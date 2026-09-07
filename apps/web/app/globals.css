@@ -15,33 +15,35 @@
  */
 
 :root {
-  /* Surfaces — cool near-black, stepped so panels separate without borders
-     doing all the work. */
-  --ground: #0e1013;
-  --panel: #15181b;
-  --panel-2: #1b1f23;
-  --panel-3: #23282d;
+  color-scheme: light;
 
-  /* Hairlines. Two weights: structural and emphasis. */
-  --line: #23282c;
-  --line-2: #333a40;
+  /* Paper. Warm-neutral rather than white — a spec sheet, not a screen. */
+  --ground: #f4f4f1;
+  --panel: #ffffff;
+  --panel-2: #ececea;
+  --panel-3: #e0e0dc;
 
-  --text: #e9ebec;
-  --text-2: #99a1a8;
-  --text-3: #666e75;
+  --line: #deddd8;
+  --line-2: #c6c5bf;
 
-  /* Brass. Bright for marks and codes, deep for fills. */
-  --brass: #d9ae4a;
+  --text: #1a1b19;
+  --text-2: #55564f;
+  --text-3: #6b6c65;
+
+  /* Brass, darkened to carry small text on paper. */
+  --brass: #7d621b;
   --brass-2: #a8842f;
-  --brass-ink: #14171a;
-  --brass-wash: rgba(217, 174, 74, 0.08);
+  --brass-ink: #ffffff;
+  --brass-wash: rgba(125, 98, 27, 0.09);
 
-  --alert: #e2705a;
-  --alert-wash: rgba(226, 112, 90, 0.1);
-  --caution: #dda94f;
-  --caution-wash: rgba(221, 169, 79, 0.1);
-  --ok: #63b78d;
-  --ok-wash: rgba(99, 183, 141, 0.1);
+  --alert: #a83c22;
+  --alert-wash: rgba(168, 60, 34, 0.08);
+  --caution: #7d5a12;
+  --caution-wash: rgba(125, 90, 18, 0.1);
+  --ok: #2b6b48;
+  --ok-wash: rgba(43, 107, 72, 0.09);
+
+  --chrome: rgba(244, 244, 241, 0.94);
 
   /* Spacing scale. Nothing off-scale. */
   --s1: 4px;
@@ -57,6 +59,77 @@
 
   --sans: var(--font-archivo), "Segoe UI", system-ui, sans-serif;
   --mono: var(--font-plex-mono), ui-monospace, Consolas, monospace;
+}
+
+/*
+ * Three states, not two. An explicit choice stamps data-theme on the root; the
+ * default "system" setting stamps nothing, so only prefers-color-scheme
+ * separates light from dark there. Both are handled, and the explicit choice
+ * wins in either direction.
+ *
+ * Only tokens are redefined — never a component rule — so a colour can never
+ * exist in one theme and not the other.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --ground: #0e1013;
+    --panel: #15181b;
+    --panel-2: #1b1f23;
+    --panel-3: #23282d;
+
+    --line: #23282c;
+    --line-2: #333a40;
+
+    --text: #e9ebec;
+    --text-2: #99a1a8;
+    --text-3: #666e75;
+
+    --brass: #d9ae4a;
+    --brass-2: #a8842f;
+    --brass-ink: #14171a;
+    --brass-wash: rgba(217, 174, 74, 0.08);
+
+    --alert: #e2705a;
+    --alert-wash: rgba(226, 112, 90, 0.1);
+    --caution: #dda94f;
+    --caution-wash: rgba(221, 169, 79, 0.1);
+    --ok: #63b78d;
+    --ok-wash: rgba(99, 183, 141, 0.1);
+
+    --chrome: rgba(14, 16, 19, 0.94);
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --ground: #0e1013;
+  --panel: #15181b;
+  --panel-2: #1b1f23;
+  --panel-3: #23282d;
+
+  --line: #23282c;
+  --line-2: #333a40;
+
+  --text: #e9ebec;
+  --text-2: #99a1a8;
+  --text-3: #666e75;
+
+  --brass: #d9ae4a;
+  --brass-2: #a8842f;
+  --brass-ink: #14171a;
+  --brass-wash: rgba(217, 174, 74, 0.08);
+
+  --alert: #e2705a;
+  --alert-wash: rgba(226, 112, 90, 0.1);
+  --caution: #dda94f;
+  --caution-wash: rgba(221, 169, 79, 0.1);
+  --ok: #63b78d;
+  --ok-wash: rgba(99, 183, 141, 0.1);
+
+  --chrome: rgba(14, 16, 19, 0.94);
 }
 
 * {
@@ -111,7 +184,7 @@ a {
 
 .banner {
   background: var(--caution-wash);
-  border-bottom: 1px solid rgba(221, 169, 79, 0.28);
+  border-bottom: 1px solid color-mix(in srgb, var(--caution) 40%, transparent);
   color: var(--caution);
   padding: 7px var(--s4);
   font-family: var(--mono);
@@ -124,7 +197,7 @@ a {
   position: sticky;
   top: 0;
   z-index: 20;
-  background: rgba(14, 16, 19, 0.94);
+  background: var(--chrome);
   backdrop-filter: blur(8px);
   border-bottom: 1px solid var(--line);
 }
@@ -355,17 +428,17 @@ a {
 
 .tag-draft {
   color: var(--caution);
-  border-color: rgba(221, 169, 79, 0.35);
+  border-color: color-mix(in srgb, var(--caution) 45%, transparent);
   background: var(--caution-wash);
 }
 .tag-sent {
   color: var(--ok);
-  border-color: rgba(99, 183, 141, 0.35);
+  border-color: color-mix(in srgb, var(--ok) 45%, transparent);
   background: var(--ok-wash);
 }
 .tag-alert {
   color: var(--alert);
-  border-color: rgba(226, 112, 90, 0.35);
+  border-color: color-mix(in srgb, var(--alert) 45%, transparent);
   background: var(--alert-wash);
 }
 
@@ -556,7 +629,7 @@ button:disabled {
   right: 0;
   bottom: 0;
   z-index: 30;
-  background: rgba(14, 16, 19, 0.96);
+  background: var(--chrome);
   backdrop-filter: blur(10px);
   border-top: 1px solid var(--line-2);
   padding: var(--s3) var(--s4) calc(var(--s3) + env(safe-area-inset-bottom, 0px));
@@ -743,10 +816,10 @@ button:disabled {
   border-left-color: var(--ok);
 }
 .note-bad {
-  border-color: rgba(226, 112, 90, 0.3);
+  border-color: color-mix(in srgb, var(--alert) 40%, transparent);
   border-left-color: var(--alert);
   background: var(--alert-wash);
-  color: #f2c3b7;
+  color: var(--alert);
 }
 
 .footnote {
@@ -794,6 +867,7 @@ button:disabled {
 
 .doc {
   background: #fbfbfa;
+  border: 1px solid var(--line-2);
   color: #1a1a19;
   border-radius: var(--r);
   padding: var(--s6) var(--s5);
@@ -973,4 +1047,27 @@ button:disabled {
   letter-spacing: 0.06em;
   color: #77776f;
   line-height: 1.7;
+}
+
+/* Theme control. Shares the nav's idiom so it reads as part of the chrome
+   rather than a widget bolted on. */
+.themebtn {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  background: none;
+  border: 1px solid var(--line);
+  padding: 0 var(--s3);
+  min-height: 30px;
+  border-radius: var(--r);
+  margin-left: var(--s2);
+  min-width: 66px;
+}
+
+.themebtn:hover:not(:disabled) {
+  color: var(--brass);
+  border-color: var(--brass-2);
+  background: var(--brass-wash);
 }

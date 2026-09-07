@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import "./globals.css";
 
 /**
@@ -31,12 +32,29 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#0e1013",
+  // The phone's browser chrome follows the theme too, so the app does not sit
+  // in a bar of the opposite colour.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f4f1" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e1013" },
+  ],
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-GB" className={`${archivo.variable} ${plexMono.variable}`}>
+    <html lang="en-GB" className={`${archivo.variable} ${plexMono.variable}`} suppressHydrationWarning>
+      <head>
+        {/*
+          Applied before first paint, so a stored preference never shows a
+          flash of the other theme. It is small and synchronous on purpose:
+          anything deferred is a flash by definition.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("relay-theme");if(t==="light"||t==="dark"){document.documentElement.setAttribute("data-theme",t)}}catch(e){}})()`,
+          }}
+        />
+      </head>
       <body>
         {/*
           Not decoration. This prototype saves to a test server with no offline
@@ -54,6 +72,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="nav">
               <Link href="/">Site</Link>
               <Link href="/office">Office</Link>
+              <ThemeToggle />
             </nav>
           </div>
         </header>
