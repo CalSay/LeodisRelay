@@ -8,6 +8,7 @@
     "start": "next start -p 4310"
   },
   "dependencies": {
+    "@react-pdf/renderer": "^4.9.0",
     "@relay/contracts": "*",
     "@relay/platform": "*",
     "next": "^15.1.0",
