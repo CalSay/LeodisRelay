@@ -31,21 +31,47 @@ export interface SharePointDriveItemRef {
   readonly itemId: string;
 }
 
+/**
+ * Which Leodis company owns a project.
+ *
+ * Sourced from the project list's required `Trading Name` choice column. This
+ * is the company authorisation boundary (blueprint 0.8): it decides who may see
+ * a project at all, so it is read from the source rather than inferred.
+ */
+export type TradingName = string;
+
 /** Captured once, at first use. Never rewritten. */
 export interface ProjectOrigin {
   readonly source: SharePointListItemRef;
-  /** Display values as they stood at pin time; used for historic rendering. */
+  /**
+   * Display values as they stood at pin time, mapped to the project list
+   * columns. `Project Number` is not a required column, so it may be absent and
+   * cannot be used as a key.
+   */
   readonly snapshot: {
-    readonly projectCode: string;
+    /** `Title` — required. */
     readonly projectName: string;
+    /** `Project Number` — optional in the source, so optional here. */
+    readonly projectNumber?: string;
+    /** Resolved through the `Client` lookup. */
     readonly clientName: string;
+    /** `Trading Name` — required; the owning Leodis company. */
+    readonly tradingName: TradingName;
   };
   /**
-   * Lookup item id, where the project list references the client list through a
-   * lookup column. The client list currently holds no data (decision D1), so
-   * this is captured only to preserve the option of mapping later.
+   * The `Client` lookup item id. The lookup is required on the project list, so
+   * this is always present: the SharePoint client list is the client identity
+   * registry even though it carries almost no attributes of its own (D1).
    */
-  readonly clientLookupItemId?: string;
+  readonly clientLookupItemId: string;
+  /**
+   * `Client: Account Number`, projected through the lookup. The accounting
+   * reference recommended in D1 already exists in the source and is read rather
+   * than separately maintained.
+   */
+  readonly clientAccountNumber?: string;
+  /** `Project Manager` — a Person or Group column, resolved to a principal. */
+  readonly projectManager?: PrincipalId;
   readonly pinnedAt: string;
   readonly pinnedBy: PrincipalId;
 }
@@ -64,17 +90,47 @@ export type SourceState = "active" | "stale" | "tombstoned";
 
 export interface Project {
   readonly id: ProjectId;
-  /** Relay owns the client record; SharePoint's client list is not a source (D1). */
+  /**
+   * Relay's own client record, pinned to the SharePoint client lookup item.
+   * SharePoint owns which clients exist; Relay owns the attributes the
+   * application needs, because the source list carries almost none (D1).
+   */
   readonly clientId: ClientId;
   readonly origin: ProjectOrigin;
   readonly mapping: ProjectMapping;
   /** Refreshed from source; never rewrites `origin.snapshot`. */
   readonly currentDisplay: {
-    readonly projectCode: string;
     readonly projectName: string;
+    readonly projectNumber?: string;
+    readonly tradingName: TradingName;
+    /** `Status` choice value as it currently stands in the source list. */
+    readonly status: string;
     readonly refreshedAt: string;
   };
   readonly sourceState: SourceState;
+}
+
+/**
+ * Status values that represent work Relay may report against.
+ *
+ * The project list also carries Probability, Contract Value, Cost of Work and
+ * Submission Deadline, which means it tracks opportunities and tenders as well
+ * as live projects. An engineer must not be offered a bid to report against, so
+ * reportability is an explicit allow-list of Status values rather than an
+ * assumption that every list item is a live project.
+ *
+ * Populated from the source list's actual choice values during setup; an
+ * unrecognised status is treated as not reportable rather than defaulting open.
+ */
+export interface ReportableStatusPolicy {
+  readonly allowed: readonly string[];
+}
+
+export function isReportable(project: Project, policy: ReportableStatusPolicy): boolean {
+  return (
+    project.sourceState !== "tombstoned" &&
+    policy.allowed.includes(project.currentDisplay.status)
+  );
 }
 
 /**

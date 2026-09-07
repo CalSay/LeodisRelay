@@ -10,7 +10,7 @@ import {
 } from "./report.js";
 import { canClose, onSourceRevisionRejected, isActionable, type Issue } from "./issue.js";
 import { nextStage, mustReuseArtifact, isIssuable, type DocumentJob } from "./document.js";
-import { resolveDisplayName, isRemap, type Project } from "./project.js";
+import { resolveDisplayName, isRemap, isReportable, type Project } from "./project.js";
 
 const id = <T,>(v: string) => v as T;
 
@@ -183,10 +183,14 @@ describe("project pinning", () => {
       origin: {
         source: { siteId: "s", listId: "l", itemId: "1" },
         snapshot: {
-          projectCode: "KG-01",
           projectName: "Kirkstall Gate",
+          projectNumber: "KG-01",
           clientName: "Acme Developments",
+          tradingName: "Leodis Developments",
         },
+        clientLookupItemId: "42",
+        clientAccountNumber: "ACME001",
+        projectManager: id("pm1"),
         pinnedAt: "2026-01-01T00:00:00Z",
         pinnedBy: id("p1"),
       },
@@ -199,13 +203,17 @@ describe("project pinning", () => {
         reason: "initial",
       },
       currentDisplay: {
-        projectCode: "KG-01",
         projectName: "Kirkstall Gate Phase 2",
+        projectNumber: "KG-01",
+        tradingName: "Leodis Developments",
+        status: "Live",
         refreshedAt: "2026-09-01T00:00:00Z",
       },
       sourceState: "active",
       ...over,
     }) as Project;
+
+  const policy = { allowed: ["Live", "On Site"] };
 
   test("a live project shows its current name", () => {
     assert.equal(resolveDisplayName(project()), "Kirkstall Gate Phase 2");
@@ -219,5 +227,24 @@ describe("project pinning", () => {
     const p = project();
     assert.equal(isRemap(p.mapping, { siteId: "s", listId: "l2", itemId: "1" }), true);
     assert.equal(isRemap(p.mapping, { siteId: "s", listId: "l", itemId: "1" }), false);
+  });
+
+  test("a tender is not reportable, however complete its record looks", () => {
+    const tender = project({
+      currentDisplay: { ...project().currentDisplay, status: "Tender" },
+    });
+    assert.equal(isReportable(tender, policy), false);
+    assert.equal(isReportable(project(), policy), true);
+  });
+
+  test("an unrecognised status is not reportable rather than defaulting open", () => {
+    const unknown = project({
+      currentDisplay: { ...project().currentDisplay, status: "Something New" },
+    });
+    assert.equal(isReportable(unknown, policy), false);
+  });
+
+  test("a tombstoned project is never reportable even with an allowed status", () => {
+    assert.equal(isReportable(project({ sourceState: "tombstoned" }), policy), false);
   });
 });
