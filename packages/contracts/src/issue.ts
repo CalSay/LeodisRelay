@@ -31,6 +31,16 @@ export interface Issue {
   readonly work: WorkState;
   readonly owner?: PrincipalId;
   readonly targetDate?: string;
+  /**
+   * Who put the work forward as complete.
+   *
+   * Independence is measured against this, not against the assigned owner.
+   * Owners are frequently unknown — the proposal is explicit that an
+   * unassigned action is normal and must be shown rather than invented — so
+   * checking the owner means an issue with no owner has nobody to be
+   * independent of, and self-verification passes silently.
+   */
+  readonly closureSubmittedBy?: PrincipalId;
   /** The revision that first raised this issue. Later revisions link to it. */
   readonly raisedByRevision: ReportRevisionId;
 }
@@ -47,12 +57,18 @@ export interface IssueEvent {
 }
 
 /**
- * Closure requires a verifier decision, not merely the assignee saying so
- * (proposal section 4). Work reaching `awaiting_verification` is a request, not
- * an outcome.
+ * Closure requires a verifier decision, not merely the person who did the work
+ * saying so (proposal section 4). Work reaching `awaiting_verification` is a
+ * request, not an outcome.
+ *
+ * Where nobody is recorded as having submitted the closure, it is refused
+ * rather than allowed: an unattributable verification is not a verification,
+ * and permitting it would reintroduce the hole this check exists to close.
  */
 export function canClose(issue: Issue, verifier: PrincipalId): boolean {
-  return issue.work === "awaiting_verification" && issue.owner !== verifier;
+  if (issue.work !== "awaiting_verification") return false;
+  const submitter = issue.closureSubmittedBy ?? issue.owner;
+  return submitter !== undefined && submitter !== verifier;
 }
 
 /**

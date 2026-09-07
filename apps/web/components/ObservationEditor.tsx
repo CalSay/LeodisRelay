@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { readPhoto, type Observation, type Photo } from "@/lib/api";
+import type { Issue } from "@/lib/types";
 import { FIXTURE_LOCATIONS, OBSERVATION_TYPES, type ObservationType } from "@/lib/fixtures";
 
 /**
@@ -17,11 +18,13 @@ import { FIXTURE_LOCATIONS, OBSERVATION_TYPES, type ObservationType } from "@/li
 export function ObservationEditor({
   observation,
   index,
+  openIssues,
   onChange,
   onRemove,
 }: {
   observation: Observation;
   index: number;
+  openIssues: Issue[];
   onChange: (next: Observation) => void;
   onRemove: () => void;
 }) {
@@ -90,6 +93,43 @@ export function ObservationEditor({
             ))}
           </datalist>
         </div>
+
+        {/*
+          The same real defect seen again is one issue with a history, not a
+          second issue saying the same thing. Existing issues are offered before
+          the description is written, because that is the moment someone would
+          otherwise retype what is already recorded.
+        */}
+        {needsAction && openIssues.length > 0 && (
+          <div className="field">
+            <label htmlFor={`link-${observation.id}`}>Is this something already raised?</label>
+            <select
+              id={`link-${observation.id}`}
+              value={observation.linkedIssueId ?? ""}
+              onChange={(e) => {
+                const value = e.target.value;
+                if (value === "") {
+                  const { linkedIssueId: _drop, ...rest } = observation;
+                  onChange(rest as Observation);
+                } else {
+                  onChange({ ...observation, linkedIssueId: value });
+                }
+              }}
+            >
+              <option value="">No — this is new</option>
+              {openIssues.map((issue) => (
+                <option key={issue.id} value={issue.id}>
+                  {issue.reference} · {issue.location || "no location"}
+                </option>
+              ))}
+            </select>
+            <p className="hint">
+              {observation.linkedIssueId
+                ? "This will be added to that issue's history rather than raising a new one."
+                : "Linking avoids raising a second issue for the same defect."}
+            </p>
+          </div>
+        )}
 
         <div className="field">
           <label htmlFor={`what-${observation.id}`}>What happened</label>

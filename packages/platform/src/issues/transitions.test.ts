@@ -48,6 +48,15 @@ describe("work axis", () => {
     assert.equal(result.ok ? result.issue.work : "", "in_progress");
   });
 
+  test("a defect fixed on the same visit goes straight to verification", () => {
+    const result = transition(
+      issue({ work: "open" }),
+      { axis: "work", to: "awaiting_verification", actor: id("e1") },
+      permissive,
+    );
+    assert.equal(result.ok, true, "same-visit rectification must not need a ceremonial step");
+  });
+
   test("skipping straight from in progress to closed is refused", () => {
     const result = transition(
       issue({ work: "in_progress" }),
@@ -55,6 +64,48 @@ describe("work axis", () => {
       permissive,
     );
     assert.equal(result.ok === false ? result.code : "", "illegal_work_transition");
+  });
+
+  test("the person who submitted the closure cannot verify it", () => {
+    // The dangerous case: nobody was ever assigned, so there is no owner to
+    // compare against. Field testing closed an issue this way.
+    const unassigned = issue({ work: "open" });
+    const submitted = transition(
+      unassigned,
+      { axis: "work", to: "awaiting_verification", actor: id("Dan") },
+      permissive,
+    );
+    assert.equal(submitted.ok, true);
+    const awaiting = submitted.ok ? submitted.issue : unassigned;
+    assert.equal(awaiting.closureSubmittedBy, "Dan", "the submitter must be recorded");
+
+    const bySelf = transition(
+      awaiting,
+      { axis: "work", to: "closed", actor: id("Dan") },
+      permissive,
+    );
+    assert.equal(
+      bySelf.ok === false ? bySelf.code : "",
+      "verification_required",
+      "an unassigned issue must not be self-verifiable",
+    );
+
+    const byOther = transition(
+      awaiting,
+      { axis: "work", to: "closed", actor: id("Sam") },
+      permissive,
+    );
+    assert.equal(byOther.ok, true);
+  });
+
+  test("an unattributable closure is refused rather than waved through", () => {
+    const orphan = issue({ work: "awaiting_verification" });
+    const result = transition(
+      orphan,
+      { axis: "work", to: "closed", actor: id("anyone") },
+      permissive,
+    );
+    assert.equal(result.ok === false ? result.code : "", "verification_required");
   });
 
   test("closure requires someone other than the owner", () => {

@@ -39,9 +39,17 @@ export type TransitionOutcome =
   | { readonly ok: true; readonly issue: Issue }
   | { readonly ok: false; readonly code: string; readonly reason: string };
 
-/** Legal moves on the work axis. Reopening is permitted; skipping ahead is not. */
+/**
+ * Legal moves on the work axis. Reopening is permitted; skipping ahead is not.
+ *
+ * `open -> awaiting_verification` is deliberately allowed. Finding a defect and
+ * rectifying it on the same visit is ordinary site behaviour, and forcing an
+ * intermediate "in progress" click for work that is already done is bureaucracy
+ * rather than a control. Verification is still required: that is enforced by
+ * the domain policy below, not by lengthening this path.
+ */
 const WORK_GRAPH: Record<WorkState, readonly WorkState[]> = {
-  open: ["assigned", "in_progress", "closed"],
+  open: ["assigned", "in_progress", "awaiting_verification", "closed"],
   assigned: ["in_progress", "awaiting_verification", "open"],
   in_progress: ["awaiting_verification", "assigned"],
   awaiting_verification: ["closed", "in_progress"],
@@ -108,7 +116,15 @@ export function transition(
       };
     }
 
-    return { ok: true, issue: { ...issue, work: command.to } };
+    // Record who put the work forward, so the verification check has something
+    // to be independent of even when nobody was ever assigned.
+    return {
+      ok: true,
+      issue:
+        command.to === "awaiting_verification"
+          ? { ...issue, work: command.to, closureSubmittedBy: command.actor }
+          : { ...issue, work: command.to },
+    };
   }
 
   const legal = CONFIRMATION_GRAPH[issue.confirmation];

@@ -8,7 +8,7 @@
  */
 
 import { FIXTURE_PROJECTS, type FixtureProject } from "./fixtures";
-import type { Observation, Photo, Report } from "./types";
+import type { Issue, Observation, Photo, Report } from "./types";
 
 const REPORTABLE_STATUSES = ["4. Active", "5. Defects Liability"];
 
@@ -114,6 +114,15 @@ export async function officeView(): Promise<{
   return parse(await request("/api/reports?view=office", { cache: "no-store" }));
 }
 
+export async function openIssues(projectId: string): Promise<Issue[]> {
+  const data = await parse<{ issues: Issue[] }>(
+    await request(`/api/issues?projectId=${encodeURIComponent(projectId)}&only=open`, {
+      cache: "no-store",
+    }),
+  );
+  return data.issues;
+}
+
 export function newObservation(): Observation {
   return {
     id: `obs-${Math.random().toString(36).slice(2, 10)}`,
@@ -143,5 +152,5 @@ export function readPhoto(file: File): Promise<Photo> {
 
 // Re-exported so screens have one import for the data layer, and so swapping
 // this module for the real client does not ripple through every component.
-export type { Observation, Photo, Report, ReportState, ReviewFinding } from "./types";
+export type { Issue, IssueEvent, Observation, Photo, Report, ReportState, ReviewFinding } from "./types";
 export { reviewReport } from "./review";

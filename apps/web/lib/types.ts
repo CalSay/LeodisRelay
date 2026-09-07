@@ -15,6 +15,12 @@ export interface Observation {
   actionNeeded: string;
   owner: string;
   photos: Photo[];
+  /**
+   * Set when this observation is a further sighting of an issue already raised.
+   * Recognising the same real defect on a later visit adds to its history
+   * rather than creating a second record of the same thing.
+   */
+  linkedIssueId?: string;
 }
 
 export type ReportState = "draft" | "submitted";
@@ -39,4 +45,57 @@ export interface ReviewFinding {
   field: string;
   message: string;
   blocking: boolean;
+}
+
+/**
+ * A persistent issue.
+ *
+ * The point of the whole system, and the thing a report alone cannot do: a
+ * defect outlives the visit that found it, gathers evidence across visits, and
+ * is closed by someone other than whoever did the work.
+ *
+ * Confirmation and work status are independent axes (decision DP-5), so an
+ * issue raised before its report was reviewed can be repaired, disputed, or
+ * both, without either fact overwriting the other.
+ */
+export type Confirmation = "provisional" | "confirmed" | "disputed" | "withdrawn";
+export type WorkStatus =
+  | "open"
+  | "assigned"
+  | "in_progress"
+  | "awaiting_verification"
+  | "closed";
+
+export type IssueEventKind =
+  | "raised"
+  | "progress"
+  | "closure_submitted"
+  | "verified"
+  | "reopened"
+  | "confirmation"
+  | "assigned";
+
+export interface IssueEvent {
+  at: string;
+  actor: string;
+  kind: IssueEventKind;
+  note: string;
+  photos: Photo[];
+}
+
+export interface Issue {
+  id: string;
+  reference: string;
+  projectId: string;
+  location: string;
+  description: string;
+  confirmation: Confirmation;
+  work: WorkStatus;
+  owner: string;
+  targetDate: string;
+  /** Who put the work forward as complete; independence is measured against this. */
+  closureSubmittedBy?: string;
+  raisedByReport: string;
+  raisedAt: string;
+  events: IssueEvent[];
 }

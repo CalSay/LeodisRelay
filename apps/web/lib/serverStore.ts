@@ -4,6 +4,7 @@ import { dirname, join } from "node:path";
 import type { Report } from "./types";
 import { reviewReport } from "./review";
 import { FIXTURE_PROJECTS } from "./fixtures";
+import { raiseFromReport } from "./issueStore";
 
 /**
  * DISPOSABLE prototype store.
@@ -137,6 +138,11 @@ export function submitReport(reportId: string): StoreOutcome<Report> {
   };
   store.reports[index] = submitted;
   save(store);
+
+  // Raised at submission rather than at approval, so urgent work is not held
+  // behind document review (blueprint 0.6).
+  raiseFromReport(submitted);
+
   return { ok: true, value: submitted };
 }
 

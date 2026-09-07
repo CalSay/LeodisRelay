@@ -6,6 +6,7 @@ import {
   getProject,
   getReport,
   newObservation,
+  openIssues as fetchOpenIssues,
   reviewReport,
   saveReport,
   submitReport,
@@ -15,6 +16,7 @@ import {
 import { ApiError } from "@/lib/api";
 import { hasUnsent, keep, migrateFromLocalStorage, recover, release } from "@/lib/localDraft";
 import { ObservationEditor } from "@/components/ObservationEditor";
+import type { Issue as IssueSummary } from "@/lib/types";
 
 type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error";
 
@@ -45,6 +47,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const [saveState, setSaveState] = useState<SaveState>("clean");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [projectIssues, setProjectIssues] = useState<IssueSummary[]>([]);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<Report | null>(null);
@@ -143,6 +146,15 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     latest.current = report;
   }, [report]);
+
+  // Context from previous visits. Fetched once the report is known so the
+  // engineer can attach a repeat sighting instead of raising a duplicate.
+  useEffect(() => {
+    if (!report) return;
+    fetchOpenIssues(report.projectId)
+      .then(setProjectIssues)
+      .catch(() => setProjectIssues([]));
+  }, [report?.projectId]);
 
   function update(next: Report) {
     setReport(next);
@@ -263,6 +275,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
               key={observation.id}
               observation={observation}
               index={index}
+              openIssues={projectIssues}
               onChange={(next) =>
                 update({
                   ...report,
