@@ -1,0 +1,402 @@
+/*
+ * Charcoal and gold, per proposal section 5.
+ *
+ * Two rules the field interface has to obey and this stylesheet enforces:
+ * status is never carried by colour alone, and touch targets are large enough
+ * to hit wearing gloves on a site.
+ */
+
+:root {
+  --ground: #14171a;
+  --surface: #1d2125;
+  --surface-raised: #262b30;
+  --ink: #eceef0;
+  --ink-muted: #a3abb2;
+  --ink-faint: #78818a;
+  --rule: #333a40;
+  --rule-strong: #47505a;
+
+  --gold: #c9a227;
+  --gold-dim: #8a6f1b;
+  --on-gold: #14171a;
+
+  --danger: #d4634a;
+  --danger-bg: #3a211b;
+  --warn: #d6a049;
+  --warn-bg: #382c17;
+  --good: #6fae7d;
+  --good-bg: #1d2c21;
+
+  --touch: 48px;
+  --radius: 6px;
+
+  --f-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --f-mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--ground);
+  color: var(--ink);
+  font-family: var(--f-sans);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Prototype banner ------------------------------------------------------- */
+
+.proto-banner {
+  background: var(--warn-bg);
+  border-bottom: 1px solid var(--warn);
+  color: var(--warn);
+  padding: 8px 16px;
+  font-size: 13px;
+  font-family: var(--f-mono);
+  text-align: center;
+}
+
+/* Layout ----------------------------------------------------------------- */
+
+.shell {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 16px 96px;
+}
+
+.topbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 0 16px;
+  border-bottom: 1px solid var(--rule);
+  flex-wrap: wrap;
+}
+
+.topbar h1 {
+  font-size: 21px;
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.topbar .sub {
+  color: var(--ink-muted);
+  font-size: 14px;
+}
+
+.backlink {
+  color: var(--gold);
+  text-decoration: none;
+  font-size: 14px;
+  display: inline-block;
+  padding: 12px 0;
+}
+.backlink:hover {
+  text-decoration: underline;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.section-label {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  margin: 28px 0 4px;
+}
+
+/* Cards ------------------------------------------------------------------ */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: block;
+  width: 100%;
+  text-align: left;
+  color: inherit;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.card:hover {
+  border-color: var(--rule-strong);
+}
+
+.card:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 17px;
+  margin: 0 0 4px;
+}
+
+.card-meta {
+  color: var(--ink-muted);
+  font-size: 14px;
+  margin: 0;
+}
+
+.code {
+  font-family: var(--f-mono);
+  font-size: 13px;
+  color: var(--gold);
+}
+
+/* Status — always a word, never colour alone -----------------------------*/
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 4px 9px;
+  border-radius: 3px;
+  border: 1px solid;
+}
+
+.badge-draft {
+  color: var(--warn);
+  background: var(--warn-bg);
+  border-color: var(--warn);
+}
+.badge-sent {
+  color: var(--good);
+  background: var(--good-bg);
+  border-color: var(--good);
+}
+.badge-blocked {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger);
+}
+
+/* Forms ------------------------------------------------------------------ */
+
+label {
+  display: block;
+  font-size: 14px;
+  color: var(--ink-muted);
+  margin-bottom: 6px;
+}
+
+.hint {
+  font-size: 13px;
+  color: var(--ink-faint);
+  margin: 4px 0 0;
+}
+
+input[type="text"],
+select,
+textarea {
+  width: 100%;
+  min-height: var(--touch);
+  background: var(--ground);
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font: inherit;
+  padding: 12px;
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+.field {
+  margin-bottom: 16px;
+}
+
+/* Buttons ---------------------------------------------------------------- */
+
+button {
+  min-height: var(--touch);
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid var(--rule-strong);
+  background: var(--surface-raised);
+  color: var(--ink);
+  padding: 12px 18px;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--gold-dim);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--on-gold);
+}
+
+.btn-danger {
+  color: var(--danger);
+  border-color: var(--rule-strong);
+}
+
+.btn-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+/* Camera ----------------------------------------------------------------- */
+
+.camera {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 64px;
+  border: 2px dashed var(--rule-strong);
+  border-radius: var(--radius);
+  background: var(--ground);
+  color: var(--gold);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.camera:hover {
+  border-color: var(--gold-dim);
+}
+
+.camera input {
+  display: none;
+}
+
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.photo {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--ground);
+}
+
+.photo img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-body {
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.photo-body input {
+  min-height: 40px;
+  padding: 8px;
+  font-size: 14px;
+}
+
+.photo-num {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+
+/* Review ----------------------------------------------------------------- */
+
+.finding {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 11px 13px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  border: 1px solid;
+}
+
+.finding-blocking {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  color: #f0c4b8;
+}
+
+.finding-advisory {
+  border-color: var(--rule-strong);
+  background: var(--surface);
+  color: var(--ink-muted);
+}
+
+.finding-tag {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding-top: 3px;
+  flex: none;
+}
+
+.empty {
+  color: var(--ink-faint);
+  padding: 28px 16px;
+  text-align: center;
+  border: 1px dashed var(--rule);
+  border-radius: var(--radius);
+}
+
+.notice {
+  padding: 13px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  border: 1px solid var(--rule-strong);
+  background: var(--surface);
+  color: var(--ink-muted);
+}
+
+.notice-error {
+  border-color: var(--danger);
+  background: var(--danger-bg);
+  color: #f0c4b8;
+}

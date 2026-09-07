@@ -9,3 +9,5 @@ coverage/
 !.env.example
 .DS_Store
 dist/
+.next/
+next-env.d.ts
