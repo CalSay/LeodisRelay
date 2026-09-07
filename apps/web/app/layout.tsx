@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { Archivo, IBM_Plex_Mono } from "next/font/google";
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { currentPrincipal } from "@/lib/auth/session";
+import { resolveProvider } from "@/lib/auth/provider";
 import "./globals.css";
 
 /**
@@ -40,7 +42,9 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const principal = await currentPrincipal();
+  const { provider } = resolveProvider();
   return (
     <html lang="en-GB" className={`${archivo.variable} ${plexMono.variable}`} suppressHydrationWarning>
       <head>
@@ -61,7 +65,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           storage, and an engineer testing on their own phone must never mistake
           it for the real thing.
         */}
-        <div className="banner">PROTOTYPE — EXAMPLE DATA — NOT FOR REAL SITE WORK</div>
+        <div className="banner">
+          PROTOTYPE — EXAMPLE DATA — NOT FOR REAL SITE WORK
+          {provider.kind === "local" ? " — IDENTITY NOT CHECKED" : ""}
+        </div>
 
         <header className="appbar">
           <div className="appbar-inner">
@@ -72,6 +79,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <nav className="nav">
               <Link href="/">Site</Link>
               <Link href="/office">Office</Link>
+              {principal && (
+                <form action="/api/auth/signout" method="POST" style={{ display: "inline" }}>
+                  <button type="submit" className="whoami" title="Sign out">
+                    {principal.name}
+                  </button>
+                </form>
+              )}
               <ThemeToggle />
             </nav>
           </div>

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getReport, reviewSubmission, saveDraft, submitReport } from "@/lib/serverStore";
+import { currentPrincipal } from "@/lib/auth/session";
 import type { Report } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -38,11 +39,18 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     signature?: { dataUrl?: string; name: string };
   };
 
+  const principal = await currentPrincipal();
+  if (!principal) {
+    return NextResponse.json({ reason: "Please sign in again." }, { status: 401 });
+  }
+
   if (body.action === "review") {
     const outcome = reviewSubmission(
       id,
       body.decision === "return" ? "return" : "approve",
-      body.reviewer ?? "Office",
+      // The reviewer is whoever is signed in. Letting the client name the
+      // reviewer would make "you cannot review your own report" a suggestion.
+      principal.name,
       body.note ?? "",
     );
     return outcome.ok
@@ -50,7 +58,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });
   }
 
-  const outcome = submitReport(id, body.signature);
+  const outcome = submitReport(
+    id,
+    body.signature ? { ...body.signature, name: body.signature.name || principal.name } : undefined,
+  );
   return outcome.ok
     ? NextResponse.json(outcome.value)
     : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });

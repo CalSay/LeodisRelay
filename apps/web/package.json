@@ -8,13 +8,14 @@
     "start": "next start -p 4310"
   },
   "dependencies": {
+    "@azure/msal-node": "^6.0.0",
     "@react-pdf/renderer": "^4.9.0",
     "@relay/contracts": "*",
+    "@relay/documents": "*",
     "@relay/platform": "*",
     "next": "^15.1.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "@relay/documents": "*"
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

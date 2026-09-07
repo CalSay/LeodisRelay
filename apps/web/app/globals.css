@@ -1197,3 +1197,27 @@ button:disabled {
   text-transform: uppercase;
   color: var(--text-3);
 }
+
+/* Signed-in identity doubles as the sign-out control: one item rather than a
+   name and a separate link competing for the same small space. */
+.whoami {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--text-2);
+  background: none;
+  border: 1px solid transparent;
+  min-height: 30px;
+  padding: 0 var(--s3);
+  border-radius: var(--r);
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.whoami:hover:not(:disabled) {
+  color: var(--brass);
+  border-color: var(--line-2);
+  background: var(--brass-wash);
+}

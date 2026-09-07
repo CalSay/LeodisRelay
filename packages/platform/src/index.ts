@@ -4,3 +4,4 @@ export * from "./sync/bundle.js";
 export * from "./report/manifest.js";
 export * from "./report/lifecycle.js";
 export * from "./issues/transitions.js";
+export * from "./auth/session.js";

@@ -13,3 +13,4 @@ dist/
 next-env.d.ts
 .relay-prototype/
 .relay-prototype/
+apps/web/.env.local

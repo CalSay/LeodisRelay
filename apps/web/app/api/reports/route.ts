@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createReport, listReports, officeView } from "@/lib/serverStore";
+import { currentPrincipal } from "@/lib/auth/session";
 
 export const dynamic = "force-dynamic";
 
@@ -13,9 +14,17 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as { projectId?: string; author?: string };
+  const principal = await currentPrincipal();
+  if (!principal) {
+    return NextResponse.json({ reason: "Please sign in again." }, { status: 401 });
+  }
+
+  const body = (await request.json()) as { projectId?: string };
   if (!body.projectId) {
     return NextResponse.json({ reason: "projectId is required." }, { status: 400 });
   }
-  return NextResponse.json(createReport(body.projectId, body.author ?? "You"), { status: 201 });
+
+  // Authorship comes from the session. A client-supplied author is not an
+  // author, and the review rules depend on knowing who actually wrote this.
+  return NextResponse.json(createReport(body.projectId, principal.name), { status: 201 });
 }
