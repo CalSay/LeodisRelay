@@ -15,6 +15,7 @@ import {
   isRemap,
   isReportable,
   DEFAULT_REPORTABLE_STATUSES,
+  projectCode,
   type Project,
 } from "./project.js";
 import { resolveClientLabel, type Client } from "./client.js";
@@ -191,6 +192,7 @@ describe("project pinning", () => {
       source: { siteId: "s", listId: "l", itemId: "1" },
       snapshot: {
         projectName: "Kirkstall Gate",
+        projectNumber: "011LME",
         clientName: "Acme Developments",
         division: "Leodis M&E",
       },
@@ -210,6 +212,7 @@ describe("project pinning", () => {
     },
     currentDisplay: {
       projectName: "Kirkstall Gate Phase 2",
+      projectNumber: "011LME",
       division: "Leodis M&E",
       status: "4. Active",
       refreshedAt: "2026-09-01T00:00:00Z",
@@ -253,6 +256,33 @@ describe("project pinning", () => {
 
   test("a tombstoned project is never reportable even with an allowed status", () => {
     assert.equal(isReportable(project({ sourceState: "tombstoned" }), policy), false);
+  });
+
+  // exactOptionalPropertyTypes distinguishes an absent key from an explicit
+  // undefined, and "the flow has not populated it yet" means absent.
+  const withoutCode = <T extends { projectNumber?: string }>(source: T): T => {
+    const { projectNumber: _omitted, ...rest } = source;
+    return rest as T;
+  };
+
+  test("an active project without a code is not reportable", () => {
+    const base = project();
+    const noCode = project({
+      origin: { ...base.origin, snapshot: withoutCode(base.origin.snapshot) },
+      currentDisplay: withoutCode(base.currentDisplay),
+    });
+    assert.equal(projectCode(noCode), null);
+    assert.equal(
+      isReportable(noCode, policy),
+      false,
+      "filing verifies the folder against the code, so there is nowhere safe to file",
+    );
+  });
+
+  test("the code falls back to the pinned snapshot if the refresh dropped it", () => {
+    const base = project();
+    const stale = project({ currentDisplay: withoutCode(base.currentDisplay) });
+    assert.equal(projectCode(stale), "011LME");
   });
 });
 

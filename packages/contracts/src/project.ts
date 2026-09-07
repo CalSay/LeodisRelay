@@ -68,8 +68,18 @@ export interface ProjectOrigin {
    * cannot be used as a key.
    */
   readonly snapshot: {
-    /** `Title` — required, and the only reliable project name. */
+    /** `Title` — required. */
     readonly projectName: string;
+    /**
+     * `Project Number`. Not flagged Required on the list because Power Automate
+     * populates it after item creation, not because it is optional in practice.
+     * Leodis confirm no project reaches Active without one.
+     *
+     * Optional here only to represent the window between item creation and the
+     * generating flow completing. Code that needs it uses `requireProjectCode`
+     * rather than assuming presence.
+     */
+    readonly projectNumber?: string;
     /** Resolved through the `Client` lookup. */
     readonly clientName: string;
     /** `Trading Name` — required; the operating division. */
@@ -116,12 +126,26 @@ export interface Project {
   /** Refreshed from source; never rewrites `origin.snapshot`. */
   readonly currentDisplay: {
     readonly projectName: string;
+    readonly projectNumber?: string;
     readonly division: Division;
     /** `Status` choice value as it currently stands in the source list. */
     readonly status: string;
     readonly refreshedAt: string;
   };
   readonly sourceState: SourceState;
+}
+
+/**
+ * The project code, where the guarantee holds.
+ *
+ * Returns null rather than throwing, so a caller can surface a missing code as
+ * a data anomaly for repair. An active project without a code means the
+ * generating flow did not complete — that is worth reporting, not crashing on
+ * and not quietly working around.
+ */
+export function projectCode(project: Project): string | null {
+  const code = project.currentDisplay.projectNumber ?? project.origin.snapshot.projectNumber;
+  return code !== undefined && code.length > 0 ? code : null;
 }
 
 /**
@@ -150,10 +174,18 @@ export const DEFAULT_REPORTABLE_STATUSES: ReportableStatusPolicy = {
   allowed: ["4. Active", "5. Defects Liability"],
 };
 
+/**
+ * Reportability also requires a project code, because filing depends on it:
+ * the archive folder check in `archive.ts` matches the linked folder against
+ * this code, and without one a report cannot be filed to a verified
+ * destination. Since no project reaches Active without a code, a reportable
+ * project missing one is an anomaly rather than a normal state.
+ */
 export function isReportable(project: Project, policy: ReportableStatusPolicy): boolean {
   return (
     project.sourceState !== "tombstoned" &&
-    policy.allowed.includes(project.currentDisplay.status)
+    policy.allowed.includes(project.currentDisplay.status) &&
+    projectCode(project) !== null
   );
 }
 
