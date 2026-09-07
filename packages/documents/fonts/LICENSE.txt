@@ -1,0 +1,7 @@
+Archivo is licensed under the SIL Open Font License, Version 1.1.
+Copyright (c) Omnibus-Type.
+https://github.com/Omnibus-Type/Archivo
+
+Bundled rather than fetched at render time: an issued document must render
+identically years from now, and a network dependency in the rendering path is a
+document that stops looking the same when someone else's CDN changes.

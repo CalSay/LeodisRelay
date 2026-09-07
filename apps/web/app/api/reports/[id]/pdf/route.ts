@@ -1,26 +1,23 @@
-import { renderToBuffer, type DocumentProps } from "@react-pdf/renderer";
 import { NextResponse } from "next/server";
-
-import { getReport } from "@/lib/serverStore";
-import { FIXTURE_PROJECTS } from "@/lib/fixtures";
-import { ReportDocument } from "@/lib/pdf/ReportDocument";
+import { renderReportPdf, type DocReport } from "@relay/documents";
 import { archiveFileName, sanitiseFileName } from "@relay/contracts";
 
+import { getReport } from "@/lib/serverStore";
+import { FIXTURE_PROJECTS, OBSERVATION_TYPES } from "@/lib/fixtures";
+
 export const dynamic = "force-dynamic";
-// react-pdf needs Node APIs; the edge runtime cannot render it.
 export const runtime = "nodejs";
 
 /**
  * Render the document on the server.
  *
- * Deliberately generated from what the server holds, not from anything the
- * client sends. The device could otherwise submit one thing and have another
- * rendered, which is the whole reason the real design renders from a frozen
- * submitted snapshot.
+ * Built from what the server holds, not from anything the client sends. The
+ * device could otherwise submit one thing and have another rendered, which is
+ * why the real design renders from a frozen submitted revision.
  *
- * A draft renders too, so layout can be judged before approval — but it is
- * stamped "not issued" throughout, because a PDF existing is not a report
- * having been issued.
+ * A draft renders too, so layout can be judged before approval, but it is
+ * stamped "not issued" in the title block and on every page footer: a PDF
+ * existing is not a report having been issued.
  */
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
@@ -31,12 +28,31 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
   const project = FIXTURE_PROJECTS.find((p) => p.id === report.projectId);
 
-  const buffer = await renderToBuffer(
-    ReportDocument({ report, project }) as React.ReactElement<DocumentProps>,
-  );
+  const doc: DocReport = {
+    reference: report.reference,
+    projectName: project?.projectName ?? report.projectId,
+    projectNumber: project?.projectNumber ?? "",
+    clientName: project?.clientName ?? "",
+    clientAccountNumber: project?.clientAccountNumber ?? "",
+    visitDate: report.visitDate,
+    author: report.author,
+    revision: report.revision,
+    approved: report.review === "approved",
+    observations: report.observations.map((o) => ({
+      id: o.id,
+      typeLabel: OBSERVATION_TYPES.find((t) => t.value === o.type)?.label ?? o.type,
+      location: o.location,
+      whatHappened: o.whatHappened,
+      actionNeeded: o.actionNeeded,
+      owner: o.owner,
+      photos: o.photos,
+    })),
+  };
+
+  const buffer = await renderReportPdf(doc);
 
   const fileName = archiveFileName({
-    projectNumber: project?.projectNumber ?? "UNKNOWN",
+    projectNumber: doc.projectNumber || "UNKNOWN",
     reportNumber: sanitiseFileName(report.reference),
     revision: report.revision,
     visitDate: report.visitDate,
@@ -45,7 +61,6 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "content-type": "application/pdf",
-      // inline so it opens in the browser rather than downloading blind
       "content-disposition": `inline; filename="${fileName}"`,
       "cache-control": "no-store",
     },
