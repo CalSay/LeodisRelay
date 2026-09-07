@@ -444,18 +444,23 @@ a {
 
 /* ── Title block ──────────────────────────────────────────────────────── */
 
+/*
+ * Title block: ruled, not boxed.
+ *
+ * A grid of equally bordered cells gave every field the same weight and read
+ * like a spreadsheet. One hairline top and bottom, no cell borders, and the
+ * fields keep their own proportions instead.
+ */
 .titleblock {
-  border: 1px solid var(--line-2);
-  border-radius: var(--r);
-  background: var(--panel);
+  border-top: 1px solid var(--line-2);
+  border-bottom: 1px solid var(--line-2);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--s4) var(--s5);
+  padding: var(--s4) 0;
 }
 
 .tb-cell {
-  padding: var(--s3) var(--s4);
-  border-right: 1px solid var(--line);
-  border-bottom: 1px solid var(--line);
   min-width: 0;
 }
 
@@ -465,13 +470,14 @@ a {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--text-3);
-  margin-bottom: 3px;
+  margin-bottom: 5px;
 }
 
 .tb-cell dd {
   margin: 0;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
   overflow-wrap: break-word;
 }
 

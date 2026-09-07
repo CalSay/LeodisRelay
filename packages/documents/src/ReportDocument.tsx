@@ -38,6 +38,14 @@ const fontDir = path.join(here, "..", "fonts");
  * identically in five years regardless of what a CDN is doing.
  */
 Font.register({
+  family: "PlexMono",
+  fonts: [
+    { src: path.join(fontDir, "IBMPlexMono-Regular.ttf"), fontWeight: 400 },
+    { src: path.join(fontDir, "IBMPlexMono-Medium.ttf"), fontWeight: 500 },
+  ],
+});
+
+Font.register({
   family: "Archivo",
   fonts: [
     { src: path.join(fontDir, "Archivo-Regular.ttf"), fontWeight: 400 },
@@ -110,30 +118,34 @@ const s = StyleSheet.create({
   },
   docKind: { fontSize: 7, letterSpacing: 2.2, color: BRASS, fontWeight: 600 },
   docTitle: { fontSize: 21, fontWeight: 600, marginTop: 3, letterSpacing: -0.3 },
-  docRef: { fontSize: 13, fontWeight: 600, letterSpacing: 0.4 },
+  // The reference is a code, so it is set as one.
+  docRef: { fontSize: 13, fontFamily: "PlexMono", fontWeight: 500, letterSpacing: 0.2 },
 
   /* A draft says so where it cannot be missed, not in small print. */
   stamp: { borderWidth: 1, borderColor: FLAG, paddingVertical: 3, paddingHorizontal: 8, marginTop: 5 },
   stampText: { fontSize: 6.5, letterSpacing: 1.4, color: FLAG, fontWeight: 600 },
 
-  tb: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderColor: RULE,
-    marginTop: 16,
-  },
-  tbCell: {
-    width: "33.333%",
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: RULE,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-  },
-  tbLabel: { fontSize: 6, letterSpacing: 1.2, color: FAINT, marginBottom: 2, fontWeight: 500 },
-  tbValue: { fontSize: 9.5, fontWeight: 600 },
+  /*
+   * Title block.
+   *
+   * Ruled, not boxed. Six equal bordered cells gave the client's name the same
+   * weight as the revision number and read like a spreadsheet; the fields are
+   * not equally important and should not look it. So: one hairline top and
+   * bottom, no cell borders, and columns proportioned to their content — the
+   * client gets the room a company name needs, the revision gets what a single
+   * digit needs.
+   *
+   * Codes and dates are set in mono with tabular figures, the same idiom the
+   * application uses, so a reference reads as a reference rather than as prose.
+   */
+  tb: { flexDirection: "row", flexWrap: "wrap", marginTop: 14, paddingTop: 12, paddingBottom: 2, borderTopWidth: 1, borderBottomWidth: 1, borderColor: RULE },
+  tbCol: { paddingRight: 16, marginBottom: 14 },
+  tbWide: { width: "44%" },
+  tbMid: { width: "30%" },
+  tbNarrow: { width: "26%" },
+  tbLabel: { fontSize: 5.8, letterSpacing: 1.4, color: FAINT, marginBottom: 3, fontWeight: 500 },
+  tbValue: { fontSize: 10.5, fontWeight: 600, letterSpacing: -0.1 },
+  tbCode: { fontSize: 10, fontFamily: "PlexMono", fontWeight: 500, letterSpacing: 0.2 },
 
   h2Row: { flexDirection: "row", alignItems: "center", marginTop: 24, marginBottom: 10 },
   h2: { fontSize: 7.5, letterSpacing: 1.8, color: BRASS, fontWeight: 600 },
@@ -206,13 +218,33 @@ const s = StyleSheet.create({
 
 });
 
-function Cell({ label, value }: { label: string; value: string }) {
+function Field({
+  label,
+  value,
+  width,
+  code,
+}: {
+  label: string;
+  value: string;
+  width: "wide" | "mid" | "narrow";
+  /** Codes, references and dates are set in mono so they read as data. */
+  code?: boolean;
+}) {
+  const w = width === "wide" ? s.tbWide : width === "mid" ? s.tbMid : s.tbNarrow;
   return (
-    <View style={s.tbCell}>
+    <View style={[s.tbCol, w]}>
       <Text style={s.tbLabel}>{label.toUpperCase()}</Text>
-      <Text style={s.tbValue}>{value}</Text>
+      <Text style={code ? s.tbCode : s.tbValue}>{value}</Text>
     </View>
   );
+}
+
+/** Long form, because the document is read by a client and not by a system. */
+function formatVisitDate(iso: string): string {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime())
+    ? iso
+    : date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 }
 
 export function ReportDocument({ report }: { report: DocReport }) {
@@ -262,12 +294,12 @@ export function ReportDocument({ report }: { report: DocReport }) {
         </View>
 
         <View style={s.tb}>
-          <Cell label="Client" value={report.clientName || "Not recorded"} />
-          <Cell label="Client account" value={report.clientAccountNumber || "—"} />
-          <Cell label="Project number" value={report.projectNumber || "—"} />
-          <Cell label="Visit date" value={report.visitDate} />
-          <Cell label="Prepared by" value={report.author} />
-          <Cell label="Revision" value={String(report.revision)} />
+          <Field label="Client" value={report.clientName || "Not recorded"} width="wide" />
+          <Field label="Project number" value={report.projectNumber || "—"} width="mid" code />
+          <Field label="Client account" value={report.clientAccountNumber || "—"} width="narrow" code />
+          <Field label="Visit date" value={formatVisitDate(report.visitDate)} width="wide" />
+          <Field label="Prepared by" value={report.author} width="mid" />
+          <Field label="Revision" value={String(report.revision)} width="narrow" code />
         </View>
 
         <View style={s.h2Row}>
