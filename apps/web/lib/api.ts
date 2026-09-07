@@ -83,12 +83,18 @@ export async function createReport(projectId: string, author: string): Promise<R
   );
 }
 
-export async function saveReport(report: Report): Promise<Report> {
+/**
+ * Save a draft against the version it was built on.
+ *
+ * The server refuses a write whose base version has moved, so two saves racing
+ * cannot silently overwrite one another.
+ */
+export async function saveReport(report: Report, expectedVersion?: number): Promise<Report> {
   return parse<Report>(
     await request(`/api/reports/${report.id}`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(report),
+      body: JSON.stringify({ observations: report.observations, expectedVersion }),
     }),
   );
 }
@@ -106,17 +112,17 @@ export async function submitReport(
   );
 }
 
+/** The reviewer is the signed-in person; the server ignores anything sent. */
 export async function reviewReportDecision(
   reportId: string,
   decision: "approve" | "return",
-  reviewer: string,
   note: string,
 ): Promise<Report> {
   return parse<Report>(
     await request(`/api/reports/${reportId}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ action: "review", decision, reviewer, note }),
+      body: JSON.stringify({ action: "review", decision, note }),
     }),
   );
 }

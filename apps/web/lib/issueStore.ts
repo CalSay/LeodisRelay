@@ -114,8 +114,10 @@ export function raiseFromReport(report: Report): Issue[] {
       }
     }
 
-    const sequence =
-      store.issues.filter((i) => i.projectId === report.projectId).length + raised.length + 1;
+    // Counted from the store alone. Newly raised issues are already pushed to
+    // it, so adding raised.length again skipped numbers and would eventually
+    // repeat a reference.
+    const sequence = store.issues.filter((i) => i.projectId === report.projectId).length + 1;
 
     const issue: Issue = {
       id: `iss-${Math.random().toString(36).slice(2, 10)}`,
@@ -123,6 +125,9 @@ export function raiseFromReport(report: Report): Issue[] {
       projectId: report.projectId,
       location: observation.location,
       description: observation.whatHappened,
+      // The required action is the clearest instruction on an issue and was
+      // being dropped on the way in.
+      actionNeeded: observation.actionNeeded,
       confirmation: "provisional",
       work: observation.owner.trim() ? "assigned" : "open",
       owner: observation.owner,

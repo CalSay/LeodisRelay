@@ -19,7 +19,6 @@ import type { Report } from "@/lib/types";
  * left to be discovered.
  */
 export function ReviewPanel({ report, onDone }: { report: Report; onDone: () => void }) {
-  const [reviewer, setReviewer] = useState("Office");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +32,7 @@ export function ReviewPanel({ report, onDone }: { report: Report; onDone: () => 
     setBusy(true);
     setError(null);
     try {
-      await reviewReportDecision(report.id, decision, reviewer, note);
+      await reviewReportDecision(report.id, decision, note);
       setNote("");
       onDone();
     } catch (e) {
@@ -64,18 +63,10 @@ export function ReviewPanel({ report, onDone }: { report: Report; onDone: () => 
           {defects > 0 ? ` / ${defects} raising an issue` : ""}
         </p>
 
-        <div className="field">
-          <label htmlFor={`rev-${report.id}`}>Reviewed by</label>
-          <input
-            id={`rev-${report.id}`}
-            type="text"
-            value={reviewer}
-            onChange={(e) => setReviewer(e.target.value)}
-          />
-          <p className="hint">
-            A report cannot be reviewed by whoever wrote it — this one is by {report.author}.
-          </p>
-        </div>
+        <p className="hint" style={{ marginBottom: 16 }}>
+          Reviewed as the person signed in. A report cannot be reviewed by whoever wrote it —
+          this one is by {report.author}.
+        </p>
 
         <div className="field">
           <label htmlFor={`note-${report.id}`}>Comments</label>

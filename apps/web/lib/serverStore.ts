@@ -65,6 +65,7 @@ export function createReport(projectId: string, author: string): Report {
     visitDate: new Date().toISOString().slice(0, 10),
     author,
     state: "draft",
+    version: 1,
     review: "not_required",
     revision: 1,
     observations: [],
@@ -84,7 +85,23 @@ export type StoreOutcome<T> =
  * Saving a draft. A submitted report is frozen: the client should never offer
  * an edit, and the server refuses one regardless of what the client offers.
  */
-export function saveDraft(reportId: string, incoming: Report): StoreOutcome<Report> {
+/**
+ * Save a draft, refusing a write built on a version that has since moved.
+ *
+ * Compare and swap rather than last-writer-wins. Without it, two saves in
+ * flight together are applied in whatever order they arrive, and the earlier
+ * one silently wins — which is how observations disappear between a bad
+ * connection and a person who has stopped watching.
+ *
+ * The autosave counter advances here. The document revision does not: what is
+ * printed on a client report must not depend on how often somebody paused
+ * while typing.
+ */
+export function saveDraft(
+  reportId: string,
+  incoming: Report,
+  expectedVersion?: number,
+): StoreOutcome<Report> {
   const store = load();
   const index = store.reports.findIndex((r) => r.id === reportId);
   if (index === -1) return { ok: false, status: 404, reason: "No such report." };
@@ -98,10 +115,20 @@ export function saveDraft(reportId: string, incoming: Report): StoreOutcome<Repo
     };
   }
 
+  if (expectedVersion !== undefined && expectedVersion !== existing.version) {
+    return {
+      ok: false,
+      status: 409,
+      reason:
+        "This report changed since your last save. Your work is held on this device; " +
+        "reopen the report to see both versions.",
+    };
+  }
+
   const saved: Report = {
     ...existing,
     observations: incoming.observations,
-    revision: existing.revision + 1,
+    version: existing.version + 1,
     lastSavedAt: new Date().toISOString(),
   };
   store.reports[index] = saved;
@@ -207,13 +234,19 @@ export async function submitReport(
  */
 export function reviewSubmission(
   reportId: string,
-  decision: "approve" | "return",
+  decision: string,
   reviewer: string,
   note: string,
 ): StoreOutcome<Report> {
   const store = load();
   const index = store.reports.findIndex((r) => r.id === reportId);
   if (index === -1) return { ok: false, status: 404, reason: "No such report." };
+
+  // An unrecognised decision is refused, never defaulted. Defaulting to
+  // approval means a malformed request approves a report.
+  if (decision !== "approve" && decision !== "return") {
+    return { ok: false, status: 422, reason: "A review decision must be approve or return." };
+  }
 
   const existing = store.reports[index]!;
   if (existing.state !== "submitted") {

@@ -14,7 +14,7 @@ import {
   type Report,
 } from "@/lib/api";
 import { ApiError } from "@/lib/api";
-import { hasUnsent, keep, migrateFromLocalStorage, recover, release } from "@/lib/localDraft";
+import { hasUnsent, keep, recover, releaseIfCurrent } from "@/lib/localDraft";
 import { ObservationEditor } from "@/components/ObservationEditor";
 import { SignaturePad } from "@/components/SignaturePad";
 import type { Issue as IssueSummary } from "@/lib/types";
@@ -54,6 +54,19 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<Report | null>(null);
+  /** Who is signed in, for scoping work held on this device. */
+  const [principalId, setPrincipalId] = useState<string | null>(null);
+  /**
+   * Every edit gets a number. It identifies which copy is held on the device,
+   * so a save that lands late releases only the edit it actually saved.
+   */
+  const seq = useRef(0);
+  /**
+   * Saves run one at a time along this chain. Debouncing alone left two
+   * requests in flight whenever somebody kept typing, and the earlier one could
+   * land last and win.
+   */
+  const chain = useRef<Promise<void>>(Promise.resolve());
   /**
    * The report as it currently stands, for retries that did not originate from
    * an edit. Recovered work is the case that matters: after a reload there is
@@ -64,9 +77,16 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const latest = useRef<Report | null>(null);
 
   useEffect(() => {
+    fetch("/api/auth/me", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setPrincipalId(d?.principal?.id ?? null))
+      .catch(() => setPrincipalId(null));
+  }, []);
+
+  useEffect(() => {
+    if (principalId === null) return;
     let cancelled = false;
     (async () => {
-      await migrateFromLocalStorage();
       let found;
       try {
         found = await getReport(id);
@@ -83,10 +103,11 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       }
       // Unsent work wins over the server copy: it exists only because a save
       // did not get through, so it is newer by definition.
-      const recovered = await recover(found);
+      const held = await recover(id, principalId);
       if (cancelled) return;
-      if (recovered) {
-        setReport(recovered);
+      if (held && found.state === "draft") {
+        seq.current = held.seq;
+        setReport({ ...found, observations: held.observations });
         setSaveState("phone");
       } else {
         setReport(found);
@@ -95,41 +116,59 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, principalId]);
 
   /**
    * Autosave after a pause, not on every keystroke: on a poor connection that
    * produces a queue of requests that all land at once and finish out of order.
    */
-  const scheduleSave = useCallback((next: Report) => {
-    pending.current = next;
-    setSaveState("saving");
-    if (saveTimer.current) clearTimeout(saveTimer.current);
+  const scheduleSave = useCallback(
+    (next: Report) => {
+      if (!principalId) return;
 
-    // Mirror to the device first, and know whether it worked. Whatever the
-    // network then does, the work survives a reload, a crash or a flat battery
-    // — but only if this actually succeeded, so the result is not discarded.
-    const held = keep(next).then(
-      () => true,
-      () => false,
-    );
+      pending.current = next;
+      setSaveState("saving");
+      if (saveTimer.current) clearTimeout(saveTimer.current);
 
-    saveTimer.current = setTimeout(async () => {
-      const toSave = pending.current;
-      if (!toSave) return;
-      try {
-        const saved = await saveReport(toSave);
-        await release(toSave.id);
-        setReport((current) => (current ? { ...current, revision: saved.revision } : saved));
-        setSaveState("saved");
-      } catch (error) {
-        const offline = error instanceof ApiError && error.offline;
-        // Not on the server. Whether that is merely inconvenient or actually
-        // dangerous depends entirely on whether the device took a copy.
-        setSaveState((await held) ? (offline ? "phone" : "error") : "unheld");
-      }
-    }, 700);
-  }, []);
+      const mySeq = (seq.current += 1);
+
+      // Mirror to the device first, and know whether it worked. Whatever the
+      // network then does the work survives a reload, a crash or a flat
+      // battery — but only if this actually succeeded, so the result is kept.
+      const held = keep({
+        reportId: next.id,
+        principalId,
+        seq: mySeq,
+        observations: next.observations,
+      }).then(
+        () => true,
+        () => false,
+      );
+
+      saveTimer.current = setTimeout(() => {
+        // Queued behind whatever is already running, so there is never more
+        // than one save in flight for this report.
+        chain.current = chain.current.then(async () => {
+          const toSave = pending.current;
+          if (!toSave) return;
+          try {
+            const saved = await saveReport(toSave, toSave.version);
+            // Release only the edit that was acknowledged. Anything typed
+            // since keeps its copy on the device.
+            await releaseIfCurrent(toSave.id, principalId, mySeq);
+            setReport((current) => (current ? { ...current, version: saved.version } : saved));
+            setSaveState((state) => (state === "saving" ? "saved" : state));
+          } catch (error) {
+            const offline = error instanceof ApiError && error.offline;
+            // Not on the server. Whether that is merely inconvenient or
+            // actually dangerous depends on whether the device took a copy.
+            setSaveState((await held) ? (offline ? "phone" : "error") : "unheld");
+          }
+        });
+      }, 700);
+    },
+    [principalId],
+  );
 
   useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
 
@@ -138,13 +177,12 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   useEffect(() => {
     async function onOnline() {
       const current = pending.current ?? latest.current;
-      if (current && current.state === "draft" && (await hasUnsent(current.id))) {
-        scheduleSave(current);
-      }
+      if (!current || current.state !== "draft" || !principalId) return;
+      if (await hasUnsent(current.id, principalId)) scheduleSave(current);
     }
     window.addEventListener("online", onOnline);
     return () => window.removeEventListener("online", onOnline);
-  }, [scheduleSave]);
+  }, [scheduleSave, principalId]);
 
   useEffect(() => {
     latest.current = report;
@@ -171,22 +209,32 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     setSubmitError(null);
     try {
       if (saveTimer.current) clearTimeout(saveTimer.current);
-      const saved = await saveReport(report);
+      // Wait for any save already running, so what is submitted is the version
+      // the engineer just reviewed rather than whatever lands last.
+      await chain.current;
+      const saved = await saveReport(report, report.version);
       const sent = await submitReport(saved, {
         ...(signatureImage ? { dataUrl: signatureImage } : {}),
         name: signerName.trim() || report.author,
       });
-      await release(report.id);
+      if (principalId) await releaseIfCurrent(report.id, principalId, seq.current);
       setReport(sent);
       setSaveState("clean");
     } catch (error) {
       if (error instanceof ApiError && error.offline) {
         // Sending failed, so make certain the device is holding the work before
         // telling anyone it is safe.
-        const held = await keep(report).then(
-          () => true,
-          () => false,
-        );
+        const held = principalId
+          ? await keep({
+              reportId: report.id,
+              principalId,
+              seq: seq.current,
+              observations: report.observations,
+            }).then(
+              () => true,
+              () => false,
+            )
+          : false;
         setSaveState(held ? "phone" : "unheld");
         setSubmitError(
           held

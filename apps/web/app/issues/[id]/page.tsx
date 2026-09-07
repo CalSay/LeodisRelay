@@ -48,7 +48,6 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
   const [missing, setMissing] = useState(false);
   const [note, setNote] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
-  const [actor, setActor] = useState("You");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,13 +60,21 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
 
   async function run(kind: string) {
     if (!issue) return;
+    // The domain refuses a confirmation change without a reason. Substituting
+    // "(no note)" here defeated that rule from the outside, which is the same
+    // failure as a route trusting a cookie: a correct rule, undone by its
+    // adapter.
+    if ((kind === "confirm" || kind === "withdraw") && note.trim().length === 0) {
+      setError("Say why this is being confirmed or withdrawn.");
+      return;
+    }
     setBusy(true);
     setError(null);
     try {
       const response = await fetch(`/api/issues/${issue.id}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind, actor, note: note.trim() || "(no note)", photos }),
+        body: JSON.stringify({ kind, note: note.trim(), photos }),
       });
       const body = await response.json();
       if (!response.ok) {
@@ -185,15 +192,6 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
 
           <section className="panel">
             <div className="panel-body">
-              <div className="field">
-                <label htmlFor="actor">Recorded by</label>
-                <input id="actor" type="text" value={actor} onChange={(e) => setActor(e.target.value)} />
-                <p className="hint">
-                  Closure must be verified by someone other than whoever submitted it — change this
-                  name to test that.
-                </p>
-              </div>
-
               <div className="field">
                 <label htmlFor="note">What has happened</label>
                 <textarea

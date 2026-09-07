@@ -29,8 +29,21 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     return NextResponse.json({ reason: "This draft belongs to someone else." }, { status: 403 });
   }
 
-  const incoming = (await request.json()) as Report;
-  const outcome = saveDraft(id, incoming);
+  const body = (await request.json()) as {
+    observations?: Report["observations"];
+    expectedVersion?: number;
+  };
+  // Casts do not validate. A malformed body must be refused rather than
+  // reaching the store as undefined.
+  if (!Array.isArray(body.observations)) {
+    return NextResponse.json({ reason: "observations must be provided." }, { status: 422 });
+  }
+
+  const outcome = saveDraft(
+    id,
+    { ...existing, observations: body.observations },
+    body.expectedVersion,
+  );
   return outcome.ok
     ? NextResponse.json(outcome.value)
     : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });
@@ -59,7 +72,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (body.action === "review") {
     const outcome = reviewSubmission(
       id,
-      body.decision === "return" ? "return" : "approve",
+      // Passed through unchanged. Coercing anything that is not "return" into
+      // "approve" meant a malformed decision approved the report before the
+      // domain rule could refuse it — the adapter undoing the rule again.
+      body.decision ?? "",
       // The reviewer is whoever is signed in. Letting the client name the
       // reviewer would make "you cannot review your own report" a suggestion.
       principal.name,

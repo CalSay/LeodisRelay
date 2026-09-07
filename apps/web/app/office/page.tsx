@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getProject, officeView, type OfficeDraftSummary } from "@/lib/api";
 import { ReviewPanel } from "@/components/ReviewPanel";
 import type { Report } from "@/lib/types";
+import { deliveryStatus, receiptStatus, reviewStatus, toneClass } from "@/lib/status";
 
 /**
  * The office view, per decision Q2.
@@ -94,9 +95,17 @@ export default function OfficePage() {
                   </p>
                 </span>
                 <span className="row-end">
-                  <span className={report.review === "approved" ? "tag tag-sent" : "tag tag-draft"}>
-                    {report.review === "approved" ? "Approved" : "Returned"}
+                  {/* Receipt, review and delivery stated separately: one does
+                      not imply another. */}
+                  <span className={toneClass(receiptStatus(report).tone)}>
+                    {receiptStatus(report).label}
                   </span>
+                  {reviewStatus(report) && (
+                    <span className="row-time">{reviewStatus(report)!.label}</span>
+                  )}
+                  {deliveryStatus(report) && (
+                    <span className="row-time">{deliveryStatus(report)!.label}</span>
+                  )}
                   <span className="row-time">
                     {report.serverAcknowledgedAt
                       ? new Date(report.serverAcknowledgedAt).toLocaleString("en-GB", {

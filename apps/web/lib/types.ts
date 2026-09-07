@@ -42,6 +42,17 @@ export interface Report {
   visitDate: string;
   author: string;
   state: ReportState;
+  /**
+   * Autosave counter, for optimistic concurrency. Increments on every accepted
+   * draft save and is never shown to anyone.
+   */
+  version: number;
+  /**
+   * Document revision, printed on the issued report. Starts at 1 and moves only
+   * when a correction supersedes an issued document — never because somebody
+   * paused while typing. Conflating this with the autosave counter had a client
+   * receiving "Revision 47" for a report written in one sitting.
+   */
   revision: number;
   observations: Observation[];
   review: ReviewState;
@@ -124,6 +135,8 @@ export interface Issue {
   projectId: string;
   location: string;
   description: string;
+  /** What has to happen to put it right, carried from the update that raised it. */
+  actionNeeded: string;
   confirmation: Confirmation;
   work: WorkStatus;
   owner: string;
