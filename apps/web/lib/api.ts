@@ -12,12 +12,37 @@ import type { Observation, Photo, Report } from "./types";
 
 const REPORTABLE_STATUSES = ["4. Active", "5. Defects Liability"];
 
-export class ApiError extends Error {}
+/**
+ * Errors an engineer might see.
+ *
+ * `offline` is separated from every other failure because it is the only one
+ * where nothing is wrong and nothing is lost — the work is on the phone and
+ * will go when there is signal. Telling someone that, rather than showing them
+ * "NetworkError when attempting to fetch resource", is the difference between
+ * a tool that feels reliable in a basement and one that feels broken.
+ */
+export class ApiError extends Error {
+  readonly offline: boolean;
+  constructor(message: string, offline = false) {
+    super(message);
+    this.offline = offline;
+  }
+}
+
+async function request(input: string, init?: RequestInit): Promise<Response> {
+  try {
+    return await fetch(input, init);
+  } catch {
+    // fetch rejects on network failure rather than resolving with a status,
+    // so this is the only place a lost connection can be caught.
+    throw new ApiError("No connection. Your work is on this phone and will send when there is signal.", true);
+  }
+}
 
 async function parse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as { reason?: string };
-    throw new ApiError(body.reason ?? `Request failed (${response.status}).`);
+    throw new ApiError(body.reason ?? `That did not go through (${response.status}).`);
   }
   return (await response.json()) as T;
 }
@@ -37,20 +62,20 @@ export function getProject(projectId: string): FixtureProject | undefined {
 
 export async function listReports(projectId: string): Promise<Report[]> {
   const data = await parse<{ reports: Report[] }>(
-    await fetch(`/api/reports?projectId=${encodeURIComponent(projectId)}`, { cache: "no-store" }),
+    await request(`/api/reports?projectId=${encodeURIComponent(projectId)}`, { cache: "no-store" }),
   );
   return data.reports;
 }
 
 export async function getReport(reportId: string): Promise<Report | undefined> {
-  const response = await fetch(`/api/reports/${reportId}`, { cache: "no-store" });
+  const response = await request(`/api/reports/${reportId}`, { cache: "no-store" });
   if (response.status === 404) return undefined;
   return parse<Report>(response);
 }
 
 export async function createReport(projectId: string, author: string): Promise<Report> {
   return parse<Report>(
-    await fetch("/api/reports", {
+    await request("/api/reports", {
       method: "POST",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ projectId, author }),
@@ -60,7 +85,7 @@ export async function createReport(projectId: string, author: string): Promise<R
 
 export async function saveReport(report: Report): Promise<Report> {
   return parse<Report>(
-    await fetch(`/api/reports/${report.id}`, {
+    await request(`/api/reports/${report.id}`, {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify(report),
@@ -69,7 +94,7 @@ export async function saveReport(report: Report): Promise<Report> {
 }
 
 export async function submitReport(report: Report): Promise<Report> {
-  return parse<Report>(await fetch(`/api/reports/${report.id}`, { method: "POST" }));
+  return parse<Report>(await request(`/api/reports/${report.id}`, { method: "POST" }));
 }
 
 export interface OfficeDraftSummary {
@@ -86,7 +111,7 @@ export async function officeView(): Promise<{
   submitted: Report[];
   drafts: OfficeDraftSummary[];
 }> {
-  return parse(await fetch("/api/reports?view=office", { cache: "no-store" }));
+  return parse(await request("/api/reports?view=office", { cache: "no-store" }));
 }
 
 export function newObservation(): Observation {

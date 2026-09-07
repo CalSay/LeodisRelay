@@ -12,21 +12,25 @@ import {
   type Observation,
   type Report,
 } from "@/lib/api";
+import { ApiError } from "@/lib/api";
+import { hasUnsent, keep, recover, release } from "@/lib/localDraft";
 import { ObservationEditor } from "@/components/ObservationEditor";
 
-/**
- * Save state, in the engineer's words.
- *
- * The prototype has no offline storage, so it may only claim the work is on the
- * server. "Saved" with no destination is exactly the ambiguity the real design
- * forbids, so every label names where the work actually is.
- */
-type SaveState = "clean" | "saving" | "saved" | "error";
+type SaveState = "clean" | "saving" | "saved" | "phone" | "error";
 
+/**
+ * Where the work is, said plainly.
+ *
+ * "On this phone only" is deliberately not a success state and does not get the
+ * green dot. Proposal section 5 is explicit that a tick for a local save must
+ * not suggest the work is safely with Leodis, and the whole point of separating
+ * these states is that an engineer can tell at a glance which one they are in.
+ */
 const SAVE: Record<SaveState, { dot: string; text: string }> = {
   clean: { dot: "dot", text: "" },
   saving: { dot: "dot dot-busy", text: "Saving to server" },
   saved: { dot: "dot dot-ok", text: "Saved on server" },
+  phone: { dot: "dot dot-busy", text: "On this phone only — will send when there is signal" },
   error: { dot: "dot dot-bad", text: "Not saved — check connection" },
 };
 
@@ -41,9 +45,33 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<Report | null>(null);
+  /**
+   * The report as it currently stands, for retries that did not originate from
+   * an edit. Recovered work is the case that matters: after a reload there is
+   * nothing pending, so without this a report restored from the device would
+   * sit there until somebody happened to type — which is precisely the moment
+   * an engineer assumes it has gone.
+   */
+  const latest = useRef<Report | null>(null);
 
   useEffect(() => {
-    getReport(id).then((found) => (found ? setReport(found) : setMissing(true)));
+    getReport(id)
+      .then((found) => {
+        if (!found) {
+          setMissing(true);
+          return;
+        }
+        // Unsent work from a previous session wins over the server copy: it is
+        // by definition newer, because it only exists because a save failed.
+        const recovered = recover(found);
+        if (recovered) {
+          setReport(recovered);
+          setSaveState("phone");
+        } else {
+          setReport(found);
+        }
+      })
+      .catch(() => setMissing(true));
   }, [id]);
 
   /**
@@ -51,6 +79,9 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
    * produces a queue of requests that all land at once and finish out of order.
    */
   const scheduleSave = useCallback((next: Report) => {
+    // Mirror to the device first. Whatever the network then does, the work
+    // survives a refresh, a crash or a phone going flat.
+    keep(next);
     pending.current = next;
     setSaveState("saving");
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -59,15 +90,32 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       if (!toSave) return;
       try {
         const saved = await saveReport(toSave);
+        release(toSave.id);
         setReport((current) => (current ? { ...current, revision: saved.revision } : saved));
         setSaveState("saved");
-      } catch {
-        setSaveState("error");
+      } catch (error) {
+        // Losing signal is not a failure to report as one; the work is held.
+        setSaveState(error instanceof ApiError && error.offline ? "phone" : "error");
       }
     }, 700);
   }, []);
 
   useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
+
+  // Coming back into signal retries by itself. An engineer walking out of a
+  // basement should not have to know to press anything.
+  useEffect(() => {
+    function onOnline() {
+      const held = pending.current ?? latest.current;
+      if (held && held.state === "draft" && hasUnsent(held.id)) scheduleSave(held);
+    }
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, [scheduleSave]);
+
+  useEffect(() => {
+    latest.current = report;
+  }, [report]);
 
   function update(next: Report) {
     setReport(next);
@@ -81,10 +129,19 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     try {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       const saved = await saveReport(report);
-      setReport(await submitReport(saved));
+      const sent = await submitReport(saved);
+      release(report.id);
+      setReport(sent);
       setSaveState("clean");
     } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : "That could not be sent.");
+      if (error instanceof ApiError && error.offline) {
+        setSaveState("phone");
+        setSubmitError(
+          "No connection, so this has not reached the office yet. Your work is held on this phone — try again when you have signal.",
+        );
+      } else {
+        setSubmitError(error instanceof Error ? error.message : "That could not be sent.");
+      }
     } finally {
       setSubmitting(false);
     }
