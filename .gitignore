@@ -11,3 +11,4 @@ coverage/
 dist/
 .next/
 next-env.d.ts
+.relay-prototype/

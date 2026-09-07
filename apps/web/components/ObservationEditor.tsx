@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { readPhoto, type Observation, type Photo } from "@/lib/testBackend";
+import { readPhoto, type Observation, type Photo } from "@/lib/api";
 import { FIXTURE_LOCATIONS, OBSERVATION_TYPES, type ObservationType } from "@/lib/fixtures";
 
 /**

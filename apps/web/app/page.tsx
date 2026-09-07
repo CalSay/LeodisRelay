@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { listProjects } from "@/lib/testBackend";
+import { listProjects } from "@/lib/api";
 import type { FixtureProject } from "@/lib/fixtures";
 
 export default function ProjectsPage() {
@@ -18,6 +18,9 @@ export default function ProjectsPage() {
         <div>
           <h1>Your projects</h1>
           <div className="sub">Projects you can report against</div>
+        </div>
+        <div>
+          <Link href="/office" className="backlink">Office view &rarr;</Link>
         </div>
       </div>
 

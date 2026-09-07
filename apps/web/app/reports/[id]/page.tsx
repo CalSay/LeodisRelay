@@ -11,7 +11,7 @@ import {
   submitReport,
   type Observation,
   type Report,
-} from "@/lib/testBackend";
+} from "@/lib/api";
 import { ObservationEditor } from "@/components/ObservationEditor";
 
 /**

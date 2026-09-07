@@ -400,3 +400,185 @@ button:disabled {
   background: var(--danger-bg);
   color: #f0c4b8;
 }
+
+/* Document preview -------------------------------------------------------
+ * Deliberately a light, paper-like surface: this is standing in for an issued
+ * PDF, and judging its layout against the dark capture interface would be
+ * judging the wrong thing.
+ */
+
+.doc {
+  background: #ffffff;
+  color: #1b1b1b;
+  border-radius: var(--radius);
+  padding: 32px 28px;
+  margin-top: 8px;
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.doc-head {
+  border-bottom: 2px solid #1b1b1b;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+}
+
+.doc-brand {
+  font-family: var(--f-mono);
+  font-size: 13px;
+  letter-spacing: 0.22em;
+  color: #8a6f1b;
+  font-weight: 600;
+}
+
+.doc-title {
+  font-size: 25px;
+  margin: 8px 0 18px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.doc-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px 24px;
+  margin: 0;
+}
+
+.doc-meta div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.doc-meta dt {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6a6a6a;
+}
+
+.doc-meta dd {
+  margin: 0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.doc-h2 {
+  font-size: 13px;
+  font-family: var(--f-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8a6f1b;
+  border-bottom: 1px solid #d8d8d4;
+  padding-bottom: 6px;
+  margin: 28px 0 14px;
+}
+
+.doc-h3 {
+  font-size: 16px;
+  margin: 0 0 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.doc-type {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6a6a6a;
+  border: 1px solid #d8d8d4;
+  padding: 2px 7px;
+  border-radius: 3px;
+}
+
+.doc-body {
+  margin: 0 0 10px;
+  max-width: 68ch;
+}
+
+.doc-obs {
+  padding: 16px 0;
+  border-bottom: 1px solid #e6e6e2;
+}
+.doc-obs:last-child {
+  border-bottom: none;
+}
+
+.doc-table-wrap {
+  overflow-x: auto;
+}
+
+.doc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  min-width: 460px;
+}
+
+.doc-table th,
+.doc-table td {
+  text-align: left;
+  padding: 9px 12px;
+  border-bottom: 1px solid #e6e6e2;
+  vertical-align: top;
+}
+
+.doc-table th {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6a6a6a;
+  background: #f4f4f1;
+}
+
+/* An unfilled owner is stated, never left blank or invented. */
+.doc-unknown {
+  color: #8a5a2a;
+  font-style: italic;
+}
+
+.doc-photos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.doc-figure {
+  margin: 0;
+}
+
+.doc-figure img {
+  width: 100%;
+  border: 1px solid #d8d8d4;
+  display: block;
+}
+
+.doc-figure figcaption {
+  font-size: 12.5px;
+  color: #4a4a4a;
+  margin-top: 6px;
+  line-height: 1.4;
+}
+
+.doc-figure-date {
+  color: #7a7a7a;
+  font-size: 11.5px;
+}
+
+.doc-foot {
+  margin-top: 28px;
+  padding-top: 14px;
+  border-top: 1px solid #d8d8d4;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: #6a6a6a;
+  line-height: 1.6;
+}

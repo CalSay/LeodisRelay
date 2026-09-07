@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createReport, getProject, listReports, type Report } from "@/lib/testBackend";
+import { createReport, getProject, listReports, type Report } from "@/lib/api";
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
