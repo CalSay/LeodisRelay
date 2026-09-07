@@ -3,7 +3,8 @@
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createReport, getProject, listReports, openIssues, type Report } from "@/lib/api";
+import { createReport, getProject, listReports, projectIssues, type Report } from "@/lib/api";
+import { IssueRegister } from "@/components/IssueRegister";
 import type { Issue } from "@/lib/types";
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
@@ -17,7 +18,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   const refresh = useCallback(() => {
     listReports(id).then(setReports);
-    openIssues(id).then(setIssues).catch(() => setIssues([]));
+    projectIssues(id).then(setIssues).catch(() => setIssues([]));
   }, [id]);
 
   useEffect(refresh, [refresh]);
@@ -85,47 +86,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       </div>
 
       {/* Outstanding work comes before the report history: what is still owed
-          matters more than what has already been written up. */}
-      {issues && issues.length > 0 && (
-        <>
-          <div className="sec">
-            <span className="lbl">Outstanding · {issues.length}</span>
-          </div>
-          <div className="reg">
-            {issues.map((issue) => (
-              <Link key={issue.id} href={`/issues/${issue.id}`} className="row">
-                <span className="row-code">{issue.reference.split("-").slice(1).join("-")}</span>
-                <span className="row-main">
-                  <p className="row-title">{issue.location || "Location not recorded"}</p>
-                  <p className="row-meta">
-                    {issue.description.length > 70
-                      ? `${issue.description.slice(0, 70)}…`
-                      : issue.description}
-                  </p>
-                </span>
-                <span className="row-end">
-                  <span
-                    className={
-                      issue.confirmation === "disputed" ? "tag tag-alert" : "tag tag-draft"
-                    }
-                  >
-                    {issue.work === "awaiting_verification"
-                      ? "Verify"
-                      : issue.work === "in_progress"
-                        ? "In progress"
-                        : issue.work === "assigned"
-                          ? "Assigned"
-                          : "Open"}
-                  </span>
-                  <span className="row-time">
-                    {issue.owner.trim() || "no owner"}
-                  </span>
-                </span>
-              </Link>
-            ))}
-          </div>
-        </>
-      )}
+          matters more than what has already been written up. Rendered whether
+          or not there is anything in it. */}
+      <IssueRegister issues={issues} />
 
       <div className="sec">
         <span className="lbl">Reports</span>

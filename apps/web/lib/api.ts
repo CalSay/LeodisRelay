@@ -123,6 +123,14 @@ export async function openIssues(projectId: string): Promise<Issue[]> {
   return data.issues;
 }
 
+/** Every issue on a project, filtered in the view rather than the request. */
+export async function projectIssues(projectId: string): Promise<Issue[]> {
+  const data = await parse<{ issues: Issue[] }>(
+    await request(`/api/issues?projectId=${encodeURIComponent(projectId)}`, { cache: "no-store" }),
+  );
+  return data.issues;
+}
+
 export function newObservation(): Observation {
   return {
     id: `obs-${Math.random().toString(36).slice(2, 10)}`,

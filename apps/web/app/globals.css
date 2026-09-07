@@ -1071,3 +1071,61 @@ button:disabled {
   border-color: var(--brass-2);
   background: var(--brass-wash);
 }
+
+/* Segmented filter. Shares the label idiom so it reads as part of the register
+   header rather than a control bolted beside it. */
+.segs {
+  display: inline-flex;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.seg {
+  min-height: 32px;
+  padding: 0 var(--s3);
+  border: none;
+  border-right: 1px solid var(--line-2);
+  border-radius: 0;
+  background: none;
+  color: var(--text-3);
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.seg:last-child {
+  border-right: none;
+}
+
+.seg:hover:not(:disabled) {
+  background: var(--panel);
+  color: var(--text-2);
+  border-color: var(--line-2);
+}
+
+.seg[aria-pressed="true"] {
+  background: var(--brass-wash);
+  color: var(--brass);
+}
+
+/* The count is the useful part, so it stays legible when the segment is not
+   selected rather than fading with the label. */
+.seg-n {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.sec-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s4);
+  margin: var(--s6) 0 var(--s3);
+  flex-wrap: wrap;
+}
