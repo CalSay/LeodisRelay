@@ -1,0 +1,23 @@
+{
+  "name": "leodis-relay",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Leodis Relay - site and compliance reporting platform",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --build --force",
+    "test": "npm run build && node --test \"packages/*/dist/**/*.test.js\"",
+    "clean": "tsc --build --clean"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "typescript": "^5.7.0"
+  }
+}
