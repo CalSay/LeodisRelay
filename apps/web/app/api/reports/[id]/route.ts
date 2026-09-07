@@ -58,7 +58,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });
   }
 
-  const outcome = submitReport(
+  const outcome = await submitReport(
     id,
     body.signature ? { ...body.signature, name: body.signature.name || principal.name } : undefined,
   );

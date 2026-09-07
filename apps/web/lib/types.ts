@@ -33,7 +33,7 @@ export type ReportState = "draft" | "submitted";
  * applies to something already sent to a client, which is a different act with
  * a different audit trail.
  */
-export type ReviewState = "pending" | "approved" | "returned";
+export type ReviewState = "not_required" | "pending" | "approved" | "returned";
 
 export interface Report {
   id: string;
@@ -55,6 +55,24 @@ export interface Report {
   lastSavedAt?: string;
   /** Captured at the point of sending. The drawn image is optional. */
   signature?: { dataUrl?: string; name: string; signedAt: string };
+  /**
+   * Who received this and when, per proposal 6.2. Kept whether delivery
+   * succeeded or failed: a delivery that failed silently is indistinguishable
+   * from one that never happened.
+   */
+  issued?: {
+    records: {
+      revisionId: string;
+      revision: number;
+      method: "email" | "filed";
+      recipient: { name: string; address: string; role: string };
+      at: string;
+      failure?: string;
+    }[];
+    unaddressed: string[];
+    transport: string;
+    location?: string;
+  };
 }
 
 export interface ReviewFinding {

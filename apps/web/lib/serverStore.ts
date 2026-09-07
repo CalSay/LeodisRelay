@@ -5,6 +5,7 @@ import type { Report } from "./types";
 import { reviewReport } from "./review";
 import { FIXTURE_PROJECTS } from "./fixtures";
 import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } from "./issueStore";
+import { issueReport } from "./delivery/issueReport";
 
 /**
  * DISPOSABLE prototype store.
@@ -64,7 +65,7 @@ export function createReport(projectId: string, author: string): Report {
     visitDate: new Date().toISOString().slice(0, 10),
     author,
     state: "draft",
-    review: "pending",
+    review: "not_required",
     revision: 1,
     observations: [],
     lastSavedAt: new Date().toISOString(),
@@ -113,10 +114,10 @@ export function saveDraft(reportId: string, incoming: Report): StoreOutcome<Repo
  * check is there to give fast, specific feedback; this one is there because a
  * client check is not a control.
  */
-export function submitReport(
+export async function submitReport(
   reportId: string,
   signature?: { dataUrl?: string; name: string },
-): StoreOutcome<Report> {
+): Promise<StoreOutcome<Report>> {
   const store = load();
   const index = store.reports.findIndex((r) => r.id === reportId);
   if (index === -1) return { ok: false, status: 404, reason: "No such report." };
@@ -138,7 +139,10 @@ export function submitReport(
   const submitted: Report = {
     ...existing,
     state: "submitted",
-    review: "pending",
+    // Reports do not wait for review unless their project asks for it.
+    review: FIXTURE_PROJECTS.find((p) => p.id === existing.projectId)?.reviewRequired
+      ? "pending"
+      : "not_required",
     serverAcknowledgedAt: new Date().toISOString(),
     // Stamped by the server, not the device: the time a report was signed off
     // is a fact about when it was received, not about a phone's clock.
@@ -159,7 +163,37 @@ export function submitReport(
   // behind document review (blueprint 0.6).
   raiseFromReport(submitted);
 
-  return { ok: true, value: submitted };
+  /*
+   * Sent to the project manager now rather than after review.
+   *
+   * Review is optional (see reviewRequired on the project) because the office
+   * is small and a control nobody has capacity to operate is worse than none.
+   * What makes that safe is the recipient: the project manager is Leodis, so
+   * this is internal distribution and the manager reading it is the check.
+   * Sending outside Leodis remains a separate act.
+   */
+  try {
+    const outcome = await issueReport(submitted, []);
+    const issued: Report = {
+      ...submitted,
+      issued: {
+        records: outcome.records as NonNullable<Report["issued"]>["records"],
+        unaddressed: [...outcome.unaddressed],
+        transport: outcome.transport,
+        ...(outcome.location ? { location: outcome.location } : {}),
+      },
+    };
+    const current = load();
+    const at = current.reports.findIndex((r) => r.id === reportId);
+    if (at !== -1) {
+      current.reports[at] = issued;
+      save(current);
+    }
+    return { ok: true, value: issued };
+  } catch {
+    // A failure to send must never lose the submission itself.
+    return { ok: true, value: submitted };
+  }
 }
 
 /**
@@ -185,7 +219,7 @@ export function reviewSubmission(
   if (existing.state !== "submitted") {
     return { ok: false, status: 409, reason: "Only a submitted report can be reviewed." };
   }
-  if (existing.review !== "pending") {
+  if (existing.review === "approved" || existing.review === "returned") {
     return { ok: false, status: 409, reason: "This report has already been reviewed." };
   }
   if (decision === "return" && note.trim().length === 0) {
@@ -263,7 +297,7 @@ export function officeView(): OfficeView {
   const { reports } = load();
   const sent = reports.filter((r) => r.state === "submitted");
   return {
-    // What a reviewer has to act on, separated from what is merely received.
+    // Only projects that ask for review produce anything here.
     awaitingReview: sent.filter((r) => r.review === "pending"),
     submitted: sent
       .filter((r) => r.review !== "pending")

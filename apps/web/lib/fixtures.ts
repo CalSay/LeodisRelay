@@ -20,6 +20,13 @@ export interface FixtureProject {
   division: string;
   status: string;
   projectManager: string;
+  /**
+   * TODO: comes from the project list's Project Manager column, which is a
+   * Person or Group and therefore carries a real address. These are examples.
+   */
+  projectManagerEmail: string;
+  /** Whether a person must approve this project's reports before they issue. */
+  reviewRequired: boolean;
 }
 
 /**
@@ -37,6 +44,8 @@ export const FIXTURE_PROJECTS: FixtureProject[] = [
     division: "Leodis M&E",
     status: "4. Active",
     projectManager: "A. Whitfield",
+    projectManagerEmail: "a.whitfield@example.invalid",
+    reviewRequired: false,
   },
   {
     id: "proj-014lme",
@@ -47,6 +56,8 @@ export const FIXTURE_PROJECTS: FixtureProject[] = [
     division: "Leodis M&E",
     status: "4. Active",
     projectManager: "A. Whitfield",
+    projectManagerEmail: "a.whitfield@example.invalid",
+    reviewRequired: false,
   },
   {
     id: "proj-009lcp",
@@ -57,6 +68,8 @@ export const FIXTURE_PROJECTS: FixtureProject[] = [
     division: "Leodis Commercial Plumbing",
     status: "5. Defects Liability",
     projectManager: "R. Ellison",
+    projectManagerEmail: "r.ellison@example.invalid",
+    reviewRequired: false,
   },
   {
     id: "proj-021lme",
@@ -67,6 +80,8 @@ export const FIXTURE_PROJECTS: FixtureProject[] = [
     division: "Leodis M&E",
     status: "1. Tender",
     projectManager: "A. Whitfield",
+    projectManagerEmail: "a.whitfield@example.invalid",
+    reviewRequired: false,
   },
   {
     id: "proj-004lcp",
@@ -77,6 +92,8 @@ export const FIXTURE_PROJECTS: FixtureProject[] = [
     division: "Leodis Commercial Plumbing",
     status: "6. Complete",
     projectManager: "R. Ellison",
+    projectManagerEmail: "r.ellison@example.invalid",
+    reviewRequired: false,
   },
 ];
 
