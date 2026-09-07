@@ -15,7 +15,9 @@ import type { Report } from "@/lib/types";
  * Two things are stated on the page rather than left implicit. Drafts listed
  * here are server-backed only, so anything still on a disconnected phone is
  * invisible and an empty list does not mean nobody is working. And there is no
- * "open for N days" figure, deliberately.
+ * "open for N days" figure, deliberately: that turns work visibility into a
+ * productivity measure, which is a different thing needing a different
+ * conversation.
  */
 export default function OfficePage() {
   const [data, setData] = useState<{ submitted: Report[]; drafts: OfficeDraftSummary[] } | null>(
@@ -29,107 +31,108 @@ export default function OfficePage() {
   }, []);
 
   return (
-    <main className="shell">
-      <Link href="/" className="backlink">
-        &larr; Capture
-      </Link>
-
-      <div className="topbar">
+    <main className="wrap">
+      <div className="pagehead">
         <div>
           <h1>Office</h1>
-          <div className="sub">Reports received from site</div>
+          <p className="sub">Reports received from site</p>
         </div>
+        {data && (
+          <span className="lbl">
+            {data.submitted.length} received &nbsp;·&nbsp; {data.drafts.length} in progress
+          </span>
+        )}
       </div>
 
-      <p className="section-label">Received</p>
+      <div className="sec">
+        <span className="lbl">Received</span>
+      </div>
 
       {data === null ? (
-        <div className="empty">Loading...</div>
+        <div className="empty">Loading</div>
       ) : data.submitted.length === 0 ? (
         <div className="empty">Nothing has been sent in yet.</div>
       ) : (
-        <div className="stack">
+        <div className="reg">
           {data.submitted.map((report) => {
             const project = getProject(report.projectId);
             const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
             return (
-              <Link key={report.id} href={`/reports/${report.id}/preview`} className="card">
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <div>
-                    <p className="card-title">
-                      <span className="code">{report.reference}</span>
-                    </p>
-                    <p className="card-meta">{project?.projectName ?? report.projectId}</p>
-                    <p className="card-meta" style={{ marginTop: 6 }}>
-                      {report.author} · visit {report.visitDate} · {report.observations.length}{" "}
-                      observation{report.observations.length === 1 ? "" : "s"} · {photos} photo
-                      {photos === 1 ? "" : "s"}
-                    </p>
-                  </div>
-                  <span className="badge badge-sent">Received</span>
-                </div>
-                <p className="card-meta" style={{ marginTop: 10 }}>
-                  {report.serverAcknowledgedAt
-                    ? new Date(report.serverAcknowledgedAt).toLocaleString("en-GB")
-                    : ""}
-                </p>
+              <Link key={report.id} href={`/reports/${report.id}/preview`} className="row">
+                <span className="row-code">{report.reference}</span>
+                <span className="row-main">
+                  <p className="row-title">{project?.projectName ?? report.projectId}</p>
+                  <p className="row-meta">
+                    {report.author}
+                    <span className="sep">/</span>visit {report.visitDate}
+                    <span className="sep">/</span>
+                    {report.observations.length} obs
+                    <span className="sep">/</span>
+                    {photos} photo{photos === 1 ? "" : "s"}
+                  </p>
+                </span>
+                <span className="row-end">
+                  <span className="tag tag-sent">Received</span>
+                  <span className="row-time">
+                    {report.serverAcknowledgedAt
+                      ? new Date(report.serverAcknowledgedAt).toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })
+                      : ""}
+                  </span>
+                </span>
               </Link>
             );
           })}
         </div>
       )}
 
-      <p className="section-label">In progress on site</p>
+      <div className="sec">
+        <span className="lbl">In progress on site</span>
+      </div>
 
       {data === null ? null : data.drafts.length === 0 ? (
         <div className="empty">No drafts saved to the server.</div>
       ) : (
-        <div className="stack">
+        <div className="reg">
           {data.drafts.map((draft) => {
             const project = getProject(draft.projectId);
             return (
-              <div key={draft.id} className="card" style={{ cursor: "default" }}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <div>
-                    <p className="card-title">
-                      <span className="code">{draft.reference}</span>
-                    </p>
-                    <p className="card-meta">{project?.projectName ?? draft.projectId}</p>
-                    <p className="card-meta" style={{ marginTop: 6 }}>
-                      {draft.author} · visit {draft.visitDate}
-                      {draft.lastSavedAt
-                        ? ` · last saved ${new Date(draft.lastSavedAt).toLocaleTimeString("en-GB")}`
-                        : ""}
-                    </p>
-                  </div>
-                  <span className="badge badge-draft">Draft</span>
-                </div>
-                <p className="hint" style={{ marginTop: 10 }}>
-                  Content is not shown until the report is sent.
-                </p>
+              <div key={draft.id} className="row row-static">
+                <span className="row-code">{draft.reference}</span>
+                <span className="row-main">
+                  <p className="row-title">{project?.projectName ?? draft.projectId}</p>
+                  <p className="row-meta">
+                    {draft.author}
+                    <span className="sep">/</span>visit {draft.visitDate}
+                    <span className="sep">/</span>
+                    {draft.observationCount} obs
+                  </p>
+                </span>
+                <span className="row-end">
+                  <span className="tag tag-draft">Draft</span>
+                  <span className="row-time">
+                    {draft.lastSavedAt
+                      ? `saved ${new Date(draft.lastSavedAt).toLocaleTimeString("en-GB", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}`
+                      : ""}
+                  </span>
+                </span>
               </div>
             );
           })}
         </div>
       )}
 
-      <p className="hint" style={{ marginTop: 20 }}>
-        Drafts listed here are the ones saved to the server. Work still on an engineer&apos;s
-        phone is not visible, so an empty list does not mean nobody is working.
+      <p className="footnote">
+        Draft content is not shown until a report is sent. Drafts listed are those saved to the
+        server — work still on an engineer&apos;s phone is not visible here, so an empty list does
+        not mean nobody is working.
       </p>
     </main>
   );

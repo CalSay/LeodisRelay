@@ -31,9 +31,9 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   if (!project) {
     return (
-      <main className="shell">
-        <Link href="/" className="backlink">
-          &larr; All projects
+      <main className="wrap">
+        <Link href="/" className="back">
+          &larr; Projects
         </Link>
         <div className="empty">That project could not be found.</div>
       </main>
@@ -41,64 +41,76 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   }
 
   return (
-    <main className="shell">
-      <Link href="/" className="backlink">
-        &larr; All projects
+    <main className="wrap">
+      <Link href="/" className="back">
+        &larr; Projects
       </Link>
 
-      <div className="topbar">
+      <div className="pagehead">
         <div>
           <h1>{project.projectName}</h1>
-          <div className="sub">
-            <span className="code">{project.projectNumber}</span> · {project.clientName}
-          </div>
+          <p className="sub">
+            <span className="ref">{project.projectNumber}</span> · {project.clientName}
+          </p>
         </div>
       </div>
 
-      <button className="btn-primary btn-block" onClick={startReport} disabled={creating}>
-        {creating ? "Starting..." : "Start a site report"}
-      </button>
+      {/* Title block: the identity of the job, stated once, the way a drawing does. */}
+      <dl className="titleblock" style={{ marginTop: 24 }}>
+        <div className="tb-cell">
+          <dt>Client account</dt>
+          <dd className="ref">{project.clientAccountNumber}</dd>
+        </div>
+        <div className="tb-cell">
+          <dt>Division</dt>
+          <dd>{project.division}</dd>
+        </div>
+        <div className="tb-cell">
+          <dt>Status</dt>
+          <dd>{project.status}</dd>
+        </div>
+        <div className="tb-cell">
+          <dt>Project manager</dt>
+          <dd>{project.projectManager}</dd>
+        </div>
+      </dl>
 
-      <p className="section-label">This project</p>
+      <div style={{ marginTop: 24 }}>
+        <button className="btn-primary btn-wide" onClick={startReport} disabled={creating}>
+          {creating ? "Starting…" : "Start a site report"}
+        </button>
+      </div>
+
+      <div className="sec">
+        <span className="lbl">Reports</span>
+      </div>
 
       {reports === null ? (
-        <div className="empty">Loading...</div>
+        <div className="empty">Loading</div>
       ) : reports.length === 0 ? (
         <div className="empty">No reports yet on this project.</div>
       ) : (
-        <div className="stack">
+        <div className="reg">
           {reports
             .slice()
             .reverse()
             .map((report) => (
-              <Link key={report.id} href={`/reports/${report.id}`} className="card">
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <div>
-                    <p className="card-title">
-                      <span className="code">{report.reference}</span>
-                    </p>
-                    <p className="card-meta">
-                      {report.visitDate} · {report.observations.length} observation
-                      {report.observations.length === 1 ? "" : "s"}
-                    </p>
-                  </div>
-                  {/*
-                    Two distinct states, each spelled out. "Sent to office" is
-                    deliberately not called "saved" — saving and sending are
-                    different things and conflating them is the confusion the
-                    real design exists to prevent.
-                  */}
-                  <span className={report.state === "submitted" ? "badge badge-sent" : "badge badge-draft"}>
-                    {report.state === "submitted" ? "Sent to office" : "Draft"}
+              <Link key={report.id} href={`/reports/${report.id}`} className="row">
+                <span className="row-code">{report.reference.split("-").slice(1).join("-")}</span>
+                <span className="row-main">
+                  <p className="row-title">Visit {report.visitDate}</p>
+                  <p className="row-meta">
+                    {report.author}
+                    <span className="sep">/</span>
+                    {report.observations.length} observation
+                    {report.observations.length === 1 ? "" : "s"}
+                  </p>
+                </span>
+                <span className="row-end">
+                  <span className={report.state === "submitted" ? "tag tag-sent" : "tag tag-draft"}>
+                    {report.state === "submitted" ? "Sent" : "Draft"}
                   </span>
-                </div>
+                </span>
               </Link>
             ))}
         </div>

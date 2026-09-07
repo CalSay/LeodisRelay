@@ -13,45 +13,51 @@ export default function ProjectsPage() {
   }, []);
 
   return (
-    <main className="shell">
-      <div className="topbar">
+    <main className="wrap">
+      <div className="pagehead">
         <div>
-          <h1>Your projects</h1>
-          <div className="sub">Projects you can report against</div>
+          <h1>Projects</h1>
+          <p className="sub">Open to you for reporting</p>
         </div>
-        <div>
-          <Link href="/office" className="backlink">Office view &rarr;</Link>
-        </div>
+        {projects && (
+          <span className="lbl">
+            {projects.length} project{projects.length === 1 ? "" : "s"}
+          </span>
+        )}
       </div>
 
       {projects === null ? (
-        <div className="empty">Loading projects...</div>
+        <div className="empty" style={{ marginTop: 24 }}>
+          Loading
+        </div>
       ) : projects.length === 0 ? (
-        <div className="empty">No projects are currently open to you.</div>
+        <div className="empty" style={{ marginTop: 24 }}>
+          No projects are open to you.
+        </div>
       ) : (
-        <div className="stack">
+        <div className="reg" style={{ marginTop: 24 }}>
           {projects.map((project) => (
-            <Link key={project.id} href={`/projects/${project.id}`} className="card">
-              <p className="card-title">{project.projectName}</p>
-              <p className="card-meta">
-                <span className="code">{project.projectNumber}</span> &nbsp;·&nbsp;{" "}
-                {project.clientName}
-              </p>
-              <p className="card-meta" style={{ marginTop: 6 }}>
-                {project.division} &nbsp;·&nbsp; {project.status}
-              </p>
+            <Link key={project.id} href={`/projects/${project.id}`} className="row">
+              <span className="row-code">{project.projectNumber}</span>
+              <span className="row-main">
+                <p className="row-title">{project.projectName}</p>
+                <p className="row-meta">
+                  {project.clientName}
+                  <span className="sep">/</span>
+                  {project.division}
+                </p>
+              </span>
+              <span className="row-end">
+                <span className="row-time">{project.status}</span>
+              </span>
             </Link>
           ))}
         </div>
       )}
 
-      {/*
-        Tenders and completed jobs are filtered out by the backend rather than
-        hidden here. An engineer must not be able to file against a bid.
-      */}
-      <p className="hint" style={{ marginTop: 24 }}>
-        Tenders and completed projects are not listed. If a project is missing, check its
-        status with the office.
+      <p className="footnote">
+        Tenders and completed projects are not listed. If a project is missing, check its status
+        with the office.
       </p>
     </main>
   );

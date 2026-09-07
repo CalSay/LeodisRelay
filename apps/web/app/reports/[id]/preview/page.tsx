@@ -32,14 +32,14 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
 
   if (missing) {
     return (
-      <main className="shell">
+      <main className="wrap">
         <div className="empty">That report could not be found.</div>
       </main>
     );
   }
   if (!report) {
     return (
-      <main className="shell">
+      <main className="wrap">
         <div className="empty">Loading...</div>
       </main>
     );
@@ -52,8 +52,8 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
   let photoNumber = 0;
 
   return (
-    <main className="shell">
-      <Link href="/office" className="backlink">
+    <main className="wrap">
+      <Link href="/office" className="back">
         &larr; Office
       </Link>
 
@@ -61,7 +61,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
         <header className="doc-head">
           <div className="doc-brand">LEODIS</div>
           <h1 className="doc-title">Site Progress Report</h1>
-          <dl className="doc-meta">
+          <dl className="doc-tb">
             <div>
               <dt>Report</dt>
               <dd>{report.reference}</dd>
@@ -97,7 +97,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
           {actions.length === 0 ? (
             <p className="doc-body">No actions or decisions arise from this visit.</p>
           ) : (
-            <div className="doc-table-wrap">
+            <div className="doc-tw">
               <table className="doc-table">
                 <thead>
                   <tr>
@@ -145,18 +145,18 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
                   </p>
                 )}
                 {observation.photos.length > 0 && (
-                  <div className="doc-photos">
+                  <div className="doc-figs">
                     {observation.photos.map((photo) => {
                       photoNumber += 1;
                       return (
-                        <figure key={photo.id} className="doc-figure">
+                        <figure key={photo.id} className="doc-fig">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
                           <img src={photo.dataUrl} alt={photo.caption || `Photograph ${photoNumber}`} />
                           <figcaption>
                             Photograph {photoNumber}
                             {photo.caption.trim() ? ` — ${photo.caption}` : " — no caption recorded"}
                             <br />
-                            <span className="doc-figure-date">
+                            <span className="doc-fig-date">
                               Taken {new Date(photo.capturedAt).toLocaleDateString("en-GB")}
                             </span>
                           </figcaption>
@@ -180,7 +180,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
         </footer>
       </div>
 
-      <p className="hint" style={{ marginTop: 20 }}>
+      <p className="footnote">
         Layout preview only. The issued document is rendered on the server from the submitted
         revision, then signed and filed.
       </p>
