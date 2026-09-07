@@ -65,6 +65,8 @@ const RULE = "#d9d9d4";
 const HAIR = "#eceae4";
 const BRASS = "#8a6d1f";
 const WASH = "#f6f5f1";
+/* A trim rather than a slab: brass at a weight that frames without shouting. */
+const BRASS_TRIM = "#cbb277";
 const FLAG = "#a8532f";
 
 /**
@@ -143,7 +145,23 @@ const s = StyleSheet.create({
   tbWide: { width: "44%" },
   tbMid: { width: "30%" },
   tbNarrow: { width: "26%" },
-  tbLabel: { fontSize: 5.8, letterSpacing: 1.4, color: FAINT, marginBottom: 3, fontWeight: 500 },
+  /* Sized to its own text, not the column, so a short label is a small box. */
+  tbLabelBox: {
+    borderWidth: 1,
+    borderColor: BRASS_TRIM,
+    backgroundColor: WASH,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    marginBottom: 7,
+  },
+  tbLabel: {
+    fontSize: 5.8,
+    letterSpacing: 1.4,
+    color: BRASS,
+    fontWeight: 500,
+    textAlign: "center",
+    lineHeight: 1,
+  },
   tbValue: { fontSize: 10.5, fontWeight: 600, letterSpacing: -0.1 },
   tbCode: { fontSize: 10, fontFamily: "PlexMono", fontWeight: 500, letterSpacing: 0.2 },
 
@@ -173,14 +191,22 @@ const s = StyleSheet.create({
   obsBody: { flex: 1, borderLeftWidth: 2, paddingLeft: 12, paddingBottom: 4 },
   obsHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 5 },
   obsTitle: { fontSize: 11.5, fontWeight: 600, flexShrink: 1, paddingRight: 12, letterSpacing: -0.15 },
-  chip: {
-    fontSize: 6,
-    letterSpacing: 1.1,
-    borderWidth: 1,
-    paddingVertical: 2.5,
-    paddingHorizontal: 6,
-    fontWeight: 500,
-  },
+  /*
+   * A box with the label centred in it, rather than text with padding.
+   * Text sits on its own line box, so padding alone leaves it riding high;
+   * a fixed-height container with centred content puts it in the middle of
+   * the frame on both axes.
+   */
+  /*
+   * Centred by padding and line height rather than by flex.
+   *
+   * A Text inside a View with justifyContent/alignItems centre does not render
+   * at all here — the frame draws and the label disappears. Symmetric vertical
+   * padding against a line height of 1 puts the text in the middle of the box
+   * just as reliably, and actually shows it.
+   */
+  chip: { borderWidth: 1, paddingHorizontal: 7, paddingVertical: 4 },
+  chipText: { fontSize: 6, letterSpacing: 1.1, fontWeight: 500, textAlign: "center", lineHeight: 1 },
   narrative: { marginBottom: 7 },
   action: {
     marginBottom: 8,
@@ -208,7 +234,22 @@ const s = StyleSheet.create({
   signRow: { flexDirection: "row", marginTop: 8 },
   signCell: { flex: 1, borderWidth: 1, borderColor: RULE, padding: 10, marginRight: 10 },
   signCellLast: { flex: 1, borderWidth: 1, borderColor: RULE, padding: 10 },
-  signLabel: { fontSize: 6, letterSpacing: 1.2, color: FAINT, fontWeight: 500, marginBottom: 6 },
+  signLabelBox: {
+    borderWidth: 1,
+    borderColor: BRASS_TRIM,
+    backgroundColor: WASH,
+    paddingHorizontal: 7,
+    paddingVertical: 4,
+    marginBottom: 8,
+  },
+  signLabel: {
+    fontSize: 6,
+    letterSpacing: 1.2,
+    color: BRASS,
+    fontWeight: 500,
+    textAlign: "center",
+    lineHeight: 1,
+  },
   /* Room for a wet signature. A drawn one occupies the same space. */
   signSpace: { height: 46, justifyContent: "flex-end" },
   signImage: { height: 42, objectFit: "contain" },
@@ -217,6 +258,22 @@ const s = StyleSheet.create({
   signMeta: { fontSize: 7, color: FAINT, marginTop: 2 },
 
 });
+
+/**
+ * Width of a label box.
+ *
+ * react-pdf does not give a shrink-to-fit container the intrinsic width of its
+ * text — the box collapsed to its padding and the label vanished — so the width
+ * is computed instead.
+ *
+ * Uppercase Archivo runs a little over 0.7em per character. The estimate errs
+ * generous on purpose: a box a couple of points too wide is invisible, whereas
+ * one a point too narrow wraps a two-word label onto two lines and looks like
+ * a mistake.
+ */
+function labelWidth(label: string, size: number, tracking: number): number {
+  return Math.ceil(label.length * (size * 0.75 + tracking)) + 22;
+}
 
 function Field({
   label,
@@ -233,7 +290,9 @@ function Field({
   const w = width === "wide" ? s.tbWide : width === "mid" ? s.tbMid : s.tbNarrow;
   return (
     <View style={[s.tbCol, w]}>
-      <Text style={s.tbLabel}>{label.toUpperCase()}</Text>
+      <View style={[s.tbLabelBox, { width: labelWidth(label, 5.8, 1.4) }]}>
+        <Text style={s.tbLabel}>{label.toUpperCase()}</Text>
+      </View>
       <Text style={code ? s.tbCode : s.tbValue}>{value}</Text>
     </View>
   );
@@ -351,9 +410,16 @@ export function ReportDocument({ report }: { report: DocReport }) {
               <View style={[s.obsBody, { borderLeftColor: tone.rule }]}>
                 <View style={s.obsHead} wrap={false}>
                   <Text style={s.obsTitle}>{observation.location || "Location not recorded"}</Text>
-                  <Text style={[s.chip, { color: tone.ink, borderColor: tone.rule }]}>
-                    {observation.typeLabel.toUpperCase()}
-                  </Text>
+                  <View
+                    style={[
+                      s.chip,
+                      { borderColor: tone.rule, width: labelWidth(observation.typeLabel, 6, 1.1) },
+                    ]}
+                  >
+                    <Text style={[s.chipText, { color: tone.ink }]}>
+                      {observation.typeLabel.toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
 
                 <Text style={s.narrative}>
@@ -399,7 +465,9 @@ export function ReportDocument({ report }: { report: DocReport }) {
 
         <View style={s.signRow} wrap={false}>
           <View style={s.signCell}>
-            <Text style={s.signLabel}>PREPARED BY</Text>
+            <View style={[s.signLabelBox, { width: labelWidth("PREPARED BY", 6, 1.2) }]}>
+              <Text style={s.signLabel}>PREPARED BY</Text>
+            </View>
             <View style={s.signSpace}>
               {report.signature?.dataUrl ? (
                 <Image style={s.signImage} src={report.signature.dataUrl} />
@@ -420,7 +488,9 @@ export function ReportDocument({ report }: { report: DocReport }) {
             offer anywhere to type one.
           */}
           <View style={s.signCellLast}>
-            <Text style={s.signLabel}>RECEIVED ON SITE BY</Text>
+            <View style={[s.signLabelBox, { width: labelWidth("RECEIVED ON SITE BY", 6, 1.2) }]}>
+              <Text style={s.signLabel}>RECEIVED ON SITE BY</Text>
+            </View>
             <View style={s.signSpace} />
             <View style={s.signRule} />
             <Text style={s.signName}> </Text>
