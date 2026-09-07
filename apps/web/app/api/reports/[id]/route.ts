@@ -1,21 +1,34 @@
 import { NextResponse } from "next/server";
 import { getReport, reviewSubmission, saveDraft, submitReport } from "@/lib/serverStore";
-import { currentPrincipal } from "@/lib/auth/session";
+import { requireSession, visibleTo } from "@/lib/auth/guard";
 import type { Report } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const guard = await requireSession();
+  if (!guard.ok) return guard.response;
+
   const { id } = await context.params;
   const report = getReport(id);
-  return report
-    ? NextResponse.json(report)
-    : NextResponse.json({ reason: "No such report." }, { status: 404 });
+  if (!report) return NextResponse.json({ reason: "No such report." }, { status: 404 });
+  return NextResponse.json(visibleTo(guard.principal, report));
 }
 
 /** Save a draft. */
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
+  const guard = await requireSession();
+  if (!guard.ok) return guard.response;
+
   const { id } = await context.params;
+  const existing = getReport(id);
+  if (!existing) return NextResponse.json({ reason: "No such report." }, { status: 404 });
+  // Only the author edits their draft. Without this, any signed-in person can
+  // overwrite anyone's work in progress.
+  if (existing.author !== guard.principal.name) {
+    return NextResponse.json({ reason: "This draft belongs to someone else." }, { status: 403 });
+  }
+
   const incoming = (await request.json()) as Report;
   const outcome = saveDraft(id, incoming);
   return outcome.ok
@@ -39,10 +52,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     signature?: { dataUrl?: string; name: string };
   };
 
-  const principal = await currentPrincipal();
-  if (!principal) {
-    return NextResponse.json({ reason: "Please sign in again." }, { status: 401 });
-  }
+  const guard = await requireSession();
+  if (!guard.ok) return guard.response;
+  const principal = guard.principal;
 
   if (body.action === "review") {
     const outcome = reviewSubmission(

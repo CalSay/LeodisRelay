@@ -1,23 +1,26 @@
 import { NextResponse } from "next/server";
 import { createReport, listReports, officeView } from "@/lib/serverStore";
-import { currentPrincipal } from "@/lib/auth/session";
+import { redactDrafts, requireSession } from "@/lib/auth/guard";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+  const guard = await requireSession();
+  if (!guard.ok) return guard.response;
+
   const url = new URL(request.url);
   if (url.searchParams.get("view") === "office") {
     return NextResponse.json(officeView());
   }
   const projectId = url.searchParams.get("projectId") ?? undefined;
-  return NextResponse.json({ reports: listReports(projectId) });
+  // Draft content belongs to its author; others get existence only.
+  return NextResponse.json({ reports: redactDrafts(guard.principal, listReports(projectId)) });
 }
 
 export async function POST(request: Request) {
-  const principal = await currentPrincipal();
-  if (!principal) {
-    return NextResponse.json({ reason: "Please sign in again." }, { status: 401 });
-  }
+  const guard = await requireSession();
+  if (!guard.ok) return guard.response;
+  const principal = guard.principal;
 
   const body = (await request.json()) as { projectId?: string };
   if (!body.projectId) {

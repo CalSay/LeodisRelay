@@ -3,6 +3,7 @@ import { renderReportPdf, type DocReport } from "@relay/documents";
 import { archiveFileName, sanitiseFileName } from "@relay/contracts";
 
 import { getReport } from "@/lib/serverStore";
+import { requireSession } from "@/lib/auth/guard";
 import { FIXTURE_PROJECTS, OBSERVATION_TYPES } from "@/lib/fixtures";
 
 export const dynamic = "force-dynamic";
@@ -20,10 +21,18 @@ export const runtime = "nodejs";
  * existing is not a report having been issued.
  */
 export async function GET(_request: Request, context: { params: Promise<{ id: string }> }) {
+  const guard = await requireSession();
+  if (!guard.ok) return guard.response;
+
   const { id } = await context.params;
   const report = getReport(id);
   if (!report) {
     return NextResponse.json({ reason: "No such report." }, { status: 404 });
+  }
+
+  // A draft document is the author's until it is sent.
+  if (report.state !== "submitted" && report.author !== guard.principal.name) {
+    return NextResponse.json({ reason: "This draft belongs to someone else." }, { status: 403 });
   }
 
   const project = FIXTURE_PROJECTS.find((p) => p.id === report.projectId);
