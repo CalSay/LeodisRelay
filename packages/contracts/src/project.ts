@@ -32,13 +32,32 @@ export interface SharePointDriveItemRef {
 }
 
 /**
- * Which Leodis company owns a project.
+ * Which Leodis company a project belongs to.
  *
- * Sourced from the project list's required `Trading Name` choice column. This
- * is the company authorisation boundary (blueprint 0.8): it decides who may see
- * a project at all, so it is read from the source rather than inferred.
+ * This is the company authorisation boundary (blueprint 0.8). It is NOT a
+ * column on the project item: it is determined by which source list the project
+ * came from. The Operations site's project list belongs to Leodis Developments;
+ * Compliance Management will have its own source when it is introduced.
+ *
+ * Deriving company from configured source rather than from item content means a
+ * mis-keyed field can never widen access across companies.
  */
-export type TradingName = string;
+export type Company = "leodis-developments" | "leodis-compliance-management";
+
+/**
+ * Operating division within a company.
+ *
+ * Sourced from the project list's required `Trading Name` choice column —
+ * currently Leodis M&E and Leodis Commercial Plumbing, both within Leodis
+ * Developments.
+ *
+ * This is a business attribute, not a permission boundary. It is used for
+ * filtering and sensible defaults in the interface. Do not build access control
+ * on it unless Leodis asks for engineers to be siloed by division: that would
+ * add a permission dimension needing ongoing maintenance, and it is easy to add
+ * later and awkward to remove.
+ */
+export type Division = string;
 
 /** Captured once, at first use. Never rewritten. */
 export interface ProjectOrigin {
@@ -49,14 +68,12 @@ export interface ProjectOrigin {
    * cannot be used as a key.
    */
   readonly snapshot: {
-    /** `Title` — required. */
+    /** `Title` — required, and the only reliable project name. */
     readonly projectName: string;
-    /** `Project Number` — optional in the source, so optional here. */
-    readonly projectNumber?: string;
     /** Resolved through the `Client` lookup. */
     readonly clientName: string;
-    /** `Trading Name` — required; the owning Leodis company. */
-    readonly tradingName: TradingName;
+    /** `Trading Name` — required; the operating division. */
+    readonly division: Division;
   };
   /**
    * The `Client` lookup item id. The lookup is required on the project list, so
@@ -90,19 +107,16 @@ export type SourceState = "active" | "stale" | "tombstoned";
 
 export interface Project {
   readonly id: ProjectId;
-  /**
-   * Relay's own client record, pinned to the SharePoint client lookup item.
-   * SharePoint owns which clients exist; Relay owns the attributes the
-   * application needs, because the source list carries almost none (D1).
-   */
+  /** Derived from the configured source list, never from item content. */
+  readonly company: Company;
+  /** Pinned to the SharePoint client lookup item; see `client.ts`. */
   readonly clientId: ClientId;
   readonly origin: ProjectOrigin;
   readonly mapping: ProjectMapping;
   /** Refreshed from source; never rewrites `origin.snapshot`. */
   readonly currentDisplay: {
     readonly projectName: string;
-    readonly projectNumber?: string;
-    readonly tradingName: TradingName;
+    readonly division: Division;
     /** `Status` choice value as it currently stands in the source list. */
     readonly status: string;
     readonly refreshedAt: string;
@@ -114,17 +128,27 @@ export interface Project {
  * Status values that represent work Relay may report against.
  *
  * The project list also carries Probability, Contract Value, Cost of Work and
- * Submission Deadline, which means it tracks opportunities and tenders as well
- * as live projects. An engineer must not be offered a bid to report against, so
- * reportability is an explicit allow-list of Status values rather than an
- * assumption that every list item is a live project.
+ * Submission Deadline, so it tracks tenders as well as live work. An engineer
+ * must never be offered a bid to report against, so reportability is an
+ * explicit allow-list rather than an assumption that every list item is live.
  *
- * Populated from the source list's actual choice values during setup; an
- * unrecognised status is treated as not reportable rather than defaulting open.
+ * An unrecognised status is not reportable. New statuses added to the source
+ * list therefore fail closed, which is the safe direction: a project that should
+ * be reportable and is not gets noticed immediately, whereas a tender that
+ * becomes reportable by accident may not.
  */
 export interface ReportableStatusPolicy {
   readonly allowed: readonly string[];
 }
+
+/**
+ * Confirmed with Leodis: only these two statuses carry site work. Defects
+ * liability is included because rectification work continues through it, which
+ * is exactly when the defect and snagging workflows are in use.
+ */
+export const DEFAULT_REPORTABLE_STATUSES: ReportableStatusPolicy = {
+  allowed: ["4. Active", "5. Defects Liability"],
+};
 
 export function isReportable(project: Project, policy: ReportableStatusPolicy): boolean {
   return (

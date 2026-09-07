@@ -10,7 +10,14 @@ import {
 } from "./report.js";
 import { canClose, onSourceRevisionRejected, isActionable, type Issue } from "./issue.js";
 import { nextStage, mustReuseArtifact, isIssuable, type DocumentJob } from "./document.js";
-import { resolveDisplayName, isRemap, isReportable, type Project } from "./project.js";
+import {
+  resolveDisplayName,
+  isRemap,
+  isReportable,
+  DEFAULT_REPORTABLE_STATUSES,
+  type Project,
+} from "./project.js";
+import { resolveClientLabel, type Client } from "./client.js";
 
 const id = <T,>(v: string) => v as T;
 
@@ -176,44 +183,42 @@ describe("idempotency", () => {
 });
 
 describe("project pinning", () => {
-  const project = (over: Partial<Project> = {}): Project =>
-    ({
-      id: id("proj1"),
-      clientId: id("c1"),
-      origin: {
-        source: { siteId: "s", listId: "l", itemId: "1" },
-        snapshot: {
-          projectName: "Kirkstall Gate",
-          projectNumber: "KG-01",
-          clientName: "Acme Developments",
-          tradingName: "Leodis Developments",
-        },
-        clientLookupItemId: "42",
-        clientAccountNumber: "ACME001",
-        projectManager: id("pm1"),
-        pinnedAt: "2026-01-01T00:00:00Z",
-        pinnedBy: id("p1"),
+  const project = (over: Partial<Project> = {}): Project => ({
+    id: id("proj1"),
+    company: "leodis-developments",
+    clientId: id("c1"),
+    origin: {
+      source: { siteId: "s", listId: "l", itemId: "1" },
+      snapshot: {
+        projectName: "Kirkstall Gate",
+        clientName: "Acme Developments",
+        division: "Leodis M&E",
       },
-      mapping: {
-        version: 1,
-        source: { siteId: "s", listId: "l", itemId: "1" },
-        archiveDestination: { driveId: "d", itemId: "f" },
-        effectiveFrom: "2026-01-01T00:00:00Z",
-        changedBy: id("p1"),
-        reason: "initial",
-      },
-      currentDisplay: {
-        projectName: "Kirkstall Gate Phase 2",
-        projectNumber: "KG-01",
-        tradingName: "Leodis Developments",
-        status: "Live",
-        refreshedAt: "2026-09-01T00:00:00Z",
-      },
-      sourceState: "active",
-      ...over,
-    }) as Project;
+      clientLookupItemId: "42",
+      clientAccountNumber: "ACME001",
+      projectManager: id("pm1"),
+      pinnedAt: "2026-01-01T00:00:00Z",
+      pinnedBy: id("p1"),
+    },
+    mapping: {
+      version: 1,
+      source: { siteId: "s", listId: "l", itemId: "1" },
+      archiveDestination: { driveId: "d", itemId: "f" },
+      effectiveFrom: "2026-01-01T00:00:00Z",
+      changedBy: id("p1"),
+      reason: "initial",
+    },
+    currentDisplay: {
+      projectName: "Kirkstall Gate Phase 2",
+      division: "Leodis M&E",
+      status: "4. Active",
+      refreshedAt: "2026-09-01T00:00:00Z",
+    },
+    sourceState: "active",
+    ...over,
+  });
 
-  const policy = { allowed: ["Live", "On Site"] };
+  const policy = DEFAULT_REPORTABLE_STATUSES;
 
   test("a live project shows its current name", () => {
     assert.equal(resolveDisplayName(project()), "Kirkstall Gate Phase 2");
@@ -229,22 +234,63 @@ describe("project pinning", () => {
     assert.equal(isRemap(p.mapping, { siteId: "s", listId: "l", itemId: "1" }), false);
   });
 
-  test("a tender is not reportable, however complete its record looks", () => {
-    const tender = project({
-      currentDisplay: { ...project().currentDisplay, status: "Tender" },
-    });
-    assert.equal(isReportable(tender, policy), false);
-    assert.equal(isReportable(project(), policy), true);
+  const withStatus = (status: string) =>
+    project({ currentDisplay: { ...project().currentDisplay, status } });
+
+  test("only active and defects liability projects are reportable", () => {
+    assert.equal(isReportable(withStatus("4. Active"), policy), true);
+    assert.equal(isReportable(withStatus("5. Defects Liability"), policy), true);
   });
 
-  test("an unrecognised status is not reportable rather than defaulting open", () => {
-    const unknown = project({
-      currentDisplay: { ...project().currentDisplay, status: "Something New" },
-    });
-    assert.equal(isReportable(unknown, policy), false);
+  test("a tender is not reportable, however complete its record looks", () => {
+    assert.equal(isReportable(withStatus("1. Tender"), policy), false);
+  });
+
+  test("an unrecognised status fails closed rather than defaulting open", () => {
+    assert.equal(isReportable(withStatus("6. Complete"), policy), false);
+    assert.equal(isReportable(withStatus("Something New"), policy), false);
   });
 
   test("a tombstoned project is never reportable even with an allowed status", () => {
     assert.equal(isReportable(project({ sourceState: "tombstoned" }), policy), false);
+  });
+});
+
+describe("client identity", () => {
+  const client = (over: Partial<Client> = {}): Client => ({
+    id: id("c1"),
+    origin: {
+      source: { siteId: "s", listId: "clients", itemId: "42" },
+      snapshot: { name: "Acme Developments", accountNumber: "ACME001" },
+      pinnedAt: "2026-01-01T00:00:00Z",
+      pinnedBy: id("p1"),
+    },
+    current: {
+      name: "Acme Developments Ltd",
+      accountNumber: "ACME001",
+      refreshedAt: "2026-09-01T00:00:00Z",
+    },
+    sourceState: "active",
+    ...over,
+  });
+
+  test("a live client shows its current name", () => {
+    assert.equal(resolveClientLabel(client()), "Acme Developments Ltd");
+  });
+
+  test("a deleted source falls back to the pinned snapshot", () => {
+    assert.equal(resolveClientLabel(client({ sourceState: "tombstoned" })), "Acme Developments");
+  });
+
+  test("an unnamed client falls back to account number, never an empty label", () => {
+    const unnamed = client({
+      current: { accountNumber: "ACME001", refreshedAt: "2026-09-01T00:00:00Z" },
+    });
+    assert.equal(resolveClientLabel(unnamed), "ACME001");
+  });
+
+  test("a client with no name and no account number is still identifiable", () => {
+    const bare = client({ current: { refreshedAt: "2026-09-01T00:00:00Z" } });
+    assert.equal(resolveClientLabel(bare), "Client 42 (unnamed in source)");
   });
 });
