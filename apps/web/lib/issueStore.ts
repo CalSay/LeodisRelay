@@ -171,6 +171,30 @@ export function disputeIssuesFromReport(reportId: string, actor: string): void {
   save(store);
 }
 
+/**
+ * A report approved at review confirms the observations it raised.
+ *
+ * Only provisional ones: an issue a reviewer had already disputed is not
+ * silently reinstated by approving a later report, and a withdrawn one stays
+ * withdrawn.
+ */
+export function confirmIssuesFromReport(reportId: string, actor: string): void {
+  const store = load();
+  for (const issue of store.issues) {
+    if (issue.raisedByReport === reportId && issue.confirmation === "provisional") {
+      issue.confirmation = "confirmed";
+      issue.events.push({
+        at: new Date().toISOString(),
+        actor,
+        kind: "confirmation",
+        note: "Confirmed at report review.",
+        photos: [],
+      });
+    }
+  }
+  save(store);
+}
+
 export type IssueOutcome =
   | { ok: true; value: Issue }
   | { ok: false; status: number; reason: string };

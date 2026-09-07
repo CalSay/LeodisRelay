@@ -25,6 +25,16 @@ export interface Observation {
 
 export type ReportState = "draft" | "submitted";
 
+/**
+ * Review is a separate dimension from capture.
+ *
+ * A returned report goes back to draft rather than being superseded: it was
+ * never issued, so there is no original for a correction to link to. Supersede
+ * applies to something already sent to a client, which is a different act with
+ * a different audit trail.
+ */
+export type ReviewState = "pending" | "approved" | "returned";
+
 export interface Report {
   id: string;
   projectId: string;
@@ -34,6 +44,11 @@ export interface Report {
   state: ReportState;
   revision: number;
   observations: Observation[];
+  review: ReviewState;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  /** Why it was returned. Required on return, so nobody has to guess. */
+  reviewNote?: string;
   /** Set by the server on submission. Never set by a client. */
   serverAcknowledgedAt?: string;
   /** Last time the server accepted a draft save, for office draft visibility. */

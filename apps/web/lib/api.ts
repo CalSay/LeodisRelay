@@ -94,7 +94,28 @@ export async function saveReport(report: Report): Promise<Report> {
 }
 
 export async function submitReport(report: Report): Promise<Report> {
-  return parse<Report>(await request(`/api/reports/${report.id}`, { method: "POST" }));
+  return parse<Report>(
+    await request(`/api/reports/${report.id}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({}),
+    }),
+  );
+}
+
+export async function reviewReportDecision(
+  reportId: string,
+  decision: "approve" | "return",
+  reviewer: string,
+  note: string,
+): Promise<Report> {
+  return parse<Report>(
+    await request(`/api/reports/${reportId}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "review", decision, reviewer, note }),
+    }),
+  );
 }
 
 export interface OfficeDraftSummary {
@@ -108,6 +129,7 @@ export interface OfficeDraftSummary {
 }
 
 export async function officeView(): Promise<{
+  awaitingReview: Report[];
   submitted: Report[];
   drafts: OfficeDraftSummary[];
 }> {
@@ -160,5 +182,5 @@ export function readPhoto(file: File): Promise<Photo> {
 
 // Re-exported so screens have one import for the data layer, and so swapping
 // this module for the real client does not ripple through every component.
-export type { Issue, IssueEvent, Observation, Photo, Report, ReportState, ReviewFinding } from "./types";
+export type { Issue, IssueEvent, Observation, Photo, Report, ReportState, ReviewState, ReviewFinding } from "./types";
 export { reviewReport } from "./review";

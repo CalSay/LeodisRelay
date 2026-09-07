@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getProject, officeView, type OfficeDraftSummary } from "@/lib/api";
+import { ReviewPanel } from "@/components/ReviewPanel";
 import type { Report } from "@/lib/types";
 
 /**
@@ -20,13 +21,17 @@ import type { Report } from "@/lib/types";
  * conversation.
  */
 export default function OfficePage() {
-  const [data, setData] = useState<{ submitted: Report[]; drafts: OfficeDraftSummary[] } | null>(
-    null,
-  );
+  const [data, setData] = useState<{
+    awaitingReview: Report[];
+    submitted: Report[];
+    drafts: OfficeDraftSummary[];
+  } | null>(null);
+
+  const refresh = () => officeView().then(setData).catch(() => undefined);
 
   useEffect(() => {
-    officeView().then(setData);
-    const poll = setInterval(() => officeView().then(setData), 5000);
+    refresh();
+    const poll = setInterval(refresh, 5000);
     return () => clearInterval(poll);
   }, []);
 
@@ -39,19 +44,36 @@ export default function OfficePage() {
         </div>
         {data && (
           <span className="lbl">
-            {data.submitted.length} received &nbsp;·&nbsp; {data.drafts.length} in progress
+            {data.awaitingReview.length} to review &nbsp;·&nbsp; {data.submitted.length} approved
+            &nbsp;·&nbsp; {data.drafts.length} in progress
           </span>
         )}
       </div>
 
+      {/* What somebody has to act on comes first. Everything below this is a
+          record; this is a queue. */}
       <div className="sec">
-        <span className="lbl">Received</span>
+        <span className="lbl">To review</span>
+      </div>
+
+      {data === null ? (
+        <div className="empty">Loading</div>
+      ) : data.awaitingReview.length === 0 ? (
+        <div className="empty">Nothing waiting to be reviewed.</div>
+      ) : (
+        data.awaitingReview.map((report) => (
+          <ReviewPanel key={report.id} report={report} onDone={refresh} />
+        ))
+      )}
+
+      <div className="sec">
+        <span className="lbl">Reviewed</span>
       </div>
 
       {data === null ? (
         <div className="empty">Loading</div>
       ) : data.submitted.length === 0 ? (
-        <div className="empty">Nothing has been sent in yet.</div>
+        <div className="empty">Nothing has been reviewed yet.</div>
       ) : (
         <div className="reg">
           {data.submitted.map((report) => {
@@ -72,7 +94,9 @@ export default function OfficePage() {
                   </p>
                 </span>
                 <span className="row-end">
-                  <span className="tag tag-sent">Received</span>
+                  <span className={report.review === "approved" ? "tag tag-sent" : "tag tag-draft"}>
+                    {report.review === "approved" ? "Approved" : "Returned"}
+                  </span>
                   <span className="row-time">
                     {report.serverAcknowledgedAt
                       ? new Date(report.serverAcknowledgedAt).toLocaleString("en-GB", {

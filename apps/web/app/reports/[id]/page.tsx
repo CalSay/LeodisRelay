@@ -238,6 +238,14 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         <div className="tb-cell"><dt>Photographs</dt><dd className="ref">{String(photos).padStart(2, "0")}</dd></div>
       </dl>
 
+      {report.review === "returned" && !sent && (
+        <div className="note note-bad" style={{ marginTop: 16 }}>
+          <strong>Sent back by {report.reviewedBy ?? "the office"}.</strong> {report.reviewNote}
+          <br />
+          Make the changes and send it again.
+        </div>
+      )}
+
       {sent && (
         <div className="note note-ok" style={{ marginTop: 16 }}>
           Sent to the office{" "}

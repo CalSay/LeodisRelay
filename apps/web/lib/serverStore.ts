@@ -4,7 +4,7 @@ import { dirname, join } from "node:path";
 import type { Report } from "./types";
 import { reviewReport } from "./review";
 import { FIXTURE_PROJECTS } from "./fixtures";
-import { raiseFromReport } from "./issueStore";
+import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } from "./issueStore";
 
 /**
  * DISPOSABLE prototype store.
@@ -64,6 +64,7 @@ export function createReport(projectId: string, author: string): Report {
     visitDate: new Date().toISOString().slice(0, 10),
     author,
     state: "draft",
+    review: "pending",
     revision: 1,
     observations: [],
     lastSavedAt: new Date().toISOString(),
@@ -134,6 +135,7 @@ export function submitReport(reportId: string): StoreOutcome<Report> {
   const submitted: Report = {
     ...existing,
     state: "submitted",
+    review: "pending",
     serverAcknowledgedAt: new Date().toISOString(),
   };
   store.reports[index] = submitted;
@@ -144,6 +146,75 @@ export function submitReport(reportId: string): StoreOutcome<Report> {
   raiseFromReport(submitted);
 
   return { ok: true, value: submitted };
+}
+
+/**
+ * Review a submitted report.
+ *
+ * Approving confirms the observations it raised. Returning sends it back to
+ * draft for the engineer to correct and disputes those observations for triage
+ * — it never reverses work already done on them, because an engineer may
+ * already have been dispatched and the defect may already be repaired
+ * (decision DP-5).
+ */
+export function reviewSubmission(
+  reportId: string,
+  decision: "approve" | "return",
+  reviewer: string,
+  note: string,
+): StoreOutcome<Report> {
+  const store = load();
+  const index = store.reports.findIndex((r) => r.id === reportId);
+  if (index === -1) return { ok: false, status: 404, reason: "No such report." };
+
+  const existing = store.reports[index]!;
+  if (existing.state !== "submitted") {
+    return { ok: false, status: 409, reason: "Only a submitted report can be reviewed." };
+  }
+  if (existing.review !== "pending") {
+    return { ok: false, status: 409, reason: "This report has already been reviewed." };
+  }
+  if (decision === "return" && note.trim().length === 0) {
+    return {
+      ok: false,
+      status: 422,
+      reason: "Returning a report must say what needs changing.",
+    };
+  }
+  if (existing.author === reviewer) {
+    return {
+      ok: false,
+      status: 422,
+      reason: "A report cannot be reviewed by the person who wrote it.",
+    };
+  }
+
+  const reviewed: Report =
+    decision === "approve"
+      ? {
+          ...existing,
+          review: "approved",
+          reviewedBy: reviewer,
+          reviewedAt: new Date().toISOString(),
+          ...(note.trim() ? { reviewNote: note.trim() } : {}),
+        }
+      : {
+          ...existing,
+          // Never issued, so it returns to draft rather than being superseded.
+          state: "draft",
+          review: "returned",
+          reviewedBy: reviewer,
+          reviewedAt: new Date().toISOString(),
+          reviewNote: note.trim(),
+        };
+
+  store.reports[index] = reviewed;
+  save(store);
+
+  if (decision === "approve") confirmIssuesFromReport(reportId, reviewer);
+  else disputeIssuesFromReport(reportId, reviewer);
+
+  return { ok: true, value: reviewed };
 }
 
 /**
@@ -169,15 +240,19 @@ export interface OfficeDraftSummary {
 }
 
 export interface OfficeView {
+  awaitingReview: Report[];
   submitted: Report[];
   drafts: OfficeDraftSummary[];
 }
 
 export function officeView(): OfficeView {
   const { reports } = load();
+  const sent = reports.filter((r) => r.state === "submitted");
   return {
-    submitted: reports
-      .filter((r) => r.state === "submitted")
+    // What a reviewer has to act on, separated from what is merely received.
+    awaitingReview: sent.filter((r) => r.review === "pending"),
+    submitted: sent
+      .filter((r) => r.review !== "pending")
       .sort((a, b) => (a.serverAcknowledgedAt ?? "") < (b.serverAcknowledgedAt ?? "") ? 1 : -1),
     drafts: reports
       .filter((r) => r.state === "draft")
