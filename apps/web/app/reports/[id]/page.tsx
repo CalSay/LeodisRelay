@@ -13,10 +13,10 @@ import {
   type Report,
 } from "@/lib/api";
 import { ApiError } from "@/lib/api";
-import { hasUnsent, keep, recover, release } from "@/lib/localDraft";
+import { hasUnsent, keep, migrateFromLocalStorage, recover, release } from "@/lib/localDraft";
 import { ObservationEditor } from "@/components/ObservationEditor";
 
-type SaveState = "clean" | "saving" | "saved" | "phone" | "error";
+type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error";
 
 /**
  * Where the work is, said plainly.
@@ -31,6 +31,9 @@ const SAVE: Record<SaveState, { dot: string; text: string }> = {
   saving: { dot: "dot dot-busy", text: "Saving to server" },
   saved: { dot: "dot dot-ok", text: "Saved on server" },
   phone: { dot: "dot dot-busy", text: "On this phone only — will send when there is signal" },
+  // The dangerous state, and the only one that warrants alarm: the work is
+  // neither on the server nor held on the device, so closing the page loses it.
+  unheld: { dot: "dot dot-bad", text: "NOT SAVED ANYWHERE — keep this page open" },
   error: { dot: "dot dot-bad", text: "Not saved — check connection" },
 };
 
@@ -55,23 +58,37 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const latest = useRef<Report | null>(null);
 
   useEffect(() => {
-    getReport(id)
-      .then((found) => {
-        if (!found) {
-          setMissing(true);
-          return;
-        }
-        // Unsent work from a previous session wins over the server copy: it is
-        // by definition newer, because it only exists because a save failed.
-        const recovered = recover(found);
-        if (recovered) {
-          setReport(recovered);
-          setSaveState("phone");
-        } else {
-          setReport(found);
-        }
-      })
-      .catch(() => setMissing(true));
+    let cancelled = false;
+    (async () => {
+      await migrateFromLocalStorage();
+      let found;
+      try {
+        found = await getReport(id);
+      } catch {
+        // Offline on first load. Nothing can be shown, because the report body
+        // itself lives on the server.
+        if (!cancelled) setMissing(true);
+        return;
+      }
+      if (cancelled) return;
+      if (!found) {
+        setMissing(true);
+        return;
+      }
+      // Unsent work wins over the server copy: it exists only because a save
+      // did not get through, so it is newer by definition.
+      const recovered = await recover(found);
+      if (cancelled) return;
+      if (recovered) {
+        setReport(recovered);
+        setSaveState("phone");
+      } else {
+        setReport(found);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   /**
@@ -79,23 +96,31 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
    * produces a queue of requests that all land at once and finish out of order.
    */
   const scheduleSave = useCallback((next: Report) => {
-    // Mirror to the device first. Whatever the network then does, the work
-    // survives a refresh, a crash or a phone going flat.
-    keep(next);
     pending.current = next;
     setSaveState("saving");
     if (saveTimer.current) clearTimeout(saveTimer.current);
+
+    // Mirror to the device first, and know whether it worked. Whatever the
+    // network then does, the work survives a reload, a crash or a flat battery
+    // — but only if this actually succeeded, so the result is not discarded.
+    const held = keep(next).then(
+      () => true,
+      () => false,
+    );
+
     saveTimer.current = setTimeout(async () => {
       const toSave = pending.current;
       if (!toSave) return;
       try {
         const saved = await saveReport(toSave);
-        release(toSave.id);
+        await release(toSave.id);
         setReport((current) => (current ? { ...current, revision: saved.revision } : saved));
         setSaveState("saved");
       } catch (error) {
-        // Losing signal is not a failure to report as one; the work is held.
-        setSaveState(error instanceof ApiError && error.offline ? "phone" : "error");
+        const offline = error instanceof ApiError && error.offline;
+        // Not on the server. Whether that is merely inconvenient or actually
+        // dangerous depends entirely on whether the device took a copy.
+        setSaveState((await held) ? (offline ? "phone" : "error") : "unheld");
       }
     }, 700);
   }, []);
@@ -105,9 +130,11 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   // Coming back into signal retries by itself. An engineer walking out of a
   // basement should not have to know to press anything.
   useEffect(() => {
-    function onOnline() {
-      const held = pending.current ?? latest.current;
-      if (held && held.state === "draft" && hasUnsent(held.id)) scheduleSave(held);
+    async function onOnline() {
+      const current = pending.current ?? latest.current;
+      if (current && current.state === "draft" && (await hasUnsent(current.id))) {
+        scheduleSave(current);
+      }
     }
     window.addEventListener("online", onOnline);
     return () => window.removeEventListener("online", onOnline);
@@ -130,14 +157,22 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       if (saveTimer.current) clearTimeout(saveTimer.current);
       const saved = await saveReport(report);
       const sent = await submitReport(saved);
-      release(report.id);
+      await release(report.id);
       setReport(sent);
       setSaveState("clean");
     } catch (error) {
       if (error instanceof ApiError && error.offline) {
-        setSaveState("phone");
+        // Sending failed, so make certain the device is holding the work before
+        // telling anyone it is safe.
+        const held = await keep(report).then(
+          () => true,
+          () => false,
+        );
+        setSaveState(held ? "phone" : "unheld");
         setSubmitError(
-          "No connection, so this has not reached the office yet. Your work is held on this phone — try again when you have signal.",
+          held
+            ? "No connection, so this has not reached the office yet. Your work is held on this phone — try again when you have signal."
+            : "No connection, and this device would not store a copy. Do not close this page: your work only exists on this screen. Move somewhere with signal and send again.",
         );
       } else {
         setSubmitError(error instanceof Error ? error.message : "That could not be sent.");

@@ -1,88 +1,146 @@
 /**
  * A safety net, not a sync engine.
  *
- * Testing in flight mode showed the honest state of things: work typed without
- * signal lived only in React state, so a refresh or a crash lost it. That is
- * unacceptable in a site tool even in a prototype, so unsent changes are
- * mirrored to this device.
+ * Holds unsent work on the device so a reload, a crash or a flat battery does
+ * not lose it.
  *
- * What this is NOT, and must not quietly become: the offline engine specified
- * in blueprint 0.7. There is no ordered mutation queue, no media manifest, no
- * idempotency, no conflict resolution. Those live in @relay/platform, are
+ * This was first written against localStorage and that was wrong. A single
+ * phone photograph as a data URL is 4-6 MB, localStorage caps around 5 MB, and
+ * the quota error was caught and ignored — so the net silently held nothing
+ * exactly when there was most to lose. IndexedDB has a quota measured in
+ * hundreds of megabytes, stores structured values without base64 inflation, and
+ * is what blueprint 0.7 specifies for this.
+ *
+ * Two rules follow from that failure and are worth keeping:
+ *
+ *   1. Never swallow a storage error. A safety net that reports success while
+ *      doing nothing is worse than no net, because the person stops worrying.
+ *   2. Say where the work is, not that it is "saved".
+ *
+ * What this is NOT, and must not quietly become: the offline engine in
+ * blueprint 0.7. There is no ordered mutation queue, no media manifest, no
+ * idempotency and no conflict resolution. Those live in @relay/platform, are
  * tested there, and belong in the real client.
- *
- * The reason to keep the distinction sharp is the status vocabulary. Proposal
- * section 5 requires "saved on this phone" and "received by Leodis" to be
- * separate things a person can tell apart, precisely because a success tick for
- * a local save that implies delivery is how work gets lost. So this module
- * exists to make the first of those states real and visible — never to make it
- * look like the second.
  */
 
 import type { Report } from "./types";
 
-const KEY = "relay-unsent-v1";
+const DB_NAME = "relay-drafts";
+const STORE = "unsent";
+const VERSION = 1;
 
-interface Cached {
+interface Held {
   reportId: string;
   observations: Report["observations"];
-  cachedAt: string;
+  heldAt: string;
 }
 
-type Store = Record<string, Cached>;
-
-function read(): Store {
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    return raw ? (JSON.parse(raw) as Store) : {};
-  } catch {
-    return {};
-  }
+function openDb(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    if (typeof indexedDB === "undefined") {
+      reject(new Error("This browser will not let the app hold work on the device."));
+      return;
+    }
+    const request = indexedDB.open(DB_NAME, VERSION);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(STORE)) {
+        db.createObjectStore(STORE, { keyPath: "reportId" });
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error ?? new Error("Device storage is unavailable."));
+    // Private browsing in some browsers hangs rather than erroring.
+    request.onblocked = () => reject(new Error("Device storage is blocked."));
+  });
 }
 
-function write(store: Store): void {
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(store));
-  } catch {
-    // Quota, or a browser refusing storage. The app keeps working; the safety
-    // net is simply absent, which is the state we were in before.
-  }
+function run<T>(
+  mode: IDBTransactionMode,
+  work: (store: IDBObjectStore) => IDBRequest<T>,
+): Promise<T> {
+  return openDb().then(
+    (db) =>
+      new Promise<T>((resolve, reject) => {
+        const tx = db.transaction(STORE, mode);
+        const request = work(tx.objectStore(STORE));
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error ?? new Error("Device storage failed."));
+        tx.onabort = () =>
+          reject(
+            tx.error?.name === "QuotaExceededError"
+              ? new Error("This device is out of storage space.")
+              : (tx.error ?? new Error("Device storage failed.")),
+          );
+        tx.oncomplete = () => db.close();
+      }),
+  );
 }
 
-/** Mirror unsent work. Called on every change, before any network attempt. */
-export function keep(report: Report): void {
-  if (typeof window === "undefined") return;
-  const store = read();
-  store[report.id] = {
+/**
+ * Mirror unsent work to the device.
+ *
+ * Rejects rather than reporting false success. The caller is expected to show
+ * that failure prominently: it means the only copy of the work is in the page,
+ * and closing the tab loses it.
+ */
+export async function keep(report: Report): Promise<void> {
+  const held: Held = {
     reportId: report.id,
     observations: report.observations,
-    cachedAt: new Date().toISOString(),
+    heldAt: new Date().toISOString(),
   };
-  write(store);
+  await run("readwrite", (store) => store.put(held));
 }
 
 /** Drop the copy once the server has confirmed it holds the work. */
-export function release(reportId: string): void {
-  if (typeof window === "undefined") return;
-  const store = read();
-  delete store[reportId];
-  write(store);
+export async function release(reportId: string): Promise<void> {
+  try {
+    await run("readwrite", (store) => store.delete(reportId));
+  } catch {
+    // Failing to clear a stale copy is harmless: `recover` only ever applies to
+    // a draft, and the next successful save overwrites it.
+  }
 }
 
 /**
  * Unsent work for a report, if any.
  *
- * Only ever applied to a draft. A sent report is frozen, and a stale local copy
- * must never be allowed to reappear over something already issued.
+ * Only ever applied to a draft. A sent report is frozen, and a stale device
+ * copy must never reappear over something already issued.
  */
-export function recover(report: Report): Report | null {
-  if (typeof window === "undefined") return null;
+export async function recover(report: Report): Promise<Report | null> {
   if (report.state !== "draft") return null;
-  const cached = read()[report.id];
-  return cached ? { ...report, observations: cached.observations } : null;
+  try {
+    const held = await run<Held | undefined>("readonly", (store) => store.get(report.id));
+    return held ? { ...report, observations: held.observations } : null;
+  } catch {
+    return null;
+  }
 }
 
-export function hasUnsent(reportId: string): boolean {
-  if (typeof window === "undefined") return false;
-  return read()[reportId] !== undefined;
+export async function hasUnsent(reportId: string): Promise<boolean> {
+  try {
+    return (await run<Held | undefined>("readonly", (store) => store.get(reportId))) !== undefined;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * One-off migration away from the localStorage version. Anything held there
+ * when this ships would otherwise be stranded.
+ */
+export async function migrateFromLocalStorage(): Promise<void> {
+  try {
+    const raw = window.localStorage.getItem("relay-unsent-v1");
+    if (!raw) return;
+    const old = JSON.parse(raw) as Record<string, Held>;
+    for (const entry of Object.values(old)) {
+      if (entry?.reportId) await run("readwrite", (store) => store.put(entry));
+    }
+    window.localStorage.removeItem("relay-unsent-v1");
+  } catch {
+    // Nothing to migrate, or storage unavailable. Not worth interrupting anyone.
+  }
 }
