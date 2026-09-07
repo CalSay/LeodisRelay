@@ -140,30 +140,24 @@ const s = StyleSheet.create({
    * Codes and dates are set in mono with tabular figures, the same idiom the
    * application uses, so a reference reads as a reference rather than as prose.
    */
-  tb: { flexDirection: "row", flexWrap: "wrap", marginTop: 14, paddingTop: 12, paddingBottom: 2, borderTopWidth: 1, borderBottomWidth: 1, borderColor: RULE },
-  tbCol: { paddingRight: 16, marginBottom: 14 },
-  tbWide: { width: "44%" },
-  tbMid: { width: "30%" },
-  tbNarrow: { width: "26%" },
+  /*
+   * Title block: an aligned label/value table in two groups of three.
+   *
+   * The framed labels that suit a type chip did not survive being repeated six
+   * times — a badge is one marker against a heading, whereas six frames in a
+   * grid are six competing objects with ragged right edges and no hierarchy.
+   * Here the label is a caption for a value beside it, so it sits in a fixed
+   * column and lets the values line up, which is what makes a block of facts
+   * scannable.
+   */
+  tb: { flexDirection: "row", marginTop: 14, borderTopWidth: 1, borderColor: RULE, paddingTop: 4 },
+  tbGroup: { width: "50%", paddingRight: 18 },
+  tbRow: { flexDirection: "row", alignItems: "baseline", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: HAIR },
   /* Sized to its own text, not the column, so a short label is a small box. */
-  tbLabelBox: {
-    borderWidth: 1,
-    borderColor: BRASS_TRIM,
-    backgroundColor: WASH,
-    paddingHorizontal: 7,
-    paddingVertical: 4,
-    marginBottom: 7,
-  },
-  tbLabel: {
-    fontSize: 5.8,
-    letterSpacing: 1.4,
-    color: BRASS,
-    fontWeight: 500,
-    textAlign: "center",
-    lineHeight: 1,
-  },
-  tbValue: { fontSize: 10.5, fontWeight: 600, letterSpacing: -0.1 },
-  tbCode: { fontSize: 10, fontFamily: "PlexMono", fontWeight: 500, letterSpacing: 0.2 },
+  /* Fixed width, so every value in the group starts on the same line. */
+  tbLabel: { width: 92, paddingRight: 8, fontSize: 5.8, letterSpacing: 1.2, color: FAINT, fontWeight: 500 },
+  tbValue: { flex: 1, fontSize: 9.5, fontWeight: 600, letterSpacing: -0.05 },
+  tbCode: { flex: 1, fontSize: 9, fontFamily: "PlexMono", fontWeight: 500, letterSpacing: 0.2 },
 
   h2Row: { flexDirection: "row", alignItems: "center", marginTop: 24, marginBottom: 10 },
   h2: { fontSize: 7.5, letterSpacing: 1.8, color: BRASS, fontWeight: 600 },
@@ -278,21 +272,16 @@ function labelWidth(label: string, size: number, tracking: number): number {
 function Field({
   label,
   value,
-  width,
   code,
 }: {
   label: string;
   value: string;
-  width: "wide" | "mid" | "narrow";
   /** Codes, references and dates are set in mono so they read as data. */
   code?: boolean;
 }) {
-  const w = width === "wide" ? s.tbWide : width === "mid" ? s.tbMid : s.tbNarrow;
   return (
-    <View style={[s.tbCol, w]}>
-      <View style={[s.tbLabelBox, { width: labelWidth(label, 5.8, 1.4) }]}>
-        <Text style={s.tbLabel}>{label.toUpperCase()}</Text>
-      </View>
+    <View style={s.tbRow}>
+      <Text style={s.tbLabel}>{label.toUpperCase()}</Text>
       <Text style={code ? s.tbCode : s.tbValue}>{value}</Text>
     </View>
   );
@@ -353,12 +342,16 @@ export function ReportDocument({ report }: { report: DocReport }) {
         </View>
 
         <View style={s.tb}>
-          <Field label="Client" value={report.clientName || "Not recorded"} width="wide" />
-          <Field label="Project number" value={report.projectNumber || "—"} width="mid" code />
-          <Field label="Client account" value={report.clientAccountNumber || "—"} width="narrow" code />
-          <Field label="Visit date" value={formatVisitDate(report.visitDate)} width="wide" />
-          <Field label="Prepared by" value={report.author} width="mid" />
-          <Field label="Revision" value={String(report.revision)} width="narrow" code />
+          <View style={s.tbGroup}>
+            <Field label="Client" value={report.clientName || "Not recorded"} />
+            <Field label="Project number" value={report.projectNumber || "—"} code />
+            <Field label="Client account" value={report.clientAccountNumber || "—"} code />
+          </View>
+          <View style={s.tbGroup}>
+            <Field label="Visit date" value={formatVisitDate(report.visitDate)} />
+            <Field label="Prepared by" value={report.author} />
+            <Field label="Revision" value={String(report.revision)} code />
+          </View>
         </View>
 
         <View style={s.h2Row}>

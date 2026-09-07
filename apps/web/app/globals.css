@@ -451,39 +451,46 @@ a {
  * like a spreadsheet. One hairline top and bottom, no cell borders, and the
  * fields keep their own proportions instead.
  */
+/*
+ * An aligned label/value table, not a grid of boxes.
+ *
+ * Framed labels suit a single badge against a heading; repeated across six
+ * fields they become six competing objects with ragged edges. A label that
+ * captions the value beside it belongs in a fixed column, so the values line
+ * up and the block can be scanned.
+ */
 .titleblock {
   border-top: 1px solid var(--line-2);
-  border-bottom: 1px solid var(--line-2);
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--s4) var(--s5);
-  padding: var(--s4) 0;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  column-gap: var(--s6);
+  margin: 0;
 }
 
 .tb-cell {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
   min-width: 0;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--line);
 }
 
-/* Brass-trimmed label boxes, matching the issued document. */
 .tb-cell dt {
-  display: inline-block;
+  flex: none;
+  width: 116px;
   font-family: var(--mono);
   font-size: 9px;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--brass);
-  border: 1px solid var(--brass-2);
-  background: var(--brass-wash);
-  border-radius: 2px;
-  padding: 4px 8px;
-  margin-bottom: 8px;
-  text-align: center;
-  line-height: 1;
+  color: var(--text-3);
+  margin: 0;
 }
 
 .tb-cell dd {
   margin: 0;
-  font-size: 15px;
+  min-width: 0;
+  font-size: 14.5px;
   font-weight: 600;
   letter-spacing: -0.005em;
   overflow-wrap: break-word;
