@@ -49,20 +49,24 @@ export function ObservationEditor({
   }
 
   const type = OBSERVATION_TYPES.find((t) => t.value === observation.type);
+  const tone = `tone-${type?.tone ?? "neutral"}`;
   const needsAction = observation.type === "defect" || observation.type === "access";
 
   return (
-    <section className="panel">
+    <section className={`panel panel-toned ${tone}`}>
       <div className="panel-head">
-        <span className="lbl">Observation {String(index + 1).padStart(2, "0")}</span>
-        <button className="btn-quiet btn-sm" onClick={onRemove}>
-          Remove
-        </button>
+        <span className="lbl">Update {String(index + 1).padStart(2, "0")}</span>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          {type && <span className={`kind ${tone}`}>{type.label}</span>}
+          <button className="btn-quiet btn-sm" onClick={onRemove}>
+            Remove
+          </button>
+        </div>
       </div>
 
       <div className="panel-body">
         <div className="field">
-          <label htmlFor={`type-${observation.id}`}>Type</label>
+          <label htmlFor={`type-${observation.id}`}>Kind of update</label>
           <select
             id={`type-${observation.id}`}
             value={observation.type}

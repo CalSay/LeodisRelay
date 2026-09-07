@@ -82,15 +82,50 @@ export const FIXTURE_PROJECTS: FixtureProject[] = [
 
 export type ObservationType = "update" | "defect" | "instruction" | "access";
 
+/**
+ * The kinds of update an engineer can record.
+ *
+ * `tone` drives a consistent colour for each kind wherever it appears — the
+ * capture screen, the register and the issued document — so a reader can tell
+ * a defect from a progress note without reading the label. It is always paired
+ * with the written label, never used alone.
+ *
+ * The stored values are unchanged from the first version. `instruction` reads
+ * as "Variation required" now, but renaming the value as well would orphan
+ * every record already captured for no benefit a reader can see.
+ */
+export type UpdateTone = "neutral" | "defect" | "variation" | "access";
+
 export const OBSERVATION_TYPES: {
   value: ObservationType;
   label: string;
   hint: string;
+  tone: UpdateTone;
 }[] = [
-  { value: "update", label: "Progress update", hint: "Work carried out or progressed" },
-  { value: "defect", label: "Defect", hint: "Something wrong that needs putting right" },
-  { value: "instruction", label: "Instruction received", hint: "Someone told you to do something" },
-  { value: "access", label: "Access restriction", hint: "You could not get to the work" },
+  {
+    value: "update",
+    label: "Progress update",
+    hint: "Work carried out or progressed",
+    tone: "neutral",
+  },
+  {
+    value: "defect",
+    label: "Defect",
+    hint: "Something wrong that needs putting right",
+    tone: "defect",
+  },
+  {
+    value: "instruction",
+    label: "Variation required",
+    hint: "Work outside the original scope, needing instruction",
+    tone: "variation",
+  },
+  {
+    value: "access",
+    label: "Access restriction",
+    hint: "You could not get to the work",
+    tone: "access",
+  },
 ];
 
 export const FIXTURE_LOCATIONS = [

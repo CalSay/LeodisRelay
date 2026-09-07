@@ -35,6 +35,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     decision?: "approve" | "return";
     reviewer?: string;
     note?: string;
+    signature?: { dataUrl?: string; name: string };
   };
 
   if (body.action === "review") {
@@ -49,7 +50,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });
   }
 
-  const outcome = submitReport(id);
+  const outcome = submitReport(id, body.signature);
   return outcome.ok
     ? NextResponse.json(outcome.value)
     : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });

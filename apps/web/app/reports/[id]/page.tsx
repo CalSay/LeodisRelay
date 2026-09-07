@@ -16,6 +16,7 @@ import {
 import { ApiError } from "@/lib/api";
 import { hasUnsent, keep, migrateFromLocalStorage, recover, release } from "@/lib/localDraft";
 import { ObservationEditor } from "@/components/ObservationEditor";
+import { SignaturePad } from "@/components/SignaturePad";
 import type { Issue as IssueSummary } from "@/lib/types";
 
 type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error";
@@ -48,6 +49,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [projectIssues, setProjectIssues] = useState<IssueSummary[]>([]);
+  const [signerName, setSignerName] = useState("");
+  const [signatureImage, setSignatureImage] = useState<string | null>(null);
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<Report | null>(null);
@@ -145,6 +148,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
   useEffect(() => {
     latest.current = report;
+    if (report && signerName === "") setSignerName(report.author);
   }, [report]);
 
   // Context from previous visits. Fetched once the report is known so the
@@ -168,7 +172,10 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     try {
       if (saveTimer.current) clearTimeout(saveTimer.current);
       const saved = await saveReport(report);
-      const sent = await submitReport(saved);
+      const sent = await submitReport(saved, {
+        ...(signatureImage ? { dataUrl: signatureImage } : {}),
+        name: signerName.trim() || report.author,
+      });
       await release(report.id);
       setReport(sent);
       setSaveState("clean");
@@ -234,7 +241,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       <dl className="titleblock" style={{ marginTop: 24 }}>
         <div className="tb-cell"><dt>Visit date</dt><dd className="ref">{report.visitDate}</dd></div>
         <div className="tb-cell"><dt>Engineer</dt><dd>{report.author}</dd></div>
-        <div className="tb-cell"><dt>Observations</dt><dd className="ref">{String(report.observations.length).padStart(2, "0")}</dd></div>
+        <div className="tb-cell"><dt>Updates</dt><dd className="ref">{String(report.observations.length).padStart(2, "0")}</dd></div>
         <div className="tb-cell"><dt>Photographs</dt><dd className="ref">{String(photos).padStart(2, "0")}</dd></div>
       </dl>
 
@@ -259,16 +266,16 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         </div>
       )}
 
-      <div className="sec"><span className="lbl">What you found</span></div>
+      <div className="sec"><span className="lbl">Updates</span></div>
 
       {report.observations.length === 0 ? (
-        <div className="empty">Nothing recorded yet.</div>
+        <div className="empty">No updates recorded yet.</div>
       ) : (
         report.observations.map((observation, index) =>
           sent ? (
             <section key={observation.id} className="panel">
               <div className="panel-head">
-                <span className="lbl">Observation {String(index + 1).padStart(2, "0")}</span>
+                <span className="lbl">Update {String(index + 1).padStart(2, "0")}</span>
                 <span className="lbl">{observation.location || "No location"}</span>
               </div>
               <div className="panel-body">
@@ -310,7 +317,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
               update({ ...report, observations: [...report.observations, newObservation()] })
             }
           >
-            Add an observation
+            Add an update
           </button>
 
           <div className="sec"><span className="lbl">Before you send</span></div>
@@ -336,6 +343,18 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
               ))}
             </div>
           )}
+
+          <div className="sec"><span className="lbl">Sign off</span></div>
+
+          <section className="panel">
+            <div className="panel-body">
+              <SignaturePad
+                name={signerName}
+                onNameChange={setSignerName}
+                onChange={setSignatureImage}
+              />
+            </div>
+          </section>
 
           {submitError && (
             <div className="note note-bad" style={{ marginTop: 16 }}>{submitError}</div>

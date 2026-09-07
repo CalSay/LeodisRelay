@@ -38,15 +38,20 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
     author: report.author,
     revision: report.revision,
     approved: report.review === "approved",
-    observations: report.observations.map((o) => ({
+    observations: report.observations.map((o) => {
+      const kind = OBSERVATION_TYPES.find((t) => t.value === o.type);
+      return {
       id: o.id,
-      typeLabel: OBSERVATION_TYPES.find((t) => t.value === o.type)?.label ?? o.type,
+      typeLabel: kind?.label ?? o.type,
+      tone: kind?.tone ?? "neutral",
       location: o.location,
       whatHappened: o.whatHappened,
       actionNeeded: o.actionNeeded,
       owner: o.owner,
       photos: o.photos,
-    })),
+      };
+    }),
+    ...(report.signature ? { signature: report.signature } : {}),
   };
 
   const buffer = await renderReportPdf(doc);

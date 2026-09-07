@@ -14,9 +14,13 @@ export interface DocPhoto {
   capturedAt: string;
 }
 
+/** Drives the colour a kind of update carries, always alongside its label. */
+export type DocTone = "neutral" | "defect" | "variation" | "access";
+
 export interface DocObservation {
   id: string;
   typeLabel: string;
+  tone: DocTone;
   location: string;
   whatHappened: string;
   actionNeeded: string;
@@ -36,4 +40,17 @@ export interface DocReport {
   /** Approved reports are issuable; anything else is stamped as a draft. */
   approved: boolean;
   observations: DocObservation[];
+  /**
+   * Signed off at the point of sending.
+   *
+   * A drawn signature where the engineer provided one; the printed name and
+   * date stand on their own either way. The client box is deliberately left
+   * blank for a wet signature — a typed name is not evidence of acceptance
+   * (proposal 6.1), so the document must not offer somewhere to type one.
+   */
+  signature?: {
+    dataUrl?: string;
+    name: string;
+    signedAt: string;
+  };
 }

@@ -2,7 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Document, Page, Text, View, Image, StyleSheet, Font } from "@react-pdf/renderer";
 
-import type { DocReport } from "./types.js";
+import type { DocReport, DocTone } from "./types.js";
 import { BRANDING } from "./branding.js";
 
 /**
@@ -58,6 +58,20 @@ const HAIR = "#eceae4";
 const BRASS = "#8a6d1f";
 const WASH = "#f6f5f1";
 const FLAG = "#a8532f";
+
+/**
+ * One colour per kind of update, used on the gutter rule and the type chip.
+ *
+ * Restrained on purpose: enough that a reader scanning the left edge can tell a
+ * defect from a progress note, not so much that the document looks colour-coded.
+ * The written label is always present, so nothing depends on colour alone.
+ */
+const TONES: Record<DocTone, { rule: string; ink: string }> = {
+  neutral: { rule: "#c9c9c2", ink: "#6f7178" },
+  defect: { rule: "#c2705a", ink: "#a8532f" },
+  variation: { rule: "#c0a24a", ink: "#8a6d1f" },
+  access: { rule: "#9aa6b8", ink: "#5b6b80" },
+};
 
 const s = StyleSheet.create({
   page: {
@@ -143,16 +157,14 @@ const s = StyleSheet.create({
 
   obs: { flexDirection: "row", marginBottom: 16 },
   gutter: { width: 30 },
-  gutterNo: { fontSize: 12, fontWeight: 600, color: BRASS, letterSpacing: 0.2 },
-  obsBody: { flex: 1, borderLeftWidth: 1, borderLeftColor: RULE, paddingLeft: 12, paddingBottom: 4 },
+  gutterNo: { fontSize: 12, fontWeight: 600, letterSpacing: 0.2 },
+  obsBody: { flex: 1, borderLeftWidth: 2, paddingLeft: 12, paddingBottom: 4 },
   obsHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 5 },
   obsTitle: { fontSize: 11.5, fontWeight: 600, flexShrink: 1, paddingRight: 12, letterSpacing: -0.15 },
   chip: {
     fontSize: 6,
     letterSpacing: 1.1,
-    color: FAINT,
     borderWidth: 1,
-    borderColor: RULE,
     paddingVertical: 2.5,
     paddingHorizontal: 6,
     fontWeight: 500,
@@ -180,6 +192,17 @@ const s = StyleSheet.create({
   capNo: { fontSize: 6, letterSpacing: 1.1, color: BRASS, marginTop: 4, fontWeight: 600 },
   cap: { fontSize: 7.5, color: MUTED, lineHeight: 1.4 },
   capDate: { fontSize: 6.5, color: FAINT },
+
+  signRow: { flexDirection: "row", marginTop: 8 },
+  signCell: { flex: 1, borderWidth: 1, borderColor: RULE, padding: 10, marginRight: 10 },
+  signCellLast: { flex: 1, borderWidth: 1, borderColor: RULE, padding: 10 },
+  signLabel: { fontSize: 6, letterSpacing: 1.2, color: FAINT, fontWeight: 500, marginBottom: 6 },
+  /* Room for a wet signature. A drawn one occupies the same space. */
+  signSpace: { height: 46, justifyContent: "flex-end" },
+  signImage: { height: 42, objectFit: "contain" },
+  signRule: { borderBottomWidth: 1, borderBottomColor: RULE, marginBottom: 5 },
+  signName: { fontSize: 9, fontWeight: 600 },
+  signMeta: { fontSize: 7, color: FAINT, marginTop: 2 },
 
 });
 
@@ -278,22 +301,27 @@ export function ReportDocument({ report }: { report: DocReport }) {
         )}
 
         <View style={s.h2Row}>
-          <Text style={s.h2}>OBSERVATIONS</Text>
+          <Text style={s.h2}>UPDATES</Text>
           <View style={s.h2Rule} />
         </View>
 
         {report.observations.map((observation, index) => {
           const single = observation.photos.length === 1;
+          const tone = TONES[observation.tone] ?? TONES.neutral;
           return (
             <View key={observation.id} style={s.obs}>
               <View style={s.gutter}>
-                <Text style={s.gutterNo}>{String(index + 1).padStart(2, "0")}</Text>
+                <Text style={[s.gutterNo, { color: tone.ink }]}>
+                  {String(index + 1).padStart(2, "0")}
+                </Text>
               </View>
 
-              <View style={s.obsBody}>
+              <View style={[s.obsBody, { borderLeftColor: tone.rule }]}>
                 <View style={s.obsHead} wrap={false}>
                   <Text style={s.obsTitle}>{observation.location || "Location not recorded"}</Text>
-                  <Text style={s.chip}>{observation.typeLabel.toUpperCase()}</Text>
+                  <Text style={[s.chip, { color: tone.ink, borderColor: tone.rule }]}>
+                    {observation.typeLabel.toUpperCase()}
+                  </Text>
                 </View>
 
                 <Text style={s.narrative}>
@@ -331,6 +359,42 @@ export function ReportDocument({ report }: { report: DocReport }) {
             </View>
           );
         })}
+
+        <View style={s.h2Row} wrap={false}>
+          <Text style={s.h2}>SIGN OFF</Text>
+          <View style={s.h2Rule} />
+        </View>
+
+        <View style={s.signRow} wrap={false}>
+          <View style={s.signCell}>
+            <Text style={s.signLabel}>PREPARED BY</Text>
+            <View style={s.signSpace}>
+              {report.signature?.dataUrl ? (
+                <Image style={s.signImage} src={report.signature.dataUrl} />
+              ) : null}
+            </View>
+            <View style={s.signRule} />
+            <Text style={s.signName}>{report.signature?.name || report.author}</Text>
+            <Text style={s.signMeta}>
+              {report.signature
+                ? `Signed ${new Date(report.signature.signedAt).toLocaleDateString("en-GB")}`
+                : "Not signed"}
+            </Text>
+          </View>
+
+          {/*
+            Left blank for a wet signature on purpose. A typed name is not
+            evidence of acceptance (proposal 6.1), so the document does not
+            offer anywhere to type one.
+          */}
+          <View style={s.signCellLast}>
+            <Text style={s.signLabel}>RECEIVED ON SITE BY</Text>
+            <View style={s.signSpace} />
+            <View style={s.signRule} />
+            <Text style={s.signName}> </Text>
+            <Text style={s.signMeta}>Name, company and date</Text>
+          </View>
+        </View>
 
         {/* The footer is stamped after rendering — see footer.ts. The page's
             bottom padding reserves the space it occupies. */}

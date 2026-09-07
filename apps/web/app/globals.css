@@ -1129,3 +1129,65 @@ button:disabled {
   margin: var(--s6) 0 var(--s3);
   flex-wrap: wrap;
 }
+
+/* Update kinds ------------------------------------------------------------
+ * A colour per kind, used on the panel edge and the type chip so a reader can
+ * tell a defect from a progress note while scanning. Always paired with the
+ * written label; nothing depends on colour alone.
+ */
+
+.tone-neutral { --tone: var(--text-3); }
+.tone-defect { --tone: var(--alert); }
+.tone-variation { --tone: var(--brass); }
+.tone-access { --tone: #7f97b5; }
+
+.panel-toned {
+  border-left: 2px solid var(--tone);
+}
+
+.kind {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 3px 7px;
+  border-radius: 2px;
+  border: 1px solid var(--tone);
+  color: var(--tone);
+  white-space: nowrap;
+}
+
+/* Signature -------------------------------------------------------------- */
+
+.sigwrap {
+  position: relative;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r);
+  background: var(--ground);
+  height: 150px;
+}
+
+.sigpad {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none; /* or the browser scrolls instead of drawing */
+  cursor: crosshair;
+}
+
+.sighint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}

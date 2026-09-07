@@ -54,7 +54,7 @@ export function reviewReport(report: Report): ReviewFinding[] {
     findings.push({
       observationId: "",
       field: "observations",
-      message: "Nothing has been recorded on this visit yet",
+      message: "No updates have been recorded on this visit yet",
       blocking: true,
     });
   }

@@ -113,7 +113,10 @@ export function saveDraft(reportId: string, incoming: Report): StoreOutcome<Repo
  * check is there to give fast, specific feedback; this one is there because a
  * client check is not a control.
  */
-export function submitReport(reportId: string): StoreOutcome<Report> {
+export function submitReport(
+  reportId: string,
+  signature?: { dataUrl?: string; name: string },
+): StoreOutcome<Report> {
   const store = load();
   const index = store.reports.findIndex((r) => r.id === reportId);
   if (index === -1) return { ok: false, status: 404, reason: "No such report." };
@@ -137,6 +140,17 @@ export function submitReport(reportId: string): StoreOutcome<Report> {
     state: "submitted",
     review: "pending",
     serverAcknowledgedAt: new Date().toISOString(),
+    // Stamped by the server, not the device: the time a report was signed off
+    // is a fact about when it was received, not about a phone's clock.
+    ...(signature
+      ? {
+          signature: {
+            ...(signature.dataUrl ? { dataUrl: signature.dataUrl } : {}),
+            name: signature.name,
+            signedAt: new Date().toISOString(),
+          },
+        }
+      : {}),
   };
   store.reports[index] = submitted;
   save(store);

@@ -93,12 +93,15 @@ export async function saveReport(report: Report): Promise<Report> {
   );
 }
 
-export async function submitReport(report: Report): Promise<Report> {
+export async function submitReport(
+  report: Report,
+  signature?: { dataUrl?: string; name: string },
+): Promise<Report> {
   return parse<Report>(
     await request(`/api/reports/${report.id}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({}),
+      body: JSON.stringify(signature ? { signature } : {}),
     }),
   );
 }

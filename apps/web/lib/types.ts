@@ -53,6 +53,8 @@ export interface Report {
   serverAcknowledgedAt?: string;
   /** Last time the server accepted a draft save, for office draft visibility. */
   lastSavedAt?: string;
+  /** Captured at the point of sending. The drawn image is optional. */
+  signature?: { dataUrl?: string; name: string; signedAt: string };
 }
 
 export interface ReviewFinding {
