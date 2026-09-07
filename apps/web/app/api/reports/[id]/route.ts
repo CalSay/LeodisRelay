@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getReport, reviewSubmission, saveDraft, submitReport } from "@/lib/serverStore";
 import { requireSession, visibleTo } from "@/lib/auth/guard";
 import type { Report } from "@/lib/types";
+import { validateObservations } from '@/lib/validatePhotos';
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +33,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   const body = (await request.json()) as {
     observations?: Report["observations"];
     expectedVersion?: number;
+    requestId?: string;
   };
   // Casts do not validate. A malformed body must be refused rather than
   // reaching the store as undefined.
@@ -39,10 +41,17 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     return NextResponse.json({ reason: "observations must be provided." }, { status: 422 });
   }
 
+  if (body.requestId !== undefined && (typeof body.requestId !== 'string' || !/^[a-f0-9-]{36}$/.test(body.requestId))) {
+    return NextResponse.json({reason:'Invalid save request ID.'},{status:422});
+  }
+  const validation = await validateObservations(body.observations, id, existing.observations);
+  if (validation) return NextResponse.json({ reason: validation }, { status: 422 });
+
   const outcome = saveDraft(
     id,
     { ...existing, observations: body.observations },
     body.expectedVersion,
+    body.requestId,
   );
   return outcome.ok
     ? NextResponse.json(outcome.value)
@@ -63,6 +72,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     reviewer?: string;
     note?: string;
     signature?: { dataUrl?: string; name: string };
+    expectedVersion?: number;
   };
 
   const guard = await requireSession();
@@ -86,9 +96,14 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });
   }
 
+  const existing = getReport(id);
+  if (!existing || existing.author !== principal.name) {
+    return NextResponse.json({ reason: 'This report belongs to someone else.' }, { status: 403 });
+  }
   const outcome = await submitReport(
     id,
     body.signature ? { ...body.signature, name: body.signature.name || principal.name } : undefined,
+    body.expectedVersion,
   );
   return outcome.ok
     ? NextResponse.json(outcome.value)

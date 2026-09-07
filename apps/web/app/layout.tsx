@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Archivo, IBM_Plex_Mono } from "next/font/google";
+import localFont from 'next/font/local';
 import Link from "next/link";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PwaRegistration } from "@/components/PwaRegistration";
 import { currentPrincipal } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/auth/provider";
 import "./globals.css";
@@ -12,16 +13,21 @@ import "./globals.css";
  * defaults. Plex Mono carries every reference, code and figure, so numbers
  * align down a column the way they do on a schedule.
  */
-const archivo = Archivo({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const archivo = localFont({
+  src: [
+    { path:'../../../packages/documents/fonts/Archivo-Regular.ttf',weight:'400' },
+    { path:'../../../packages/documents/fonts/Archivo-Medium.ttf',weight:'500' },
+    { path:'../../../packages/documents/fonts/Archivo-SemiBold.ttf',weight:'600' },
+  ],
   variable: "--font-archivo",
   display: "swap",
 });
 
-const plexMono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500"],
+const plexMono = localFont({
+  src: [
+    { path:'../../../packages/documents/fonts/IBMPlexMono-Regular.ttf',weight:'400' },
+    { path:'../../../packages/documents/fonts/IBMPlexMono-Medium.ttf',weight:'500' },
+  ],
   variable: "--font-plex-mono",
   display: "swap",
 });
@@ -60,6 +66,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body>
+        <PwaRegistration />
         {/*
           Not decoration. This prototype saves to a test server with no offline
           storage, and an engineer testing on their own phone must never mistake

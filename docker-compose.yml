@@ -1,0 +1,31 @@
+services:
+  relay:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:4310:4310"
+    environment:
+      NODE_ENV: production
+      RELAY_DATA_ROOT: /var/lib/relay
+      RELAY_MEDIA_ROOT: /var/lib/relay/media
+      ENTRA_TENANT_ID: ${ENTRA_TENANT_ID:?set ENTRA_TENANT_ID}
+      ENTRA_CLIENT_ID: ${ENTRA_CLIENT_ID:?set ENTRA_CLIENT_ID}
+      ENTRA_CLIENT_SECRET: ${ENTRA_CLIENT_SECRET:?set ENTRA_CLIENT_SECRET}
+      ENTRA_REDIRECT_URI: ${ENTRA_REDIRECT_URI:?set ENTRA_REDIRECT_URI}
+    volumes:
+      - relay-data:/var/lib/relay
+
+  worker:
+    build: .
+    restart: unless-stopped
+    command: ["npm", "--workspace", "@relay/web", "run", "worker"]
+    environment:
+      NODE_ENV: production
+      RELAY_DATA_ROOT: /var/lib/relay
+      RELAY_MEDIA_ROOT: /var/lib/relay/media
+      RELAY_MAIL_ENABLED: "no"
+    volumes:
+      - relay-data:/var/lib/relay
+
+volumes:
+  relay-data:

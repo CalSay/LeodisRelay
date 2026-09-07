@@ -75,7 +75,22 @@ export function SignaturePad({
   function emit() {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    onChange(strokes.current.length > 0 ? canvas.toDataURL("image/png") : null);
+    if (!strokes.current.length) { onChange(null); return; }
+    // Display follows the theme; the PDF always needs dark ink on white paper.
+    const exportCanvas = document.createElement('canvas');
+    exportCanvas.width = canvas.width; exportCanvas.height = canvas.height;
+    const context = exportCanvas.getContext('2d');
+    if (!context) return;
+    const box = canvas.getBoundingClientRect();
+    context.scale(canvas.width/box.width,canvas.height/box.height);
+    context.strokeStyle='#111111'; context.lineWidth=2; context.lineCap='round'; context.lineJoin='round';
+    for (const stroke of strokes.current) {
+      if (!stroke.length) continue;
+      context.beginPath(); context.moveTo(stroke[0]!.x,stroke[0]!.y);
+      for (const point of stroke.slice(1)) context.lineTo(point.x,point.y);
+      context.stroke();
+    }
+    onChange(exportCanvas.toDataURL('image/png'));
   }
 
   return (

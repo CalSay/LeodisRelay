@@ -14,6 +14,7 @@ import {
   type Report,
 } from "@/lib/api";
 import { ApiError } from "@/lib/api";
+import { clientId } from '@/lib/clientId';
 import { hasUnsent, keep, recover, releaseIfCurrent } from "@/lib/localDraft";
 import { ObservationEditor } from "@/components/ObservationEditor";
 import { SignaturePad } from "@/components/SignaturePad";
@@ -60,7 +61,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
    * Every edit gets a number. It identifies which copy is held on the device,
    * so a save that lands late releases only the edit it actually saved.
    */
-  const seq = useRef(0);
+  const seq = useRef<number | string>(0);
   /**
    * Saves run one at a time along this chain. Debouncing alone left two
    * requests in flight whenever somebody kept typing, and the earlier one could
@@ -75,12 +76,19 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
    * an engineer assumes it has gone.
    */
   const latest = useRef<Report | null>(null);
+  const serverVersion = useRef<number | undefined>(undefined);
+  const sending = useRef(false);
+  const [recovered,setRecovered] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me", { cache: "no-store" })
       .then((r) => r.json())
-      .then((d) => setPrincipalId(d?.principal?.id ?? null))
-      .catch(() => setPrincipalId(null));
+      .then((d) => {
+        const principal = d?.principal?.id ?? null;
+        setPrincipalId(principal);
+        try { if (principal) sessionStorage.setItem('relay-offline-principal',principal); else sessionStorage.removeItem('relay-offline-principal'); } catch {}
+      })
+      .catch(() => {setPrincipalId(null);setMissing(true);});
   }, []);
 
   useEffect(() => {
@@ -91,9 +99,12 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       try {
         found = await getReport(id);
       } catch {
-        // Offline on first load. Nothing can be shown, because the report body
-        // itself lives on the server.
-        if (!cancelled) setMissing(true);
+        const held = await recover(id,principalId);
+        if (!cancelled && held?.report) {
+          seq.current=held.seq;serverVersion.current=held.baseVersion ?? 0;
+          setReport({...held.report,observations:held.observations,version:held.baseVersion ?? 0});
+          setSaveState('phone');
+        } else if (!cancelled) setMissing(true);
         return;
       }
       if (cancelled) return;
@@ -101,14 +112,17 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         setMissing(true);
         return;
       }
-      // Unsent work wins over the server copy: it exists only because a save
-      // did not get through, so it is newer by definition.
+      serverVersion.current = found.version;
+      // Retain the original base version. Local work is not necessarily newer
+      // than changes made on another device while this phone was disconnected.
       const held = await recover(id, principalId);
       if (cancelled) return;
       if (held && found.state === "draft") {
         seq.current = held.seq;
-        setReport({ ...found, observations: held.observations });
+        serverVersion.current = held.baseVersion ?? 0;
+        setReport({ ...found, version:held.baseVersion ?? 0, observations: held.observations });
         setSaveState("phone");
+        setRecovered(true);
       } else {
         setReport(found);
       }
@@ -130,7 +144,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       setSaveState("saving");
       if (saveTimer.current) clearTimeout(saveTimer.current);
 
-      const mySeq = (seq.current += 1);
+      const mySeq = (seq.current = clientId());
 
       // Mirror to the device first, and know whether it worked. Whatever the
       // network then does the work survives a reload, a crash or a flat
@@ -140,6 +154,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         principalId,
         seq: mySeq,
         observations: next.observations,
+        baseVersion:serverVersion.current ?? next.version,
+        report:next,
       }).then(
         () => true,
         () => false,
@@ -149,20 +165,25 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         // Queued behind whatever is already running, so there is never more
         // than one save in flight for this report.
         chain.current = chain.current.then(async () => {
-          const toSave = pending.current;
+          const toSave = next;
           if (!toSave) return;
           try {
-            const saved = await saveReport(toSave, toSave.version);
+            const saved = await saveReport(toSave, serverVersion.current ?? toSave.version,principalId);
+            serverVersion.current = saved.version;
             // Release only the edit that was acknowledged. Anything typed
             // since keeps its copy on the device.
             await releaseIfCurrent(toSave.id, principalId, mySeq);
             setReport((current) => (current ? { ...current, version: saved.version } : saved));
-            setSaveState((state) => (state === "saving" ? "saved" : state));
+            if (seq.current === mySeq) {
+              pending.current = null;
+              setSaveState('saved');
+            }
           } catch (error) {
+            if (!(error instanceof ApiError && error.offline)) setSubmitError(error instanceof Error ? error.message : 'Unable to save.');
             const offline = error instanceof ApiError && error.offline;
             // Not on the server. Whether that is merely inconvenient or
             // actually dangerous depends on whether the device took a copy.
-            setSaveState((await held) ? (offline ? "phone" : "error") : "unheld");
+            if (seq.current === mySeq) setSaveState((await held) ? (offline ? "phone" : "error") : "unheld");
           }
         });
       }, 700);
@@ -171,13 +192,16 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   );
 
   useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
+  useEffect(() => {
+    if (recovered && report && principalId) { setRecovered(false); scheduleSave(report); }
+  },[recovered,report,principalId,scheduleSave]);
 
   // Coming back into signal retries by itself. An engineer walking out of a
   // basement should not have to know to press anything.
   useEffect(() => {
     async function onOnline() {
       const current = pending.current ?? latest.current;
-      if (!current || current.state !== "draft" || !principalId) return;
+      if (!current || current.state !== "draft" || !principalId || sending.current) return;
       if (await hasUnsent(current.id, principalId)) scheduleSave(current);
     }
     window.addEventListener("online", onOnline);
@@ -199,12 +223,14 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   }, [report?.projectId]);
 
   function update(next: Report) {
+    if (sending.current) return;
     setReport(next);
     if (next.state === "draft") scheduleSave(next);
   }
 
   async function send() {
-    if (!report) return;
+    if (!report || sending.current) return;
+    sending.current = true;
     setSubmitting(true);
     setSubmitError(null);
     try {
@@ -212,13 +238,16 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       // Wait for any save already running, so what is submitted is the version
       // the engineer just reviewed rather than whatever lands last.
       await chain.current;
-      const saved = await saveReport(report, report.version);
+      const saved = await saveReport(report, serverVersion.current ?? report.version,principalId ?? undefined);
+      serverVersion.current = saved.version;
+      setReport(saved);
       const sent = await submitReport(saved, {
         ...(signatureImage ? { dataUrl: signatureImage } : {}),
         name: signerName.trim() || report.author,
       });
       if (principalId) await releaseIfCurrent(report.id, principalId, seq.current);
       setReport(sent);
+      pending.current = null;
       setSaveState("clean");
     } catch (error) {
       if (error instanceof ApiError && error.offline) {
@@ -230,6 +259,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
               principalId,
               seq: seq.current,
               observations: report.observations,
+              baseVersion:serverVersion.current ?? report.version,
+              report,
             }).then(
               () => true,
               () => false,
@@ -245,6 +276,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         setSubmitError(error instanceof Error ? error.message : "That could not be sent.");
       }
     } finally {
+      sending.current = false;
       setSubmitting(false);
     }
   }
@@ -253,7 +285,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     return (
       <main className="wrap">
         <Link href="/" className="back">&larr; Projects</Link>
-        <div className="empty">That report could not be found.</div>
+        <div className="empty">This report could not be loaded. Check your connection or sign in again.</div>
+        <a href="/offline.html">Recover drafts retained on this phone</a>
       </main>
     );
   }
@@ -283,7 +316,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           <h1 className="ref" style={{ fontSize: 22 }}>{report.reference}</h1>
           <p className="sub">{project?.projectName}</p>
         </div>
-        <span className={sent ? "tag tag-sent" : "tag tag-draft"}>{sent ? "Sent" : "Draft"}</span>
+        <span className={sent ? "tag tag-sent" : "tag tag-draft"}>{sent ? "Submitted" : "Draft"}</span>
       </div>
 
       <dl className="titleblock" style={{ marginTop: 24 }}>
@@ -303,7 +336,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
       {sent && (
         <div className="note note-ok" style={{ marginTop: 16 }}>
-          Sent to the office{" "}
+          Received by Relay{" "}
           {report.serverAcknowledgedAt
             ? new Date(report.serverAcknowledgedAt).toLocaleString("en-GB")
             : ""}

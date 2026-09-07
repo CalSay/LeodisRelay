@@ -5,21 +5,24 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createReport, getProject, listReports, projectIssues, type Report } from "@/lib/api";
 import { IssueRegister } from "@/components/IssueRegister";
-import type { Issue } from "@/lib/types";
+import type { Issue, ReportSummary } from "@/lib/types";
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const project = getProject(id);
 
-  const [reports, setReports] = useState<Report[] | null>(null);
+  const [reports, setReports] = useState<ReportSummary[] | null>(null);
+  const [offset,setOffset] = useState(0);
+  const [next,setNext] = useState<number | null>(null);
+  const [error,setError] = useState('');
   const [issues, setIssues] = useState<Issue[] | null>(null);
   const [creating, setCreating] = useState(false);
 
   const refresh = useCallback(() => {
-    listReports(id).then(setReports);
+    listReports(id,offset).then(page => { setReports(page.reports); setNext(page.next); setError(''); }).catch(e => setError(e.message));
     projectIssues(id).then(setIssues).catch(() => setIssues([]));
-  }, [id]);
+  }, [id,offset]);
 
   useEffect(refresh, [refresh]);
 
@@ -100,10 +103,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
         <div className="empty">No reports yet on this project.</div>
       ) : (
         <div className="reg">
-          {reports
-            .slice()
-            .reverse()
-            .map((report) => (
+          {reports.map((report) => (
               <Link key={report.id} href={`/reports/${report.id}`} className="row">
                 <span className="row-code">{report.reference.split("-").slice(1).join("-")}</span>
                 <span className="row-main">
@@ -111,19 +111,24 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
                   <p className="row-meta">
                     {report.author}
                     <span className="sep">/</span>
-                    {report.observations.length} observation
-                    {report.observations.length === 1 ? "" : "s"}
+                    {report.observationCount} observation
+                    {report.observationCount === 1 ? "" : "s"}
                   </p>
                 </span>
                 <span className="row-end">
                   <span className={report.state === "submitted" ? "tag tag-sent" : "tag tag-draft"}>
-                    {report.state === "submitted" ? "Sent" : "Draft"}
+                    {report.state === "submitted" ? "Submitted" : "Draft"}
                   </span>
                 </span>
               </Link>
             ))}
         </div>
       )}
+      {error && <p role="alert">{error}</p>}
+      <div className="btn-row">
+        {offset > 0 && <button onClick={() => setOffset(Math.max(0,offset-50))}>Newer reports</button>}
+        {next !== null && <button onClick={() => setOffset(next)}>Older reports</button>}
+      </div>
     </main>
   );
 }

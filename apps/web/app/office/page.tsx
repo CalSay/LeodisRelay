@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { getProject, officeView, type OfficeDraftSummary } from "@/lib/api";
 import { ReviewPanel } from "@/components/ReviewPanel";
-import type { Report } from "@/lib/types";
+import type { ReportSummary } from "@/lib/types";
 import { deliveryStatus, receiptStatus, reviewStatus, toneClass } from "@/lib/status";
 
 /**
@@ -23,18 +23,34 @@ import { deliveryStatus, receiptStatus, reviewStatus, toneClass } from "@/lib/st
  */
 export default function OfficePage() {
   const [data, setData] = useState<{
-    awaitingReview: Report[];
-    submitted: Report[];
+    awaitingReview: ReportSummary[];
+    submitted: ReportSummary[];
     drafts: OfficeDraftSummary[];
+    next:number | null;
   } | null>(null);
-
-  const refresh = () => officeView().then(setData).catch(() => undefined);
+  const [offset,setOffset] = useState(0);
+  const [error,setError] = useState('');
+  const generation = useRef(0);
+  const refresh = useCallback(async () => {
+    const request = ++generation.current;
+    try {
+      const result = await officeView(offset);
+      if (request === generation.current) { setData(result); setError(''); }
+    } catch (e) {
+      if (request === generation.current) setError(e instanceof Error ? e.message : 'Unable to refresh reports.');
+    }
+  },[offset]);
 
   useEffect(() => {
-    refresh();
-    const poll = setInterval(refresh, 5000);
-    return () => clearInterval(poll);
-  }, []);
+    let stopped = false;
+    let timer: ReturnType<typeof setTimeout>;
+    async function poll() {
+      if (document.visibilityState === 'visible') await refresh();
+      if (!stopped) timer = setTimeout(poll,15000);
+    }
+    void poll();
+    return () => { stopped = true; clearTimeout(timer); generation.current++; };
+  }, [refresh]);
 
   return (
     <main className="wrap">
@@ -45,7 +61,7 @@ export default function OfficePage() {
         </div>
         {data && (
           <span className="lbl">
-            {data.awaitingReview.length} to review &nbsp;·&nbsp; {data.submitted.length} approved
+            This page: {data.awaitingReview.length} to review &nbsp;·&nbsp; {data.submitted.length} submitted
             &nbsp;·&nbsp; {data.drafts.length} in progress
           </span>
         )}
@@ -68,18 +84,18 @@ export default function OfficePage() {
       )}
 
       <div className="sec">
-        <span className="lbl">Reviewed</span>
+        <span className="lbl">Submitted</span>
       </div>
 
       {data === null ? (
         <div className="empty">Loading</div>
       ) : data.submitted.length === 0 ? (
-        <div className="empty">Nothing has been reviewed yet.</div>
+        <div className="empty">No other submissions on this page.</div>
       ) : (
         <div className="reg">
           {data.submitted.map((report) => {
             const project = getProject(report.projectId);
-            const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
+            const photos = report.photoCount;
             return (
               <Link key={report.id} href={`/reports/${report.id}/preview`} className="row">
                 <span className="row-code">{report.reference}</span>
@@ -89,7 +105,7 @@ export default function OfficePage() {
                     {report.author}
                     <span className="sep">/</span>visit {report.visitDate}
                     <span className="sep">/</span>
-                    {report.observations.length} obs
+                    {report.observationCount} obs
                     <span className="sep">/</span>
                     {photos} photo{photos === 1 ? "" : "s"}
                   </p>
@@ -162,6 +178,11 @@ export default function OfficePage() {
         </div>
       )}
 
+      {error && <p role="alert">{error}</p>}
+      <div className="btn-row">
+        {offset > 0 && <button onClick={() => setOffset(Math.max(0,offset-50))}>Newer reports</button>}
+        {data?.next != null && <button onClick={() => setOffset(data.next!)}>Older reports</button>}
+      </div>
       <p className="footnote">
         Draft content is not shown until a report is sent. Drafts listed are those saved to the
         server — work still on an engineer&apos;s phone is not visible here, so an empty list does

@@ -1,5 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { createHash } from 'node:crypto';
+import { dataRoot } from '../storage';
 import type { Recipient } from "@relay/platform";
 
 /**
@@ -35,7 +37,6 @@ export interface Transport {
   lastLocation?: string;
 }
 
-const OUTBOX = join(process.cwd(), ".relay-prototype", "outbox");
 
 /** RFC 2047 encoding, so a name with an accent or an ampersand survives. */
 function encodeHeader(value: string): string {
@@ -53,6 +54,7 @@ export function outboxTransport(): Transport {
   const transport: Transport = {
     kind: "outbox",
     async send(message) {
+      const OUTBOX = join(dataRoot(),'outbox');
       mkdirSync(OUTBOX, { recursive: true });
 
       const boundary = `relay-${Math.random().toString(36).slice(2)}`;
@@ -83,9 +85,10 @@ export function outboxTransport(): Transport {
 
       const path = join(
         OUTBOX,
-        `${new Date().toISOString().replace(/[:.]/g, "-")}-${message.to.address}.eml`,
+        `${createHash('sha256').update(message.to.address).update(message.attachment.fileName).update(message.attachment.bytes).digest('hex')}.eml`,
       );
-      writeFileSync(path, eml, "utf8");
+      try { writeFileSync(path, eml, { encoding:'utf8',flag:'wx' }); }
+      catch (error) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; }
       transport.lastLocation = path;
     },
   };

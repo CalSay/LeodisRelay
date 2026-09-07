@@ -39,6 +39,8 @@ export interface DocReport {
   revision: number;
   /** Approved reports are issuable; anything else is stamped as a draft. */
   approved: boolean;
+  /** Submission without mandatory office review is not a draft or an approval. */
+  submittedWithoutReview?: boolean;
   observations: DocObservation[];
   /**
    * Signed off at the point of sending.

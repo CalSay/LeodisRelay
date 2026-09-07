@@ -1,5 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { atomic, database, getRecord, putRecord, records } from './storage';
 
 import { transition, type IssuePolicy } from "@relay/platform";
 import type { Issue as ContractIssue } from "@relay/contracts";
@@ -15,27 +14,12 @@ import { FIXTURE_PROJECTS } from "./fixtures";
  * the prototype exercises the real logic rather than a lookalike that can drift
  * from it.
  *
- * Storage is the same disposable JSON file as reports.
+ * SQLite is the current prototype store. Deployment will use SharePoint Lists
+ * as the authority, with SQLite holding a cache and pending operations.
  */
 
-const DATA_FILE = join(process.cwd(), ".relay-prototype", "issues.json");
-
-interface StoreShape {
-  issues: Issue[];
-}
-
-function load(): StoreShape {
-  try {
-    if (!existsSync(DATA_FILE)) return { issues: [] };
-    return JSON.parse(readFileSync(DATA_FILE, "utf8")) as StoreShape;
-  } catch {
-    return { issues: [] };
-  }
-}
-
-function save(store: StoreShape): void {
-  mkdirSync(dirname(DATA_FILE), { recursive: true });
-  writeFileSync(DATA_FILE, JSON.stringify(store, null, 2), "utf8");
+function fromReport(reportId:string): Issue[] {
+  return database().prepare("SELECT data FROM records WHERE kind='issues' AND json_extract(data,'$.raisedByReport')=?").all(reportId).map(row => JSON.parse(row.data as string));
 }
 
 /**
@@ -66,12 +50,11 @@ function toContract(issue: Issue): ContractIssue {
 }
 
 export function listIssues(projectId?: string): Issue[] {
-  const { issues } = load();
-  return projectId ? issues.filter((i) => i.projectId === projectId) : issues;
+  return records<Issue>('issues',projectId);
 }
 
 export function getIssue(issueId: string): Issue | undefined {
-  return load().issues.find((i) => i.id === issueId);
+  return getRecord('issues',issueId);
 }
 
 /** Still needing attention: not withdrawn, not closed. */
@@ -93,7 +76,10 @@ export function openIssues(projectId: string): Issue[] {
  * issue with a history, not five issues with one line each.
  */
 export function raiseFromReport(report: Report): Issue[] {
-  const store = load();
+  return atomic(() => raiseIssues(report));
+}
+function raiseIssues(report: Report): Issue[] {
+  let sequence = Number(database().prepare("SELECT count(*) AS n FROM records WHERE kind='issues' AND project=?").get(report.projectId)!.n);
   const project = FIXTURE_PROJECTS.find((p) => p.id === report.projectId);
   const raised: Issue[] = [];
 
@@ -101,8 +87,8 @@ export function raiseFromReport(report: Report): Issue[] {
     if (observation.type !== "defect" && observation.type !== "access") continue;
 
     if (observation.linkedIssueId) {
-      const existing = store.issues.find((i) => i.id === observation.linkedIssueId);
-      if (existing) {
+      const existing = getIssue(observation.linkedIssueId);
+      if (existing && existing.projectId === report.projectId) {
         existing.events.push({
           at: new Date().toISOString(),
           actor: report.author,
@@ -110,6 +96,7 @@ export function raiseFromReport(report: Report): Issue[] {
           note: observation.whatHappened,
           photos: observation.photos,
         });
+        putRecord('issues',existing);
         continue;
       }
     }
@@ -117,7 +104,7 @@ export function raiseFromReport(report: Report): Issue[] {
     // Counted from the store alone. Newly raised issues are already pushed to
     // it, so adding raised.length again skipped numbers and would eventually
     // repeat a reference.
-    const sequence = store.issues.filter((i) => i.projectId === report.projectId).length + 1;
+    sequence++;
 
     const issue: Issue = {
       id: `iss-${Math.random().toString(36).slice(2, 10)}`,
@@ -144,11 +131,10 @@ export function raiseFromReport(report: Report): Issue[] {
         },
       ],
     };
-    store.issues.push(issue);
+    putRecord('issues',issue);
     raised.push(issue);
   }
 
-  save(store);
   return raised;
 }
 
@@ -160,8 +146,10 @@ export function raiseFromReport(report: Report): Issue[] {
  * exactly this reason.
  */
 export function disputeIssuesFromReport(reportId: string, actor: string): void {
-  const store = load();
-  for (const issue of store.issues) {
+  atomic(() => disputeIssues(reportId,actor));
+}
+function disputeIssues(reportId: string, actor: string): void {
+  for (const issue of fromReport(reportId)) {
     if (issue.raisedByReport === reportId && issue.confirmation === "provisional") {
       issue.confirmation = "disputed";
       issue.events.push({
@@ -171,9 +159,9 @@ export function disputeIssuesFromReport(reportId: string, actor: string): void {
         note: "Source report returned for correction — needs triage.",
         photos: [],
       });
+      putRecord('issues',issue);
     }
   }
-  save(store);
 }
 
 /**
@@ -184,8 +172,10 @@ export function disputeIssuesFromReport(reportId: string, actor: string): void {
  * withdrawn.
  */
 export function confirmIssuesFromReport(reportId: string, actor: string): void {
-  const store = load();
-  for (const issue of store.issues) {
+  atomic(() => confirmIssues(reportId,actor));
+}
+function confirmIssues(reportId: string, actor: string): void {
+  for (const issue of fromReport(reportId)) {
     if (issue.raisedByReport === reportId && issue.confirmation === "provisional") {
       issue.confirmation = "confirmed";
       issue.events.push({
@@ -195,9 +185,9 @@ export function confirmIssuesFromReport(reportId: string, actor: string): void {
         note: "Confirmed at report review.",
         photos: [],
       });
+      putRecord('issues',issue);
     }
   }
-  save(store);
 }
 
 export type IssueOutcome =
@@ -215,11 +205,11 @@ export interface IssueCommand {
 
 /** Map a user-facing command onto the platform's transition vocabulary. */
 export function applyCommand(issueId: string, command: IssueCommand): IssueOutcome {
-  const store = load();
-  const index = store.issues.findIndex((i) => i.id === issueId);
-  if (index === -1) return { ok: false, status: 404, reason: "No such issue." };
-
-  const issue = store.issues[index]!;
+  return atomic(() => applyIssueCommand(issueId,command));
+}
+function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome {
+  const issue = getIssue(issueId);
+  if (!issue) return { ok: false, status: 404, reason: "No such issue." };
   const event: IssueEvent = {
     at: new Date().toISOString(),
     actor: command.actor,
@@ -311,7 +301,6 @@ export function applyCommand(issueId: string, command: IssueCommand): IssueOutco
   }
 
   next = { ...next, events: [...issue.events, event] };
-  store.issues[index] = next;
-  save(store);
+  putRecord('issues',next);
   return { ok: true, value: next };
 }

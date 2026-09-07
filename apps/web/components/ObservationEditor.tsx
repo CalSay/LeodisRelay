@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { PhotoImage } from './PhotoImage';
 import { readPhoto, type Observation, type Photo } from "@/lib/api";
 import type { Issue } from "@/lib/types";
 import { FIXTURE_LOCATIONS, OBSERVATION_TYPES, type ObservationType } from "@/lib/fixtures";
@@ -183,7 +184,7 @@ export function ObservationEditor({
             <input
               ref={fileInput}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp"
               capture="environment"
               multiple
               onChange={(e) => addPhotos(e.target.files)}
@@ -202,7 +203,7 @@ export function ObservationEditor({
               {observation.photos.map((photo, i) => (
                 <figure key={photo.id} className="shot" style={{ margin: 0 }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={photo.dataUrl} alt={photo.caption || `Photograph ${i + 1}`} />
+                  <PhotoImage src={photo.dataUrl} alt={photo.caption || `Photograph ${i + 1}`} />
                   <div className="shot-body">
                     <span className="shot-no">Photo {String(i + 1).padStart(2, "0")}</span>
                     <input

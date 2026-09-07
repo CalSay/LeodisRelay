@@ -1,4 +1,4 @@
-import type { Observation } from "./types";
+import type { Observation, Report } from "./types";
 
 /**
  * Unsent work held on the device.
@@ -33,9 +33,11 @@ export interface HeldDraft {
   reportId: string;
   principalId: string;
   /** Monotonic per report. Identifies exactly which edit this copy is. */
-  seq: number;
+  seq: number | string;
   observations: Observation[];
   heldAt: string;
+  baseVersion?:number;
+  report?:Report;
 }
 
 function keyFor(reportId: string, principalId: string): string {
@@ -117,8 +119,10 @@ function run<T>(
 export async function keep(input: {
   reportId: string;
   principalId: string;
-  seq: number;
+  seq: number | string;
   observations: Observation[];
+  baseVersion?:number;
+  report?:Report;
 }): Promise<void> {
   const held: HeldDraft = {
     key: keyFor(input.reportId, input.principalId),
@@ -127,6 +131,8 @@ export async function keep(input: {
     seq: input.seq,
     observations: input.observations,
     heldAt: new Date().toISOString(),
+    baseVersion:input.baseVersion,
+    report:input.report,
   };
   await run("readwrite", (store) => store.put(held));
 }
@@ -141,13 +147,22 @@ export async function keep(input: {
 export async function releaseIfCurrent(
   reportId: string,
   principalId: string,
-  acknowledgedSeq: number,
+  acknowledgedSeq: number | string,
 ): Promise<void> {
   try {
     const key = keyFor(reportId, principalId);
-    const held = await run<HeldDraft | undefined>("readonly", (store) => store.get(key));
-    if (!held || held.seq !== acknowledgedSeq) return;
-    await run("readwrite", (store) => store.delete(key));
+    const db = await openDb();
+    await new Promise<void>((resolve,reject) => {
+      const tx = db.transaction(STORE,'readwrite');
+      const store = tx.objectStore(STORE);
+      const request = store.get(key);
+      request.onsuccess = () => {
+        const held = request.result as HeldDraft | undefined;
+        if (held?.seq === acknowledgedSeq) store.delete(key);
+      };
+      tx.oncomplete = () => { db.close(); resolve(); };
+      tx.onabort = () => { db.close(); reject(tx.error); };
+    });
   } catch {
     // Failing to clear a stale copy is harmless: recovery only ever applies to
     // a draft, and the next successful save overwrites it.
@@ -166,6 +181,22 @@ export async function recover(
   } catch {
     return null;
   }
+}
+
+export async function advanceBase(reportId:string,principalId:string,version:number):Promise<void> {
+  const db = await openDb();
+  await new Promise<void>((resolve,reject) => {
+    const tx = db.transaction(STORE,'readwrite');
+    const store = tx.objectStore(STORE);
+    const key = keyFor(reportId,principalId);
+    const request = store.get(key);
+    request.onsuccess = () => {
+      const held = request.result as HeldDraft | undefined;
+      if (held && (held.baseVersion ?? 0) < version) store.put({...held,baseVersion:version,report:held.report ? {...held.report,version} : undefined});
+    };
+    tx.oncomplete = () => {db.close();resolve();};
+    tx.onabort = () => {db.close();reject(tx.error);};
+  });
 }
 
 export async function hasUnsent(reportId: string, principalId: string): Promise<boolean> {

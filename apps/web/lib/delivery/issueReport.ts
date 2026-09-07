@@ -1,8 +1,7 @@
-import { renderReportPdf } from "@relay/documents";
 import { archiveFileName, sanitiseFileName } from "@relay/contracts";
 import { alreadyDelivered, resolveRecipients, type IssueRecord } from "@relay/platform";
 
-import { FIXTURE_PROJECTS, OBSERVATION_TYPES } from "../fixtures";
+import { FIXTURE_PROJECTS } from "../fixtures";
 import { resolveTransport } from "./transport";
 import type { Report } from "../types";
 
@@ -55,6 +54,7 @@ function bodyFor(report: Report, projectName: string): string {
 export async function issueReport(
   report: Report,
   existing: readonly IssueRecord[],
+  pdf: Uint8Array,
 ): Promise<IssueOutcome> {
   const project = FIXTURE_PROJECTS.find((p) => p.id === report.projectId);
 
@@ -72,32 +72,6 @@ export async function issueReport(
   if (send.length === 0) {
     return { records, unaddressed, transport: transport.kind, ...(missing.length ? {} : {}) };
   }
-
-  const pdf = await renderReportPdf({
-    reference: report.reference,
-    projectName: project?.projectName ?? report.projectId,
-    projectNumber: project?.projectNumber ?? "",
-    clientName: project?.clientName ?? "",
-    clientAccountNumber: project?.clientAccountNumber ?? "",
-    visitDate: report.visitDate,
-    author: report.author,
-    revision: report.revision,
-    approved: report.review === "approved",
-    observations: report.observations.map((o) => {
-      const kind = OBSERVATION_TYPES.find((t) => t.value === o.type);
-      return {
-        id: o.id,
-        typeLabel: kind?.label ?? o.type,
-        tone: kind?.tone ?? "neutral",
-        location: o.location,
-        whatHappened: o.whatHappened,
-        actionNeeded: o.actionNeeded,
-        owner: o.owner,
-        photos: o.photos,
-      };
-    }),
-    ...(report.signature ? { signature: report.signature } : {}),
-  });
 
   const fileName = archiveFileName({
     projectNumber: project?.projectNumber ?? "UNKNOWN",

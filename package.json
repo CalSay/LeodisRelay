@@ -8,12 +8,14 @@
     "apps/*"
   ],
   "engines": {
-    "node": ">=22"
+    "node": ">=24"
   },
   "scripts": {
-    "build": "tsc --build",
-    "typecheck": "tsc --build --force",
-    "test": "npm run build && node --test \"packages/*/dist/**/*.test.js\"",
+    "build": "npm run build:packages && npm run build:web",
+    "build:packages": "tsc --build",
+    "build:web": "npm --workspace @relay/web run build",
+    "typecheck": "tsc --build && tsc -p apps/web/tsconfig.json --noEmit",
+    "test": "npm run build:packages && node --test \"packages/*/dist/**/*.test.js\" && npm --workspace @relay/web test",
     "clean": "tsc --build --clean"
   },
   "devDependencies": {

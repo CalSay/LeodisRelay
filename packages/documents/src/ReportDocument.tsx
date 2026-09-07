@@ -333,7 +333,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
           </View>
           <View style={{ alignItems: "flex-end" }}>
             <Text style={s.docRef}>{report.reference}</Text>
-            {!report.approved && (
+            {!report.approved && !report.submittedWithoutReview && (
               <View style={s.stamp}>
                 <Text style={s.stampText}>DRAFT — NOT ISSUED</Text>
               </View>

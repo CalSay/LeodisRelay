@@ -10,5 +10,5 @@ export const runtime = "nodejs";
  */
 export async function POST(request: Request) {
   await endSession();
-  return NextResponse.redirect(`${new URL(request.url).origin}/signin`, { status: 303 });
+  return new NextResponse(null,{status:303,headers:{location:'/signin'}});
 }

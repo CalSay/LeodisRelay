@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { reviewReportDecision } from "@/lib/api";
 import { getProject } from "@/lib/api";
-import type { Report } from "@/lib/types";
+import type { ReportSummary } from "@/lib/types";
 
 /**
  * The reviewer's decision on one submitted report.
@@ -18,15 +18,13 @@ import type { Report } from "@/lib/types";
  * which is why the consequence is stated on the button's own panel rather than
  * left to be discovered.
  */
-export function ReviewPanel({ report, onDone }: { report: Report; onDone: () => void }) {
+export function ReviewPanel({ report, onDone }: { report: ReportSummary; onDone: () => void }) {
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const project = getProject(report.projectId);
-  const defects = report.observations.filter(
-    (o) => o.type === "defect" || o.type === "access",
-  ).length;
+  const defects = report.defectCount;
 
   async function decide(decision: "approve" | "return") {
     setBusy(true);
@@ -59,7 +57,7 @@ export function ReviewPanel({ report, onDone }: { report: Report; onDone: () => 
           {report.author}
           <span className="sep">/</span>visit {report.visitDate}
           <span className="sep">/</span>
-          {report.observations.length} observation{report.observations.length === 1 ? "" : "s"}
+          {report.observationCount} observation{report.observationCount === 1 ? "" : "s"}
           {defects > 0 ? ` / ${defects} raising an issue` : ""}
         </p>
 

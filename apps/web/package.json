@@ -3,8 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
+    "test": "tsc -p tsconfig.tests.json && node --test .test-build/tests/*.test.js",
     "dev": "next dev -p 4310",
-    "build": "next build",
+    "build": "next build && tsc -p tsconfig.worker.json",
+    "worker": "node .worker/worker.js",
     "start": "next start -p 4310"
   },
   "dependencies": {
@@ -15,7 +17,8 @@
     "@relay/platform": "*",
     "next": "^15.1.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "sharp": "^0.35.4"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

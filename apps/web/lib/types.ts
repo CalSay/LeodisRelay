@@ -28,14 +28,16 @@ export type ReportState = "draft" | "submitted";
 /**
  * Review is a separate dimension from capture.
  *
- * A returned report goes back to draft rather than being superseded: it was
- * never issued, so there is no original for a correction to link to. Supersede
- * applies to something already sent to a client, which is a different act with
- * a different audit trail.
+ * Review decisions do not mutate the submitted content snapshot. Corrections
+ * require a separate linked draft revision.
  */
 export type ReviewState = "not_required" | "pending" | "approved" | "returned";
 
 export interface Report {
+  delivery?: 'pending' | 'rendered' | 'filed' | 'sent' | 'outbox' | 'failed';
+  deliveryError?: string;
+  corrects?: string;
+  correctionReason?: string;
   id: string;
   projectId: string;
   reference: string;
@@ -92,6 +94,11 @@ export interface ReviewFinding {
   message: string;
   blocking: boolean;
 }
+
+export type ReportSummary = Omit<Report, 'observations' | 'signature'> & {
+  observationCount: number; photoCount: number; defectCount: number;
+};
+export type IssueSummary = Omit<Issue, 'events'>;
 
 /**
  * A persistent issue.

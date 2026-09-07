@@ -1,350 +1,134 @@
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { createHash, randomUUID } from 'node:crypto';
+import type { Report, ReportSummary, Observation } from './types';
+import { reviewReport } from './review';
+import { FIXTURE_PROJECTS } from './fixtures';
+import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } from './issueStore';
+import { atomic, getRecord, putRecord, records, pageRecords, enqueue, database } from './storage';
 
-import type { Report } from "./types";
-import { reviewReport } from "./review";
-import { FIXTURE_PROJECTS } from "./fixtures";
-import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } from "./issueStore";
-import { issueReport } from "./delivery/issueReport";
-
-/**
- * DISPOSABLE prototype store.
- *
- * A JSON file on disk, held by the dev server process. This is what makes the
- * prototype a shared thing rather than a private one: a report sent from a
- * phone is visible to the office view on a laptop, which is the only way to
- * test the question of what the office should actually see.
- *
- * It is not a database and must not grow into one. No concurrency control, no
- * migrations, no indexing. When the real API lands, this goes.
- */
-
-const DATA_FILE = join(process.cwd(), ".relay-prototype", "reports.json");
-
-interface StoreShape {
-  reports: Report[];
-}
-
-function load(): StoreShape {
-  try {
-    if (!existsSync(DATA_FILE)) return { reports: [] };
-    return JSON.parse(readFileSync(DATA_FILE, "utf8")) as StoreShape;
-  } catch {
-    // A corrupt prototype file should not stop the prototype starting.
-    return { reports: [] };
-  }
-}
-
-function save(store: StoreShape): void {
-  mkdirSync(dirname(DATA_FILE), { recursive: true });
-  writeFileSync(DATA_FILE, JSON.stringify(store, null, 2), "utf8");
-}
-
-function uid(prefix: string): string {
-  return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-export function listReports(projectId?: string): Report[] {
-  const { reports } = load();
-  return projectId ? reports.filter((r) => r.projectId === projectId) : reports;
-}
-
-export function getReport(reportId: string): Report | undefined {
-  return load().reports.find((r) => r.id === reportId);
-}
+export type StoreOutcome<T> = { ok: true; value: T } | { ok: false; status: number; reason: string };
+const reject = (reason: string, status = 409): StoreOutcome<never> => ({ ok: false, status, reason });
+export function listReports(projectId?: string): Report[] { return records('reports', projectId); }
+export function getReport(id: string): Report | undefined { return getRecord('reports', id); }
+export function reportPage(projectId?: string, offset = 0) { return pageRecords<ReportSummary>('reports', projectId, offset); }
 
 export function createReport(projectId: string, author: string): Report {
-  const store = load();
-  const project = FIXTURE_PROJECTS.find((p) => p.id === projectId);
-  const sequence = store.reports.filter((r) => r.projectId === projectId).length + 1;
-
-  const report: Report = {
-    id: uid("rep"),
-    projectId,
-    reference: `${project?.projectNumber ?? "UNKNOWN"}-SPR-${String(sequence).padStart(3, "0")}`,
-    visitDate: new Date().toISOString().slice(0, 10),
-    author,
-    state: "draft",
-    version: 1,
-    review: "not_required",
-    revision: 1,
-    observations: [],
-    lastSavedAt: new Date().toISOString(),
-  };
-
-  store.reports.push(report);
-  save(store);
-  return report;
+  return atomic(() => {
+    const project = FIXTURE_PROJECTS.find(p => p.id === projectId);
+    if (!project) throw new Error('Project not found.');
+    const count = database().prepare("SELECT COUNT(*) AS n FROM records WHERE kind='reports' AND project=?").get(projectId)!;
+    const report: Report = {
+      id: 'rep-' + randomUUID(), projectId, author,
+      reference: `${project.projectNumber}-SPR-${String(Number(count.n) + 1).padStart(3,'0')}`,
+      visitDate: new Date().toISOString().slice(0,10), state: 'draft', version: 1,
+      revision: 1, review: 'not_required', observations: [], lastSavedAt: new Date().toISOString(),
+    };
+    putRecord('reports',report);
+    return report;
+  });
 }
 
-export type StoreOutcome<T> =
-  | { ok: true; value: T }
-  | { ok: false; status: number; reason: string };
-
-/**
- * Saving a draft. A submitted report is frozen: the client should never offer
- * an edit, and the server refuses one regardless of what the client offers.
- */
-/**
- * Save a draft, refusing a write built on a version that has since moved.
- *
- * Compare and swap rather than last-writer-wins. Without it, two saves in
- * flight together are applied in whatever order they arrive, and the earlier
- * one silently wins — which is how observations disappear between a bad
- * connection and a person who has stopped watching.
- *
- * The autosave counter advances here. The document revision does not: what is
- * printed on a client report must not depend on how often somebody paused
- * while typing.
- */
-export function saveDraft(
-  reportId: string,
-  incoming: Report,
-  expectedVersion?: number,
-): StoreOutcome<Report> {
-  const store = load();
-  const index = store.reports.findIndex((r) => r.id === reportId);
-  if (index === -1) return { ok: false, status: 404, reason: "No such report." };
-
-  const existing = store.reports[index]!;
-  if (existing.state === "submitted") {
-    return {
-      ok: false,
-      status: 409,
-      reason: "This report has been sent and can no longer be edited.",
-    };
-  }
-
-  if (expectedVersion !== undefined && expectedVersion !== existing.version) {
-    return {
-      ok: false,
-      status: 409,
-      reason:
-        "This report changed since your last save. Your work is held on this device; " +
-        "reopen the report to see both versions.",
-    };
-  }
-
-  const saved: Report = {
-    ...existing,
-    observations: incoming.observations,
-    version: existing.version + 1,
-    lastSavedAt: new Date().toISOString(),
-  };
-  store.reports[index] = saved;
-  save(store);
-  return { ok: true, value: saved };
-}
-
-/**
- * Submission is checked server-side as well as on the device. The device
- * check is there to give fast, specific feedback; this one is there because a
- * client check is not a control.
- */
-export async function submitReport(
-  reportId: string,
-  signature?: { dataUrl?: string; name: string },
-): Promise<StoreOutcome<Report>> {
-  const store = load();
-  const index = store.reports.findIndex((r) => r.id === reportId);
-  if (index === -1) return { ok: false, status: 404, reason: "No such report." };
-
-  const existing = store.reports[index]!;
-  if (existing.state === "submitted") {
-    return { ok: false, status: 409, reason: "This report has already been sent." };
-  }
-
-  const blocking = reviewReport(existing).filter((f) => f.blocking);
-  if (blocking.length > 0) {
-    return {
-      ok: false,
-      status: 422,
-      reason: `${blocking.length} item(s) must be completed before sending.`,
-    };
-  }
-
-  const submitted: Report = {
-    ...existing,
-    state: "submitted",
-    // Reports do not wait for review unless their project asks for it.
-    review: FIXTURE_PROJECTS.find((p) => p.id === existing.projectId)?.reviewRequired
-      ? "pending"
-      : "not_required",
-    serverAcknowledgedAt: new Date().toISOString(),
-    // Stamped by the server, not the device: the time a report was signed off
-    // is a fact about when it was received, not about a phone's clock.
-    ...(signature
-      ? {
-          signature: {
-            ...(signature.dataUrl ? { dataUrl: signature.dataUrl } : {}),
-            name: signature.name,
-            signedAt: new Date().toISOString(),
-          },
-        }
-      : {}),
-  };
-  store.reports[index] = submitted;
-  save(store);
-
-  // Raised at submission rather than at approval, so urgent work is not held
-  // behind document review (blueprint 0.6).
-  raiseFromReport(submitted);
-
-  /*
-   * Sent to the project manager now rather than after review.
-   *
-   * Review is optional (see reviewRequired on the project) because the office
-   * is small and a control nobody has capacity to operate is worse than none.
-   * What makes that safe is the recipient: the project manager is Leodis, so
-   * this is internal distribution and the manager reading it is the check.
-   * Sending outside Leodis remains a separate act.
-   */
-  try {
-    const outcome = await issueReport(submitted, []);
-    const issued: Report = {
-      ...submitted,
-      issued: {
-        records: outcome.records as NonNullable<Report["issued"]>["records"],
-        unaddressed: [...outcome.unaddressed],
-        transport: outcome.transport,
-        ...(outcome.location ? { location: outcome.location } : {}),
-      },
-    };
-    const current = load();
-    const at = current.reports.findIndex((r) => r.id === reportId);
-    if (at !== -1) {
-      current.reports[at] = issued;
-      save(current);
+export function saveDraft(id: string, incoming: Report, expectedVersion?: number, requestId?: string): StoreOutcome<Report> {
+  return atomic(() => {
+    const digest = createHash('sha256').update(JSON.stringify({observations:incoming.observations,expectedVersion})).digest('hex');
+    const key = requestId ? `save:${requestId}` : undefined;
+    if (key) {
+      const previous = getRecord<{id:string;reportId:string;digest:string;version?:number;receipt?:Report}>('save-receipts',key);
+      if (previous) {
+        if (previous.reportId !== id || previous.digest !== digest) return reject('A save request ID was reused with different content.');
+        const current = getReport(id);
+        if (!current || current.version !== (previous.version ?? previous.receipt?.version) || current.state !== 'draft') return reject('That save was received, but the report has since changed. Your local work is retained; reopen the report to compare.');
+        return {ok:true,value:current};
+      }
     }
-    return { ok: true, value: issued };
-  } catch {
-    // A failure to send must never lose the submission itself.
+    const existing = getReport(id);
+    if (!existing) return reject('No such report.',404);
+    if (existing.state !== 'draft') return reject('This report has already been submitted.');
+    if (expectedVersion !== existing.version) return reject('This report changed elsewhere. Your local copy has been retained.');
+    const saved = { ...existing, observations: incoming.observations, version: existing.version + 1, lastSavedAt: new Date().toISOString() };
+    putRecord('reports',saved);
+    if (key) putRecord('save-receipts',{id:key,reportId:id,digest,version:saved.version});
+    return { ok: true, value: saved };
+  });
+}
+
+export interface DraftMutation { id: string; expectedVersion: number; upsert: Observation[]; remove: string[] }
+export function mutateDraft(id: string, mutation: DraftMutation): StoreOutcome<Report> {
+  return atomic(() => {
+    const acknowledged = database().prepare('SELECT receipt FROM mutations WHERE id=? AND report=?').get(mutation.id,id);
+    if (acknowledged) return { ok: true, value: JSON.parse(acknowledged.receipt as string) };
+    const current = getReport(id);
+    if (!current) return reject('No such report.',404);
+    const changes = new Map(mutation.upsert.map(o => [o.id,o]));
+    const observations = current.observations.filter(o => !mutation.remove.includes(o.id)).map(o => {
+      const next = changes.get(o.id); changes.delete(o.id); return next ?? o;
+    });
+    observations.push(...changes.values());
+    const result = saveDraft(id,{ ...current, observations },mutation.expectedVersion);
+    if (result.ok) database().prepare('INSERT INTO mutations VALUES (?,?,?)').run(mutation.id,id,JSON.stringify(result.value));
+    return result;
+  });
+}
+
+export async function submitReport(id: string, signature?: { dataUrl?: string; name: string }, expectedVersion?: number): Promise<StoreOutcome<Report>> {
+  return atomic(() => {
+    const existing = getReport(id);
+    if (!existing) return reject('No such report.',404);
+    if (existing.state === 'submitted') return { ok: true, value: existing }; // Lost receipt, safe retry.
+    if (expectedVersion !== existing.version) return reject('Save the latest changes before submitting.');
+    const blocking = reviewReport(existing).filter(f => f.blocking);
+    if (blocking.length) return reject(`${blocking.length} item(s) need completing before sending.`,422);
+    const submitted: Report = {
+      ...existing, state: 'submitted', serverAcknowledgedAt: new Date().toISOString(),
+      review: FIXTURE_PROJECTS.find(p => p.id === existing.projectId)?.reviewRequired ? 'pending' : 'not_required',
+      delivery: 'pending',
+      ...(signature ? { signature: { ...signature, signedAt: new Date().toISOString() } } : {}),
+    };
+    putRecord('reports',submitted);
+    putRecord('snapshots',submitted);
+    raiseFromReport(submitted);
+    enqueue('pdf:' + id,'pdf',{ reportId: id });
     return { ok: true, value: submitted };
-  }
+  });
 }
 
-/**
- * Review a submitted report.
- *
- * Approving confirms the observations it raised. Returning sends it back to
- * draft for the engineer to correct and disputes those observations for triage
- * — it never reverses work already done on them, because an engineer may
- * already have been dispatched and the defect may already be repaired
- * (decision DP-5).
- */
-export function reviewSubmission(
-  reportId: string,
-  decision: string,
-  reviewer: string,
-  note: string,
-): StoreOutcome<Report> {
-  const store = load();
-  const index = store.reports.findIndex((r) => r.id === reportId);
-  if (index === -1) return { ok: false, status: 404, reason: "No such report." };
-
-  // An unrecognised decision is refused, never defaulted. Defaulting to
-  // approval means a malformed request approves a report.
-  if (decision !== "approve" && decision !== "return") {
-    return { ok: false, status: 422, reason: "A review decision must be approve or return." };
-  }
-
-  const existing = store.reports[index]!;
-  if (existing.state !== "submitted") {
-    return { ok: false, status: 409, reason: "Only a submitted report can be reviewed." };
-  }
-  if (existing.review === "approved" || existing.review === "returned") {
-    return { ok: false, status: 409, reason: "This report has already been reviewed." };
-  }
-  if (decision === "return" && note.trim().length === 0) {
-    return {
-      ok: false,
-      status: 422,
-      reason: "Returning a report must say what needs changing.",
-    };
-  }
-  if (existing.author === reviewer) {
-    return {
-      ok: false,
-      status: 422,
-      reason: "A report cannot be reviewed by the person who wrote it.",
-    };
-  }
-
-  const reviewed: Report =
-    decision === "approve"
-      ? {
-          ...existing,
-          review: "approved",
-          reviewedBy: reviewer,
-          reviewedAt: new Date().toISOString(),
-          ...(note.trim() ? { reviewNote: note.trim() } : {}),
-        }
-      : {
-          ...existing,
-          // Never issued, so it returns to draft rather than being superseded.
-          state: "draft",
-          review: "returned",
-          reviewedBy: reviewer,
-          reviewedAt: new Date().toISOString(),
-          reviewNote: note.trim(),
-        };
-
-  store.reports[index] = reviewed;
-  save(store);
-
-  if (decision === "approve") confirmIssuesFromReport(reportId, reviewer);
-  else disputeIssuesFromReport(reportId, reviewer);
-
-  return { ok: true, value: reviewed };
+export function reviewSubmission(id: string, decision: string, reviewer: string, note: string): StoreOutcome<Report> {
+  return atomic(() => {
+    const report = getReport(id);
+    if (!report) return reject('No such report.',404);
+    if (!['approve','return'].includes(decision)) return reject('Choose approve or return.',422);
+    if (report.state !== 'submitted' || report.review !== 'pending') return reject('This report is not awaiting review.');
+    if (report.author === reviewer) return reject('The author cannot review their own report.',422);
+    if (decision === 'return' && !note.trim()) return reject('Say what needs changing.',422);
+    // The submitted snapshot stays immutable even when changes are requested.
+    const reviewed: Report = { ...report, review: decision === 'approve' ? 'approved' : 'returned', reviewedBy: reviewer, reviewedAt: new Date().toISOString(), reviewNote: note.trim() };
+    putRecord('reports',reviewed);
+    if (decision === 'approve') confirmIssuesFromReport(id,reviewer);
+    else disputeIssuesFromReport(id,reviewer);
+    return { ok: true, value: reviewed };
+  });
 }
 
-/**
- * What the office is allowed to see, per decision Q2.
- *
- * Submitted reports come back in full. Drafts return existence only — who,
- * which project, when it was last saved — and never their content. The
- * filtering happens here rather than in the view, because hiding fields on a
- * screen is not access control.
- *
- * Deliberately omitted: any "draft open for N days" figure. That turns work
- * visibility into a productivity measure, which is a different thing needing a
- * different conversation.
- */
-export interface OfficeDraftSummary {
-  id: string;
-  projectId: string;
-  reference: string;
-  author: string;
-  visitDate: string;
-  lastSavedAt?: string;
-  observationCount: number;
+export function correctReport(id: string, reason: string): StoreOutcome<Report> {
+  return atomic(() => {
+    const original = getReport(id);
+    if (!original || original.state !== 'submitted') return reject('Only a submitted report can be corrected.');
+    if (!reason.trim()) return reject('Say why this correction is needed.',422);
+    const previous = records<Report>('reports',original.projectId).find(r => r.corrects === id);
+    if (previous) return { ok: true, value: previous };
+    const { signature, issued, delivery, serverAcknowledgedAt, reviewedAt, reviewedBy, reviewNote, ...base } = original;
+    const correction: Report = { ...base, id: 'rep-' + randomUUID(), state: 'draft', review: 'not_required', revision: original.revision + 1, version: 1, corrects: id, correctionReason: reason.trim(), lastSavedAt: new Date().toISOString() };
+    putRecord('reports',correction);
+    return { ok: true, value: correction };
+  });
 }
 
-export interface OfficeView {
-  awaitingReview: Report[];
-  submitted: Report[];
-  drafts: OfficeDraftSummary[];
-}
-
-export function officeView(): OfficeView {
-  const { reports } = load();
-  const sent = reports.filter((r) => r.state === "submitted");
+export function officeView(offset = 0) {
+  const page = reportPage(undefined,offset);
+  const all = page.items;
   return {
-    // Only projects that ask for review produce anything here.
-    awaitingReview: sent.filter((r) => r.review === "pending"),
-    submitted: sent
-      .filter((r) => r.review !== "pending")
-      .sort((a, b) => (a.serverAcknowledgedAt ?? "") < (b.serverAcknowledgedAt ?? "") ? 1 : -1),
-    drafts: reports
-      .filter((r) => r.state === "draft")
-      .map((r) => ({
-        id: r.id,
-        projectId: r.projectId,
-        reference: r.reference,
-        author: r.author,
-        visitDate: r.visitDate,
-        ...(r.lastSavedAt !== undefined ? { lastSavedAt: r.lastSavedAt } : {}),
-        observationCount: r.observations.length,
-      })),
+    awaitingReview: all.filter(r => r.state === 'submitted' && r.review === 'pending'),
+    submitted: all.filter(r => r.state === 'submitted' && r.review !== 'pending'),
+    drafts: all.filter(r => r.state === 'draft'),
+    next: page.next,
   };
 }

@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.tests.json",
+  "compilerOptions": { "outDir": ".worker" },
+  "include": ["worker.ts"]
+}

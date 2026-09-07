@@ -1,4 +1,5 @@
-import type { Report } from "./types";
+import type { ReportSummary } from "./types";
+type Report = Omit<ReportSummary,'observationCount' | 'photoCount' | 'defectCount'>;
 
 /**
  * One place that turns a report's state into words.
@@ -43,6 +44,10 @@ export function reviewStatus(report: Report): StatusLine | null {
 }
 
 export function deliveryStatus(report: Report): StatusLine | null {
+  if (report.delivery === 'pending') return { label:'PDF queued', tone:'draft' };
+  if (report.delivery === 'rendered') return { label:'PDF ready — not emailed', tone:'draft' };
+  if (report.delivery === 'failed') return { label:'Processing needs attention', tone:'alert' };
+  if (report.delivery === 'outbox' || report.issued?.transport === 'outbox') return { label:'Local outbox only — not emailed', tone:'draft' };
   const records = report.issued?.records ?? [];
   if (records.length === 0) {
     return report.state === "submitted" ? { label: "Not sent", tone: "draft" } : null;

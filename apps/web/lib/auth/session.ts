@@ -1,9 +1,8 @@
 import { randomBytes } from "node:crypto";
-import { mkdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
-import { dirname, join } from "node:path";
 import { cookies } from "next/headers";
 
 import { expiryFrom, isExpired, type Principal, type Session } from "@relay/platform";
+import { atomic, database, getRecord, putRecord } from '../storage';
 
 /**
  * Server-side sessions with an opaque cookie.
@@ -20,25 +19,6 @@ import { expiryFrom, isExpired, type Principal, type Session } from "@relay/plat
 const SESSION_COOKIE = "relay_session";
 const STATE_COOKIE = "relay_oauth_state";
 const RETURN_COOKIE = "relay_oauth_return";
-const FILE = join(process.cwd(), ".relay-prototype", "sessions.json");
-
-interface Store {
-  sessions: Session[];
-}
-
-function load(): Store {
-  try {
-    if (!existsSync(FILE)) return { sessions: [] };
-    return JSON.parse(readFileSync(FILE, "utf8")) as Store;
-  } catch {
-    return { sessions: [] };
-  }
-}
-
-function save(store: Store): void {
-  mkdirSync(dirname(FILE), { recursive: true });
-  writeFileSync(FILE, JSON.stringify(store, null, 2), "utf8");
-}
 
 /** 256 bits from a cryptographic source. Session ids are guessed, not derived. */
 function token(): string {
@@ -53,8 +33,15 @@ const BASE_COOKIE = {
   httpOnly: true,
   sameSite: "lax" as const,
   path: "/",
-  // Secure in production only, or sign-in cannot be tested over plain http.
-  secure: process.env.NODE_ENV === "production",
+  // A deliberately enabled LAN demo can use HTTP with local identity only.
+  // Entra and normal production deployments always retain Secure cookies.
+  secure: process.env.NODE_ENV === "production" && !(
+    process.env.RELAY_ALLOW_LOCAL_AUTH === "yes" &&
+    process.env.RELAY_LOCAL_HTTP === "yes" &&
+    !process.env.ENTRA_TENANT_ID &&
+    !process.env.ENTRA_CLIENT_ID &&
+    !process.env.ENTRA_CLIENT_SECRET
+  ),
 };
 
 export async function beginSignIn(state: string, returnTo: string): Promise<void> {
@@ -83,11 +70,10 @@ export async function createSession(principal: Principal): Promise<Session> {
     expiresAt: expiryFrom(issuedAt),
   };
 
-  const store = load();
-  // Expired rows are cleared on write rather than accumulating forever.
-  store.sessions = store.sessions.filter((s) => !isExpired(s, issuedAt));
-  store.sessions.push(session);
-  save(store);
+  atomic(() => {
+    database().prepare("DELETE FROM records WHERE kind='sessions' AND json_extract(data,'$.expiresAt')<=?").run(issuedAt.toISOString());
+    putRecord('sessions',session);
+  });
 
   const jar = await cookies();
   jar.set(SESSION_COOKIE, session.id, {
@@ -104,7 +90,7 @@ export async function currentSession(): Promise<Session | null> {
   const id = jar.get(SESSION_COOKIE)?.value;
   if (!id) return null;
 
-  const session = load().sessions.find((s) => s.id === id);
+  const session = getRecord<Session>('sessions',id);
   if (!session) return null;
   if (isExpired(session, new Date())) return null;
   return session;
@@ -117,12 +103,6 @@ export async function currentPrincipal(): Promise<Principal | null> {
 export async function endSession(): Promise<void> {
   const jar = await cookies();
   const id = jar.get(SESSION_COOKIE)?.value;
-  if (id) {
-    const store = load();
-    // Removed server-side as well as from the browser: clearing only the cookie
-    // leaves a session that still works if the value is recovered.
-    store.sessions = store.sessions.filter((s) => s.id !== id);
-    save(store);
-  }
+  if (id) database().prepare("DELETE FROM records WHERE kind='sessions' AND id=?").run(id);
   jar.delete(SESSION_COOKIE);
 }

@@ -8,7 +8,10 @@
  */
 
 import { FIXTURE_PROJECTS, type FixtureProject } from "./fixtures";
-import type { Issue, Observation, Photo, Report } from "./types";
+import type { Issue, Observation, Photo, Report, ReportSummary } from "./types";
+import { capturePhoto, uploadPhotos } from './localMedia';
+import { localSaveJournal } from './localSaveJournal';
+import { saveWithJournal, type SaveRequest } from './saveRequest';
 
 const REPORTABLE_STATUSES = ["4. Active", "5. Defects Liability"];
 
@@ -60,11 +63,10 @@ export function getProject(projectId: string): FixtureProject | undefined {
   return FIXTURE_PROJECTS.find((p) => p.id === projectId);
 }
 
-export async function listReports(projectId: string): Promise<Report[]> {
-  const data = await parse<{ reports: Report[] }>(
-    await request(`/api/reports?projectId=${encodeURIComponent(projectId)}`, { cache: "no-store" }),
+export async function listReports(projectId: string, offset = 0): Promise<{ reports: ReportSummary[]; next:number | null }> {
+  return parse(
+    await request(`/api/reports?projectId=${encodeURIComponent(projectId)}&offset=${offset}`, { cache: "no-store" }),
   );
-  return data.reports;
 }
 
 export async function getReport(reportId: string): Promise<Report | undefined> {
@@ -89,14 +91,16 @@ export async function createReport(projectId: string, author: string): Promise<R
  * The server refuses a write whose base version has moved, so two saves racing
  * cannot silently overwrite one another.
  */
-export async function saveReport(report: Report, expectedVersion?: number): Promise<Report> {
-  return parse<Report>(
-    await request(`/api/reports/${report.id}`, {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ observations: report.observations, expectedVersion }),
-    }),
-  );
+export async function saveReport(report: Report, expectedVersion?: number,principalId?:string): Promise<Report> {
+  const send = async (body:SaveRequest) => {
+    try { await uploadPhotos(body.observations.flatMap(o => o.photos), { reportId: report.id }); }
+    catch (error) { if (error instanceof TypeError) throw new ApiError('No connection. Photographs remain on this phone.',true); throw error; }
+    return parse<Report>(await request(`/api/reports/${report.id}`, {
+      method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body),
+    }));
+  };
+  if (!principalId) throw new ApiError('Sign in before saving.');
+  return saveWithJournal(report,expectedVersion ?? 0,localSaveJournal(report.id,principalId),send);
 }
 
 export async function submitReport(
@@ -107,7 +111,7 @@ export async function submitReport(
     await request(`/api/reports/${report.id}`, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify(signature ? { signature } : {}),
+      body: JSON.stringify({ signature, expectedVersion: report.version }),
     }),
   );
 }
@@ -137,12 +141,13 @@ export interface OfficeDraftSummary {
   observationCount: number;
 }
 
-export async function officeView(): Promise<{
-  awaitingReview: Report[];
-  submitted: Report[];
+export async function officeView(offset = 0): Promise<{
+  awaitingReview: ReportSummary[];
+  submitted: ReportSummary[];
   drafts: OfficeDraftSummary[];
+  next:number | null;
 }> {
-  return parse(await request("/api/reports?view=office", { cache: "no-store" }));
+  return parse(await request(`/api/reports?view=office&offset=${offset}`, { cache: "no-store" }));
 }
 
 export async function openIssues(projectId: string): Promise<Issue[]> {
@@ -175,18 +180,7 @@ export function newObservation(): Observation {
 }
 
 export function readPhoto(file: File): Promise<Photo> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () =>
-      resolve({
-        id: `media-${Math.random().toString(36).slice(2, 10)}`,
-        dataUrl: String(reader.result),
-        caption: "",
-        capturedAt: new Date().toISOString(),
-      });
-    reader.onerror = () => reject(new Error("That photograph could not be read."));
-    reader.readAsDataURL(file);
-  });
+  return capturePhoto(file);
 }
 
 // Re-exported so screens have one import for the data layer, and so swapping

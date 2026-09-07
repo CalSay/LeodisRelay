@@ -13,6 +13,7 @@ const PUBLIC = ["/signin", "/api/auth"];
 
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  if (['/sw.js', '/offline.html', '/offline.js', '/manifest.webmanifest', '/icon', '/icon-192', '/apple-icon'].includes(pathname)) return NextResponse.next();
   if (PUBLIC.some((p) => pathname.startsWith(p))) return NextResponse.next();
 
   if (request.cookies.get("relay_session")) return NextResponse.next();
@@ -23,7 +24,7 @@ export function middleware(request: NextRequest) {
   }
 
   const url = request.nextUrl.clone();
-  url.pathname = "/signin";
+  url.pathname = '/signin';
   url.search = `?returnTo=${encodeURIComponent(pathname + search)}`;
   return NextResponse.redirect(url);
 }

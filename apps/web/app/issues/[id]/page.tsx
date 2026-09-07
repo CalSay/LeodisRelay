@@ -4,6 +4,8 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { getProject, readPhoto } from "@/lib/api";
 import type { Issue, Photo } from "@/lib/types";
+import { PhotoImage } from '@/components/PhotoImage';
+import { uploadPhotos } from '@/lib/localMedia';
 
 /**
  * One issue, across every visit that touched it.
@@ -71,6 +73,7 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
     setBusy(true);
     setError(null);
     try {
+      await uploadPhotos(photos, { issueId: issue.id });
       const response = await fetch(`/api/issues/${issue.id}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -166,7 +169,7 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
                   {event.photos.map((photo, pi) => (
                     <figure key={photo.id} className="shot" style={{ margin: 0 }}>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photo.dataUrl} alt={photo.caption || `Photograph ${pi + 1}`} />
+                      <PhotoImage src={photo.dataUrl} alt={photo.caption || `Photograph ${pi + 1}`} />
                       {photo.caption && (
                         <div className="shot-body">
                           <span className="shot-no">{photo.caption}</span>
@@ -207,7 +210,7 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
                 <label className="camera">
                   <input
                     type="file"
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     capture="environment"
                     multiple
                     onChange={async (e) => {
@@ -226,7 +229,7 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
                     {photos.map((photo, i) => (
                       <figure key={photo.id} className="shot" style={{ margin: 0 }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={photo.dataUrl} alt={`New evidence ${i + 1}`} />
+                        <PhotoImage src={photo.dataUrl} alt={`New evidence ${i + 1}`} />
                       </figure>
                     ))}
                   </div>

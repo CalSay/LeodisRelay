@@ -1,0 +1,11 @@
+node_modules
+**/node_modules
+**/.next
+**/.test-build
+**/.worker
+**/.relay-prototype
+.git
+.env
+.env.*
+!.env.example
+**/*.tsbuildinfo
