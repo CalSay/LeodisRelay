@@ -4,7 +4,7 @@ import { getReport } from '@/lib/serverStore';
 import { getIssue } from '@/lib/issueStore';
 import { getMedia, mediaBytes, putMedia, renditionBytes } from '@/lib/mediaStore';
 import { MEDIA_LIMIT, mediaId } from '@/lib/media';
-import { ownsReport, canReadReport } from '@/lib/auth/access';
+import { ownsReport, canReadReport, canAccessProject } from '@/lib/auth/access';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,7 +23,16 @@ export async function PUT(request: Request, context: Context) {
     if (!report || !ownsReport(guard.principal,report) || report.state !== 'draft') {
       return NextResponse.json({ reason: 'This report is not editable by you.' }, { status: 403 });
     }
-  } else if (!await getIssue(issueId!)) return NextResponse.json({ reason: 'Issue not found.' }, { status: 404 });
+  } else {
+    // An issue is not a public pinboard. Without the project check any signed-in
+    // person could attach evidence to any issue in any project — including one
+    // in a division they have nothing to do with.
+    const issue = await getIssue(issueId!);
+    if (!issue) return NextResponse.json({ reason: 'Issue not found.' }, { status: 404 });
+    if (!canAccessProject(guard.principal, issue.projectId)) {
+      return NextResponse.json({ reason: 'This issue is on a project you do not have access to.' }, { status: 403 });
+    }
+  }
   const reader = request.body?.getReader();
   if (!reader) return NextResponse.json({ reason: 'Photograph required.' }, { status: 422 });
   const chunks: Uint8Array[] = [];
@@ -52,9 +61,12 @@ export async function GET(_request: Request, context: Context) {
   if (!record) return new NextResponse(null, { status: 404 });
   const report = record.reportId ? await getReport(record.reportId) : null;
   const issue = record.issueId ? await getIssue(record.issueId) : null;
-  if (!(report && canReadReport(guard.principal,report)) && !issue) {
-    return new NextResponse(null, { status: 403 });
-  }
+  // Report media follows the report's own visibility; issue media follows
+  // access to the project the issue sits on. Existence alone authorises nothing.
+  const allowed = report
+    ? canReadReport(guard.principal, report)
+    : Boolean(issue) && canAccessProject(guard.principal, issue!.projectId);
+  if (!allowed) return new NextResponse(null, { status: 403 });
   const variant = new URL(_request.url).searchParams.get('variant');
   if (variant && !['thumb','pdf'].includes(variant)) return NextResponse.json({reason:'Unknown image variant.'},{status:400});
   const bytes = variant ? await renditionBytes(id,variant as 'thumb'|'pdf') : await mediaBytes(id);

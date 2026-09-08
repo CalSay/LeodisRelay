@@ -1,18 +1,28 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface InstallPrompt extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{outcome:'accepted'|'dismissed'}>;
 }
 
-/** Guidance is always available in a browser; native installation is feature-detected. */
+/**
+ * Guidance is always available in a browser; native installation is
+ * feature-detected.
+ *
+ * Shown on the sign-in and home screens only. It used to sit above the content
+ * of every page, which put a band of installation advice permanently above the
+ * report an engineer was in the middle of writing. These are the two screens
+ * someone is actually on when they think about installing it.
+ */
 export function InstallRelay() {
   const [installed,setInstalled] = useState(false);
   const [prompt,setPrompt] = useState<InstallPrompt | null>(null);
   const [busy,setBusy] = useState(false);
   const [message,setMessage] = useState('');
+  const pathname = usePathname();
   useEffect(() => {
     const mode = window.matchMedia('(display-mode: standalone)');
     const detect = () => setInstalled(mode.matches || (navigator as Navigator & {standalone?:boolean}).standalone === true);
@@ -38,7 +48,7 @@ export function InstallRelay() {
     } catch {setMessage('Use the browser instructions below to install RELAY.');}
     finally {setPrompt(null);setBusy(false);}
   }
-  if (installed) return null;
+  if (installed || !['/','/signin'].includes(pathname)) return null;
   return <aside className="install-help" aria-label="Install RELAY">
     <details>
       <summary>Install RELAY on your phone</summary>
@@ -46,9 +56,9 @@ export function InstallRelay() {
         <p>Add RELAY to your home screen and open it like an app. Use your usual Leodis Microsoft account.</p>
         {prompt && <button className="btn-primary" disabled={busy} onClick={install}>{busy ? 'Opening installer…' : 'Install RELAY'}</button>}
         <p role="status" aria-live="polite">{message}</p>
-        <h2>iPhone or iPad</h2>
+        <h3>iPhone or iPad</h3>
         <ol><li>Open this website in Safari.</li><li>Open the Share menu (it may be inside the More menu).</li><li>Choose <strong>Add to Home Screen</strong>. Keep <strong>Open as Web App</strong> enabled if shown, then tap <strong>Add</strong>.</li></ol>
-        <h2>Android</h2>
+        <h3>Android</h3>
         <ol><li>Open this website in Chrome.</li><li>Tap <strong>Install RELAY</strong> above if available, or open Chrome’s three-dot menu.</li><li>Choose <strong>Install app</strong> or <strong>Add to Home screen</strong> and follow the prompts. Wording varies by phone.</li></ol>
         <p>If you opened RELAY inside Teams or an email app, open the link in Safari or Chrome first. On a computer, look for the browser’s install option.</p>
         <p>Installation does not enable full offline working. Connect to sign in, upload photographs and submit reports. Offline recovery currently covers previously retained draft text.</p>

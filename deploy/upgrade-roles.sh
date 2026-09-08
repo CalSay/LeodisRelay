@@ -47,16 +47,31 @@ sha256sum "$backup/relay-data.tar.gz" > "$backup/relay-data.sha256"
 docker tag "$candidate" relay:pilot
 docker compose -f deploy/compose.yaml up -d --no-build --force-recreate web worker
 
+# Two separate questions, because they have opposite remedies. If the container
+# is unhealthy the new image is at fault and rolling back is right. If the
+# container is healthy but the site is unreachable, the fault is DNS, Caddy or
+# the certificate, and rolling the application back would fix nothing while
+# discarding a good deployment.
 ready=0
-for attempt in $(seq 1 30); do
-  if curl --fail --silent --output /dev/null https://app.relaybyleodis.com/signin; then
+for attempt in $(seq 1 60); do
+  if [ "$(docker inspect --format '{{.State.Health.Status}}' relay-web-1 2>/dev/null)" = healthy ]; then
     ready=1
     break
   fi
   sleep 2
 done
+if [ "$ready" != 1 ]; then
+  echo 'The application container did not report healthy. Recent log:'
+  docker compose -f deploy/compose.yaml logs --tail 50 web || true
+fi
 test "$ready" = 1
 test "$(docker inspect --format '{{.State.Running}}' relay-worker-1)" = true
+if ! curl --fail --silent --output /dev/null https://app.relaybyleodis.com/signin; then
+  echo
+  echo 'WARNING: the application is healthy but https://app.relaybyleodis.com is not responding.'
+  echo 'That is DNS, Caddy or the certificate, not this release. Do not roll back;'
+  echo 'check "docker compose -f deploy/compose.yaml logs caddy".'
+fi
 recover=0
 docker compose -f deploy/compose.yaml ps
 echo "Upgrade started successfully. Backup: $backup"

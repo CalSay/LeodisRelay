@@ -13,6 +13,9 @@ x-relay: &relay
     RELAY_MAIL_ENABLED: "no"
   volumes:
     - relay_data:/data
+  # Both write to SQLite and to the photo store; neither should be killed
+  # part-way through a submission or a PDF render.
+  stop_grace_period: 60s
   logging:
     driver: local
     options:
@@ -27,7 +30,10 @@ services:
   worker:
     <<: *relay
     command: ["npm", "run", "worker"]
-    stop_grace_period: 60s
+    # The worker renders PDFs; it serves no HTTP, so the image's health probe
+    # does not apply to it.
+    healthcheck:
+      disable: true
   caddy:
     image: caddy:2
     restart: unless-stopped

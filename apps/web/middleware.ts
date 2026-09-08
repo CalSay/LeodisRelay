@@ -9,7 +9,8 @@ import { NextResponse, type NextRequest } from "next/server";
  * routes themselves establish who the person actually is. A cookie is a hint;
  * it is never taken as proof.
  */
-const PUBLIC = ["/signin", "/api/auth"];
+// The container health probe has no session and must not be redirected to one.
+const PUBLIC = ["/signin", "/api/auth", "/api/health"];
 
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;

@@ -1,0 +1,8 @@
+# Files that are executed on the Linux server must keep LF endings whatever the
+# checkout platform does. A CRLF shebang fails as "/usr/bin/env bash\r: not
+# found", which reads like a missing interpreter rather than a line ending.
+*.sh text eol=lf
+Dockerfile text eol=lf
+Caddyfile text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf

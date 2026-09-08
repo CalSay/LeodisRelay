@@ -29,7 +29,18 @@ Verify HTTPS, Microsoft sign-in, rejection of an unassigned account, photo uploa
 and PDF worker processing. Restart web and worker and verify data survives.
 Do not run `docker compose down -v`: it deletes the persistent volumes.
 
-Before real data, enable server backups and test an application backup/restore.
+Before real data, enable server backups and rehearse a restore.
+
+`upgrade-pilot.sh` takes a verified backup on every run; `restore-data.sh` puts
+one back. Rehearse it on a copy before you need it in anger:
+
+    sudo bash deploy/restore-data.sh /opt/relay-backups/<timestamp>
+
+It verifies the archive first, asks you to type RESTORE, and takes its own
+backup of the current data before replacing it, so a restore from the wrong
+timestamp is itself reversible. `rollback-roles.sh` is the different case: it
+returns the application to the previous image and does not touch data.
+
 For a consistent full data backup, stop web and worker, back up relay_relay_data,
 then start both again. Include images and SQLite together. Store an encrypted
 backup off the server; restore into a separate volume and verify reports/photos.

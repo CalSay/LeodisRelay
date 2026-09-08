@@ -12,6 +12,7 @@ export default function PdfPage({params}: {params:Promise<{id:string}>}) {
   const [zoom,setZoom] = useState(1);
   const [width,setWidth] = useState(320);
   const [error,setError] = useState('');
+  const [signedOut,setSignedOut] = useState(false);
   const [loading,setLoading] = useState(true);
   const [pageText,setPageText] = useState('');
   const [retry,setRetry] = useState(0);
@@ -31,12 +32,13 @@ export default function PdfPage({params}: {params:Promise<{id:string}>}) {
     let active = true;
     let task: ReturnType<typeof import('pdfjs-dist')['getDocument']> | undefined;
     const abort = new AbortController();
-    setDoc(null);setPage(1);setLoading(true);setError('');
+    setDoc(null);setPage(1);setLoading(true);setError('');setSignedOut(false);
     async function load() {
       try {
         const response = await fetch(`/api/reports/${id}/pdf`,{cache:'no-store',signal:abort.signal});
         if (!response.ok) {
           const body = await response.json().catch(() => ({}));
+          if (response.status === 401 && active) setSignedOut(true);
           throw new Error(body.reason ?? 'Unable to open this PDF.');
         }
         const bytes = new Uint8Array(await response.arrayBuffer());
@@ -56,14 +58,20 @@ export default function PdfPage({params}: {params:Promise<{id:string}>}) {
     let active = true;
     let render:RenderTask | undefined;
     const surface = canvas.current;
-    setLoading(true);setError('');setPageText('');
+    setLoading(true);setError('');setPageText('');setSignedOut(false);
     async function draw() {
       try {
         const pdfPage = await doc!.getPage(page);
         if (!active) return;
         const base = pdfPage.getViewport({scale:1});
         const viewport = pdfPage.getViewport({scale:width / base.width * zoom});
-        const ratio = Math.min(window.devicePixelRatio || 1,2);
+        // Safari on iOS refuses a canvas larger than about 16.7 million pixels
+        // and returns a blank one rather than an error. A2 drawings at 200% on
+        // a retina screen go past that, so the device pixel ratio is reduced
+        // until the surface fits instead of silently rendering nothing.
+        const CANVAS_LIMIT = 16_000_000;
+        const area = viewport.width * viewport.height;
+        const ratio = Math.max(1,Math.min(window.devicePixelRatio || 1,2,Math.sqrt(CANVAS_LIMIT / area)));
         surface.width = Math.ceil(viewport.width * ratio);
         surface.height = Math.ceil(viewport.height * ratio);
         surface.style.width = `${viewport.width}px`;
@@ -88,7 +96,7 @@ export default function PdfPage({params}: {params:Promise<{id:string}>}) {
       {doc && <a className="back" href={`/api/reports/${id}/pdf?download=1`} download>Download PDF</a>}
     </div>
     {loading && <p role="status">Loading PDF…</p>}
-    {error && <div role="alert" className="note note-bad"><p>{error}</p><button onClick={() => setRetry(n => n+1)}>Try again</button> <Link href="/signin">Sign in</Link></div>}
+    {error && <div role="alert" className="note note-bad"><p>{error}</p><button onClick={() => setRetry(n => n+1)}>Try again</button>{/* Offered only when the session is the actual problem; on a render fault it sends people to fix something that is not broken. */}{signedOut && <> <Link href="/signin">Sign in</Link></>}</div>}
     <div ref={container} style={{width:'100%',overflowX:'auto',marginTop:16}}>
       {doc && <canvas key={`${page}-${width}-${zoom}`} ref={canvas} role="img" aria-label={`Report PDF, page ${page}. Text is available below.`} style={{display:error ? 'none':'block',background:'#fff'}} />}
     </div>
