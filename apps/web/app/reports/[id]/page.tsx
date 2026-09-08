@@ -19,6 +19,7 @@ import { hasUnsent, keep, recover, releaseIfCurrent } from "@/lib/localDraft";
 import { ObservationEditor } from "@/components/ObservationEditor";
 import { SignaturePad } from "@/components/SignaturePad";
 import type { Issue as IssueSummary } from "@/lib/types";
+import { usePrincipal } from '@/components/PrincipalContext';
 
 type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error";
 
@@ -34,7 +35,7 @@ const SAVE: Record<SaveState, { dot: string; text: string }> = {
   clean: { dot: "dot", text: "" },
   saving: { dot: "dot dot-busy", text: "Saving to server" },
   saved: { dot: "dot dot-ok", text: "Saved on server" },
-  phone: { dot: "dot dot-busy", text: "On this phone only — will send when there is signal" },
+  phone: { dot: "dot dot-busy", text: "On this device only — will retry saving when connected" },
   // The dangerous state, and the only one that warrants alarm: the work is
   // neither on the server nor held on the device, so closing the page loses it.
   unheld: { dot: "dot dot-bad", text: "NOT SAVED ANYWHERE — keep this page open" },
@@ -43,6 +44,8 @@ const SAVE: Record<SaveState, { dot: string; text: string }> = {
 
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const principal = usePrincipal();
+  const [selectedSection,setSelectedSection] = useState<string | null>(null);
 
   const [report, setReport] = useState<Report | null>(null);
   const [missing, setMissing] = useState(false);
@@ -306,15 +309,15 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
 
   return (
-    <main className={sent ? "wrap" : "wrap wrap-pad"}>
-      <Link href={`/projects/${report.projectId}`} className="back">
+    <main className={sent ? "wrap" : "wrap wrap-pad eng-report-editor"}>
+      <Link href={`/engineer?project=${encodeURIComponent(report.projectId)}`} className="back">
         &larr; {project?.projectName ?? "Project"}
       </Link>
 
       <div className="pagehead">
         <div>
-          <h1 className="ref" style={{ fontSize: 22 }}>{report.reference}</h1>
-          <p className="sub">{project?.projectName}</p>
+          <h1>{sent ? report.reference : 'Site update'}</h1>
+          <p className="sub">{project?.projectName} · {report.reference}</p>
         </div>
         <span className={sent ? "tag tag-sent" : "tag tag-draft"}>{sent ? "Submitted" : "Draft"}</span>
       </div>
@@ -347,7 +350,14 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         </div>
       )}
 
-      <div className="sec"><span className="lbl">Updates</span></div>
+      {!sent && <div className="eng-editor-intro"><p>Build your visit report section by section. Each section uses the existing observation fields.</p><a href="#report-check">Check report ↓</a></div>}
+      <div className={sent ? '' : 'eng-editor-grid'}>
+      {!sent && <aside className="eng-sections" aria-label="Report sections"><h2>Report sections · {report.observations.length}</h2>
+        {report.observations.map((o,i)=><button type="button" key={o.id} aria-pressed={(report.observations.some(x=>x.id===selectedSection)?selectedSection:report.observations[0]?.id)===o.id} onClick={()=>setSelectedSection(o.id)}><span>{String(i+1).padStart(2,'0')}</span><span><strong>{o.location || `Section ${i+1}`}</strong><small>{o.type} · {o.photos.length} photo{o.photos.length===1?'':'s'}</small></span></button>)}
+        <button type="button" className="eng-add-section" disabled={submitting} onClick={()=>{const o=newObservation();update({...report,observations:[...report.observations,o]});setSelectedSection(o.id);}}>+ Add section</button>
+      </aside>}
+      <div>
+      <div className="sec"><span className="lbl">{sent?'Updates':'Selected section'}</span></div>
 
       {report.observations.length === 0 ? (
         <div className="empty">No updates recorded yet.</div>
@@ -367,8 +377,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
               </div>
             </section>
           ) : (
+            <div key={observation.id} hidden={(report.observations.some(o=>o.id===selectedSection)?selectedSection:report.observations[0]?.id)!==observation.id}>
             <ObservationEditor
-              key={observation.id}
               observation={observation}
               index={index}
               openIssues={projectIssues}
@@ -385,23 +395,15 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
                 })
               }
             />
+            </div>
           ),
         )
       )}
+      </div></div>
 
       {!sent && (
         <>
-          <button
-            className="btn-wide"
-            style={{ marginTop: 4 }}
-            onClick={() =>
-              update({ ...report, observations: [...report.observations, newObservation()] })
-            }
-          >
-            Add an update
-          </button>
-
-          <div className="sec"><span className="lbl">Before you send</span></div>
+          <div id="report-check" className="sec"><span className="lbl">Before you send · All sections</span></div>
 
           {findings.length === 0 ? (
             <div className="note note-ok">Everything needed is here.</div>

@@ -120,7 +120,7 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <main className="wrap">
-      <Link href={`/projects/${issue.projectId}`} className="back">
+      <Link href={`/engineer?project=${encodeURIComponent(issue.projectId)}&view=issues`} className="back">
         &larr; {project?.projectName ?? "Project"}
       </Link>
 
@@ -151,6 +151,12 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
           <dd className="ref">{new Date(issue.raisedAt).toLocaleDateString("en-GB")}</dd>
         </div>
       </dl>
+      <section className="eng-panel">
+        <h2>{issue.source==='individual'?'Individual defect':'Site observation'}</h2>
+        <p>{issue.description}</p>
+        <p className="eng-help">{project?.projectName} · {issue.location || 'Location not recorded'}</p>
+        <p className="eng-help">Trade affected: {issue.affectedTrade ?? 'Not recorded'}<br/>Reported by {issue.reportedBy ?? issue.events[0]?.actor ?? 'Not recorded'} · {issue.reporterTrade ?? 'Reporting trade not recorded'}</p>
+      </section>
 
       {issue.confirmation === "disputed" && (
         <div className="note note-bad" style={{ marginTop: 16 }}>

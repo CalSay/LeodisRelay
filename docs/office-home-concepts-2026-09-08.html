@@ -1,0 +1,1447 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Relay Office Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* ---------------------------------------------------------------------------
+   Relay office concepts.
+
+   The palette is lifted unchanged from apps/web/app/globals.css. The only new
+   token is --sunken: a recessed ground behind list regions, so a panel reads as
+   a raised surface without a shadow or a radius. Cards would contradict the
+   register idiom the app is built on; recession does the same job with the
+   materials already in the system.
+--------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+  --ground: #f4f4f1;
+  --sunken: #e9e9e5;
+  --panel: #ffffff;
+  --panel-2: #ececea;
+  --panel-3: #e0e0dc;
+  --line: #deddd8;
+  --line-2: #c6c5bf;
+  --text: #1a1b19;
+  --text-2: #55564f;
+  --text-3: #6b6c65;
+  --brass: #7d621b;
+  --brass-2: #a8842f;
+  --brass-ink: #ffffff;
+  --brass-wash: rgba(125, 98, 27, 0.09);
+  --alert: #a83c22;
+  --alert-wash: rgba(168, 60, 34, 0.08);
+  --caution: #7d5a12;
+  --caution-wash: rgba(125, 90, 18, 0.1);
+  --ok: #2b6b48;
+  --ok-wash: rgba(43, 107, 72, 0.09);
+
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+  --r: 3px;
+  --sans: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #0e1013;
+    --sunken: #0a0c0e;
+    --panel: #15181b;
+    --panel-2: #1b1f23;
+    --panel-3: #23282d;
+    --line: #23282c;
+    --line-2: #333a40;
+    --text: #e9ebec;
+    --text-2: #99a1a8;
+    --text-3: #666e75;
+    --brass: #d9ae4a;
+    --brass-2: #a8842f;
+    --brass-ink: #14171a;
+    --brass-wash: rgba(217, 174, 74, 0.08);
+    --alert: #e2705a;
+    --alert-wash: rgba(226, 112, 90, 0.1);
+    --caution: #dda94f;
+    --caution-wash: rgba(221, 169, 79, 0.1);
+    --ok: #63b78d;
+    --ok-wash: rgba(99, 183, 141, 0.1);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #0e1013;
+  --sunken: #0a0c0e;
+  --panel: #15181b;
+  --panel-2: #1b1f23;
+  --panel-3: #23282d;
+  --line: #23282c;
+  --line-2: #333a40;
+  --text: #e9ebec;
+  --text-2: #99a1a8;
+  --text-3: #666e75;
+  --brass: #d9ae4a;
+  --brass-2: #a8842f;
+  --brass-ink: #14171a;
+  --brass-wash: rgba(217, 174, 74, 0.08);
+  --alert: #e2705a;
+  --alert-wash: rgba(226, 112, 90, 0.1);
+  --caution: #dda94f;
+  --caution-wash: rgba(221, 169, 79, 0.1);
+  --ok: #63b78d;
+  --ok-wash: rgba(99, 183, 141, 0.1);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---- Document shell ---------------------------------------------------- */
+.doc { max-width: 1440px; margin: 0 auto; padding: var(--s6) var(--s5) var(--s7); }
+.doc-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: var(--s5); flex-wrap: wrap;
+  padding-bottom: var(--s5); border-bottom: 2px solid var(--text);
+}
+.doc-head h1 { font-size: 26px; font-weight: 600; margin: 0 0 var(--s2); letter-spacing: -0.01em; text-wrap: balance; }
+.doc-head p { margin: 0; color: var(--text-2); max-width: 62ch; }
+.eyebrow {
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.12em; color: var(--brass); margin: 0 0 var(--s3);
+}
+.themer {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  background: var(--panel); color: var(--text-2); border: 1px solid var(--line-2);
+  border-radius: var(--r); padding: var(--s2) var(--s4); cursor: pointer; white-space: nowrap;
+}
+.themer:hover { border-color: var(--brass); color: var(--brass); }
+
+.brief { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0; margin-top: var(--s5); border: 1px solid var(--line); background: var(--panel); }
+.brief div { padding: var(--s4); border-right: 1px solid var(--line); }
+.brief div:last-child { border-right: 0; }
+.brief dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.11em; color: var(--text-3); margin-bottom: var(--s2); }
+.brief dd { margin: 0; font-size: 13px; color: var(--text-2); }
+
+.pass { margin-top: var(--s5); border: 1px solid var(--brass); border-left-width: 3px; background: var(--brass-wash); padding: var(--s4) var(--s5); }
+.pass h5 { margin: 0 0 var(--s2); font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.11em; color: var(--brass); }
+.pass ul { margin: 0; padding-left: 18px; }
+.pass li { font-size: 13px; color: var(--text-2); margin-bottom: var(--s1); max-width: 90ch; }
+.pass li b { color: var(--text); font-weight: 500; }
+
+/* What a visit found. The words carry the meaning; colour only weights them. */
+.found { font-size: 12px; color: var(--text-3); white-space: nowrap; }
+.found b { font-weight: 500; color: var(--caution); }
+.found b.f-defect { color: var(--alert); }
+.attn-item .btn { margin-top: var(--s2); padding: 5px var(--s3); font-size: 10px; }
+
+/* ---- Concept sections -------------------------------------------------- */
+.concept { margin-top: var(--s7); }
+.concept-head { border-top: 2px solid var(--brass); padding-top: var(--s4); margin-bottom: var(--s4); }
+.concept-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.12em; color: var(--brass); text-transform: uppercase; }
+.concept-head h2 { font-size: 20px; font-weight: 600; margin: var(--s2) 0 var(--s3); }
+.concept-head > p { margin: 0; color: var(--text-2); max-width: 78ch; }
+
+/* The mockup is a picture of an application, so it gets a device edge that the
+   surrounding document does not. */
+.frame { border: 1px solid var(--line-2); background: var(--sunken); overflow-x: auto; }
+.app { min-width: 1160px; }
+
+/* ---- Shared application chrome ---------------------------------------- */
+.topbar {
+  display: flex; align-items: center; gap: var(--s5);
+  background: var(--panel); border-bottom: 1px solid var(--line-2);
+  padding: 0 var(--s5); height: 56px;
+}
+.logo { display: flex; align-items: baseline; gap: var(--s2); }
+.logo b { font-family: var(--mono); font-size: 14px; font-weight: 500; letter-spacing: 0.28em; }
+.logo span { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--text-3); }
+.search {
+  flex: 1; max-width: 420px; display: flex; align-items: center; gap: var(--s2);
+  background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r);
+  padding: var(--s2) var(--s3); color: var(--text-3); font-size: 13px;
+}
+.search kbd {
+  margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  border: 1px solid var(--line-2); border-radius: 2px; padding: 1px 5px;
+}
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: var(--s4); }
+.whoami { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--text-2); }
+.whoami em { font-style: normal; color: var(--brass); }
+.bell { position: relative; font-family: var(--mono); font-size: 11px; color: var(--text-2); letter-spacing: 0.08em; }
+.bell b { color: var(--alert); font-weight: 500; }
+
+/* Horizontal nav (concepts 2 and 3) */
+.hnav { display: flex; gap: 0; background: var(--panel); border-bottom: 1px solid var(--line-2); padding: 0 var(--s5); }
+.hnav a {
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.11em;
+  color: var(--text-3); text-decoration: none; padding: var(--s3) var(--s4);
+  border-bottom: 2px solid transparent; display: flex; align-items: center; gap: var(--s2);
+}
+.hnav a:hover { color: var(--text); }
+.hnav a.on { color: var(--text); border-bottom-color: var(--brass); }
+.hnav a i { font-style: normal; font-size: 10px; color: var(--text-3); background: var(--panel-2); border-radius: 8px; padding: 0 6px; }
+.hnav a.on i { background: var(--brass-wash); color: var(--brass); }
+
+/* Sidebar nav (concept 1) */
+.shell { display: grid; grid-template-columns: 208px 1fr; align-items: start; }
+.side { background: var(--panel); border-right: 1px solid var(--line-2); padding: var(--s4) 0; min-height: 660px; }
+.side-grp { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); padding: var(--s4) var(--s5) var(--s2); }
+.side a {
+  display: flex; align-items: center; gap: var(--s2); text-decoration: none;
+  padding: var(--s2) var(--s5); font-size: 13px; color: var(--text-2);
+  border-left: 2px solid transparent;
+}
+.side a:hover { color: var(--text); background: var(--sunken); }
+.side a.on { color: var(--text); font-weight: 500; border-left-color: var(--brass); background: var(--brass-wash); }
+.side a i { font-style: normal; margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+.side a.on i { color: var(--brass); }
+.side a i.warn { color: var(--alert); }
+
+/* ---- Shared content primitives ---------------------------------------- */
+.main { padding: var(--s5); display: flex; flex-direction: column; gap: var(--s5); }
+.pagehead { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s4); }
+.pagehead h3 { margin: 0; font-size: 20px; font-weight: 600; }
+.pagehead p { margin: var(--s1) 0 0; font-size: 13px; color: var(--text-2); }
+.btn {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase;
+  background: var(--brass); color: var(--brass-ink); border: 1px solid var(--brass);
+  border-radius: var(--r); padding: var(--s2) var(--s4); cursor: pointer;
+}
+.btn-q { background: transparent; color: var(--text-2); border-color: var(--line-2); }
+.btn-q:hover { color: var(--brass); border-color: var(--brass); }
+
+.panel { background: var(--panel); border: 1px solid var(--line); }
+.panel-head {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); background: var(--panel);
+}
+.panel-head h4 {
+  margin: 0; font-family: var(--mono); font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-2);
+}
+.panel-head .more { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--brass); text-decoration: none; letter-spacing: 0.06em; }
+.panel-foot { padding: var(--s3) var(--s4); border-top: 1px solid var(--line); font-size: 12px; color: var(--text-3); }
+
+/* Status marks. Never colour alone: a glyph and a word carry it too. */
+.tag {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
+  border: 1px solid; border-radius: var(--r); padding: 2px var(--s2);
+}
+.tag::before { content: "●"; font-size: 8px; line-height: 1; }
+.tag-ok { color: var(--ok); border-color: var(--ok); background: var(--ok-wash); }
+.tag-alert { color: var(--alert); border-color: var(--alert); background: var(--alert-wash); }
+.tag-alert::before { content: "▲"; }
+.tag-caution { color: var(--caution); border-color: var(--caution); background: var(--caution-wash); }
+.tag-caution::before { content: "◆"; }
+.tag-quiet { color: var(--text-3); border-color: var(--line-2); background: transparent; }
+.tag-quiet::before { content: "○"; }
+
+.ref { font-family: var(--mono); font-size: 12px; color: var(--brass); letter-spacing: 0.02em; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+/* Register table */
+table.reg { width: 100%; border-collapse: collapse; }
+table.reg th {
+  text-align: left; font-family: var(--mono); font-size: 10px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.11em; color: var(--text-3);
+  padding: var(--s2) var(--s4); border-bottom: 1px solid var(--line-2); background: var(--panel-2);
+  white-space: nowrap;
+}
+table.reg td { padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); vertical-align: top; }
+table.reg tr:last-child td { border-bottom: 0; }
+table.reg tbody tr:hover { background: var(--brass-wash); }
+.rowtitle { font-weight: 500; font-size: 14px; }
+.rowsub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.rowsub .sep { color: var(--line-2); margin: 0 6px; }
+.divis { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-3); }
+
+/* Attention band: the only place on the page allowed to be loud. */
+.attn { border: 1px solid var(--alert); border-left-width: 3px; background: var(--alert-wash); }
+.attn .panel-head { border-bottom-color: var(--alert); background: transparent; }
+.attn .panel-head h4 { color: var(--alert); }
+.attn-list { display: grid; grid-template-columns: repeat(3, 1fr); }
+.attn-item { padding: var(--s3) var(--s4); border-right: 1px solid var(--line); }
+.attn-item:last-child { border-right: 0; }
+.attn-item b { display: block; font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.attn-item span { font-size: 12px; color: var(--text-2); }
+.attn-item a { color: var(--brass); text-decoration: none; font-family: var(--mono); font-size: 11px; }
+
+/* Figure strip */
+.figs { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); background: var(--panel); }
+.figs div { padding: var(--s4); border-right: 1px solid var(--line); }
+.figs div:last-child { border-right: 0; }
+.figs dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.11em; color: var(--text-3); }
+.figs dd { margin: var(--s2) 0 0; font-family: var(--mono); font-size: 24px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.figs dd small { font-size: 12px; color: var(--text-3); letter-spacing: 0; margin-left: 6px; }
+.figs dd.warn { color: var(--alert); }
+
+/* Right rail lists */
+.rail { display: flex; flex-direction: column; gap: var(--s5); }
+.mini { display: flex; gap: var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); }
+.mini:last-child { border-bottom: 0; }
+.mini-b { flex: 1; min-width: 0; }
+.mini-b p { margin: 0; font-size: 13px; }
+.mini-b .rowsub { margin-top: 3px; }
+.age { font-family: var(--mono); font-size: 11px; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Filter bar */
+.filters { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; padding: var(--s3) var(--s4); background: var(--panel-2); border: 1px solid var(--line); }
+.chip {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+  border: 1px solid var(--line-2); border-radius: var(--r); padding: 3px var(--s3);
+  color: var(--text-2); background: var(--panel); white-space: nowrap;
+}
+.chip.on { border-color: var(--brass); color: var(--brass); background: var(--brass-wash); }
+.chip.drop::after { content: " ▾"; color: var(--text-3); }
+.filters .spacer { margin-left: auto; }
+
+/* Concept 2: split reader */
+.split { display: grid; grid-template-columns: 400px 1fr; min-height: 620px; }
+.split-list { border-right: 1px solid var(--line-2); background: var(--panel); }
+.li { display: block; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); border-left: 2px solid transparent; text-decoration: none; color: inherit; }
+.li:hover { background: var(--sunken); }
+.li.on { background: var(--brass-wash); border-left-color: var(--brass); }
+.li-top { display: flex; align-items: baseline; gap: var(--s2); }
+.li-top .age { margin-left: auto; }
+.reader { background: var(--sunken); padding: var(--s5); display: flex; flex-direction: column; gap: var(--s4); }
+.sheet { background: var(--panel); border: 1px solid var(--line); padding: var(--s5); }
+.sheet-title { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s4); border-bottom: 1px solid var(--line-2); padding-bottom: var(--s4); }
+.sheet-title h4 { margin: 0 0 var(--s1); font-size: 17px; font-weight: 600; }
+.tb { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: var(--s4); border: 1px solid var(--line); }
+.tb div { padding: var(--s3) var(--s4); border-right: 1px solid var(--line); }
+.tb div:last-child { border-right: 0; }
+.tb dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
+.tb dd { margin: var(--s1) 0 0; font-size: 13px; }
+.upd { display: flex; gap: var(--s4); padding: var(--s4) 0; border-bottom: 1px solid var(--line); }
+.upd:last-child { border-bottom: 0; }
+.upd-n { font-family: var(--mono); font-size: 12px; color: var(--text-3); width: 24px; flex: none; }
+.upd-b { flex: 1; min-width: 0; }
+.upd-b h5 { margin: 0 0 var(--s1); font-size: 14px; font-weight: 500; display: flex; align-items: center; gap: var(--s3); flex-wrap: wrap; }
+.upd-b p { margin: 0; font-size: 13px; color: var(--text-2); }
+.thumb { width: 84px; height: 60px; flex: none; background: var(--panel-3); border: 1px solid var(--line-2); display: grid; place-items: center; font-family: var(--mono); font-size: 9px; color: var(--text-3); letter-spacing: 0.08em; }
+
+/* Concept 3: project board */
+.board { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s4); }
+.proj { background: var(--panel); border: 1px solid var(--line); display: flex; flex-direction: column; }
+.proj-top { padding: var(--s4); border-bottom: 1px solid var(--line); }
+.proj-top h4 { margin: var(--s2) 0 var(--s1); font-size: 15px; font-weight: 600; }
+.proj-top .rowsub { margin: 0; }
+.proj-stat { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
+.proj-stat div { padding: var(--s3) var(--s4); border-right: 1px solid var(--line); }
+.proj-stat div:last-child { border-right: 0; }
+.proj-stat dt { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
+.proj-stat dd { margin: 3px 0 0; font-family: var(--mono); font-size: 18px; font-variant-numeric: tabular-nums; }
+.proj-stat dd.warn { color: var(--alert); }
+.proj-body { padding: var(--s4); flex: 1; display: flex; flex-direction: column; gap: var(--s3); }
+.proj-line { display: flex; gap: var(--s3); align-items: baseline; font-size: 13px; }
+.proj-line .k { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text-3); width: 76px; flex: none; }
+.proj-line .v { flex: 1; min-width: 0; }
+.proj-foot { padding: var(--s3) var(--s4); border-top: 1px solid var(--line); display: flex; gap: var(--s3); align-items: center; background: var(--panel-2); }
+.proj-foot a { font-family: var(--mono); font-size: 11px; color: var(--brass); text-decoration: none; letter-spacing: 0.05em; }
+
+/* Timeline strip for the board's visit planner */
+.plan { display: grid; grid-template-columns: 150px repeat(5, 1fr); border: 1px solid var(--line); background: var(--panel); }
+.plan > div { padding: var(--s2) var(--s3); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 12px; min-height: 38px; display: flex; align-items: center; }
+.plan > div:nth-child(6n) { border-right: 0; }
+.plan .hd { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); background: var(--panel-2); }
+.plan .pname { font-size: 12px; font-weight: 500; }
+.plan .slot { color: var(--text-3); font-family: var(--mono); font-size: 11px; }
+.plan .slot.has { color: var(--text); background: var(--brass-wash); }
+.plan .slot.gap { color: var(--alert); background: var(--alert-wash); }
+
+/* Concept 4: project strip. Tiles are filters, so the active one is marked
+   like a tab, and each carries the two facts the office asks about a job —
+   open work and how long since anyone was there. */
+.app-wide { min-width: 1280px; }
+.pstrip { display: flex; border: 1px solid var(--line); background: var(--panel); overflow-x: auto; }
+.ptile {
+  flex: 1 1 0; min-width: 160px; padding: var(--s3) var(--s4);
+  border-right: 1px solid var(--line); border-top: 2px solid transparent;
+  text-decoration: none; color: inherit;
+}
+.ptile:last-child { border-right: 0; }
+.ptile:hover { background: var(--sunken); }
+.ptile.on { border-top-color: var(--brass); background: var(--brass-wash); }
+.ptile h6 { margin: 2px 0 var(--s1); font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ptile .pm { display: flex; gap: var(--s3); flex-wrap: wrap; font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.ptile .pm b { font-weight: 500; color: var(--text-2); }
+.ptile .pm .bad { color: var(--alert); }
+.ptile .pm .quiet { color: var(--caution); }
+.ptile .pm .live { color: var(--ok); }
+.ptile.more { display: grid; place-items: center; font-family: var(--mono); font-size: 11px; color: var(--brass); min-width: 110px; }
+.reader-c { background: var(--panel); border: 1px solid var(--line); display: flex; flex-direction: column; }
+.reader-c .sheet { border: 0; padding: var(--s4); }
+.reader-c .tb { grid-template-columns: 1fr 1fr; }
+.reader-c .tb div:nth-child(2) { border-right: 0; }
+.reader-c .tb div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+.reader-c .upd { padding: var(--s3) 0; }
+.reader-c .upd-b h5 { font-size: 13px; }
+.reader-c .upd-b p { font-size: 12px; }
+.reader-c .thumb { width: 64px; height: 46px; }
+.reader-c .sec-h { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--text-3); margin: var(--s4) 0 var(--s2); }
+table.reg.tight td, table.reg.tight th { padding: var(--s2) var(--s3); font-size: 12px; }
+
+/* ---- Notes under each concept ----------------------------------------- */
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0; margin-top: var(--s4); border: 1px solid var(--line); background: var(--panel); }
+.notes section { padding: var(--s4); border-right: 1px solid var(--line); }
+.notes section:last-child { border-right: 0; }
+.notes h5 { margin: 0 0 var(--s2); font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.11em; color: var(--brass); }
+.notes ul { margin: 0; padding-left: 18px; }
+.notes li { font-size: 13px; color: var(--text-2); margin-bottom: var(--s2); }
+.notes li:last-child { margin-bottom: 0; }
+.notes li b { color: var(--text); font-weight: 500; }
+
+/* ---- Closing comparison ------------------------------------------------ */
+.verdict { margin-top: var(--s7); border-top: 2px solid var(--text); padding-top: var(--s5); }
+.verdict h2 { font-size: 20px; font-weight: 600; margin: 0 0 var(--s4); }
+table.cmp { width: 100%; border-collapse: collapse; border: 1px solid var(--line); background: var(--panel); }
+table.cmp th, table.cmp td { text-align: left; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13px; }
+table.cmp th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.11em; color: var(--text-3); background: var(--panel-2); border-bottom-color: var(--line-2); }
+table.cmp tr:last-child td { border-bottom: 0; }
+table.cmp td:first-child { font-weight: 500; white-space: nowrap; }
+.rec { border-left: 3px solid var(--brass); background: var(--brass-wash); padding: var(--s4) var(--s5); margin-top: var(--s5); }
+.rec h3 { margin: 0 0 var(--s2); font-size: 15px; font-weight: 600; }
+.rec p { margin: 0 0 var(--s3); max-width: 80ch; color: var(--text-2); }
+.rec p:last-child { margin-bottom: 0; }
+.wrap-note { margin-top: var(--s5); font-size: 13px; color: var(--text-3); max-width: 80ch; }
+
+@media (max-width: 860px) {
+  .doc { padding: var(--s5) var(--s4) var(--s6); }
+  .attn-list { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <header class="doc-head">
+    <div>
+      <p class="eyebrow">Relay · Leodis Developments · Desktop office</p>
+      <h1>Office home, three ways</h1>
+      <p>Three different answers to the same brief: treat the office screen as a website rather than a phone
+        page stretched wide. Same palette, same typefaces, same register idiom — what changes is the
+        information architecture underneath.</p>
+    </div>
+    <button class="themer" id="themer" type="button">Dark</button>
+  </header>
+
+  <dl class="brief">
+    <div>
+      <dt>Kept</dt>
+      <dd>Charcoal, brass and paper exactly as they are. Archivo and Plex Mono. Hairline rules, no floating cards.</dd>
+    </div>
+    <div>
+      <dt>Adjusted for separation</dt>
+      <dd>A recessed ground behind list regions, so panels read as surfaces. Region edges move to the heavier rule.</dd>
+    </div>
+    <div>
+      <dt>Fixed throughout</dt>
+      <dd>Delivery failures carry their severity. “Obs” becomes “updates”. The empty review queue is gone.</dd>
+    </div>
+    <div>
+      <dt>Assumed, not built</dt>
+      <dd>Issues on the office screen, search, filters, a visit planner. Marked per concept below.</dd>
+    </div>
+  </dl>
+
+  <div class="pass">
+    <h5>Second pass — what changed</h5>
+    <ul>
+      <li>The four-figure tile strip is gone from Concept 1. It was the generic dashboard move, one figure was invented, and it pushed the register down the page.</li>
+      <li>The register now says what each visit <b>found</b> — defects, access problems, variations — instead of counting updates. Engineer gets its own column.</li>
+      <li>Concept 2’s reader now follows the real document: action and decision summary first, then the updates, then the signature line.</li>
+      <li>Attention items have actions, not links. Counts agree with each other.</li>
+      <li><b>Concept 4 added</b> — the combination I described in words last time, now drawn: rail and attention band from 1, the reader from 2, and 3’s project-first view as a strip of filter tiles rather than a board.</li>
+    </ul>
+  </div>
+
+  <!-- ===================== CONCEPT 1 ===================== -->
+  <section class="concept">
+    <div class="concept-head">
+      <span class="concept-num">Concept 1</span>
+      <h2>Control desk</h2>
+      <p>A permanent left rail carries the whole product, so the office is never more than one click from
+        anything. The screen opens with what is wrong, then the register, then a rail of standing work. This is
+        the most conventional of the three, and the most extensible — every future section is a rail item.</p>
+    </div>
+
+    <div class="frame">
+      <div class="app">
+        <div class="topbar">
+          <div class="logo"><b>RELAY</b><span>LEODIS</span></div>
+          <div class="search"><span>Search reports, issues, projects</span><kbd>/</kbd></div>
+          <div class="topbar-right">
+            <span class="bell">Attention <b>3</b></span>
+            <span class="whoami">Cal Say · <em>Manager</em></span>
+          </div>
+        </div>
+
+        <div class="shell">
+          <nav class="side">
+            <div class="side-grp">Office</div>
+            <a href="#c1" class="on">Overview <i>3</i></a>
+            <a href="#c1">Reports <i>184</i></a>
+            <a href="#c1">Issues <i class="warn">12</i></a>
+            <a href="#c1">Deliveries <i class="warn">2</i></a>
+            <div class="side-grp">Register</div>
+            <a href="#c1">Projects <i>27</i></a>
+            <a href="#c1">Clients <i>14</i></a>
+            <a href="#c1">Engineers <i>9</i></a>
+            <div class="side-grp">Administration</div>
+            <a href="#c1">Roles &amp; access</a>
+            <a href="#c1">Delivery settings</a>
+          </nav>
+
+          <div class="main">
+            <div class="pagehead">
+              <div>
+                <h3>Overview</h3>
+                <p>Tuesday 8 September 2026 · Leodis M&amp;E and Commercial Plumbing</p>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn-q btn" type="button">Export register</button>
+                <button class="btn" type="button">New project visit</button>
+              </div>
+            </div>
+
+            <div class="panel attn">
+              <div class="panel-head"><h4>Needs attention</h4><a class="more" href="#c1">All 3 →</a></div>
+              <div class="attn-list">
+                <div class="attn-item">
+                  <b>2 reports were never emailed</b>
+                  <span>Sitting in the local outbox since 08 Sept. The project manager has not received them.</span><br>
+                  <button class="btn" type="button">Retry delivery</button>
+                </div>
+                <div class="attn-item">
+                  <b>1 issue awaiting verification for 9 days</b>
+                  <span><span class="ref">011LME-ISS-006</span> · L2 lighting circuits · closed by D. Priestley, needs a second pair of eyes.</span><br>
+                  <button class="btn btn-q" type="button">Verify</button>
+                </div>
+                <div class="attn-item">
+                  <b>2 issues unassigned</b>
+                  <span>Raised on site, nobody owns them yet. Oldest is 4 days old.</span><br>
+                  <button class="btn btn-q" type="button">Assign owners</button>
+                </div>
+              </div>
+            </div>
+
+
+            <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div class="filters">
+                  <span class="chip on">All projects</span>
+                  <span class="chip drop">Division</span>
+                  <span class="chip drop">Engineer</span>
+                  <span class="chip drop">Last 30 days</span>
+                  <span class="chip drop">Delivery</span>
+                  <span class="spacer"></span>
+                  <span class="chip">184 reports</span>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-head"><h4>Reports received</h4><a class="more" href="#c1">Full register →</a></div>
+                  <table class="reg">
+                    <thead>
+                      <tr><th>Reference</th><th>Project</th><th>Engineer</th><th>Visit</th><th>Found</th><th>Delivery</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><span class="ref">009LCP-SPR-002</span></td>
+                        <td>
+                          <div class="rowtitle">Hunslet Depot — Welfare Block</div>
+                          <div class="rowsub"><span class="divis">LEODIS COMMERCIAL PLUMBING</span></div>
+                        </td>
+                        <td style="font-size:13px;">Cal Say</td>
+                        <td class="num" style="font-size:12px;white-space:nowrap;">08 Sep <span style="color:var(--text-3)">10:29</span></td>
+                        <td><span class="found"><b>1 access</b></span></td>
+                        <td><span class="tag tag-alert">Not emailed</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">009LCP-SPR-001</span></td>
+                        <td>
+                          <div class="rowtitle">Hunslet Depot — Welfare Block</div>
+                          <div class="rowsub"><span class="divis">LEODIS COMMERCIAL PLUMBING</span></div>
+                        </td>
+                        <td style="font-size:13px;">Cal Say</td>
+                        <td class="num" style="font-size:12px;white-space:nowrap;">08 Sep <span style="color:var(--text-3)">09:06</span></td>
+                        <td><span class="found">2 progress</span></td>
+                        <td><span class="tag tag-alert">Not emailed</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">011LME-SPR-014</span></td>
+                        <td>
+                          <div class="rowtitle">Tetley Hall — Block E</div>
+                          <div class="rowsub"><span class="divis">LEODIS M&amp;E</span></div>
+                        </td>
+                        <td style="font-size:13px;">R. Ashworth</td>
+                        <td class="num" style="font-size:12px;white-space:nowrap;">07 Sep <span style="color:var(--text-3)">16:41</span></td>
+                        <td><span class="found"><b class="f-defect">2 defects</b> · 4 progress</span></td>
+                        <td><span class="tag tag-ok">Sent to 2</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">011LME-SPR-013</span></td>
+                        <td>
+                          <div class="rowtitle">Tetley Hall — Block E</div>
+                          <div class="rowsub"><span class="divis">LEODIS M&amp;E</span></div>
+                        </td>
+                        <td style="font-size:13px;">R. Ashworth</td>
+                        <td class="num" style="font-size:12px;white-space:nowrap;">04 Sep <span style="color:var(--text-3)">11:02</span></td>
+                        <td><span class="found"><b class="f-defect">1 defect</b> · 2 progress</span></td>
+                        <td><span class="tag tag-alert">Delivery failed</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">004LCP-SPR-008</span></td>
+                        <td>
+                          <div class="rowtitle">Kirkstall Retail — Plant Room</div>
+                          <div class="rowsub"><span class="divis">LEODIS COMMERCIAL PLUMBING</span></div>
+                        </td>
+                        <td style="font-size:13px;">J. Whitaker</td>
+                        <td class="num" style="font-size:12px;white-space:nowrap;">03 Sep <span style="color:var(--text-3)">14:18</span></td>
+                        <td><span class="found"><b>1 variation</b> · 3 progress</span></td>
+                        <td><span class="tag tag-ok">Sent to 1</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">007LME-SPR-021</span></td>
+                        <td>
+                          <div class="rowtitle">Farsley Health Centre — Riser 2</div>
+                          <div class="rowsub"><span class="divis">LEODIS M&amp;E</span></div>
+                        </td>
+                        <td style="font-size:13px;">D. Priestley</td>
+                        <td class="num" style="font-size:12px;white-space:nowrap;">02 Sep <span style="color:var(--text-3)">08:55</span></td>
+                        <td><span class="found">2 progress</span></td>
+                        <td><span class="tag tag-caution">PDF queued</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="panel-foot">Showing 6 of 184. Drafts still on an engineer’s phone are not listed here, so an empty list does not mean nobody is working.</div>
+                </div>
+              </div>
+
+              <div class="rail">
+                <div class="panel">
+                  <div class="panel-head"><h4>Open issues</h4><a class="more" href="#c1">All 12 →</a></div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p><span class="ref">011LME-ISS-007</span></p>
+                      <div class="rowsub">Riser 3 fire stopping incomplete · R. Ashworth · target 12 Sep</div>
+                    </div>
+                    <span class="tag tag-caution">Confirmed</span>
+                  </div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p><span class="ref">011LME-ISS-006</span></p>
+                      <div class="rowsub">L2 lighting circuits · awaiting a second signature</div>
+                    </div>
+                    <span class="tag tag-alert">Verify</span>
+                  </div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p><span class="ref">009LCP-ISS-002</span></p>
+                      <div class="rowsub">No access to plant room · unassigned · 4 days</div>
+                    </div>
+                    <span class="tag tag-quiet">Provisional</span>
+                  </div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p><span class="ref">004LCP-ISS-011</span></p>
+                      <div class="rowsub">Variation required — revised pipe route · unassigned</div>
+                    </div>
+                    <span class="tag tag-quiet">Provisional</span>
+                  </div>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-head"><h4>On site now</h4></div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p>R. Ashworth</p>
+                      <div class="rowsub">Tetley Hall — Block E · draft saved 11 min ago</div>
+                    </div>
+                    <span class="age">11m</span>
+                  </div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p>J. Whitaker</p>
+                      <div class="rowsub">Kirkstall Retail · draft saved 40 min ago</div>
+                    </div>
+                    <span class="age">40m</span>
+                  </div>
+                  <div class="panel-foot">Existence only. Draft content stays with its author until they send it.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <section>
+        <h5>What it fixes</h5>
+        <ul>
+          <li><b>Failures are loud.</b> The attention band is the only place on the screen allowed to use alert colour, so it means something.</li>
+          <li><b>No empty review queue.</b> The section appears only when a project requires review.</li>
+          <li><b>Full width earns its keep</b> — register and standing work side by side.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>What it assumes</h5>
+        <ul>
+          <li>An <b>issues list on the office screen</b> — the biggest missing piece today.</li>
+          <li><b>Search and filters</b> across reports.</li>
+          <li>A <b>retry delivery</b> action, which the outbox has no button for yet.</li>
+          <li>Trend figures need history the store already holds.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Trade-off</h5>
+        <ul>
+          <li>The most screen furniture of the three. With 27 projects that is right; with 5 it would look overbuilt.</li>
+          <li>Reading a report still means leaving the page.</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== CONCEPT 2 ===================== -->
+  <section class="concept">
+    <div class="concept-head">
+      <span class="concept-num">Concept 2</span>
+      <h2>Register and reader</h2>
+      <p>The office spends its day reading reports, so the report is on the page. A dense list on the left, the
+        selected document on the right, the way a mail client works. Nobody navigates away to find out what an
+        engineer actually said, and checking ten reports is ten clicks in one place.</p>
+    </div>
+
+    <div class="frame">
+      <div class="app">
+        <div class="topbar">
+          <div class="logo"><b>RELAY</b><span>LEODIS</span></div>
+          <div class="search"><span>Search 184 reports and 12 issues</span><kbd>/</kbd></div>
+          <div class="topbar-right">
+            <span class="bell">Attention <b>3</b></span>
+            <span class="whoami">Cal Say · <em>Manager</em></span>
+          </div>
+        </div>
+        <nav class="hnav">
+          <a href="#c2" class="on">Reports <i>184</i></a>
+          <a href="#c2">Issues <i>12</i></a>
+          <a href="#c2">Projects <i>27</i></a>
+          <a href="#c2">Deliveries <i>2</i></a>
+          <a href="#c2">Engineers</a>
+          <a href="#c2">Admin</a>
+        </nav>
+
+        <div class="split">
+          <div class="split-list">
+            <div class="filters" style="border:0;border-bottom:1px solid var(--line);">
+              <span class="chip on">Unread 4</span>
+              <span class="chip">Flagged 2</span>
+              <span class="chip drop">Project</span>
+              <span class="chip drop">Division</span>
+            </div>
+
+            <a href="#c2" class="li on">
+              <div class="li-top"><span class="ref">009LCP-SPR-002</span><span class="age">10:29</span></div>
+              <div class="rowtitle" style="margin-top:4px;">Hunslet Depot — Welfare Block</div>
+              <div class="rowsub">Cal Say<span class="sep">/</span>1 update<span class="sep">/</span>1 photo</div>
+              <div style="margin-top:8px;"><span class="tag tag-alert">Not emailed</span></div>
+            </a>
+            <a href="#c2" class="li">
+              <div class="li-top"><span class="ref">009LCP-SPR-001</span><span class="age">09:06</span></div>
+              <div class="rowtitle" style="margin-top:4px;">Hunslet Depot — Welfare Block</div>
+              <div class="rowsub">Cal Say<span class="sep">/</span>2 updates<span class="sep">/</span>2 photos</div>
+              <div style="margin-top:8px;"><span class="tag tag-alert">Not emailed</span></div>
+            </a>
+            <a href="#c2" class="li">
+              <div class="li-top"><span class="ref">011LME-SPR-014</span><span class="age">07 Sep</span></div>
+              <div class="rowtitle" style="margin-top:4px;">Tetley Hall — Block E</div>
+              <div class="rowsub">R. Ashworth<span class="sep">/</span>6 updates<span class="sep">/</span>9 photos</div>
+              <div style="margin-top:8px;"><span class="tag tag-ok">Sent to 2</span> <span class="tag tag-caution">2 defects</span></div>
+            </a>
+            <a href="#c2" class="li">
+              <div class="li-top"><span class="ref">011LME-SPR-013</span><span class="age">04 Sep</span></div>
+              <div class="rowtitle" style="margin-top:4px;">Tetley Hall — Block E</div>
+              <div class="rowsub">R. Ashworth<span class="sep">/</span>3 updates<span class="sep">/</span>4 photos</div>
+              <div style="margin-top:8px;"><span class="tag tag-alert">Delivery failed</span></div>
+            </a>
+            <a href="#c2" class="li">
+              <div class="li-top"><span class="ref">004LCP-SPR-008</span><span class="age">03 Sep</span></div>
+              <div class="rowtitle" style="margin-top:4px;">Kirkstall Retail — Plant Room</div>
+              <div class="rowsub">J. Whitaker<span class="sep">/</span>4 updates<span class="sep">/</span>6 photos</div>
+              <div style="margin-top:8px;"><span class="tag tag-ok">Sent to 1</span></div>
+            </a>
+            <a href="#c2" class="li">
+              <div class="li-top"><span class="ref">007LME-SPR-021</span><span class="age">02 Sep</span></div>
+              <div class="rowtitle" style="margin-top:4px;">Farsley Health Centre — Riser 2</div>
+              <div class="rowsub">D. Priestley<span class="sep">/</span>2 updates<span class="sep">/</span>3 photos</div>
+              <div style="margin-top:8px;"><span class="tag tag-caution">PDF queued</span></div>
+            </a>
+          </div>
+
+          <div class="reader">
+            <div class="sheet">
+              <div class="sheet-title">
+                <div>
+                  <h4>Hunslet Depot — Welfare Block</h4>
+                  <div class="rowsub"><span class="ref">009LCP-SPR-002</span><span class="sep">/</span>Revision 1<span class="sep">/</span>Issued 08 Sept 2026, 10:29</div>
+                </div>
+                <div style="display:flex;gap:8px;align-items:center;">
+                  <button class="btn-q btn" type="button">Open PDF</button>
+                  <button class="btn" type="button">Retry email</button>
+                </div>
+              </div>
+
+              <dl class="tb">
+                <div><dt>Client</dt><dd>C&amp;AJ Marshall Builders Ltd</dd></div>
+                <div><dt>Division</dt><dd>Leodis Commercial Plumbing</dd></div>
+                <div><dt>Engineer</dt><dd>Cal Say</dd></div>
+                <div><dt>Visit date</dt><dd class="num">08 Sept 2026</dd></div>
+              </dl>
+
+              <div style="margin-top:16px;padding:12px 16px;border:1px solid var(--alert);border-left-width:3px;background:var(--alert-wash);font-size:13px;">
+                <b style="color:var(--alert);">Not emailed.</b>
+                This report was filed and the PDF is ready, but the mail transport is off, so it is sitting in the
+                local outbox. <strong>Sam Ledgard (project manager) has not received it.</strong>
+              </div>
+
+              <h5 style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-3);margin:24px 0 8px;">Action and decision summary</h5>
+              <table class="reg" style="border:1px solid var(--line);">
+                <thead><tr><th>Item</th><th>Action or decision required</th><th>Owner</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td class="num" style="font-size:12px;">1. Ground floor plant room</td>
+                    <td style="font-size:13px;">Confirm key holder before the next visit so the pressure test on the incoming main can be completed.</td>
+                    <td style="font-size:13px;color:var(--caution);">Awaiting confirmation</td>
+                  </tr>
+                  <tr>
+                    <td class="num" style="font-size:12px;">2. Welfare block WCs</td>
+                    <td style="font-size:13px;">None — progress only.</td>
+                    <td style="font-size:13px;color:var(--text-3);">—</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h5 style="font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-3);margin:24px 0 0;">Updates</h5>
+
+              <div class="upd">
+                <span class="upd-n">01</span>
+                <div class="upd-b">
+                  <h5>Ground floor plant room <span class="tag tag-alert">Defect</span> <span class="tag tag-quiet">Issue 009LCP-ISS-002</span></h5>
+                  <p>No access to the plant room on arrival; the main contractor’s key holder was not on site.
+                    Second visit needed to complete the pressure test on the incoming main.</p>
+                  <p style="margin-top:6px;color:var(--text-3);font-size:12px;">Action required — confirm key holder before the next visit · Owner: awaiting confirmation</p>
+                </div>
+                <div class="thumb">PHOTO 1</div>
+              </div>
+              <div class="upd">
+                <span class="upd-n">02</span>
+                <div class="upd-b">
+                  <h5>Welfare block WCs <span class="tag tag-quiet">Progress</span></h5>
+                  <p>First-fix pipework complete to all six cubicles. Waste runs tested, no leaks. Ready for
+                    second fix once the wall boards are on — main contractor expects that w/c 14 Sept.</p>
+                </div>
+              </div>
+              <div style="margin-top:20px;padding-top:12px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:.04em;">
+                Signed Cal Say · 08 Sept 2026, 10:27 · Revision 1 · Generated by Leodis Relay
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <section>
+        <h5>What it fixes</h5>
+        <ul>
+          <li><b>Reading is the job</b>, so reading happens here. No round trip per report.</li>
+          <li>The delivery failure is stated <b>in the words that matter</b> — a named person has not received it.</li>
+          <li>Updates carry their type and their linked issue, so a defect is traceable from the report.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>What it assumes</h5>
+        <ul>
+          <li>A <b>read / unread</b> notion per person, which does not exist today.</li>
+          <li><b>Flagging</b> a report for follow-up.</li>
+          <li>The reader is the existing preview page, embedded rather than navigated to.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Trade-off</h5>
+        <ul>
+          <li>Standing work — open issues, unassigned items — has no home on this screen. It lives behind the Issues tab.</li>
+          <li>Narrow list column means less per row.</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== CONCEPT 3 ===================== -->
+  <section class="concept">
+    <div class="concept-head">
+      <span class="concept-num">Concept 3</span>
+      <h2>Project board</h2>
+      <p>Organised the way the office already thinks. Nobody asks “what reports came in?” — they ask “where are
+        we on Tetley Hall?”. Each live project is one panel carrying its last visit, its open issues and its
+        delivery state, with a visit planner underneath showing which sites have gone quiet.</p>
+    </div>
+
+    <div class="frame">
+      <div class="app">
+        <div class="topbar">
+          <div class="logo"><b>RELAY</b><span>LEODIS</span></div>
+          <div class="search"><span>Search projects, reports, issues</span><kbd>/</kbd></div>
+          <div class="topbar-right">
+            <span class="bell">Attention <b>3</b></span>
+            <span class="whoami">Cal Say · <em>Manager</em></span>
+          </div>
+        </div>
+        <nav class="hnav">
+          <a href="#c3" class="on">Projects <i>27</i></a>
+          <a href="#c3">Reports <i>184</i></a>
+          <a href="#c3">Issues <i>12</i></a>
+          <a href="#c3">Deliveries <i>2</i></a>
+          <a href="#c3">Admin</a>
+        </nav>
+
+        <div class="main">
+          <div class="pagehead">
+            <div>
+              <h3>Live projects</h3>
+              <p>9 active · 3 in defects liability · Leodis M&amp;E and Commercial Plumbing</p>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn-q btn" type="button">4. Active</button>
+              <button class="btn-q btn" type="button">5. Defects liability</button>
+              <button class="btn" type="button">Weekly summary</button>
+            </div>
+          </div>
+
+          <div class="board">
+            <article class="proj">
+              <div class="proj-top">
+                <span class="ref">011LME</span>
+                <h4>Tetley Hall — Block E</h4>
+                <p class="rowsub">C&amp;AJ Marshall Builders Ltd<span class="sep">/</span><span class="divis">LEODIS M&amp;E</span></p>
+              </div>
+              <dl class="proj-stat">
+                <div><dt>Reports</dt><dd>14</dd></div>
+                <div><dt>Open issues</dt><dd class="warn">5</dd></div>
+                <div><dt>Last visit</dt><dd>1d</dd></div>
+              </dl>
+              <div class="proj-body">
+                <div class="proj-line"><span class="k">Latest</span><span class="v"><span class="ref">011LME-SPR-014</span> · R. Ashworth · 07 Sept</span></div>
+                <div class="proj-line"><span class="k">Oldest issue</span><span class="v">Riser 3 fire stopping — 11 days open</span></div>
+                <div class="proj-line"><span class="k">Delivery</span><span class="v"><span class="tag tag-alert">1 failed</span></span></div>
+              </div>
+              <div class="proj-foot"><a href="#c3">Reports →</a><a href="#c3">Issues →</a><a href="#c3">Folder →</a></div>
+            </article>
+
+            <article class="proj">
+              <div class="proj-top">
+                <span class="ref">009LCP</span>
+                <h4>Hunslet Depot — Welfare Block</h4>
+                <p class="rowsub">Marshall Facilities<span class="sep">/</span><span class="divis">LEODIS COMMERCIAL PLUMBING</span></p>
+              </div>
+              <dl class="proj-stat">
+                <div><dt>Reports</dt><dd>2</dd></div>
+                <div><dt>Open issues</dt><dd class="warn">2</dd></div>
+                <div><dt>Last visit</dt><dd style="font-size:13px;padding-top:4px;">today</dd></div>
+              </dl>
+              <div class="proj-body">
+                <div class="proj-line"><span class="k">Latest</span><span class="v"><span class="ref">009LCP-SPR-002</span> · Cal Say · today</span></div>
+                <div class="proj-line"><span class="k">Blocked</span><span class="v">No access to plant room — 4 days, unassigned</span></div>
+                <div class="proj-line"><span class="k">Delivery</span><span class="v"><span class="tag tag-alert">2 not emailed</span></span></div>
+              </div>
+              <div class="proj-foot"><a href="#c3">Reports →</a><a href="#c3">Issues →</a><a href="#c3">Folder →</a></div>
+            </article>
+
+            <article class="proj">
+              <div class="proj-top">
+                <span class="ref">004LCP</span>
+                <h4>Kirkstall Retail — Plant Room</h4>
+                <p class="rowsub">Northbrook Estates<span class="sep">/</span><span class="divis">LEODIS COMMERCIAL PLUMBING</span></p>
+              </div>
+              <dl class="proj-stat">
+                <div><dt>Reports</dt><dd>8</dd></div>
+                <div><dt>Open issues</dt><dd>3</dd></div>
+                <div><dt>Last visit</dt><dd>5d</dd></div>
+              </dl>
+              <div class="proj-body">
+                <div class="proj-line"><span class="k">Latest</span><span class="v"><span class="ref">004LCP-SPR-008</span> · J. Whitaker · 03 Sept</span></div>
+                <div class="proj-line"><span class="k">Oldest issue</span><span class="v">Variation required — revised pipe route</span></div>
+                <div class="proj-line"><span class="k">Delivery</span><span class="v"><span class="tag tag-ok">All sent</span></span></div>
+              </div>
+              <div class="proj-foot"><a href="#c3">Reports →</a><a href="#c3">Issues →</a><a href="#c3">Folder →</a></div>
+            </article>
+          </div>
+
+          <div class="filters" style="justify-content:space-between;">
+            <span style="font-size:13px;color:var(--text-2);">Showing the 3 projects with most open work. <b style="font-weight:500;color:var(--text);">6 more active</b>, 3 in defects liability.</span>
+            <span class="chip drop">Sort: open work</span>
+          </div>
+
+          <div>
+            <div class="panel-head" style="border:1px solid var(--line);border-bottom:0;">
+              <h4>Visit coverage — last five weeks</h4>
+              <a class="more" href="#c3">Plan a visit →</a>
+            </div>
+            <div class="plan">
+              <div class="hd">Project</div>
+              <div class="hd">w/c 04 Aug</div>
+              <div class="hd">w/c 11 Aug</div>
+              <div class="hd">w/c 18 Aug</div>
+              <div class="hd">w/c 25 Aug</div>
+              <div class="hd">w/c 01 Sept</div>
+
+              <div class="pname">Tetley Hall — Block E</div>
+              <div class="slot has">2 visits</div>
+              <div class="slot has">1 visit</div>
+              <div class="slot has">3 visits</div>
+              <div class="slot has">2 visits</div>
+              <div class="slot has">2 visits</div>
+
+              <div class="pname">Hunslet Depot</div>
+              <div class="slot gap">none</div>
+              <div class="slot gap">none</div>
+              <div class="slot gap">none</div>
+              <div class="slot gap">none</div>
+              <div class="slot has">2 visits</div>
+
+              <div class="pname">Kirkstall Retail</div>
+              <div class="slot has">1 visit</div>
+              <div class="slot gap">none</div>
+              <div class="slot has">1 visit</div>
+              <div class="slot has">2 visits</div>
+              <div class="slot has">1 visit</div>
+
+              <div class="pname">Farsley Health Centre</div>
+              <div class="slot has">2 visits</div>
+              <div class="slot has">2 visits</div>
+              <div class="slot gap">none</div>
+              <div class="slot gap">none</div>
+              <div class="slot has">1 visit</div>
+            </div>
+            <div class="panel-foot" style="border:1px solid var(--line);border-top:0;">
+              Coverage, not productivity. A gap is a prompt to ask whether a site needed a visit, not a measure of anybody’s week.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <section>
+        <h5>What it fixes</h5>
+        <ul>
+          <li><b>Matches how the office asks the question.</b> Project first, documents second.</li>
+          <li>Issues and delivery sit against the project they belong to, so nothing is orphaned.</li>
+          <li>The planner surfaces <b>silence</b> — the one thing a report list can never show.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>What it assumes</h5>
+        <ul>
+          <li>Per-project <b>issue and delivery roll-ups</b>.</li>
+          <li>A link straight into the SharePoint project folder.</li>
+          <li>Visit history aggregated by week.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Trade-off</h5>
+        <ul>
+          <li>Scales badly past roughly a dozen live projects without a filter or collapse.</li>
+          <li>“What came in today?” takes one more click than it does in Concept 1.</li>
+          <li>The planner needs care: coverage is one sentence away from reading as a productivity score.</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== CONCEPT 4 ===================== -->
+  <section class="concept" id="c4">
+    <div class="concept-head">
+      <span class="concept-num">Concept 4</span>
+      <h2>Combined desk</h2>
+      <p>One screen that answers all three questions in order: what is wrong, where are we on each job, and what
+        does this report actually say. The rail and attention band come from Concept 1. The project strip is
+        Concept 3 reduced to a row of tiles that filter everything beneath them. The reader is Concept 2, sharing
+        the screen with the register instead of replacing it, and it carries the open issues on the same project
+        as the report being read — the context a manager reaches for next.</p>
+    </div>
+
+    <div class="frame">
+      <div class="app app-wide">
+        <div class="topbar">
+          <div class="logo"><b>RELAY</b><span>LEODIS</span></div>
+          <div class="search"><span>Search reports, issues, projects</span><kbd>/</kbd></div>
+          <div class="topbar-right">
+            <span class="bell">Attention <b>3</b></span>
+            <span class="whoami">Cal Say · <em>Manager</em></span>
+          </div>
+        </div>
+
+        <div class="shell">
+          <nav class="side">
+            <div class="side-grp">Office</div>
+            <a href="#c4" class="on">Overview <i>3</i></a>
+            <a href="#c4">Reports <i>184</i></a>
+            <a href="#c4">Issues <i class="warn">12</i></a>
+            <a href="#c4">Deliveries <i class="warn">2</i></a>
+            <div class="side-grp">Register</div>
+            <a href="#c4">Projects <i>27</i></a>
+            <a href="#c4">Clients <i>14</i></a>
+            <a href="#c4">Engineers <i>9</i></a>
+            <div class="side-grp">Administration</div>
+            <a href="#c4">Roles &amp; access</a>
+            <a href="#c4">Delivery settings</a>
+          </nav>
+
+          <div class="main">
+            <div class="pagehead">
+              <div>
+                <h3>Overview</h3>
+                <p>Tuesday 8 September 2026 · 12 live projects · Leodis M&amp;E and Commercial Plumbing</p>
+              </div>
+              <div style="display:flex;gap:8px;">
+                <button class="btn-q btn" type="button">Weekly summary</button>
+                <button class="btn" type="button">New project visit</button>
+              </div>
+            </div>
+
+            <div class="panel attn">
+              <div class="panel-head"><h4>Needs attention</h4><a class="more" href="#c4">All 3 →</a></div>
+              <div class="attn-list">
+                <div class="attn-item">
+                  <b>2 reports were never emailed</b>
+                  <span>Hunslet Depot, both from 08 Sept. Sam Ledgard has not received them.</span><br>
+                  <button class="btn" type="button">Retry delivery</button>
+                </div>
+                <div class="attn-item">
+                  <b>1 issue awaiting verification for 9 days</b>
+                  <span><span class="ref">011LME-ISS-006</span> · L2 lighting circuits · closed by D. Priestley.</span><br>
+                  <button class="btn btn-q" type="button">Verify</button>
+                </div>
+                <div class="attn-item">
+                  <b>Farsley Health Centre has gone quiet</b>
+                  <span>No visit in 6 days with 1 issue still open. Nothing is overdue yet; worth a call.</span><br>
+                  <button class="btn btn-q" type="button">Plan a visit</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="pstrip" role="tablist" aria-label="Filter by project">
+              <a href="#c4" class="ptile on" role="tab" aria-selected="true">
+                <span class="ref">ALL</span>
+                <h6>All live projects</h6>
+                <div class="pm"><span><b>12</b> open</span><span><b>184</b> reports</span></div>
+              </a>
+              <a href="#c4" class="ptile" role="tab">
+                <span class="ref">011LME</span>
+                <h6>Tetley Hall — Block E</h6>
+                <div class="pm"><span><b>5</b> open</span><span>visit <b>1d</b></span><span class="live">● on site now</span></div>
+              </a>
+              <a href="#c4" class="ptile" role="tab">
+                <span class="ref">009LCP</span>
+                <h6>Hunslet Depot — Welfare Block</h6>
+                <div class="pm"><span><b>2</b> open</span><span>visit <b>today</b></span><span class="bad">▲ 2 not emailed</span></div>
+              </a>
+              <a href="#c4" class="ptile" role="tab">
+                <span class="ref">004LCP</span>
+                <h6>Kirkstall Retail — Plant Room</h6>
+                <div class="pm"><span><b>3</b> open</span><span>visit <b>5d</b></span></div>
+              </a>
+              <a href="#c4" class="ptile" role="tab">
+                <span class="ref">007LME</span>
+                <h6>Farsley Health Centre</h6>
+                <div class="pm"><span><b>1</b> open</span><span class="quiet">◆ visit 6d</span></div>
+              </a>
+              <a href="#c4" class="ptile more">8 more →</a>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 400px;gap:24px;align-items:start;">
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div class="filters">
+                  <span class="chip drop">Division</span>
+                  <span class="chip drop">Engineer</span>
+                  <span class="chip drop">Last 30 days</span>
+                  <span class="chip drop">Found</span>
+                  <span class="chip drop">Delivery</span>
+                  <span class="spacer"></span>
+                  <span class="chip">184 reports</span>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-head"><h4>Reports received</h4><a class="more" href="#c4">Full register →</a></div>
+                  <table class="reg tight">
+                    <thead>
+                      <tr><th>Reference</th><th>Project</th><th>Engineer</th><th>Visit</th><th>Found</th><th>Delivery</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr style="background:var(--brass-wash);box-shadow:inset 2px 0 0 var(--brass);">
+                        <td><span class="ref">009LCP-SPR-002</span></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Hunslet Depot — Welfare Block</div></td>
+                        <td>Cal Say</td>
+                        <td class="num" style="white-space:nowrap;">08 Sep <span style="color:var(--text-3)">10:29</span></td>
+                        <td><span class="found"><b>1 access</b> · 1 progress</span></td>
+                        <td><span class="tag tag-alert">Not emailed</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">009LCP-SPR-001</span></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Hunslet Depot — Welfare Block</div></td>
+                        <td>Cal Say</td>
+                        <td class="num" style="white-space:nowrap;">08 Sep <span style="color:var(--text-3)">09:06</span></td>
+                        <td><span class="found">2 progress</span></td>
+                        <td><span class="tag tag-alert">Not emailed</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">011LME-SPR-014</span></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Tetley Hall — Block E</div></td>
+                        <td>R. Ashworth</td>
+                        <td class="num" style="white-space:nowrap;">07 Sep <span style="color:var(--text-3)">16:41</span></td>
+                        <td><span class="found"><b class="f-defect">2 defects</b> · 4 progress</span></td>
+                        <td><span class="tag tag-ok">Sent to 2</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">011LME-SPR-013</span></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Tetley Hall — Block E</div></td>
+                        <td>R. Ashworth</td>
+                        <td class="num" style="white-space:nowrap;">04 Sep <span style="color:var(--text-3)">11:02</span></td>
+                        <td><span class="found"><b class="f-defect">1 defect</b> · 2 progress</span></td>
+                        <td><span class="tag tag-alert">Delivery failed</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">004LCP-SPR-008</span></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Kirkstall Retail — Plant Room</div></td>
+                        <td>J. Whitaker</td>
+                        <td class="num" style="white-space:nowrap;">03 Sep <span style="color:var(--text-3)">14:18</span></td>
+                        <td><span class="found"><b>1 variation</b> · 3 progress</span></td>
+                        <td><span class="tag tag-ok">Sent to 1</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">007LME-SPR-021</span></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Farsley Health Centre — Riser 2</div></td>
+                        <td>D. Priestley</td>
+                        <td class="num" style="white-space:nowrap;">02 Sep <span style="color:var(--text-3)">08:55</span></td>
+                        <td><span class="found">2 progress</span></td>
+                        <td><span class="tag tag-caution">PDF queued</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">011LME-SPR-012</span></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Tetley Hall — Block E</div></td>
+                        <td>R. Ashworth</td>
+                        <td class="num" style="white-space:nowrap;">01 Sep <span style="color:var(--text-3)">15:20</span></td>
+                        <td><span class="found">3 progress</span></td>
+                        <td><span class="tag tag-ok">Sent to 2</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">004LCP-SPR-007</span></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Kirkstall Retail — Plant Room</div></td>
+                        <td>J. Whitaker</td>
+                        <td class="num" style="white-space:nowrap;">28 Aug <span style="color:var(--text-3)">13:44</span></td>
+                        <td><span class="found"><b class="f-defect">1 defect</b> · 1 progress</span></td>
+                        <td><span class="tag tag-ok">Sent to 1</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="panel-foot">Showing 8 of 184. Select a row to read it on the right. Drafts still on an engineer’s phone are not listed here.</div>
+                </div>
+              </div>
+
+              <div class="reader-c">
+                <div class="sheet">
+                  <div class="sheet-title" style="padding-bottom:12px;">
+                    <div>
+                      <h4 style="font-size:15px;">Hunslet Depot — Welfare Block</h4>
+                      <div class="rowsub"><span class="ref">009LCP-SPR-002</span><span class="sep">/</span>Rev 1<span class="sep">/</span>08 Sept, 10:29</div>
+                    </div>
+                    <button class="btn-q btn" type="button" style="padding:5px 10px;font-size:10px;">PDF</button>
+                  </div>
+
+                  <dl class="tb" style="margin-top:12px;">
+                    <div><dt>Client</dt><dd>C&amp;AJ Marshall Builders Ltd</dd></div>
+                    <div><dt>Engineer</dt><dd>Cal Say</dd></div>
+                    <div><dt>Division</dt><dd>Leodis Commercial Plumbing</dd></div>
+                    <div><dt>Visit</dt><dd class="num">08 Sept 2026</dd></div>
+                  </dl>
+
+                  <div style="margin-top:12px;padding:10px 12px;border:1px solid var(--alert);border-left-width:3px;background:var(--alert-wash);font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                    <span><b style="color:var(--alert);">Not emailed.</b> Sam Ledgard has not received this.</span>
+                    <button class="btn" type="button" style="padding:5px 10px;font-size:10px;white-space:nowrap;">Retry</button>
+                  </div>
+
+                  <div class="sec-h">Action and decision summary</div>
+                  <table class="reg tight" style="border:1px solid var(--line);">
+                    <tbody>
+                      <tr>
+                        <td style="white-space:nowrap;">1. Plant room</td>
+                        <td>Confirm key holder before next visit.</td>
+                        <td style="color:var(--caution);white-space:nowrap;">Awaiting confirmation</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+                  <div class="sec-h">Updates</div>
+                  <div class="upd">
+                    <span class="upd-n">01</span>
+                    <div class="upd-b">
+                      <h5>Ground floor plant room <span class="tag tag-alert">Access</span></h5>
+                      <p>No access on arrival; key holder not on site. Second visit needed to complete the
+                        pressure test on the incoming main.</p>
+                    </div>
+                    <div class="thumb">PHOTO</div>
+                  </div>
+                  <div class="upd">
+                    <span class="upd-n">02</span>
+                    <div class="upd-b">
+                      <h5>Welfare block WCs <span class="tag tag-quiet">Progress</span></h5>
+                      <p>First-fix pipework complete to all six cubicles. Waste runs tested, no leaks.</p>
+                    </div>
+                  </div>
+
+                  <div class="sec-h" style="display:flex;justify-content:space-between;">
+                    <span>Open issues — Hunslet Depot</span>
+                    <a href="#c4" style="color:var(--brass);text-decoration:none;letter-spacing:.06em;">All 2 →</a>
+                  </div>
+                  <div style="border:1px solid var(--line);">
+                    <div class="mini">
+                      <div class="mini-b">
+                        <p style="font-size:12px;"><span class="ref">009LCP-ISS-002</span></p>
+                        <div class="rowsub">No access to plant room · unassigned · 4 days</div>
+                      </div>
+                      <span class="tag tag-quiet">Provisional</span>
+                    </div>
+                    <div class="mini">
+                      <div class="mini-b">
+                        <p style="font-size:12px;"><span class="ref">009LCP-ISS-001</span></p>
+                        <div class="rowsub">Incoming main pressure test outstanding · Cal Say</div>
+                      </div>
+                      <span class="tag tag-caution">Assigned</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <section>
+        <h5>What it takes from each</h5>
+        <ul>
+          <li><b>1 —</b> the rail and the attention band, unchanged. Structure that lasts and one loud place.</li>
+          <li><b>2 —</b> the reader, condensed to a column. The document is on the page; the round trip is gone.</li>
+          <li><b>3 —</b> project-first, as filter tiles. Open work and days since a visit on every tile; “gone quiet” becomes an attention item rather than a planner grid.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>What it assumes</h5>
+        <ul>
+          <li>Everything Concept 1 assumed, plus a <b>selected-row state</b> for the reader.</li>
+          <li><b>Per-project open counts and last-visit dates</b> — cheap: both are one query on data the store already holds.</li>
+          <li>A quiet-site threshold, which is a policy decision, not a technical one.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Trade-off</h5>
+        <ul>
+          <li>The densest screen of the four. It needs a wide monitor and earns it; on a laptop the reader would need to collapse.</li>
+          <li>The strip stops working past about a dozen tiles — hence “8 more”, which becomes a search.</li>
+          <li>Photos in a 400px reader are thumbnails. Anyone checking evidence opens the PDF.</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== VERDICT ===================== -->
+  <section class="verdict">
+    <h2>Choosing between them</h2>
+    <table class="cmp">
+      <thead>
+        <tr><th>Concept</th><th>Answers first</th><th>Best when</th><th>Build cost from today</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1 · Control desk</td>
+          <td>“What is wrong, and what came in?”</td>
+          <td>The office is triaging across many projects and wants one place to stand.</td>
+          <td>Medium. Needs an issues list and filters; the register is largely what you have.</td>
+        </tr>
+        <tr>
+          <td>2 · Register and reader</td>
+          <td>“What does this report actually say?”</td>
+          <td>Most office time goes on reading and checking documents.</td>
+          <td>Low–medium. The reader is the preview page you already render; read state is the new part.</td>
+        </tr>
+        <tr>
+          <td>3 · Project board</td>
+          <td>“Where are we on each job?”</td>
+          <td>Reporting to clients and running project meetings from the app.</td>
+          <td>High. Needs roll-ups and visit history that nothing computes yet.</td>
+        </tr>
+        <tr>
+          <td>4 · Combined desk</td>
+          <td>All three, in that order.</td>
+          <td>The office wants one screen to stand on for the day, on a proper monitor.</td>
+          <td>Medium–high. Concept 1 plus a selected-row reader and two per-project figures.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="rec">
+      <h3>My recommendation: Concept 4, built in the order 1 → 2 → 3</h3>
+      <p>Concept 4 is what I described in words last time, drawn out. It is the right destination. It is not the
+        right first build, because it is three things and each of them can ship on its own.</p>
+      <p><b>Ship Concept 1 first</b> — the rail, the attention band, the register with a Found column. That fixes
+        the two real defects on today’s screen (a failure styled like a timestamp, and a permanently empty review
+        queue) and gives every later section a place to live.</p>
+      <p><b>Then add the reader</b> as a selected-row column, exactly as Concept 4 shows it. The document is
+        already rendered by the preview page; this is mostly layout.</p>
+      <p><b>Then the project strip</b>, once the confirmation question is settled and per-project counts mean
+        something. Until then a tile that says “5 open” is counting issues nobody has looked at, and the strip
+        would be teaching the office to ignore it.</p>
+      <p>Concept 3 as a full board I would still hold — it is the same information as the strip at four times the
+        screen and the build, and the strip is what makes 4 work.</p>
+    </div>
+
+    <p class="wrap-note">All three are static mockups — nothing here is wired to the application. Data shown is
+      representative, not real: project names, references and engineers are examples in the Leodis format.</p>
+  </section>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById("themer");
+  var root = document.documentElement;
+  function current() {
+    var set = root.getAttribute("data-theme");
+    if (set) return set;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  function label() { btn.textContent = current() === "dark" ? "Light" : "Dark"; }
+  label();
+  btn.addEventListener("click", function () {
+    root.setAttribute("data-theme", current() === "dark" ? "light" : "dark");
+    label();
+  });
+})();
+</script>
+</body>
+</html>

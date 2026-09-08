@@ -17,7 +17,7 @@ interface InstallPrompt extends Event {
  * report an engineer was in the middle of writing. These are the two screens
  * someone is actually on when they think about installing it.
  */
-export function InstallRelay() {
+export function InstallRelay({alwaysShow=false}: {alwaysShow?:boolean} = {}) {
   const [installed,setInstalled] = useState(false);
   const [prompt,setPrompt] = useState<InstallPrompt | null>(null);
   const [busy,setBusy] = useState(false);
@@ -48,7 +48,7 @@ export function InstallRelay() {
     } catch {setMessage('Use the browser instructions below to install RELAY.');}
     finally {setPrompt(null);setBusy(false);}
   }
-  if (installed || !['/','/signin'].includes(pathname)) return null;
+  if (!alwaysShow && (installed || !['/','/signin'].includes(pathname))) return null;
   return <aside className="install-help" aria-label="Install RELAY">
     <details>
       <summary>Install RELAY on your phone</summary>

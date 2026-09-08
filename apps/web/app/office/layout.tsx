@@ -1,3 +1,4 @@
+import './office.css';
 import { redirect } from 'next/navigation';
 import { currentPrincipal } from '@/lib/auth/session';
 import { canManage } from '@/lib/auth/access';

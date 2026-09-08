@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { applyCommand, getIssue, type IssueCommand } from "@/lib/issueStore";
 import { requireSession } from "@/lib/auth/guard";
 import { validatePhotos } from '@/lib/validatePhotos';
-import { canIssueCommand } from '@/lib/auth/access';
+import { canIssueCommand,canAccessProject } from '@/lib/auth/access';
 
 export const dynamic = "force-dynamic";
 
@@ -12,6 +12,7 @@ export async function GET(_r: Request, context: { params: Promise<{ id: string }
 
   const { id } = await context.params;
   const issue = getIssue(id);
+  if(issue && !canAccessProject(guard.principal,issue.projectId))return NextResponse.json({reason:'Project access required.'},{status:403});
   return issue
     ? NextResponse.json(issue)
     : NextResponse.json({ reason: "No such issue." }, { status: 404 });
@@ -22,6 +23,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
   const principal = guard.principal;
+  const issue=getIssue(id);
+  if(!issue)return NextResponse.json({reason:'No such issue.'},{status:404});
+  if(!canAccessProject(principal,issue.projectId))return NextResponse.json({reason:'Project access required.'},{status:403});
 
   const command = (await request.json().catch(() => null)) as IssueCommand | null;
   if (!command || typeof command.kind !== 'string' || typeof command.note !== 'string' ||

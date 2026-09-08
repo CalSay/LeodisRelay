@@ -141,6 +141,12 @@ export interface IssueEvent {
 }
 
 export interface Issue {
+  /** Individual defects have no source report; older report-raised issues retain it. */
+  source?: 'individual' | 'report';
+  affectedTrade?: 'Electrical' | 'HVAC' | 'P&H' | 'Other / non-Leodis';
+  reportedBy?: string;
+  reportedById?: string;
+  reporterTrade?: 'Electrical' | 'HVAC' | 'P&H';
   id: string;
   reference: string;
   projectId: string;

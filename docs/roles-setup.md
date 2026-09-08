@@ -48,7 +48,7 @@ to the same person (including via groups): ambiguous assignments fail closed.
 | Manager | tom@leodisme.com; ollie@leodisme.com; jonny@leodisme.com; russel@leodisme.com |
 | Engineer.Electrical | john@leodisme.com; damien@leodisme.com; graham.stephenson@leodisme.com; bryony@leodisme.com; tyler.parker@leodisme.com |
 | Engineer.HVAC | danny@leodisme.com; anthony.dyson@leodisme.com |
-| Engineer.PH | chris@leodisme.com; aidan@leodisme.com; marcus@leodisme.com; harvey.obrien@leodisme.com |
+| Engineer.PH | chris@leodisme.com; aidan@leodisme.com; marcus@leodisme.com; harvey.obrien@leodisme.com; nicky.cunningham@leodisme.com |
 
 Sources: [Microsoft app roles](https://learn.microsoft.com/en-us/entra/identity-platform/howto-add-app-roles-in-apps)
 and [user assignment](https://learn.microsoft.com/en-us/entra/identity/enterprise-apps/assign-user-or-group-access-portal).

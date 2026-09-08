@@ -110,6 +110,10 @@ function raiseIssues(report: Report): Issue[] {
       id: `iss-${Math.random().toString(36).slice(2, 10)}`,
       reference: `${project?.projectNumber ?? "UNKNOWN"}-ISS-${String(sequence).padStart(3, "0")}`,
       projectId: report.projectId,
+      source: 'report',
+      reportedBy: report.author,
+      ...(report.authorId ? {reportedById:report.authorId}:{}),
+      ...(report.authorTrade ? {reporterTrade:report.authorTrade}:{}),
       location: observation.location,
       description: observation.whatHappened,
       // The required action is the clearest instruction on an issue and was

@@ -59,7 +59,9 @@ try {
   const admin = await status('/admin','Admin',200); assert.match(await admin.text(),/Team assignment checklist/);
   await status('/office','Engineer',307);
   await status('/office','Manager',200);
-  const home = await status('/','Engineer',200); assert.match(await home.text(),/Continue my report/);
+  const home = await status('/','Engineer',200); assert.match(await home.text(),/Site companion navigation/);
+  await status('/engineer','forged',307);
+  const engineerPreview = await status('/engineer','Admin',200); assert.match(await engineerPreview.text(),/Engineer layout preview/);
   const managerHome = await status('/','Manager',307); assert.equal(managerHome.headers.get('location'),'/office');
   const adminHome = await status('/','Admin',307); assert.equal(adminHome.headers.get('location'),'/admin');
   const page = await (await status('/api/reports','Engineer',200)).json();
@@ -121,6 +123,17 @@ try {
   // asserts the check runs at all — an issue on no project is refused.
   const realPng = await sharp({create:{width:4,height:4,channels:3,background:'#111'}}).png().toBuffer();
   await status(`/api/media/${randomUUID()}?issueId=issue-unscoped`,'Engineer',403,{method:'PUT',headers:{'content-type':'image/png'},body:realPng});
+  const defectPhoto=randomUUID(),defectRequest=randomUUID();
+  const defect={requestId:defectRequest,projectId:own.projectId,description:'Individual API defect',location:'Corridor',affectedTrade:'HVAC',reportedById:'forged-author',reporterTrade:'HVAC',photos:[{id:defectPhoto,dataUrl:`/api/media/${defectPhoto}`,caption:'',capturedAt:new Date().toISOString()}]};
+  const defectForm=(data=defect)=>{const form=new FormData();form.set('defect',JSON.stringify(data));form.set(defectPhoto,new Blob([realPng],{type:'image/png'}),'photo.png');return {method:'POST',body:form};};
+  await status('/api/issues','forged',401,defectForm());
+  const createdDefect=await (await status('/api/issues','Engineer',201,defectForm())).json();
+  assert.equal(createdDefect.reportedById,'entra:Engineer');assert.equal(createdDefect.reporterTrade,undefined);assert.equal(createdDefect.affectedTrade,'HVAC');assert.equal(createdDefect.raisedByReport,'');
+  const repeatedDefect=await (await status('/api/issues','Engineer',201,defectForm())).json();assert.equal(repeatedDefect.id,createdDefect.id);assert.equal(repeatedDefect.events.length,1);
+  await status('/api/issues','Engineer',409,defectForm({...defect,description:'Changed after receipt'}));
+  await status('/api/issues','Engineer',422,defectForm({...defect,requestId:randomUUID(),affectedTrade:'unknown'}));
+  await status(`/api/media/${defectPhoto}`,'Engineer',200);
+  await status(`/api/media/${defectPhoto}`,'forged',401);
 
 
   // The container health probe must answer with no cookie at all, and must say

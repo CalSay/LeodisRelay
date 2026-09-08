@@ -73,7 +73,8 @@ export function ObservationEditor({
             value={observation.type}
             onChange={(e) => set("type", e.target.value as ObservationType)}
           >
-            {OBSERVATION_TYPES.map((option) => (
+            {observation.type === 'defect' && <option value="defect" disabled>Defect (existing section)</option>}
+            {OBSERVATION_TYPES.filter(option => option.value !== 'defect').map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>

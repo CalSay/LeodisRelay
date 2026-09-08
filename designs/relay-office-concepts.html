@@ -1,0 +1,1474 @@
+<!doctype html>
+<html lang="en" data-visualize-standalone>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src 'unsafe-inline' blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>RELAY Office — Four Design Concepts</title>
+<style>:root{color-scheme:light dark;background:light-dark(rgb(255 255 255), rgb(24 24 24))}html,body{margin:0}body{box-sizing:border-box;padding:1rem;background:inherit}iframe{display:block;width:100%;height:calc(100vh - 2rem);margin:0 auto;border:0}</style>
+</head>
+<body>
+<iframe sandbox="allow-scripts" referrerpolicy="no-referrer" title="RELAY Office — Four Design Concepts" srcdoc="&lt;!doctype html&gt;
+&lt;html lang=&quot;en&quot; data-visualize-standalone&gt;
+&lt;head&gt;
+&lt;meta charset=&quot;utf-8&quot;&gt;
+&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
+&lt;meta name=&quot;referrer&quot; content=&quot;no-referrer&quot;&gt;
+&lt;meta http-equiv=&quot;Content-Security-Policy&quot; content=&quot;default-src &#x27;none&#x27;; script-src &#x27;unsafe-inline&#x27; &#x27;unsafe-eval&#x27; &#x27;wasm-unsafe-eval&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; style-src &#x27;unsafe-inline&#x27; blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; img-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; font-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; media-src blob: data: https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://esm.sh https://fonts.bunny.net https://fonts.googleapis.com https://fonts.gstatic.com https://unpkg.com; worker-src blob:; connect-src blob: data:; frame-src &#x27;none&#x27;; object-src &#x27;none&#x27;; base-uri &#x27;none&#x27;; form-action &#x27;none&#x27;&quot;&gt;
+&lt;title&gt;RELAY Office — Four Design Concepts&lt;/title&gt;
+&lt;style&gt;:root {
+  color-scheme: light dark;
+  background-color: var(
+    --background,
+    var(--color-background-primary, light-dark(rgb(255 255 255), rgb(24 24 24)))
+  ) !important;
+
+  /* Agent-facing contract; keep in sync with SKILL.md. */
+  --background: var(
+    --color-background-primary,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --card: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --card-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --popover: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255), rgb(45 45 45))
+  );
+  --popover-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --primary: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --primary-foreground: var(
+    --color-text-inverse,
+    light-dark(rgb(255 255 255), rgb(13 13 13))
+  );
+  --secondary: var(
+    --color-background-secondary,
+    light-dark(rgb(255 255 255 / 96%), rgb(54 54 54 / 96%))
+  );
+  --secondary-foreground: var(
+    --color-text-primary,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --muted: color-mix(in srgb, var(--foreground) 10%, transparent);
+  --muted-foreground: var(
+    --color-text-secondary,
+    light-dark(rgb(26 28 31 / 49.4%), rgb(255 255 255 / 49.8%))
+  );
+  --accent: var(
+    --color-background-info,
+    light-dark(rgb(229 242 255), rgb(13 39 63))
+  );
+  --accent-foreground: var(
+    --color-text-info,
+    light-dark(rgb(51 156 255), rgb(131 195 255))
+  );
+  --destructive: var(
+    --color-text-warning,
+    light-dark(rgb(226 85 7), rgb(255 133 73))
+  );
+  --border: var(
+    --color-border-secondary,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+  --input: var(
+    --color-border-primary,
+    light-dark(
+      rgb(26 28 31 / 11.8%),
+      color-mix(in oklab, rgb(0 0 0) 10%, transparent)
+    )
+  );
+  --ring: var(
+    --color-ring-primary,
+    light-dark(rgb(51 156 255), rgb(131 195 255 / 76%))
+  );
+  --font-size-base: var(--font-text-md-size, 14px);
+  --blue: light-dark(rgb(51 156 255), rgb(51 156 255));
+  --orange: light-dark(rgb(226 85 7), rgb(251 106 34));
+  --green: light-dark(rgb(0 162 64), rgb(64 201 119));
+  --red: light-dark(rgb(224 46 42), rgb(255 103 100));
+  --purple: light-dark(rgb(146 79 247), rgb(173 123 249));
+  --yellow: light-dark(rgb(255 195 0), rgb(255 210 64));
+  --viz-series-1: var(--primary);
+  --viz-series-2: light-dark(rgb(243 136 59), rgb(245 154 86));
+  --viz-series-3: light-dark(rgb(93 201 119), rgb(116 213 139));
+  --viz-series-4: light-dark(rgb(235 119 177), rgb(240 143 192));
+  --viz-series-5: light-dark(rgb(155 121 236), rgb(170 145 239));
+  --viz-series-6: light-dark(rgb(58 185 177), rgb(90 203 194));
+
+  /* Internal implementation variables; not part of the agent contract. */
+  --font-sans: -apple-system, system-ui, &quot;Segoe UI&quot;, sans-serif;
+  --font-mono:
+    ui-monospace, SFMono-Regular, &quot;SF Mono&quot;, Menlo, Consolas, &quot;Liberation Mono&quot;,
+    monospace;
+  --font-size-normal: max(11px, var(--font-size-base));
+  --font-size-tooltip: calc(var(--font-size-base) - 1px);
+  --font-size-small: max(11px, calc(var(--font-size-base) - 2px));
+  --font-size-h1: calc(var(--font-size-normal) * 1.7142857143);
+  --font-size-h2: calc(var(--font-size-normal) * 1.4285714286);
+  --font-size-h3: calc(var(--font-size-normal) * 1.2857142857);
+  --font-weight-normal: 430;
+  --font-weight-medium: 500;
+  --icon-size: 16px;
+  --line-height-normal: calc(var(--font-size-normal) * 1.5);
+  --line-height-tooltip: calc(var(--font-size-tooltip) * 1.4285714286);
+  --line-height-small: calc(var(--font-size-small) + 4px);
+  --corner-shape: round;
+  --radius: var(--border-radius-lg, 10px);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-2xl: calc(var(--radius) * 1.6);
+  --radius-full: 9999px;
+  --shadow-sm: 0 1px 2px -1px rgb(0 0 0 / 8%);
+  --checkmark-image: url(&quot;data:image/svg+xml,%3Csvg xmlns=&#x27;http://www.w3.org/2000/svg&#x27; viewBox=&#x27;0 0 17 17&#x27;%3E%3Cpath d=&#x27;M12.8961 3.64101C13.1297 3.41418 13.4984 3.37523 13.7779 3.56581C14.0571 3.75635 14.1554 4.11331 14.0299 4.41347L13.9615 4.53847L7.71151 13.7045C7.59411 13.8767 7.4063 13.9877 7.19881 14.0072C6.99136 14.0267 6.78564 13.9533 6.63826 13.806L2.88826 10.056L2.79842 9.9457C2.6192 9.67407 2.64927 9.30496 2.88826 9.06581C3.12738 8.82669 3.49647 8.79676 3.76815 8.97597L3.8785 9.06581L7.03084 12.2182L12.8053 3.74941L12.8961 3.64101Z&#x27;/%3E%3C/svg%3E&quot;);
+
+  /* Legacy aliases; not part of the current agent contract. */
+  --viz-bg: transparent;
+  --viz-panel: var(--card);
+  --viz-border: var(--border);
+  --viz-text: var(--foreground);
+  --viz-muted: var(--muted-foreground);
+  --viz-accent: var(--primary);
+  --viz-accent-text: var(--primary-foreground);
+  --viz-accent-bg: var(--accent);
+  --viz-font-size: var(--font-size-base);
+  --viz-warning: var(--destructive);
+}
+
+:root[data-theme=&quot;light&quot;] {
+  color-scheme: light;
+}
+
+:root[data-theme=&quot;dark&quot;] {
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html &gt; body {
+  /* Preserve MCP aliases for older inline renderers without creating :root cycles. */
+  --color-background-primary: var(
+    --background,
+    light-dark(rgb(255 255 255), rgb(24 24 24))
+  );
+  --color-text-primary: var(
+    --foreground,
+    light-dark(rgb(26 28 31), rgb(255 255 255))
+  );
+  --color-border-secondary: var(
+    --border,
+    light-dark(rgb(26 28 31 / 8%), rgb(255 255 255 / 8.2%))
+  );
+
+  margin: 0;
+  padding: var(--visualize-paint-gutter, 0px);
+  color: var(--foreground);
+  background: transparent !important;
+  font-family: var(--font-sans) !important;
+  font-size: var(--font-size-normal);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+}
+
+a {
+  color: color-mix(in srgb, var(--viz-accent) 80%, var(--viz-text) 20%);
+  cursor: pointer;
+  font-weight: var(--font-weight-medium, 500);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+a:is(:hover, :focus-visible) {
+  text-decoration-line: underline;
+  text-decoration-style: dashed;
+  text-decoration-thickness: 0.5px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p {
+  margin-block: 0;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+h3,
+h4,
+h5,
+h6 {
+  font-size: var(--font-size-h3);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.3;
+}
+
+b,
+strong,
+th {
+  font-weight: var(--font-weight-medium);
+}
+
+code:not(pre code) {
+  display: inline;
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  corner-shape: var(--corner-shape);
+  background: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.92em;
+  overflow-wrap: anywhere;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  word-break: break-word;
+}
+
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--foreground);
+  font: inherit;
+  text-align: start;
+}
+
+.table :is(th, td) {
+  padding-block: 10px;
+  padding-inline: 0 24px;
+  overflow-wrap: anywhere;
+  border-bottom: 1px solid var(--border);
+  text-align: start;
+  vertical-align: top;
+}
+
+.table-responsive &gt; .table :is(th, td) {
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-inline-end: 0;
+}
+
+.table :is(caption, thead th) {
+  font-weight: 600;
+}
+
+.table thead th {
+  padding-block: 8px;
+  border-bottom-color: color-mix(in srgb, var(--foreground) 16%, transparent);
+}
+
+.table tbody tr:last-child :is(th, td) {
+  border-bottom: 0;
+}
+
+.table.table-sm :is(th, td) {
+  padding-block: 6px;
+}
+
+.table.table-sm :is(th, td):not(:last-child) {
+  padding-inline-end: 16px;
+}
+
+.table :is(.text-end, [align=&quot;right&quot;]) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.table :is(.text-center, [align=&quot;center&quot;]) {
+  text-align: center;
+}
+
+.table .text-nowrap {
+  white-space: nowrap;
+}
+
+#widget {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  background: transparent !important;
+}
+
+.card {
+  min-width: 0;
+  padding: 12px;
+  overflow: hidden;
+  overflow-wrap: break-word;
+  border-radius: var(--radius-2xl);
+  corner-shape: var(--corner-shape);
+  color: var(--card-foreground);
+  background: var(--card);
+}
+
+#widget &gt; :not(.card, .progress) {
+  width: 100% !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.tooltip {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: max-content;
+  max-width: min(
+    20rem,
+    var(--tooltip-available-width, calc(100vw - 10px)),
+    calc(100vw - 10px)
+  );
+  max-height: min(
+    var(--tooltip-available-height, calc(100vh - 10px)),
+    calc(100vh - 10px)
+  );
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--popover-foreground);
+  background: var(--popover);
+  box-shadow: none;
+  font-size: var(--font-size-tooltip);
+  line-height: var(--line-height-tooltip);
+  overflow-wrap: break-word;
+  white-space: normal;
+  pointer-events: none;
+  user-select: none;
+}
+
+.viz-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(max(180px, 24%), 1fr));
+  gap: 10px;
+}
+
+.viz-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.viz-stat-value {
+  font-size: var(--font-size-h2);
+  font-weight: var(--font-weight-medium);
+  line-height: 1.25;
+}
+
+.viz-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+hr {
+  width: 100%;
+  height: 1px;
+  margin-block: 6px;
+  border: 0;
+  background: var(--border);
+}
+
+.nav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+}
+
+.progress {
+  display: flex;
+  height: 8px;
+  margin-block: calc((var(--line-height-normal, 1.5em) - 8px) / 2);
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+}
+
+.progress-bar:only-child {
+  border-radius: var(--radius-full);
+}
+
+.progress-bar {
+  height: 100%;
+  flex-shrink: 0;
+  border: 0;
+  background: var(--viz-series-1);
+}
+
+.viz-badge {
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-foreground);
+  background: var(--accent);
+  font-weight: var(--font-weight-medium);
+}
+
+small,
+.text-small,
+.viz-badge {
+  font-size: var(--font-size-small);
+  line-height: var(--line-height-small);
+}
+
+.text-muted {
+  color: var(--muted-foreground);
+}
+
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.viz-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.viz-controls &gt; .form-label {
+  display: grid;
+  min-width: min(100%, 260px);
+  flex: 1 1 280px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 2px 12px;
+  margin-bottom: 0;
+}
+
+.viz-controls &gt; .form-label &gt; :is(.form-control, .form-range, .form-select) {
+  grid-column: 1 / -1;
+}
+
+.btn,
+.nav-link,
+.form-check-input,
+.form-control,
+.form-range,
+.form-select {
+  font: inherit;
+}
+
+.btn,
+.nav-link {
+  appearance: button;
+  display: inline-flex;
+  inline-size: fit-content;
+  max-inline-size: 100%;
+  min-height: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  margin: 0;
+  padding: 0 8px;
+  -webkit-app-region: no-drag;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: var(--cursor-interaction, pointer);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+.btn:is(.btn-block, .viz-tile) {
+  inline-size: 100%;
+}
+
+.btn.viz-tile {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+a.btn {
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn:not(:disabled):hover,
+.nav-link:not(:disabled):not([aria-disabled=&quot;true&quot;]):hover {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.btn-primary {
+  border-color: transparent;
+  color: var(--primary-foreground);
+  background: var(--foreground);
+  background-clip: padding-box;
+}
+
+.btn-primary .text-muted {
+  color: color-mix(in srgb, var(--primary-foreground) 50%, transparent);
+}
+
+.btn-primary:not(:disabled):hover {
+  background: color-mix(in srgb, var(--foreground) 80%, transparent);
+  background-clip: padding-box;
+}
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.btn-ghost:not(:disabled):hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.nav-pills .nav-link {
+  min-width: 0;
+  border-color: transparent;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.nav-justified .nav-link {
+  flex: 1 1 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.nav-pills .nav-link.active {
+  color: var(--foreground);
+  background: var(--muted);
+}
+
+.btn:disabled,
+.nav-link:disabled,
+.nav-link[aria-disabled=&quot;true&quot;] {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+[data-lucide] {
+  stroke-width: 1.6;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--foreground);
+}
+
+.form-control {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  background: var(--secondary);
+}
+
+.form-control::placeholder {
+  color: var(--muted-foreground);
+}
+
+.form-control[type=&quot;file&quot;] {
+  padding: 0;
+  overflow: hidden;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control[type=&quot;file&quot;]::file-selector-button {
+  min-height: 26px;
+  margin-right: 8px;
+  padding: 0 8px;
+  border: 0;
+  border-right: 1px solid var(--input);
+  color: var(--secondary-foreground);
+  background: var(--secondary);
+  cursor: inherit;
+  font: inherit;
+}
+
+.form-control[type=&quot;file&quot;]:not(:disabled):hover::file-selector-button {
+  background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-control-color[type=&quot;color&quot;] {
+  width: 40px;
+  height: 28px;
+  padding: 3px;
+  cursor: var(--cursor-interaction, pointer);
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.form-control-color[type=&quot;color&quot;]::-webkit-color-swatch {
+  border: 0;
+  border-radius: calc(var(--radius-lg) - 4px);
+  corner-shape: var(--corner-shape);
+}
+
+textarea.form-control {
+  height: auto;
+  min-height: 72px;
+  padding: 8px 10px;
+  resize: vertical;
+}
+
+.form-control:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.form-select {
+  appearance: none;
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  margin: 0;
+  padding: 0 32px 0 8px;
+  outline: none;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-lg);
+  corner-shape: var(--corner-shape);
+  color: var(--foreground);
+  background-color: var(--secondary);
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
+  background-position:
+    calc(100% - 14px) 50%,
+    calc(100% - 10px) 50%;
+  background-repeat: no-repeat;
+  background-size: 4px 4px;
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-select:not(:disabled):hover {
+  background-color: color-mix(in srgb, var(--foreground) 6%, var(--secondary));
+}
+
+.form-select:focus-visible {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-check {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  gap: 6px;
+}
+
+.form-check-input {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 1px solid var(--input);
+  color: var(--primary-foreground);
+  background-color: transparent;
+  cursor: var(--cursor-interaction, default);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;] {
+  border-color: var(--input);
+  border-radius: var(--radius-sm);
+  corner-shape: var(--corner-shape);
+  background-color: var(--secondary);
+  box-shadow: var(--shadow-sm);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input:not(:disabled):not(:checked):hover {
+  background-color: var(--card);
+}
+
+.form-check:not(.form-switch) .form-check-input[type=&quot;checkbox&quot;]:checked {
+  border-color: var(--primary);
+  background-color: var(--primary);
+}
+
+.form-check:not(.form-switch)
+  .form-check-input[type=&quot;checkbox&quot;]:checked::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--primary-foreground);
+  content: &quot;&quot;;
+  mask: var(--checkmark-image) center / 12px 12px no-repeat;
+}
+
+.form-check-input[type=&quot;radio&quot;] {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-full);
+}
+
+.form-check-input[type=&quot;radio&quot;]:checked {
+  border: 2px solid var(--primary);
+  background:
+    radial-gradient(circle, var(--primary-foreground) 0 2.5px, transparent 3px),
+    var(--primary);
+}
+
+.form-check:not(.form-switch) .form-check-input:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled {
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.form-check:not(.form-switch) .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+}
+
+.form-switch .form-check-input:disabled,
+.form-switch .form-check-input:disabled + .form-check-label {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.form-check-label {
+  color: var(--foreground);
+  cursor: var(--cursor-interaction, default);
+}
+
+.form-switch .form-check-input {
+  position: relative;
+  width: 32px;
+  height: 20px;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  box-shadow: none;
+  transition: background-color 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input::before {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  box-sizing: border-box;
+  border: 1px solid light-dark(var(--primary-foreground), var(--foreground));
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+  box-shadow: var(--shadow-sm);
+  content: &quot;&quot;;
+  transform: translate(2px, -50%);
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.form-switch .form-check-input:checked {
+  background: var(--primary);
+}
+
+.form-switch .form-check-input:checked::before {
+  transform: translate(14px, -50%);
+}
+
+.form-switch .form-check-input:focus-visible {
+  box-shadow: 0 0 0 2px var(--ring);
+}
+
+.form-range {
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 28px;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  outline: none;
+  border: 0;
+  accent-color: var(--primary);
+  background: linear-gradient(
+      color-mix(in srgb, var(--foreground) 7%, transparent),
+      color-mix(in srgb, var(--foreground) 7%, transparent)
+    )
+    center / 100% 2px no-repeat;
+}
+
+.form-range::-webkit-slider-runnable-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  margin-top: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-webkit-slider-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range::-moz-range-track {
+  height: 28px;
+  background: transparent;
+}
+
+.form-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  background: light-dark(var(--primary-foreground), var(--foreground));
+}
+
+.form-range:focus-visible::-moz-range-thumb {
+  border-color: var(--ring);
+  box-shadow: inset 0 0 0 1px var(--ring);
+}
+
+.form-range:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
+}
+
+.btn:not(.btn-primary, .viz-tile):is(
+  [aria-pressed=&quot;true&quot;],
+  [aria-selected=&quot;true&quot;],
+  .is-selected
+) {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--primary);
+}
+
+.btn.viz-tile:is([aria-pressed=&quot;true&quot;], [aria-selected=&quot;true&quot;], .is-selected) {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+
+.btn:focus-visible,
+.nav-link:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+@media (pointer: coarse) {
+  .btn,
+  .nav-link,
+  .form-control,
+  .form-select {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  /* Keep small-screen WebKit from zooming when a text field receives focus. */
+  .form-control,
+  .form-select {
+    font-size: max(16px, var(--font-size-normal));
+  }
+
+  .form-control[type=&quot;file&quot;]::file-selector-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .form-control-color[type=&quot;color&quot;] {
+    width: 44px;
+    height: 44px;
+  }
+
+  .form-control:is(
+    [type=&quot;date&quot;],
+    [type=&quot;datetime-local&quot;],
+    [type=&quot;month&quot;],
+    [type=&quot;time&quot;],
+    [type=&quot;week&quot;]
+  ) {
+    min-width: 0;
+    max-width: 100%;
+    padding-block: 8px;
+  }
+
+  .form-check {
+    min-height: 44px;
+    padding-inline: 15px;
+  }
+
+  .form-check-input {
+    position: relative;
+  }
+
+  .form-check-input::after {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    content: &quot;&quot;;
+    transform: translate(-50%, -50%);
+  }
+
+  .form-check-label {
+    display: inline-flex;
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .form-range {
+    height: 44px;
+    touch-action: pan-y;
+  }
+
+  .form-range::-webkit-slider-runnable-track {
+    height: 44px;
+  }
+
+  .form-range::-moz-range-track {
+    height: 44px;
+  }
+
+  .form-range::-webkit-slider-thumb {
+    margin-top: 12px;
+  }
+}
+
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+#widget &gt; svg {
+  width: 100%;
+}
+
+/* Model-authored chart rules can otherwise stretch icons after these styles load. */
+svg.lucide {
+  display: block;
+  width: var(--icon-size) !important;
+  height: var(--icon-size) !important;
+  flex: none;
+  margin: 0 !important;
+  stroke-width: 1.6;
+}
+
+.text-warning,
+.text-destructive {
+  color: var(--destructive);
+}
+
+html&gt;body{padding:0}&lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+&lt;div id=&quot;relay-directions&quot; aria-label=&quot;RELAY Office design concepts&quot;&gt;
+&lt;style&gt;
+#relay-directions{--r-paper:#f5f4ef;--r-panel:#fffefa;--r-ink:#272b26;--r-muted:#66695f;--r-line:#d9d8ce;--r-gold:#806521;--r-tint:#ece8da;--r-green:#32664e;--r-gap:22px;color:var(--r-ink);font:14px/1.5 Arial,sans-serif;color-scheme:light}
+#relay-directions *{box-sizing:border-box}#relay-directions button,#relay-directions input,#relay-directions select{font:inherit}#relay-directions button{cursor:pointer}#relay-directions button:focus-visible,#relay-directions input:focus-visible,#relay-directions select:focus-visible{outline:3px solid #9d7d32;outline-offset:3px}#relay-directions .choices{display:flex;gap:8px;flex-wrap:wrap;padding:12px 0;background:var(--r-paper)}#relay-directions .choices button{padding:12px 18px;border:1px solid var(--r-line);background:var(--r-panel);color:var(--r-ink);border-radius:5px}#relay-directions .choices button[aria-selected=true]{background:var(--r-gold);color:#fffefa;border-color:var(--r-gold)}#relay-directions .concept-note{display:flex;justify-content:space-between;gap:16px;padding:10px 16px;background:var(--r-tint);color:#5d532f;font-size:12px;flex-wrap:wrap}#relay-directions .app{background:var(--r-paper);border:1px solid var(--r-line);min-height:750px}#relay-directions .brand{font-size:20px;letter-spacing:5px;color:var(--r-gold);white-space:nowrap}#relay-directions .brand small{font:11px monospace;letter-spacing:2px;margin-left:8px;color:var(--r-muted)}#relay-directions .top{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 24px;border-bottom:1px solid var(--r-line);background:var(--r-panel);flex-wrap:wrap}#relay-directions .account{display:flex;align-items:center;gap:10px;font-size:12px}#relay-directions .avatar{display:inline-grid;place-items:center;background:var(--r-tint);color:var(--r-gold);width:34px;height:34px;border-radius:50%;font-weight:bold}#relay-directions .search{background:var(--r-paper);border:1px solid var(--r-line);padding:9px 12px;border-radius:4px;min-width:180px;width:100%;color:var(--r-ink)}#relay-directions .top-search{flex:1;max-width:380px}#relay-directions .shell{display:grid;grid-template-columns:177px minmax(0,1fr)}#relay-directions .side{padding:24px 13px;background:#eeede5;border-right:1px solid var(--r-line)}#relay-directions .nav-label{display:block;font:10px monospace;letter-spacing:1.5px;color:var(--r-muted);margin:4px 11px 12px}#relay-directions .side button{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:transparent;border:0;color:var(--r-muted);padding:11px 12px;border-radius:4px;margin-bottom:4px}#relay-directions .side button.active{background:var(--r-panel);box-shadow:inset 3px 0 var(--r-gold);color:var(--r-gold);font-weight:bold}#relay-directions .side .spacer{margin-top:32px}#relay-directions .side button small{margin-left:auto}#relay-directions main{min-width:0;padding:var(--r-gap)}#relay-directions h1{font-size:27px;letter-spacing:-.7px;line-height:1.2;margin:0 0 8px;font-weight:600}#relay-directions h2{font-size:16px;margin:0;font-weight:600}#relay-directions h3{font-size:15px;margin:0 0 6px;font-weight:600}#relay-directions p{margin:0}#relay-directions .muted{color:var(--r-muted);font-size:12px}#relay-directions .eyebrow{color:var(--r-gold);font:10px monospace;letter-spacing:1.5px;margin-bottom:9px}#relay-directions .heading{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:24px;flex-wrap:wrap}#relay-directions .action{border:1px solid var(--r-line);background:var(--r-panel);color:var(--r-ink);padding:8px 12px;border-radius:4px;text-align:left}#relay-directions .action.primary{background:var(--r-gold);color:#fffefa;border-color:var(--r-gold)}#relay-directions .link{color:var(--r-gold);border:0;background:none;padding:4px 0;text-align:left;font-size:12px}#relay-directions .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:22px}#relay-directions .stat{padding:15px;background:var(--r-panel);border:1px solid var(--r-line);border-radius:5px;text-align:left;color:var(--r-ink)}#relay-directions .stat strong{display:block;font-size:28px;font-weight:500;margin:4px 0}#relay-directions .stat span{font-size:12px}#relay-directions .stat:first-child{background:var(--r-tint);border-color:#c9bd97}#relay-directions .columns{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(230px,1fr);gap:18px;align-items:start}#relay-directions .panel{border:1px solid var(--r-line);border-radius:5px;background:var(--r-panel);overflow:hidden;margin-bottom:18px}#relay-directions .panel-head{padding:15px 17px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--r-line);background:#faf9f4}#relay-directions .row{padding:15px 17px;border-bottom:1px solid #e8e6dd;display:flex;align-items:start;gap:12px}#relay-directions .row:last-child{border-bottom:0}#relay-directions .row .grow{flex:1;min-width:0}#relay-directions .row strong{font-size:13px;display:block;font-weight:600}#relay-directions .tag{font-size:10px;display:inline-block;border:1px solid #cfbfa0;background:#f1ebdb;color:#786024;padding:3px 6px;border-radius:3px;white-space:nowrap}#relay-directions .tag.green{background:#e9f0e9;color:#32664e;border-color:#bfd1c0}#relay-directions .tag.red{background:#f5e8e1;color:#8d4b32;border-color:#dec0b0}#relay-directions .dot{width:8px;height:8px;border-radius:50%;background:#9a8044;flex:none;margin-top:6px}#relay-directions .row-foot{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px}#relay-directions .project-line{padding:14px 17px;border-bottom:1px solid var(--r-line)}#relay-directions .project-line:last-child{border:0}#relay-directions .project-line button{display:block;font-size:13px;font-weight:bold;margin-bottom:5px}#relay-directions .strip{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 17px;background:var(--r-tint);border-radius:4px;flex-wrap:wrap}#relay-directions .tabs{display:flex;gap:24px;border-bottom:1px solid var(--r-line);padding:0 24px;background:var(--r-panel);flex-wrap:wrap}#relay-directions .tabs button{background:none;border:0;border-bottom:3px solid transparent;color:var(--r-muted);padding:14px 0}#relay-directions .tabs button.active{border-color:var(--r-gold);color:var(--r-gold);font-weight:bold}#relay-directions .portfolio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin:20px 0}#relay-directions .project-card{border:1px solid var(--r-line);border-top:4px solid #a38a49;border-radius:5px;background:var(--r-panel);padding:18px;text-align:left;color:var(--r-ink)}#relay-directions .project-card.selected{border-color:var(--r-gold);background:#f1eddf}#relay-directions .project-card .counts{display:flex;gap:18px;border-top:1px solid var(--r-line);padding-top:14px;margin-top:20px}#relay-directions .counts strong{display:block;font-size:23px;font-weight:500}#relay-directions .counts span{font-size:11px;color:var(--r-muted)}#relay-directions .table-wrap{overflow:auto}#relay-directions table{width:100%;border-collapse:collapse;font-size:12px}#relay-directions td,#relay-directions th{padding:13px 17px;border-bottom:1px solid var(--r-line);text-align:left}#relay-directions th{background:#f0eee5;color:var(--r-muted);font-weight:500;font-size:11px}#relay-directions td strong{font-weight:600;display:block}#relay-directions .olive{background:#454936;color:#fffefa}#relay-directions .olive .brand,#relay-directions .olive small{color:#eee4be}#relay-directions .olive .account{color:#f2efdf}#relay-directions .inbox{display:grid;grid-template-columns:155px minmax(240px,.95fr) minmax(0,1.2fr);gap:0;background:var(--r-panel);border:1px solid var(--r-line);border-radius:5px;overflow:hidden}#relay-directions .folders{background:#eeede5;padding:16px 10px;border-right:1px solid var(--r-line)}#relay-directions .folders button{display:flex;justify-content:space-between;gap:8px;width:100%;background:none;border:0;padding:11px 8px;color:var(--r-muted);text-align:left;font-size:12px;border-radius:4px}#relay-directions .folders button.active{background:var(--r-panel);color:var(--r-gold);font-weight:bold}#relay-directions .messages{border-right:1px solid var(--r-line)}#relay-directions .message{display:block;width:100%;text-align:left;background:var(--r-panel);border:0;border-bottom:1px solid var(--r-line);padding:17px;color:var(--r-ink)}#relay-directions .message.active{background:#efebdd;box-shadow:inset 3px 0 var(--r-gold)}#relay-directions .message h3{font-size:13px;margin-top:8px}#relay-directions .preview{padding:23px;min-width:0}#relay-directions .preview h2{font-size:22px;line-height:1.25;margin:12px 0}#relay-directions .preview-box{background:var(--r-paper);border:1px solid var(--r-line);padding:16px;margin:20px 0}#relay-directions .preview dl{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}#relay-directions dt{font-size:11px;color:var(--r-muted)}#relay-directions dd{margin:2px 0;font-size:13px}#relay-directions .bottom-note{padding:15px 0;color:var(--r-muted);font-size:11px}#relay-directions .detail{background:var(--r-panel);border:2px solid #b4a373;padding:20px;margin:18px 0;border-radius:5px}#relay-directions .detail[hidden]{display:none}#relay-directions .detail p{margin:10px 0}#relay-directions .filter{display:flex;gap:10px;align-items:center;flex-wrap:wrap}#relay-directions select{border:1px solid var(--r-line);background:var(--r-panel);color:var(--r-ink);padding:8px;border-radius:4px}#relay-directions .draft{font-size:12px;padding:14px 17px;border-top:1px solid var(--r-line);color:var(--r-muted)}
+@media(max-width:850px){#relay-directions .shell{grid-template-columns:145px minmax(0,1fr)}#relay-directions .columns{grid-template-columns:1fr}#relay-directions .inbox{grid-template-columns:130px minmax(0,1fr)}#relay-directions .preview{grid-column:1/-1;border-top:1px solid var(--r-line)}#relay-directions .portfolio{gap:10px}#relay-directions .project-card{padding:13px}}
+@media(max-width:600px){#relay-directions .shell{display:block}#relay-directions .side{display:flex;flex-wrap:wrap;padding:8px;border-right:0;border-bottom:1px solid var(--r-line)}#relay-directions .side button{width:auto;margin:0;font-size:12px}#relay-directions .side .nav-label,#relay-directions .side .spacer{display:none}#relay-directions .stats{grid-template-columns:repeat(2,minmax(0,1fr))}#relay-directions .portfolio{grid-template-columns:1fr}#relay-directions .top{padding:16px}#relay-directions .top-search{order:3;max-width:none;flex-basis:100%}#relay-directions main{padding:16px}#relay-directions .inbox{display:block}#relay-directions .folders{display:flex;flex-wrap:wrap}#relay-directions .folders button{width:auto;gap:8px}#relay-directions .folders .nav-label{width:100%}#relay-directions .tabs{gap:18px;padding:0 16px}#relay-directions h1{font-size:24px}#relay-directions .account .name{display:none}}
+#relay-directions .connected-trail{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--r-muted);font:11px monospace;letter-spacing:1px;padding-bottom:17px;margin-bottom:23px;border-bottom:1px solid var(--r-line)}
+#relay-directions .connected-launch{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+#relay-directions .connected-launch button{display:grid;gap:4px;text-align:left;padding:18px 20px;background:var(--r-panel);color:var(--r-ink);border:1px solid var(--r-line);border-left:3px solid #9a8044;border-radius:4px}
+#relay-directions .connected-launch strong{font-size:16px;font-weight:600}#relay-directions .connected-launch .eyebrow{margin:0}#relay-directions .launch-arrow{color:var(--r-gold);font-size:12px;margin-top:6px}
+#relay-directions .connected .inbox{grid-template-columns:125px minmax(190px,.9fr) minmax(0,1.2fr)}
+#relay-directions .connected .heading .eyebrow{display:none}
+@media(max-width:1100px){#relay-directions .connected .inbox{grid-template-columns:minmax(200px,.9fr) minmax(0,1.2fr)}#relay-directions .connected .folders{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:3px;padding:9px 12px;border-right:0;border-bottom:1px solid var(--r-line)}#relay-directions .connected .folders button{width:auto;gap:8px}#relay-directions .connected .folders .nav-label{display:none}#relay-directions .connected .preview{grid-column:auto;border-top:0}}
+@media(max-width:700px){#relay-directions .connected .inbox{display:block}#relay-directions .connected .preview{border-top:1px solid var(--r-line)}#relay-directions .connected-launch{grid-template-columns:1fr}}
+&lt;/style&gt;
+&lt;div class=&quot;choices&quot; role=&quot;tablist&quot; aria-label=&quot;Office home concepts&quot;&gt;
+&lt;button role=&quot;tab&quot; id=&quot;r-tab-a&quot; aria-selected=&quot;true&quot; aria-controls=&quot;r-screen&quot; data-concept=&quot;a&quot;&gt;01 · Operations dashboard&lt;/button&gt;
+&lt;button role=&quot;tab&quot; id=&quot;r-tab-b&quot; aria-selected=&quot;false&quot; aria-controls=&quot;r-screen&quot; data-concept=&quot;b&quot;&gt;02 · Project workspace&lt;/button&gt;
+&lt;button role=&quot;tab&quot; id=&quot;r-tab-c&quot; aria-selected=&quot;false&quot; aria-controls=&quot;r-screen&quot; data-concept=&quot;c&quot;&gt;03 · Office inbox&lt;/button&gt;
+&lt;button role=&quot;tab&quot; id=&quot;r-tab-d&quot; aria-selected=&quot;false&quot; aria-controls=&quot;r-screen&quot; data-concept=&quot;d&quot;&gt;04 · Connected Office&lt;/button&gt;
+&lt;/div&gt;
+&lt;div class=&quot;concept-note&quot;&gt;&lt;span&gt;DESIGN EXPLORATION · Illustrative projects, reports and counts&lt;/span&gt;&lt;span&gt;Future: deadlines · notifications · project documents · office acknowledgements&lt;/span&gt;&lt;/div&gt;
+&lt;div id=&quot;r-screen&quot; role=&quot;tabpanel&quot; aria-labelledby=&quot;r-tab-a&quot; class=&quot;app&quot;&gt;&lt;/div&gt;
+&lt;script&gt;
+(()=&gt;{
+const root=document.getElementById(&#x27;relay-directions&#x27;),screen=root.querySelector(&#x27;#r-screen&#x27;);
+const state={concept:&#x27;d&#x27;,spacing:22,project:0,folder:&#x27;All activity&#x27;,message:0,section:&#x27;Office home&#x27;};
+const projects=[{name:&#x27;Hunslet Depot&#x27;,area:&#x27;Welfare Block&#x27;,manager:&#x27;Tom&#x27;,open:8,late:2,reports:4,trade:&#x27;Electrical&#x27;,author:&#x27;John&#x27;,summary:&#x27;Containment incomplete above corridor ceiling&#x27;,note:&#x27;Access panel locations need confirming before the ceiling is closed.&#x27;,time:&#x27;10:29&#x27;}, {name:&#x27;Riverside House&#x27;,area:&#x27;Level 02 refurbishment&#x27;,manager:&#x27;Ollie&#x27;,open:5,late:1,reports:3,trade:&#x27;HVAC&#x27;,author:&#x27;Danny&#x27;,summary:&#x27;Ductwork supports ready for verification&#x27;,note:&#x27;Installation complete. Site photographs and completion evidence are ready for the manager.&#x27;,time:&#x27;09:46&#x27;}, {name:&#x27;Park View&#x27;,area:&#x27;Plant room&#x27;,manager:&#x27;Jonny&#x27;,open:3,late:0,reports:2,trade:&#x27;P&amp;H&#x27;,author:&#x27;Chris&#x27;,summary:&#x27;Pressure test results received&#x27;,note:&#x27;Test readings and installation observations have been received from site.&#x27;,time:&#x27;09:12&#x27;}];
+const brand=&#x27;&lt;div class=&quot;brand&quot;&gt;RELAY &lt;small&gt;LEODIS&lt;/small&gt;&lt;/div&gt;&#x27;;
+const account=&#x27;&lt;div class=&quot;account&quot;&gt;&lt;span class=&quot;avatar&quot;&gt;CS&lt;/span&gt;&lt;span class=&quot;name&quot;&gt;Callum Say&lt;br&gt;&lt;span style=&quot;opacity:.75&quot;&gt;Admin · Office view&lt;/span&gt;&lt;/span&gt;&lt;/div&gt;&#x27;;
+const action=(label,detail,primary=false)=&gt;`&lt;button class=&quot;action ${primary?&#x27;primary&#x27;:&#x27;&#x27;}&quot; data-detail=&quot;${detail}&quot;&gt;${label}&lt;/button&gt;`;
+const link=(label,detail)=&gt;`&lt;button class=&quot;link&quot; data-detail=&quot;${detail}&quot;&gt;${label}&lt;/button&gt;`;
+const top=(olive=false)=&gt;`&lt;header class=&quot;top ${olive?&#x27;olive&#x27;:&#x27;&#x27;}&quot;&gt;${brand}&lt;div class=&quot;top-search&quot;&gt;&lt;input class=&quot;search&quot; aria-label=&quot;Search projects and reports&quot; placeholder=&quot;Search projects, reports or issues…&quot; data-search&gt;&lt;/div&gt;${account}&lt;/header&gt;`;
+const nav=(selected=&#x27;Overview&#x27;)=&gt;`&lt;nav class=&quot;tabs&quot; aria-label=&quot;Main navigation&quot;&gt;${[&#x27;Overview&#x27;,&#x27;Projects&#x27;,&#x27;Reports&#x27;,&#x27;Issues&#x27;,&#x27;Team&#x27;,&#x27;Documents&#x27;].map(x=&gt;`&lt;button class=&quot;${x===selected?&#x27;active&#x27;:&#x27;&#x27;}&quot; data-nav=&quot;${x}&quot;&gt;${x}&lt;/button&gt;`).join(&#x27;&#x27;)}&lt;/nav&gt;`;
+const details=&#x27;&lt;section class=&quot;detail&quot; aria-live=&quot;polite&quot; hidden&gt;&lt;/section&gt;&#x27;;
+function reports(){return projects.map((p,i)=&gt;`&lt;div class=&quot;row&quot;&gt;&lt;span class=&quot;dot&quot;&gt;&lt;/span&gt;&lt;div class=&quot;grow&quot;&gt;&lt;strong&gt;${p.name} · ${p.area}&lt;/strong&gt;&lt;p class=&quot;muted&quot;&gt;${p.author} · ${p.trade} · Site progress report&lt;/p&gt;&lt;div class=&quot;row-foot&quot;&gt;&lt;span class=&quot;tag green&quot;&gt;Received&lt;/span&gt;&lt;span class=&quot;muted&quot;&gt;Today, ${p.time}&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;${link(&#x27;View report →&#x27;,&#x27;report-&#x27;+i)}&lt;/div&gt;`).join(&#x27;&#x27;);}
+function a(){return `${top()}&lt;div class=&quot;shell&quot;&gt;&lt;nav class=&quot;side&quot; aria-label=&quot;Main navigation&quot;&gt;&lt;span class=&quot;nav-label&quot;&gt;WORKSPACE&lt;/span&gt;${[&#x27;Office home&#x27;,&#x27;Projects&#x27;,&#x27;Reports&#x27;,&#x27;Issues &amp; actions&#x27;,&#x27;People &amp; trades&#x27;].map((x,i)=&gt;`&lt;button class=&quot;${i===0?&#x27;active&#x27;:&#x27;&#x27;}&quot; data-nav=&quot;${x}&quot;&gt;${x}${i===3?&#x27;&lt;small&gt;16&lt;/small&gt;&#x27;:&#x27;&#x27;}&lt;/button&gt;`).join(&#x27;&#x27;)}&lt;span class=&quot;nav-label spacer&quot;&gt;RESOURCES&lt;/span&gt;${[&#x27;Documents&#x27;,&#x27;Activity log&#x27;,&#x27;Administration&#x27;,&#x27;Help &amp; install&#x27;].map(x=&gt;`&lt;button data-nav=&quot;${x}&quot;&gt;${x}&lt;/button&gt;`).join(&#x27;&#x27;)}&lt;/nav&gt;&lt;main&gt;&lt;div class=&quot;heading&quot;&gt;&lt;div&gt;&lt;p class=&quot;eyebrow&quot;&gt;TUESDAY 8 SEPTEMBER&lt;/p&gt;&lt;h1&gt;Office overview&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;Your projects, incoming reports and next actions.&lt;/p&gt;&lt;/div&gt;${action(&#x27;Open all projects&#x27;,&#x27;projects&#x27;)}&lt;/div&gt;&lt;div class=&quot;stats&quot;&gt;${[[&#x27;3&#x27;,&#x27;Overdue actions&#x27;,&#x27;Across 2 projects&#x27;,&#x27;overdue&#x27;],[&#x27;4&#x27;,&#x27;Ready to verify&#x27;,&#x27;Completion evidence received&#x27;,&#x27;verify&#x27;],[&#x27;9&#x27;,&#x27;Reports this week&#x27;,&#x27;3 received today&#x27;,&#x27;reports&#x27;],[&#x27;3&#x27;,&#x27;Active projects&#x27;,&#x27;All projects visible&#x27;,&#x27;projects&#x27;]].map(x=&gt;`&lt;button class=&quot;stat&quot; data-detail=&quot;${x[3]}&quot;&gt;&lt;span&gt;${x[1]}&lt;/span&gt;&lt;strong&gt;${x[0]}&lt;/strong&gt;&lt;span class=&quot;muted&quot;&gt;${x[2]}&lt;/span&gt;&lt;/button&gt;`).join(&#x27;&#x27;)}&lt;/div&gt;${details}&lt;div class=&quot;columns&quot;&gt;&lt;div&gt;&lt;section class=&quot;panel&quot;&gt;&lt;div class=&quot;panel-head&quot;&gt;&lt;h2&gt;Needs attention&lt;/h2&gt;${link(&#x27;All actions →&#x27;,&#x27;actions&#x27;)}&lt;/div&gt;&lt;div class=&quot;row&quot;&gt;&lt;span class=&quot;tag red&quot;&gt;Overdue&lt;/span&gt;&lt;div class=&quot;grow&quot;&gt;&lt;strong&gt;Confirm ceiling access locations&lt;/strong&gt;&lt;p class=&quot;muted&quot;&gt;Hunslet Depot · Electrical · Tom&lt;/p&gt;&lt;div class=&quot;row-foot&quot;&gt;&lt;span class=&quot;muted&quot;&gt;Due yesterday&lt;/span&gt;${link(&#x27;Open issue →&#x27;,&#x27;issue-0&#x27;)}&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;row&quot;&gt;&lt;span class=&quot;tag&quot;&gt;Verify&lt;/span&gt;&lt;div class=&quot;grow&quot;&gt;&lt;strong&gt;Check completed ductwork supports&lt;/strong&gt;&lt;p class=&quot;muted&quot;&gt;Riverside House · HVAC · Ollie&lt;/p&gt;&lt;div class=&quot;row-foot&quot;&gt;&lt;span class=&quot;muted&quot;&gt;Evidence received 09:46&lt;/span&gt;${link(&#x27;View evidence →&#x27;,&#x27;issue-1&#x27;)}&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;row&quot;&gt;&lt;span class=&quot;tag&quot;&gt;Unassigned&lt;/span&gt;&lt;div class=&quot;grow&quot;&gt;&lt;strong&gt;Agree responsibility for damaged ceiling tile&lt;/strong&gt;&lt;p class=&quot;muted&quot;&gt;Hunslet Depot · Other contractor&lt;/p&gt;${link(&#x27;Open issue →&#x27;,&#x27;external&#x27;)}&lt;/div&gt;&lt;/div&gt;&lt;/section&gt;&lt;section class=&quot;panel&quot;&gt;&lt;div class=&quot;panel-head&quot;&gt;&lt;h2&gt;Latest site reports&lt;/h2&gt;${link(&#x27;All reports →&#x27;,&#x27;reports&#x27;)}&lt;/div&gt;${reports()}&lt;/section&gt;&lt;/div&gt;&lt;div&gt;&lt;section class=&quot;panel&quot;&gt;&lt;div class=&quot;panel-head&quot;&gt;&lt;h2&gt;Project watch&lt;/h2&gt;${link(&#x27;View all →&#x27;,&#x27;projects&#x27;)}&lt;/div&gt;${projects.map((p,i)=&gt;`&lt;div class=&quot;project-line&quot;&gt;${link(p.name,&#x27;project-&#x27;+i)}&lt;p class=&quot;muted&quot;&gt;${p.area} · ${p.manager}&lt;/p&gt;&lt;div class=&quot;row-foot&quot;&gt;&lt;span class=&quot;tag ${p.late?&#x27;red&#x27;:&#x27;green&#x27;}&quot;&gt;${p.late?p.late+&#x27; overdue&#x27;:&#x27;No overdue actions&#x27;}&lt;/span&gt;&lt;span class=&quot;muted&quot;&gt;${p.open} open issues&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;`).join(&#x27;&#x27;)}&lt;/section&gt;&lt;section class=&quot;panel&quot;&gt;&lt;div class=&quot;panel-head&quot;&gt;&lt;h2&gt;From site today&lt;/h2&gt;&lt;/div&gt;&lt;div class=&quot;row&quot;&gt;&lt;div&gt;&lt;strong&gt;3 reports received&lt;/strong&gt;&lt;p class=&quot;muted&quot;&gt;Electrical, HVAC and P&amp;H&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;draft&quot;&gt;2 drafts in progress · John and Chris&lt;br&gt;Unfinished report contents stay private.&lt;/div&gt;&lt;/section&gt;&lt;div class=&quot;strip&quot;&gt;&lt;div&gt;&lt;h3&gt;Office tools&lt;/h3&gt;&lt;p class=&quot;muted&quot;&gt;Contacts, documents and site history&lt;/p&gt;&lt;/div&gt;${link(&#x27;Browse →&#x27;,&#x27;resources&#x27;)}&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;&lt;/main&gt;&lt;/div&gt;`;}
+function b(){const p=projects[state.project];return `${top()}${nav()}&lt;main&gt;&lt;div class=&quot;heading&quot;&gt;&lt;div&gt;&lt;p class=&quot;eyebrow&quot;&gt;OFFICE / PROJECT PORTFOLIO&lt;/p&gt;&lt;h1&gt;A clear view across your sites&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;Choose a project to see its reports, issues and team together.&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;filter&quot;&gt;&lt;label class=&quot;muted&quot;&gt;Show &lt;select data-project-filter aria-label=&quot;Project manager&quot;&gt;&lt;option&gt;All managers&lt;/option&gt;&lt;option&gt;Tom&lt;/option&gt;&lt;option&gt;Ollie&lt;/option&gt;&lt;option&gt;Jonny&lt;/option&gt;&lt;/select&gt;&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;strip&quot;&gt;&lt;span&gt;&lt;strong&gt;3 active projects&lt;/strong&gt; · 16 open issues · 3 overdue actions&lt;/span&gt;${link(&#x27;View overdue actions →&#x27;,&#x27;overdue&#x27;)}&lt;/div&gt;&lt;div class=&quot;portfolio&quot;&gt;${projects.map((p,i)=&gt;`&lt;button class=&quot;project-card ${i===state.project?&#x27;selected&#x27;:&#x27;&#x27;}&quot; data-project=&quot;${i}&quot; aria-pressed=&quot;${i===state.project}&quot;&gt;&lt;p class=&quot;eyebrow&quot;&gt;PROJECT 00${i+1}&lt;/p&gt;&lt;h3&gt;${p.name}&lt;/h3&gt;&lt;p class=&quot;muted&quot;&gt;${p.area}&lt;/p&gt;&lt;div class=&quot;row-foot&quot;&gt;&lt;span class=&quot;tag ${p.late?&#x27;red&#x27;:&#x27;green&#x27;}&quot;&gt;${p.late?p.late+&#x27; overdue actions&#x27;:&#x27;On top of actions&#x27;}&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;counts&quot;&gt;&lt;div&gt;&lt;strong&gt;${p.open}&lt;/strong&gt;&lt;span&gt;Open issues&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;strong&gt;${p.reports}&lt;/strong&gt;&lt;span&gt;Reports / week&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;p class=&quot;muted&quot; style=&quot;margin-top:14px&quot;&gt;Manager: ${p.manager} &lt;span style=&quot;float:right&quot;&gt;Open workspace →&lt;/span&gt;&lt;/p&gt;&lt;/button&gt;`).join(&#x27;&#x27;)}&lt;/div&gt;${details}&lt;section class=&quot;panel&quot;&gt;&lt;div class=&quot;panel-head&quot;&gt;&lt;div&gt;&lt;p class=&quot;eyebrow&quot;&gt;SELECTED PROJECT&lt;/p&gt;&lt;h2&gt;${p.name} · ${p.area}&lt;/h2&gt;&lt;/div&gt;${action(&#x27;Project details →&#x27;,&#x27;project-&#x27;+state.project)}&lt;/div&gt;&lt;div class=&quot;tabs&quot; aria-label=&quot;Project sections&quot;&gt;${[&#x27;Activity&#x27;,&#x27;Issues (&#x27;+p.open+&#x27;)&#x27;,&#x27;Reports&#x27;,&#x27;Team&#x27;,&#x27;Documents&#x27;].map((x,i)=&gt;`&lt;button class=&quot;${i===0?&#x27;active&#x27;:&#x27;&#x27;}&quot; data-project-tab=&quot;${x}&quot;&gt;${x}&lt;/button&gt;`).join(&#x27;&#x27;)}&lt;/div&gt;&lt;div data-project-content&gt;&lt;div class=&quot;table-wrap&quot;&gt;&lt;table&gt;&lt;thead&gt;&lt;tr&gt;&lt;th&gt;Latest activity&lt;/th&gt;&lt;th&gt;Trade / author&lt;/th&gt;&lt;th&gt;Status&lt;/th&gt;&lt;th&gt;Received&lt;/th&gt;&lt;th&gt;&lt;/th&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Site progress report&lt;/strong&gt;${p.summary}&lt;/td&gt;&lt;td&gt;${p.trade}&lt;br&gt;${p.author}&lt;/td&gt;&lt;td&gt;&lt;span class=&quot;tag green&quot;&gt;Received&lt;/span&gt;&lt;/td&gt;&lt;td&gt;Today ${p.time}&lt;/td&gt;&lt;td&gt;${link(&#x27;View report →&#x27;,&#x27;report-&#x27;+state.project)}&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;&lt;strong&gt;Issue update&lt;/strong&gt;${state.project===1?&#x27;Completion evidence uploaded&#x27;:&#x27;Site observation added&#x27;}&lt;/td&gt;&lt;td&gt;${p.trade}&lt;br&gt;${p.author}&lt;/td&gt;&lt;td&gt;&lt;span class=&quot;tag&quot;&gt;${state.project===1?&#x27;Ready to verify&#x27;:&#x27;Open&#x27;}&lt;/span&gt;&lt;/td&gt;&lt;td&gt;Today 08:40&lt;/td&gt;&lt;td&gt;${link(&#x27;Open issue →&#x27;,&#x27;issue-&#x27;+state.project)}&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;div class=&quot;draft&quot;&gt;1 draft in progress · ${p.author} · Last saved 10:41. Contents visible after submission.&lt;/div&gt;&lt;/div&gt;&lt;/section&gt;&lt;div class=&quot;columns&quot;&gt;&lt;div class=&quot;strip&quot;&gt;&lt;div&gt;&lt;h3&gt;Project documents&lt;/h3&gt;&lt;p class=&quot;muted&quot;&gt;Drawings, specifications and handover records&lt;/p&gt;&lt;/div&gt;${link(&#x27;Explore →&#x27;,&#x27;documents&#x27;)}&lt;/div&gt;&lt;div class=&quot;strip&quot;&gt;&lt;div&gt;&lt;h3&gt;Project team&lt;/h3&gt;&lt;p class=&quot;muted&quot;&gt;Manager, engineers and trade contacts&lt;/p&gt;&lt;/div&gt;${link(&#x27;View team →&#x27;,&#x27;team&#x27;)}&lt;/div&gt;&lt;/div&gt;&lt;/main&gt;`;}
+function c(){return `${top(true)}${nav(&#x27;Reports&#x27;)}&lt;main&gt;&lt;div class=&quot;heading&quot;&gt;&lt;div&gt;&lt;p class=&quot;eyebrow&quot;&gt;OFFICE / DAILY WORKSPACE&lt;/p&gt;&lt;h1&gt;Pick up where site left off.&lt;/h1&gt;&lt;p class=&quot;muted&quot;&gt;Read the latest reports and deal with the actions they raise.&lt;/p&gt;&lt;/div&gt;${action(&#x27;Project overview →&#x27;,&#x27;projects&#x27;)}&lt;/div&gt;${details}&lt;div class=&quot;inbox&quot;&gt;&lt;nav class=&quot;folders&quot; aria-label=&quot;Office activity queues&quot;&gt;&lt;span class=&quot;nav-label&quot;&gt;YOUR QUEUES&lt;/span&gt;${[[&#x27;All activity&#x27;,&#x27;9&#x27;],[&#x27;New reports&#x27;,&#x27;3&#x27;],[&#x27;Needs action&#x27;,&#x27;3&#x27;],[&#x27;Ready to verify&#x27;,&#x27;4&#x27;],[&#x27;In progress&#x27;,&#x27;2&#x27;]].map(x=&gt;`&lt;button data-folder=&quot;${x[0]}&quot; class=&quot;${state.folder===x[0]?&#x27;active&#x27;:&#x27;&#x27;}&quot;&gt;${x[0]}&lt;span&gt;${x[1]}&lt;/span&gt;&lt;/button&gt;`).join(&#x27;&#x27;)}&lt;span class=&quot;nav-label&quot; style=&quot;margin-top:24px&quot;&gt;BY TRADE&lt;/span&gt;${[&#x27;Electrical&#x27;,&#x27;HVAC&#x27;,&#x27;P&amp;H&#x27;].map(x=&gt;`&lt;button data-folder=&quot;${x}&quot; class=&quot;${state.folder===x?&#x27;active&#x27;:&#x27;&#x27;}&quot;&gt;${x}&lt;/button&gt;`).join(&#x27;&#x27;)}&lt;/nav&gt;&lt;section class=&quot;messages&quot; aria-label=&quot;Activity list&quot;&gt;&lt;div class=&quot;panel-head&quot;&gt;&lt;h2&gt;${state.folder}&lt;/h2&gt;&lt;span class=&quot;muted&quot;&gt;Newest first&lt;/span&gt;&lt;/div&gt;&lt;div data-message-list&gt;&lt;/div&gt;&lt;/section&gt;&lt;section class=&quot;preview&quot; data-preview aria-live=&quot;polite&quot;&gt;&lt;/section&gt;&lt;/div&gt;&lt;div class=&quot;bottom-note&quot;&gt;Report receipt, office acknowledgement and email delivery are separate statuses. Draft contents remain private.&lt;/div&gt;&lt;/main&gt;`;}
+function fillInbox(){let rows=projects.map((p,i)=&gt;({p,i}));if([&#x27;Electrical&#x27;,&#x27;HVAC&#x27;,&#x27;P&amp;H&#x27;].includes(state.folder))rows=rows.filter(x=&gt;x.p.trade===state.folder);if(state.folder===&#x27;Ready to verify&#x27;)rows=rows.filter(x=&gt;x.i===1);if(!rows.some(x=&gt;x.i===state.message))state.message=rows[0].i;const draft=state.folder===&#x27;In progress&#x27;,issue=state.folder===&#x27;Needs action&#x27;||state.folder===&#x27;Ready to verify&#x27;;root.querySelector(&#x27;[data-message-list]&#x27;).innerHTML=rows.map(({p,i})=&gt;`&lt;button class=&quot;message ${i===state.message?&#x27;active&#x27;:&#x27;&#x27;}&quot; data-message=&quot;${i}&quot;&gt;&lt;span class=&quot;muted&quot;&gt;${p.trade} · ${p.time}&lt;/span&gt;&lt;h3&gt;${p.name}&lt;/h3&gt;&lt;p class=&quot;muted&quot;&gt;${draft?&#x27;Draft in progress · &#x27;+p.author:issue?p.summary:&#x27;Site progress report · &#x27;+p.author}&lt;/p&gt;&lt;div class=&quot;row-foot&quot;&gt;&lt;span class=&quot;tag ${draft||issue?&#x27;&#x27;:&#x27;green&#x27;}&quot;&gt;${draft?&#x27;Draft summary&#x27;:issue?&#x27;Action required&#x27;:&#x27;Received&#x27;}&lt;/span&gt;&lt;/div&gt;&lt;/button&gt;`).join(&#x27;&#x27;);const p=projects[state.message];root.querySelector(&#x27;[data-preview]&#x27;).innerHTML=draft?`&lt;p class=&quot;eyebrow&quot;&gt;DRAFT SUMMARY&lt;/p&gt;&lt;h2&gt;${p.name}&lt;/h2&gt;&lt;p&gt;${p.author} · ${p.trade}&lt;/p&gt;&lt;div class=&quot;preview-box&quot;&gt;Work is in progress. Report contents and photographs will be available after submission.&lt;/div&gt;`:`&lt;p class=&quot;eyebrow&quot;&gt;${issue?&#x27;SITE ISSUE&#x27;:&#x27;SITE PROGRESS REPORT · 009LCP-SPR-002&#x27;}&lt;/p&gt;&lt;h2&gt;${p.name}&lt;br&gt;${p.area}&lt;/h2&gt;&lt;span class=&quot;tag ${issue?&#x27;&#x27;:&#x27;green&#x27;}&quot;&gt;${issue?&#x27;Action required&#x27;:&#x27;Received by RELAY&#x27;}&lt;/span&gt;&lt;dl&gt;&lt;div&gt;&lt;dt&gt;Submitted by&lt;/dt&gt;&lt;dd&gt;${p.author} · ${p.trade}&lt;/dd&gt;&lt;/div&gt;&lt;div&gt;&lt;dt&gt;Site visit&lt;/dt&gt;&lt;dd&gt;8 September 2026&lt;/dd&gt;&lt;/div&gt;&lt;div&gt;&lt;dt&gt;Project manager&lt;/dt&gt;&lt;dd&gt;${p.manager}&lt;/dd&gt;&lt;/div&gt;&lt;div&gt;&lt;dt&gt;Email delivery&lt;/dt&gt;&lt;dd&gt;Not sent&lt;/dd&gt;&lt;/div&gt;&lt;/dl&gt;&lt;div class=&quot;preview-box&quot;&gt;&lt;p class=&quot;eyebrow&quot;&gt;${issue?&#x27;REQUIRED ACTION&#x27;:&#x27;REPORT HIGHLIGHT&#x27;}&lt;/p&gt;&lt;h3&gt;${p.summary}&lt;/h3&gt;&lt;p class=&quot;muted&quot;&gt;${p.note}&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;filter&quot;&gt;${action(issue?&#x27;Open issue →&#x27;:&#x27;Open full report →&#x27;,(issue?&#x27;issue-&#x27;:&#x27;report-&#x27;)+state.message,true)}${action(&#x27;View project&#x27;,&#x27;project-&#x27;+state.message)}&lt;/div&gt;&lt;div class=&quot;row-foot&quot;&gt;${link(&#x27;Mark seen by office&#x27;,&#x27;acknowledge&#x27;)}&lt;/div&gt;`;}
+function showDetail(key){const el=root.querySelector(&#x27;.detail&#x27;);let title=&#x27;&#x27;,body=&#x27;&#x27;;const n=Number(key.split(&#x27;-&#x27;)[1]||0),p=projects[n]||projects[0];if(key.startsWith(&#x27;report-&#x27;)){title=p.name+&#x27; · Site progress report&#x27;;body=p.summary+&#x27;. &#x27;+p.note+&#x27; Received today at &#x27;+p.time+&#x27;. Full report view would include photographs, observations and the in-app PDF.&#x27;;}else if(key.startsWith(&#x27;issue-&#x27;)){title=p.summary;body=&#x27;Project: &#x27;+p.name+&#x27;. Trade: &#x27;+p.trade+&#x27;. Manager: &#x27;+p.manager+&#x27;. The issue workspace brings together responsibility, evidence and the action history. Due dates are a proposed addition.&#x27;;}else if(key.startsWith(&#x27;project-&#x27;)){title=p.name+&#x27; · &#x27;+p.area;body=&#x27;Project workspace: reports, issues, activity and team. Future additions: project documents and deadlines. All projects remain accessible to all roles for the current pilot.&#x27;;}else{const copy={projects:[&#x27;All projects&#x27;,&#x27;Hunslet Depot · Tom | Riverside House · Ollie | Park View · Jonny. Choose concept 02 to explore the project-led layout.&#x27;],reports:[&#x27;Report library&#x27;,&#x27;Search and filter by project, engineer, trade and visit date. Open received reports and PDFs; show only permitted draft summaries.&#x27;],overdue:[&#x27;Overdue actions · future capability&#x27;,&#x27;2 at Hunslet Depot and 1 at Riverside House. Proposed fields: responsible person, agreed due date and last update.&#x27;],verify:[&#x27;Ready to verify&#x27;,&#x27;Completion evidence awaits a manager’s decision. Open the issue to review photographs and confirm or reopen the work.&#x27;],actions:[&#x27;Office actions&#x27;,&#x27;Prioritise overdue work, unassigned observations and completion evidence awaiting verification.&#x27;],external:[&#x27;Responsibility to agree&#x27;,&#x27;Damaged ceiling tile · Hunslet Depot. Proposed trade selection: Other / non-Leodis. Record the reporting engineer’s own trade separately.&#x27;],resources:[&#x27;Office resources&#x27;,&#x27;Project documents, people and trade contacts, activity history and app installation help.&#x27;],documents:[&#x27;Project documents · future capability&#x27;,&#x27;SharePoint-backed drawings and specifications, organised by project with document revision information.&#x27;],team:[&#x27;People &amp; trades&#x27;,&#x27;Browse Admin, Manager and Engineer profiles, including Electrical, HVAC and P&amp;H. Project assignment is a future extension.&#x27;],acknowledge:[&#x27;Office acknowledgement · future capability&#x27;,&#x27;This would record who has seen the report and when. It would not approve the report or claim that an email has been sent.&#x27;]};[title,body]=copy[key]||[key,&#x27;Proposed navigation destination. A dedicated workspace would open here, retaining project context and a clear route back to Office home.&#x27;];}el.hidden=false;el.innerHTML=`&lt;div class=&quot;heading&quot; style=&quot;margin:0&quot;&gt;&lt;h2&gt;${title}&lt;/h2&gt;&lt;button class=&quot;action&quot; data-close&gt;Close&lt;/button&gt;&lt;/div&gt;&lt;p&gt;${body}&lt;/p&gt;&lt;span class=&quot;muted&quot;&gt;Concept preview · no live records changed&lt;/span&gt;`;}
+function connected(){
+  const shell=document.createElement(&#x27;div&#x27;);shell.innerHTML=a();
+  const header=shell.querySelector(&#x27;.top&#x27;);header.classList.add(&#x27;olive&#x27;);
+  let main=shell.querySelector(&#x27;main&#x27;);
+  if(state.section===&#x27;Projects&#x27;||state.section===&#x27;Reports&#x27;){
+    const content=document.createElement(&#x27;div&#x27;);content.innerHTML=state.section===&#x27;Projects&#x27;?b():c();
+    main.replaceWith(content.querySelector(&#x27;main&#x27;));main=shell.querySelector(&#x27;main&#x27;);
+  }
+  shell.querySelectorAll(&#x27;.side [data-nav]&#x27;).forEach(button=&gt;{const selected=button.dataset.nav===state.section;button.classList.toggle(&#x27;active&#x27;,selected);if(selected)button.setAttribute(&#x27;aria-current&#x27;,&#x27;page&#x27;);});
+  const trail=document.createElement(&#x27;div&#x27;);trail.className=&#x27;connected-trail&#x27;;trail.innerHTML=`&lt;span&gt;OFFICE &lt;span style=&quot;opacity:.5&quot;&gt;/&lt;/span&gt; ${state.section.toUpperCase()}&lt;/span&gt;&lt;span&gt;All projects · Admin view&lt;/span&gt;`;main.prepend(trail);
+  if(state.section===&#x27;Office home&#x27;){
+    main.querySelector(&#x27;h1&#x27;).textContent=&#x27;Your office, connected.&#x27;;
+    main.querySelector(&#x27;.heading .muted&#x27;).textContent=&#x27;See what needs attention, then go straight to the project or report.&#x27;;
+    main.querySelector(&#x27;.heading &gt; button&#x27;).outerHTML=&#x27;&lt;div class=&quot;filter&quot;&gt;&#x27;+action(&#x27;Browse projects&#x27;,&#x27;projects&#x27;)+action(&#x27;Open report inbox →&#x27;,&#x27;reports&#x27;,true)+&#x27;&lt;/div&gt;&#x27;;
+    const strip=document.createElement(&#x27;section&#x27;);strip.className=&#x27;connected-launch&#x27;;strip.innerHTML=`&lt;button data-detail=&quot;projects&quot;&gt;&lt;span class=&quot;eyebrow&quot;&gt;PROJECT WORKSPACE&lt;/span&gt;&lt;strong&gt;Everything about each site&lt;/strong&gt;&lt;span class=&quot;muted&quot;&gt;Reports, issues, people and documents&lt;/span&gt;&lt;span class=&quot;launch-arrow&quot;&gt;Browse 3 projects →&lt;/span&gt;&lt;/button&gt;&lt;button data-detail=&quot;reports&quot;&gt;&lt;span class=&quot;eyebrow&quot;&gt;REPORT INBOX&lt;/span&gt;&lt;strong&gt;Read, understand, act&lt;/strong&gt;&lt;span class=&quot;muted&quot;&gt;Site updates with a preview beside the list&lt;/span&gt;&lt;span class=&quot;launch-arrow&quot;&gt;Open latest reports →&lt;/span&gt;&lt;/button&gt;`;
+    main.querySelector(&#x27;.stats&#x27;).after(strip);
+  }else if(state.section===&#x27;Reports&#x27;){
+    main.querySelector(&#x27;h1&#x27;).textContent=&#x27;Report inbox&#x27;;
+    main.querySelector(&#x27;.heading .muted&#x27;).textContent=&#x27;Read site updates alongside the list, then open the project or take action.&#x27;;
+  }
+  return shell.innerHTML;
+}
+function render(){root.style.setProperty(&#x27;--r-gap&#x27;,state.spacing+&#x27;px&#x27;);screen.classList.toggle(&#x27;connected&#x27;,state.concept===&#x27;d&#x27;);screen.innerHTML=state.concept===&#x27;d&#x27;?connected():state.concept===&#x27;a&#x27;?a():state.concept===&#x27;b&#x27;?b():c();screen.setAttribute(&#x27;aria-labelledby&#x27;,&#x27;r-tab-&#x27;+state.concept);root.querySelectorAll(&#x27;[data-concept]&#x27;).forEach(b=&gt;b.setAttribute(&#x27;aria-selected&#x27;,String(b.dataset.concept===state.concept)));if(state.concept===&#x27;c&#x27;||state.concept===&#x27;d&#x27;&amp;&amp;state.section===&#x27;Reports&#x27;)fillInbox();}
+root.addEventListener(&#x27;click&#x27;,e=&gt;{
+  if(state.concept!==&#x27;d&#x27;)return;const button=e.target.closest(&#x27;button&#x27;);if(!button)return;
+  const key=button.dataset.detail,nav=button.dataset.nav;
+  let section=null;
+  if([&#x27;Office home&#x27;,&#x27;Projects&#x27;,&#x27;Reports&#x27;].includes(nav)){section=nav;if(nav===&#x27;Reports&#x27;)state.folder=&#x27;All activity&#x27;;}
+  if(key===&#x27;projects&#x27;||key?.startsWith(&#x27;project-&#x27;)){section=&#x27;Projects&#x27;;if(key.startsWith(&#x27;project-&#x27;))state.project=Number(key.split(&#x27;-&#x27;)[1]);}
+  if(key===&#x27;reports&#x27;||key?.startsWith(&#x27;report-&#x27;)&amp;&amp;!button.closest(&#x27;[data-preview]&#x27;)){section=&#x27;Reports&#x27;;state.folder=&#x27;All activity&#x27;;if(key.startsWith(&#x27;report-&#x27;))state.message=Number(key.split(&#x27;-&#x27;)[1]);}
+  if(key===&#x27;verify&#x27;){section=&#x27;Reports&#x27;;state.folder=&#x27;Ready to verify&#x27;;state.message=1;}
+  if(section){e.stopImmediatePropagation();state.section=section;render();}
+},true);
+root.addEventListener(&#x27;click&#x27;,e=&gt;{const b=e.target.closest(&#x27;button&#x27;);if(!b)return;if(b.dataset.concept){state.concept=b.dataset.concept;render();}else if(b.dataset.detail)showDetail(b.dataset.detail);else if(b.hasAttribute(&#x27;data-close&#x27;))b.closest(&#x27;.detail&#x27;).hidden=true;else if(b.dataset.project!==undefined){state.project=Number(b.dataset.project);render();}else if(b.dataset.folder){state.folder=b.dataset.folder;render();}else if(b.dataset.message!==undefined){state.message=Number(b.dataset.message);fillInbox();}else if(b.dataset.nav){showDetail(({&#x27;Projects&#x27;:&#x27;projects&#x27;,&#x27;Reports&#x27;:&#x27;reports&#x27;,&#x27;Issues&#x27;:&#x27;actions&#x27;,&#x27;Issues &amp; actions&#x27;:&#x27;actions&#x27;,&#x27;Team&#x27;:&#x27;team&#x27;,&#x27;People &amp; trades&#x27;:&#x27;team&#x27;,&#x27;Documents&#x27;:&#x27;documents&#x27;,&#x27;Overview&#x27;:&#x27;projects&#x27;,&#x27;Office home&#x27;:&#x27;projects&#x27;})[b.dataset.nav]||b.dataset.nav);}else if(b.dataset.projectTab){root.querySelectorAll(&#x27;[data-project-tab]&#x27;).forEach(x=&gt;x.classList.toggle(&#x27;active&#x27;,x===b));const x=b.dataset.projectTab;if(x===&#x27;Activity&#x27;){render();return;}const p=projects[state.project];root.querySelector(&#x27;[data-project-content]&#x27;).innerHTML=`&lt;div class=&quot;row&quot;&gt;&lt;div&gt;&lt;h3&gt;${x} · ${p.name}&lt;/h3&gt;&lt;p class=&quot;muted&quot;&gt;${x.startsWith(&#x27;Issues&#x27;)?p.summary:x===&#x27;Team&#x27;?&#x27;Manager: &#x27;+p.manager+&#x27; · &#x27;+p.trade+&#x27;: &#x27;+p.author:x===&#x27;Documents&#x27;?&#x27;Future: project drawings, specifications and handover records.&#x27;:&#x27;Site progress reports, organised by visit date and trade.&#x27;}&lt;/p&gt;&lt;div class=&quot;row-foot&quot;&gt;${link(&#x27;Open &#x27;+x.toLowerCase()+&#x27; →&#x27;,x===&#x27;Reports&#x27;?&#x27;reports&#x27;:x===&#x27;Team&#x27;?&#x27;team&#x27;:x===&#x27;Documents&#x27;?&#x27;documents&#x27;:&#x27;issue-&#x27;+state.project)}&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;`;}});
+root.addEventListener(&#x27;change&#x27;,e=&gt;{if(e.target.matches(&#x27;[data-project-filter]&#x27;)){root.querySelectorAll(&#x27;[data-project]&#x27;).forEach(b=&gt;{b.hidden=e.target.value!==&#x27;All managers&#x27;&amp;&amp;projects[Number(b.dataset.project)].manager!==e.target.value;});}});
+root.addEventListener(&#x27;input&#x27;,e=&gt;{if(!e.target.matches(&#x27;[data-search]&#x27;))return;const q=e.target.value.trim().toLowerCase();const el=root.querySelector(&#x27;.detail&#x27;);if(!q){el.hidden=true;return;}const hits=projects.map((p,i)=&gt;({p,i})).filter(({p})=&gt;Object.values(p).join(&#x27; &#x27;).toLowerCase().includes(q));el.hidden=false;el.innerHTML=&#x27;&lt;h2&gt;Search results&lt;/h2&gt;&#x27;+ (hits.length?hits.map(({p,i})=&gt;`&lt;div class=&quot;row&quot;&gt;&lt;div class=&quot;grow&quot;&gt;&lt;strong&gt;${p.name}&lt;/strong&gt;&lt;p class=&quot;muted&quot;&gt;${p.area} · ${p.trade}&lt;/p&gt;&lt;/div&gt;${link(&#x27;Open project →&#x27;,&#x27;project-&#x27;+i)}&lt;/div&gt;`).join(&#x27;&#x27;):&#x27;&lt;p&gt;No matching example records.&lt;/p&gt;&#x27;);});
+render();if(globalThis.Tweak){const tweak=new Tweak({container:root,onChange:render});tweak.addSelect(state,&#x27;concept&#x27;,{label:&#x27;Office direction&#x27;,options:[{label:&#x27;Operations dashboard&#x27;,value:&#x27;a&#x27;},{label:&#x27;Project workspace&#x27;,value:&#x27;b&#x27;},{label:&#x27;Office inbox&#x27;,value:&#x27;c&#x27;},{label:&#x27;Connected Office&#x27;,value:&#x27;d&#x27;}]});tweak.addSlider(state,&#x27;spacing&#x27;,{label:&#x27;Content spacing&#x27;,min:16,max:32,step:2,unit:&#x27;px&#x27;});}
+})();
+&lt;/script&gt;
+&lt;/div&gt;
+
+&lt;script src=&quot;https://unpkg.com/@floating-ui/core@1.7.3/dist/floating-ui.core.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script src=&quot;https://unpkg.com/@floating-ui/dom@1.7.4/dist/floating-ui.dom.umd.min.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  if (window.FloatingUIDOM == null) {
+    return;
+  }
+  const { autoUpdate, computePosition, flip, offset, shift, size } =
+    window.FloatingUIDOM;
+  const tooltipPlacements = new Set([&quot;top&quot;, &quot;right&quot;, &quot;bottom&quot;, &quot;left&quot;]);
+  const tooltipId = `codex-visualization-tooltip-${
+    window.crypto?.randomUUID?.() ?? Date.now().toString(36)
+  }`;
+  const tooltipGap = 5;
+  const hoverDelay = 700;
+  const skipDelay = 300;
+  let activeTrigger = null;
+  let pendingTrigger = null;
+  let tooltip = null;
+  let openTimeout = null;
+  let autoUpdateCleanup = null;
+  let positionRequest = 0;
+  let skipDelayUntil = 0;
+  let lastPointerWasTouch = false;
+  let pinnedByTouch = false;
+
+  const getTrigger = (target) =&gt;
+    target?.nodeType === Node.ELEMENT_NODE
+      ? target.closest(&quot;[data-tooltip]&quot;)
+      : null;
+  const containsTarget = (trigger, target) =&gt;
+    target?.nodeType != null &amp;&amp; trigger.contains(target);
+  const getContent = (trigger) =&gt;
+    trigger.getAttribute(&quot;data-tooltip&quot;)?.trim() ?? &quot;&quot;;
+  const getPlacement = (trigger) =&gt; {
+    const placement = trigger.getAttribute(&quot;data-tooltip-placement&quot;);
+    return tooltipPlacements.has(placement) ? placement : &quot;top&quot;;
+  };
+  const getTooltip = () =&gt; {
+    if (tooltip == null) {
+      tooltip = document.createElement(&quot;div&quot;);
+      tooltip.id = tooltipId;
+      tooltip.className = &quot;tooltip&quot;;
+      tooltip.setAttribute(&quot;role&quot;, &quot;tooltip&quot;);
+    }
+    return tooltip;
+  };
+  const setDescribedBy = (trigger, described) =&gt; {
+    const ids = new Set(
+      (trigger.getAttribute(&quot;aria-describedby&quot;) ?? &quot;&quot;)
+        .split(/\s+/)
+        .filter(Boolean),
+    );
+    if (described) {
+      ids.add(tooltipId);
+    } else {
+      ids.delete(tooltipId);
+    }
+    if (ids.size === 0) {
+      trigger.removeAttribute(&quot;aria-describedby&quot;);
+    } else {
+      trigger.setAttribute(&quot;aria-describedby&quot;, [...ids].join(&quot; &quot;));
+    }
+  };
+  const clearOpenTimeout = () =&gt; {
+    if (openTimeout != null) {
+      window.clearTimeout(openTimeout);
+      openTimeout = null;
+    }
+    pendingTrigger = null;
+  };
+  const closeTooltip = (activateSkipDelay = true) =&gt; {
+    clearOpenTimeout();
+    pinnedByTouch = false;
+    positionRequest += 1;
+    autoUpdateCleanup?.();
+    autoUpdateCleanup = null;
+    if (activeTrigger == null) {
+      return;
+    }
+    setDescribedBy(activeTrigger, false);
+    activeTrigger = null;
+    tooltip?.remove();
+    if (activateSkipDelay) {
+      skipDelayUntil = Date.now() + skipDelay;
+    }
+  };
+  const updatePosition = (trigger, floating) =&gt; {
+    const request = ++positionRequest;
+    void computePosition(trigger, floating, {
+      middleware: [
+        offset(tooltipGap),
+        flip({ padding: tooltipGap }),
+        shift({ padding: tooltipGap }),
+        size({
+          padding: tooltipGap,
+          apply({ availableHeight, availableWidth, elements }) {
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-width&quot;,
+              `${Math.max(0, availableWidth)}px`,
+            );
+            elements.floating.style.setProperty(
+              &quot;--tooltip-available-height&quot;,
+              `${Math.max(0, availableHeight)}px`,
+            );
+          },
+        }),
+      ],
+      placement: getPlacement(trigger),
+      strategy: &quot;fixed&quot;,
+    })
+      .then(({ x, y }) =&gt; {
+        if (activeTrigger !== trigger || request !== positionRequest) {
+          return;
+        }
+        const scale = window.devicePixelRatio || 1;
+        floating.style.transform = `translate(${Math.round(x * scale) / scale}px, ${Math.round(y * scale) / scale}px)`;
+        floating.style.visibility = &quot;visible&quot;;
+      })
+      .catch(() =&gt; {
+        if (activeTrigger === trigger &amp;&amp; request === positionRequest) {
+          closeTooltip(false);
+        }
+      });
+  };
+  const openTooltip = (trigger) =&gt; {
+    const content = getContent(trigger);
+    if (!trigger.isConnected || content.length === 0) {
+      return;
+    }
+    clearOpenTimeout();
+    if (activeTrigger === trigger) {
+      return;
+    }
+    closeTooltip();
+    const floating = getTooltip();
+    floating.textContent = content;
+    floating.style.visibility = &quot;hidden&quot;;
+    floating.style.transform = &quot;translate(0, 0)&quot;;
+    document.body.appendChild(floating);
+    activeTrigger = trigger;
+    setDescribedBy(trigger, true);
+    autoUpdateCleanup = autoUpdate(trigger, floating, () =&gt; {
+      updatePosition(trigger, floating);
+    });
+  };
+  const requestOpen = (trigger, immediate = false) =&gt; {
+    if (
+      getContent(trigger).length === 0 ||
+      activeTrigger === trigger ||
+      pendingTrigger === trigger
+    ) {
+      return;
+    }
+    clearOpenTimeout();
+    pendingTrigger = trigger;
+    const delay =
+      immediate || activeTrigger != null || Date.now() &lt; skipDelayUntil
+        ? 0
+        : hoverDelay;
+    if (delay === 0) {
+      openTooltip(trigger);
+      return;
+    }
+    openTimeout = window.setTimeout(() =&gt; {
+      openTimeout = null;
+      pendingTrigger = null;
+      openTooltip(trigger);
+    }, delay);
+  };
+  const handlePointerOpen = (event) =&gt; {
+    if (event.pointerType === &quot;touch&quot;) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    requestOpen(trigger);
+  };
+  const handlePointer = (event) =&gt; {
+    lastPointerWasTouch =
+      event.type === &quot;pointerdown&quot; &amp;&amp; event.pointerType === &quot;touch&quot;;
+  };
+  const handleTouchClick = (event) =&gt; {
+    const isTouch = event.pointerType === &quot;touch&quot; || lastPointerWasTouch;
+    lastPointerWasTouch = false;
+    if (!isTouch || event.detail === 0) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (
+      trigger == null ||
+      !trigger.isConnected ||
+      getContent(trigger).length === 0 ||
+      (pinnedByTouch &amp;&amp; activeTrigger === trigger)
+    ) {
+      if (pinnedByTouch) {
+        closeTooltip();
+      }
+      return;
+    }
+    openTooltip(trigger);
+    pinnedByTouch = activeTrigger === trigger;
+    window.setTimeout(() =&gt; {
+      if (activeTrigger === trigger &amp;&amp; !trigger.isConnected) {
+        closeTooltip(false);
+      }
+    }, 0);
+  };
+  const handleLeave = (event) =&gt; {
+    if (pinnedByTouch) {
+      return;
+    }
+    const trigger = getTrigger(event.target);
+    if (trigger == null || containsTarget(trigger, event.relatedTarget)) {
+      return;
+    }
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const handleFocusIn = (event) =&gt; {
+    const trigger = getTrigger(event.target);
+    if (trigger?.matches(&quot;:focus-visible&quot;)) {
+      requestOpen(trigger, true);
+    }
+  };
+  const handleKeyDown = (event) =&gt; {
+    if (event.key === &quot;Escape&quot;) {
+      closeTooltip();
+    }
+  };
+  const handleContextMenu = (event) =&gt; {
+    lastPointerWasTouch = false;
+    const trigger = getTrigger(event.target);
+    if (activeTrigger === trigger || pendingTrigger === trigger) {
+      closeTooltip();
+    }
+  };
+  const destroy = () =&gt; {
+    closeTooltip(false);
+    lastPointerWasTouch = false;
+    document.removeEventListener(&quot;pointerover&quot;, handlePointerOpen);
+    document.removeEventListener(&quot;pointerdown&quot;, handlePointer);
+    document.removeEventListener(&quot;pointercancel&quot;, handlePointer);
+    document.removeEventListener(&quot;click&quot;, handleTouchClick);
+    document.removeEventListener(&quot;pointerout&quot;, handleLeave);
+    document.removeEventListener(&quot;focusin&quot;, handleFocusIn);
+    document.removeEventListener(&quot;focusout&quot;, handleLeave);
+    document.removeEventListener(&quot;keydown&quot;, handleKeyDown);
+    document.removeEventListener(&quot;contextmenu&quot;, handleContextMenu);
+    tooltip = null;
+  };
+
+  document.addEventListener(&quot;pointerover&quot;, handlePointerOpen);
+  document.addEventListener(&quot;pointerdown&quot;, handlePointer);
+  document.addEventListener(&quot;pointercancel&quot;, handlePointer);
+  document.addEventListener(&quot;click&quot;, handleTouchClick);
+  document.addEventListener(&quot;pointerout&quot;, handleLeave);
+  document.addEventListener(&quot;focusin&quot;, handleFocusIn);
+  document.addEventListener(&quot;focusout&quot;, handleLeave);
+  document.addEventListener(&quot;keydown&quot;, handleKeyDown);
+  document.addEventListener(&quot;contextmenu&quot;, handleContextMenu);
+  window.addEventListener(&quot;pagehide&quot;, destroy, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-tabs&quot;&gt;
+(() =&gt; {
+  const selector = &#x27;.nav[role=&quot;tablist&quot;] [role=&quot;tab&quot;]&#x27;;
+  const disabled = &#x27;:disabled,[aria-disabled=&quot;true&quot;]&#x27;;
+  const selectTab = (selected) =&gt; {
+    const panelId = selected.getAttribute(&quot;aria-controls&quot;);
+    for (const tab of selected.closest(&#x27;[role=&quot;tablist&quot;]&#x27;).querySelectorAll(&#x27;[role=&quot;tab&quot;]&#x27;)) {
+      const active = tab === selected;
+      tab.classList.toggle(&quot;active&quot;, active);
+      tab.setAttribute(&quot;aria-selected&quot;, String(active));
+      const id = tab.getAttribute(&quot;aria-controls&quot;);
+      const panel = id &amp;&amp; document.getElementById(id);
+      if (panel != null) {
+        panel.hidden = id !== panelId;
+        if (!panel.hidden &amp;&amp; selected.id) {
+          panel.setAttribute(&quot;aria-labelledby&quot;, selected.id);
+        }
+      }
+    }
+  };
+  const interact = (event) =&gt; {
+    const tab = event.target?.closest?.(selector);
+    if (event.defaultPrevented || tab == null || tab.matches(disabled)) {
+      return;
+    }
+    if (event.type === &quot;click&quot;) {
+      selectTab(tab);
+      return;
+    }
+    const tabs = Array.from(
+      tab.closest(&#x27;[role=&quot;tablist&quot;]&#x27;).querySelectorAll(&#x27;[role=&quot;tab&quot;]&#x27;),
+    ).filter((candidate) =&gt; !candidate.matches(disabled));
+    const current = tabs.indexOf(tab);
+    let next;
+    if (event.key === &quot;ArrowRight&quot; || event.key === &quot;ArrowDown&quot;) {
+      next = (current + 1) % tabs.length;
+    } else if (event.key === &quot;ArrowLeft&quot; || event.key === &quot;ArrowUp&quot;) {
+      next = (current + tabs.length - 1) % tabs.length;
+    } else if (event.key === &quot;Home&quot;) {
+      next = 0;
+    } else if (event.key === &quot;End&quot;) {
+      next = tabs.length - 1;
+    } else {
+      return;
+    }
+    event.preventDefault();
+    tabs[next].focus();
+    selectTab(tabs[next]);
+  };
+
+  for (const list of document.querySelectorAll(&#x27;.nav[role=&quot;tablist&quot;]&#x27;)) {
+    const selected =
+      list.querySelector(&#x27;[role=&quot;tab&quot;][aria-selected=&quot;true&quot;]&#x27;) ??
+      list.querySelector(&#x27;[role=&quot;tab&quot;].active&#x27;) ??
+      list.querySelector(&#x27;[role=&quot;tab&quot;]&#x27;);
+    if (selected != null) {
+      selectTab(selected);
+    }
+  }
+  document.addEventListener(&quot;click&quot;, interact);
+  document.addEventListener(&quot;keydown&quot;, interact);
+  window.addEventListener(&quot;pagehide&quot;, () =&gt; {
+    document.removeEventListener(&quot;click&quot;, interact);
+    document.removeEventListener(&quot;keydown&quot;, interact);
+  }, { once: true });
+})();
+&lt;/script&gt;
+&lt;script id=&quot;codex-visualization-lucide&quot; async src=&quot;https://unpkg.com/lucide@1.17.0/dist/umd/lucide.js&quot;&gt;&lt;/script&gt;
+&lt;script&gt;
+(() =&gt; {
+  const initialize = () =&gt; {
+    globalThis.lucide?.createIcons({ attrs: { width: 16, height: 16 } });
+  };
+  if (globalThis.lucide != null) {
+    initialize();
+    return;
+  }
+  document
+    .getElementById(&quot;codex-visualization-lucide&quot;)
+    ?.addEventListener(&quot;load&quot;, initialize, { once: true });
+})();
+&lt;/script&gt;
+
+&lt;/body&gt;
+&lt;/html&gt;
+"></iframe>
+</body>
+</html>

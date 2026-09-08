@@ -6,6 +6,7 @@ import { PwaRegistration } from "@/components/PwaRegistration";
 import { currentPrincipal } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/auth/provider";
 import "./globals.css";
+import './engineer.css';
 import { canManage, isAdmin } from '@/lib/auth/access';
 import { PrincipalContext } from '@/components/PrincipalContext';
 import { InstallRelay } from '@/components/InstallRelay';
@@ -81,7 +82,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {provider.kind === "local" ? " — IDENTITY NOT CHECKED" : ""}
         </div>
 
-        <header className="appbar">
+        <header className={`appbar${principal?.role==='Engineer'?' appbar-engineer':''}`}>
           <div className="appbar-inner">
             <Link href="/" className="brand">
               <span>RELAY</span>
@@ -89,13 +90,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             </Link>
             <nav className="nav">
               <Link href="/">Home</Link>
-              {principal && <Link href="/projects">Projects</Link>}
+              {principal && <Link href={principal.role==='Engineer'?'/engineer?view=projects':'/projects'}>Projects</Link>}
+              {principal && canManage(principal) && <Link href="/engineer">Engineer view</Link>}
               {principal && canManage(principal) && <Link href="/office">Office</Link>}
               {principal && isAdmin(principal) && <Link href="/admin">Admin</Link>}
               {principal && (
                 <form action="/api/auth/signout" method="POST" style={{ display: "inline" }}>
                   <button type="submit" className="whoami" title="Sign out">
-                    {principal.name} · {principal.role} · Sign out
+                    {principal.role==='Engineer'?'Sign out':`${principal.name} · ${principal.role} · Sign out`}
                   </button>
                 </form>
               )}
