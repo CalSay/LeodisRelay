@@ -1,0 +1,1556 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compliance Home Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* ---------------------------------------------------------------------------
+   Relay · Leodis Compliance Management · office home concepts.
+
+   Neutrals come from the approved entry screens (docs/designs/entry-approved.html)
+   so the hub and the workspace feel continuous: charcoal and grey, off-white
+   text, a warm paper in light mode. Gold keeps the one primary action per
+   screen, as it does on the hub. Aquamarine — reserved for Compliance in the
+   design decisions — takes the structural role brass plays in Developments:
+   references, active state, the company mark. Status colours are the
+   application's own, unchanged.
+
+   The register idiom is kept: hairline rules, strict grid, monospace codes,
+   no floating cards. A recessed ground sits behind list regions so panels
+   read as raised surfaces without shadows or radii.
+--------------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+  --ground: #eeede9;
+  --sunken: #e4e3de;
+  --panel: #f8f7f3;
+  --panel-2: #efeeea;
+  --panel-3: #e3e2dd;
+  --line: #d6d7d3;
+  --line-2: #c3c6c4;
+  --text: #25282a;
+  --text-2: #5b5f60;
+  --text-3: #767a7b;
+  --aqua: #267c76;
+  --aqua-ink: #ffffff;
+  --aqua-wash: rgba(38, 124, 118, 0.09);
+  --gold: #816321;
+  --gold-ink: #ffffff;
+  --gold-wash: rgba(129, 99, 33, 0.09);
+  --alert: #a83c22;
+  --alert-wash: rgba(168, 60, 34, 0.09);
+  --caution: #7d5a12;
+  --caution-wash: rgba(125, 90, 18, 0.11);
+  --ok: #2b6b48;
+  --ok-wash: rgba(43, 107, 72, 0.10);
+
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+  --r: 2px;
+  --sans: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #202224;
+    --sunken: #1a1c1e;
+    --panel: #282b2d;
+    --panel-2: #2e3134;
+    --panel-3: #363a3d;
+    --line: #3a3e41;
+    --line-2: #484c4e;
+    --text: #f0efeb;
+    --text-2: #b5b7b6;
+    --text-3: #868a8b;
+    --aqua: #77c7bf;
+    --aqua-ink: #16201f;
+    --aqua-wash: rgba(119, 199, 191, 0.10);
+    --gold: #ccb071;
+    --gold-ink: #202224;
+    --gold-wash: rgba(204, 176, 113, 0.10);
+    --alert: #e2705a;
+    --alert-wash: rgba(226, 112, 90, 0.11);
+    --caution: #dda94f;
+    --caution-wash: rgba(221, 169, 79, 0.11);
+    --ok: #63b78d;
+    --ok-wash: rgba(99, 183, 141, 0.11);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #202224;
+  --sunken: #1a1c1e;
+  --panel: #282b2d;
+  --panel-2: #2e3134;
+  --panel-3: #363a3d;
+  --line: #3a3e41;
+  --line-2: #484c4e;
+  --text: #f0efeb;
+  --text-2: #b5b7b6;
+  --text-3: #868a8b;
+  --aqua: #77c7bf;
+  --aqua-ink: #16201f;
+  --aqua-wash: rgba(119, 199, 191, 0.10);
+  --gold: #ccb071;
+  --gold-ink: #202224;
+  --gold-wash: rgba(204, 176, 113, 0.10);
+  --alert: #e2705a;
+  --alert-wash: rgba(226, 112, 90, 0.11);
+  --caution: #dda94f;
+  --caution-wash: rgba(221, 169, 79, 0.11);
+  --ok: #63b78d;
+  --ok-wash: rgba(99, 183, 141, 0.11);
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--ground);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+:focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---- Document shell ---------------------------------------------------- */
+.doc { max-width: 1480px; margin: 0 auto; padding: var(--s6) var(--s5) var(--s7); }
+.doc-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: var(--s5); flex-wrap: wrap;
+  padding-bottom: var(--s5); border-bottom: 2px solid var(--text);
+}
+.doc-head h1 { font-size: 30px; font-weight: 500; letter-spacing: -0.035em; line-height: 1.12; margin: 0 0 var(--s3); text-wrap: balance; }
+.doc-head p { margin: 0; color: var(--text-2); max-width: 64ch; }
+.eyebrow {
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--aqua); margin: 0 0 var(--s4);
+}
+.eyebrow b { font-weight: 500; color: var(--text); }
+.themer {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase;
+  background: var(--panel); color: var(--text-2); border: 1px solid var(--line-2);
+  border-radius: var(--r); padding: var(--s2) var(--s4); cursor: pointer; white-space: nowrap;
+}
+.themer:hover { border-color: var(--aqua); color: var(--aqua); }
+
+.brief { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0; margin: var(--s5) 0 0; border: 1px solid var(--line); background: var(--panel); }
+.brief div { padding: var(--s4); border-right: 1px solid var(--line); }
+.brief div:last-child { border-right: 0; }
+.brief dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); margin-bottom: var(--s2); }
+.brief dd { margin: 0; font-size: 13px; color: var(--text-2); }
+.brief dd b { color: var(--text); font-weight: 500; }
+
+.pass { margin-top: var(--s5); border: 1px solid var(--aqua); border-left-width: 3px; background: var(--aqua-wash); padding: var(--s4) var(--s5); }
+.pass h5 { margin: 0 0 var(--s2); font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--aqua); }
+.pass ul { margin: 0; padding-left: 18px; }
+.pass li { font-size: 13px; color: var(--text-2); margin-bottom: var(--s1); max-width: 92ch; }
+.pass li b { color: var(--text); font-weight: 500; }
+
+/* The hierarchy, drawn once so every concept can be read against it. */
+.ia { display: flex; align-items: stretch; margin-top: var(--s5); border: 1px solid var(--line); background: var(--panel); overflow-x: auto; }
+.ia div { flex: 1 1 0; min-width: 190px; padding: var(--s4); border-right: 1px solid var(--line); position: relative; }
+.ia div:last-child { border-right: 0; }
+.ia div::after { content: "›"; position: absolute; right: -6px; top: 14px; font-size: 18px; color: var(--line-2); background: var(--panel); line-height: 1; padding: 0 2px; }
+.ia div:last-child::after { content: none; }
+.ia dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--aqua); }
+.ia dd { margin: var(--s1) 0 0; font-size: 13px; color: var(--text-2); }
+.ia dd b { display: block; color: var(--text); font-weight: 500; font-size: 15px; margin-bottom: 2px; }
+
+/* ---- Concept sections -------------------------------------------------- */
+.concept { margin-top: var(--s7); }
+.concept-head { border-top: 2px solid var(--aqua); padding-top: var(--s4); margin-bottom: var(--s4); }
+.concept-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; color: var(--aqua); text-transform: uppercase; }
+.concept-head h2 { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; margin: var(--s2) 0 var(--s3); }
+.concept-head > p { margin: 0; color: var(--text-2); max-width: 80ch; }
+
+.frame { border: 1px solid var(--line-2); background: var(--sunken); overflow-x: auto; }
+.app { min-width: 1200px; }
+.app-wide { min-width: 1320px; }
+
+/* ---- Shared application chrome ----------------------------------------- */
+.topbar {
+  display: flex; align-items: center; gap: var(--s5);
+  background: var(--panel); border-bottom: 1px solid var(--line-2);
+  padding: 0 var(--s5); height: 56px;
+}
+.logo { display: flex; align-items: baseline; gap: var(--s3); }
+.logo b { font-family: var(--sans); font-size: 17px; font-weight: 500; letter-spacing: 0.12em; }
+.logo span { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; color: var(--aqua); border-left: 1px solid var(--line-2); padding-left: var(--s3); }
+.search {
+  flex: 1; max-width: 440px; display: flex; align-items: center; gap: var(--s2);
+  background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r);
+  padding: var(--s2) var(--s3); color: var(--text-3); font-size: 13px;
+}
+.search kbd {
+  margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--text-3);
+  border: 1px solid var(--line-2); border-radius: 2px; padding: 1px 5px;
+}
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: var(--s4); }
+.whoami { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; color: var(--text-2); }
+.whoami em { font-style: normal; color: var(--aqua); }
+.bell { font-family: var(--mono); font-size: 11px; color: var(--text-2); letter-spacing: 0.08em; }
+.bell b { color: var(--alert); font-weight: 500; }
+.switch { font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-3); text-decoration: none; }
+.switch:hover { color: var(--text); }
+
+/* Horizontal nav */
+.hnav { display: flex; gap: 0; background: var(--panel); border-bottom: 1px solid var(--line-2); padding: 0 var(--s5); }
+.hnav a {
+  font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.11em;
+  color: var(--text-3); text-decoration: none; padding: var(--s3) var(--s4);
+  border-bottom: 2px solid transparent; display: flex; align-items: center; gap: var(--s2);
+}
+.hnav a:hover { color: var(--text); }
+.hnav a.on { color: var(--text); border-bottom-color: var(--aqua); }
+.hnav a i { font-style: normal; font-size: 10px; color: var(--text-3); background: var(--panel-2); border-radius: 8px; padding: 0 6px; }
+.hnav a.on i { background: var(--aqua-wash); color: var(--aqua); }
+.hnav a i.warn { color: var(--alert); background: var(--alert-wash); }
+
+/* Sidebar nav */
+.shell { display: grid; grid-template-columns: 212px 1fr; align-items: start; }
+.side { background: var(--panel); border-right: 1px solid var(--line-2); padding: var(--s4) 0; min-height: 700px; }
+.side-grp { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); padding: var(--s4) var(--s5) var(--s2); }
+.side a {
+  display: flex; align-items: center; gap: var(--s2); text-decoration: none;
+  padding: var(--s2) var(--s5); font-size: 13px; color: var(--text-2);
+  border-left: 2px solid transparent;
+}
+.side a:hover { color: var(--text); background: var(--sunken); }
+.side a.on { color: var(--text); font-weight: 500; border-left-color: var(--aqua); background: var(--aqua-wash); }
+.side a i { font-style: normal; margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+.side a.on i { color: var(--aqua); }
+.side a i.warn { color: var(--alert); }
+
+/* ---- Shared content primitives ----------------------------------------- */
+.main { padding: var(--s5); display: flex; flex-direction: column; gap: var(--s5); }
+.pagehead { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s4); }
+.pagehead h3 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -0.02em; }
+.pagehead p { margin: var(--s1) 0 0; font-size: 13px; color: var(--text-2); }
+.actions { display: flex; gap: var(--s2); align-items: center; }
+.btn {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.09em; text-transform: uppercase;
+  background: var(--gold); color: var(--gold-ink); border: 1px solid var(--gold);
+  border-radius: var(--r); padding: var(--s2) var(--s4); cursor: pointer; white-space: nowrap;
+}
+.btn:hover { filter: brightness(1.08); }
+.btn-q { background: transparent; color: var(--text-2); border-color: var(--line-2); }
+.btn-q:hover { color: var(--aqua); border-color: var(--aqua); filter: none; }
+.btn-sm { padding: 5px var(--s3); font-size: 10px; }
+.drop::after { content: " ▾"; color: inherit; opacity: .7; }
+
+.panel { background: var(--panel); border: 1px solid var(--line); }
+.panel-head {
+  display: flex; align-items: center; gap: var(--s3);
+  padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); background: var(--panel);
+}
+.panel-head h4 {
+  margin: 0; font-family: var(--mono); font-size: 11px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-2);
+}
+.panel-head .more { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--aqua); text-decoration: none; letter-spacing: 0.06em; }
+.panel-foot { padding: var(--s3) var(--s4); border-top: 1px solid var(--line); font-size: 12px; color: var(--text-3); }
+
+/* Status marks. Never colour alone: a glyph and a word carry it too. */
+.tag {
+  display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.07em; text-transform: uppercase;
+  border: 1px solid; border-radius: var(--r); padding: 2px var(--s2);
+}
+.tag::before { content: "●"; font-size: 8px; line-height: 1; }
+.tag-ok { color: var(--ok); border-color: var(--ok); background: var(--ok-wash); }
+.tag-alert { color: var(--alert); border-color: var(--alert); background: var(--alert-wash); }
+.tag-alert::before { content: "▲"; }
+.tag-caution { color: var(--caution); border-color: var(--caution); background: var(--caution-wash); }
+.tag-caution::before { content: "◆"; }
+.tag-quiet { color: var(--text-3); border-color: var(--line-2); background: transparent; }
+.tag-quiet::before { content: "○"; }
+.tag-aqua { color: var(--aqua); border-color: var(--aqua); background: var(--aqua-wash); }
+.tag-aqua::before { content: "■"; }
+
+.ref { font-family: var(--mono); font-size: 12px; color: var(--aqua); letter-spacing: 0.02em; font-weight: 500; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.due { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.due b { font-weight: 500; }
+.due .late { color: var(--alert); }
+.due .soon { color: var(--caution); }
+.due .fine { color: var(--text-3); }
+
+/* Register table */
+table.reg { width: 100%; border-collapse: collapse; }
+table.reg th {
+  text-align: left; font-family: var(--mono); font-size: 10px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.11em; color: var(--text-3);
+  padding: var(--s2) var(--s4); border-bottom: 1px solid var(--line-2); background: var(--panel-2);
+  white-space: nowrap;
+}
+table.reg td { padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13px; }
+table.reg tr:last-child td { border-bottom: 0; }
+table.reg tbody tr:hover { background: var(--aqua-wash); }
+table.reg tr.sel { background: var(--aqua-wash); box-shadow: inset 2px 0 0 var(--aqua); }
+table.reg.tight td, table.reg.tight th { padding: var(--s2) var(--s3); font-size: 12px; }
+.rowtitle { font-weight: 500; font-size: 14px; }
+.rowsub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.rowsub .sep { color: var(--line-2); margin: 0 6px; }
+.client { font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-3); text-transform: uppercase; }
+
+/* Attention band: the only place on the page allowed to be loud. */
+.attn { border: 1px solid var(--alert); border-left-width: 3px; background: var(--alert-wash); }
+.attn .panel-head { border-bottom-color: var(--alert); background: transparent; }
+.attn .panel-head h4 { color: var(--alert); }
+.attn-list { display: grid; grid-template-columns: repeat(3, 1fr); }
+.attn-item { padding: var(--s3) var(--s4); border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: var(--s2); align-items: flex-start; }
+.attn-item:last-child { border-right: 0; }
+.attn-item b { display: block; font-size: 13px; font-weight: 500; }
+.attn-item span { font-size: 12px; color: var(--text-2); }
+
+/* Right rail lists */
+.rail { display: flex; flex-direction: column; gap: var(--s5); }
+.mini { display: flex; gap: var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); align-items: flex-start; }
+.mini:last-child { border-bottom: 0; }
+.mini-b { flex: 1; min-width: 0; }
+.mini-b p { margin: 0; font-size: 13px; }
+.mini-b .rowsub { margin-top: 3px; }
+.age { font-family: var(--mono); font-size: 11px; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Filter bar */
+.filters { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; padding: var(--s3) var(--s4); background: var(--panel-2); border: 1px solid var(--line); }
+.chip {
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+  border: 1px solid var(--line-2); border-radius: var(--r); padding: 3px var(--s3);
+  color: var(--text-2); background: var(--panel); white-space: nowrap;
+}
+.chip.on { border-color: var(--aqua); color: var(--aqua); background: var(--aqua-wash); }
+.chip.warn { color: var(--alert); border-color: var(--alert); }
+.chip.drop::after { content: " ▾"; color: var(--text-3); }
+.filters .spacer { margin-left: auto; }
+
+/* Compliance bar: a building's position in one glance. Four segments, in this
+   order, so the bad news is always at the right-hand end where the eye lands. */
+.cbar { display: flex; height: 6px; width: 100%; background: var(--panel-3); border-radius: 1px; overflow: hidden; }
+.cbar i { display: block; height: 100%; }
+.cbar .ok { background: var(--ok); }
+.cbar .soon { background: var(--caution); }
+.cbar .late { background: var(--alert); }
+.cbar .none { background: var(--line-2); }
+.cbar-key { display: flex; gap: var(--s4); font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; color: var(--text-3); text-transform: uppercase; }
+.cbar-key span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: -1px; }
+.cbar-key .k-ok::before { background: var(--ok); }
+.cbar-key .k-soon::before { background: var(--caution); }
+.cbar-key .k-late::before { background: var(--alert); }
+.cbar-key .k-none::before { background: var(--line-2); }
+
+/* Figure strip — used only in Concept 3, where the portfolio position is the
+   point of the screen. */
+.figs { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--line); background: var(--panel); }
+.figs div { padding: var(--s4); border-right: 1px solid var(--line); }
+.figs div:last-child { border-right: 0; }
+.figs dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.11em; color: var(--text-3); }
+.figs dd { margin: var(--s2) 0 0; font-family: var(--mono); font-size: 24px; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.figs dd small { font-size: 12px; color: var(--text-3); letter-spacing: 0; margin-left: 6px; font-family: var(--sans); }
+.figs dd.warn { color: var(--alert); }
+.figs dd.soon { color: var(--caution); }
+
+/* ---- Concept 2: portfolio browser (Clients › Buildings › Assets › Details) */
+.cols { display: grid; grid-template-columns: 220px 300px 340px 1fr; min-height: 680px; }
+.col { border-right: 1px solid var(--line-2); background: var(--panel); display: flex; flex-direction: column; min-width: 0; }
+.col:last-child { border-right: 0; background: var(--sunken); }
+.col-head { display: flex; align-items: baseline; gap: var(--s2); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line-2); background: var(--panel-2); }
+.col-head h4 { margin: 0; font-family: var(--mono); font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.12em; color: var(--aqua); }
+.col-head i { font-style: normal; font-family: var(--mono); font-size: 10px; color: var(--text-3); margin-left: auto; }
+.col:last-child .col-head { background: var(--panel); }
+.item { display: block; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); border-left: 2px solid transparent; text-decoration: none; color: inherit; }
+.item:hover { background: var(--sunken); }
+.item.on { background: var(--aqua-wash); border-left-color: var(--aqua); }
+.item-top { display: flex; align-items: baseline; gap: var(--s2); }
+.item-top .rowtitle { font-size: 13px; flex: 1; min-width: 0; }
+.item-top .arrow { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+.item.on .arrow { color: var(--aqua); }
+.item .cbar { margin-top: var(--s2); }
+.item .meta { display: flex; gap: var(--s3); margin-top: var(--s1); font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.item .meta .late { color: var(--alert); }
+.item .meta .soon { color: var(--caution); }
+.grp { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--text-3); padding: var(--s3) var(--s4) var(--s1); background: var(--panel); border-bottom: 1px solid var(--line); display: flex; }
+.grp i { font-style: normal; margin-left: auto; }
+.arow { display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s4); border-bottom: 1px solid var(--line); border-left: 2px solid transparent; text-decoration: none; color: inherit; }
+.arow:hover { background: var(--sunken); }
+.arow.on { background: var(--aqua-wash); border-left-color: var(--aqua); }
+.arow .ref { font-size: 11px; width: 118px; flex: none; }
+.arow .nm { flex: 1; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arow .tag { flex: none; }
+
+/* Detail sheet (Concept 2 column 4 and Concept 4 reader) */
+.sheet { background: var(--panel); border: 1px solid var(--line); padding: var(--s5); }
+.sheet-title { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s4); border-bottom: 1px solid var(--line-2); padding-bottom: var(--s4); }
+.sheet-title h4 { margin: 0 0 var(--s1); font-size: 18px; font-weight: 500; letter-spacing: -0.015em; }
+.crumbs { font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: 0.03em; }
+.crumbs b { font-weight: 500; color: var(--aqua); }
+.crumbs span { margin: 0 6px; color: var(--line-2); }
+.tb { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; margin-top: var(--s4); border: 1px solid var(--line); }
+.tb div { padding: var(--s3) var(--s4); border-right: 1px solid var(--line); }
+.tb div:last-child { border-right: 0; }
+.tb dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
+.tb dd { margin: var(--s1) 0 0; font-size: 13px; }
+.tb.two { grid-template-columns: 1fr 1fr; }
+.tb.two div:nth-child(2n) { border-right: 0; }
+.tb.two div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+.tb.three { grid-template-columns: repeat(3, 1fr); }
+.tb.three div:nth-child(3n) { border-right: 0; }
+.sec-h { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--text-3); margin: var(--s5) 0 var(--s2); display: flex; align-items: center; gap: var(--s3); }
+.sec-h a { margin-left: auto; color: var(--aqua); text-decoration: none; letter-spacing: .06em; }
+
+/* Due block: the two dates that decide everything sit together, large. */
+.dueblock { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--line); margin-top: var(--s4); }
+.dueblock > div { padding: var(--s3) var(--s4); border-right: 1px solid var(--line); }
+.dueblock > div:last-child { border-right: 0; }
+.dueblock dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-3); }
+.dueblock dd { margin: var(--s1) 0 0; font-family: var(--mono); font-size: 18px; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.dueblock dd small { display: block; font-family: var(--sans); font-size: 12px; color: var(--text-3); letter-spacing: 0; margin-top: 2px; }
+.dueblock dd.late { color: var(--alert); }
+.dueblock dd.soon { color: var(--caution); }
+.dueblock dd.okc { color: var(--ok); }
+.dueblock.stack { grid-template-columns: 1fr; }
+.dueblock.stack > div { border-right: 0; border-bottom: 1px solid var(--line); }
+.dueblock.stack > div:last-child { border-bottom: 0; }
+
+/* Service history: a ledger, oldest at the bottom. */
+.hist { display: flex; gap: var(--s4); padding: var(--s3) 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.hist:last-child { border-bottom: 0; }
+.hist .d { font-family: var(--mono); font-size: 12px; color: var(--text-2); width: 92px; flex: none; font-variant-numeric: tabular-nums; }
+.hist .b { flex: 1; min-width: 0; }
+.hist .b p { margin: 0; font-size: 13px; }
+.hist .b .rowsub { margin-top: 2px; }
+
+/* Report menu: options the office will have, marked by what exists. */
+.rmenu { border: 1px solid var(--line); background: var(--panel); }
+.rmenu a { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); text-decoration: none; color: inherit; }
+.rmenu a:last-child { border-bottom: 0; }
+.rmenu a:hover { background: var(--aqua-wash); }
+.rmenu .rt { flex: 1; min-width: 0; }
+.rmenu .rt b { display: block; font-size: 13px; font-weight: 500; }
+.rmenu .rt span { font-size: 12px; color: var(--text-3); }
+.rmenu .ref { font-size: 11px; width: 110px; flex: none; }
+
+/* ---- Concept 3: compliance matrix --------------------------------------- */
+table.mx { width: 100%; border-collapse: collapse; background: var(--panel); }
+table.mx th { font-family: var(--mono); font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); padding: var(--s2) var(--s2); border-bottom: 1px solid var(--line-2); background: var(--panel-2); text-align: left; vertical-align: bottom; line-height: 1.3; }
+table.mx th.rowhd { text-align: left; padding-left: var(--s4); width: 220px; }
+table.mx td { padding: 0; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); height: 44px; vertical-align: middle; }
+table.mx td.rowhd { padding: var(--s2) var(--s4); border-right: 1px solid var(--line-2); }
+table.mx td.rowhd .rowtitle { font-size: 13px; }
+table.mx td:last-child { border-right: 0; }
+table.mx tr.cg td { background: var(--panel-2); border-bottom-color: var(--line-2); height: 30px; padding: var(--s1) var(--s4); font-family: var(--mono); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--aqua); }
+.cell { display: flex; flex-direction: column; justify-content: center; height: 44px; padding: 0 var(--s2); font-family: var(--mono); font-size: 10px; letter-spacing: 0.04em; line-height: 1.3; text-decoration: none; color: var(--text-2); }
+.cell::before { font-size: 8px; line-height: 1; margin-bottom: 3px; }
+.cell b { font-weight: 500; font-variant-numeric: tabular-nums; }
+.cell.c-ok { color: var(--ok); background: var(--ok-wash); }
+.cell.c-ok::before { content: "●"; }
+.cell.c-soon { color: var(--caution); background: var(--caution-wash); }
+.cell.c-soon::before { content: "◆"; }
+.cell.c-late { color: var(--alert); background: var(--alert-wash); }
+.cell.c-late::before { content: "▲"; }
+.cell.c-none { color: var(--text-3); }
+.cell.c-none::before { content: "○"; }
+.cell.c-na { color: var(--line-2); align-items: center; }
+.cell.c-na::before { content: "—"; font-size: 12px; margin: 0; }
+.cell.sel { outline: 2px solid var(--aqua); outline-offset: -2px; }
+.cell:hover { filter: brightness(0.97); }
+
+/* Week strip beneath the matrix */
+.weeks { display: grid; grid-template-columns: 180px repeat(8, 1fr); border: 1px solid var(--line); background: var(--panel); }
+.weeks > div { padding: var(--s2) var(--s3); border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); font-size: 12px; min-height: 40px; display: flex; align-items: center; gap: 6px; }
+.weeks > div:nth-child(9n) { border-right: 0; }
+.weeks .hd { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-3); background: var(--panel-2); }
+.weeks .lbl { font-size: 12px; font-weight: 500; }
+.weeks .n { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--text-2); }
+.weeks .n.hot { color: var(--alert); font-weight: 500; }
+.weeks .n.warm { color: var(--caution); }
+.weeks .n.zero { color: var(--line-2); }
+
+/* ---- Concept 4: ledger and reader --------------------------------------- */
+.split { display: grid; grid-template-columns: 460px 1fr; min-height: 720px; }
+.split-list { border-right: 1px solid var(--line-2); background: var(--panel); }
+.li { display: block; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); border-left: 2px solid transparent; text-decoration: none; color: inherit; }
+.li:hover { background: var(--sunken); }
+.li.on { background: var(--aqua-wash); border-left-color: var(--aqua); }
+.li-top { display: flex; align-items: baseline; gap: var(--s2); }
+.li-top .due { margin-left: auto; }
+.li .rowtitle { font-size: 13px; margin-top: 3px; }
+.li .tags { margin-top: var(--s2); display: flex; gap: 6px; flex-wrap: wrap; }
+.reader { background: var(--sunken); padding: var(--s5); display: flex; flex-direction: column; gap: var(--s4); }
+
+/* ---- Notes under each concept ------------------------------------------- */
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0; margin-top: var(--s4); border: 1px solid var(--line); background: var(--panel); }
+.notes section { padding: var(--s4); border-right: 1px solid var(--line); }
+.notes section:last-child { border-right: 0; }
+.notes h5 { margin: 0 0 var(--s2); font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.11em; color: var(--aqua); }
+.notes ul { margin: 0; padding-left: 18px; }
+.notes li { font-size: 13px; color: var(--text-2); margin-bottom: var(--s2); }
+.notes li:last-child { margin-bottom: 0; }
+.notes li b { color: var(--text); font-weight: 500; }
+
+/* ---- Closing comparison -------------------------------------------------- */
+.verdict { margin-top: var(--s7); border-top: 2px solid var(--text); padding-top: var(--s5); }
+.verdict h2 { font-size: 22px; font-weight: 500; letter-spacing: -0.02em; margin: 0 0 var(--s4); }
+table.cmp { width: 100%; border-collapse: collapse; border: 1px solid var(--line); background: var(--panel); }
+table.cmp th, table.cmp td { text-align: left; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13px; }
+table.cmp th { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.11em; color: var(--text-3); background: var(--panel-2); border-bottom-color: var(--line-2); }
+table.cmp tr:last-child td { border-bottom: 0; }
+table.cmp td:first-child { font-weight: 500; white-space: nowrap; }
+.rec { border-left: 3px solid var(--aqua); background: var(--aqua-wash); padding: var(--s4) var(--s5); margin-top: var(--s5); }
+.rec h3 { margin: 0 0 var(--s2); font-size: 16px; font-weight: 500; }
+.rec p { margin: 0 0 var(--s3); max-width: 84ch; color: var(--text-2); }
+.rec p b { color: var(--text); font-weight: 500; }
+.rec p:last-child { margin-bottom: 0; }
+.wrap-note { margin-top: var(--s5); font-size: 13px; color: var(--text-3); max-width: 84ch; }
+
+@media (max-width: 860px) {
+  .doc { padding: var(--s5) var(--s4) var(--s6); }
+  .attn-list { grid-template-columns: 1fr; }
+  .figs { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="doc">
+
+  <header class="doc-head">
+    <div>
+      <p class="eyebrow">Relay · <b>Leodis Compliance Management</b> · Desktop office</p>
+      <h1>Compliance home, four ways</h1>
+      <p>Four answers to one brief: an office screen for a business that keeps other people's buildings legal.
+        Same materials as the approved entry screens and the Developments drafts. What changes between them is
+        which question the page answers first — <em>what is due</em>, <em>where do we stand</em>, <em>which
+        building is exposed</em>, or <em>what is this asset</em>.</p>
+    </div>
+    <button class="themer" id="themer" type="button">Dark</button>
+  </header>
+
+  <dl class="brief">
+    <div>
+      <dt>Kept</dt>
+      <dd>The hub's charcoal, grey and off-white. Archivo and Plex Mono. Hairline rules, strict grid, no cards.</dd>
+    </div>
+    <div>
+      <dt>Accent roles — proposed</dt>
+      <dd><b>Aquamarine</b> marks the company, references and active state, the job brass does in Developments.
+        <b>Gold</b> stays on the one primary action per screen, as on the hub.</dd>
+    </div>
+    <div>
+      <dt>Status language</dt>
+      <dd>Four states everywhere: <b>in date</b>, <b>due</b> (inside 30 days), <b>overdue</b>, <b>no record</b>.
+        A glyph and a word carry each; colour only weights them.</dd>
+    </div>
+    <div>
+      <dt>Made up throughout</dt>
+      <dd>Clients, buildings, assets, dates, engineers and report types are all invented in a plausible Leeds
+        format. Nothing here is wired to the application.</dd>
+    </div>
+  </dl>
+
+  <dl class="ia">
+    <div><dt>Clients</dt><dd><b>Who we answer to</b>Portfolio owners and managing agents. 5 in the examples.</dd></div>
+    <div><dt>Buildings</dt><dd><b>Where the duty sits</b>Each has a responsible person and a set of statutory requirements. 14 in the examples.</dd></div>
+    <div><dt>Assets</dt><dd><b>What gets serviced</b>Fire alarm, emergency lighting, boilers, lifts, doors, water systems. 412 in the examples.</dd></div>
+    <div><dt>Details</dt><dd><b>The dates that matter</b>Last service, next due, warranty end, certificates, remedials, and the reports raised against it.</dd></div>
+  </dl>
+
+  <div class="pass">
+    <h5>How the brief was read</h5>
+    <ul>
+      <li>A compliance office runs on <b>dates against a regime</b>, not on visits. So the primary object on every screen is a due date with the requirement that sets it, and the status vocabulary is the same on all four.</li>
+      <li>The hierarchy you gave — Clients › Buildings › Assets › Details — is drawn literally in Concept 2 and used as the breadcrumb on every asset elsewhere. It is the navigation structure whichever home wins.</li>
+      <li><b>Warranties are tracked separately from service.</b> A boiler can be in date for its gas safety check while its warranty runs out next month; the two dates never share a column.</li>
+      <li>Reports are shown as <b>options against an asset</b> — service report, test certificate, remedial works report, condition survey, building compliance statement — with none of them claimed to exist yet.</li>
+    </ul>
+  </div>
+
+  <!-- ===================== CONCEPT 1 ===================== -->
+  <section class="concept" id="c1">
+    <div class="concept-head">
+      <span class="concept-num">Concept 1</span>
+      <h2>Due desk</h2>
+      <p>Time-first. The office's day is a list of things that fall due, so the page is that list, sorted by
+        date, with the overdue at the top and everything the manager can act on within reach. A permanent rail
+        carries the register — clients, buildings, assets — so the hierarchy is always one click away without
+        being the page.</p>
+    </div>
+
+    <div class="frame">
+      <div class="app">
+        <div class="topbar">
+          <div class="logo"><b>RELAY</b><span>LEODIS COMPLIANCE</span></div>
+          <div class="search"><span>Search assets, buildings, certificates</span><kbd>/</kbd></div>
+          <div class="topbar-right">
+            <span class="bell">Attention <b>3</b></span>
+            <span class="whoami">Cal Say · <em>Compliance manager</em></span>
+            <a class="switch" href="#c1">Companies</a>
+          </div>
+        </div>
+
+        <div class="shell">
+          <nav class="side">
+            <div class="side-grp">Office</div>
+            <a href="#c1" class="on">Overview <i>3</i></a>
+            <a href="#c1">Due this month <i>23</i></a>
+            <a href="#c1">Overdue <i class="warn">7</i></a>
+            <a href="#c1">Remedials <i class="warn">9</i></a>
+            <a href="#c1">Reports <i>312</i></a>
+            <div class="side-grp">Register</div>
+            <a href="#c1">Clients <i>5</i></a>
+            <a href="#c1">Buildings <i>14</i></a>
+            <a href="#c1">Assets <i>412</i></a>
+            <a href="#c1">Engineers <i>6</i></a>
+            <div class="side-grp">Administration</div>
+            <a href="#c1">Requirements &amp; intervals</a>
+            <a href="#c1">Roles &amp; access</a>
+          </nav>
+
+          <div class="main">
+            <div class="pagehead">
+              <div>
+                <h3>Overview</h3>
+                <p>Tuesday 8 September 2026 · 5 clients · 14 buildings · 412 tracked assets</p>
+              </div>
+              <div class="actions">
+                <button class="btn btn-q drop" type="button">Reports</button>
+                <button class="btn btn-q" type="button">Export due list</button>
+                <button class="btn" type="button">Book a service visit</button>
+              </div>
+            </div>
+
+            <div class="panel attn">
+              <div class="panel-head"><h4>Needs attention</h4><a class="more" href="#c1">All 3 →</a></div>
+              <div class="attn-list">
+                <div class="attn-item">
+                  <b>7 statutory items overdue</b>
+                  <span>Oldest is the legionella risk assessment at St Chad's Primary, 19 days past its two-year date. The school is the duty holder and has not been told.</span>
+                  <button class="btn btn-sm" type="button">Book the overdue</button>
+                </div>
+                <div class="attn-item">
+                  <b>3 fire doors failed at Aire Court</b>
+                  <span>Quarterly communal check on 04 Sept found three doors failing to self-close. Remedial raised, nobody owns it yet.</span>
+                  <button class="btn btn-q btn-sm" type="button">Assign remedial</button>
+                </div>
+                <div class="attn-item">
+                  <b>2 warranties end this month</b>
+                  <span>Wellington Place boiler 2 (12 Oct) and the Granary Wharf AOV actuator (already lapsed). A fault after the date is the client's cost.</span>
+                  <button class="btn btn-q btn-sm" type="button">Notify clients</button>
+                </div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 340px;gap:24px;align-items:start;">
+              <div style="display:flex;flex-direction:column;gap:12px;">
+                <div class="filters">
+                  <span class="chip on">Next 30 days · 30</span>
+                  <span class="chip warn">Overdue · 7</span>
+                  <span class="chip">Next 90 days · 61</span>
+                  <span class="chip drop">Client</span>
+                  <span class="chip drop">Building</span>
+                  <span class="chip drop">Requirement</span>
+                  <span class="spacer"></span>
+                  <span class="chip">Sort: due date</span>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-head"><h4>Falling due</h4><a class="more" href="#c1">Full due list →</a></div>
+                  <table class="reg">
+                    <thead>
+                      <tr><th>Asset</th><th>Building</th><th>Requirement</th><th>Last done</th><th>Due</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><span class="ref">SCA-SCP-WH-01</span><div class="rowsub">Domestic water system</div></td>
+                        <td><div class="rowtitle" style="font-size:13px;">St Chad's Primary</div><div class="rowsub"><span class="client">St Chad's Academy Trust</span></div></td>
+                        <td>Legionella risk assessment<div class="rowsub">ACoP L8 · 2-yearly</div></td>
+                        <td class="due">20 Aug 2024</td>
+                        <td class="due"><b class="late">20 Aug</b> · 19d late</td>
+                        <td><span class="tag tag-alert">Overdue</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">AVH-ARC-FA-01</span><div class="rowsub">Fire alarm panel · Advanced MxPro 5</div></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Aire Court, Hunslet</div><div class="rowsub"><span class="client">Aire Valley Housing</span></div></td>
+                        <td>Service visit<div class="rowsub">BS 5839-1 · 6-monthly</div></td>
+                        <td class="due">02 Mar 2026</td>
+                        <td class="due"><b class="late">02 Sep</b> · 6d late</td>
+                        <td><span class="tag tag-alert">Overdue</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">AVH-ARC-FD-07</span><div class="rowsub">Fire door · flat 7 entrance</div></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Aire Court, Hunslet</div><div class="rowsub"><span class="client">Aire Valley Housing</span></div></td>
+                        <td>Remedial — self-closer<div class="rowsub">Raised 04 Sept · unassigned</div></td>
+                        <td class="due">04 Sep 2026</td>
+                        <td class="due"><b class="soon">02 Oct</b> · 28d target</td>
+                        <td><span class="tag tag-caution">Remedial open</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">HPT-HRC-EL-01</span><div class="rowsub">Emergency lighting · 84 luminaires</div></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Headrow Chambers</div><div class="rowsub"><span class="client">Headrow Property Trust</span></div></td>
+                        <td>Annual duration test<div class="rowsub">BS 5266-1 · 3-hour</div></td>
+                        <td class="due">15 Sep 2025</td>
+                        <td class="due"><b class="soon">15 Sep</b> · 7d</td>
+                        <td><span class="tag tag-caution">Due</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">NBE-KR4-LF-01</span><div class="rowsub">Passenger lift · Kone MonoSpace</div></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Kirkstall Retail Park — Unit 4</div><div class="rowsub"><span class="client">Northbrook Estates</span></div></td>
+                        <td>Thorough examination<div class="rowsub">LOLER · 6-monthly</div></td>
+                        <td class="due">22 Mar 2026</td>
+                        <td class="due"><b class="soon">22 Sep</b> · 14d</td>
+                        <td><span class="tag tag-caution">Due</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">NBE-WP3-GB-02</span><div class="rowsub">Gas boiler 2 · Remeha Quinta Ace 115</div></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Wellington Place — Block 3</div><div class="rowsub"><span class="client">Northbrook Estates</span></div></td>
+                        <td>Gas safety inspection<div class="rowsub">CP17 · annual</div></td>
+                        <td class="due">30 Sep 2025</td>
+                        <td class="due"><b class="soon">30 Sep</b> · 22d</td>
+                        <td><span class="tag tag-caution">Due</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">MFL-HDP-EX-*</span><div class="rowsub">Extinguishers · 31 units</div></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Hunslet Depot</div><div class="rowsub"><span class="client">Marshall Facilities</span></div></td>
+                        <td>Annual service<div class="rowsub">BS 5306-3 · annual</div></td>
+                        <td class="due">04 Oct 2025</td>
+                        <td class="due"><b>04 Oct</b> · 26d</td>
+                        <td><span class="tag tag-caution">Due</span></td>
+                      </tr>
+                      <tr>
+                        <td><span class="ref">SCA-CGA-LP-01</span><div class="rowsub">Lightning protection</div></td>
+                        <td><div class="rowtitle" style="font-size:13px;">Cross Gates Academy</div><div class="rowsub"><span class="client">St Chad's Academy Trust</span></div></td>
+                        <td>Annual test<div class="rowsub">BS EN 62305 · annual</div></td>
+                        <td class="due fine">—</td>
+                        <td class="due fine">Not known</td>
+                        <td><span class="tag tag-quiet">No record</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="panel-foot">Showing 8 of 30 due inside 30 days, plus 7 overdue. “No record” means we hold the asset but no certificate or service date has been entered — it is not the same as overdue, and it is not the same as compliant.</div>
+                </div>
+              </div>
+
+              <div class="rail">
+                <div class="panel">
+                  <div class="panel-head"><h4>Warranties ending</h4><a class="more" href="#c1">All 6 →</a></div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p><span class="ref">NBE-GWO-AOV-01</span></p>
+                      <div class="rowsub">AOV actuator · Granary Wharf · <span style="color:var(--alert)">lapsed 31 Aug</span></div>
+                    </div>
+                    <span class="age">−8d</span>
+                  </div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p><span class="ref">NBE-WP3-GB-02</span></p>
+                      <div class="rowsub">Boiler 2 · Wellington Place · manufacturer 5-yr</div>
+                    </div>
+                    <span class="age">12 Oct</span>
+                  </div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p><span class="ref">AVH-ARC-FA-01</span></p>
+                      <div class="rowsub">Panel batteries · Aire Court · 12-month</div>
+                    </div>
+                    <span class="age">03 Nov</span>
+                  </div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p><span class="ref">HPT-PRH-AC-03</span></p>
+                      <div class="rowsub">VRF condenser · Park Row House · parts &amp; labour</div>
+                    </div>
+                    <span class="age">21 Nov</span>
+                  </div>
+                  <div class="panel-foot">Warranty is a cost question, not a legal one. It never changes an asset's compliance status.</div>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-head"><h4>Reports received</h4><a class="more" href="#c1">Register →</a></div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p><span class="ref">AVH-ARC-SVR-018</span></p>
+                      <div class="rowsub">Fire door quarterly check · R. Ashworth · <span style="color:var(--alert)">3 failed</span></div>
+                    </div>
+                    <span class="age">04 Sep</span>
+                  </div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p><span class="ref">HPT-PRH-CERT-011</span></p>
+                      <div class="rowsub">EICR · satisfactory · valid to Mar 2031</div>
+                    </div>
+                    <span class="age">03 Sep</span>
+                  </div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p><span class="ref">NBE-WP3-SVR-044</span></p>
+                      <div class="rowsub">Emergency lighting monthly · J. Whitaker · no faults</div>
+                    </div>
+                    <span class="age">01 Sep</span>
+                  </div>
+                </div>
+
+                <div class="panel">
+                  <div class="panel-head"><h4>On site now</h4></div>
+                  <div class="mini">
+                    <div class="mini-b">
+                      <p>D. Priestley</p>
+                      <div class="rowsub">Headrow Chambers · emergency lighting duration test</div>
+                    </div>
+                    <span class="age">since 08:10</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <section>
+        <h5>What it gets right</h5>
+        <ul>
+          <li><b>The list is the job.</b> A compliance manager opens the day asking what is due; this answers it with no navigation at all.</li>
+          <li>Overdue and due are visibly different things, and <b>“no record” is its own state</b>, so a blank never passes for compliant.</li>
+          <li>The attention band says who is exposed — the duty holder — not just what number is late.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>What it assumes</h5>
+        <ul>
+          <li>A <b>requirements table</b>: each asset category mapped to its standard and interval, so due dates compute from the last service.</li>
+          <li><b>Warranty end</b> stored per asset, separate from the service record.</li>
+          <li>A remedial entity linked to the report that raised it.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Trade-off</h5>
+        <ul>
+          <li>Flat. Two overdue items in the same building appear as two rows, and the office has to notice they are one visit.</li>
+          <li>A client asking “how are we doing?” gets no answer here; that lives in the register.</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== CONCEPT 2 ===================== -->
+  <section class="concept" id="c2">
+    <div class="concept-head">
+      <span class="concept-num">Concept 2</span>
+      <h2>Portfolio browser</h2>
+      <p>The hierarchy, drawn literally. Four columns, left to right: clients, the buildings of the selected
+        client, the assets in the selected building, and the selected asset's details. Every column shows its
+        compliance position, so a manager can see which client is exposed, then which building, then which
+        asset, without the page ever changing. It is a file browser for a portfolio.</p>
+    </div>
+
+    <div class="frame">
+      <div class="app app-wide">
+        <div class="topbar">
+          <div class="logo"><b>RELAY</b><span>LEODIS COMPLIANCE</span></div>
+          <div class="search"><span>Search 412 assets across 14 buildings</span><kbd>/</kbd></div>
+          <div class="topbar-right">
+            <span class="bell">Attention <b>3</b></span>
+            <span class="whoami">Cal Say · <em>Compliance manager</em></span>
+            <a class="switch" href="#c2">Companies</a>
+          </div>
+        </div>
+        <nav class="hnav">
+          <a href="#c2" class="on">Portfolio <i>5</i></a>
+          <a href="#c2">Due <i>30</i></a>
+          <a href="#c2">Overdue <i class="warn">7</i></a>
+          <a href="#c2">Remedials <i class="warn">9</i></a>
+          <a href="#c2">Reports <i>312</i></a>
+          <a href="#c2">Engineers</a>
+          <a href="#c2">Admin</a>
+        </nav>
+
+        <div class="cols">
+          <!-- Column 1: clients -->
+          <div class="col">
+            <div class="col-head"><h4>Clients</h4><i>5</i></div>
+            <a href="#c2" class="item">
+              <div class="item-top"><div class="rowtitle">Northbrook Estates</div><span class="arrow">›</span></div>
+              <div class="cbar"><i class="ok" style="width:78%"></i><i class="soon" style="width:14%"></i><i class="late" style="width:2%"></i><i class="none" style="width:6%"></i></div>
+              <div class="meta"><span>3 buildings</span><span>146 assets</span><span class="late">1 overdue</span></div>
+            </a>
+            <a href="#c2" class="item on">
+              <div class="item-top"><div class="rowtitle">Aire Valley Housing</div><span class="arrow">›</span></div>
+              <div class="cbar"><i class="ok" style="width:71%"></i><i class="soon" style="width:11%"></i><i class="late" style="width:7%"></i><i class="none" style="width:11%"></i></div>
+              <div class="meta"><span>2 buildings</span><span>98 assets</span><span class="late">4 overdue</span></div>
+            </a>
+            <a href="#c2" class="item">
+              <div class="item-top"><div class="rowtitle">Headrow Property Trust</div><span class="arrow">›</span></div>
+              <div class="cbar"><i class="ok" style="width:86%"></i><i class="soon" style="width:12%"></i><i class="late" style="width:0"></i><i class="none" style="width:2%"></i></div>
+              <div class="meta"><span>2 buildings</span><span>77 assets</span><span class="soon">4 due</span></div>
+            </a>
+            <a href="#c2" class="item">
+              <div class="item-top"><div class="rowtitle">St Chad's Academy Trust</div><span class="arrow">›</span></div>
+              <div class="cbar"><i class="ok" style="width:62%"></i><i class="soon" style="width:9%"></i><i class="late" style="width:4%"></i><i class="none" style="width:25%"></i></div>
+              <div class="meta"><span>2 buildings</span><span>54 assets</span><span class="late">2 overdue</span></div>
+            </a>
+            <a href="#c2" class="item">
+              <div class="item-top"><div class="rowtitle">Marshall Facilities</div><span class="arrow">›</span></div>
+              <div class="cbar"><i class="ok" style="width:90%"></i><i class="soon" style="width:10%"></i><i class="late" style="width:0"></i><i class="none" style="width:0"></i></div>
+              <div class="meta"><span>1 building</span><span>37 assets</span><span>all in date</span></div>
+            </a>
+            <div style="padding:12px 16px;margin-top:auto;border-top:1px solid var(--line);">
+              <div class="cbar-key"><span class="k-ok">in date</span><span class="k-soon">due</span><span class="k-late">overdue</span><span class="k-none">no record</span></div>
+            </div>
+          </div>
+
+          <!-- Column 2: buildings -->
+          <div class="col">
+            <div class="col-head"><h4>Buildings · Aire Valley Housing</h4><i>2</i></div>
+            <a href="#c2" class="item on">
+              <div class="item-top"><div class="rowtitle">Aire Court, Hunslet</div><span class="arrow">›</span></div>
+              <div class="rowsub">36 flats · communal areas · responsible person: M. Okafor</div>
+              <div class="cbar"><i class="ok" style="width:66%"></i><i class="soon" style="width:10%"></i><i class="late" style="width:9%"></i><i class="none" style="width:15%"></i></div>
+              <div class="meta"><span>61 assets</span><span class="late">4 overdue</span><span class="soon">3 due</span><span>9 no record</span></div>
+            </a>
+            <a href="#c2" class="item">
+              <div class="item-top"><div class="rowtitle">Bramley Fall House</div><span class="arrow">›</span></div>
+              <div class="rowsub">Sheltered housing · 24 units · responsible person: L. Grant</div>
+              <div class="cbar"><i class="ok" style="width:81%"></i><i class="soon" style="width:14%"></i><i class="late" style="width:0"></i><i class="none" style="width:5%"></i></div>
+              <div class="meta"><span>37 assets</span><span class="soon">5 due</span><span>2 no record</span></div>
+            </a>
+            <div style="padding:12px 16px;border-bottom:1px solid var(--line);font-size:12px;color:var(--text-3);">
+              Client-level actions
+            </div>
+            <div style="padding:12px 16px;display:flex;flex-direction:column;gap:8px;">
+              <button class="btn btn-q btn-sm" type="button" style="text-align:left;">Portfolio compliance statement</button>
+              <button class="btn btn-q btn-sm" type="button" style="text-align:left;">Asset register export</button>
+            </div>
+          </div>
+
+          <!-- Column 3: assets -->
+          <div class="col">
+            <div class="col-head"><h4>Assets · Aire Court</h4><i>61</i></div>
+            <div class="filters" style="border:0;border-bottom:1px solid var(--line);padding:8px 16px;">
+              <span class="chip on">Needs action · 7</span>
+              <span class="chip">All · 61</span>
+              <span class="chip drop">Category</span>
+            </div>
+            <div class="grp">Fire detection <i>2</i></div>
+            <a href="#c2" class="arow on"><span class="ref">AVH-ARC-FA-01</span><span class="nm">Fire alarm panel</span><span class="tag tag-alert">Overdue</span></a>
+            <a href="#c2" class="arow"><span class="ref">AVH-ARC-FA-02</span><span class="nm">Repeater panel · lobby</span><span class="tag tag-alert">Overdue</span></a>
+            <div class="grp">Fire doors <i>39</i></div>
+            <a href="#c2" class="arow"><span class="ref">AVH-ARC-FD-07</span><span class="nm">Flat 7 entrance</span><span class="tag tag-caution">Remedial</span></a>
+            <a href="#c2" class="arow"><span class="ref">AVH-ARC-FD-19</span><span class="nm">Flat 19 entrance</span><span class="tag tag-caution">Remedial</span></a>
+            <a href="#c2" class="arow"><span class="ref">AVH-ARC-FD-31</span><span class="nm">Flat 31 entrance</span><span class="tag tag-caution">Remedial</span></a>
+            <div class="grp">Emergency lighting <i>1</i></div>
+            <a href="#c2" class="arow"><span class="ref">AVH-ARC-EL-01</span><span class="nm">Communal · 42 luminaires</span><span class="tag tag-ok">In date</span></a>
+            <div class="grp">Water hygiene <i>1</i></div>
+            <a href="#c2" class="arow"><span class="ref">AVH-ARC-WH-01</span><span class="nm">Cold water storage · roof tank</span><span class="tag tag-alert">Overdue</span></a>
+            <div class="grp">Smoke control <i>2</i></div>
+            <a href="#c2" class="arow"><span class="ref">AVH-ARC-AOV-01</span><span class="nm">AOV · stair 1 head</span><span class="tag tag-quiet">No record</span></a>
+            <a href="#c2" class="arow"><span class="ref">AVH-ARC-AOV-02</span><span class="nm">AOV · stair 2 head</span><span class="tag tag-quiet">No record</span></a>
+            <div class="panel-foot" style="border:0;border-top:1px solid var(--line);margin-top:auto;">Filtered to 7 that need action; 54 in date are hidden.</div>
+          </div>
+
+          <!-- Column 4: details -->
+          <div class="col">
+            <div class="col-head"><h4>Details</h4><i>AVH-ARC-FA-01</i></div>
+            <div style="padding:16px;display:flex;flex-direction:column;gap:16px;">
+              <div class="sheet" style="padding:16px;">
+                <div class="sheet-title" style="padding-bottom:12px;">
+                  <div>
+                    <div class="crumbs"><b>Aire Valley Housing</b><span>›</span><b>Aire Court</b><span>›</span>Fire detection</div>
+                    <h4 style="margin-top:6px;">Fire alarm panel</h4>
+                    <div class="rowsub"><span class="ref">AVH-ARC-FA-01</span><span class="sep">/</span>Advanced MxPro 5 · 4 loop<span class="sep">/</span>Ground floor plant cupboard</div>
+                  </div>
+                  <div class="actions">
+                    <button class="btn btn-q btn-sm drop" type="button">Report</button>
+                    <button class="btn btn-sm" type="button">Book service</button>
+                  </div>
+                </div>
+
+                <dl class="dueblock">
+                  <div><dt>Requirement</dt><dd style="font-family:var(--sans);font-size:13px;">Service visit<small>BS 5839-1 · 6-monthly</small></dd></div>
+                  <div><dt>Last service</dt><dd>02 Mar 2026<small>R. Ashworth · <span class="ref" style="font-size:11px;">SVR-014</span></small></dd></div>
+                  <div><dt>Next due</dt><dd class="late">02 Sep 2026<small>6 days overdue</small></dd></div>
+                </dl>
+
+                <dl class="tb two" style="margin-top:12px;">
+                  <div><dt>Panel warranty</dt><dd>Advanced 5-yr · to <span class="num">14 Mar 2028</span></dd></div>
+                  <div><dt>Batteries</dt><dd>12-month · to <span class="num">03 Nov 2026</span></dd></div>
+                  <div><dt>Installed</dt><dd class="num">14 Mar 2023 · Leodis M&amp;E</dd></div>
+                  <div><dt>Serial</dt><dd class="num">MX5-0417-2231</dd></div>
+                </dl>
+
+                <div class="sec-h">Service history <a href="#c2">All 7 →</a></div>
+                <div class="hist"><span class="d">02 Mar 2026</span><div class="b"><p>6-monthly service · <span class="ref" style="font-size:11px;">AVH-ARC-SVR-014</span></p><div class="rowsub">R. Ashworth · 2 detectors replaced · batteries tested OK</div></div><span class="tag tag-ok">Pass</span></div>
+                <div class="hist"><span class="d">01 Sep 2025</span><div class="b"><p>6-monthly service · <span class="ref" style="font-size:11px;">AVH-ARC-SVR-009</span></p><div class="rowsub">R. Ashworth · no faults</div></div><span class="tag tag-ok">Pass</span></div>
+                <div class="hist"><span class="d">03 Mar 2025</span><div class="b"><p>6-monthly service · <span class="ref" style="font-size:11px;">AVH-ARC-SVR-004</span></p><div class="rowsub">D. Priestley · sounder fault L2 · remedial closed 11 Mar</div></div><span class="tag tag-caution">Fault</span></div>
+
+                <div class="sec-h">Documents</div>
+                <div class="rmenu">
+                  <a href="#c2"><span class="ref">CERT-2023-031</span><div class="rt"><b>Commissioning certificate</b><span>BS 5839-1 · 14 Mar 2023 · PDF</span></div></a>
+                  <a href="#c2"><span class="ref">AVH-ARC-SVR-014</span><div class="rt"><b>Latest service report</b><span>02 Mar 2026 · sent to M. Okafor</span></div></a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <section>
+        <h5>What it gets right</h5>
+        <ul>
+          <li><b>It is the hierarchy.</b> Clients › Buildings › Assets › Details is the screen, not a breadcrumb. Nobody has to learn the structure.</li>
+          <li>The compliance bar answers “how are we doing?” at every level in the same shape, so a client conversation and a building visit read the same way.</li>
+          <li>Selecting an asset never leaves the page; the details column is the asset page.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>What it assumes</h5>
+        <ul>
+          <li><b>Roll-ups</b> at client and building level: counts of in date, due, overdue, no record.</li>
+          <li>A stable asset categorisation, since the third column groups by it.</li>
+          <li>Selection state across four columns, which is a proper piece of front-end work.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Trade-off</h5>
+        <ul>
+          <li>“What is due this week across everyone?” is not on this screen — it is behind the Due tab.</li>
+          <li>Needs width. Below about 1300px the fourth column has to become a drawer.</li>
+          <li>A client with 40 buildings turns column two into a scroll.</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== CONCEPT 3 ===================== -->
+  <section class="concept" id="c3">
+    <div class="concept-head">
+      <span class="concept-num">Concept 3</span>
+      <h2>Compliance matrix</h2>
+      <p>Buildings down, statutory requirements across, one cell per pair. This is the sheet a compliance
+        manager keeps in Excel today and the one a client asks to see in a review meeting. Every cell is a
+        status and a date; select one and the assets behind it appear below. The week strip under the matrix
+        shows how the next two months load up.</p>
+    </div>
+
+    <div class="frame">
+      <div class="app app-wide">
+        <div class="topbar">
+          <div class="logo"><b>RELAY</b><span>LEODIS COMPLIANCE</span></div>
+          <div class="search"><span>Search buildings, assets, certificates</span><kbd>/</kbd></div>
+          <div class="topbar-right">
+            <span class="bell">Attention <b>3</b></span>
+            <span class="whoami">Cal Say · <em>Compliance manager</em></span>
+            <a class="switch" href="#c3">Companies</a>
+          </div>
+        </div>
+        <nav class="hnav">
+          <a href="#c3" class="on">Matrix</a>
+          <a href="#c3">Due <i>30</i></a>
+          <a href="#c3">Overdue <i class="warn">7</i></a>
+          <a href="#c3">Remedials <i class="warn">9</i></a>
+          <a href="#c3">Clients <i>5</i></a>
+          <a href="#c3">Assets <i>412</i></a>
+          <a href="#c3">Reports <i>312</i></a>
+          <a href="#c3">Admin</a>
+        </nav>
+
+        <div class="main">
+          <div class="pagehead">
+            <div>
+              <h3>Portfolio position</h3>
+              <p>Tuesday 8 September 2026 · 14 buildings against 10 requirement groups</p>
+            </div>
+            <div class="actions">
+              <span class="chip drop">All clients</span>
+              <span class="chip drop">Show: status</span>
+              <button class="btn btn-q" type="button">Export matrix</button>
+              <button class="btn" type="button">Compliance statement</button>
+            </div>
+          </div>
+
+          <dl class="figs">
+            <div><dt>Compliant</dt><dd>84<small>% of tracked requirements</small></dd></div>
+            <div><dt>Overdue</dt><dd class="warn">7<small>across 4 buildings</small></dd></div>
+            <div><dt>Due in 30 days</dt><dd class="soon">30<small>12 need a visit booking</small></dd></div>
+            <div><dt>No record</dt><dd>21<small>5.1% · mostly St Chad's</small></dd></div>
+            <div><dt>Open remedials</dt><dd class="warn">9<small>3 unassigned</small></dd></div>
+          </dl>
+
+          <div class="panel" style="overflow-x:auto;">
+            <table class="mx">
+              <thead>
+                <tr>
+                  <th class="rowhd">Building</th>
+                  <th>Fire<br>alarm</th>
+                  <th>Emergency<br>lighting</th>
+                  <th>Extin-<br>guishers</th>
+                  <th>Fire<br>doors</th>
+                  <th>Gas<br>safety</th>
+                  <th>Electrical<br>EICR</th>
+                  <th>Water<br>hygiene</th>
+                  <th>Lifts<br>LOLER</th>
+                  <th>Smoke<br>control</th>
+                  <th>Lightning<br>protection</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="cg"><td colspan="11">Northbrook Estates · 3 buildings</td></tr>
+                <tr>
+                  <td class="rowhd"><div class="rowtitle">Wellington Place — Block 3</div><div class="rowsub">Offices · 6 floors</div></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 11 Jan</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 01 Oct</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 18 Feb</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 20 Nov</b></a></td>
+                  <td><a class="cell c-soon" href="#c3">Due<b>30 Sep · 22d</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to Jun 2029</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 14 Dec</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 02 Feb</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 09 Mar</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 27 Apr</b></a></td>
+                </tr>
+                <tr>
+                  <td class="rowhd"><div class="rowtitle">Kirkstall Retail Park — Unit 4</div><div class="rowsub">Retail · plant room</div></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 05 Dec</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 05 Dec</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 19 Jan</b></a></td>
+                  <td><a class="cell c-na" href="#c3"></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 08 Jul</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to Feb 2028</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 30 Oct</b></a></td>
+                  <td><a class="cell c-soon" href="#c3">Due<b>22 Sep · 14d</b></a></td>
+                  <td><a class="cell c-na" href="#c3"></a></td>
+                  <td><a class="cell c-na" href="#c3"></a></td>
+                </tr>
+                <tr>
+                  <td class="rowhd"><div class="rowtitle">Granary Wharf Offices</div><div class="rowsub">Offices · 4 floors</div></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 16 Dec</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 16 Dec</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 03 Mar</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 08 Nov</b></a></td>
+                  <td><a class="cell c-na" href="#c3"></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to Oct 2027</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 21 Nov</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 14 Jan</b></a></td>
+                  <td><a class="cell c-late" href="#c3">Overdue<b>11 Aug · 28d</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 02 Jun</b></a></td>
+                </tr>
+                <tr class="cg"><td colspan="11">Aire Valley Housing · 2 buildings</td></tr>
+                <tr>
+                  <td class="rowhd"><div class="rowtitle">Aire Court, Hunslet</div><div class="rowsub">Residential · 36 flats</div></td>
+                  <td><a class="cell c-late sel" href="#c3">Overdue<b>02 Sep · 6d</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 28 Oct</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 12 Feb</b></a></td>
+                  <td><a class="cell c-soon" href="#c3">3 remedial<b>target 02 Oct</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 04 Apr</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to Sep 2029</b></a></td>
+                  <td><a class="cell c-late" href="#c3">Overdue<b>15 Aug · 24d</b></a></td>
+                  <td><a class="cell c-na" href="#c3"></a></td>
+                  <td><a class="cell c-none" href="#c3">No record<b>2 assets</b></a></td>
+                  <td><a class="cell c-na" href="#c3"></a></td>
+                </tr>
+                <tr>
+                  <td class="rowhd"><div class="rowtitle">Bramley Fall House</div><div class="rowsub">Sheltered housing · 24 units</div></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 19 Nov</b></a></td>
+                  <td><a class="cell c-soon" href="#c3">Due<b>03 Oct · 25d</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 07 Jan</b></a></td>
+                  <td><a class="cell c-soon" href="#c3">Due<b>06 Oct · 28d</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 22 May</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to Jan 2030</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 30 Nov</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 17 Dec</b></a></td>
+                  <td><a class="cell c-none" href="#c3">No record<b>1 asset</b></a></td>
+                  <td><a class="cell c-na" href="#c3"></a></td>
+                </tr>
+                <tr class="cg"><td colspan="11">St Chad's Academy Trust · 2 buildings</td></tr>
+                <tr>
+                  <td class="rowhd"><div class="rowtitle">St Chad's Primary</div><div class="rowsub">School · 2 blocks</div></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 24 Oct</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 24 Oct</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 09 Dec</b></a></td>
+                  <td><a class="cell c-none" href="#c3">No record<b>14 doors</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 13 Aug</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to Mar 2027</b></a></td>
+                  <td><a class="cell c-late" href="#c3">Overdue<b>20 Aug · 19d</b></a></td>
+                  <td><a class="cell c-na" href="#c3"></a></td>
+                  <td><a class="cell c-na" href="#c3"></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 15 May</b></a></td>
+                </tr>
+                <tr>
+                  <td class="rowhd"><div class="rowtitle">Cross Gates Academy</div><div class="rowsub">School · sports hall</div></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 02 Nov</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 02 Nov</b></a></td>
+                  <td><a class="cell c-soon" href="#c3">Due<b>27 Sep · 19d</b></a></td>
+                  <td><a class="cell c-none" href="#c3">No record<b>22 doors</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 30 Jun</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to Nov 2028</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 05 Jan</b></a></td>
+                  <td><a class="cell c-ok" href="#c3">In date<b>to 11 Mar</b></a></td>
+                  <td><a class="cell c-na" href="#c3"></a></td>
+                  <td><a class="cell c-none" href="#c3">No record<b>1 asset</b></a></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="panel-foot" style="display:flex;justify-content:space-between;gap:16px;">
+              <span>Showing 7 of 14 buildings — Headrow Property Trust and Marshall Facilities below the fold. A dash means the requirement does not apply to that building.</span>
+              <span class="cbar-key"><span class="k-ok">in date</span><span class="k-soon">due / remedial</span><span class="k-late">overdue</span><span class="k-none">no record</span></span>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;">
+            <div class="panel">
+              <div class="panel-head"><h4>Selected · Aire Court · Fire alarm</h4><a class="more" href="#c3">Open building →</a></div>
+              <table class="reg tight">
+                <thead><tr><th>Asset</th><th>Requirement</th><th>Due</th><th>Status</th><th></th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><span class="ref">AVH-ARC-FA-01</span><div class="rowsub">Fire alarm panel · MxPro 5</div></td>
+                    <td>Service · 6-monthly</td>
+                    <td class="due"><b class="late">02 Sep</b> · 6d</td>
+                    <td><span class="tag tag-alert">Overdue</span></td>
+                    <td><button class="btn btn-sm" type="button">Book</button></td>
+                  </tr>
+                  <tr>
+                    <td><span class="ref">AVH-ARC-FA-02</span><div class="rowsub">Repeater panel · lobby</div></td>
+                    <td>Service · 6-monthly</td>
+                    <td class="due"><b class="late">02 Sep</b> · 6d</td>
+                    <td><span class="tag tag-alert">Overdue</span></td>
+                    <td><button class="btn btn-q btn-sm" type="button">Same visit</button></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="panel-foot">Both fall to one visit. Booking the first offers to include the second.</div>
+            </div>
+
+            <div>
+              <div class="panel-head" style="border:1px solid var(--line);border-bottom:0;">
+                <h4>Load — next eight weeks</h4>
+                <a class="more" href="#c3">Plan visits →</a>
+              </div>
+              <div class="weeks">
+                <div class="hd">Requirement</div>
+                <div class="hd">w/c 07 Sep</div><div class="hd">14 Sep</div><div class="hd">21 Sep</div><div class="hd">28 Sep</div><div class="hd">05 Oct</div><div class="hd">12 Oct</div><div class="hd">19 Oct</div><div class="hd">26 Oct</div>
+                <div class="lbl">Overdue carried</div>
+                <div><span class="n hot">7</span></div><div><span class="n zero">·</span></div><div><span class="n zero">·</span></div><div><span class="n zero">·</span></div><div><span class="n zero">·</span></div><div><span class="n zero">·</span></div><div><span class="n zero">·</span></div><div><span class="n zero">·</span></div>
+                <div class="lbl">Fire &amp; life safety</div>
+                <div><span class="n warm">2</span></div><div><span class="n warm">3</span></div><div><span class="n">1</span></div><div><span class="n warm">4</span></div><div><span class="n">2</span></div><div><span class="n">1</span></div><div><span class="n">2</span></div><div><span class="n warm">5</span></div>
+                <div class="lbl">Gas &amp; electrical</div>
+                <div><span class="n zero">·</span></div><div><span class="n">1</span></div><div><span class="n zero">·</span></div><div><span class="n warm">3</span></div><div><span class="n">1</span></div><div><span class="n zero">·</span></div><div><span class="n">1</span></div><div><span class="n zero">·</span></div>
+                <div class="lbl">Water &amp; plant</div>
+                <div><span class="n">1</span></div><div><span class="n">2</span></div><div><span class="n">2</span></div><div><span class="n">1</span></div><div><span class="n">1</span></div><div><span class="n warm">3</span></div><div><span class="n zero">·</span></div><div><span class="n">1</span></div>
+              </div>
+              <div class="panel-foot" style="border:1px solid var(--line);border-top:0;">Count of requirements falling due, not visits: two panels in one plant room are one visit. The last week of September is the one to staff for.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <section>
+        <h5>What it gets right</h5>
+        <ul>
+          <li><b>One glance for the whole portfolio.</b> The exposed cells find your eye; everything green stays quiet.</li>
+          <li>It is the document the client already understands — this replaces a spreadsheet they have seen a hundred times.</li>
+          <li>The week strip turns compliance into a staffing question, which is what the office actually has to solve.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>What it assumes</h5>
+        <ul>
+          <li>A fixed <b>requirement taxonomy</b> as columns — the ten here are a guess at Leodis's actual scope.</li>
+          <li>Per-cell roll-up when several assets sit behind one requirement (39 fire doors in one cell).</li>
+          <li>An “applies / does not apply” flag per building and requirement.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Trade-off</h5>
+        <ul>
+          <li>Wide. Ten columns is the limit before it scrolls; a wider scope means grouping columns.</li>
+          <li>A cell hides its detail; two overdue assets and one look identical until selected.</li>
+          <li>Looks like a scorecard, and clients may read it as one. The wording has to stay factual.</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== CONCEPT 4 ===================== -->
+  <section class="concept" id="c4">
+    <div class="concept-head">
+      <span class="concept-num">Concept 4</span>
+      <h2>Asset ledger and reader</h2>
+      <p>Asset-first. A dense register of every tracked asset on the left, the selected asset's full record on
+        the right: identity, requirement and dates, warranty, service history, documents, remedials, and the
+        reports that can be raised against it. This is the screen where the office does the actual work of
+        keeping records straight, and where the report options you mentioned would live.</p>
+    </div>
+
+    <div class="frame">
+      <div class="app app-wide">
+        <div class="topbar">
+          <div class="logo"><b>RELAY</b><span>LEODIS COMPLIANCE</span></div>
+          <div class="search"><span>Search by tag, serial, make or location</span><kbd>/</kbd></div>
+          <div class="topbar-right">
+            <span class="bell">Attention <b>3</b></span>
+            <span class="whoami">Cal Say · <em>Compliance manager</em></span>
+            <a class="switch" href="#c4">Companies</a>
+          </div>
+        </div>
+        <nav class="hnav">
+          <a href="#c4" class="on">Assets <i>412</i></a>
+          <a href="#c4">Due <i>30</i></a>
+          <a href="#c4">Overdue <i class="warn">7</i></a>
+          <a href="#c4">Remedials <i class="warn">9</i></a>
+          <a href="#c4">Clients <i>5</i></a>
+          <a href="#c4">Buildings <i>14</i></a>
+          <a href="#c4">Reports <i>312</i></a>
+          <a href="#c4">Admin</a>
+        </nav>
+
+        <div class="split">
+          <div class="split-list">
+            <div class="filters" style="border:0;border-bottom:1px solid var(--line);">
+              <span class="chip on">Needs action · 37</span>
+              <span class="chip warn">Overdue · 7</span>
+              <span class="chip">Warranty ending · 6</span>
+              <span class="chip drop">Client</span>
+              <span class="chip drop">Category</span>
+            </div>
+
+            <a href="#c4" class="li">
+              <div class="li-top"><span class="ref">SCA-SCP-WH-01</span><span class="due"><b class="late">19d late</b></span></div>
+              <div class="rowtitle">Domestic water system — legionella RA</div>
+              <div class="rowsub">St Chad's Primary<span class="sep">/</span>St Chad's Academy Trust</div>
+              <div class="tags"><span class="tag tag-alert">Overdue</span></div>
+            </a>
+            <a href="#c4" class="li on">
+              <div class="li-top"><span class="ref">NBE-WP3-GB-02</span><span class="due"><b class="soon">22d</b></span></div>
+              <div class="rowtitle">Gas boiler 2 — Remeha Quinta Ace 115</div>
+              <div class="rowsub">Wellington Place — Block 3<span class="sep">/</span>Northbrook Estates</div>
+              <div class="tags"><span class="tag tag-caution">Due</span><span class="tag tag-quiet">Warranty 12 Oct</span></div>
+            </a>
+            <a href="#c4" class="li">
+              <div class="li-top"><span class="ref">AVH-ARC-FA-01</span><span class="due"><b class="late">6d late</b></span></div>
+              <div class="rowtitle">Fire alarm panel — Advanced MxPro 5</div>
+              <div class="rowsub">Aire Court, Hunslet<span class="sep">/</span>Aire Valley Housing</div>
+              <div class="tags"><span class="tag tag-alert">Overdue</span></div>
+            </a>
+            <a href="#c4" class="li">
+              <div class="li-top"><span class="ref">AVH-ARC-FD-07</span><span class="due"><b class="soon">28d target</b></span></div>
+              <div class="rowtitle">Fire door — flat 7 entrance</div>
+              <div class="rowsub">Aire Court, Hunslet<span class="sep">/</span>Aire Valley Housing</div>
+              <div class="tags"><span class="tag tag-caution">Remedial open</span><span class="tag tag-quiet">Unassigned</span></div>
+            </a>
+            <a href="#c4" class="li">
+              <div class="li-top"><span class="ref">NBE-GWO-AOV-01</span><span class="due"><b class="late">28d late</b></span></div>
+              <div class="rowtitle">AOV — stair head, Granary Wharf</div>
+              <div class="rowsub">Granary Wharf Offices<span class="sep">/</span>Northbrook Estates</div>
+              <div class="tags"><span class="tag tag-alert">Overdue</span><span class="tag tag-quiet">Warranty lapsed</span></div>
+            </a>
+            <a href="#c4" class="li">
+              <div class="li-top"><span class="ref">HPT-HRC-EL-01</span><span class="due"><b class="soon">7d</b></span></div>
+              <div class="rowtitle">Emergency lighting — 84 luminaires</div>
+              <div class="rowsub">Headrow Chambers<span class="sep">/</span>Headrow Property Trust</div>
+              <div class="tags"><span class="tag tag-caution">Due</span><span class="tag tag-aqua">On site today</span></div>
+            </a>
+            <a href="#c4" class="li">
+              <div class="li-top"><span class="ref">NBE-KR4-LF-01</span><span class="due"><b class="soon">14d</b></span></div>
+              <div class="rowtitle">Passenger lift — Kone MonoSpace</div>
+              <div class="rowsub">Kirkstall Retail Park — Unit 4<span class="sep">/</span>Northbrook Estates</div>
+              <div class="tags"><span class="tag tag-caution">Due</span></div>
+            </a>
+            <a href="#c4" class="li">
+              <div class="li-top"><span class="ref">SCA-CGA-LP-01</span><span class="due fine">—</span></div>
+              <div class="rowtitle">Lightning protection system</div>
+              <div class="rowsub">Cross Gates Academy<span class="sep">/</span>St Chad's Academy Trust</div>
+              <div class="tags"><span class="tag tag-quiet">No record</span></div>
+            </a>
+            <div class="panel-foot" style="border:0;border-top:1px solid var(--line);">Showing 8 of 37. Sorted by urgency: overdue by age, then due by date, then no record.</div>
+          </div>
+
+          <div class="reader">
+            <div class="sheet">
+              <div class="sheet-title">
+                <div>
+                  <div class="crumbs"><b>Northbrook Estates</b><span>›</span><b>Wellington Place — Block 3</b><span>›</span>Heating plant</div>
+                  <h4 style="margin-top:6px;">Gas boiler 2</h4>
+                  <div class="rowsub"><span class="ref">NBE-WP3-GB-02</span><span class="sep">/</span>Remeha Quinta Ace 115<span class="sep">/</span>Roof plant room, position 2 of 3</div>
+                </div>
+                <div class="actions">
+                  <button class="btn btn-q" type="button">Edit asset</button>
+                  <button class="btn btn-q drop" type="button">Report</button>
+                  <button class="btn" type="button">Book gas safety</button>
+                </div>
+              </div>
+
+              <dl class="dueblock">
+                <div><dt>Requirement</dt><dd style="font-family:var(--sans);font-size:13px;">Gas safety inspection<small>Gas Safety (Installation and Use) Regs · CP17 · annual</small></dd></div>
+                <div><dt>Last inspection</dt><dd>30 Sep 2025<small>J. Whitaker · <span class="ref" style="font-size:11px;">NBE-WP3-CERT-019</span> · satisfactory</small></dd></div>
+                <div><dt>Next due</dt><dd class="soon">30 Sep 2026<small>22 days · not yet booked</small></dd></div>
+              </dl>
+
+              <dl class="tb" style="margin-top:12px;">
+                <div><dt>Manufacturer warranty</dt><dd>5-year · ends <span class="num" style="color:var(--caution)">12 Oct 2026</span></dd></div>
+                <div><dt>Installed</dt><dd class="num">12 Oct 2021 · Leodis M&amp;E</dd></div>
+                <div><dt>Serial</dt><dd class="num">RQA115-21-08832</dd></div>
+                <div><dt>Gas Safe engineer</dt><dd>J. Whitaker · <span class="num">5467213</span></dd></div>
+              </dl>
+
+              <div style="margin-top:12px;padding:10px 12px;border:1px solid var(--caution);border-left-width:3px;background:var(--caution-wash);font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:12px;">
+                <span><b style="color:var(--caution);">Warranty ends 34 days after the next inspection.</b> If the service finds a fault, repair inside warranty saves Northbrook the parts cost. Worth bringing the inspection forward.</span>
+                <button class="btn btn-q btn-sm" type="button" style="white-space:nowrap;">Bring forward</button>
+              </div>
+
+              <div class="sec-h">Service history <a href="#c4">All 5 →</a></div>
+              <div class="hist"><span class="d">30 Sep 2025</span><div class="b"><p>Annual gas safety · <span class="ref" style="font-size:11px;">NBE-WP3-CERT-019</span></p><div class="rowsub">J. Whitaker · combustion within limits · flue integrity OK · sent to S. Ledgard</div></div><span class="tag tag-ok">Satisfactory</span></div>
+              <div class="hist"><span class="d">14 Feb 2025</span><div class="b"><p>Reactive — lockout fault · <span class="ref" style="font-size:11px;">NBE-WP3-SVR-027</span></p><div class="rowsub">J. Whitaker · gas valve replaced under warranty · remedial closed same day</div></div><span class="tag tag-caution">Fault</span></div>
+              <div class="hist"><span class="d">28 Sep 2024</span><div class="b"><p>Annual gas safety · <span class="ref" style="font-size:11px;">NBE-WP3-CERT-012</span></p><div class="rowsub">D. Priestley · satisfactory</div></div><span class="tag tag-ok">Satisfactory</span></div>
+
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
+                <div>
+                  <div class="sec-h">Reports against this asset</div>
+                  <div class="rmenu">
+                    <a href="#c4"><div class="rt"><b>Service report</b><span>What was done on a visit, with photos and readings</span></div><span class="tag tag-aqua">Available</span></a>
+                    <a href="#c4"><div class="rt"><b>Gas safety certificate (CP17)</b><span>Statutory record · issued from the inspection</span></div><span class="tag tag-quiet">Planned</span></a>
+                    <a href="#c4"><div class="rt"><b>Remedial works report</b><span>Fault found, work quoted, work done</span></div><span class="tag tag-quiet">Planned</span></a>
+                    <a href="#c4"><div class="rt"><b>Condition survey</b><span>Life expectancy and replacement advice</span></div><span class="tag tag-quiet">Planned</span></a>
+                  </div>
+                </div>
+                <div>
+                  <div class="sec-h">Documents <a href="#c4">Folder →</a></div>
+                  <div class="rmenu">
+                    <a href="#c4"><span class="ref">CERT-019</span><div class="rt"><b>Gas safety certificate 2025</b><span>PDF · 30 Sep 2025</span></div></a>
+                    <a href="#c4"><span class="ref">CERT-012</span><div class="rt"><b>Gas safety certificate 2024</b><span>PDF · 28 Sep 2024</span></div></a>
+                    <a href="#c4"><span class="ref">COMM-2021</span><div class="rt"><b>Commissioning &amp; warranty</b><span>PDF · 12 Oct 2021 · Remeha</span></div></a>
+                  </div>
+                  <div class="sec-h">Related in this plant room</div>
+                  <div class="rmenu">
+                    <a href="#c4"><span class="ref">NBE-WP3-GB-01</span><div class="rt"><b>Gas boiler 1</b><span>Due 30 Sep · same visit</span></div><span class="tag tag-caution">Due</span></a>
+                    <a href="#c4"><span class="ref">NBE-WP3-GB-03</span><div class="rt"><b>Gas boiler 3</b><span>Due 30 Sep · same visit</span></div><span class="tag tag-caution">Due</span></a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="notes">
+      <section>
+        <h5>What it gets right</h5>
+        <ul>
+          <li><b>The record is the page.</b> Every date, document and report about an asset in one place, which is what an auditor or a client's insurer asks for.</li>
+          <li>Warranty sits beside the service date, so the “bring it forward” judgement is visible instead of remembered.</li>
+          <li>Report types are listed against the asset, honestly marked by what exists.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>What it assumes</h5>
+        <ul>
+          <li>An <b>asset record</b> with make, model, serial, location, install date and installer.</li>
+          <li>Certificates as documents attached to a service event, not free files.</li>
+          <li>“Same visit” grouping by location, a small but valuable rule.</li>
+        </ul>
+      </section>
+      <section>
+        <h5>Trade-off</h5>
+        <ul>
+          <li>Poor as a home: it answers “what is this?” brilliantly and “how are we doing?” not at all.</li>
+          <li>A 460px list carries less per row than Concept 1's table; the client name is a subtitle.</li>
+          <li>This is the asset <em>page</em> whichever concept wins; as a home it is a detail view promoted above its station.</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===================== VERDICT ===================== -->
+  <section class="verdict">
+    <h2>Choosing between them</h2>
+    <table class="cmp">
+      <thead>
+        <tr><th>Concept</th><th>Answers first</th><th>Best when</th><th>Build cost from today</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1 · Due desk</td>
+          <td>“What is due, and what is late?”</td>
+          <td>The office runs a daily list and books visits from it.</td>
+          <td>Medium. Needs the requirements table and a due-date computation; the register table is familiar.</td>
+        </tr>
+        <tr>
+          <td>2 · Portfolio browser</td>
+          <td>“Where do we stand, client by client?”</td>
+          <td>Managers think in clients and buildings, and want the hierarchy to be the navigation.</td>
+          <td>Medium–high. Roll-ups at two levels plus a four-column selection model.</td>
+        </tr>
+        <tr>
+          <td>3 · Compliance matrix</td>
+          <td>“Which building is exposed on which requirement?”</td>
+          <td>Client reviews and audits; replacing the spreadsheet.</td>
+          <td>High. A fixed taxonomy, applies/does-not-apply flags and per-cell roll-ups.</td>
+        </tr>
+        <tr>
+          <td>4 · Asset ledger and reader</td>
+          <td>“What is this asset and what has happened to it?”</td>
+          <td>Record-keeping, audits, raising reports.</td>
+          <td>Low–medium as an asset page. As a home it is the wrong altitude.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="rec">
+      <h3>My recommendation: Concept 1 as the home, Concept 2 as the structure, Concept 4 as the asset page</h3>
+      <p>These are less rivals than layers. <b>The home should be the due desk.</b> A compliance business is a
+        calendar with consequences, and the screen the office opens each morning should be the list of what falls
+        due, loudest at the top. Concept 1 does that with the least new machinery and the most direct payoff.</p>
+      <p><b>The navigation should be Concept 2.</b> Clients › Buildings › Assets is the structure you gave, and
+        the compliance bar at each level is how “how are we doing?” gets answered on the phone. It does not need
+        to be the landing page to be the spine of the product; it is where the Register links in the rail go.</p>
+      <p><b>The asset page should be Concept 4's reader</b>, with the report options listed against the asset
+        and marked by what exists. The record is what everything else summarises, so it should be the richest
+        screen, not the first one.</p>
+      <p><b>Hold the matrix</b> until the requirement taxonomy is settled. It is the most impressive of the four
+        and the most dependent on decisions nobody has made yet — which requirements Leodis covers, and how a
+        building declares that one does not apply. Built early, it would be a scorecard full of “no record”.</p>
+      <p>Two things to settle before any of it: the <b>accent roles</b> (aquamarine structural, gold for the
+        action — proposed here, not approved), and the <b>status vocabulary</b>. In date, due, overdue, no
+        record — four words, used identically on every screen, is most of what makes a compliance tool
+        trustworthy.</p>
+    </div>
+
+    <p class="wrap-note">All four are static mockups. Nothing is wired to the application, and the Compliance
+      route in the app remains an honest “not yet available” page. Clients, buildings, assets, standards
+      intervals, engineers, dates and report types are examples in a plausible format, chosen to show how the
+      screens behave; the statutory intervals quoted are typical UK practice and would need confirming against
+      Leodis's actual scope before they drive anything.</p>
+  </section>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById("themer");
+  var root = document.documentElement;
+  function current() {
+    var set = root.getAttribute("data-theme");
+    if (set) return set;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  function label() { btn.textContent = current() === "dark" ? "Light" : "Dark"; }
+  label();
+  btn.addEventListener("click", function () {
+    root.setAttribute("data-theme", current() === "dark" ? "light" : "dark");
+    label();
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import { EntryFrame } from '@/components/EntryFrame';
 
 /**
  * Local sign-in, for development only.
@@ -18,11 +19,11 @@ export default function LocalSignInPage({
   const [name, setName] = useState("");
 
   return (
-    <main className="wrap" style={{ maxWidth: 460 }}>
+    <EntryFrame><div className="entry-login entry-local">
       <div className="pagehead">
         <div>
           <h1>Local sign-in</h1>
-          <p className="sub">Development only — no identity is checked</p>
+          <p className="entry-copy">Development only — no identity is checked</p>
         </div>
       </div>
 
@@ -45,10 +46,10 @@ export default function LocalSignInPage({
             test review and verification.
           </p>
         </div>
-        <button className="btn-primary btn-wide" type="submit" disabled={name.trim() === ""}>
+        <button className="entry-cta" type="submit" disabled={name.trim() === ""}>
           Continue
         </button>
       </form>
-    </main>
+    </div></EntryFrame>
   );
 }

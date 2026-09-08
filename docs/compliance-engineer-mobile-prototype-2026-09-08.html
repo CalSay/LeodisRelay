@@ -1,0 +1,1054 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compliance Engineer Mobile</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Relay · Leodis Compliance Management · engineer mobile prototype.
+   Same data model and tokens as the portfolio browser. Field rules from the
+   app apply: status never depends on colour alone, and anything an engineer
+   taps is at least 48px. */
+:root {
+  color-scheme: light;
+  --ground: #eeede9; --sunken: #e4e3de; --panel: #f8f7f3; --panel-2: #efeeea; --panel-3: #e3e2dd;
+  --line: #d6d7d3; --line-2: #c3c6c4;
+  --text: #25282a; --text-2: #5b5f60; --text-3: #767a7b;
+  --aqua: #267c76; --aqua-ink: #ffffff; --aqua-wash: rgba(38,124,118,.09);
+  --gold: #816321; --gold-ink: #ffffff; --gold-wash: rgba(129,99,33,.09);
+  --alert: #a83c22; --alert-wash: rgba(168,60,34,.09);
+  --caution: #7d5a12; --caution-wash: rgba(125,90,18,.11);
+  --ok: #2b6b48; --ok-wash: rgba(43,107,72,.10);
+  --r: 2px; --touch: 48px;
+  --sans: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #202224; --sunken: #1a1c1e; --panel: #282b2d; --panel-2: #2e3134; --panel-3: #363a3d;
+    --line: #3a3e41; --line-2: #484c4e;
+    --text: #f0efeb; --text-2: #b5b7b6; --text-3: #868a8b;
+    --aqua: #77c7bf; --aqua-ink: #16201f; --aqua-wash: rgba(119,199,191,.10);
+    --gold: #ccb071; --gold-ink: #202224; --gold-wash: rgba(204,176,113,.10);
+    --alert: #e2705a; --alert-wash: rgba(226,112,90,.11);
+    --caution: #dda94f; --caution-wash: rgba(221,169,79,.11);
+    --ok: #63b78d; --ok-wash: rgba(99,183,141,.11);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #202224; --sunken: #1a1c1e; --panel: #282b2d; --panel-2: #2e3134; --panel-3: #363a3d;
+  --line: #3a3e41; --line-2: #484c4e;
+  --text: #f0efeb; --text-2: #b5b7b6; --text-3: #868a8b;
+  --aqua: #77c7bf; --aqua-ink: #16201f; --aqua-wash: rgba(119,199,191,.10);
+  --gold: #ccb071; --gold-ink: #202224; --gold-wash: rgba(204,176,113,.10);
+  --alert: #e2705a; --alert-wash: rgba(226,112,90,.11);
+  --caution: #dda94f; --caution-wash: rgba(221,169,79,.11);
+  --ok: #63b78d; --ok-wash: rgba(99,183,141,.11);
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--sunken); color: var(--text); font-family: var(--sans); font-size: 15px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; color: inherit; }
+:focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* Stage: a phone on a desk. On an actual phone the frame is the viewport. */
+.stage { min-height: 100vh; display: grid; place-items: center; padding: 24px; gap: 16px; grid-template-rows: 1fr auto; }
+.phone { width: 390px; height: 844px; max-height: calc(100vh - 80px); background: var(--ground); border: 1px solid var(--line-2); border-radius: 34px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 30px 60px rgba(0,0,0,.18), inset 0 0 0 6px var(--panel-3); position: relative; }
+.caption { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); text-align: center; }
+@media (max-width: 480px) { .stage { padding: 0; min-height: 100dvh; grid-template-rows: 1fr; } .phone { width: 100%; height: 100dvh; max-height: none; border: 0; border-radius: 0; box-shadow: none; } .caption { display: none; } }
+
+/* Chrome */
+.appbar { flex: none; display: flex; align-items: center; gap: 10px; padding: 14px 12px 10px 16px; background: var(--panel); border-bottom: 1px solid var(--line-2); min-height: 64px; }
+.brandm { display: flex; align-items: baseline; gap: 8px; padding-right: 8px; border-right: 1px solid var(--line-2); }
+.brandm b { font-size: 13px; font-weight: 500; letter-spacing: .12em; }
+.brandm span { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; color: var(--aqua); }
+.abt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.abt b { font-size: 16px; font-weight: 500; letter-spacing: -.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.abt span { font-size: 12px; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.iconbtn { width: var(--touch); height: var(--touch); flex: none; display: grid; place-items: center; background: none; border: 0; border-radius: var(--r); font-size: 22px; color: var(--text-2); }
+.iconbtn:hover { background: var(--sunken); }
+.wknav { display: flex; }
+.screen { flex: 1; min-height: 0; overflow-y: auto; padding-bottom: 24px; display: flex; flex-direction: column; }
+.tabbar { flex: none; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--panel); border-top: 1px solid var(--line-2); height: 64px; }
+.tabbar a { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); border-top: 2px solid transparent; position: relative; }
+.tabbar a i { font-style: normal; font-size: 18px; line-height: 1; }
+.tabbar a.on { color: var(--text); border-top-color: var(--aqua); }
+.tabbar a.on i { color: var(--aqua); }
+.tabbar a b { position: absolute; top: 8px; right: 22%; font-size: 10px; min-width: 18px; height: 18px; display: grid; place-items: center; border-radius: 9px; background: var(--gold); color: var(--gold-ink); font-weight: 500; }
+
+/* Type helpers */
+.sec-h { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--text-3); margin: 20px 16px 8px; display: flex; align-items: center; gap: 8px; }
+.sec-h .cnt { margin-left: auto; color: var(--aqua); letter-spacing: .06em; }
+.ref { font-family: var(--mono); font-size: 12px; color: var(--aqua); letter-spacing: .02em; font-weight: 500; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.late { color: var(--alert); } .soon { color: var(--caution); } .fine { color: var(--text-3); } .okc, .ok { color: var(--ok); }
+.tag { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-family: var(--mono); font-size: 10px; letter-spacing: .07em; text-transform: uppercase; border: 1px solid; border-radius: var(--r); padding: 2px 8px; }
+.tag::before { content: "●"; font-size: 8px; line-height: 1; }
+.tag-ok { color: var(--ok); border-color: var(--ok); background: var(--ok-wash); }
+.tag-alert { color: var(--alert); border-color: var(--alert); background: var(--alert-wash); } .tag-alert::before { content: "▲"; }
+.tag-caution { color: var(--caution); border-color: var(--caution); background: var(--caution-wash); } .tag-caution::before { content: "◆"; }
+.tag-quiet { color: var(--text-3); border-color: var(--line-2); background: transparent; } .tag-quiet::before { content: "○"; }
+.tag-aqua { color: var(--aqua); border-color: var(--aqua); background: var(--aqua-wash); } .tag-aqua::before { content: "■"; }
+.tag-gold { color: var(--gold); border-color: var(--gold); background: var(--gold-wash); } .tag-gold::before { content: "◪"; }
+.empty { padding: 20px 16px; color: var(--text-3); font-size: 14px; text-align: center; }
+.fine-print { margin: 20px 16px 0; font-size: 12px; color: var(--text-3); line-height: 1.5; }
+.note { margin: 12px 16px 0; padding: 12px 14px; border: 1px solid var(--line-2); border-left-width: 3px; font-size: 13px; display: flex; justify-content: space-between; align-items: center; gap: 12px; background: var(--panel-2); }
+.note.warn { border-color: var(--caution); background: var(--caution-wash); }
+.note.info { border-color: var(--aqua); background: var(--aqua-wash); }
+.note b { font-weight: 500; }
+.btn { font-family: var(--mono); font-size: 11px; letter-spacing: .09em; text-transform: uppercase; background: var(--gold); color: var(--gold-ink); border: 1px solid var(--gold); border-radius: var(--r); padding: 0 16px; min-height: var(--touch); white-space: nowrap; }
+.btn-q { background: transparent; color: var(--text-2); border-color: var(--line-2); }
+.btn.wide { width: 100%; }
+
+/* Today summary */
+.sum { display: grid; grid-template-columns: repeat(4, 1fr); margin: 16px 16px 0; border: 1px solid var(--line); background: var(--panel); }
+.sum div { padding: 10px 12px; border-right: 1px solid var(--line); }
+.sum div:last-child { border-right: 0; }
+.sum dt { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); }
+.sum dd { margin: 2px 0 0; font-family: var(--mono); font-size: 20px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.sum dd small { font-size: 11px; color: var(--text-3); margin-left: 3px; font-family: var(--sans); }
+
+/* Visit cards */
+.vlist { display: flex; flex-direction: column; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--panel); }
+.vcard { display: flex; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--line); border-left: 3px solid transparent; min-height: var(--touch); }
+.vcard:last-child { border-bottom: 0; }
+.vcard:active, .vcard:hover { background: var(--sunken); }
+.vcard.onsite { border-left-color: var(--aqua); background: var(--aqua-wash); }
+.vcard.next { border-left-color: var(--gold); }
+.vcard.done { opacity: .72; }
+.vtime { width: 56px; flex: none; display: flex; flex-direction: column; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.vtime b { font-size: 15px; font-weight: 500; }
+.vtime span { font-size: 10px; color: var(--text-3); }
+.vbody { flex: 1; min-width: 0; }
+.vhead { display: flex; align-items: baseline; gap: 8px; }
+.vhead b { font-size: 15px; font-weight: 500; flex: 1; min-width: 0; }
+.vsub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.vitems { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.vi { font-size: 12px; padding: 2px 8px; border: 1px solid var(--line-2); border-radius: var(--r); color: var(--text-2); }
+.vi.late { border-color: var(--alert); color: var(--alert); }
+.vi.soon { border-color: var(--caution); color: var(--caution); }
+.vi.none { border-style: dashed; }
+.vi.did { border-color: var(--ok); color: var(--ok); text-decoration: line-through; }
+.vfoot { display: flex; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+.travel { font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: .02em; }
+
+/* Week */
+.days { display: grid; grid-template-columns: repeat(7, 1fr); margin: 12px 16px 0; border: 1px solid var(--line); background: var(--panel); }
+.day { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; min-height: 60px; background: none; border: 0; border-right: 1px solid var(--line); border-top: 2px solid transparent; }
+.day:last-child { border-right: 0; }
+.day span { font-family: var(--mono); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); }
+.day b { font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.day i { font-style: normal; font-size: 7px; letter-spacing: 2px; color: var(--aqua); height: 10px; }
+.day.on { border-top-color: var(--aqua); background: var(--aqua-wash); }
+.day.today b { color: var(--gold); }
+.route { margin: 0 16px; border: 1px solid var(--line); background: var(--panel); padding: 8px 16px; }
+.rstop { display: flex; align-items: center; gap: 12px; min-height: 40px; position: relative; }
+.rstop i { width: 8px; height: 8px; border-radius: 50%; background: var(--aqua); flex: none; }
+.rstop:not(:last-child)::before { content: ""; position: absolute; left: 3.5px; top: 24px; bottom: -16px; border-left: 1px dashed var(--line-2); }
+.rstop b { font-weight: 500; font-size: 14px; flex: 1; }
+.rstop span { font-family: var(--mono); font-size: 11px; color: var(--text-3); }
+
+/* Visit screen */
+.btnrow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 16px 0; }
+.bigbtn { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 2px; min-height: 60px; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--r); text-align: left; }
+.bigbtn:first-child { background: var(--gold); border-color: var(--gold); color: var(--gold-ink); }
+.bigbtn b { font-size: 14px; font-weight: 500; }
+.bigbtn span { font-size: 11px; opacity: .8; font-family: var(--mono); letter-spacing: .02em; }
+.addr { margin: 10px 16px 0; font-size: 13px; color: var(--text-2); }
+.access { margin: 12px 16px 0; border: 1px solid var(--line); background: var(--panel); }
+.access div { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.access div:last-child { border-bottom: 0; }
+.access dt { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--aqua); }
+.access dd { margin: 2px 0 0; font-size: 14px; }
+.ilist { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--panel); }
+.irow { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--line); min-height: var(--touch); width: 100%; background: none; border-left: 0; border-right: 0; border-top: 0; text-align: left; }
+.irow:last-child { border-bottom: 0; }
+.irow.did { opacity: .65; }
+.irow:hover { background: var(--sunken); }
+.imain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.imain b { font-size: 14px; font-weight: 500; }
+.imain > span { font-size: 12px; color: var(--text-3); }
+.istat { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.chev { font-family: var(--mono); color: var(--text-3); font-size: 16px; }
+.stick { position: sticky; bottom: 0; margin-top: auto; padding: 12px 16px 12px; background: linear-gradient(to bottom, transparent, var(--ground) 30%); display: flex; flex-direction: column; gap: 8px; }
+.donebar { font-size: 13px; color: var(--text-2); text-align: center; padding: 12px; border: 1px solid var(--ok); background: var(--ok-wash); }
+.kv { margin: 12px 16px 0; border: 1px solid var(--line); background: var(--panel); }
+.kv div { padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.kv div:last-child { border-bottom: 0; }
+.kv dt { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); }
+.kv dd { margin: 2px 0 0; font-size: 14px; }
+.duem { display: grid; grid-template-columns: 1.4fr 1fr 1fr; margin: 12px 16px 0; border: 1px solid var(--line); background: var(--panel); }
+.duem div { padding: 10px 12px; border-right: 1px solid var(--line); min-width: 0; }
+.duem div:last-child { border-right: 0; }
+.duem dt { font-family: var(--mono); font-size: 9px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.duem dd { margin: 2px 0 0; font-family: var(--mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+.duem dd.txt { font-family: var(--sans); font-size: 12px; color: var(--text-2); }
+.duem dd small { display: block; font-family: var(--sans); font-size: 11px; color: var(--text-3); }
+.duem dd.late { color: var(--alert); } .duem dd.soon { color: var(--caution); } .duem dd.none { color: var(--text-3); }
+.searchm { padding: 12px 16px 8px; }
+.searchm input { width: 100%; min-height: var(--touch); background: var(--panel); border: 1px solid var(--line-2); border-radius: var(--r); padding: 0 14px; font: inherit; font-size: 15px; color: var(--text); }
+.cbar { display: flex; height: 6px; width: 100%; background: var(--panel-3); overflow: hidden; }
+.cbar i { display: block; height: 100%; }
+.cbar .ok { background: var(--ok); } .cbar .soon { background: var(--caution); } .cbar .late { background: var(--alert); } .cbar .none { background: var(--line-2); }
+.meta { display: flex; gap: 12px; font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--text-3); flex-wrap: wrap; }
+.f { display: flex; flex-direction: column; gap: 6px; }
+.f label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); }
+.f input, .f select, .f textarea { font: inherit; font-size: 15px; background: var(--sunken); color: var(--text); border: 1px solid var(--line-2); border-radius: var(--r); padding: 12px 14px; min-height: var(--touch); }
+.f textarea { min-height: 96px; resize: vertical; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid var(--line-2); border-radius: var(--r); overflow: hidden; }
+.seg label { position: relative; min-height: var(--touch); display: grid; place-items: center; font: inherit; font-size: 14px; text-transform: none; letter-spacing: 0; color: var(--text-2); background: var(--panel); }
+.seg label + label { border-left: 1px solid var(--line-2); }
+.seg input { position: absolute; opacity: 0; inset: 0; margin: 0; }
+.seg input:checked + span { color: var(--aqua); font-weight: 500; }
+.seg label:has(input:checked) { background: var(--aqua-wash); }
+.photos { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ph { width: 64px; height: 64px; display: grid; place-items: center; border: 1px dashed var(--line-2); background: var(--panel); font-size: 20px; line-height: 1; color: var(--text-2); }
+.ph span { font-family: var(--mono); font-size: 9px; letter-spacing: .1em; text-transform: uppercase; }
+.ph.thumb { border-style: solid; background: var(--panel-3); font-family: var(--mono); font-size: 9px; letter-spacing: .08em; color: var(--text-3); }
+.phn { font-size: 12px; color: var(--text-3); }
+.sig-line { font-family: var(--mono); font-size: 12px; color: var(--text-2); padding: 12px 14px; border: 1px solid var(--line); background: var(--panel); }
+
+/* Service forms */
+.vi.draft { border-color: var(--gold); color: var(--gold); }
+.fsec { margin: 0 16px; border: 1px solid var(--line); background: var(--panel); }
+.ff { padding: 12px 14px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.ff:last-child { border-bottom: 0; }
+.ff label { font-size: 14px; color: var(--text); font-family: var(--sans); text-transform: none; letter-spacing: 0; }
+.ff label em { font-style: normal; font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-3); margin-left: 6px; }
+.ff .seg label { font-size: 14px; }
+.seg.s3 { grid-template-columns: repeat(3, 1fr); }
+.seg.s2 { grid-template-columns: repeat(2, 1fr); }
+.ff input, .ff select, .ff textarea { font: inherit; font-size: 15px; background: var(--sunken); color: var(--text); border: 1px solid var(--line-2); border-radius: var(--r); padding: 12px 14px; min-height: var(--touch); width: 100%; }
+.ff textarea { min-height: 72px; resize: vertical; }
+.numf { display: flex; align-items: center; gap: 10px; }
+.numf input { flex: 1; font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.numf span { font-family: var(--mono); font-size: 12px; color: var(--text-3); min-width: 32px; }
+.fstick { background: var(--panel); border-top: 1px solid var(--line-2); padding: 10px 16px 14px; gap: 10px; }
+.prog { display: flex; flex-direction: column; gap: 6px; }
+.progbar { height: 4px; background: var(--panel-3); overflow: hidden; }
+.progbar i { display: block; height: 100%; background: var(--aqua); transition: width .2s; }
+.prog span { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase; color: var(--text-3); }
+.btnpair { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; }
+.btn[disabled] { opacity: .45; cursor: default; }
+.sig-line.signed { color: var(--ok); border-color: var(--ok); background: var(--ok-wash); }
+
+/* Bottom sheet */
+dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line-2); border-bottom: 0; border-radius: 16px 16px 0 0; padding: 0; width: 390px; max-width: 100vw; max-height: 86vh; overflow: auto; margin: auto auto 0; }
+dialog::backdrop { background: rgba(20,22,24,.5); }
+.sh-head { display: grid; grid-template-columns: 1fr auto; padding: 14px 8px 12px 20px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: var(--panel); }
+.sh-head b { font-size: 17px; font-weight: 500; letter-spacing: -.01em; }
+.sh-head span { grid-column: 1; font-size: 12px; color: var(--text-3); }
+.sh-head .iconbtn { grid-row: 1 / span 2; grid-column: 2; }
+.sh-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 16px; }
+.sh-foot { padding: 12px 20px 20px; border-top: 1px solid var(--line); }
+#toasts { position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 50; width: min(360px, 92vw); }
+.toast { background: var(--text); color: var(--ground); font-size: 13px; padding: 10px 14px; border-left: 3px solid var(--aqua); box-shadow: 0 8px 24px rgba(0,0,0,.25); }
+.toast .ref { color: var(--ground); opacity: .85; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="phone" id="phone"></div>
+  <p class="caption">Relay · Leodis Compliance · engineer mobile · prototype on invented data · 08 Sep 2026</p>
+</div>
+<div id="toasts"></div>
+<dialog id="dlg"></dialog>
+<script>
+(function () {
+'use strict';
+/* ------------------------------------------------------------------ utils */
+const pad = n => String(n).padStart(2, '0');
+const pad3 = n => String(n).padStart(3, '0');
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const D = (y, m, d) => new Date(y, m - 1, d);
+const TODAY = D(2026, 9, 8);
+const MS = 864e5;
+const dayDiff = (a, b) => Math.round((a - b) / MS);
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const addMonths = (d, m) => { const x = new Date(d); x.setMonth(x.getMonth() + m); return x; };
+const fmt = d => d ? `${pad(d.getDate())} ${MON[d.getMonth()]} ${d.getFullYear()}` : '—';
+const fmtS = d => d ? `${pad(d.getDate())} ${MON[d.getMonth()]}` : '—';
+const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fromISO = s => { const [y, m, d] = s.split('-').map(Number); return D(y, m, d); };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let seed = 20260908;
+const R = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const pick = a => a[Math.floor(R() * a.length)];
+const ri = (a, b) => a + Math.floor(R() * (b - a + 1));
+const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
+
+/* ------------------------------------------------------------- reference */
+const ENG = {
+  RA: { id: 'RA', name: 'R. Ashworth', full: 'Rachel Ashworth', trades: ['Fire alarm', 'Emergency lighting', 'Fire doors', 'Smoke control'] },
+  JW: { id: 'JW', name: 'J. Whitaker', full: 'James Whitaker', trades: ['Gas', 'HVAC'], gasSafe: '5467213' },
+  DP: { id: 'DP', name: 'D. Priestley', full: 'Dan Priestley', trades: ['Electrical', 'Emergency lighting', 'Lightning protection', 'Fire alarm'] },
+  SK: { id: 'SK', name: 'S. Kaur', full: 'Simran Kaur', trades: ['Water hygiene'] },
+  TB: { id: 'TB', name: 'T. Bright', full: 'Tom Bright', trades: ['Lifts', 'Smoke control', 'Extinguishers', 'HVAC'] },
+  CS: { id: 'CS', name: 'Cal Say', full: 'Cal Say', trades: ['Fire doors', 'Extinguishers'], role: 'Compliance manager' },
+};
+const engineersFor = trade => { const l = Object.values(ENG).filter(e => e.trades.includes(trade)); return l.length ? l : Object.values(ENG); };
+
+const RTYPES = { SVR: 'Service report', CERT: 'Certificate', RA: 'Risk assessment', TER: 'Thorough examination' };
+const CATS = {
+  FA: { label: 'Fire alarm', req: 'Service visit', std: 'BS 5839-1', months: 6, group: 'Fire & life safety', trade: 'Fire alarm', rtype: 'SVR', unit: 'panel' },
+  EL: { label: 'Emergency lighting', req: 'Annual duration test', std: 'BS 5266-1', months: 12, group: 'Fire & life safety', trade: 'Emergency lighting', rtype: 'SVR', unit: 'system' },
+  EX: { label: 'Extinguishers', req: 'Annual service', std: 'BS 5306-3', months: 12, group: 'Fire & life safety', trade: 'Extinguishers', rtype: 'SVR', unit: 'unit' },
+  FD: { label: 'Fire doors', req: 'Quarterly check', std: 'Fire Safety (England) Regs 2022', months: 3, group: 'Fire & life safety', trade: 'Fire doors', rtype: 'SVR', unit: 'door' },
+  GS: { label: 'Gas safety', req: 'Gas safety inspection', std: 'CP17 · Gas Safety Regs 1998', months: 12, group: 'Gas & electrical', trade: 'Gas', rtype: 'CERT', unit: 'appliance' },
+  EI: { label: 'Electrical', req: 'Periodic inspection (EICR)', std: 'BS 7671', months: 60, group: 'Gas & electrical', trade: 'Electrical', rtype: 'CERT', unit: 'installation' },
+  WH: { label: 'Water hygiene', req: 'Legionella risk assessment', std: 'ACoP L8 · HSG274', months: 24, group: 'Water & plant', trade: 'Water hygiene', rtype: 'RA', unit: 'system' },
+  LF: { label: 'Lifts', req: 'Thorough examination', std: 'LOLER 1998', months: 6, group: 'Water & plant', trade: 'Lifts', rtype: 'TER', unit: 'lift' },
+  SC: { label: 'Smoke control', req: 'Annual service', std: 'BS 7346-8', months: 12, group: 'Fire & life safety', trade: 'Smoke control', rtype: 'SVR', unit: 'vent' },
+  LP: { label: 'Lightning protection', req: 'Annual test', std: 'BS EN 62305', months: 12, group: 'Gas & electrical', trade: 'Lightning protection', rtype: 'CERT', unit: 'system' },
+  AC: { label: 'Air conditioning', req: 'F-gas leak check', std: 'F-gas Regs 2015', months: 12, group: 'Water & plant', trade: 'HVAC', rtype: 'SVR', unit: 'system' },
+};
+
+const CLIENTS = [
+  { code: 'NBE', name: 'Northbrook Estates', contact: 'Sam Ledgard', role: 'Portfolio manager', email: 's.ledgard@northbrook.example', since: 2019 },
+  { code: 'AVH', name: 'Aire Valley Housing', contact: 'M. Okafor', role: 'Housing compliance lead', email: 'm.okafor@airevalley.example', since: 2021 },
+  { code: 'HPT', name: 'Headrow Property Trust', contact: 'Priya Nair', role: 'Estates director', email: 'p.nair@headrowpt.example', since: 2020 },
+  { code: 'SCA', name: "St Chad's Academy Trust", contact: 'Helen Marsh', role: 'Head of estates', email: 'h.marsh@stchads.example', since: 2024 },
+  { code: 'MFL', name: 'Marshall Facilities', contact: 'Tom Barlow', role: 'Facilities manager', email: 't.barlow@marshallfm.example', since: 2022 },
+];
+const CL = Object.fromEntries(CLIENTS.map(c => [c.code, c]));
+
+const PROF = {
+  office: { ok: .82, soon: .12, late: .02, none: .04 },
+  resi: { ok: .72, soon: .12, late: .05, none: .11 },
+  school: { ok: .70, soon: .10, late: .04, none: .16 },
+  tidy: { ok: .90, soon: .10, late: 0, none: 0 },
+};
+// spec: [cat, n, name, make, location, options]
+const S = (cat, n, name, make, loc, o) => Object.assign({ cat, n, name, make, loc }, o || {});
+const BUILDINGS = [
+  { code: 'WP3', client: 'NBE', name: 'Wellington Place — Block 3', kind: 'Offices · 6 floors', rp: 'Building manager: A. Fenton', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Gent Vigilon · 2 loop', 'Ground floor reception', { inst: '2019-05-20', wy: 5 }),
+    S('EL', 1, 'Emergency lighting — 120 luminaires', 'Self-contained LED', 'All floors'),
+    S('EX', 18, 'Extinguishers', 'Mixed CO₂ / foam / water', 'Fire points, all floors', { grp: true }),
+    S('GS', 3, i => `Gas boiler ${i}`, 'Remeha Quinta Ace 115', 'Roof plant room', { last: '2025-09-30', inst: '2021-10-12', wy: 5, serial: i => `RQA115-21-0883${i}` }),
+    S('EI', 1, 'Electrical installation', 'TP&N · 6 distribution boards', 'Basement switchroom', { last: '2024-06-11' }),
+    S('WH', 1, 'Domestic water system', 'CWS tanks ×2 · calorifier', 'Roof plant room'),
+    S('LF', 2, i => `Passenger lift ${i}`, 'Otis Gen2', i => `Core ${'AB'[i - 1]}`, { inst: '2019-05-01', wy: 2 }),
+    S('SC', 1, 'AOV — stair 1 head', 'Colt actuator', 'Stair 1'),
+    S('LP', 1, 'Lightning protection system', 'Copper tape · 8 down conductors', 'Roof'),
+    S('AC', 2, i => `VRF system — floors ${i === 1 ? '1–3' : '4–6'}`, 'Daikin VRV IV', 'Roof', { inst: '2019-05-20', wy: 5 }),
+  ] },
+  { code: 'KR4', client: 'NBE', name: 'Kirkstall Retail Park — Unit 4', kind: 'Retail · warehouse & plant room', rp: 'Store manager: K. Dhillon', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Kentec Syncro', 'Back-of-house corridor'),
+    S('EL', 1, 'Emergency lighting — 38 luminaires', 'Self-contained LED', 'Sales floor & warehouse'),
+    S('EX', 9, 'Extinguishers', 'CO₂ / foam', 'Fire points', { grp: true }),
+    S('GS', 1, 'Gas heater — warehouse', 'Powrmatic NVx', 'Warehouse'),
+    S('EI', 1, 'Electrical installation', 'TP&N · 3 boards', 'Plant room', { last: '2023-02-14' }),
+    S('WH', 1, 'Domestic water system', 'Mains-fed · point-of-use heaters', 'Staff area'),
+    S('LF', 1, 'Passenger lift', 'Kone MonoSpace', 'Mezzanine core', { last: '2026-03-22', inst: '2018-04-01', wy: 2 }),
+  ] },
+  { code: 'GWO', client: 'NBE', name: 'Granary Wharf Offices', kind: 'Offices · 4 floors', rp: 'Facilities: R. Malik', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Advanced MxPro 5', 'Reception'),
+    S('EL', 1, 'Emergency lighting — 76 luminaires', 'Self-contained LED', 'All floors'),
+    S('EX', 14, 'Extinguishers', 'Mixed', 'Fire points', { grp: true }),
+    S('EI', 1, 'Electrical installation', 'TP&N · 4 boards', 'Basement', { last: '2022-10-05' }),
+    S('WH', 1, 'Domestic water system', 'CWS tank · calorifier', 'Roof plant'),
+    S('LF', 1, 'Passenger lift', 'Schindler 3300', 'Main core', { inst: '2017-09-01', wy: 2 }),
+    S('SC', 1, 'AOV — stair head', 'Colt actuator', 'Stair 1', { last: '2025-08-11', inst: '2021-08-31', wy: 5, wnote: 'Actuator' }),
+    S('LP', 1, 'Lightning protection system', 'Copper tape · 6 down conductors', 'Roof'),
+    S('AC', 1, 'VRF system', 'Mitsubishi City Multi', 'Roof', { inst: '2020-02-10', wy: 5 }),
+  ] },
+  { code: 'ARC', client: 'AVH', name: 'Aire Court, Hunslet', kind: 'Residential · 36 flats · 5 storeys', rp: 'Responsible person: M. Okafor', prof: 'resi', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Advanced MxPro 5 · 4 loop', 'Ground floor plant cupboard', { last: '2026-03-02', inst: '2023-03-14', wy: 5, wnote: 'Panel', serial: () => 'MX5-0417-2231', batt: '2026-11-03', hist: [
+      { date: '2026-03-02', eng: 'RA', result: 'pass', notes: 'Six-monthly service. All zones tested; 2 optical detectors replaced on loop 3; batteries load-tested OK; event log cleared.' },
+      { date: '2025-09-01', eng: 'RA', result: 'pass', notes: 'Six-monthly service. No faults. Cause-and-effect checked against AOV interface.' },
+      { date: '2025-03-03', eng: 'DP', result: 'fault', notes: 'Sounder fault on level 2 corridor circuit. Isolated and remedial raised; closed 11 Mar after cable repair.' },
+      { date: '2024-09-02', eng: 'RA', result: 'pass', notes: 'Six-monthly service. No faults.' },
+    ] }),
+    S('FA', 1, 'Repeater panel', 'Advanced MxPro 5 repeater', 'Entrance lobby', { seq: 2, last: '2026-03-02', inst: '2023-03-14', wy: 5 }),
+    S('EL', 1, 'Emergency lighting — communal, 42 luminaires', 'Self-contained LED', 'Corridors & stairs', { last: '2025-10-28' }),
+    S('EX', 6, 'Extinguishers', 'Water mist', 'Plant & bin stores', { grp: true, last: '2026-02-12' }),
+    S('FD', 36, i => `Flat ${i} entrance`, 'FD30S · timber', i => `Floor ${Math.floor((i - 1) / 8)}`, { grp: true, last: '2026-09-04', hist: [
+      { date: '2026-09-04', eng: 'RA', result: 'fault', notes: '36 flat entrance doors inspected. Three fail to self-close from 45°: flats 7, 19 and 31. Closers need adjustment or replacement. Remedial raised. All others: strips, seals and gaps satisfactory.' },
+      { date: '2026-06-05', eng: 'CS', result: 'pass', notes: '36 doors inspected. All self-close and latch; intumescent strips and cold smoke seals intact; gaps within 3–4 mm.' },
+      { date: '2026-03-06', eng: 'CS', result: 'pass', notes: '36 doors inspected. One damaged cold smoke seal (flat 22) replaced on the day.' },
+    ] }),
+    S('GS', 1, 'Communal heating plant', 'Ideal Evomax 2 ×2', 'Ground floor plant room', { last: '2026-04-04', inst: '2018-11-02', wy: 5 }),
+    S('EI', 1, 'Electrical installation — landlord supplies', 'Landlord DB · 3 boards', 'Meter room', { last: '2024-09-10' }),
+    S('WH', 1, 'Cold water storage — roof tank', 'GRP sectional tank · 4,000 L', 'Roof tank room', { last: '2024-08-15' }),
+    S('SC', 2, i => `AOV — stair ${i} head`, 'Unknown actuator', i => `Stair ${i}`, { last: null }),
+  ] },
+  { code: 'BFH', client: 'AVH', name: 'Bramley Fall House', kind: 'Sheltered housing · 24 units', rp: 'Scheme manager: L. Grant', prof: 'resi', specs: [
+    S('FA', 1, 'Fire alarm panel', 'C-TEC XFP', 'Office', { last: '2026-05-19' }),
+    S('EL', 1, 'Emergency lighting — 31 luminaires', 'Self-contained LED', 'Corridors', { last: '2025-10-03' }),
+    S('EX', 5, 'Extinguishers', 'Water mist', 'Corridors', { grp: true }),
+    S('FD', 24, i => `Flat ${i} entrance`, 'FD30S · timber', i => `Floor ${Math.floor((i - 1) / 12)}`, { grp: true, last: '2026-07-06' }),
+    S('GS', 1, 'Communal boiler', 'Worcester GB162', 'Plant room', { last: '2026-05-22', inst: '2020-06-01', wy: 7 }),
+    S('EI', 1, 'Electrical installation — landlord', 'Landlord DB', 'Meter cupboard', { last: '2025-01-15' }),
+    S('WH', 1, 'Domestic water system', 'CWS tank · calorifier', 'Plant room', { last: '2024-11-30' }),
+    S('LF', 1, 'Passenger lift', 'Stannah · traction', 'Main stair', { inst: '2016-03-01', wy: 1 }),
+    S('SC', 1, 'AOV — stair head', 'Unknown', 'Main stair', { last: null }),
+  ] },
+  { code: 'KLG', client: 'AVH', name: 'Kirkstall Lodge', kind: 'Residential · 18 flats · 3 storeys', rp: 'Responsible person: M. Okafor', prof: 'resi', specs: [
+    S('FA', 1, 'Fire alarm panel', 'C-TEC CFP', 'Entrance'),
+    S('EL', 1, 'Emergency lighting — central battery', 'Central battery unit · 22 luminaires', 'Plant cupboard'),
+    S('EX', 4, 'Extinguishers', 'Water mist', 'Corridors', { grp: true }),
+    S('FD', 18, i => `Flat ${i} entrance`, 'FD30S · composite', i => `Floor ${Math.floor((i - 1) / 6)}`, { grp: true }),
+    S('GS', 1, 'Communal boiler', 'Vaillant ecoTEC', 'Plant cupboard'),
+    S('EI', 1, 'Electrical installation — landlord', 'Landlord DB', 'Meter cupboard'),
+    S('WH', 1, 'Domestic water system', 'Mains-fed · unvented cylinder', 'Plant cupboard'),
+  ] },
+  { code: 'HRC', client: 'HPT', name: 'Headrow Chambers', kind: 'Offices · Grade II listed · 5 floors', rp: 'Building manager: G. Pollard', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Gent Vigilon', 'Porters’ lodge'),
+    S('EL', 1, 'Emergency lighting — 84 luminaires', 'Self-contained LED', 'All floors', { last: '2025-09-15' }),
+    S('EX', 12, 'Extinguishers', 'Mixed', 'Fire points', { grp: true }),
+    S('EI', 1, 'Electrical installation', 'TP&N · 5 boards', 'Basement'),
+    S('WH', 1, 'Domestic water system', 'CWS tank · 2 calorifiers', 'Roof plant'),
+    S('LF', 1, 'Passenger lift', 'Stannah · traction', 'Main core', { inst: '2015-01-01', wy: 1 }),
+    S('LP', 1, 'Lightning protection system', 'Copper tape · 5 down conductors', 'Roof'),
+    S('AC', 1, 'Split systems — server room', 'Daikin ×2', 'Third floor', { inst: '2022-07-01', wy: 5 }),
+  ] },
+  { code: 'PRH', client: 'HPT', name: 'Park Row House', kind: 'Offices · 7 floors', rp: 'Facilities: J. Cole', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Advanced MxPro 5', 'Reception'),
+    S('EL', 1, 'Emergency lighting — 110 luminaires', 'Self-contained LED', 'All floors'),
+    S('EX', 10, 'Extinguishers', 'Mixed', 'Fire points', { grp: true }),
+    S('GS', 1, 'Gas boilers ×2', 'Hamworthy Wessex', 'Roof plant', { inst: '2019-03-01', wy: 5 }),
+    S('EI', 1, 'Electrical installation', 'TP&N · 8 boards', 'Basement', { last: '2026-09-03' }),
+    S('WH', 1, 'Domestic water system', 'CWS tanks ×2', 'Roof plant'),
+    S('LF', 1, 'Passenger lift', 'Otis Gen2', 'Main core', { inst: '2019-03-01', wy: 2 }),
+    S('AC', 3, i => `VRF condenser ${i}`, 'Mitsubishi City Multi', 'Roof', { inst: '2021-11-21', wy: 5 }),
+  ] },
+  { code: 'APA', client: 'HPT', name: 'Albion Place Arcade', kind: 'Retail arcade · 14 units', rp: 'Centre manager: F. Hughes', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Kentec Syncro', 'Management suite'),
+    S('EL', 1, 'Emergency lighting — 46 luminaires', 'Self-contained LED', 'Arcade & service corridor'),
+    S('EX', 8, 'Extinguishers', 'Mixed', 'Service corridor', { grp: true }),
+    S('EI', 1, 'Electrical installation — landlord', 'TP&N · 2 boards', 'Switchroom'),
+    S('SC', 1, 'Smoke vent — arcade roof', 'Colt louvres ×4', 'Roof'),
+    S('LP', 1, 'Lightning protection system', 'Copper tape', 'Roof'),
+  ] },
+  { code: 'SCP', client: 'SCA', name: "St Chad's Primary", kind: 'School · 2 blocks · 310 pupils', rp: 'Site manager: B. Aldridge', prof: 'school', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Kentec Syncro AS', 'Main entrance'),
+    S('EL', 1, 'Emergency lighting — 52 luminaires', 'Self-contained LED', 'Both blocks'),
+    S('EX', 11, 'Extinguishers', 'Mixed', 'Corridors & kitchen', { grp: true }),
+    S('FD', 14, i => `Corridor door ${i}`, 'FD30S · timber', i => (i <= 8 ? 'Main block' : 'KS1 block'), { grp: true, last: null }),
+    S('GS', 1, 'Boilers ×2', 'Remeha Avanta Plus', 'Boiler house'),
+    S('EI', 1, 'Electrical installation', 'TP&N · 4 boards', 'Boiler house', { last: '2022-03-10' }),
+    S('WH', 1, 'Domestic water system', 'CWS tank · calorifier', 'Roof void', { last: '2024-08-20' }),
+    S('LP', 1, 'Lightning protection system', 'Copper tape', 'Roof'),
+  ] },
+  { code: 'CGA', client: 'SCA', name: 'Cross Gates Academy', kind: 'Secondary · sports hall · 1,100 pupils', rp: 'Estates: N. Osei', prof: 'school', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Advanced MxPro 5 · 6 loop', 'Reception'),
+    S('EL', 1, 'Emergency lighting — 190 luminaires', 'Self-contained LED', 'All blocks'),
+    S('EX', 16, 'Extinguishers', 'Mixed', 'Corridors, labs, kitchen', { grp: true, last: '2025-09-27' }),
+    S('FD', 22, i => `Corridor door ${i}`, 'FD30S · timber', i => (i <= 12 ? 'Teaching block' : 'Sports hall'), { grp: true, last: null }),
+    S('GS', 1, 'Boilers ×3', 'Hoval UltraGas', 'Boiler house'),
+    S('EI', 1, 'Electrical installation', 'TP&N · 11 boards', 'Switchroom'),
+    S('WH', 1, 'Domestic water system', 'CWS tanks ×2 · showers', 'Sports hall plant'),
+    S('LF', 1, 'Platform lift', 'Aritco 7000', 'Teaching block', { inst: '2021-01-01', wy: 2 }),
+    S('LP', 1, 'Lightning protection system', 'Unknown', 'Roof', { last: null }),
+  ] },
+  { code: 'SGP', client: 'SCA', name: 'Seacroft Grange Primary', kind: 'School · single block', rp: 'Site manager: P. Walsh', prof: 'school', specs: [
+    S('FA', 1, 'Fire alarm panel', 'C-TEC XFP', 'Entrance'),
+    S('EL', 1, 'Emergency lighting — 40 luminaires', 'Self-contained LED', 'Corridors & hall'),
+    S('EX', 9, 'Extinguishers', 'Mixed', 'Corridors & kitchen', { grp: true }),
+    S('FD', 12, i => `Corridor door ${i}`, 'FD30S · timber', 'Main corridor', { grp: true }),
+    S('GS', 1, 'Boilers ×2', 'Ideal Evomax', 'Boiler room'),
+    S('EI', 1, 'Electrical installation', 'TP&N · 3 boards', 'Boiler room'),
+    S('WH', 1, 'Domestic water system', 'CWS tank · calorifier', 'Roof void'),
+  ] },
+  { code: 'HDP', client: 'MFL', name: 'Hunslet Depot', kind: 'Industrial · workshop & offices', rp: 'Depot manager: T. Barlow', prof: 'tidy', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Kentec Syncro', 'Gatehouse'),
+    S('EL', 1, 'Emergency lighting — 64 luminaires', 'Self-contained LED', 'Workshop & offices'),
+    S('EX', 31, 'Extinguishers', 'Mixed · incl. 6 powder', 'Workshop bays & offices', { grp: true, last: '2025-10-04' }),
+    S('GS', 1, 'Warehouse heaters ×4', 'Powrmatic NVx', 'Workshop'),
+    S('EI', 1, 'Electrical installation', 'TP&N · 6 boards', 'Switchroom'),
+    S('WH', 1, 'Domestic water system', 'Mains-fed · showers', 'Welfare block'),
+    S('LP', 1, 'Lightning protection system', 'Copper tape', 'Workshop roof'),
+  ] },
+  { code: 'LDW', client: 'MFL', name: 'Leeds Dock Warehouse', kind: 'Warehouse · mezzanine offices', rp: 'Site lead: O. Brennan', prof: 'tidy', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Advanced MxPro 5', 'Goods-in office'),
+    S('EL', 1, 'Emergency lighting — 58 luminaires', 'Self-contained LED', 'Warehouse & mezzanine'),
+    S('EX', 14, 'Extinguishers', 'Mixed', 'Fire points', { grp: true }),
+    S('EI', 1, 'Electrical installation', 'TP&N · 4 boards', 'Switchroom'),
+    S('LP', 1, 'Lightning protection system', 'Copper tape', 'Roof'),
+    S('SC', 1, 'Smoke vents — warehouse roof', 'Colt louvres ×8', 'Roof'),
+  ] },
+];
+const BL = Object.fromEntries(BUILDINGS.map(b => [b.code, b]));
+
+/* --------------------------------------------------------- generation */
+const assets = [], groups = [], events = [], remedials = [];
+const AS = {}, GR = {};
+function autoLast(months, prof) {
+  const r = R(); let acc = 0, bucket = 'ok';
+  for (const k of ['ok', 'soon', 'late', 'none']) { acc += prof[k]; if (r < acc) { bucket = k; break; } }
+  if (bucket === 'none') return null;
+  const ahead = bucket === 'ok' ? ri(31, Math.max(45, months * 30 - 10)) : bucket === 'soon' ? ri(1, 30) : ri(-40, -1);
+  return addMonths(addDays(TODAY, ahead), -months);
+}
+const FIND = {
+  FA: ['All zones tested from the panel; sounders audible throughout. Batteries load-tested and within capacity. Event log reviewed and cleared.', 'Fault on one sounder circuit; isolated and remedial raised. All other zones tested satisfactory.'],
+  EL: ['Full duration test completed; all luminaires held for 3 hours. Charging indicators normal.', 'Duration test completed; 3 luminaires failed to hold 3 hours and are marked for battery replacement.'],
+  EX: ['All extinguishers inspected, weighed and tagged. Pressure gauges in the green. Signage and brackets in order.', 'All inspected. One unit found under pressure and replaced; one bracket loose and refixed.'],
+  FD: ['All doors inspected. Self-close and latch from 45°; intumescent strips and cold smoke seals intact; gaps within 3–4 mm.', 'All doors inspected. Two fail to latch reliably; closers adjusted on the day and re-tested satisfactory.'],
+  GS: ['Tightness test satisfactory. Combustion analysis within manufacturer limits. Flue integrity and ventilation checked. Appliance safe to use.', 'Appliance classified At Risk: flue joint seal deteriorated. Turned off with responsible person’s consent; remedial raised.'],
+  EI: ['Periodic inspection complete. Installation satisfactory for continued use. No C1 or C2 observations; C3 improvements listed.', 'Periodic inspection complete: unsatisfactory. Two C2 observations (missing RCD protection to socket circuits). Remedial raised.'],
+  WH: ['Risk assessment reviewed and reissued. Tank condition good; temperatures within HSG274 ranges; no dead legs identified.', 'Risk assessment reissued. Sentinel outlet temperatures below 50 °C at two points; flushing regime and TMV service recommended.'],
+  LF: ['Thorough examination complete. No defects affecting safe operation. Next examination due in six months.', 'Thorough examination complete. Defect: door protection device intermittent. Repair required within 28 days.'],
+  SC: ['Vent opened and closed on test from fire alarm signal and manual control. Actuator and weather seals sound.', 'Actuator slow to open on test; lubricated and re-tested satisfactory. Monitor at next visit.'],
+  LP: ['Continuity and earth resistance within BS EN 62305 limits at all test points. Conductors and clamps visually sound.', 'Two down-conductor joints showing corrosion; cleaned and re-made. One test clamp replaced.'],
+  AC: ['F-gas leak check complete; no leaks detected. Refrigerant charge recorded on the system log.', 'Minor leak detected at outdoor unit flare; charge topped up and joint remade. Follow-up check in 30 days.'],
+};
+function findings(cat, fault) { return FIND[cat][fault ? 1 : 0]; }
+
+BUILDINGS.forEach(b => {
+  const prof = PROF[b.prof]; const seqByCat = {};
+  b.specs.forEach(sp => {
+    const cat = CATS[sp.cat];
+    const sharedLast = sp.last === undefined ? autoLast(cat.months, prof) : (sp.last ? fromISO(sp.last) : null);
+    const makeAsset = i => {
+      const seq = sp.seq || ((seqByCat[sp.cat] = (seqByCat[sp.cat] || 0) + 1));
+      const id = `${b.client}-${b.code}-${sp.cat}-${pad(seq)}`;
+      const a = {
+        id, client: b.client, building: b.code, cat: sp.cat, seq,
+        name: typeof sp.name === 'function' ? sp.name(i) : sp.name,
+        make: sp.make, loc: typeof sp.loc === 'function' ? sp.loc(i) : sp.loc,
+        installed: sp.inst ? fromISO(sp.inst) : null,
+        warrantyEnd: sp.inst && sp.wy ? addMonths(fromISO(sp.inst), sp.wy * 12) : null,
+        warrantyNote: sp.wnote || (sp.wy ? `${sp.wy}-year manufacturer` : null),
+        serial: sp.serial ? sp.serial(i) : (sp.inst ? `${sp.cat}${String(Math.floor(R() * 9e5 + 1e5))}` : null),
+        batt: sp.batt ? fromISO(sp.batt) : null,
+      };
+      assets.push(a); AS[id] = a; return a;
+    };
+    const made = []; for (let i = 1; i <= sp.n; i++) made.push(makeAsset(i));
+    const mkGroup = (list, last) => {
+      const g = { id: `G-${list[0].id}`, client: b.client, building: b.code, cat: sp.cat, assetIds: list.map(a => a.id), last, booking: null, notified: null, label: list.length > 1 ? `${cat.label} · ${plural(list.length, cat.unit)}` : list[0].name };
+      list.forEach(a => a.groupId = g.id); groups.push(g); GR[g.id] = g;
+      if (sp.hist) { sp.hist.forEach(h => events.push({ date: fromISO(h.date), eng: h.eng, result: h.result, notes: h.notes, assetIds: g.assetIds.slice(), groupId: g.id, cat: sp.cat, building: b.code, client: b.client })); }
+      else if (g.last) {
+        const k = ri(2, 4);
+        for (let i = 0; i < k; i++) {
+          const date = i === 0 ? g.last : addDays(addMonths(g.last, -cat.months * i), ri(-6, 6));
+          if (date.getFullYear() < 2022) break;
+          const fault = i > 0 && R() < 0.15;
+          events.push({ date, eng: pick(engineersFor(cat.trade)).id, result: fault ? 'fault' : 'pass', notes: findings(sp.cat, fault), assetIds: g.assetIds.slice(), groupId: g.id, cat: sp.cat, building: b.code, client: b.client });
+        }
+      }
+    };
+    if (sp.grp) mkGroup(made, sharedLast); else made.forEach(a => mkGroup([a], sp.last === undefined ? (sp.n > 1 ? autoLast(cat.months, prof) : sharedLast) : sharedLast));
+  });
+});
+// Reference numbers per building and report type, in date order.
+function renumber() {
+  const counters = {};
+  events.slice().sort((a, b) => a.date - b.date).forEach(e => {
+    if (e.id) { const key = `${e.building}-${CATS[e.cat].rtype}`; counters[key] = Math.max(counters[key] || 0, Number(e.id.slice(-3))); return; }
+    const t = CATS[e.cat].rtype; const key = `${e.building}-${t}`; counters[key] = (counters[key] || 0) + 1;
+    e.id = `${e.client}-${e.building}-${t}-${pad3(counters[key])}`; e.type = RTYPES[t];
+  });
+}
+renumber();
+
+/* Seeded bookings and remedials — the story on top of the generated base. */
+const gOf = assetId => GR[AS[assetId].groupId];
+gOf('HPT-HRC-EL-01').booking = { date: TODAY, eng: 'DP', note: 'Annual 3-hour duration test', onSite: true };
+gOf('NBE-KR4-LF-01').booking = { date: D(2026, 9, 18), eng: 'TB', note: 'LOLER thorough examination' };
+gOf('MFL-HDP-EX-01').booking = { date: D(2026, 9, 22), eng: 'TB', note: 'Annual service · all 31 units' };
+gOf('AVH-BFH-EL-01').booking = { date: D(2026, 9, 29), eng: 'RA', note: 'Duration test' };
+gOf('SCA-CGA-EX-01').booking = { date: D(2026, 9, 24), eng: 'TB', note: 'Annual service' };
+let remSeq = 33;
+const REM = (id, assetId, title, raised, owner, target, extra) => remedials.push(Object.assign({ id, assetId, title, raised: fromISO(raised), owner, target: fromISO(target), status: 'open', closed: null, log: [] }, extra || {}));
+REM('REM-031', 'AVH-ARC-FD-07', 'Self-closer fails from 45° — adjust or replace', '2026-09-04', null, '2026-10-02', { from: 'AVH-ARC-SVR' });
+REM('REM-032', 'AVH-ARC-FD-19', 'Self-closer fails from 45° — adjust or replace', '2026-09-04', null, '2026-10-02');
+REM('REM-033', 'AVH-ARC-FD-31', 'Self-closer fails from 45° — adjust or replace', '2026-09-04', null, '2026-10-02');
+REM('REM-028', 'NBE-GWO-SC-01', 'Actuator seized on monthly test — replace', '2026-08-27', 'TB', '2026-09-15');
+REM('REM-029', 'HPT-HRC-EL-01', '3 luminaires failed monthly flick test — replace batteries', '2026-09-01', 'DP', '2026-09-15');
+REM('REM-027', 'HPT-PRH-AC-03', 'Refrigerant loss detected — trace and repair', '2026-08-20', 'TB', '2026-09-19');
+REM('REM-026', 'SCA-SCP-EX-04', 'Extinguisher missing from bracket — replace', '2026-08-18', 'CS', '2026-09-10');
+REM('REM-030', 'MFL-HDP-FA-01', 'Zone 3 detector intermittent fault — investigate', '2026-09-02', 'RA', '2026-09-16');
+REM('REM-025', 'AVH-KLG-EL-01', 'Central battery unit low capacity — replace cells', '2026-08-12', 'DP', '2026-09-12');
+REM('REM-021', 'NBE-WP3-GS-02', 'Gas valve lockout — replaced under warranty', '2025-02-14', 'JW', '2025-02-21', { status: 'closed', closed: fromISO('2025-02-14') });
+REM('REM-019', 'AVH-ARC-FA-01', 'Level 2 sounder circuit fault — cable repair', '2025-03-03', 'DP', '2025-03-17', { status: 'closed', closed: fromISO('2025-03-11') });
+remedials.forEach(r => { AS[r.assetId].remedials = AS[r.assetId].remedials || []; AS[r.assetId].remedials.push(r.id); });
+
+/* ------------------------------------------------------------- derived */
+function status(g) {
+  if (!g.last) return { key: 'none', next: null, days: null, word: 'No record' };
+  const next = addMonths(g.last, CATS[g.cat].months); const days = dayDiff(next, TODAY);
+  if (days < 0) return { key: 'late', next, days, word: 'Overdue' };
+  if (days <= 30) return { key: 'soon', next, days, word: 'Due' };
+  return { key: 'ok', next, days, word: 'In date' };
+}
+const openRems = a => (a.remedials || []).map(id => remedials.find(r => r.id === id)).filter(r => r.status === 'open');
+const groupRems = g => g.assetIds.flatMap(id => openRems(AS[id]));
+const groupsIn = (pred) => groups.filter(pred);
+function rollup(list) {
+  const c = { ok: 0, soon: 0, late: 0, none: 0, total: 0 };
+  list.forEach(g => { const k = status(g).key; c[k] += g.assetIds.length; c.total += g.assetIds.length; });
+  return c;
+}
+const buildingsOf = code => BUILDINGS.filter(b => b.client === code);
+const groupsOfBuilding = code => groups.filter(g => g.building === code);
+const groupsOfClient = code => groups.filter(g => g.client === code);
+const dueItems = (win) => groups.filter(g => { const s = status(g); return s.key === 'soon' || (win > 30 && s.key === 'ok' && s.days <= win); }).sort((a, b) => status(a).days - status(b).days);
+const lateItems = () => groups.filter(g => status(g).key === 'late').sort((a, b) => status(a).days - status(b).days);
+const noneItems = () => groups.filter(g => status(g).key === 'none');
+const eventsOf = g => events.filter(e => e.groupId === g.id).sort((a, b) => b.date - a.date);
+const warrantyWatch = () => assets.filter(a => a.warrantyEnd && dayDiff(a.warrantyEnd, TODAY) <= 90 && dayDiff(a.warrantyEnd, TODAY) >= -60).sort((a, b) => a.warrantyEnd - b.warrantyEnd);
+function attentionItems() {
+  const out = [];
+  const lateUnbooked = lateItems().filter(g => !g.booking);
+  if (lateUnbooked.length) { const g = lateUnbooked[0]; const s = status(g); out.push({ t: `${plural(lateUnbooked.length, 'statutory item')} overdue and not booked`, s: `Oldest: ${g.label} at ${BL[g.building].name}, ${-s.days} days past its date.`, go: '#/overdue' }); }
+  const un = remedials.filter(r => r.status === 'open' && !r.owner);
+  if (un.length) out.push({ t: `${plural(un.length, 'remedial')} unassigned`, s: `${un[0].title} · ${BL[AS[un[0].assetId].building].name}.`, go: '#/remedials/unassigned' });
+  const ww = warrantyWatch().filter(a => dayDiff(a.warrantyEnd, TODAY) <= 45);
+  if (ww.length) out.push({ t: `${plural(ww.length, 'warranty', 'warranties')} ending or lapsed`, s: ww.map(a => `${a.name} (${BL[a.building].name.split(' —')[0]}) ${fmtS(a.warrantyEnd)}`).join(' · '), go: `#/portfolio/${ww[0].client}/${ww[0].building}/${ww[0].id}` });
+  const nr = noneItems();
+  if (nr.length) out.push({ t: `${plural(nr.length, 'requirement')} with no record`, s: 'Held on the register with no certificate or service date entered.', go: '#/overdue/norecord' });
+  return out;
+}
+
+/* ------------------------------------------------------------- helpers */
+const TAGCLASS = { ok: 'tag-ok', soon: 'tag-caution', late: 'tag-alert', none: 'tag-quiet' };
+const tag = (s, word) => `<span class="tag ${TAGCLASS[s.key]}">${esc(word || s.word)}</span>`;
+function dueCell(s) {
+  if (s.key === 'none') return `<span class="due fine">Not known</span>`;
+  const cls = s.key === 'late' ? 'late' : s.key === 'soon' ? 'soon' : '';
+  const rel = s.key === 'late' ? `${-s.days}d late` : `${s.days}d`;
+  return `<span class="due"><b class="${cls}">${fmtS(s.next)}</b> · ${rel}</span>`;
+}
+function bar(c) { if (!c.total) return ''; const p = k => (100 * c[k] / c.total).toFixed(1) + '%'; return `<div class="cbar"><i class="ok" style="width:${p('ok')}"></i><i class="soon" style="width:${p('soon')}"></i><i class="late" style="width:${p('late')}"></i><i class="none" style="width:${p('none')}"></i></div>`; }
+function metaLine(c, extra) {
+  const parts = [`${c.total} assets`];
+  if (c.late) parts.push(`<span class="late">${c.late} overdue</span>`); if (c.soon) parts.push(`<span class="soon">${c.soon} due</span>`); if (c.none) parts.push(`${c.none} no record`);
+  if (!c.late && !c.soon && !c.none) parts.push('all in date');
+  return `<div class="meta">${(extra ? [extra] : []).concat(parts).map(p => `<span>${p}</span>`).join('')}</div>`;
+}
+const engName = id => ENG[id] ? ENG[id].name : '—';
+const pathTo = (a) => `#/portfolio/${a.client}/${a.building}/${a.id}`;
+const bookingTag = g => g.booking ? `<span class="tag tag-aqua">${g.booking.onSite ? 'On site now' : 'Booked ' + fmtS(g.booking.date)}</span>` : '';
+const remTag = g => { const n = groupRems(g).length; return n ? `<span class="tag tag-caution">${n} remedial</span>` : ''; };
+const notifiedTag = g => g.notified ? `<span class="tag tag-quiet">Client told ${fmtS(g.notified)}</span>` : '';
+const aRef = (a) => `<a class="ref" href="${pathTo(a)}">${a.id}</a>`;
+const gRef = (g) => aRef(AS[g.assetIds[0]]);
+const thumbLine = g => { const b = BL[g.building]; return `<div class="rowtitle" style="font-size:13px;">${esc(b.name)}</div><div class="rowsub"><span class="client">${esc(CL[b.client].name)}</span></div>`; };
+const reqCell = g => { const c = CATS[g.cat]; return `${esc(c.req)}<div class="rowsub">${esc(c.std)} · ${c.months >= 12 ? (c.months / 12) + '-yearly' : c.months + '-monthly'}</div>`.replace('1-yearly', 'annual'); };
+const resultTag = r => r === 'pass' ? '<span class="tag tag-ok">Satisfactory</span>' : '<span class="tag tag-caution">Fault found</span>';
+
+
+/* ================================================================ mobile */
+/* Site logistics — the part of the record an engineer needs at 08:20 in the van. */
+const SITE = {
+  WP3: { addr: '3 Wellington Place, Leeds LS1 4AP', parking: 'Visitor bays, car park B off Whitehall Road — book via A. Fenton the day before', access: 'Sign in at reception for a contractor pass. Plant room keys from security desk; return before leaving.', route: 'Roof plant via core B lift to 6, then the plant stair. Permit to work for hot works only.', phone: '0113 496 0331', hours: '07:00–19:00 weekdays' },
+  KR4: { addr: 'Unit 4, Kirkstall Retail Park, Kirkstall Road, Leeds LS4 2AT', parking: 'Customer car park; use the bays nearest the goods-in door', access: 'Report to the back-of-house door and ask for the duty manager. No pass needed.', route: 'Plant room is off the warehouse behind the roller door. Lift motor room via the mezzanine stair.', phone: '0113 496 0418', hours: 'Store hours 08:00–20:00; plant work before 10:00 preferred' },
+  GWO: { addr: 'Granary Wharf Offices, Wharf Approach, Leeds LS1 4BR', parking: 'No parking on the wharf. Use Granary Wharf multi-storey (paid); claim on expenses', access: 'Reception on the ground floor. Ask for R. Malik; roof access needs the roof key and a second person present.', route: 'AOV at stair 1 head — roof hatch above the 4th floor landing.', phone: '0113 496 0522', hours: '08:00–18:00 weekdays' },
+  ARC: { addr: 'Aire Court, Goodman Street, Hunslet, Leeds LS10 1NZ', parking: 'Residents’ car park — use the two visitor bays by the bin store, display the Leodis card', access: 'Key safe by the main entrance; code from the office. M. Okafor visits Tuesdays and Thursdays.', route: 'Panel in the ground floor plant cupboard, left of the lobby. Repeater in the lobby. Flat entrance doors need a knock first — tenants are in during the day.', phone: '0113 496 0207', hours: 'Communal areas any time; flat doors 09:30–16:00' },
+  BFH: { addr: 'Bramley Fall House, Fall Lane, Bramley, Leeds LS13 3JH', parking: 'Staff car park at the rear; the scheme manager will open the gate', access: 'Ring the office bell. L. Grant on site 08:00–16:00. Residents are elderly — announce yourself in the lounge.', route: 'Plant room off the laundry. Lift motor room key on the office board.', phone: '0113 496 0644', hours: '08:00–16:00' },
+  KLG: { addr: 'Kirkstall Lodge, Abbey Road, Leeds LS5 3NA', parking: 'On-street on Abbey Road; avoid the school run 15:00–15:45', access: 'Key safe by the door, code from the office. No one on site — call M. Okafor if anything is unexpected.', route: 'Panel in the entrance hall. Central battery unit in the plant cupboard under the stair.', phone: '0113 496 0207', hours: 'Any time; be out by 17:00 for residents' },
+  HRC: { addr: 'Headrow Chambers, 34 The Headrow, Leeds LS1 8EQ', parking: 'None. Nearest is the Q-Park on Albion Street. Loading bay on Cookridge Street, 20 min max', access: 'Porters’ lodge, ground floor. Contractor sign-in and permit; G. Pollard holds keys to all risers.', route: 'Listed building — nothing fixed to the plaster without asking. Emergency lighting test switches are in each riser cupboard.', phone: '0113 496 0790', hours: '07:30–18:30 weekdays' },
+  PRH: { addr: 'Park Row House, 19 Park Row, Leeds LS1 5JF', parking: 'Loading bay behind the building off Bond Court, 30 min', access: 'Reception; J. Cole issues the roof key. Two-person rule on the roof.', route: 'Boilers and VRF on the roof via the goods lift to 7 then the plant stair.', phone: '0113 496 0803', hours: '07:30–18:00 weekdays' },
+  APA: { addr: 'Albion Place Arcade, Albion Place, Leeds LS1 6JL', parking: 'Q-Park Albion Street. Trolley from the van via the Briggate entrance', access: 'Management suite above unit 9. F. Hughes on site; service corridor key from the centre office.', route: 'Roof vents via the service stair at the Briggate end.', phone: '0113 496 0866', hours: 'Arcade opens 09:00; plant work before then' },
+  SCP: { addr: "St Chad's Primary School, Otley Road, Far Headingley, Leeds LS16 5JT", parking: 'Staff car park; visitor bays by the main office', access: 'Main office for a visitor badge and DBS check. B. Aldridge escorts in teaching hours.', route: 'Boiler house is the detached block behind the KS1 building. Water tank in the roof void via the caretaker’s hatch.', phone: '0113 496 0912', hours: 'Term time: before 08:30, after 15:30 or by arrangement' },
+  CGA: { addr: 'Cross Gates Academy, Poole Road, Cross Gates, Leeds LS15 7LQ', parking: 'Visitor bays at the front; sign in at reception', access: 'Reception badge and DBS check. N. Osei escorts; radio channel 3.', route: 'Boiler house behind the sports hall. Platform lift in the teaching block, key from estates.', phone: '0113 496 0955', hours: 'Term time: before 08:30, after 15:30' },
+  SGP: { addr: 'Seacroft Grange Primary, Brooklands View, Leeds LS14 6SA', parking: 'Staff car park off Brooklands View', access: 'Main office badge. P. Walsh holds all keys; he starts at 06:30.', route: 'Boiler room at the end of the main corridor. Roof void via the hall store.', phone: '0113 496 0977', hours: 'Term time: before 08:30, after 15:30' },
+  HDP: { addr: 'Hunslet Depot, Balm Road, Hunslet, Leeds LS10 2TP', parking: 'Anywhere in the yard clear of the loading bays', access: 'Gatehouse sign-in; hi-vis and boots on site. T. Barlow in the depot office.', route: 'Workshop bays 1–6 from the yard. Heaters are high level — MEWP available from the depot with 24 h notice.', phone: '0113 496 0123', hours: '06:00–18:00 weekdays' },
+  LDW: { addr: 'Leeds Dock Warehouse, Armouries Way, Leeds LS10 1LE', parking: 'Yard, by the goods-in office', access: 'Goods-in office; O. Brennan. Warehouse floor needs hi-vis; forklifts operating.', route: 'Roof vents via the fixed ladder at the north end. Harness required.', phone: '0113 496 0177', hours: '07:00–19:00' },
+};
+const DEPOT = { name: 'Leodis Compliance, Hunslet', addr: 'Unit 7, Hunslet Trading Estate, Leeds LS10 1BL' };
+const codeSum = s => [...s].reduce((n, c) => n + c.charCodeAt(0), 0);
+const driveMin = (from, to) => from === to ? 0 : 9 + ((codeSum(from) * 7 + codeSum(to) * 13) % 26);
+const miles = min => (min * 0.36).toFixed(1);
+const mapsUrl = code => `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(SITE[code].addr)}`;
+
+/* ------------------------------------------------------------ schedule */
+const visits = []; let vseq = 400;
+const MONDAY = D(2026, 9, 7);
+const SLOTS = ['08:30', '11:00', '13:30', '15:30'];
+function mkVisit(date, time, eng, building, items, status, extra) { const v = Object.assign({ id: `V-${++vseq}`, date, time, eng, building, items, status, filed: [] }, extra || {}); visits.push(v); return v; }
+function fileEvent(g, date, eng, result, notes) {
+  const cat = CATS[g.cat]; const e = { id: nextRefM(g.building, cat.rtype), type: RTYPES[cat.rtype], date, eng, result, notes: notes || findings(g.cat, result === 'fault'), assetIds: g.assetIds.slice(), groupId: g.id, cat: g.cat, building: g.building, client: g.client };
+  events.push(e); if (!g.last || date > g.last) g.last = date; g.booking = null; g.notified = null; return e;
+}
+function nextRefM(building, rtype) { const n = events.filter(e => e.building === building && CATS[e.cat].rtype === rtype).length + 1; return `${BL[building].client}-${building}-${rtype}-${pad3(n)}`; }
+
+/* Existing office bookings become visits. */
+groups.filter(g => g.booking).forEach(g => { const b = g.booking; const same = visits.find(v => v.building === g.building && dayDiff(v.date, b.date) === 0 && v.eng === b.eng); if (same) { same.items.push(g.id); return; } mkVisit(b.date, b.onSite ? '08:30' : '11:00', b.eng, g.building, [g.id], b.onSite ? 'onsite' : 'planned', b.onSite ? { started: '08:12' } : {}); });
+/* The story: Rachel is at Aire Court now, servicing the overdue panels. */
+const arcFA = GR[AS['AVH-ARC-FA-01'].groupId], arcFA2 = GR[AS['AVH-ARC-FA-02'].groupId], arcFD = GR[AS['AVH-ARC-FD-07'].groupId];
+mkVisit(TODAY, '08:30', 'RA', 'ARC', [arcFA.id, arcFA2.id, arcFD.id], 'onsite', { started: '08:41', note: 'Panels overdue since 02 Sep. Check the three failed door closers while there.' });
+/* Fill each engineer's fortnight from what is due in their trades. */
+Object.values(ENG).forEach(eng => {
+  const taken = new Set(visits.flatMap(v => v.items));
+  const pool = groups.filter(g => !taken.has(g.id) && eng.trades.includes(CATS[g.cat].trade) && ['soon', 'late', 'none'].includes(status(g).key)).sort((a, b) => (status(a).days ?? 999) - (status(b).days ?? 999));
+  const byB = {}; pool.forEach(g => { (byB[g.building] = byB[g.building] || []).push(g); });
+  const order = Object.keys(byB).sort((a, b) => Math.min(...byB[a].map(g => status(g).days ?? 999)) - Math.min(...byB[b].map(g => status(g).days ?? 999)));
+  let day = 0, slot = 0; const perDay = eng.id === 'CS' ? 1 : 2;
+  order.forEach(code => {
+    const items = byB[code].slice(0, 4).map(g => g.id); if (!items.length) return;
+    let date = addDays(MONDAY, day); if (date.getDay() === 6) { day += 2; date = addDays(MONDAY, day); }
+    const existing = visits.filter(v => v.eng === eng.id && dayDiff(v.date, date) === 0);
+    if (existing.length >= perDay + (dayDiff(date, TODAY) === 0 ? 1 : 0)) { day++; slot = 0; date = addDays(MONDAY, day); if (date.getDay() === 6) { day += 2; date = addDays(MONDAY, day); } }
+    const used = visits.filter(v => v.eng === eng.id && dayDiff(v.date, date) === 0).map(v => v.time);
+    const time = SLOTS.find(t => !used.includes(t)) || '15:30';
+    const past = date < TODAY;
+    const v = mkVisit(date, time, eng.id, code, items, past ? 'done' : 'planned', past ? { started: time, finished: SLOTS[Math.min(3, SLOTS.indexOf(time) + 1)] } : {});
+    if (past) items.forEach(gid => { const e = fileEvent(GR[gid], date, eng.id, R() < 0.15 ? 'fault' : 'pass'); v.filed.push(e.id); });
+    items.forEach(gid => { const g = GR[gid]; if (!past && !g.booking) g.booking = { date, eng: eng.id, note: CATS[g.cat].req }; });
+    slot++; if (slot >= perDay) { slot = 0; day++; }
+    if (day > 11) day = 11;
+  });
+});
+visits.sort((a, b) => a.date - b.date || a.time.localeCompare(b.time));
+const visitsOn = (eng, date) => visits.filter(v => v.eng === eng && dayDiff(v.date, date) === 0);
+const isDoneItem = (v, gid) => v.filed.some(id => { const e = events.find(x => x.id === id); return e && e.groupId === gid; });
+
+/* -------------------------------------------------------------- state */
+let me = 'RA';
+let route = { screen: 'today', a: null, b: null };
+let cur = '';
+let weekDay = TODAY;
+let openAccess = false, bSearch = '';
+const dlg = document.getElementById('dlg');
+function openDlg(html) { dlg.innerHTML = html; if (!dlg.open) dlg.showModal(); }
+function closeDlg() { if (dlg.open) dlg.close(); dlg.innerHTML = ''; }
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = msg; document.getElementById('toasts').appendChild(t); setTimeout(() => t.remove(), 4000); }
+const DAY = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAYL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const longDate = d => `${DAYL[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}`;
+const vstatus = v => v.status === 'done' ? '<span class="tag tag-ok">Done</span>' : v.status === 'onsite' ? '<span class="tag tag-aqua">On site</span>' : dayDiff(v.date, TODAY) === 0 ? '<span class="tag tag-gold">Today</span>' : '<span class="tag tag-quiet">Planned</span>';
+const itemWord = v => `${plural(v.items.length, 'item')} · ${v.items.reduce((n, gid) => n + GR[gid].assetIds.length, 0)} assets`;
+
+/* ------------------------------------------------------------- screens */
+function appbar(title, sub, back, right) {
+  return `<header class="appbar">${back ? `<button class="iconbtn" data-act="back" type="button" aria-label="Back">‹</button>` : `<div class="brandm"><b>RELAY</b><span>COMPLIANCE</span></div>`}<div class="abt"><b>${esc(title)}</b>${sub ? `<span>${sub}</span>` : ''}</div>${right || ''}</header>`;
+}
+function travelLine(prev, code) {
+  const from = prev ? BL[prev].name.split(' —')[0] : 'the depot'; const min = prev ? driveMin(prev, code) : 9 + (codeSum(code) % 22);
+  return `<span class="travel">🚐 ${min} min · ${miles(min)} mi from ${esc(from)}</span>`;
+}
+function visitCard(v, prev, compact) {
+  const b = BL[v.building]; const s = SITE[v.building]; const next = !compact && v.status === 'planned' && visitsOn(me, v.date).filter(x => x.status !== 'done').indexOf(v) === 0 && dayDiff(v.date, TODAY) === 0;
+  const items = v.items.map(gid => GR[gid]);
+  return `<a class="vcard ${v.status} ${next ? 'next' : ''}" href="#/visit/${v.id}">
+    <div class="vtime"><b>${v.time}</b>${v.status === 'done' ? `<span>–${v.finished}</span>` : v.status === 'onsite' ? `<span>since ${v.started}</span>` : ''}</div>
+    <div class="vbody">
+      <div class="vhead"><b>${esc(b.name)}</b>${vstatus(v)}</div>
+      <div class="vsub">${esc(CL[b.client].name)} · ${esc(s.addr.split(',').slice(-2).join(',').trim())}</div>
+      <div class="vitems">${items.slice(0, 3).map(g => `<span class="vi ${isDoneItem(v, g.id) ? 'did' : isDraft(g) ? 'draft' : status(g).key}">${esc(g.label)}</span>`).join('')}${items.length > 3 ? `<span class="vi">+${items.length - 3}</span>` : ''}</div>
+      ${compact ? '' : `<div class="vfoot">${travelLine(prev, v.building)}${v.status === 'done' ? `<span class="travel">${plural(v.filed.length, 'report')} filed</span>` : ''}</div>`}
+    </div></a>`;
+}
+function screenToday() {
+  const list = visitsOn(me, TODAY); const todo = list.filter(v => v.status !== 'done'); const items = list.reduce((n, v) => n + v.items.length, 0);
+  let prev = null;
+  const cards = list.map(v => { const h = visitCard(v, prev); prev = v.building; return h; }).join('');
+  const onsite = list.find(v => v.status === 'onsite');
+  return appbar('Today', `${longDate(TODAY)} · ${ENG[me].name}`, false, `<button class="iconbtn" data-act="theme" type="button" aria-label="Appearance">◐</button>`) + `<main class="screen">
+    <div class="sum"><div><dt>Visits</dt><dd>${list.length}</dd></div><div><dt>To go</dt><dd>${todo.length}</dd></div><div><dt>Items</dt><dd>${items}</dd></div><div><dt>Drive</dt><dd>${list.reduce((n, v, i) => n + (i ? driveMin(list[i - 1].building, v.building) : 12), 0)}<small>min</small></dd></div></div>
+    ${onsite ? `<div class="note info"><span><b>You are on site at ${esc(BL[onsite.building].name.split(' —')[0])}</b> since ${onsite.started}. ${onsite.items.filter(g => !isDoneItem(onsite, g)).length} of ${onsite.items.length} items still to file${onsite.items.filter(g => !isDoneItem(onsite, g) && isDraft(GR[g])).length ? ` (${onsite.items.filter(g => !isDoneItem(onsite, g) && isDraft(GR[g])).length} in draft)` : ''}.</span></div>` : ''}
+    <div class="sec-h">Your day</div>
+    <div class="vlist">${cards || '<div class="empty">Nothing booked today.</div>'}</div>
+    <div class="sec-h">Tomorrow</div>
+    <div class="vlist">${visitsOn(me, addDays(TODAY, 1)).map(v => visitCard(v, null, true)).join('') || '<div class="empty">Nothing booked.</div>'}</div>
+    <p class="fine-print">Drafts and photos stay on this phone until you send them. The office sees that a visit has started, not what you have written.</p>
+  </main>`;
+}
+function screenWeek() {
+  const start = addDays(MONDAY, weekDay < MONDAY ? -7 : weekDay >= addDays(MONDAY, 7) ? 7 : 0);
+  const days = Array.from({ length: 7 }, (_, i) => addDays(start, i));
+  const list = visitsOn(me, weekDay); let prev = null;
+  return appbar('Diary', `w/c ${fmtS(start)} · ${ENG[me].name}`, false, `<div class="wknav"><button class="iconbtn" data-act="week" data-d="-7" type="button" aria-label="Previous week">‹</button><button class="iconbtn" data-act="week" data-d="7" type="button" aria-label="Next week">›</button></div>`) + `<main class="screen">
+    <div class="days">${days.map(d => { const n = visitsOn(me, d).length; const on = dayDiff(d, weekDay) === 0; const today = dayDiff(d, TODAY) === 0; return `<button class="day ${on ? 'on' : ''} ${today ? 'today' : ''}" data-act="day" data-iso="${toISO(d)}" type="button"><span>${DAY[d.getDay()]}</span><b>${d.getDate()}</b><i>${n ? '●'.repeat(Math.min(n, 3)) : ''}</i></button>`; }).join('')}</div>
+    <div class="sec-h">${longDate(weekDay)}${dayDiff(weekDay, TODAY) === 0 ? ' · today' : ''}</div>
+    <div class="vlist">${list.map(v => { const h = visitCard(v, prev); prev = v.building; return h; }).join('') || '<div class="empty">Nothing booked this day.</div>'}</div>
+    ${list.length > 1 ? `<div class="sec-h">Route</div><div class="route">${['Depot', ...list.map(v => BL[v.building].name.split(' —')[0]), 'Depot'].map((n, i, arr) => `<div class="rstop"><i></i><b>${esc(n)}</b>${i < arr.length - 1 ? `<span>${driveMin(i === 0 ? 'DEP' : list[i - 1].building, i === arr.length - 2 ? 'DEP' : list[i].building)} min</span>` : ''}</div>`).join('')}</div>` : ''}
+  </main>`;
+}
+function screenVisit(v) {
+  const b = BL[v.building]; const s = SITE[v.building]; const c = CL[b.client];
+  const dayList = visitsOn(v.eng, v.date); const idx = dayList.indexOf(v); const prev = idx > 0 ? dayList[idx - 1].building : null;
+  const min = prev ? driveMin(prev, v.building) : 9 + (codeSum(v.building) % 22);
+  const items = v.items.map(gid => GR[gid]); const left = items.filter(g => !isDoneItem(v, g.id));
+  const rems = remedials.filter(r => r.status === 'open' && AS[r.assetId].building === v.building);
+  return appbar(b.name, `${esc(c.name)} · ${fmtS(v.date)} ${v.time}`, true, vstatus(v)) + `<main class="screen">
+    ${v.note ? `<div class="note warn"><span>${esc(v.note)}</span></div>` : ''}
+    <div class="btnrow">
+      <a class="bigbtn" href="${mapsUrl(v.building)}" target="_blank" rel="noopener"><b>Directions</b><span>${min} min · ${miles(min)} mi</span></a>
+      <a class="bigbtn" href="tel:${s.phone.replace(/\s/g, '')}"><b>Call site</b><span>${esc(b.rp.split(': ')[1] || c.contact)}</span></a>
+      <button class="bigbtn" data-act="access" type="button"><b>Access</b><span>${openAccess ? 'hide' : 'keys, parking'}</span></button>
+    </div>
+    <div class="addr">${esc(s.addr)}</div>
+    ${openAccess ? `<div class="access">
+      <div><dt>Parking</dt><dd>${esc(s.parking)}</dd></div>
+      <div><dt>On arrival</dt><dd>${esc(s.access)}</dd></div>
+      <div><dt>Finding the plant</dt><dd>${esc(s.route)}</dd></div>
+      <div><dt>Hours</dt><dd>${esc(s.hours)}</dd></div>
+      <div><dt>Duty holder</dt><dd>${esc(b.rp)} · ${esc(s.phone)}</dd></div>
+    </div>` : ''}
+    <div class="sec-h">Work at this visit <span class="cnt">${items.length - left.length}/${items.length} filed</span></div>
+    <div class="ilist">${items.map(g => { const st = status(g); const done = isDoneItem(v, g.id); const a = AS[g.assetIds[0]]; return `<div class="irow ${done ? 'did' : ''}">
+      <a class="imain" href="#/asset/${a.id}"><b>${esc(g.label)}</b><span>${esc(CATS[g.cat].req)} · ${esc(a.loc)}${g.assetIds.length > 1 ? '' : ' · ' + esc(a.make)}</span><span class="istat">${done ? '<span class="tag tag-ok">Filed</span>' : isDraft(g) ? `<span class="tag tag-gold">Draft ${progress(g).pct}%</span>` : tag(st, st.key === 'late' ? `Overdue ${-st.days}d` : st.key === 'soon' ? `Due ${fmtS(st.next)}` : st.word)}${groupRems(g).length ? `<span class="tag tag-caution">${groupRems(g).length} remedial</span>` : ''}</span></a>
+      ${done || v.status !== 'onsite' ? '' : isDraft(g) ? `<button class="btn btn-q" data-act="form" data-g="${g.id}" data-v="${v.id}" type="button">Continue · ${progress(g).pct}%</button>` : `<button class="btn" data-act="form" data-g="${g.id}" data-v="${v.id}" type="button">Start form</button>`}</div>`; }).join('')}</div>
+    ${rems.length ? `<div class="sec-h">Open remedials here</div><div class="ilist">${rems.map(r => `<a class="irow" href="#/asset/${r.assetId}"><span class="imain"><b>${esc(r.title)}</b><span>${r.id} · ${esc(AS[r.assetId].name)} · ${r.owner === me ? 'yours' : r.owner ? engName(r.owner) : 'unassigned'} · target ${fmtS(r.target)}</span></span></a>`).join('')}</div>` : ''}
+    <div class="sec-h">Building</div>
+    <a class="irow" href="#/building/${v.building}"><span class="imain"><b>All assets at ${esc(b.name.split(' —')[0])}</b><span>${groupsOfBuilding(v.building).reduce((n, g) => n + g.assetIds.length, 0)} tracked · ${esc(b.kind)}</span></span><span class="chev">›</span></a>
+    <div class="stick">${v.status === 'planned' ? `<button class="btn wide" data-act="start" data-v="${v.id}" type="button">Start visit</button>` : v.status === 'onsite' ? `<button class="btn wide ${left.length ? 'btn-q' : ''}" data-act="complete" data-v="${v.id}" type="button">${left.length ? `Complete with ${plural(left.length, 'item')} unfiled` : 'Complete visit'}</button>` : `<div class="donebar">Completed ${v.finished} · ${plural(v.filed.length, 'report')} sent to ${esc(c.contact)}</div>`}
+      ${v.status !== 'done' ? `<button class="btn btn-q wide" data-act="raise" data-b="${v.building}" type="button">Raise a remedial</button>` : ''}</div>
+  </main>`;
+}
+function screenBuilding(b) {
+  const gs = groupsOfBuilding(b.code); const q = bSearch.trim().toLowerCase();
+  const all = gs.flatMap(g => g.assetIds.map(id => AS[id])).filter(a => !q || `${a.id} ${a.name} ${a.make} ${a.loc} ${CATS[a.cat].label}`.toLowerCase().includes(q));
+  const cats = [...new Set(all.map(a => a.cat))]; const r = rollup(gs);
+  return appbar(b.name, `${esc(b.kind)} · ${r.total} assets`, true) + `<main class="screen">
+    <div class="searchm"><input id="bq" type="search" placeholder="Find an asset, tag, make or location" value="${esc(bSearch)}" autocomplete="off"></div>
+    <div style="padding:0 16px;">${bar(r)}<div class="meta" style="margin-top:6px;"><span>${r.ok} in date</span><span class="soon">${r.soon} due</span><span class="late">${r.late} overdue</span><span>${r.none} no record</span></div></div>
+    ${cats.map(cat => `<div class="sec-h">${esc(CATS[cat].label)} <span class="cnt">${all.filter(a => a.cat === cat).length}</span></div><div class="ilist">${all.filter(a => a.cat === cat).map(a => { const g = GR[a.groupId]; const st = status(g); return `<a class="irow" href="#/asset/${a.id}"><span class="imain"><b>${esc(a.name)}</b><span><span class="ref" style="font-size:11px;">${a.id}</span> · ${esc(a.loc)}</span></span>${openRems(a).length ? '<span class="tag tag-caution">Remedial</span>' : tag(st)}</a>`; }).join('')}</div>`).join('') || '<div class="empty">Nothing matches.</div>'}
+  </main>`;
+}
+function screenAsset(a) {
+  const g = GR[a.groupId]; const b = BL[a.building]; const cat = CATS[a.cat]; const st = status(g); const hist = eventsOf(g).slice(0, 4); const rems = openRems(a);
+  const todayVisit = visitsOn(me, TODAY).find(v => v.items.includes(g.id) && v.status === 'onsite');
+  return appbar(a.name, `<span class="ref" style="font-size:11px;">${a.id}</span> · ${esc(b.name.split(' —')[0])}`, true) + `<main class="screen">
+    <dl class="kv"><div><dt>Where</dt><dd>${esc(a.loc)}</dd></div><div><dt>Make</dt><dd>${esc(a.make)}</dd></div>${a.serial ? `<div><dt>Serial</dt><dd class="num">${esc(a.serial)}</dd></div>` : ''}${a.installed ? `<div><dt>Installed</dt><dd>${fmt(a.installed)}${a.warrantyEnd ? ` · warranty to ${fmt(a.warrantyEnd)}` : ''}</dd></div>` : ''}</dl>
+    <div class="duem"><div><dt>${esc(cat.req)}</dt><dd class="txt">${esc(cat.std)} · ${cat.months >= 12 ? (cat.months === 12 ? 'annual' : cat.months / 12 + '-yearly') : cat.months + '-monthly'}</dd></div><div><dt>Last</dt><dd>${g.last ? fmtS(g.last) + ' ' + g.last.getFullYear() : '<span class="fine">none</span>'}</dd></div><div><dt>Next</dt><dd class="${st.key}">${st.next ? fmtS(st.next) + ' ' + st.next.getFullYear() : 'not known'}<small>${st.key === 'late' ? -st.days + ' days overdue' : st.key === 'soon' ? st.days + ' days' : st.key === 'none' ? 'no record' : 'in date'}</small></dd></div></div>
+    ${g.assetIds.length > 1 ? `<div class="note info"><span>One of ${g.assetIds.length} ${cat.unit}s checked together. Filing covers the whole set.</span></div>` : ''}
+    ${rems.length ? `<div class="sec-h">Open remedials</div><div class="ilist">${rems.map(r => `<div class="irow"><span class="imain"><b>${esc(r.title)}</b><span>${r.id} · raised ${fmtS(r.raised)} · ${r.owner ? engName(r.owner) : 'unassigned'} · target ${fmtS(r.target)}</span></span>${r.owner === me || !r.owner ? `<button class="btn btn-q" data-act="close-rem" data-r="${r.id}" type="button">Close</button>` : ''}</div>`).join('')}</div>` : ''}
+    <div class="sec-h">History</div>
+    <div class="ilist">${hist.length ? hist.map(e => `<button class="irow" data-act="report" data-id="${e.id}" type="button"><span class="imain"><b>${fmt(e.date)} · ${engName(e.eng)}</b><span>${e.id} · ${esc(e.notes.length > 90 ? e.notes.slice(0, 88) + '…' : e.notes)}</span></span>${resultTag(e.result)}</button>`).join('') : '<div class="empty">No reports on file.</div>'}</div>
+    <div class="stick">${todayVisit && !isDoneItem(todayVisit, g.id) ? `<button class="btn wide" data-act="form" data-g="${g.id}" data-v="${todayVisit.id}" type="button">${isDraft(g) ? `Continue form · ${progress(g).pct}%` : `Open ${esc(formFor(g).title.toLowerCase())} form`}</button>` : `<button class="btn btn-q wide" data-act="form" data-g="${g.id}" type="button">${isDraft(g) ? `Continue draft · ${progress(g).pct}%` : 'Open service form'}</button>`}<button class="btn btn-q wide" data-act="raise" data-a="${a.id}" type="button">Raise a remedial</button></div>
+  </main>`;
+}
+function screenMe() {
+  const e = ENG[me]; const week = visits.filter(v => v.eng === me && v.date >= MONDAY && v.date < addDays(MONDAY, 7));
+  const done = week.filter(v => v.status === 'done'); const filed = events.filter(x => x.eng === me && x.date >= MONDAY).length; const rems = remedials.filter(r => r.status === 'open' && r.owner === me);
+  return appbar(e.full, e.role || 'Engineer', false, `<button class="iconbtn" data-act="theme" type="button" aria-label="Appearance">◐</button>`) + `<main class="screen">
+    <div class="sum"><div><dt>Visits</dt><dd>${done.length}<small>/${week.length}</small></dd></div><div><dt>Filed</dt><dd>${filed}</dd></div><div><dt>Remedials</dt><dd>${rems.length}</dd></div><div><dt>Queued</dt><dd>0</dd></div></div>
+    <dl class="kv"><div><dt>Trades</dt><dd>${e.trades.join(' · ')}</dd></div>${e.gasSafe ? `<div><dt>Gas Safe</dt><dd class="num">${e.gasSafe} · card expires 31 Mar 2027</dd></div>` : ''}<div><dt>Van</dt><dd>YX24 LDS · MEWP licence to Oct 2027</dd></div><div><dt>Sync</dt><dd>Up to date · 08:40 · nothing waiting to send</dd></div></dl>
+    <div class="sec-h">Your remedials</div>
+    <div class="ilist">${rems.length ? rems.map(r => `<a class="irow" href="#/asset/${r.assetId}"><span class="imain"><b>${esc(r.title)}</b><span>${esc(BL[AS[r.assetId].building].name)} · target ${fmtS(r.target)}</span></span><span class="tag ${dayDiff(r.target, TODAY) < 0 ? 'tag-alert' : 'tag-caution'}">${dayDiff(r.target, TODAY) < 0 ? 'Past target' : 'Open'}</span></a>`).join('') : '<div class="empty">None assigned to you.</div>'}</div>
+    <div class="sec-h">Prototype</div>
+    <div class="f" style="padding:0 16px;"><label>View as</label><select data-act="switch">${Object.values(ENG).map(x => `<option value="${x.id}" ${x.id === me ? 'selected' : ''}>${esc(x.full)} — ${x.trades.slice(0, 2).join(', ')}</option>`).join('')}</select></div>
+    <div class="ilist" style="margin-top:16px;"><button class="irow" data-act="planned" data-what="Installing Relay to the home screen" type="button"><span class="imain"><b>Install Relay</b><span>Add to home screen for offline use</span></span><span class="chev">›</span></button><button class="irow" data-act="planned" data-what="Sign out" type="button"><span class="imain"><b>Sign out</b><span>Microsoft · Leodis</span></span><span class="chev">›</span></button></div>
+    <p class="fine-print">Everything here is invented. Addresses are real streets with made-up buildings; phone numbers are 0113 496 test numbers.</p>
+  </main>`;
+}
+function tabbar() {
+  const t = route.screen === 'visit' ? (visits.find(v => v.id === route.a) && dayDiff(visits.find(v => v.id === route.a).date, TODAY) === 0 ? 'today' : 'week') : route.screen === 'building' || route.screen === 'asset' ? (visitsOn(me, TODAY).length ? 'today' : 'week') : route.screen;
+  const todo = visitsOn(me, TODAY).filter(v => v.status !== 'done').length;
+  return `<nav class="tabbar">${[['today', 'Today', todo || ''], ['week', 'Diary', ''], ['buildings', 'Buildings', ''], ['me', 'Me', '']].map(([k, l, n]) => `<a class="${t === k ? 'on' : ''}" href="#/${k}"><i>${{ today: '◉', week: '▦', buildings: '⌂', me: '◯' }[k]}</i>${l}${n ? `<b>${n}</b>` : ''}</a>`).join('')}</nav>`;
+}
+function screenBuildings() {
+  const mine = [...new Set(visits.filter(v => v.eng === me && v.date >= addDays(TODAY, -7)).map(v => v.building))];
+  const rest = BUILDINGS.map(b => b.code).filter(c => !mine.includes(c));
+  const row = code => { const b = BL[code]; const r = rollup(groupsOfBuilding(code)); const nv = visits.find(v => v.eng === me && v.building === code && v.status !== 'done'); return `<a class="irow" href="#/building/${code}"><span class="imain"><b>${esc(b.name)}</b><span>${esc(SITE[code].addr.split(',').slice(-2).join(',').trim())}${nv ? ` · next visit ${fmtS(nv.date)}` : ''}</span><span style="display:block;margin-top:6px;">${bar(r)}</span></span><span class="chev">›</span></a>`; };
+  return appbar('Buildings', `${BUILDINGS.length} on the register`, false) + `<main class="screen">
+    <div class="sec-h">Yours this fortnight</div><div class="ilist">${mine.map(row).join('') || '<div class="empty">No visits assigned.</div>'}</div>
+    <div class="sec-h">Everything else</div><div class="ilist">${rest.map(row).join('')}</div></main>`;
+}
+
+/* ------------------------------------------------------------- sheets */
+function sheetRaise(assetId, building) {
+  const opts = assetId ? [AS[assetId]] : groupsOfBuilding(building).map(g => AS[g.assetIds[0]]);
+  return openDlg(`<form method="dialog" data-form="raise"><div class="sh-head"><b>Raise a remedial</b><span>${esc(BL[(assetId ? AS[assetId] : { building }).building].name)}</span><button class="iconbtn" type="button" data-act="dlg-close" aria-label="Close">×</button></div>
+    <div class="sh-body"><div class="f"><label>Asset</label><select name="asset">${opts.map(a => `<option value="${a.id}">${esc(GR[a.groupId].label)} · ${a.id}</option>`).join('')}</select></div>
+      <div class="f"><label>What needs doing</label><input name="title" required placeholder="Short, so the office can quote it"></div>
+      <div class="f"><label>Photos</label><div class="photos"><button type="button" class="ph" data-act="photo">＋<span>Add</span></button><span class="phn" data-phn>0 attached</span></div></div>
+    </div><div class="sh-foot"><button class="btn wide" type="submit">Raise</button></div></form>`);
+}
+function sheetReport(e) {
+  const g = GR[e.groupId];
+  return openDlg(`<div class="sh-head"><b>${esc(e.type)}</b><span>${e.id} · ${fmt(e.date)}</span><button class="iconbtn" type="button" data-act="dlg-close" aria-label="Close">×</button></div>
+    <div class="sh-body"><dl class="kv" style="margin:0;"><div><dt>Covers</dt><dd>${esc(g.label)} · ${esc(BL[e.building].name)}</dd></div><div><dt>Engineer</dt><dd>${esc(ENG[e.eng].full)}</dd></div><div><dt>Result</dt><dd>${resultTag(e.result)}</dd></div></dl><p style="margin:12px 0 0;font-size:14px;">${esc(e.notes)}</p><p class="fine-print" style="padding:8px 0 0;">Next ${esc(CATS[e.cat].req.toLowerCase())} due ${fmt(addMonths(e.date, CATS[e.cat].months))}.</p></div>`);
+}
+
+/* ------------------------------------------------------------- actions */
+let photoN = 0;
+const ACTIONS = {
+  back() { const prev = stack.pop(); go(prev || '#/today', true); },
+  theme() { const root = document.documentElement; const c = root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); root.setAttribute('data-theme', c === 'dark' ? 'light' : 'dark'); },
+  access() { openAccess = !openAccess; render(); },
+  week(d) { weekDay = addDays(weekDay, Number(d.d)); render(); },
+  day(d) { weekDay = fromISO(d.iso); render(); },
+  start(d) { const v = visits.find(x => x.id === d.v); v.status = 'onsite'; v.started = '08:41' === v.started ? v.started : `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`; v.items.forEach(gid => { const g = GR[gid]; g.booking = { date: v.date, eng: v.eng, onSite: true }; }); toast(`Visit started. The office can see you are at ${esc(BL[v.building].name.split(' —')[0])}.`); render(); },
+  complete(d) { const v = visits.find(x => x.id === d.v); v.status = 'done'; v.finished = `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}`; v.items.forEach(gid => { const g = GR[gid]; if (g.booking && g.booking.onSite) g.booking = null; }); toast(`Visit complete. ${plural(v.filed.length, 'report')} sent to ${esc(CL[BL[v.building].client].contact)}.`); go('#/today'); },
+  raise(d) { photoN = 0; sheetRaise(d.a || null, d.b || (d.a ? AS[d.a].building : null)); },
+  photo(d, el) { photoN++; const n = el.closest('form').querySelector('[data-phn]'); n.textContent = `${plural(photoN, 'photo')} attached`; el.parentNode.insertBefore(Object.assign(document.createElement('span'), { className: 'ph thumb', textContent: `IMG ${photoN}` }), n); },
+  'close-rem'(d) { const r = remedials.find(x => x.id === d.r); r.status = 'closed'; r.closed = TODAY; toast(`${r.id} closed by ${esc(ENG[me].name)}.`); render(); },
+  report(d) { const e = events.find(x => x.id === d.id); if (e) sheetReport(e); },
+  planned(d) { toast(`${esc(d.what)} is outside this prototype.`); },
+  'dlg-close'() { closeDlg(); },
+};
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#/"]');
+  if (a && !e.defaultPrevented) { e.preventDefault(); if (a.dataset.act === 'dlg-close') closeDlg(); go(a.getAttribute('href')); return; }
+  const t = e.target.closest('[data-act]'); if (t && t.tagName !== 'SELECT') { const f = ACTIONS[t.dataset.act]; if (f) f(t.dataset, t); }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.act === 'switch') { me = t.value; openAccess = false; toast(`Viewing as ${esc(ENG[me].full)}.`); go('#/today'); }
+  if (t.name === 'result' && t.form) { const f = t.form.querySelector('[data-remfield]'); if (f) f.hidden = t.value !== 'fault'; const n = t.form.querySelector('[name=notes]'); const g = GR[t.form.dataset.g]; if (n && g) n.value = findings(g.cat, t.value === 'fault'); }
+});
+document.addEventListener('input', e => { if (e.target.id === 'bq') { bSearch = e.target.value; render(); const q = document.getElementById('bq'); if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); } } });
+dlg.addEventListener('submit', e => {
+  e.preventDefault(); const f = e.target; const fd = new FormData(f);
+  if (f.dataset.form === 'raise') {
+    const a = AS[fd.get('asset')]; const id = `REM-${pad3(++remSeq)}`; const r = { id, assetId: a.id, title: fd.get('title'), raised: TODAY, owner: null, target: addDays(TODAY, 28), status: 'open', closed: null }; remedials.push(r); a.remedials = a.remedials || []; a.remedials.push(id); toast(`${id} raised against ${esc(a.name)}. The office will assign it.`);
+  }
+  closeDlg(); render();
+});
+dlg.addEventListener('close', () => { dlg.innerHTML = ''; });
+
+
+/* ================================================================= forms */
+/* Service form templates, one per requirement. These are PLACEHOLDERS: the
+   sections and fields are a plausible first draft of what each standard asks
+   for, to be replaced by Leodis's actual forms. Field types: check (pass /
+   fail / n.a.), yn, num (with unit), choice, text, time. */
+const C = (id, label, o) => Object.assign({ id, label, t: 'check', req: true }, o || {});
+const N = (id, label, unit, o) => Object.assign({ id, label, t: 'num', unit, req: true }, o || {});
+const Y = (id, label, o) => Object.assign({ id, label, t: 'yn', req: true }, o || {});
+const T = (id, label, o) => Object.assign({ id, label, t: 'text', req: false }, o || {});
+const CH = (id, label, opts, o) => Object.assign({ id, label, t: 'choice', opts, req: true }, o || {});
+const FORMS = {
+  FA: { title: 'Fire alarm service', sections: [
+    { h: 'Panel and power', f: [C('mains', 'Mains supply present and healthy'), C('batt', 'Standby batteries — condition and date'), N('battv', 'Battery voltage on load', 'V'), N('chg', 'Charger output', 'V'), CH('faults', 'Faults shown on panel', ['None', 'Fault cleared on site', 'Fault remains — remedial'])] },
+    { h: 'Functional test', f: [N('zones', 'Zones tested this visit', 'zones'), CH('pct', 'Detectors tested', ['25%', '50%', '100%']), C('sound', 'Sounders audible in all areas'), C('vis', 'Visual alarm devices operate'), C('cae', 'Cause and effect — AOV, door holders, lift grounding', { req: false }), C('arc', 'Signal received at monitoring centre', { req: false })] },
+    { h: 'Record', f: [Y('log', 'Logbook updated on site'), N('false', 'False alarms since last visit', '', { req: false }), T('obs', 'Observations and variations')] },
+  ] },
+  EL: { title: 'Emergency lighting duration test', sections: [
+    { h: 'Duration test', f: [{ id: 'start', label: 'Test started', t: 'time', req: true }, N('lum', 'Luminaires under test', ''), N('fail', 'Failed to hold 3 hours', ''), C('chg', 'Charging indicators normal after restoration'), C('exit', 'Exit signage legible and lit')] },
+    { h: 'Record', f: [Y('log', 'Logbook updated'), T('obs', 'Failed luminaire locations and observations')] },
+  ] },
+  EX: { title: 'Extinguisher annual service', sections: [
+    { h: 'Inventory', f: [N('n', 'Units inspected', ''), N('miss', 'Units missing from location', ''), N('cond', 'Units condemned or replaced', '')] },
+    { h: 'Condition', f: [C('press', 'Pressure gauges / weights within limits'), C('hose', 'Hoses, nozzles and pins'), C('seal', 'Tamper seals intact'), C('tag', 'Service tags dated'), C('sign', 'Signage and brackets')] },
+    { h: 'Record', f: [T('obs', 'Observations')] },
+  ] },
+  FD: { title: 'Fire door quarterly check', sections: [
+    { h: 'Doors', f: [N('n', 'Doors inspected', ''), N('fail', 'Doors failing to self-close and latch', ''), T('failwhich', 'Which doors failed')] },
+    { h: 'Condition', f: [C('gap', 'Gaps within 3–4 mm'), C('strip', 'Intumescent strips and cold smoke seals'), C('glaz', 'Glazing and beads'), C('hinge', 'Hinges — three, CE marked, secure'), C('sign', 'Signage present')] },
+    { h: 'Record', f: [T('obs', 'Observations')] },
+  ] },
+  GS: { title: 'Gas safety inspection (CP17)', sections: [
+    { h: 'Appliance', f: [Y('ident', 'Appliance details match the register'), C('tight', 'Tightness test'), N('pres', 'Operating pressure', 'mbar'), N('ratio', 'CO/CO₂ ratio', '', { req: true })] },
+    { h: 'Installation', f: [C('flue', 'Flue integrity and termination'), C('vent', 'Ventilation adequate'), C('safe', 'Safety devices operate'), C('pipe', 'Pipework and supports')] },
+    { h: 'Classification', f: [CH('class', 'Appliance classification', ['Safe to use', 'At Risk (AR)', 'Immediately Dangerous (ID)']), Y('notice', 'Warning notice issued', { req: false }), T('obs', 'Observations')] },
+  ] },
+  EI: { title: 'Periodic inspection (EICR)', sections: [
+    { h: 'Scope', f: [N('boards', 'Distribution boards inspected', ''), N('circ', 'Circuits tested', ''), CH('samp', 'Sampling', ['100%', '50%', '25%'])] },
+    { h: 'Results', f: [C('zs', 'Earth fault loop impedance within limits'), C('rcd', 'RCD trip times within limits'), N('c1', 'C1 observations', ''), N('c2', 'C2 observations', ''), N('c3', 'C3 observations', ''), Y('sat', 'Installation satisfactory for continued use')] },
+    { h: 'Record', f: [T('obs', 'Observations')] },
+  ] },
+  WH: { title: 'Legionella risk assessment review', sections: [
+    { h: 'Storage', f: [C('tank', 'Tank condition, lid and insect screen'), N('cold', 'Cold water storage temperature', '°C'), N('flow', 'Calorifier flow temperature', '°C'), N('ret', 'Calorifier return temperature', '°C')] },
+    { h: 'Outlets', f: [C('coldout', 'Sentinel cold outlets below 20 °C'), C('hotout', 'Sentinel hot outlets above 50 °C within a minute'), N('dead', 'Dead legs identified', ''), Y('disinf', 'Disinfection recommended')] },
+    { h: 'Record', f: [Y('scheme', 'Written scheme reviewed with duty holder'), T('obs', 'Observations')] },
+  ] },
+  LF: { title: 'Thorough examination (LOLER)', sections: [
+    { h: 'Examination', f: [C('gear', 'Safety gear and overspeed governor'), C('doors', 'Doors, locks and protection devices'), C('ropes', 'Ropes / belts and terminations'), C('brake', 'Brake and machine'), C('pit', 'Pit, car top and machine room')] },
+    { h: 'Outcome', f: [Y('unsafe', 'Defects affecting safe operation'), N('within', 'Repairs required within', 'days', { req: false }), T('obs', 'Defects and observations')] },
+  ] },
+  SC: { title: 'Smoke control annual service', sections: [
+    { h: 'Operation', f: [C('alarm', 'Opens on fire alarm signal'), C('man', 'Opens and closes on manual control'), C('reset', 'Resets and holds closed'), C('seal', 'Weather seals and frame')] },
+    { h: 'Record', f: [CH('act', 'Actuator condition', ['Good', 'Serviceable — monitor', 'Replace']), T('obs', 'Observations')] },
+  ] },
+  LP: { title: 'Lightning protection annual test', sections: [
+    { h: 'Testing', f: [N('pts', 'Test points tested', ''), N('ohm', 'Highest earth resistance', 'Ω'), C('cont', 'Continuity of conductors'), C('joint', 'Joints, clamps and fixings')] },
+    { h: 'Record', f: [T('obs', 'Observations')] },
+  ] },
+  AC: { title: 'F-gas leak check', sections: [
+    { h: 'System', f: [N('kg', 'Refrigerant charge', 'kg'), CH('method', 'Leak detection method', ['Electronic detector', 'Bubble test', 'UV dye']), Y('leak', 'Leak found'), C('label', 'F-gas label present and legible')] },
+    { h: 'Record', f: [Y('log', 'F-gas log updated'), T('obs', 'Observations')] },
+  ] },
+};
+const drafts = {};
+const formFor = g => FORMS[g.cat] || { title: `${CATS[g.cat].req}`, sections: [{ h: 'Inspection', f: [C('vis', 'Visual inspection'), C('func', 'Functional test'), T('obs', 'Observations')] }] };
+const allFields = g => formFor(g).sections.flatMap(s => s.f);
+const draftOf = g => drafts[g.id];
+function progress(g) { const d = draftOf(g); const req = allFields(g).filter(f => f.req); const done = d ? req.filter(f => d.a[f.id] != null && d.a[f.id] !== '').length : 0; return { done, total: req.length, pct: req.length ? Math.round(100 * done / req.length) : 0, signed: !!(d && d.signed), photos: d ? d.photos : 0 }; }
+const isDraft = g => !!draftOf(g);
+function screenForm(v, g) {
+  const b = BL[g.building]; const cat = CATS[g.cat]; const form = formFor(g); const d = drafts[g.id] || (drafts[g.id] = { a: {}, photos: 0, signed: false, started: `${pad(new Date().getHours())}:${pad(new Date().getMinutes())}` }); const p = progress(g);
+  const field = f => {
+    const val = d.a[f.id];
+    const seg = (opts) => `<div class="seg s${opts.length}">${opts.map(o => `<label><input type="radio" name="${f.id}" value="${o.v}" data-f="${f.id}" ${val === o.v ? 'checked' : ''}><span class="${o.c || ''}">${o.l}</span></label>`).join('')}</div>`;
+    let ctl;
+    if (f.t === 'check') ctl = seg([{ v: 'pass', l: 'Pass', c: 'okc' }, { v: 'fail', l: 'Fail', c: 'late' }, { v: 'na', l: 'N/A', c: 'fine' }]);
+    else if (f.t === 'yn') ctl = seg([{ v: 'yes', l: 'Yes' }, { v: 'no', l: 'No' }]);
+    else if (f.t === 'num') ctl = `<div class="numf"><input type="number" inputmode="decimal" step="any" data-f="${f.id}" value="${val != null ? esc(val) : ''}" placeholder="—">${f.unit ? `<span>${esc(f.unit)}</span>` : ''}</div>`;
+    else if (f.t === 'time') ctl = `<input type="time" data-f="${f.id}" value="${esc(val || '')}">`;
+    else if (f.t === 'choice') ctl = `<select data-f="${f.id}"><option value="">Select…</option>${f.opts.map(o => `<option ${val === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select>`;
+    else ctl = `<textarea data-f="${f.id}" placeholder="Optional">${esc(val || '')}</textarea>`;
+    return `<div class="ff ${f.req ? 'req' : ''}"><label>${esc(f.label)}${f.req ? '' : ' <em>optional</em>'}</label>${ctl}</div>`;
+  };
+  return appbar(form.title, `${esc(g.label)} · ${esc(b.name.split(' —')[0])}`, true, `<span class="tag tag-gold">Draft</span>`) + `<main class="screen" data-formscreen>
+    <div class="note warn"><span><b>Placeholder form.</b> Sections and fields are a first draft against ${esc(cat.std)}. Leodis's actual ${esc(form.title.toLowerCase())} form replaces this.</span></div>
+    <dl class="kv" style="margin-top:12px;"><div><dt>Covers</dt><dd>${g.assetIds.length > 1 ? `${g.assetIds.length} ${cat.unit}s · ${esc(AS[g.assetIds[0]].loc)} and others` : `${esc(AS[g.assetIds[0]].name)} · ${esc(AS[g.assetIds[0]].make)} · ${esc(AS[g.assetIds[0]].loc)}`}</dd></div><div><dt>Started</dt><dd>${d.started} · ${esc(ENG[me].full)}${v ? ` · visit ${v.id}` : ''}</dd></div></dl>
+    ${form.sections.map((s, i) => `<div class="sec-h">${i + 1}. ${esc(s.h)}</div><div class="fsec">${s.f.map(field).join('')}</div>`).join('')}
+    <div class="sec-h">${form.sections.length + 1}. Evidence</div>
+    <div class="fsec"><div class="ff"><label>Photos</label><div class="photos"><button type="button" class="ph" data-act="fphoto" data-g="${g.id}">＋<span>Add</span></button>${Array.from({ length: d.photos }, (_, i) => `<span class="ph thumb">IMG ${i + 1}</span>`).join('')}</div></div>
+      <div class="ff req"><label>Signature</label>${d.signed ? `<div class="sig-line signed">✓ Signed ${esc(ENG[me].full)} · ${fmt(TODAY)} · on site</div>` : `<button type="button" class="btn btn-q wide" data-act="fsign" data-g="${g.id}">Sign as ${esc(ENG[me].full)}</button>`}</div></div>
+    <div class="stick fstick">
+      <div class="prog"><div class="progbar"><i style="width:${p.pct}%"></i></div><span data-progtext>${p.done} of ${p.total} required answered${p.signed ? ' · signed' : ' · not signed'}</span></div>
+      <div class="btnpair"><button class="btn btn-q" data-act="fsave" data-g="${g.id}" data-v="${v ? v.id : ''}" type="button">Save draft</button><button class="btn" data-act="fsend" data-g="${g.id}" data-v="${v ? v.id : ''}" type="button" ${p.done < p.total || !p.signed ? 'disabled' : ''}>Send report</button></div>
+    </div>
+  </main>`;
+}
+function composeNotes(g) {
+  const d = draftOf(g); const fields = allFields(g); const fails = fields.filter(f => f.t === 'check' && d.a[f.id] === 'fail').map(f => f.label);
+  const bad = fields.filter(f => (f.t === 'yn' && ((f.id === 'unsafe' || f.id === 'leak' || f.id === 'disinf') ? d.a[f.id] === 'yes' : (f.id === 'sat' && d.a[f.id] === 'no'))) || (f.t === 'choice' && /At Risk|Immediately|Replace|remains/.test(d.a[f.id] || ''))).map(f => `${f.label}: ${d.a[f.id]}`);
+  const nums = fields.filter(f => f.t === 'num' && d.a[f.id] !== undefined && d.a[f.id] !== '').map(f => `${f.label.toLowerCase()} ${d.a[f.id]}${f.unit ? ' ' + f.unit : ''}`);
+  const fault = fails.length > 0 || bad.length > 0 || Number(d.a.fail || 0) > 0 || Number(d.a.c1 || 0) + Number(d.a.c2 || 0) > 0;
+  const parts = [];
+  if (fails.length) parts.push(`Failed: ${fails.join('; ')}.`); if (bad.length) parts.push(bad.join('. ') + '.');
+  if (Number(d.a.fail || 0) > 0) parts.push(`${d.a.fail} failed${d.a.failwhich ? ` (${d.a.failwhich})` : ''}.`);
+  if (!fault) parts.push(findings(g.cat, false)); if (nums.length) parts.push(`Readings: ${nums.join(', ')}.`); if (d.a.obs) parts.push(d.a.obs);
+  return { fault, notes: parts.join(' '), remTitle: fails[0] ? `${fails[0]} — failed at ${CATS[g.cat].req.toLowerCase()}` : bad[0] || (Number(d.a.fail || 0) > 0 ? `${d.a.fail} ${CATS[g.cat].unit}s failed — ${d.a.failwhich || 'see report'}` : `Fault found at ${CATS[g.cat].req.toLowerCase()}`) };
+}
+function updateFormFooter(g) { const p = progress(g); const t = document.querySelector('[data-progtext]'); if (t) t.textContent = `${p.done} of ${p.total} required answered${p.signed ? ' · signed' : ' · not signed'}`; const bar = document.querySelector('.progbar i'); if (bar) bar.style.width = p.pct + '%'; const send = document.querySelector('[data-act=fsend]'); if (send) send.disabled = p.done < p.total || !p.signed; }
+document.addEventListener('change', e => { const t = e.target; const fid = t.dataset.f; if (!fid || !route.b) return; const g = GR[route.b]; if (!g || !drafts[g.id]) return; drafts[g.id].a[fid] = t.value; updateFormFooter(g); });
+document.addEventListener('input', e => { const t = e.target; const fid = t.dataset.f; if (!fid || !route.b || t.tagName === 'SELECT') return; const g = GR[route.b]; if (!g || !drafts[g.id]) return; drafts[g.id].a[fid] = t.value; updateFormFooter(g); });
+Object.assign(ACTIONS, {
+  form(d) { go(`#/form/${d.v || '-'}/${d.g}`); },
+  fphoto(d, el) { const dr = drafts[d.g]; dr.photos++; el.parentNode.appendChild(Object.assign(document.createElement('span'), { className: 'ph thumb', textContent: `IMG ${dr.photos}` })); },
+  fsign(d) { drafts[d.g].signed = true; render(); },
+  fsave(d) { toast('Draft saved on this phone. It is not sent until you send it.'); go(d.v ? `#/visit/${d.v}` : `#/asset/${GR[d.g].assetIds[0]}`); },
+  fsend(d) {
+    const g = GR[d.g]; const v = visits.find(x => x.id === d.v) || null; const c = composeNotes(g);
+    const ev = fileEvent(g, TODAY, me, c.fault ? 'fault' : 'pass', c.notes); if (v) v.filed.push(ev.id);
+    if (c.fault) { const id = `REM-${pad3(++remSeq)}`; const r = { id, assetId: g.assetIds[0], title: c.remTitle, raised: TODAY, owner: null, target: addDays(TODAY, 28), status: 'open', closed: null }; remedials.push(r); const a = AS[r.assetId]; a.remedials = a.remedials || []; a.remedials.push(id); toast(`Sent <span class="ref">${ev.id}</span> with a fault. ${id} raised for the office to assign.`); }
+    else toast(`Sent <span class="ref">${ev.id}</span> · next ${esc(CATS[g.cat].req.toLowerCase())} due ${fmt(addMonths(TODAY, CATS[g.cat].months))}.`);
+    delete drafts[g.id]; go(v ? `#/visit/${v.id}` : `#/asset/${g.assetIds[0]}`);
+  },
+});
+
+/* -------------------------------------------------------------- router */
+function parse(h) { cur = h || ''; const p = cur.replace(/^#\/?/, '').split('/').filter(Boolean); route = { screen: p[0] || 'today', a: p[1] || null, b: p[2] || null }; }
+const stack = [];
+function go(h, isBack) { openAccess = false; if (!isBack && cur && cur !== h) { stack.push(cur); if (stack.length > 40) stack.shift(); } try { if (location.hash !== h) history.pushState(null, '', h); } catch (err) { } parse(h); render(); }
+function render() {
+  const s = route.screen; let html;
+  if (s === 'form' && GR[route.b]) html = screenForm(visits.find(v => v.id === route.a) || null, GR[route.b]);
+  else if (s === 'visit' && visits.find(v => v.id === route.a)) html = screenVisit(visits.find(v => v.id === route.a));
+  else if (s === 'building' && BL[route.a]) html = screenBuilding(BL[route.a]);
+  else if (s === 'asset' && AS[route.a]) html = screenAsset(AS[route.a]);
+  else if (s === 'week') html = screenWeek();
+  else if (s === 'buildings') html = screenBuildings();
+  else if (s === 'me') html = screenMe();
+  else html = screenToday();
+  const ph = document.getElementById('phone'); const sc = ph.querySelector('.screen'); const top = sc ? sc.scrollTop : 0;
+  ph.innerHTML = html + tabbar();
+  if (sc && ['building'].includes(s)) ph.querySelector('.screen').scrollTop = top;
+}
+window.addEventListener('popstate', () => { if (location.hash !== cur) { parse(location.hash); render(); } });
+window.addEventListener('hashchange', () => { if (location.hash !== cur) { parse(location.hash); render(); } });
+go(location.hash && location.hash.startsWith('#/') ? location.hash : '#/today');
+})();
+
+</script>
+</body>
+</html>

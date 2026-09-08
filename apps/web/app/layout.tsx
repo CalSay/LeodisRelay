@@ -7,6 +7,8 @@ import { currentPrincipal } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/auth/provider";
 import "./globals.css";
 import './engineer.css';
+import './entry.css';
+import { WorkspaceChrome } from '@/components/WorkspaceChrome';
 import { canManage, isAdmin } from '@/lib/auth/access';
 import { PrincipalContext } from '@/components/PrincipalContext';
 import { InstallRelay } from '@/components/InstallRelay';
@@ -82,14 +84,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           {provider.kind === "local" ? " — IDENTITY NOT CHECKED" : ""}
         </div>
 
-        <header className={`appbar${principal?.role==='Engineer'?' appbar-engineer':''}`}>
+        <WorkspaceChrome><header className={`appbar${principal?.role==='Engineer'?' appbar-engineer':''}`}>
           <div className="appbar-inner">
             <Link href="/" className="brand">
               <span>RELAY</span>
               <em>LEODIS</em>
             </Link>
             <nav className="nav">
-              <Link href="/">Home</Link>
+              <Link href="/developments">Home</Link>
+              <Link href="/">Companies</Link>
               {principal && <Link href={principal.role==='Engineer'?'/engineer?view=projects':'/projects'}>Projects</Link>}
               {principal && canManage(principal) && <Link href="/engineer">Engineer view</Link>}
               {principal && canManage(principal) && <Link href="/office">Office</Link>}
@@ -106,7 +109,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
 
-        <InstallRelay />
+        <InstallRelay /></WorkspaceChrome>
         <PrincipalContext principal={principal}>{children}</PrincipalContext>
       </body>
     </html>

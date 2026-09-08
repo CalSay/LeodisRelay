@@ -287,7 +287,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   if (missing) {
     return (
       <main className="wrap">
-        <Link href="/" className="back">&larr; Projects</Link>
+        <Link href="/projects" className="back">&larr; Projects</Link>
         <div className="empty">This report could not be loaded. Check your connection or sign in again.</div>
         <a href="/offline.html">Recover drafts retained on this phone</a>
       </main>

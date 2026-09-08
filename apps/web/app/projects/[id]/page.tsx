@@ -42,7 +42,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   if (!project) {
     return (
       <main className="wrap">
-        <Link href="/" className="back">
+        <Link href="/projects" className="back">
           &larr; Projects
         </Link>
         <div className="empty">That project could not be found.</div>
@@ -52,7 +52,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   return (
     <main className="wrap">
-      <Link href="/" className="back">
+      <Link href="/projects" className="back">
         &larr; Projects
       </Link>
 

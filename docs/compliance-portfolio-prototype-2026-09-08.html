@@ -1,0 +1,1176 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compliance Portfolio Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Relay · Leodis Compliance Management · portfolio browser prototype.
+   Same tokens as the concept document. Everything on screen is generated from
+   an invented data model in the script below; nothing is wired to the app. */
+:root {
+  color-scheme: light;
+  --ground: #eeede9; --sunken: #e4e3de; --panel: #f8f7f3; --panel-2: #efeeea; --panel-3: #e3e2dd;
+  --line: #d6d7d3; --line-2: #c3c6c4;
+  --text: #25282a; --text-2: #5b5f60; --text-3: #767a7b;
+  --aqua: #267c76; --aqua-ink: #ffffff; --aqua-wash: rgba(38,124,118,.09);
+  --gold: #816321; --gold-ink: #ffffff; --gold-wash: rgba(129,99,33,.09);
+  --alert: #a83c22; --alert-wash: rgba(168,60,34,.09);
+  --caution: #7d5a12; --caution-wash: rgba(125,90,18,.11);
+  --ok: #2b6b48; --ok-wash: rgba(43,107,72,.10);
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+  --r: 2px;
+  --sans: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #202224; --sunken: #1a1c1e; --panel: #282b2d; --panel-2: #2e3134; --panel-3: #363a3d;
+    --line: #3a3e41; --line-2: #484c4e;
+    --text: #f0efeb; --text-2: #b5b7b6; --text-3: #868a8b;
+    --aqua: #77c7bf; --aqua-ink: #16201f; --aqua-wash: rgba(119,199,191,.10);
+    --gold: #ccb071; --gold-ink: #202224; --gold-wash: rgba(204,176,113,.10);
+    --alert: #e2705a; --alert-wash: rgba(226,112,90,.11);
+    --caution: #dda94f; --caution-wash: rgba(221,169,79,.11);
+    --ok: #63b78d; --ok-wash: rgba(99,183,141,.11);
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #202224; --sunken: #1a1c1e; --panel: #282b2d; --panel-2: #2e3134; --panel-3: #363a3d;
+  --line: #3a3e41; --line-2: #484c4e;
+  --text: #f0efeb; --text-2: #b5b7b6; --text-3: #868a8b;
+  --aqua: #77c7bf; --aqua-ink: #16201f; --aqua-wash: rgba(119,199,191,.10);
+  --gold: #ccb071; --gold-ink: #202224; --gold-wash: rgba(204,176,113,.10);
+  --alert: #e2705a; --alert-wash: rgba(226,112,90,.11);
+  --caution: #dda94f; --caution-wash: rgba(221,169,79,.11);
+  --ok: #63b78d; --ok-wash: rgba(99,183,141,.11);
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--ground); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow: hidden auto; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--aqua); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+#app { height: 100vh; min-width: 1240px; display: flex; flex-direction: column; }
+
+/* ---- Chrome ---- */
+.topbar { flex: none; display: flex; align-items: center; gap: var(--s5); background: var(--panel); border-bottom: 1px solid var(--line-2); padding: 0 var(--s5); height: 56px; position: relative; z-index: 5; }
+.logo { display: flex; align-items: baseline; gap: var(--s3); }
+.logo b { font-size: 17px; font-weight: 500; letter-spacing: .12em; }
+.logo span { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; color: var(--aqua); border-left: 1px solid var(--line-2); padding-left: var(--s3); }
+.search { flex: 1; max-width: 440px; position: relative; }
+.search input { width: 100%; background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s2) var(--s3); color: var(--text); font: inherit; font-size: 13px; }
+.search input::placeholder { color: var(--text-3); }
+.search kbd { position: absolute; right: 10px; top: 8px; font-family: var(--mono); font-size: 10px; color: var(--text-3); border: 1px solid var(--line-2); border-radius: 2px; padding: 1px 5px; pointer-events: none; }
+.results { position: absolute; top: 40px; left: 0; right: 0; background: var(--panel); border: 1px solid var(--line-2); box-shadow: 0 8px 24px rgba(0,0,0,.12); max-height: 380px; overflow: auto; }
+.results a { display: flex; gap: var(--s3); align-items: baseline; padding: var(--s2) var(--s3); border-bottom: 1px solid var(--line); font-size: 13px; }
+.results a:last-child { border-bottom: 0; }
+.results a:hover { background: var(--aqua-wash); }
+.results .ref { width: 130px; flex: none; }
+.results .k { margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--text-3); letter-spacing: .08em; text-transform: uppercase; }
+.results .none { padding: var(--s3); color: var(--text-3); font-size: 13px; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: var(--s4); }
+.whoami { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; color: var(--text-2); }
+.whoami em { font-style: normal; color: var(--aqua); }
+.bell { font-family: var(--mono); font-size: 11px; color: var(--text-2); letter-spacing: .08em; background: none; border: 1px solid transparent; padding: 4px 8px; border-radius: var(--r); }
+.bell:hover { border-color: var(--line-2); }
+.bell b { color: var(--alert); font-weight: 500; }
+.bell.quiet b { color: var(--ok); }
+.tbtn { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); background: none; border: 0; padding: 4px 6px; }
+.tbtn:hover { color: var(--text); }
+.attn-pop { position: absolute; right: 24px; top: 56px; width: 420px; background: var(--panel); border: 1px solid var(--alert); border-top: 0; border-left-width: 3px; box-shadow: 0 12px 28px rgba(0,0,0,.14); z-index: 6; }
+.attn-pop .mini b { color: var(--text); font-weight: 500; font-size: 13px; }
+.attn-pop .mini .rowsub { margin-top: 2px; }
+
+.hnav { flex: none; display: flex; background: var(--panel); border-bottom: 1px solid var(--line-2); padding: 0 var(--s5); }
+.hnav a { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .11em; color: var(--text-3); padding: var(--s3) var(--s4); border-bottom: 2px solid transparent; display: flex; align-items: center; gap: var(--s2); }
+.hnav a:hover { color: var(--text); }
+.hnav a.on { color: var(--text); border-bottom-color: var(--aqua); }
+.hnav a i { font-style: normal; font-size: 10px; color: var(--text-3); background: var(--panel-2); border-radius: 8px; padding: 0 6px; font-variant-numeric: tabular-nums; }
+.hnav a.on i { background: var(--aqua-wash); color: var(--aqua); }
+.hnav a i.warn { color: var(--alert); background: var(--alert-wash); }
+
+/* ---- Views ---- */
+.view { flex: 1; min-height: 0; overflow: auto; padding: var(--s5); display: flex; flex-direction: column; gap: var(--s5); }
+.pagehead { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s4); }
+.pagehead h3 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -.02em; }
+.pagehead p { margin: var(--s1) 0 0; font-size: 13px; color: var(--text-2); }
+.actions { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap; }
+.btn { font-family: var(--mono); font-size: 11px; letter-spacing: .09em; text-transform: uppercase; background: var(--gold); color: var(--gold-ink); border: 1px solid var(--gold); border-radius: var(--r); padding: var(--s2) var(--s4); white-space: nowrap; }
+.btn:hover { filter: brightness(1.08); }
+.btn-q { background: transparent; color: var(--text-2); border-color: var(--line-2); }
+.btn-q:hover { color: var(--aqua); border-color: var(--aqua); filter: none; }
+.btn-sm { padding: 5px var(--s3); font-size: 10px; }
+.btn[disabled] { opacity: .5; cursor: default; filter: none; }
+.drop::after { content: " ▾"; opacity: .7; }
+.panel { background: var(--panel); border: 1px solid var(--line); }
+.panel-head { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); }
+.panel-head h4 { margin: 0; font-family: var(--mono); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .12em; color: var(--text-2); }
+.panel-head .more { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--aqua); letter-spacing: .06em; }
+.panel-foot { padding: var(--s3) var(--s4); border-top: 1px solid var(--line); font-size: 12px; color: var(--text-3); }
+.tag { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-family: var(--mono); font-size: 10px; letter-spacing: .07em; text-transform: uppercase; border: 1px solid; border-radius: var(--r); padding: 2px var(--s2); }
+.tag::before { content: "●"; font-size: 8px; line-height: 1; }
+.tag-ok { color: var(--ok); border-color: var(--ok); background: var(--ok-wash); }
+.tag-alert { color: var(--alert); border-color: var(--alert); background: var(--alert-wash); }
+.tag-alert::before { content: "▲"; }
+.tag-caution { color: var(--caution); border-color: var(--caution); background: var(--caution-wash); }
+.tag-caution::before { content: "◆"; }
+.tag-quiet { color: var(--text-3); border-color: var(--line-2); background: transparent; }
+.tag-quiet::before { content: "○"; }
+.tag-aqua { color: var(--aqua); border-color: var(--aqua); background: var(--aqua-wash); }
+.tag-aqua::before { content: "■"; }
+.tag-gold { color: var(--gold); border-color: var(--gold); background: var(--gold-wash); }
+.tag-gold::before { content: "◪"; }
+.ref { font-family: var(--mono); font-size: 12px; color: var(--aqua); letter-spacing: .02em; font-weight: 500; }
+a.ref:hover { text-decoration: underline; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.due { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.due b { font-weight: 500; }
+.late { color: var(--alert); } .soon { color: var(--caution); } .fine { color: var(--text-3); } .okc { color: var(--ok); }
+table.reg { width: 100%; border-collapse: collapse; }
+table.reg th { text-align: left; font-family: var(--mono); font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .11em; color: var(--text-3); padding: var(--s2) var(--s4); border-bottom: 1px solid var(--line-2); background: var(--panel-2); white-space: nowrap; }
+table.reg td { padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13px; }
+table.reg tr:last-child td { border-bottom: 0; }
+table.reg tbody tr:hover { background: var(--aqua-wash); }
+table.reg tr.sel { background: var(--aqua-wash); box-shadow: inset 2px 0 0 var(--aqua); }
+table.reg.tight td, table.reg.tight th { padding: var(--s2) var(--s3); font-size: 12px; }
+table.reg tr.clickable { cursor: pointer; }
+.rowtitle { font-weight: 500; font-size: 14px; }
+.rowsub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.rowsub .sep { color: var(--line-2); margin: 0 6px; }
+.client { font-family: var(--mono); font-size: 10px; letter-spacing: .06em; color: var(--text-3); text-transform: uppercase; }
+.mini { display: flex; gap: var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); align-items: flex-start; }
+.mini:last-child { border-bottom: 0; }
+.mini-b { flex: 1; min-width: 0; }
+.mini-b p { margin: 0; font-size: 13px; }
+.age { font-family: var(--mono); font-size: 11px; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.filters { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; padding: var(--s3) var(--s4); background: var(--panel-2); border: 1px solid var(--line); }
+.chip { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; border: 1px solid var(--line-2); border-radius: var(--r); padding: 3px var(--s3); color: var(--text-2); background: var(--panel); white-space: nowrap; cursor: pointer; }
+.chip:hover { border-color: var(--aqua); }
+.chip.on { border-color: var(--aqua); color: var(--aqua); background: var(--aqua-wash); }
+.chip.warn { color: var(--alert); border-color: var(--alert); }
+.chip.warn.on { background: var(--alert-wash); }
+.filters .spacer { margin-left: auto; }
+.filters select, .f select, .f input, .f textarea { font: inherit; font-size: 13px; background: var(--panel); color: var(--text); border: 1px solid var(--line-2); border-radius: var(--r); padding: 4px 8px; }
+.cbar { display: flex; height: 6px; width: 100%; background: var(--panel-3); border-radius: 1px; overflow: hidden; }
+.cbar i { display: block; height: 100%; }
+.cbar .ok { background: var(--ok); } .cbar .soon { background: var(--caution); } .cbar .late { background: var(--alert); } .cbar .none { background: var(--line-2); }
+.cbar-key { display: flex; gap: var(--s4); font-family: var(--mono); font-size: 10px; letter-spacing: .06em; color: var(--text-3); text-transform: uppercase; flex-wrap: wrap; }
+.cbar-key span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: -1px; }
+.cbar-key .k-ok::before { background: var(--ok); } .cbar-key .k-soon::before { background: var(--caution); } .cbar-key .k-late::before { background: var(--alert); } .cbar-key .k-none::before { background: var(--line-2); }
+.figs { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--line); background: var(--panel); }
+.figs div { padding: var(--s4); border-right: 1px solid var(--line); }
+.figs div:last-child { border-right: 0; }
+.figs dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .11em; color: var(--text-3); }
+.figs dd { margin: var(--s2) 0 0; font-family: var(--mono); font-size: 24px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.figs dd small { font-size: 12px; color: var(--text-3); letter-spacing: 0; margin-left: 6px; font-family: var(--sans); }
+
+/* ---- Portfolio columns ---- */
+.cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 224px 300px 372px 1fr; }
+.col { min-height: 0; overflow-y: auto; border-right: 1px solid var(--line-2); background: var(--panel); display: flex; flex-direction: column; min-width: 0; }
+.col:last-child { border-right: 0; background: var(--sunken); }
+.col-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: baseline; gap: var(--s2); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line-2); background: var(--panel-2); }
+.col-head h4 { margin: 0; font-family: var(--mono); font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .12em; color: var(--aqua); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.col-head i { font-style: normal; font-family: var(--mono); font-size: 10px; color: var(--text-3); margin-left: auto; white-space: nowrap; }
+.col:last-child .col-head { background: var(--panel); }
+.item { display: block; padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); border-left: 2px solid transparent; }
+.item:hover { background: var(--sunken); }
+.item.on { background: var(--aqua-wash); border-left-color: var(--aqua); }
+.item-top { display: flex; align-items: baseline; gap: var(--s2); }
+.item-top .rowtitle { font-size: 13px; flex: 1; min-width: 0; }
+.item-top .arrow { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+.item.on .arrow { color: var(--aqua); }
+.item .cbar { margin-top: var(--s2); }
+.item .meta { display: flex; gap: var(--s3); margin-top: var(--s1); font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--text-3); font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.grp { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--text-3); padding: var(--s3) var(--s4) var(--s1); border-bottom: 1px solid var(--line); display: flex; gap: var(--s2); }
+.grp i { font-style: normal; margin-left: auto; }
+.arow { display: flex; align-items: center; gap: var(--s3); padding: var(--s2) var(--s4); border-bottom: 1px solid var(--line); border-left: 2px solid transparent; }
+.arow:hover { background: var(--sunken); }
+.arow.on { background: var(--aqua-wash); border-left-color: var(--aqua); }
+.arow .ref { font-size: 11px; width: 122px; flex: none; }
+.arow .nm { flex: 1; min-width: 0; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.arow .tag { flex: none; }
+.empty { padding: var(--s6) var(--s5); color: var(--text-3); font-size: 13px; text-align: center; }
+.colpad { padding: var(--s4); display: flex; flex-direction: column; gap: var(--s4); }
+.colpad.sticky-foot { margin-top: auto; border-top: 1px solid var(--line); padding: var(--s3) var(--s4); }
+
+/* ---- Sheet ---- */
+.sheet { background: var(--panel); border: 1px solid var(--line); padding: var(--s4); }
+.sheet-title { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s4); border-bottom: 1px solid var(--line-2); padding-bottom: var(--s3); }
+.sheet-title h4 { margin: 6px 0 var(--s1); font-size: 18px; font-weight: 500; letter-spacing: -.015em; }
+.crumbs { font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: .03em; }
+.crumbs a { font-weight: 500; color: var(--aqua); }
+.crumbs a:hover { text-decoration: underline; }
+.crumbs span { margin: 0 6px; color: var(--line-2); }
+.tb { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); margin-top: var(--s3); }
+.tb div { padding: var(--s3) var(--s4); border-right: 1px solid var(--line); }
+.tb div:last-child { border-right: 0; }
+.tb dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); }
+.tb dd { margin: var(--s1) 0 0; font-size: 13px; }
+.tb.two { grid-template-columns: 1fr 1fr; }
+.tb.two div:nth-child(2n) { border-right: 0; }
+.tb.two div:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+.tb.two.single div:nth-child(-n+2) { border-bottom: 0; }
+.sec-h { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--text-3); margin: var(--s5) 0 var(--s2); display: flex; align-items: center; gap: var(--s3); }
+.sec-h a, .sec-h button { margin-left: auto; color: var(--aqua); letter-spacing: .06em; background: none; border: 0; font: inherit; }
+.dueblock { display: grid; grid-template-columns: 1fr 1fr 1fr; border: 1px solid var(--line); margin-top: var(--s4); }
+.dueblock > div { padding: var(--s3) var(--s4); border-right: 1px solid var(--line); }
+.dueblock > div:last-child { border-right: 0; }
+.dueblock dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); }
+.dueblock dd { margin: var(--s1) 0 0; font-family: var(--mono); font-size: 18px; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.dueblock dd.txt { font-family: var(--sans); font-size: 13px; }
+.dueblock dd small { display: block; font-family: var(--sans); font-size: 12px; color: var(--text-3); letter-spacing: 0; margin-top: 2px; }
+.hist { display: flex; gap: var(--s4); padding: var(--s3) 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.hist:last-child { border-bottom: 0; }
+.hist .d { font-family: var(--mono); font-size: 12px; color: var(--text-2); width: 92px; flex: none; font-variant-numeric: tabular-nums; }
+.hist .b { flex: 1; min-width: 0; }
+.hist .b p { margin: 0; font-size: 13px; }
+.rmenu { border: 1px solid var(--line); background: var(--panel); }
+.rmenu a, .rmenu button { display: flex; width: 100%; text-align: left; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); border: 0; border-bottom: 1px solid var(--line); background: none; color: inherit; }
+.rmenu a:last-child, .rmenu button:last-child { border-bottom: 0; }
+.rmenu a:hover, .rmenu button:hover { background: var(--aqua-wash); }
+.rmenu .rt { flex: 1; min-width: 0; }
+.rmenu .rt b { display: block; font-size: 13px; font-weight: 500; }
+.rmenu .rt span { font-size: 12px; color: var(--text-3); }
+.rmenu .ref { font-size: 11px; width: 118px; flex: none; }
+.note { margin-top: var(--s3); padding: 10px 12px; border: 1px solid var(--line-2); border-left-width: 3px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); background: var(--panel-2); }
+.note.warn { border-color: var(--caution); background: var(--caution-wash); }
+.note.bad { border-color: var(--alert); background: var(--alert-wash); }
+.note.good { border-color: var(--ok); background: var(--ok-wash); }
+.note.info { border-color: var(--aqua); background: var(--aqua-wash); }
+.note b { font-weight: 500; }
+.menu { position: relative; }
+.menu-pop { position: absolute; right: 0; top: 34px; width: 320px; z-index: 4; box-shadow: 0 12px 28px rgba(0,0,0,.14); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5); align-items: start; }
+.two-wide { display: grid; grid-template-columns: 1fr 380px; gap: var(--s5); align-items: start; }
+
+/* ---- Dialogs, toasts, overlays ---- */
+dialog { background: var(--panel); color: var(--text); border: 1px solid var(--line-2); padding: 0; width: min(620px, 92vw); max-height: 90vh; overflow: auto; }
+dialog::backdrop { background: rgba(20,22,24,.45); }
+.dlg-head { display: flex; align-items: flex-start; gap: var(--s4); padding: var(--s4) var(--s5); border-bottom: 1px solid var(--line-2); }
+.dlg-head h3 { margin: 0; font-size: 18px; font-weight: 500; letter-spacing: -.015em; }
+.dlg-head .x { margin-left: auto; background: none; border: 0; color: var(--text-3); font-size: 18px; line-height: 1; padding: 0 4px; }
+.dlg-body { padding: var(--s4) var(--s5); display: flex; flex-direction: column; gap: var(--s4); }
+.dlg-foot { padding: var(--s3) var(--s5); border-top: 1px solid var(--line); display: flex; justify-content: flex-end; gap: var(--s2); background: var(--panel-2); }
+.f { display: flex; flex-direction: column; gap: 4px; }
+.f label { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); }
+.f input, .f select, .f textarea { padding: 8px 10px; background: var(--sunken); }
+.f textarea { min-height: 72px; resize: vertical; }
+.f-row { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s4); }
+.checks { display: flex; flex-direction: column; gap: 6px; font-size: 13px; }
+.checks label { display: flex; gap: 8px; align-items: center; font-family: var(--sans); text-transform: none; letter-spacing: 0; color: var(--text); font-size: 13px; }
+.doc { padding: var(--s5); }
+.doc-head { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid var(--text); padding-bottom: var(--s3); margin-bottom: var(--s4); }
+.doc-head h2 { margin: 0; font-size: 20px; font-weight: 500; letter-spacing: -.02em; }
+.doc-head .kick { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--aqua); margin-bottom: 6px; }
+.doc p { font-size: 13px; color: var(--text-2); margin: 0 0 var(--s3); }
+.doc .sig { margin-top: var(--s4); padding-top: var(--s3); border-top: 1px solid var(--line); font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: .04em; }
+#toasts { position: fixed; right: 24px; bottom: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 50; }
+.toast { background: var(--text); color: var(--ground); font-size: 13px; padding: 10px 14px; border-left: 3px solid var(--aqua); box-shadow: 0 8px 24px rgba(0,0,0,.2); max-width: 420px; }
+.toast .ref { color: var(--ground); opacity: .85; }
+.hub { position: fixed; inset: 0; background: var(--ground); z-index: 40; display: grid; place-items: center; }
+.hub-card { width: min(1060px, 92vw); border: 1px solid var(--line-2); background: var(--ground); }
+.hub-top { display: flex; align-items: center; justify-content: space-between; padding: 22px 32px; border-bottom: 1px solid var(--line-2); }
+.hub-top .logo b { font-size: 24px; }
+.hub-body { padding: 28px 32px 34px; }
+.hub-body h1 { font-size: 11px; letter-spacing: .15em; text-transform: uppercase; color: var(--gold); margin: 0 0 30px; font-weight: 400; }
+.hub-grid { display: grid; grid-template-columns: .75fr 1.25fr; gap: 28px; }
+.mast { display: flex; flex-direction: column; justify-content: space-between; border-right: 1px solid var(--line-2); padding: 22px 24px 24px 0; }
+.mast strong { font-size: clamp(42px, 7vw, 72px); font-weight: 500; line-height: .96; letter-spacing: -.06em; }
+.mast small { font-size: 11px; letter-spacing: .13em; color: var(--gold); margin-top: 36px; line-height: 1.6; }
+.company { --acc: var(--gold); position: relative; display: grid; grid-template-columns: minmax(0,1fr) 38px; gap: 12px; align-items: center; width: 100%; border: 0; border-top: 1px solid var(--line-2); padding: 26px 24px; min-height: 165px; background: transparent; color: var(--text); text-align: left; }
+.company.aq { --acc: var(--aqua); }
+.company::before { content: ''; position: absolute; left: 24px; top: -1px; width: 28px; height: 2px; background: var(--acc); }
+.company:hover { background: var(--panel); }
+.company small { display: block; color: var(--acc); font-size: 12px; letter-spacing: .2em; margin-bottom: 14px; }
+.company .nm { font-size: 26px; line-height: 1.18; letter-spacing: -.02em; }
+.company .nm em { display: block; font-size: 11px; font-style: normal; letter-spacing: .14em; margin-top: 10px; color: var(--text-2); }
+.company .arrow { display: grid; place-items: center; width: 38px; height: 38px; background: var(--gold); color: var(--gold-ink); font-size: 23px; line-height: 1; }
+.hub-foot { padding: 17px 32px; border-top: 1px solid var(--line-2); font-size: 11px; letter-spacing: .04em; color: var(--text-2); display: flex; justify-content: space-between; }
+.proto { position: fixed; left: 16px; bottom: 16px; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); background: var(--panel); border: 1px solid var(--line-2); padding: 4px 8px; z-index: 30; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="toasts"></div>
+<dialog id="dlg"></dialog>
+<div class="proto">Prototype · invented data · 08 Sep 2026</div>
+<script>
+(function () {
+'use strict';
+/* ------------------------------------------------------------------ utils */
+const pad = n => String(n).padStart(2, '0');
+const pad3 = n => String(n).padStart(3, '0');
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const D = (y, m, d) => new Date(y, m - 1, d);
+const TODAY = D(2026, 9, 8);
+const MS = 864e5;
+const dayDiff = (a, b) => Math.round((a - b) / MS);
+const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+const addMonths = (d, m) => { const x = new Date(d); x.setMonth(x.getMonth() + m); return x; };
+const fmt = d => d ? `${pad(d.getDate())} ${MON[d.getMonth()]} ${d.getFullYear()}` : '—';
+const fmtS = d => d ? `${pad(d.getDate())} ${MON[d.getMonth()]}` : '—';
+const toISO = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const fromISO = s => { const [y, m, d] = s.split('-').map(Number); return D(y, m, d); };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+let seed = 20260908;
+const R = () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+const pick = a => a[Math.floor(R() * a.length)];
+const ri = (a, b) => a + Math.floor(R() * (b - a + 1));
+const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
+
+/* ------------------------------------------------------------- reference */
+const ENG = {
+  RA: { id: 'RA', name: 'R. Ashworth', full: 'Rachel Ashworth', trades: ['Fire alarm', 'Emergency lighting', 'Fire doors', 'Smoke control'] },
+  JW: { id: 'JW', name: 'J. Whitaker', full: 'James Whitaker', trades: ['Gas', 'HVAC'], gasSafe: '5467213' },
+  DP: { id: 'DP', name: 'D. Priestley', full: 'Dan Priestley', trades: ['Electrical', 'Emergency lighting', 'Lightning protection', 'Fire alarm'] },
+  SK: { id: 'SK', name: 'S. Kaur', full: 'Simran Kaur', trades: ['Water hygiene'] },
+  TB: { id: 'TB', name: 'T. Bright', full: 'Tom Bright', trades: ['Lifts', 'Smoke control', 'Extinguishers', 'HVAC'] },
+  CS: { id: 'CS', name: 'Cal Say', full: 'Cal Say', trades: ['Fire doors', 'Extinguishers'], role: 'Compliance manager' },
+};
+const engineersFor = trade => { const l = Object.values(ENG).filter(e => e.trades.includes(trade)); return l.length ? l : Object.values(ENG); };
+
+const RTYPES = { SVR: 'Service report', CERT: 'Certificate', RA: 'Risk assessment', TER: 'Thorough examination' };
+const CATS = {
+  FA: { label: 'Fire alarm', req: 'Service visit', std: 'BS 5839-1', months: 6, group: 'Fire & life safety', trade: 'Fire alarm', rtype: 'SVR', unit: 'panel' },
+  EL: { label: 'Emergency lighting', req: 'Annual duration test', std: 'BS 5266-1', months: 12, group: 'Fire & life safety', trade: 'Emergency lighting', rtype: 'SVR', unit: 'system' },
+  EX: { label: 'Extinguishers', req: 'Annual service', std: 'BS 5306-3', months: 12, group: 'Fire & life safety', trade: 'Extinguishers', rtype: 'SVR', unit: 'unit' },
+  FD: { label: 'Fire doors', req: 'Quarterly check', std: 'Fire Safety (England) Regs 2022', months: 3, group: 'Fire & life safety', trade: 'Fire doors', rtype: 'SVR', unit: 'door' },
+  GS: { label: 'Gas safety', req: 'Gas safety inspection', std: 'CP17 · Gas Safety Regs 1998', months: 12, group: 'Gas & electrical', trade: 'Gas', rtype: 'CERT', unit: 'appliance' },
+  EI: { label: 'Electrical', req: 'Periodic inspection (EICR)', std: 'BS 7671', months: 60, group: 'Gas & electrical', trade: 'Electrical', rtype: 'CERT', unit: 'installation' },
+  WH: { label: 'Water hygiene', req: 'Legionella risk assessment', std: 'ACoP L8 · HSG274', months: 24, group: 'Water & plant', trade: 'Water hygiene', rtype: 'RA', unit: 'system' },
+  LF: { label: 'Lifts', req: 'Thorough examination', std: 'LOLER 1998', months: 6, group: 'Water & plant', trade: 'Lifts', rtype: 'TER', unit: 'lift' },
+  SC: { label: 'Smoke control', req: 'Annual service', std: 'BS 7346-8', months: 12, group: 'Fire & life safety', trade: 'Smoke control', rtype: 'SVR', unit: 'vent' },
+  LP: { label: 'Lightning protection', req: 'Annual test', std: 'BS EN 62305', months: 12, group: 'Gas & electrical', trade: 'Lightning protection', rtype: 'CERT', unit: 'system' },
+  AC: { label: 'Air conditioning', req: 'F-gas leak check', std: 'F-gas Regs 2015', months: 12, group: 'Water & plant', trade: 'HVAC', rtype: 'SVR', unit: 'system' },
+};
+
+const CLIENTS = [
+  { code: 'NBE', name: 'Northbrook Estates', contact: 'Sam Ledgard', role: 'Portfolio manager', email: 's.ledgard@northbrook.example', since: 2019 },
+  { code: 'AVH', name: 'Aire Valley Housing', contact: 'M. Okafor', role: 'Housing compliance lead', email: 'm.okafor@airevalley.example', since: 2021 },
+  { code: 'HPT', name: 'Headrow Property Trust', contact: 'Priya Nair', role: 'Estates director', email: 'p.nair@headrowpt.example', since: 2020 },
+  { code: 'SCA', name: "St Chad's Academy Trust", contact: 'Helen Marsh', role: 'Head of estates', email: 'h.marsh@stchads.example', since: 2024 },
+  { code: 'MFL', name: 'Marshall Facilities', contact: 'Tom Barlow', role: 'Facilities manager', email: 't.barlow@marshallfm.example', since: 2022 },
+];
+const CL = Object.fromEntries(CLIENTS.map(c => [c.code, c]));
+
+const PROF = {
+  office: { ok: .82, soon: .12, late: .02, none: .04 },
+  resi: { ok: .72, soon: .12, late: .05, none: .11 },
+  school: { ok: .70, soon: .10, late: .04, none: .16 },
+  tidy: { ok: .90, soon: .10, late: 0, none: 0 },
+};
+// spec: [cat, n, name, make, location, options]
+const S = (cat, n, name, make, loc, o) => Object.assign({ cat, n, name, make, loc }, o || {});
+const BUILDINGS = [
+  { code: 'WP3', client: 'NBE', name: 'Wellington Place — Block 3', kind: 'Offices · 6 floors', rp: 'Building manager: A. Fenton', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Gent Vigilon · 2 loop', 'Ground floor reception', { inst: '2019-05-20', wy: 5 }),
+    S('EL', 1, 'Emergency lighting — 120 luminaires', 'Self-contained LED', 'All floors'),
+    S('EX', 18, 'Extinguishers', 'Mixed CO₂ / foam / water', 'Fire points, all floors', { grp: true }),
+    S('GS', 3, i => `Gas boiler ${i}`, 'Remeha Quinta Ace 115', 'Roof plant room', { last: '2025-09-30', inst: '2021-10-12', wy: 5, serial: i => `RQA115-21-0883${i}` }),
+    S('EI', 1, 'Electrical installation', 'TP&N · 6 distribution boards', 'Basement switchroom', { last: '2024-06-11' }),
+    S('WH', 1, 'Domestic water system', 'CWS tanks ×2 · calorifier', 'Roof plant room'),
+    S('LF', 2, i => `Passenger lift ${i}`, 'Otis Gen2', i => `Core ${'AB'[i - 1]}`, { inst: '2019-05-01', wy: 2 }),
+    S('SC', 1, 'AOV — stair 1 head', 'Colt actuator', 'Stair 1'),
+    S('LP', 1, 'Lightning protection system', 'Copper tape · 8 down conductors', 'Roof'),
+    S('AC', 2, i => `VRF system — floors ${i === 1 ? '1–3' : '4–6'}`, 'Daikin VRV IV', 'Roof', { inst: '2019-05-20', wy: 5 }),
+  ] },
+  { code: 'KR4', client: 'NBE', name: 'Kirkstall Retail Park — Unit 4', kind: 'Retail · warehouse & plant room', rp: 'Store manager: K. Dhillon', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Kentec Syncro', 'Back-of-house corridor'),
+    S('EL', 1, 'Emergency lighting — 38 luminaires', 'Self-contained LED', 'Sales floor & warehouse'),
+    S('EX', 9, 'Extinguishers', 'CO₂ / foam', 'Fire points', { grp: true }),
+    S('GS', 1, 'Gas heater — warehouse', 'Powrmatic NVx', 'Warehouse'),
+    S('EI', 1, 'Electrical installation', 'TP&N · 3 boards', 'Plant room', { last: '2023-02-14' }),
+    S('WH', 1, 'Domestic water system', 'Mains-fed · point-of-use heaters', 'Staff area'),
+    S('LF', 1, 'Passenger lift', 'Kone MonoSpace', 'Mezzanine core', { last: '2026-03-22', inst: '2018-04-01', wy: 2 }),
+  ] },
+  { code: 'GWO', client: 'NBE', name: 'Granary Wharf Offices', kind: 'Offices · 4 floors', rp: 'Facilities: R. Malik', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Advanced MxPro 5', 'Reception'),
+    S('EL', 1, 'Emergency lighting — 76 luminaires', 'Self-contained LED', 'All floors'),
+    S('EX', 14, 'Extinguishers', 'Mixed', 'Fire points', { grp: true }),
+    S('EI', 1, 'Electrical installation', 'TP&N · 4 boards', 'Basement', { last: '2022-10-05' }),
+    S('WH', 1, 'Domestic water system', 'CWS tank · calorifier', 'Roof plant'),
+    S('LF', 1, 'Passenger lift', 'Schindler 3300', 'Main core', { inst: '2017-09-01', wy: 2 }),
+    S('SC', 1, 'AOV — stair head', 'Colt actuator', 'Stair 1', { last: '2025-08-11', inst: '2021-08-31', wy: 5, wnote: 'Actuator' }),
+    S('LP', 1, 'Lightning protection system', 'Copper tape · 6 down conductors', 'Roof'),
+    S('AC', 1, 'VRF system', 'Mitsubishi City Multi', 'Roof', { inst: '2020-02-10', wy: 5 }),
+  ] },
+  { code: 'ARC', client: 'AVH', name: 'Aire Court, Hunslet', kind: 'Residential · 36 flats · 5 storeys', rp: 'Responsible person: M. Okafor', prof: 'resi', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Advanced MxPro 5 · 4 loop', 'Ground floor plant cupboard', { last: '2026-03-02', inst: '2023-03-14', wy: 5, wnote: 'Panel', serial: () => 'MX5-0417-2231', batt: '2026-11-03', hist: [
+      { date: '2026-03-02', eng: 'RA', result: 'pass', notes: 'Six-monthly service. All zones tested; 2 optical detectors replaced on loop 3; batteries load-tested OK; event log cleared.' },
+      { date: '2025-09-01', eng: 'RA', result: 'pass', notes: 'Six-monthly service. No faults. Cause-and-effect checked against AOV interface.' },
+      { date: '2025-03-03', eng: 'DP', result: 'fault', notes: 'Sounder fault on level 2 corridor circuit. Isolated and remedial raised; closed 11 Mar after cable repair.' },
+      { date: '2024-09-02', eng: 'RA', result: 'pass', notes: 'Six-monthly service. No faults.' },
+    ] }),
+    S('FA', 1, 'Repeater panel', 'Advanced MxPro 5 repeater', 'Entrance lobby', { seq: 2, last: '2026-03-02', inst: '2023-03-14', wy: 5 }),
+    S('EL', 1, 'Emergency lighting — communal, 42 luminaires', 'Self-contained LED', 'Corridors & stairs', { last: '2025-10-28' }),
+    S('EX', 6, 'Extinguishers', 'Water mist', 'Plant & bin stores', { grp: true, last: '2026-02-12' }),
+    S('FD', 36, i => `Flat ${i} entrance`, 'FD30S · timber', i => `Floor ${Math.floor((i - 1) / 8)}`, { grp: true, last: '2026-09-04', hist: [
+      { date: '2026-09-04', eng: 'RA', result: 'fault', notes: '36 flat entrance doors inspected. Three fail to self-close from 45°: flats 7, 19 and 31. Closers need adjustment or replacement. Remedial raised. All others: strips, seals and gaps satisfactory.' },
+      { date: '2026-06-05', eng: 'CS', result: 'pass', notes: '36 doors inspected. All self-close and latch; intumescent strips and cold smoke seals intact; gaps within 3–4 mm.' },
+      { date: '2026-03-06', eng: 'CS', result: 'pass', notes: '36 doors inspected. One damaged cold smoke seal (flat 22) replaced on the day.' },
+    ] }),
+    S('GS', 1, 'Communal heating plant', 'Ideal Evomax 2 ×2', 'Ground floor plant room', { last: '2026-04-04', inst: '2018-11-02', wy: 5 }),
+    S('EI', 1, 'Electrical installation — landlord supplies', 'Landlord DB · 3 boards', 'Meter room', { last: '2024-09-10' }),
+    S('WH', 1, 'Cold water storage — roof tank', 'GRP sectional tank · 4,000 L', 'Roof tank room', { last: '2024-08-15' }),
+    S('SC', 2, i => `AOV — stair ${i} head`, 'Unknown actuator', i => `Stair ${i}`, { last: null }),
+  ] },
+  { code: 'BFH', client: 'AVH', name: 'Bramley Fall House', kind: 'Sheltered housing · 24 units', rp: 'Scheme manager: L. Grant', prof: 'resi', specs: [
+    S('FA', 1, 'Fire alarm panel', 'C-TEC XFP', 'Office', { last: '2026-05-19' }),
+    S('EL', 1, 'Emergency lighting — 31 luminaires', 'Self-contained LED', 'Corridors', { last: '2025-10-03' }),
+    S('EX', 5, 'Extinguishers', 'Water mist', 'Corridors', { grp: true }),
+    S('FD', 24, i => `Flat ${i} entrance`, 'FD30S · timber', i => `Floor ${Math.floor((i - 1) / 12)}`, { grp: true, last: '2026-07-06' }),
+    S('GS', 1, 'Communal boiler', 'Worcester GB162', 'Plant room', { last: '2026-05-22', inst: '2020-06-01', wy: 7 }),
+    S('EI', 1, 'Electrical installation — landlord', 'Landlord DB', 'Meter cupboard', { last: '2025-01-15' }),
+    S('WH', 1, 'Domestic water system', 'CWS tank · calorifier', 'Plant room', { last: '2024-11-30' }),
+    S('LF', 1, 'Passenger lift', 'Stannah · traction', 'Main stair', { inst: '2016-03-01', wy: 1 }),
+    S('SC', 1, 'AOV — stair head', 'Unknown', 'Main stair', { last: null }),
+  ] },
+  { code: 'KLG', client: 'AVH', name: 'Kirkstall Lodge', kind: 'Residential · 18 flats · 3 storeys', rp: 'Responsible person: M. Okafor', prof: 'resi', specs: [
+    S('FA', 1, 'Fire alarm panel', 'C-TEC CFP', 'Entrance'),
+    S('EL', 1, 'Emergency lighting — central battery', 'Central battery unit · 22 luminaires', 'Plant cupboard'),
+    S('EX', 4, 'Extinguishers', 'Water mist', 'Corridors', { grp: true }),
+    S('FD', 18, i => `Flat ${i} entrance`, 'FD30S · composite', i => `Floor ${Math.floor((i - 1) / 6)}`, { grp: true }),
+    S('GS', 1, 'Communal boiler', 'Vaillant ecoTEC', 'Plant cupboard'),
+    S('EI', 1, 'Electrical installation — landlord', 'Landlord DB', 'Meter cupboard'),
+    S('WH', 1, 'Domestic water system', 'Mains-fed · unvented cylinder', 'Plant cupboard'),
+  ] },
+  { code: 'HRC', client: 'HPT', name: 'Headrow Chambers', kind: 'Offices · Grade II listed · 5 floors', rp: 'Building manager: G. Pollard', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Gent Vigilon', 'Porters’ lodge'),
+    S('EL', 1, 'Emergency lighting — 84 luminaires', 'Self-contained LED', 'All floors', { last: '2025-09-15' }),
+    S('EX', 12, 'Extinguishers', 'Mixed', 'Fire points', { grp: true }),
+    S('EI', 1, 'Electrical installation', 'TP&N · 5 boards', 'Basement'),
+    S('WH', 1, 'Domestic water system', 'CWS tank · 2 calorifiers', 'Roof plant'),
+    S('LF', 1, 'Passenger lift', 'Stannah · traction', 'Main core', { inst: '2015-01-01', wy: 1 }),
+    S('LP', 1, 'Lightning protection system', 'Copper tape · 5 down conductors', 'Roof'),
+    S('AC', 1, 'Split systems — server room', 'Daikin ×2', 'Third floor', { inst: '2022-07-01', wy: 5 }),
+  ] },
+  { code: 'PRH', client: 'HPT', name: 'Park Row House', kind: 'Offices · 7 floors', rp: 'Facilities: J. Cole', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Advanced MxPro 5', 'Reception'),
+    S('EL', 1, 'Emergency lighting — 110 luminaires', 'Self-contained LED', 'All floors'),
+    S('EX', 10, 'Extinguishers', 'Mixed', 'Fire points', { grp: true }),
+    S('GS', 1, 'Gas boilers ×2', 'Hamworthy Wessex', 'Roof plant', { inst: '2019-03-01', wy: 5 }),
+    S('EI', 1, 'Electrical installation', 'TP&N · 8 boards', 'Basement', { last: '2026-09-03' }),
+    S('WH', 1, 'Domestic water system', 'CWS tanks ×2', 'Roof plant'),
+    S('LF', 1, 'Passenger lift', 'Otis Gen2', 'Main core', { inst: '2019-03-01', wy: 2 }),
+    S('AC', 3, i => `VRF condenser ${i}`, 'Mitsubishi City Multi', 'Roof', { inst: '2021-11-21', wy: 5 }),
+  ] },
+  { code: 'APA', client: 'HPT', name: 'Albion Place Arcade', kind: 'Retail arcade · 14 units', rp: 'Centre manager: F. Hughes', prof: 'office', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Kentec Syncro', 'Management suite'),
+    S('EL', 1, 'Emergency lighting — 46 luminaires', 'Self-contained LED', 'Arcade & service corridor'),
+    S('EX', 8, 'Extinguishers', 'Mixed', 'Service corridor', { grp: true }),
+    S('EI', 1, 'Electrical installation — landlord', 'TP&N · 2 boards', 'Switchroom'),
+    S('SC', 1, 'Smoke vent — arcade roof', 'Colt louvres ×4', 'Roof'),
+    S('LP', 1, 'Lightning protection system', 'Copper tape', 'Roof'),
+  ] },
+  { code: 'SCP', client: 'SCA', name: "St Chad's Primary", kind: 'School · 2 blocks · 310 pupils', rp: 'Site manager: B. Aldridge', prof: 'school', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Kentec Syncro AS', 'Main entrance'),
+    S('EL', 1, 'Emergency lighting — 52 luminaires', 'Self-contained LED', 'Both blocks'),
+    S('EX', 11, 'Extinguishers', 'Mixed', 'Corridors & kitchen', { grp: true }),
+    S('FD', 14, i => `Corridor door ${i}`, 'FD30S · timber', i => (i <= 8 ? 'Main block' : 'KS1 block'), { grp: true, last: null }),
+    S('GS', 1, 'Boilers ×2', 'Remeha Avanta Plus', 'Boiler house'),
+    S('EI', 1, 'Electrical installation', 'TP&N · 4 boards', 'Boiler house', { last: '2022-03-10' }),
+    S('WH', 1, 'Domestic water system', 'CWS tank · calorifier', 'Roof void', { last: '2024-08-20' }),
+    S('LP', 1, 'Lightning protection system', 'Copper tape', 'Roof'),
+  ] },
+  { code: 'CGA', client: 'SCA', name: 'Cross Gates Academy', kind: 'Secondary · sports hall · 1,100 pupils', rp: 'Estates: N. Osei', prof: 'school', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Advanced MxPro 5 · 6 loop', 'Reception'),
+    S('EL', 1, 'Emergency lighting — 190 luminaires', 'Self-contained LED', 'All blocks'),
+    S('EX', 16, 'Extinguishers', 'Mixed', 'Corridors, labs, kitchen', { grp: true, last: '2025-09-27' }),
+    S('FD', 22, i => `Corridor door ${i}`, 'FD30S · timber', i => (i <= 12 ? 'Teaching block' : 'Sports hall'), { grp: true, last: null }),
+    S('GS', 1, 'Boilers ×3', 'Hoval UltraGas', 'Boiler house'),
+    S('EI', 1, 'Electrical installation', 'TP&N · 11 boards', 'Switchroom'),
+    S('WH', 1, 'Domestic water system', 'CWS tanks ×2 · showers', 'Sports hall plant'),
+    S('LF', 1, 'Platform lift', 'Aritco 7000', 'Teaching block', { inst: '2021-01-01', wy: 2 }),
+    S('LP', 1, 'Lightning protection system', 'Unknown', 'Roof', { last: null }),
+  ] },
+  { code: 'SGP', client: 'SCA', name: 'Seacroft Grange Primary', kind: 'School · single block', rp: 'Site manager: P. Walsh', prof: 'school', specs: [
+    S('FA', 1, 'Fire alarm panel', 'C-TEC XFP', 'Entrance'),
+    S('EL', 1, 'Emergency lighting — 40 luminaires', 'Self-contained LED', 'Corridors & hall'),
+    S('EX', 9, 'Extinguishers', 'Mixed', 'Corridors & kitchen', { grp: true }),
+    S('FD', 12, i => `Corridor door ${i}`, 'FD30S · timber', 'Main corridor', { grp: true }),
+    S('GS', 1, 'Boilers ×2', 'Ideal Evomax', 'Boiler room'),
+    S('EI', 1, 'Electrical installation', 'TP&N · 3 boards', 'Boiler room'),
+    S('WH', 1, 'Domestic water system', 'CWS tank · calorifier', 'Roof void'),
+  ] },
+  { code: 'HDP', client: 'MFL', name: 'Hunslet Depot', kind: 'Industrial · workshop & offices', rp: 'Depot manager: T. Barlow', prof: 'tidy', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Kentec Syncro', 'Gatehouse'),
+    S('EL', 1, 'Emergency lighting — 64 luminaires', 'Self-contained LED', 'Workshop & offices'),
+    S('EX', 31, 'Extinguishers', 'Mixed · incl. 6 powder', 'Workshop bays & offices', { grp: true, last: '2025-10-04' }),
+    S('GS', 1, 'Warehouse heaters ×4', 'Powrmatic NVx', 'Workshop'),
+    S('EI', 1, 'Electrical installation', 'TP&N · 6 boards', 'Switchroom'),
+    S('WH', 1, 'Domestic water system', 'Mains-fed · showers', 'Welfare block'),
+    S('LP', 1, 'Lightning protection system', 'Copper tape', 'Workshop roof'),
+  ] },
+  { code: 'LDW', client: 'MFL', name: 'Leeds Dock Warehouse', kind: 'Warehouse · mezzanine offices', rp: 'Site lead: O. Brennan', prof: 'tidy', specs: [
+    S('FA', 1, 'Fire alarm panel', 'Advanced MxPro 5', 'Goods-in office'),
+    S('EL', 1, 'Emergency lighting — 58 luminaires', 'Self-contained LED', 'Warehouse & mezzanine'),
+    S('EX', 14, 'Extinguishers', 'Mixed', 'Fire points', { grp: true }),
+    S('EI', 1, 'Electrical installation', 'TP&N · 4 boards', 'Switchroom'),
+    S('LP', 1, 'Lightning protection system', 'Copper tape', 'Roof'),
+    S('SC', 1, 'Smoke vents — warehouse roof', 'Colt louvres ×8', 'Roof'),
+  ] },
+];
+const BL = Object.fromEntries(BUILDINGS.map(b => [b.code, b]));
+
+/* --------------------------------------------------------- generation */
+const assets = [], groups = [], events = [], remedials = [];
+const AS = {}, GR = {};
+function autoLast(months, prof) {
+  const r = R(); let acc = 0, bucket = 'ok';
+  for (const k of ['ok', 'soon', 'late', 'none']) { acc += prof[k]; if (r < acc) { bucket = k; break; } }
+  if (bucket === 'none') return null;
+  const ahead = bucket === 'ok' ? ri(31, Math.max(45, months * 30 - 10)) : bucket === 'soon' ? ri(1, 30) : ri(-40, -1);
+  return addMonths(addDays(TODAY, ahead), -months);
+}
+const FIND = {
+  FA: ['All zones tested from the panel; sounders audible throughout. Batteries load-tested and within capacity. Event log reviewed and cleared.', 'Fault on one sounder circuit; isolated and remedial raised. All other zones tested satisfactory.'],
+  EL: ['Full duration test completed; all luminaires held for 3 hours. Charging indicators normal.', 'Duration test completed; 3 luminaires failed to hold 3 hours and are marked for battery replacement.'],
+  EX: ['All extinguishers inspected, weighed and tagged. Pressure gauges in the green. Signage and brackets in order.', 'All inspected. One unit found under pressure and replaced; one bracket loose and refixed.'],
+  FD: ['All doors inspected. Self-close and latch from 45°; intumescent strips and cold smoke seals intact; gaps within 3–4 mm.', 'All doors inspected. Two fail to latch reliably; closers adjusted on the day and re-tested satisfactory.'],
+  GS: ['Tightness test satisfactory. Combustion analysis within manufacturer limits. Flue integrity and ventilation checked. Appliance safe to use.', 'Appliance classified At Risk: flue joint seal deteriorated. Turned off with responsible person’s consent; remedial raised.'],
+  EI: ['Periodic inspection complete. Installation satisfactory for continued use. No C1 or C2 observations; C3 improvements listed.', 'Periodic inspection complete: unsatisfactory. Two C2 observations (missing RCD protection to socket circuits). Remedial raised.'],
+  WH: ['Risk assessment reviewed and reissued. Tank condition good; temperatures within HSG274 ranges; no dead legs identified.', 'Risk assessment reissued. Sentinel outlet temperatures below 50 °C at two points; flushing regime and TMV service recommended.'],
+  LF: ['Thorough examination complete. No defects affecting safe operation. Next examination due in six months.', 'Thorough examination complete. Defect: door protection device intermittent. Repair required within 28 days.'],
+  SC: ['Vent opened and closed on test from fire alarm signal and manual control. Actuator and weather seals sound.', 'Actuator slow to open on test; lubricated and re-tested satisfactory. Monitor at next visit.'],
+  LP: ['Continuity and earth resistance within BS EN 62305 limits at all test points. Conductors and clamps visually sound.', 'Two down-conductor joints showing corrosion; cleaned and re-made. One test clamp replaced.'],
+  AC: ['F-gas leak check complete; no leaks detected. Refrigerant charge recorded on the system log.', 'Minor leak detected at outdoor unit flare; charge topped up and joint remade. Follow-up check in 30 days.'],
+};
+function findings(cat, fault) { return FIND[cat][fault ? 1 : 0]; }
+
+BUILDINGS.forEach(b => {
+  const prof = PROF[b.prof]; const seqByCat = {};
+  b.specs.forEach(sp => {
+    const cat = CATS[sp.cat];
+    const sharedLast = sp.last === undefined ? autoLast(cat.months, prof) : (sp.last ? fromISO(sp.last) : null);
+    const makeAsset = i => {
+      const seq = sp.seq || ((seqByCat[sp.cat] = (seqByCat[sp.cat] || 0) + 1));
+      const id = `${b.client}-${b.code}-${sp.cat}-${pad(seq)}`;
+      const a = {
+        id, client: b.client, building: b.code, cat: sp.cat, seq,
+        name: typeof sp.name === 'function' ? sp.name(i) : sp.name,
+        make: sp.make, loc: typeof sp.loc === 'function' ? sp.loc(i) : sp.loc,
+        installed: sp.inst ? fromISO(sp.inst) : null,
+        warrantyEnd: sp.inst && sp.wy ? addMonths(fromISO(sp.inst), sp.wy * 12) : null,
+        warrantyNote: sp.wnote || (sp.wy ? `${sp.wy}-year manufacturer` : null),
+        serial: sp.serial ? sp.serial(i) : (sp.inst ? `${sp.cat}${String(Math.floor(R() * 9e5 + 1e5))}` : null),
+        batt: sp.batt ? fromISO(sp.batt) : null,
+      };
+      assets.push(a); AS[id] = a; return a;
+    };
+    const made = []; for (let i = 1; i <= sp.n; i++) made.push(makeAsset(i));
+    const mkGroup = (list, last) => {
+      const g = { id: `G-${list[0].id}`, client: b.client, building: b.code, cat: sp.cat, assetIds: list.map(a => a.id), last, booking: null, notified: null, label: list.length > 1 ? `${cat.label} · ${plural(list.length, cat.unit)}` : list[0].name };
+      list.forEach(a => a.groupId = g.id); groups.push(g); GR[g.id] = g;
+      if (sp.hist) { sp.hist.forEach(h => events.push({ date: fromISO(h.date), eng: h.eng, result: h.result, notes: h.notes, assetIds: g.assetIds.slice(), groupId: g.id, cat: sp.cat, building: b.code, client: b.client })); }
+      else if (g.last) {
+        const k = ri(2, 4);
+        for (let i = 0; i < k; i++) {
+          const date = i === 0 ? g.last : addDays(addMonths(g.last, -cat.months * i), ri(-6, 6));
+          if (date.getFullYear() < 2022) break;
+          const fault = i > 0 && R() < 0.15;
+          events.push({ date, eng: pick(engineersFor(cat.trade)).id, result: fault ? 'fault' : 'pass', notes: findings(sp.cat, fault), assetIds: g.assetIds.slice(), groupId: g.id, cat: sp.cat, building: b.code, client: b.client });
+        }
+      }
+    };
+    if (sp.grp) mkGroup(made, sharedLast); else made.forEach(a => mkGroup([a], sp.last === undefined ? (sp.n > 1 ? autoLast(cat.months, prof) : sharedLast) : sharedLast));
+  });
+});
+// Reference numbers per building and report type, in date order.
+function renumber() {
+  const counters = {};
+  events.slice().sort((a, b) => a.date - b.date).forEach(e => {
+    if (e.id) { const key = `${e.building}-${CATS[e.cat].rtype}`; counters[key] = Math.max(counters[key] || 0, Number(e.id.slice(-3))); return; }
+    const t = CATS[e.cat].rtype; const key = `${e.building}-${t}`; counters[key] = (counters[key] || 0) + 1;
+    e.id = `${e.client}-${e.building}-${t}-${pad3(counters[key])}`; e.type = RTYPES[t];
+  });
+}
+renumber();
+
+/* Seeded bookings and remedials — the story on top of the generated base. */
+const gOf = assetId => GR[AS[assetId].groupId];
+gOf('HPT-HRC-EL-01').booking = { date: TODAY, eng: 'DP', note: 'Annual 3-hour duration test', onSite: true };
+gOf('NBE-KR4-LF-01').booking = { date: D(2026, 9, 18), eng: 'TB', note: 'LOLER thorough examination' };
+gOf('MFL-HDP-EX-01').booking = { date: D(2026, 9, 22), eng: 'TB', note: 'Annual service · all 31 units' };
+gOf('AVH-BFH-EL-01').booking = { date: D(2026, 9, 29), eng: 'RA', note: 'Duration test' };
+gOf('SCA-CGA-EX-01').booking = { date: D(2026, 9, 24), eng: 'TB', note: 'Annual service' };
+let remSeq = 33;
+const REM = (id, assetId, title, raised, owner, target, extra) => remedials.push(Object.assign({ id, assetId, title, raised: fromISO(raised), owner, target: fromISO(target), status: 'open', closed: null, log: [] }, extra || {}));
+REM('REM-031', 'AVH-ARC-FD-07', 'Self-closer fails from 45° — adjust or replace', '2026-09-04', null, '2026-10-02', { from: 'AVH-ARC-SVR' });
+REM('REM-032', 'AVH-ARC-FD-19', 'Self-closer fails from 45° — adjust or replace', '2026-09-04', null, '2026-10-02');
+REM('REM-033', 'AVH-ARC-FD-31', 'Self-closer fails from 45° — adjust or replace', '2026-09-04', null, '2026-10-02');
+REM('REM-028', 'NBE-GWO-SC-01', 'Actuator seized on monthly test — replace', '2026-08-27', 'TB', '2026-09-15');
+REM('REM-029', 'HPT-HRC-EL-01', '3 luminaires failed monthly flick test — replace batteries', '2026-09-01', 'DP', '2026-09-15');
+REM('REM-027', 'HPT-PRH-AC-03', 'Refrigerant loss detected — trace and repair', '2026-08-20', 'TB', '2026-09-19');
+REM('REM-026', 'SCA-SCP-EX-04', 'Extinguisher missing from bracket — replace', '2026-08-18', 'CS', '2026-09-10');
+REM('REM-030', 'MFL-HDP-FA-01', 'Zone 3 detector intermittent fault — investigate', '2026-09-02', 'RA', '2026-09-16');
+REM('REM-025', 'AVH-KLG-EL-01', 'Central battery unit low capacity — replace cells', '2026-08-12', 'DP', '2026-09-12');
+REM('REM-021', 'NBE-WP3-GS-02', 'Gas valve lockout — replaced under warranty', '2025-02-14', 'JW', '2025-02-21', { status: 'closed', closed: fromISO('2025-02-14') });
+REM('REM-019', 'AVH-ARC-FA-01', 'Level 2 sounder circuit fault — cable repair', '2025-03-03', 'DP', '2025-03-17', { status: 'closed', closed: fromISO('2025-03-11') });
+remedials.forEach(r => { AS[r.assetId].remedials = AS[r.assetId].remedials || []; AS[r.assetId].remedials.push(r.id); });
+
+/* ------------------------------------------------------------- derived */
+function status(g) {
+  if (!g.last) return { key: 'none', next: null, days: null, word: 'No record' };
+  const next = addMonths(g.last, CATS[g.cat].months); const days = dayDiff(next, TODAY);
+  if (days < 0) return { key: 'late', next, days, word: 'Overdue' };
+  if (days <= 30) return { key: 'soon', next, days, word: 'Due' };
+  return { key: 'ok', next, days, word: 'In date' };
+}
+const openRems = a => (a.remedials || []).map(id => remedials.find(r => r.id === id)).filter(r => r.status === 'open');
+const groupRems = g => g.assetIds.flatMap(id => openRems(AS[id]));
+const groupsIn = (pred) => groups.filter(pred);
+function rollup(list) {
+  const c = { ok: 0, soon: 0, late: 0, none: 0, total: 0 };
+  list.forEach(g => { const k = status(g).key; c[k] += g.assetIds.length; c.total += g.assetIds.length; });
+  return c;
+}
+const buildingsOf = code => BUILDINGS.filter(b => b.client === code);
+const groupsOfBuilding = code => groups.filter(g => g.building === code);
+const groupsOfClient = code => groups.filter(g => g.client === code);
+const dueItems = (win) => groups.filter(g => { const s = status(g); return s.key === 'soon' || (win > 30 && s.key === 'ok' && s.days <= win); }).sort((a, b) => status(a).days - status(b).days);
+const lateItems = () => groups.filter(g => status(g).key === 'late').sort((a, b) => status(a).days - status(b).days);
+const noneItems = () => groups.filter(g => status(g).key === 'none');
+const eventsOf = g => events.filter(e => e.groupId === g.id).sort((a, b) => b.date - a.date);
+const warrantyWatch = () => assets.filter(a => a.warrantyEnd && dayDiff(a.warrantyEnd, TODAY) <= 90 && dayDiff(a.warrantyEnd, TODAY) >= -60).sort((a, b) => a.warrantyEnd - b.warrantyEnd);
+function attentionItems() {
+  const out = [];
+  const lateUnbooked = lateItems().filter(g => !g.booking);
+  if (lateUnbooked.length) { const g = lateUnbooked[0]; const s = status(g); out.push({ t: `${plural(lateUnbooked.length, 'statutory item')} overdue and not booked`, s: `Oldest: ${g.label} at ${BL[g.building].name}, ${-s.days} days past its date.`, go: '#/overdue' }); }
+  const un = remedials.filter(r => r.status === 'open' && !r.owner);
+  if (un.length) out.push({ t: `${plural(un.length, 'remedial')} unassigned`, s: `${un[0].title} · ${BL[AS[un[0].assetId].building].name}.`, go: '#/remedials/unassigned' });
+  const ww = warrantyWatch().filter(a => dayDiff(a.warrantyEnd, TODAY) <= 45);
+  if (ww.length) out.push({ t: `${plural(ww.length, 'warranty', 'warranties')} ending or lapsed`, s: ww.map(a => `${a.name} (${BL[a.building].name.split(' —')[0]}) ${fmtS(a.warrantyEnd)}`).join(' · '), go: `#/portfolio/${ww[0].client}/${ww[0].building}/${ww[0].id}` });
+  const nr = noneItems();
+  if (nr.length) out.push({ t: `${plural(nr.length, 'requirement')} with no record`, s: 'Held on the register with no certificate or service date entered.', go: '#/overdue/norecord' });
+  return out;
+}
+
+/* ------------------------------------------------------------- helpers */
+const TAGCLASS = { ok: 'tag-ok', soon: 'tag-caution', late: 'tag-alert', none: 'tag-quiet' };
+const tag = (s, word) => `<span class="tag ${TAGCLASS[s.key]}">${esc(word || s.word)}</span>`;
+function dueCell(s) {
+  if (s.key === 'none') return `<span class="due fine">Not known</span>`;
+  const cls = s.key === 'late' ? 'late' : s.key === 'soon' ? 'soon' : '';
+  const rel = s.key === 'late' ? `${-s.days}d late` : `${s.days}d`;
+  return `<span class="due"><b class="${cls}">${fmtS(s.next)}</b> · ${rel}</span>`;
+}
+function bar(c) { if (!c.total) return ''; const p = k => (100 * c[k] / c.total).toFixed(1) + '%'; return `<div class="cbar"><i class="ok" style="width:${p('ok')}"></i><i class="soon" style="width:${p('soon')}"></i><i class="late" style="width:${p('late')}"></i><i class="none" style="width:${p('none')}"></i></div>`; }
+function metaLine(c, extra) {
+  const parts = [`${c.total} assets`];
+  if (c.late) parts.push(`<span class="late">${c.late} overdue</span>`); if (c.soon) parts.push(`<span class="soon">${c.soon} due</span>`); if (c.none) parts.push(`${c.none} no record`);
+  if (!c.late && !c.soon && !c.none) parts.push('all in date');
+  return `<div class="meta">${(extra ? [extra] : []).concat(parts).map(p => `<span>${p}</span>`).join('')}</div>`;
+}
+const engName = id => ENG[id] ? ENG[id].name : '—';
+const pathTo = (a) => `#/portfolio/${a.client}/${a.building}/${a.id}`;
+const bookingTag = g => g.booking ? `<span class="tag tag-aqua">${g.booking.onSite ? 'On site now' : 'Booked ' + fmtS(g.booking.date)}</span>` : '';
+const remTag = g => { const n = groupRems(g).length; return n ? `<span class="tag tag-caution">${n} remedial</span>` : ''; };
+const notifiedTag = g => g.notified ? `<span class="tag tag-quiet">Client told ${fmtS(g.notified)}</span>` : '';
+const aRef = (a) => `<a class="ref" href="${pathTo(a)}">${a.id}</a>`;
+const gRef = (g) => aRef(AS[g.assetIds[0]]);
+const thumbLine = g => { const b = BL[g.building]; return `<div class="rowtitle" style="font-size:13px;">${esc(b.name)}</div><div class="rowsub"><span class="client">${esc(CL[b.client].name)}</span></div>`; };
+const reqCell = g => { const c = CATS[g.cat]; return `${esc(c.req)}<div class="rowsub">${esc(c.std)} · ${c.months >= 12 ? (c.months / 12) + '-yearly' : c.months + '-monthly'}</div>`.replace('1-yearly', 'annual'); };
+const resultTag = r => r === 'pass' ? '<span class="tag tag-ok">Satisfactory</span>' : '<span class="tag tag-caution">Fault found</span>';
+
+/* ------------------------------------------------------------- chrome */
+let route = { tab: 'portfolio', a: null, b: null, c: null };
+let assetFilter = 'action', dueWin = 30, repType = 'all', repClient = 'all', attnOpen = false, menuOpen = null;
+
+function topbar() {
+  const n = attentionItems().length;
+  return `<header class="topbar">
+    <a class="logo" href="#/portfolio" aria-label="Portfolio"><b>RELAY</b><span>LEODIS COMPLIANCE</span></a>
+    <div class="search"><input id="q" type="search" placeholder="Search assets, buildings, serials, report refs" autocomplete="off"><kbd>/</kbd><div id="results" class="results" hidden></div></div>
+    <div class="topbar-right">
+      <button class="bell ${n ? '' : 'quiet'}" data-act="attn" type="button">Attention <b>${n}</b></button>
+      <span class="whoami">Cal Say · <em>Compliance manager</em></span>
+      <button class="tbtn" data-act="theme" type="button">Appearance</button>
+      <button class="tbtn" data-act="hub" type="button">Companies</button>
+    </div>
+    ${attnOpen ? attnPop() : ''}
+  </header>`;
+}
+function attnPop() {
+  const items = attentionItems();
+  return `<div class="attn-pop panel">
+    <div class="panel-head"><h4 style="color:var(--alert)">Needs attention</h4><a class="more" href="#/overdue" data-act="attn-close">Overdue list →</a></div>
+    ${items.length ? items.map(i => `<a class="mini" href="${i.go}" data-act="attn-close"><div class="mini-b"><b>${esc(i.t)}</b><div class="rowsub">${esc(i.s)}</div></div><span class="age">→</span></a>`).join('') : '<div class="empty">Nothing needs attention.</div>'}
+  </div>`;
+}
+function hnav() {
+  const tabs = [
+    ['portfolio', 'Portfolio', CLIENTS.length, ''], ['due', 'Due', dueItems(30).length, ''], ['overdue', 'Overdue', lateItems().length, 'warn'],
+    ['remedials', 'Remedials', remedials.filter(r => r.status === 'open').length, 'warn'], ['reports', 'Reports', events.length, ''], ['engineers', 'Engineers', Object.keys(ENG).length, ''], ['admin', 'Admin', null, ''],
+  ];
+  return `<nav class="hnav">${tabs.map(([k, l, n, w]) => `<a href="#/${k}" class="${route.tab === k ? 'on' : ''}">${l}${n != null ? `<i class="${n && w ? w : ''}">${n}</i>` : ''}</a>`).join('')}</nav>`;
+}
+
+/* ------------------------------------------------------- portfolio view */
+function viewPortfolio() {
+  const client = CL[route.a] || null;
+  const building = client && BL[route.b] && BL[route.b].client === client.code ? BL[route.b] : null;
+  const asset = building && AS[route.c] && AS[route.c].building === building.code ? AS[route.c] : null;
+  return `<div class="cols">${colClients(client)}${colBuildings(client, building)}${colAssets(building, asset)}${colDetails(client, building, asset)}</div>`;
+}
+function colClients(sel) {
+  return `<div class="col" data-col="1"><div class="col-head"><h4>Clients</h4><i>${CLIENTS.length}</i></div>
+    ${CLIENTS.map(c => { const r = rollup(groupsOfClient(c.code)); return `<a class="item ${sel && sel.code === c.code ? 'on' : ''}" href="#/portfolio/${c.code}">
+      <div class="item-top"><div class="rowtitle">${esc(c.name)}</div><span class="arrow">›</span></div>${bar(r)}${metaLine(r, plural(buildingsOf(c.code).length, 'building'))}</a>`; }).join('')}
+    <div class="colpad sticky-foot"><div class="cbar-key"><span class="k-ok">in date</span><span class="k-soon">due</span><span class="k-late">overdue</span><span class="k-none">no record</span></div></div>
+  </div>`;
+}
+function colBuildings(client, sel) {
+  if (!client) return `<div class="col" data-col="2"><div class="col-head"><h4>Buildings</h4></div><div class="empty">Select a client to see its buildings.</div></div>`;
+  const bs = buildingsOf(client.code);
+  return `<div class="col" data-col="2"><div class="col-head"><h4>Buildings · ${esc(client.name)}</h4><i>${bs.length}</i></div>
+    ${bs.map(b => { const r = rollup(groupsOfBuilding(b.code)); return `<a class="item ${sel && sel.code === b.code ? 'on' : ''}" href="#/portfolio/${client.code}/${b.code}">
+      <div class="item-top"><div class="rowtitle">${esc(b.name)}</div><span class="arrow">›</span></div><div class="rowsub">${esc(b.kind)} · ${esc(b.rp)}</div>${bar(r)}${metaLine(r)}</a>`; }).join('')}
+    <div class="colpad sticky-foot"><div class="rowsub" style="margin-bottom:8px;">Client-level actions</div>
+      <div style="display:flex;flex-direction:column;gap:8px;"><button class="btn btn-q btn-sm" data-act="statement" data-client="${client.code}" type="button" style="text-align:left;">Portfolio compliance statement</button>
+      <button class="btn btn-q btn-sm" data-act="export" data-what="asset register for ${esc(client.name)}" type="button" style="text-align:left;">Asset register export</button></div></div>
+  </div>`;
+}
+function colAssets(building, sel) {
+  if (!building) return `<div class="col" data-col="3"><div class="col-head"><h4>Assets</h4></div><div class="empty">Select a building to see its assets.</div></div>`;
+  const gs = groupsOfBuilding(building.code);
+  const needs = g => { const k = status(g).key; return k !== 'ok' || groupRems(g).length; };
+  const all = gs.flatMap(g => g.assetIds.map(id => AS[id]));
+  const shown = assetFilter === 'all' ? all : all.filter(a => { const g = GR[a.groupId]; return status(g).key !== 'ok' || openRems(a).length; });
+  const nAction = all.filter(a => { const g = GR[a.groupId]; return status(g).key !== 'ok' || openRems(a).length; }).length;
+  const cats = [...new Set(shown.map(a => a.cat))];
+  return `<div class="col" data-col="3"><div class="col-head"><h4>Assets · ${esc(building.name)}</h4><i>${all.length}</i></div>
+    <div class="filters" style="border:0;border-bottom:1px solid var(--line);padding:8px 16px;">
+      <button class="chip ${assetFilter === 'action' ? 'on' : ''}" data-act="afilter" data-v="action" type="button">Needs action · ${nAction}</button>
+      <button class="chip ${assetFilter === 'all' ? 'on' : ''}" data-act="afilter" data-v="all" type="button">All · ${all.length}</button>
+    </div>
+    ${cats.length ? cats.map(cat => { const list = shown.filter(a => a.cat === cat); return `<div class="grp">${esc(CATS[cat].label)}<i>${list.length}${assetFilter !== 'all' ? ' of ' + all.filter(a => a.cat === cat).length : ''}</i></div>` +
+      list.map(a => { const g = GR[a.groupId]; const s = status(g); const rem = openRems(a).length; return `<a class="arow ${sel && sel.id === a.id ? 'on' : ''}" href="${pathTo(a)}"><span class="ref">${a.id}</span><span class="nm">${esc(a.name)}</span>${rem ? '<span class="tag tag-caution">Remedial</span>' : tag(s)}</a>`; }).join(''); }).join('')
+      : `<div class="empty">Nothing needs action at ${esc(building.name)}.<br>${all.length} assets are all in date.</div>`}
+    <div class="colpad sticky-foot"><div class="rowsub">${assetFilter === 'all' ? `Showing all ${all.length}.` : `Filtered to ${shown.length} that need action; ${all.length - shown.length} in date hidden.`} Grouped assets share one visit and one report.</div></div>
+  </div>`;
+}
+
+/* ------------------------------------------------------- details column */
+function colDetails(client, building, asset) {
+  let inner;
+  if (asset) inner = assetSheet(asset);
+  else if (building) inner = buildingSheet(building);
+  else if (client) inner = clientSheet(client);
+  else inner = portfolioSheet();
+  const head = asset ? asset.id : building ? building.name : client ? client.name : 'Portfolio';
+  return `<div class="col" data-col="4"><div class="col-head"><h4>Details</h4><i>${esc(head)}</i></div><div class="colpad">${inner}</div></div>`;
+}
+function portfolioSheet() {
+  const r = rollup(groups); const late = lateItems(), due = dueItems(30), nr = noneItems();
+  const pct = Math.round(100 * r.ok / r.total);
+  return `<div class="sheet"><div class="sheet-title"><div><div class="crumbs">Leodis Compliance Management</div><h4>Portfolio position</h4><div class="rowsub">${CLIENTS.length} clients · ${BUILDINGS.length} buildings · ${assets.length} tracked assets · Tuesday 8 September 2026</div></div>
+    <div class="actions"><button class="btn btn-q btn-sm" data-act="export" data-what="portfolio due list" type="button">Export due list</button></div></div>
+    <dl class="dueblock"><div><dt>In date</dt><dd class="okc">${pct}%<small>of tracked assets</small></dd></div><div><dt>Overdue</dt><dd class="late">${late.length}<small>${plural(late.filter(g => !g.booking).length, 'item')} not yet booked</small></dd></div><div><dt>Due in 30 days</dt><dd class="soon">${due.length}<small>${plural(due.filter(g => !g.booking).length, 'item')} need a booking</small></dd></div></dl>
+    <div style="margin-top:12px;">${bar(r)}<div class="meta" style="margin-top:6px;"><span>${r.ok} in date</span><span class="soon">${r.soon} due</span><span class="late">${r.late} overdue</span><span>${r.none} no record</span></div></div>
+    <div class="sec-h">Needs attention</div>
+    <div class="rmenu">${attentionItems().map(i => `<a href="${i.go}"><div class="rt"><b>${esc(i.t)}</b><span>${esc(i.s)}</span></div><span class="age">→</span></a>`).join('') || '<div class="empty">Nothing needs attention.</div>'}</div>
+    <div class="sec-h">Overdue now <a href="#/overdue">All ${late.length} →</a></div>
+    <table class="reg tight"><tbody>${late.slice(0, 5).map(g => `<tr><td>${gRef(g)}<div class="rowsub">${esc(g.label)}</div></td><td>${esc(BL[g.building].name)}</td><td>${dueCell(status(g))}</td><td>${g.booking ? bookingTag(g) : `<button class="btn btn-sm" data-act="book" data-g="${g.id}" type="button">Book</button>`}</td></tr>`).join('')}</tbody></table>
+    <div class="sec-h">Warranties ending</div>
+    <div class="rmenu">${warrantyWatch().slice(0, 5).map(a => { const d = dayDiff(a.warrantyEnd, TODAY); return `<a href="${pathTo(a)}"><span class="ref">${a.id}</span><div class="rt"><b>${esc(a.name)}</b><span>${esc(BL[a.building].name)} · ${esc(a.warrantyNote || 'warranty')}</span></div><span class="due ${d < 0 ? 'late' : d <= 45 ? 'soon' : ''}">${d < 0 ? 'lapsed ' + fmtS(a.warrantyEnd) : fmtS(a.warrantyEnd)}</span></a>`; }).join('')}</div>
+    <p class="rowsub" style="margin-top:16px;">Select a client on the left to drill in. “No record” (${nr.length} items) means the register holds the asset but no certificate or service date has been entered. It is neither overdue nor compliant.</p>
+  </div>`;
+}
+function clientSheet(c) {
+  const bs = buildingsOf(c.code); const r = rollup(groupsOfClient(c.code));
+  const late = lateItems().filter(g => g.client === c.code), due = dueItems(30).filter(g => g.client === c.code);
+  const reps = events.filter(e => e.client === c.code).sort((a, b) => b.date - a.date).slice(0, 4);
+  return `<div class="sheet"><div class="sheet-title"><div><div class="crumbs"><a href="#/portfolio">Portfolio</a><span>›</span>Client</div><h4>${esc(c.name)}</h4><div class="rowsub">${plural(bs.length, 'building')} · ${r.total} assets · client since ${c.since}</div></div>
+    <div class="actions"><button class="btn btn-q btn-sm" data-act="statement" data-client="${c.code}" type="button">Compliance statement</button><button class="btn btn-sm" data-act="book-next" data-client="${c.code}" type="button">Book next due</button></div></div>
+    <dl class="dueblock"><div><dt>In date</dt><dd class="okc">${Math.round(100 * r.ok / r.total)}%<small>${r.ok} of ${r.total} assets</small></dd></div><div><dt>Overdue</dt><dd class="${late.length ? 'late' : ''}">${late.length}<small>${late.length ? plural(late.filter(g => !g.booking).length, 'item') + ' not booked' : 'nothing overdue'}</small></dd></div><div><dt>Due in 30 days</dt><dd class="${due.length ? 'soon' : ''}">${due.length}<small>${plural(due.filter(g => g.booking).length, 'item')} booked</small></dd></div></dl>
+    <dl class="tb two"><div><dt>Contact</dt><dd>${esc(c.contact)} · ${esc(c.role)}</dd></div><div><dt>Reports go to</dt><dd class="num" style="font-size:12px;">${esc(c.email)}</dd></div><div><dt>Open remedials</dt><dd>${remedials.filter(x => x.status === 'open' && AS[x.assetId].client === c.code).length}</dd></div><div><dt>Reports this year</dt><dd>${events.filter(e => e.client === c.code && e.date.getFullYear() === 2026).length}</dd></div></dl>
+    <div class="sec-h">Buildings</div>
+    <table class="reg tight"><thead><tr><th>Building</th><th>Assets</th><th>Position</th><th>Next due</th></tr></thead><tbody>${bs.map(b => { const gs = groupsOfBuilding(b.code); const rb = rollup(gs); const nxt = gs.filter(g => status(g).next).sort((x, y) => status(x).next - status(y).next)[0]; return `<tr class="clickable" data-go="#/portfolio/${c.code}/${b.code}"><td><div class="rowtitle" style="font-size:13px;">${esc(b.name)}</div><div class="rowsub">${esc(b.kind)}</div></td><td class="num">${rb.total}</td><td style="min-width:120px;">${bar(rb)}${metaLine(rb)}</td><td>${nxt ? dueCell(status(nxt)) : '—'}</td></tr>`; }).join('')}</tbody></table>
+    <div class="sec-h">Latest reports <a href="#/reports/${c.code}">All →</a></div>
+    <div class="rmenu">${reps.map(e => `<button type="button" data-act="report" data-id="${e.id}"><span class="ref">${e.id}</span><div class="rt"><b>${esc(GR[e.groupId].label)}</b><span>${esc(BL[e.building].name)} · ${engName(e.eng)} · ${fmt(e.date)}</span></div>${resultTag(e.result)}</button>`).join('')}</div>
+  </div>`;
+}
+function buildingSheet(b) {
+  const gs = groupsOfBuilding(b.code); const r = rollup(gs); const c = CL[b.client];
+  const cats = [...new Set(gs.map(g => g.cat))];
+  const rems = remedials.filter(x => x.status === 'open' && AS[x.assetId].building === b.code);
+  const reps = events.filter(e => e.building === b.code).sort((x, y) => y.date - x.date).slice(0, 4);
+  return `<div class="sheet"><div class="sheet-title"><div><div class="crumbs"><a href="#/portfolio">Portfolio</a><span>›</span><a href="#/portfolio/${c.code}">${esc(c.name)}</a><span>›</span>Building</div><h4>${esc(b.name)}</h4><div class="rowsub">${esc(b.kind)} · ${esc(b.rp)}</div></div>
+    <div class="actions"><button class="btn btn-q btn-sm" data-act="statement" data-building="${b.code}" type="button">Compliance statement</button><button class="btn btn-sm" data-act="book-next" data-building="${b.code}" type="button">Book a visit</button></div></div>
+    <div style="margin-top:16px;">${bar(r)}${metaLine(r)}</div>
+    <div class="sec-h">Requirements at this building</div>
+    <table class="reg tight"><thead><tr><th>Requirement</th><th>Assets</th><th>Last done</th><th>Next due</th><th>Status</th></tr></thead><tbody>
+      ${cats.map(cat => gs.filter(g => g.cat === cat).map(g => { const s = status(g); const a = AS[g.assetIds[0]]; return `<tr class="clickable" data-go="${pathTo(a)}"><td><div class="rowtitle" style="font-size:13px;">${esc(g.label)}</div><div class="rowsub">${esc(CATS[cat].req)} · ${esc(CATS[cat].std)}</div></td><td class="num">${g.assetIds.length}</td><td class="due">${fmt(g.last)}</td><td>${dueCell(s)}</td><td style="display:flex;gap:6px;flex-wrap:wrap;">${tag(s)}${bookingTag(g)}${remTag(g)}</td></tr>`; }).join('')).join('')}
+    </tbody></table>
+    ${rems.length ? `<div class="sec-h">Open remedials <a href="#/remedials">All →</a></div><div class="rmenu">${rems.map(x => `<a href="${pathTo(AS[x.assetId])}"><span class="ref">${x.id}</span><div class="rt"><b>${esc(x.title)}</b><span>${AS[x.assetId].name} · raised ${fmtS(x.raised)} · ${x.owner ? engName(x.owner) : 'unassigned'} · target ${fmtS(x.target)}</span></div>${x.owner ? '<span class="tag tag-caution">Assigned</span>' : '<span class="tag tag-alert">Unassigned</span>'}</a>`).join('')}</div>` : ''}
+    <div class="sec-h">Latest reports <a href="#/reports/${c.code}/${b.code}">All →</a></div>
+    <div class="rmenu">${reps.map(e => `<button type="button" data-act="report" data-id="${e.id}"><span class="ref">${e.id}</span><div class="rt"><b>${esc(GR[e.groupId].label)}</b><span>${engName(e.eng)} · ${fmt(e.date)} · sent to ${esc(c.contact)}</span></div>${resultTag(e.result)}</button>`).join('')}</div>
+  </div>`;
+}
+function assetSheet(a) {
+  const g = GR[a.groupId]; const b = BL[a.building]; const c = CL[a.client]; const cat = CATS[a.cat]; const s = status(g);
+  const hist = eventsOf(g); const rems = openRems(a); const closed = (a.remedials || []).map(id => remedials.find(r => r.id === id)).filter(r => r.status === 'closed');
+  const wd = a.warrantyEnd ? dayDiff(a.warrantyEnd, TODAY) : null;
+  const siblings = groupsOfBuilding(b.code).filter(x => x.id !== g.id && ['soon', 'late'].includes(status(x).key)).sort((x, y) => status(x).days - status(y).days).slice(0, 3);
+  const groupNote = g.assetIds.length > 1 ? `<div class="note info"><span><b>One of ${g.assetIds.length} ${cat.unit}s checked together.</b> The ${cat.req.toLowerCase()} covers the whole set on one visit, so dates, bookings and reports below belong to the group.</span></div>` : '';
+  const warrantyNote = wd != null && wd <= 90 && wd >= -60 ? (wd < 0 ? `<div class="note bad"><span><b>Warranty lapsed ${fmt(a.warrantyEnd)}.</b> Faults from here are chargeable to ${esc(c.name)}.</span></div>`
+    : s.next && dayDiff(a.warrantyEnd, s.next) > 0 && dayDiff(a.warrantyEnd, s.next) <= 60 ? `<div class="note warn"><span><b>Warranty ends ${dayDiff(a.warrantyEnd, s.next)} days after the next ${cat.req.toLowerCase()}.</b> A fault found then is still covered — worth bringing the visit forward rather than letting it drift.</span><button class="btn btn-q btn-sm" data-act="book" data-g="${g.id}" data-early="1" type="button">Bring forward</button></div>`
+    : `<div class="note warn"><span><b>Warranty ends ${fmt(a.warrantyEnd)}</b> (${wd} days). ${esc(c.contact)} may want a pre-expiry check.</span><button class="btn btn-q btn-sm" data-act="notify" data-g="${g.id}" type="button">Notify client</button></div>`) : '';
+  return `<div class="sheet">
+    <div class="sheet-title"><div><div class="crumbs"><a href="#/portfolio/${c.code}">${esc(c.name)}</a><span>›</span><a href="#/portfolio/${c.code}/${b.code}">${esc(b.name)}</a><span>›</span>${esc(cat.label)}</div><h4>${esc(a.name)}</h4><div class="rowsub"><span class="ref">${a.id}</span><span class="sep">/</span>${esc(a.make)}<span class="sep">/</span>${esc(a.loc)}</div></div>
+      <div class="actions"><div class="menu"><button class="btn btn-q btn-sm drop" data-act="menu" data-menu="report-${a.id}" type="button">Report</button>${menuOpen === 'report-' + a.id ? reportMenu(a, g) : ''}</div>${g.booking ? `<button class="btn btn-q btn-sm" data-act="unbook" data-g="${g.id}" type="button">Cancel booking</button>` : `<button class="btn btn-sm" data-act="book" data-g="${g.id}" type="button">Book ${s.key === 'none' ? 'first visit' : esc(cat.req.split(' ')[0].toLowerCase() === 'annual' ? 'test' : 'service')}</button>`}</div></div>
+    ${groupNote}
+    <dl class="dueblock"><div><dt>Requirement</dt><dd class="txt">${esc(cat.req)}<small>${esc(cat.std)} · ${cat.months >= 12 ? (cat.months === 12 ? 'annual' : (cat.months / 12) + '-yearly') : cat.months + '-monthly'}</small></dd></div>
+      <div><dt>Last done</dt><dd>${g.last ? fmt(g.last) : '<span class="fine">None</span>'}<small>${hist[0] ? `${engName(hist[0].eng)} · <span class="ref" style="font-size:11px;">${hist[0].id.split('-').slice(2).join('-')}</span> · ${hist[0].result === 'pass' ? 'satisfactory' : 'fault found'}` : 'no report on file'}</small></dd></div>
+      <div><dt>Next due</dt><dd class="${s.key === 'late' ? 'late' : s.key === 'soon' ? 'soon' : s.key === 'none' ? 'fine' : 'okc'}">${s.next ? fmt(s.next) : 'Not known'}<small>${s.key === 'late' ? `${-s.days} days overdue` : s.key === 'soon' ? `${s.days} days` : s.key === 'none' ? 'enter a record to compute it' : `${s.days} days · in date`}${g.booking ? ` · booked ${fmtS(g.booking.date)} with ${engName(g.booking.eng)}` : ''}</small></dd></div></dl>
+    ${g.booking ? `<div class="note good"><span><b>${g.booking.onSite ? 'On site now' : 'Booked ' + fmt(g.booking.date)}</b> · ${engName(g.booking.eng)} · ${esc(g.booking.note || cat.req)}</span>${g.booking.onSite ? '' : `<button class="btn btn-q btn-sm" data-act="unbook" data-g="${g.id}" type="button">Cancel</button>`}</div>` : ''}
+    ${s.key === 'late' && !g.booking ? `<div class="note bad"><span><b>${-s.days} days past its statutory date.</b> ${esc(b.rp.split(': ')[1] || c.contact)} is the duty holder${g.notified ? ` and was told on ${fmt(g.notified)}` : ' and has not been told'}.</span>${g.notified ? '' : `<button class="btn btn-q btn-sm" data-act="notify" data-g="${g.id}" type="button">Notify duty holder</button>`}</div>` : ''}
+    ${s.key === 'none' ? `<div class="note warn"><span><b>No record held.</b> The asset is on the register but no certificate or service date has been entered. Enter the last known record, or book a first visit.</span><button class="btn btn-q btn-sm" data-act="newreport" data-g="${g.id}" data-mode="record" type="button">Enter record</button></div>` : ''}
+    ${a.installed || a.serial ? `<dl class="tb two ${a.batt ? '' : 'single'}" style="margin-top:12px;">
+      <div><dt>${a.warrantyNote && a.warrantyNote !== 'Panel' ? esc(a.warrantyNote) + ' warranty' : 'Warranty'}</dt><dd>${a.warrantyEnd ? `to <span class="num ${wd < 0 ? 'late' : wd <= 90 ? 'soon' : ''}">${fmt(a.warrantyEnd)}</span>${wd < 0 ? ' · lapsed' : ''}` : 'Not recorded'}</dd></div>
+      <div><dt>Installed</dt><dd class="num">${a.installed ? fmt(a.installed) + ' · Leodis M&amp;E' : '—'}</dd></div>
+      ${a.batt ? `<div><dt>Batteries</dt><dd>12-month · to <span class="num">${fmt(a.batt)}</span></dd></div><div><dt>Serial</dt><dd class="num">${esc(a.serial || '—')}</dd></div>` : ''}
+    </dl>` : ''}
+    ${warrantyNote}
+    ${rems.length ? `<div class="sec-h">Open remedials</div><div class="rmenu">${rems.map(x => `<div style="display:flex;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);"><span class="ref" style="font-size:11px;width:70px;flex:none;">${x.id}</span><div class="rt" style="flex:1;"><b style="display:block;font-size:13px;font-weight:500;">${esc(x.title)}</b><span style="font-size:12px;color:var(--text-3);">Raised ${fmt(x.raised)} · target ${fmt(x.target)} · ${x.owner ? 'owner ' + engName(x.owner) : '<span class="late">unassigned</span>'}</span></div><div class="actions">${x.owner ? '' : `<button class="btn btn-sm" data-act="assign" data-r="${x.id}" type="button">Assign</button>`}<button class="btn btn-q btn-sm" data-act="close-rem" data-r="${x.id}" type="button">Close</button></div></div>`).join('')}</div>` : ''}
+    <div class="sec-h">Service history <span style="margin-left:auto;color:var(--text-3);letter-spacing:.06em;">${plural(hist.length, 'report')}</span></div>
+    ${hist.length ? hist.map(e => `<div class="hist"><span class="d">${fmt(e.date)}</span><div class="b"><p>${esc(e.type)} · <button type="button" class="ref" data-act="report" data-id="${e.id}" style="background:none;border:0;padding:0;font-size:11px;cursor:pointer;">${e.id}</button></p><div class="rowsub">${engName(e.eng)} · ${esc(e.notes.length > 110 ? e.notes.slice(0, 108) + '…' : e.notes)}</div></div>${resultTag(e.result)}</div>`).join('') : '<div class="empty" style="padding:16px;">No reports on file for this asset.</div>'}
+    ${closed.length ? `<div class="sec-h">Closed remedials</div>${closed.map(x => `<div class="hist"><span class="d">${fmt(x.closed)}</span><div class="b"><p>${esc(x.title)}</p><div class="rowsub">${x.id} · raised ${fmtS(x.raised)} · ${engName(x.owner)}</div></div><span class="tag tag-ok">Closed</span></div>`).join('')}` : ''}
+    <div class="two" style="margin-top:8px;">
+      <div><div class="sec-h">Documents <button type="button" data-act="export" data-what="document folder">Folder →</button></div>
+        <div class="rmenu">${hist.filter(e => CATS[e.cat].rtype !== 'SVR' || e === hist[0]).slice(0, 3).map(e => `<button type="button" data-act="report" data-id="${e.id}"><span class="ref">${e.id.split('-').slice(2).join('-')}</span><div class="rt"><b>${esc(e.type)}${e.date.getFullYear() ? ' ' + e.date.getFullYear() : ''}</b><span>PDF · ${fmt(e.date)}</span></div></button>`).join('')}${a.installed ? `<button type="button" data-act="export" data-what="commissioning pack"><span class="ref">COMM-${a.installed.getFullYear()}</span><div class="rt"><b>Commissioning &amp; warranty</b><span>PDF · ${fmt(a.installed)}</span></div></button>` : ''}</div></div>
+      <div><div class="sec-h">Also falling due here</div>
+        <div class="rmenu">${siblings.length ? siblings.map(x => `<a href="${pathTo(AS[x.assetIds[0]])}"><span class="ref">${x.assetIds[0]}</span><div class="rt"><b>${esc(x.label)}</b><span>${dueCell(status(x))}${x.booking ? ' · booked' : ' · same visit?'}</span></div>${tag(status(x))}</a>`).join('') : '<div class="empty" style="padding:14px;">Nothing else due at this building.</div>'}</div></div>
+    </div>
+  </div>`;
+}
+function reportMenu(a, g) {
+  const cat = CATS[a.cat];
+  const opts = [
+    ['Service report', 'What was done on a visit, with readings and photos', 'newreport', 'Available'],
+    [cat.rtype === 'CERT' ? `${cat.label} certificate` : cat.rtype === 'RA' ? 'Risk assessment reissue' : cat.rtype === 'TER' ? 'Thorough examination report' : 'Test certificate', 'Statutory record issued from the inspection', 'planned', 'Planned'],
+    ['Remedial works report', 'Fault found, work quoted, work done', 'planned', 'Planned'],
+    ['Condition survey', 'Life expectancy and replacement advice', 'planned', 'Planned'],
+  ];
+  return `<div class="menu-pop rmenu">${opts.map(([t, s, act, st]) => `<button type="button" data-act="${act}" data-g="${g.id}" data-what="${esc(t)}"><div class="rt"><b>${esc(t)}</b><span>${esc(s)}</span></div><span class="tag ${st === 'Available' ? 'tag-aqua' : 'tag-quiet'}">${st}</span></button>`).join('')}</div>`;
+}
+
+/* ------------------------------------------------------------ due tabs */
+function itemRow(g, action) {
+  const s = status(g); const a = AS[g.assetIds[0]];
+  return `<tr><td>${gRef(g)}<div class="rowsub">${esc(g.label)}${g.assetIds.length > 1 ? '' : ' · ' + esc(a.make)}</div></td><td>${thumbLine(g)}</td><td>${reqCell(g)}</td><td class="due">${fmt(g.last)}</td><td>${dueCell(s)}</td><td style="display:flex;gap:6px;flex-wrap:wrap;">${tag(s)}${bookingTag(g)}${remTag(g)}${notifiedTag(g)}</td><td>${action(g, s)}</td></tr>`;
+}
+const bookBtn = g => g.booking ? `<button class="btn btn-q btn-sm" data-act="unbook" data-g="${g.id}" type="button">Cancel</button>` : `<button class="btn btn-sm" data-act="book" data-g="${g.id}" type="button">Book</button>`;
+function viewDue() {
+  const clientF = route.a && CL[route.a] ? route.a : 'all';
+  let items = dueItems(dueWin); if (clientF !== 'all') items = items.filter(g => g.client === clientF);
+  const unb = items.filter(g => !g.booking).length;
+  return `<div class="view">
+    <div class="pagehead"><div><h3>Falling due</h3><p>${plural(items.length, 'requirement')} inside ${dueWin} days${clientF !== 'all' ? ' for ' + esc(CL[clientF].name) : ' across the portfolio'} · ${unb} not yet booked</p></div>
+      <div class="actions"><button class="btn btn-q" data-act="export" data-what="due list" type="button">Export due list</button><button class="btn" data-act="book-next" type="button">Book the next due</button></div></div>
+    <div class="filters">${[30, 60, 90].map(w => `<button class="chip ${dueWin === w ? 'on' : ''}" data-act="duewin" data-v="${w}" type="button">Next ${w} days · ${dueItems(w).length}</button>`).join('')}
+      <span class="spacer"></span><label class="rowsub" style="margin:0;">Client</label><select data-act="dueclient"><option value="all">All clients</option>${CLIENTS.map(c => `<option value="${c.code}" ${clientF === c.code ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>
+    <div class="panel"><table class="reg"><thead><tr><th>Item</th><th>Building</th><th>Requirement</th><th>Last done</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>
+      ${items.length ? items.map(g => itemRow(g, bookBtn)).join('') : `<tr><td colspan="7" class="empty">Nothing falls due inside ${dueWin} days.</td></tr>`}</tbody></table>
+      <div class="panel-foot">Sorted by due date. Grouped assets (doors, extinguishers) appear once, because they are one visit and one report. Booking an item offers to include anything else due at the same building.</div></div>
+  </div>`;
+}
+function viewOverdue() {
+  const sub = route.a === 'norecord' ? 'norecord' : 'late';
+  const late = lateItems(), none = noneItems();
+  return `<div class="view">
+    <div class="pagehead"><div><h3>Overdue</h3><p>${plural(late.length, 'statutory item')} past their date · ${late.filter(g => !g.booking).length} not booked · ${late.filter(g => !g.notified && !g.booking).length} duty holders not yet told</p></div>
+      <div class="actions"><button class="btn btn-q" data-act="notify-all" type="button">Notify all duty holders</button><button class="btn" data-act="book-next" data-late="1" type="button">Book the oldest</button></div></div>
+    <div class="filters"><a class="chip warn ${sub === 'late' ? 'on' : ''}" href="#/overdue">Overdue · ${late.length}</a><a class="chip ${sub === 'norecord' ? 'on' : ''}" href="#/overdue/norecord">No record · ${none.length}</a><span class="spacer"></span><span class="rowsub">Oldest first</span></div>
+    ${sub === 'late' ? `<div class="panel"><table class="reg"><thead><tr><th>Item</th><th>Building</th><th>Requirement</th><th>Last done</th><th>Due</th><th>Status</th><th></th></tr></thead><tbody>
+      ${late.length ? late.map(g => itemRow(g, (g) => `<div class="actions" style="flex-wrap:nowrap;">${bookBtn(g)}${g.notified ? '' : `<button class="btn btn-q btn-sm" data-act="notify" data-g="${g.id}" type="button">Notify</button>`}</div>`)).join('') : '<tr><td colspan="7" class="empty">Nothing is overdue.</td></tr>'}</tbody></table>
+      <div class="panel-foot">Overdue is a legal position, not a scheduling one: booking a visit does not clear it. Only a filed report moves the date.</div></div>`
+    : `<div class="panel"><div class="panel-head"><h4>Held with no record</h4><span class="rowsub" style="margin-left:auto;">Enter the last known certificate or service date, or book a first visit</span></div><table class="reg"><thead><tr><th>Item</th><th>Building</th><th>Requirement</th><th>Assets</th><th>Status</th><th></th></tr></thead><tbody>
+      ${none.length ? none.map(g => `<tr><td>${gRef(g)}<div class="rowsub">${esc(g.label)}</div></td><td>${thumbLine(g)}</td><td>${reqCell(g)}</td><td class="num">${g.assetIds.length}</td><td style="display:flex;gap:6px;">${tag(status(g))}${bookingTag(g)}</td><td><div class="actions" style="flex-wrap:nowrap;"><button class="btn btn-q btn-sm" data-act="newreport" data-g="${g.id}" data-mode="record" type="button">Enter record</button>${bookBtn(g)}</div></td></tr>`).join('') : '<tr><td colspan="6" class="empty">Every requirement on the register has a record.</td></tr>'}</tbody></table>
+      <div class="panel-foot">“No record” is its own state. It never displays as compliant, and it never counts as overdue until a date exists to be late against.</div></div>`}
+  </div>`;
+}
+/* ----------------------------------------------------------- remedials */
+function viewRemedials() {
+  const f = ['open', 'unassigned', 'closed'].includes(route.a) ? route.a : 'open';
+  let list = remedials.filter(r => f === 'closed' ? r.status === 'closed' : r.status === 'open' && (f === 'open' || !r.owner));
+  list = list.sort((x, y) => f === 'closed' ? y.closed - x.closed : x.target - y.target);
+  const cnt = k => k === 'closed' ? remedials.filter(r => r.status === 'closed').length : k === 'unassigned' ? remedials.filter(r => r.status === 'open' && !r.owner).length : remedials.filter(r => r.status === 'open').length;
+  return `<div class="view">
+    <div class="pagehead"><div><h3>Remedials</h3><p>${cnt('open')} open · ${cnt('unassigned')} unassigned · ${remedials.filter(r => r.status === 'open' && dayDiff(r.target, TODAY) < 0).length} past target</p></div>
+      <div class="actions"><button class="btn btn-q" data-act="export" data-what="remedials schedule" type="button">Export schedule</button><button class="btn" data-act="raise" type="button">Raise a remedial</button></div></div>
+    <div class="filters">${['open', 'unassigned', 'closed'].map(k => `<a class="chip ${k === 'unassigned' ? 'warn' : ''} ${f === k ? 'on' : ''}" href="#/remedials/${k}">${k[0].toUpperCase() + k.slice(1)} · ${cnt(k)}</a>`).join('')}</div>
+    <div class="panel"><table class="reg"><thead><tr><th>Ref</th><th>Asset</th><th>Building</th><th>Raised</th><th>Owner</th><th>Target</th><th>Status</th><th></th></tr></thead><tbody>
+      ${list.length ? list.map(r => { const a = AS[r.assetId]; const td = dayDiff(r.target, TODAY); return `<tr><td><span class="ref">${r.id}</span></td><td>${aRef(a)}<div class="rowtitle" style="font-size:13px;">${esc(r.title)}</div><div class="rowsub">${esc(a.name)}</div></td><td>${thumbLine(GR[a.groupId])}</td><td class="due">${fmt(r.raised)}</td><td>${r.owner ? engName(r.owner) : '<span class="late">Unassigned</span>'}</td><td class="due">${r.status === 'closed' ? `<span class="fine">closed ${fmtS(r.closed)}</span>` : `<b class="${td < 0 ? 'late' : td <= 7 ? 'soon' : ''}">${fmtS(r.target)}</b> · ${td < 0 ? -td + 'd late' : td + 'd'}`}</td><td>${r.status === 'closed' ? '<span class="tag tag-ok">Closed</span>' : r.owner ? '<span class="tag tag-caution">Assigned</span>' : '<span class="tag tag-alert">Unassigned</span>'}</td><td>${r.status === 'closed' ? '' : `<div class="actions" style="flex-wrap:nowrap;">${r.owner ? `<button class="btn btn-q btn-sm" data-act="assign" data-r="${r.id}" type="button">Reassign</button>` : `<button class="btn btn-sm" data-act="assign" data-r="${r.id}" type="button">Assign</button>`}<button class="btn btn-q btn-sm" data-act="close-rem" data-r="${r.id}" type="button">Close</button></div>`}</td></tr>`; }).join('') : `<tr><td colspan="8" class="empty">No ${f} remedials.</td></tr>`}</tbody></table>
+      <div class="panel-foot">A remedial belongs to the asset that raised it and to the report that found it. Closing one records who closed it and when; it does not alter the asset's statutory date.</div></div>
+  </div>`;
+}
+/* ------------------------------------------------------------- reports */
+function viewReports() {
+  const clientF = route.a && CL[route.a] ? route.a : 'all'; const bF = route.b && BL[route.b] ? route.b : null;
+  let list = events.slice().sort((x, y) => y.date - x.date);
+  if (clientF !== 'all') list = list.filter(e => e.client === clientF); if (bF) list = list.filter(e => e.building === bF);
+  if (repType !== 'all') list = list.filter(e => CATS[e.cat].rtype === repType);
+  const shown = list.slice(0, 80);
+  return `<div class="view">
+    <div class="pagehead"><div><h3>Reports</h3><p>${list.length} on file${bF ? ' for ' + esc(BL[bF].name) : clientF !== 'all' ? ' for ' + esc(CL[clientF].name) : ''} · ${events.filter(e => e.date.getFullYear() === 2026).length} filed this year · ${events.filter(e => e.result === 'fault').length} found a fault</p></div>
+      <div class="actions"><button class="btn btn-q" data-act="export" data-what="report register" type="button">Export register</button></div></div>
+    <div class="filters"><button class="chip ${repType === 'all' ? 'on' : ''}" data-act="reptype" data-v="all" type="button">All types</button>${Object.entries(RTYPES).map(([k, v]) => `<button class="chip ${repType === k ? 'on' : ''}" data-act="reptype" data-v="${k}" type="button">${v}s · ${events.filter(e => CATS[e.cat].rtype === k).length}</button>`).join('')}
+      <span class="spacer"></span><label class="rowsub" style="margin:0;">Client</label><select data-act="repclient"><option value="all">All clients</option>${CLIENTS.map(c => `<option value="${c.code}" ${clientF === c.code ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}</select></div>
+    <div class="panel"><table class="reg"><thead><tr><th>Reference</th><th>Covers</th><th>Building</th><th>Engineer</th><th>Date</th><th>Result</th><th>Sent to</th></tr></thead><tbody>
+      ${shown.map(e => `<tr class="clickable" data-act="report" data-id="${e.id}"><td><span class="ref">${e.id}</span><div class="rowsub">${esc(e.type)}</div></td><td><div class="rowtitle" style="font-size:13px;">${esc(GR[e.groupId].label)}</div><div class="rowsub">${esc(CATS[e.cat].req)}</div></td><td>${thumbLine(GR[e.groupId])}</td><td>${engName(e.eng)}</td><td class="due">${fmt(e.date)}</td><td>${resultTag(e.result)}</td><td style="font-size:12px;color:var(--text-2);">${esc(CL[e.client].contact)}</td></tr>`).join('')}</tbody></table>
+      <div class="panel-foot">Showing ${shown.length} of ${list.length}. Select a row to read it. Every report here was generated from a visit against a tracked asset; the register cannot hold a report with no asset.</div></div>
+  </div>`;
+}
+/* ----------------------------------------------------------- engineers */
+function viewEngineers() {
+  const sel = ENG[route.a] || null;
+  const bookingsOf = id => groups.filter(g => g.booking && g.booking.eng === id).sort((x, y) => x.booking.date - y.booking.date);
+  const repsOf = id => events.filter(e => e.eng === id).sort((x, y) => y.date - x.date);
+  const remsOf = id => remedials.filter(r => r.status === 'open' && r.owner === id);
+  return `<div class="view">
+    <div class="pagehead"><div><h3>Engineers</h3><p>${Object.keys(ENG).length} on the compliance rota · ${groups.filter(g => g.booking && g.booking.onSite).length} on site now · ${groups.filter(g => g.booking).length} visits booked</p></div>
+      <div class="actions"><button class="btn btn-q" data-act="export" data-what="rota" type="button">Export rota</button></div></div>
+    <div class="two-wide">
+      <div class="panel"><table class="reg"><thead><tr><th>Engineer</th><th>Trades</th><th>Today</th><th>Next booked</th><th>Open remedials</th><th>Reports 2026</th></tr></thead><tbody>
+        ${Object.values(ENG).map(e => { const bk = bookingsOf(e.id); const today = bk.find(g => dayDiff(g.booking.date, TODAY) === 0); const next = bk.find(g => dayDiff(g.booking.date, TODAY) > 0); return `<tr class="clickable ${sel && sel.id === e.id ? 'sel' : ''}" data-go="#/engineers/${e.id}"><td><div class="rowtitle" style="font-size:13px;">${esc(e.full)}</div><div class="rowsub">${e.role || 'Engineer'}${e.gasSafe ? ' · Gas Safe ' + e.gasSafe : ''}</div></td><td style="font-size:12px;">${e.trades.join(', ')}</td><td>${today ? `<span class="tag tag-aqua">On site</span><div class="rowsub">${esc(BL[today.building].name)}</div>` : '<span class="rowsub">Office / travelling</span>'}</td><td class="due">${next ? `${fmtS(next.booking.date)}<div class="rowsub">${esc(BL[next.building].name)}</div>` : '—'}</td><td class="num">${remsOf(e.id).length}</td><td class="num">${repsOf(e.id).filter(x => x.date.getFullYear() === 2026).length}</td></tr>`; }).join('')}</tbody></table>
+        <div class="panel-foot">Select an engineer to see their diary. Trades decide who is offered when a visit is booked.</div></div>
+      ${sel ? `<div class="panel"><div class="panel-head"><h4>${esc(sel.full)}</h4><span class="rowsub" style="margin-left:auto;">${sel.trades.join(' · ')}</span></div>
+        <div class="sec-h" style="padding:0 16px;">Booked visits</div>
+        ${bookingsOf(sel.id).length ? bookingsOf(sel.id).map(g => `<a class="mini" href="${pathTo(AS[g.assetIds[0]])}"><div class="mini-b"><p>${esc(g.label)}</p><div class="rowsub">${esc(BL[g.building].name)} · ${esc(g.booking.note || CATS[g.cat].req)}</div></div><span class="age">${g.booking.onSite ? 'now' : fmtS(g.booking.date)}</span></a>`).join('') : '<div class="empty" style="padding:16px;">Nothing booked.</div>'}
+        <div class="sec-h" style="padding:0 16px;">Open remedials</div>
+        ${remsOf(sel.id).length ? remsOf(sel.id).map(r => `<a class="mini" href="${pathTo(AS[r.assetId])}"><div class="mini-b"><p>${esc(r.title)}</p><div class="rowsub">${r.id} · ${esc(BL[AS[r.assetId].building].name)}</div></div><span class="age ${dayDiff(r.target, TODAY) < 0 ? 'late' : ''}">${fmtS(r.target)}</span></a>`).join('') : '<div class="empty" style="padding:16px;">None assigned.</div>'}
+        <div class="sec-h" style="padding:0 16px;">Recent reports</div>
+        ${repsOf(sel.id).slice(0, 6).map(e => `<button class="mini" type="button" data-act="report" data-id="${e.id}" style="width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);color:inherit;"><div class="mini-b"><p><span class="ref">${e.id}</span></p><div class="rowsub">${esc(GR[e.groupId].label)} · ${esc(BL[e.building].name)}</div></div><span class="age">${fmtS(e.date)}</span></button>`).join('')}
+      </div>` : `<div class="panel"><div class="empty">Select an engineer to see bookings, remedials and recent reports.</div></div>`}
+    </div>
+  </div>`;
+}
+/* --------------------------------------------------------------- admin */
+function viewAdmin() {
+  const sec = ['requirements', 'access', 'contacts'].includes(route.a) ? route.a : 'requirements';
+  const body = sec === 'requirements' ? `<div class="panel"><div class="panel-head"><h4>Requirements &amp; intervals</h4><span class="rowsub" style="margin-left:auto;">Due dates are computed from the last report and these intervals</span></div>
+      <table class="reg"><thead><tr><th>Category</th><th>Requirement</th><th>Standard</th><th>Interval</th><th>Trade</th><th>Report type</th><th>Buildings</th><th>Assets</th><th></th></tr></thead><tbody>
+      ${Object.entries(CATS).map(([k, c]) => `<tr><td><div class="rowtitle" style="font-size:13px;">${esc(c.label)}</div><div class="rowsub">${k} · ${esc(c.group)}</div></td><td>${esc(c.req)}</td><td class="num" style="font-size:12px;">${esc(c.std)}</td><td class="num">${c.months >= 12 ? (c.months / 12) + ' yr' : c.months + ' mo'}</td><td>${esc(c.trade)}</td><td>${RTYPES[c.rtype]}</td><td class="num">${new Set(groups.filter(g => g.cat === k).map(g => g.building)).size}</td><td class="num">${assets.filter(a => a.cat === k).length}</td><td><button class="btn btn-q btn-sm" data-act="planned" data-what="Editing intervals" type="button">Edit</button></td></tr>`).join('')}</tbody></table>
+      <div class="panel-foot">Changing an interval recomputes every due date in that category, so it is an administrator action with an audit entry, not a filter.</div></div>`
+    : sec === 'access' ? `<div class="panel"><div class="panel-head"><h4>Roles &amp; access</h4></div><table class="reg"><thead><tr><th>Person</th><th>Role</th><th>Sees</th><th>Can</th><th>Sign-in</th></tr></thead><tbody>
+      ${[['Cal Say', 'Compliance manager', 'Everything', 'Book, assign, file, notify, administer', 'Microsoft · Leodis'], ...Object.values(ENG).filter(e => e.id !== 'CS').map(e => [e.full, 'Engineer', 'Own bookings and the buildings they visit', 'File reports, close own remedials', 'Microsoft · Leodis']), ...CLIENTS.map(c => [c.contact, `Client viewer · ${c.name}`, `${c.name} only`, 'Read reports and statements', 'Invited · not yet enabled'])].map(r => `<tr><td class="rowtitle" style="font-size:13px;">${esc(r[0])}</td><td>${esc(r[1])}</td><td style="font-size:12px;">${esc(r[2])}</td><td style="font-size:12px;">${esc(r[3])}</td><td><span class="tag ${r[4].startsWith('Invited') ? 'tag-quiet' : 'tag-ok'}">${esc(r[4])}</span></td></tr>`).join('')}</tbody></table>
+      <div class="panel-foot">Client viewers are shown as a future role. Company selection on the hub is navigation, not access control; these rows would be.</div></div>`
+    : `<div class="panel"><div class="panel-head"><h4>Client contacts &amp; delivery</h4></div><table class="reg"><thead><tr><th>Client</th><th>Reports go to</th><th>Duty holders</th><th>Statement cadence</th><th></th></tr></thead><tbody>
+      ${CLIENTS.map(c => `<tr><td class="rowtitle" style="font-size:13px;">${esc(c.name)}</td><td>${esc(c.contact)} · ${esc(c.role)}<div class="rowsub num">${esc(c.email)}</div></td><td style="font-size:12px;">${buildingsOf(c.code).map(b => esc(b.rp.split(': ')[1] || b.rp) + ' — ' + esc(b.name.split(' —')[0])).join('<br>')}</td><td>${c.code === 'SCA' ? 'Termly' : 'Quarterly'}</td><td><button class="btn btn-q btn-sm" data-act="planned" data-what="Editing contacts" type="button">Edit</button></td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="view">
+    <div class="pagehead"><div><h3>Administration</h3><p>Requirements, people and delivery for Leodis Compliance Management</p></div></div>
+    <div class="filters">${[['requirements', 'Requirements & intervals'], ['access', 'Roles & access'], ['contacts', 'Client contacts']].map(([k, l]) => `<a class="chip ${sec === k ? 'on' : ''}" href="#/admin/${k}">${l}</a>`).join('')}</div>
+    ${body}
+  </div>`;
+}
+
+/* ------------------------------------------------------------- dialogs */
+const dlg = document.getElementById('dlg');
+function openDlg(html) { dlg.innerHTML = html; if (!dlg.open) dlg.showModal(); }
+function closeDlg() { if (dlg.open) dlg.close(); dlg.innerHTML = ''; }
+const dlgShell = (title, sub, body, foot) => `<div class="dlg-head"><div>${sub ? `<div class="crumbs">${sub}</div>` : ''}<h3>${title}</h3></div><button class="x" type="button" data-act="dlg-close" aria-label="Close">×</button></div><div class="dlg-body">${body}</div>${foot ? `<div class="dlg-foot">${foot}</div>` : ''}`;
+const engSelect = (name, trade, sel) => `<select name="${name}">${engineersFor(trade).map(e => `<option value="${e.id}" ${sel === e.id ? 'selected' : ''}>${esc(e.full)} — ${e.trades.slice(0, 2).join(', ')}</option>`).join('')}</select>`;
+
+function dlgBook(g, early) {
+  const s = status(g); const cat = CATS[g.cat]; const b = BL[g.building];
+  const suggested = s.next && dayDiff(s.next, TODAY) > 3 && !early ? addDays(s.next, -3) : addDays(TODAY, 3);
+  const others = groupsOfBuilding(b.code).filter(x => x.id !== g.id && !x.booking && ['soon', 'late', 'none'].includes(status(x).key));
+  return openDlg(`<form method="dialog" data-form="book" data-g="${g.id}">${dlgShell('Book a visit', `${esc(CL[g.client].name)} › ${esc(b.name)}`,
+    `<div class="note info" style="margin:0;"><span><b>${esc(g.label)}</b> · ${esc(cat.req)} · ${s.key === 'none' ? 'no record held' : s.key === 'late' ? `<span class="late">${-s.days} days overdue</span>` : `due ${fmt(s.next)}`}</span></div>
+     <div class="f-row"><div class="f"><label>Visit date</label><input name="date" type="date" value="${toISO(suggested)}" required></div><div class="f"><label>Engineer · ${esc(cat.trade)}</label>${engSelect('eng', cat.trade)}</div></div>
+     <div class="f"><label>Note for the engineer</label><input name="note" value="${esc(cat.req)}${g.assetIds.length > 1 ? ' · all ' + g.assetIds.length + ' ' + cat.unit + 's' : ''}"></div>
+     ${others.length ? `<div class="f"><label>Also due at ${esc(b.name)} — include in the same visit</label><div class="checks">${others.slice(0, 6).map(x => `<label><input type="checkbox" name="also" value="${x.id}" ${status(x).key === 'late' ? 'checked' : ''}> ${esc(x.label)} <span class="rowsub" style="margin:0;">· ${status(x).word.toLowerCase()}${status(x).next ? ' ' + fmtS(status(x).next) : ''}</span></label>`).join('')}</div></div>` : ''}
+     <p class="rowsub" style="margin:0;">Booking does not change the compliance status. Only the filed report moves the date.</p>`,
+    `<button class="btn btn-q" type="button" data-act="dlg-close">Cancel</button><button class="btn" type="submit">Book visit</button>`)}</form>`);
+}
+function dlgAssign(r) {
+  const a = AS[r.assetId]; const cat = CATS[a.cat];
+  return openDlg(`<form method="dialog" data-form="assign" data-r="${r.id}">${dlgShell('Assign remedial', `${r.id} · ${esc(BL[a.building].name)}`,
+    `<div class="note warn" style="margin:0;"><span><b>${esc(r.title)}</b><br>${esc(a.name)} · raised ${fmt(r.raised)}</span></div>
+     <div class="f-row"><div class="f"><label>Owner · ${esc(cat.trade)}</label>${engSelect('eng', cat.trade, r.owner)}</div><div class="f"><label>Target date</label><input name="target" type="date" value="${toISO(r.target)}" required></div></div>
+     <div class="f"><label>Instruction</label><textarea name="note" placeholder="Parts, access arrangements, who to call on site">${r.owner ? '' : 'Access via ' + esc(BL[a.building].rp.split(': ')[1] || 'site contact') + '. '}</textarea></div>`,
+    `<button class="btn btn-q" type="button" data-act="dlg-close">Cancel</button><button class="btn" type="submit">Assign</button>`)}</form>`);
+}
+function dlgNewReport(g, mode) {
+  const cat = CATS[g.cat]; const s = status(g); const b = BL[g.building]; const record = mode === 'record';
+  return openDlg(`<form method="dialog" data-form="newreport" data-g="${g.id}" data-mode="${mode || 'file'}">${dlgShell(record ? 'Enter last known record' : `File a ${cat.rtype === 'SVR' ? 'service report' : RTYPES[cat.rtype].toLowerCase()}`, `${esc(CL[g.client].name)} › ${esc(b.name)} › ${esc(g.label)}`,
+    `${record ? `<div class="note warn" style="margin:0;"><span>No record is held. Entering the date of the last known ${esc(cat.req.toLowerCase())} lets the next due date be computed. Attach the certificate afterwards.</span></div>` : `<div class="note info" style="margin:0;"><span><b>${esc(cat.req)}</b> · ${esc(cat.std)} · ${s.next ? 'was due ' + fmt(s.next) : 'no previous record'}. Filing this moves the next due date to ${cat.months} months after the visit.</span></div>`}
+     <div class="f-row"><div class="f"><label>${record ? 'Date of last ' + esc(cat.req.toLowerCase()) : 'Visit date'}</label><input name="date" type="date" value="${toISO(record ? addMonths(TODAY, -Math.floor(cat.months / 2)) : (g.booking && g.booking.date <= TODAY ? g.booking.date : TODAY))}" max="${toISO(TODAY)}" required></div><div class="f"><label>Engineer</label>${engSelect('eng', cat.trade, g.booking ? g.booking.eng : null)}</div></div>
+     <div class="f"><label>Result</label><select name="result"><option value="pass">Satisfactory — no faults</option><option value="fault">Fault found — raise a remedial</option></select></div>
+     <div class="f"><label>Findings</label><textarea name="notes">${esc(record ? 'Record entered from client paperwork; certificate to be attached.' : findings(g.cat, false))}</textarea></div>
+     <div class="f" data-remfield hidden><label>Remedial title</label><input name="remtitle" placeholder="What needs doing"></div>
+     <p class="rowsub" style="margin:0;">The report will be numbered in sequence for ${esc(b.name)} and sent to ${esc(CL[g.client].contact)}.</p>`,
+    `<button class="btn btn-q" type="button" data-act="dlg-close">Cancel</button><button class="btn" type="submit">${record ? 'Save record' : 'File report'}</button>`)}</form>`);
+}
+function dlgRaise() {
+  return openDlg(`<form method="dialog" data-form="raise">${dlgShell('Raise a remedial', 'Against a tracked asset',
+    `<div class="f"><label>Asset</label><select name="asset">${BUILDINGS.map(b => `<optgroup label="${esc(b.name)}">${groupsOfBuilding(b.code).map(g => `<option value="${g.assetIds[0]}">${esc(g.label)} · ${g.assetIds[0]}</option>`).join('')}</optgroup>`).join('')}</select></div>
+     <div class="f"><label>What needs doing</label><input name="title" required placeholder="e.g. Replace failed sounder, level 2 corridor"></div>
+     <div class="f-row"><div class="f"><label>Owner</label><select name="eng"><option value="">Unassigned</option>${Object.values(ENG).map(e => `<option value="${e.id}">${esc(e.full)}</option>`).join('')}</select></div><div class="f"><label>Target</label><input name="target" type="date" value="${toISO(addDays(TODAY, 28))}" required></div></div>`,
+    `<button class="btn btn-q" type="button" data-act="dlg-close">Cancel</button><button class="btn" type="submit">Raise</button>`)}</form>`);
+}
+function dlgReport(e) {
+  const g = GR[e.groupId]; const b = BL[e.building]; const c = CL[e.client]; const cat = CATS[e.cat]; const a = AS[g.assetIds[0]];
+  const rems = remedials.filter(r => g.assetIds.includes(r.assetId) && Math.abs(dayDiff(r.raised, e.date)) <= 3);
+  return openDlg(`<div class="doc"><div class="doc-head"><div><div class="kick">${esc(e.type)} · Leodis Compliance Management</div><h2>${esc(g.label)}</h2><div class="rowsub"><span class="ref">${e.id}</span><span class="sep">/</span>${esc(b.name)}<span class="sep">/</span>${fmt(e.date)}</div></div><div class="actions"><button class="btn btn-q btn-sm" type="button" data-act="export" data-what="PDF of ${e.id}">Download PDF</button><button class="x" type="button" data-act="dlg-close" aria-label="Close">×</button></div></div>
+    <dl class="tb" style="margin:0 0 16px;"><div><dt>Client</dt><dd>${esc(c.name)}</dd></div><div><dt>Engineer</dt><dd>${esc(ENG[e.eng].full)}${ENG[e.eng].gasSafe && e.cat === 'GS' ? `<div class="rowsub">Gas Safe ${ENG[e.eng].gasSafe}</div>` : ''}</dd></div><div><dt>Requirement</dt><dd>${esc(cat.req)}<div class="rowsub">${esc(cat.std)}</div></dd></div><div><dt>Result</dt><dd>${resultTag(e.result)}</dd></div></dl>
+    <div class="sec-h" style="margin-top:0;">Assets covered · ${g.assetIds.length}</div>
+    <div class="rmenu" style="max-height:160px;overflow:auto;">${g.assetIds.slice(0, 40).map(id => `<a href="${pathTo(AS[id])}" data-act="dlg-close"><span class="ref">${id}</span><div class="rt"><b>${esc(AS[id].name)}</b><span>${esc(AS[id].loc)}</span></div></a>`).join('')}${g.assetIds.length > 40 ? `<div class="empty" style="padding:8px;">and ${g.assetIds.length - 40} more</div>` : ''}</div>
+    <div class="sec-h">Findings</div><p>${esc(e.notes)}</p>
+    ${rems.length ? `<div class="sec-h">Remedials raised</div><div class="rmenu">${rems.map(r => `<a href="${pathTo(AS[r.assetId])}" data-act="dlg-close"><span class="ref">${r.id}</span><div class="rt"><b>${esc(r.title)}</b><span>${esc(AS[r.assetId].name)} · ${r.status === 'closed' ? 'closed ' + fmtS(r.closed) : r.owner ? 'owner ' + engName(r.owner) : 'unassigned'}</span></div></a>`).join('')}</div>` : ''}
+    <div class="sec-h">Next due</div><p>${esc(cat.req)} due again by <b class="num">${fmt(addMonths(e.date, cat.months))}</b>${eventsOf(g)[0] === e ? '' : ' — superseded by a later report'}.</p>
+    <div class="sig">Signed ${esc(ENG[e.eng].full)} · ${fmt(e.date)} · Sent to ${esc(c.contact)} (${esc(c.email)}) · Generated by Leodis Relay</div></div>`);
+}
+function dlgStatement(scope) {
+  const isClient = !!scope.client; const c = CL[scope.client || BL[scope.building].client]; const b = scope.building ? BL[scope.building] : null;
+  const gs = b ? groupsOfBuilding(b.code) : groupsOfClient(c.code); const r = rollup(gs);
+  const rows = b ? gs.map(g => { const s = status(g); return `<tr><td>${esc(g.label)}<div class="rowsub">${esc(CATS[g.cat].req)} · ${esc(CATS[g.cat].std)}</div></td><td class="due">${fmt(g.last)}</td><td>${s.next ? fmt(s.next) : '—'}</td><td>${tag(s)}</td></tr>`; }).join('')
+    : buildingsOf(c.code).map(bb => { const rb = rollup(groupsOfBuilding(bb.code)); const l = lateItems().filter(g => g.building === bb.code).length; return `<tr><td>${esc(bb.name)}<div class="rowsub">${esc(bb.kind)}</div></td><td class="num">${rb.total}</td><td class="num">${Math.round(100 * rb.ok / rb.total)}%</td><td>${l ? `<span class="tag tag-alert">${l} overdue</span>` : rb.none ? `<span class="tag tag-quiet">${rb.none} no record</span>` : rb.soon ? `<span class="tag tag-caution">${rb.soon} due</span>` : '<span class="tag tag-ok">In date</span>'}</td></tr>`; }).join('');
+  return openDlg(`<div class="doc"><div class="doc-head"><div><div class="kick">Compliance statement · ${isClient ? 'portfolio' : 'building'} · prototype</div><h2>${esc(b ? b.name : c.name)}</h2><div class="rowsub">Prepared for ${esc(c.contact)}, ${esc(c.role)} · position as at ${fmt(TODAY)}</div></div><div class="actions"><button class="btn btn-q btn-sm" type="button" data-act="export" data-what="statement PDF">Download PDF</button><button class="x" type="button" data-act="dlg-close" aria-label="Close">×</button></div></div>
+    <p>Of ${r.total} tracked assets, <b>${r.ok}</b> are in date, <b>${r.soon}</b> fall due within 30 days, <b>${r.late}</b> are past their statutory date and <b>${r.none}</b> have no record held. This statement summarises the register; it does not replace the individual certificates, which remain the statutory documents.</p>
+    <div style="margin:12px 0;">${bar(r)}</div>
+    <table class="reg tight" style="border:1px solid var(--line);"><thead><tr>${b ? '<th>Requirement</th><th>Last done</th><th>Next due</th><th>Status</th>' : '<th>Building</th><th>Assets</th><th>In date</th><th>Position</th>'}</tr></thead><tbody>${rows}</tbody></table>
+    <div class="sig">Issued by Cal Say, Compliance manager · Leodis Compliance Management Ltd · ${fmt(TODAY)}</div></div>`);
+}
+function hubOverlay() {
+  return `<div class="hub" id="hub"><div class="hub-card"><div class="hub-top"><div class="logo"><b>RELAY</b><span style="color:var(--text-3)">BY LEODIS</span></div><button class="tbtn" data-act="hub-close" type="button">Back to Compliance</button></div>
+    <div class="hub-body"><h1>Select your company</h1><div class="hub-grid"><div class="mast"><strong>One<br>Leodis.</strong><small>TWO COMPANIES.<br>ONE CONNECTION.</small></div><div>
+      <button class="company" type="button" data-act="hub-dev"><span><small>LEODIS</small><span class="nm">Developments<em>LIMITED</em></span></span><span class="arrow">↗</span></button>
+      <button class="company aq" type="button" data-act="hub-close"><span><small>LEODIS</small><span class="nm">Compliance<br>Management<em>LIMITED</em></span></span><span class="arrow">↗</span></button></div></div></div>
+    <div class="hub-foot"><span>Leodis Developments Ltd</span><span>Leodis Compliance Management Ltd</span></div></div></div>`;
+}
+
+/* -------------------------------------------------------------- toasts */
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = msg; document.getElementById('toasts').appendChild(t); setTimeout(() => t.remove(), 4200); }
+
+/* ------------------------------------------------------------- actions */
+function nextRef(building, rtype) { const n = events.filter(e => e.building === building && CATS[e.cat].rtype === rtype).length + 1; return `${BL[building].client}-${building}-${rtype}-${pad3(n)}`; }
+function fileReport(g, date, eng, result, notes, mode, remtitle) {
+  const cat = CATS[g.cat];
+  const e = { id: nextRef(g.building, cat.rtype), type: RTYPES[cat.rtype], date, eng, result, notes, assetIds: g.assetIds.slice(), groupId: g.id, cat: g.cat, building: g.building, client: g.client };
+  events.push(e); if (!g.last || date > g.last) g.last = date; if (g.booking && !g.booking.onSite) g.booking = null; if (g.booking && g.booking.onSite) g.booking = null; g.notified = null;
+  if (result === 'fault') { const id = `REM-${pad3(++remSeq)}`; const r = { id, assetId: g.assetIds[0], title: remtitle || `Fault found at ${cat.req.toLowerCase()} — see ${e.id}`, raised: date, owner: null, target: addDays(date, 28), status: 'open', closed: null }; remedials.push(r); const a = AS[r.assetId]; a.remedials = a.remedials || []; a.remedials.push(id); toast(`Filed <span class="ref">${e.id}</span> and raised ${id}. Sent to ${esc(CL[g.client].contact)}.`); }
+  else toast(`${mode === 'record' ? 'Record saved as' : 'Filed'} <span class="ref">${e.id}</span> · next ${esc(cat.req.toLowerCase())} due ${fmt(addMonths(date, cat.months))}. Sent to ${esc(CL[g.client].contact)}.`);
+}
+const ACTIONS = {
+  theme() { const root = document.documentElement; const cur = root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'); root.setAttribute('data-theme', cur === 'dark' ? 'light' : 'dark'); },
+  attn() { attnOpen = !attnOpen; render(); },
+  'attn-close'() { attnOpen = false; },
+  hub() { document.body.insertAdjacentHTML('beforeend', hubOverlay()); },
+  'hub-close'() { const h = document.getElementById('hub'); if (h) h.remove(); },
+  'hub-dev'() { toast('Leodis Developments opens the reporting workspace. It is outside this prototype.'); },
+  afilter(d) { assetFilter = d.v; render(); },
+  duewin(d) { dueWin = Number(d.v); render(); },
+  reptype(d) { repType = d.v; render(); },
+  menu(d) { menuOpen = menuOpen === d.menu ? null : d.menu; render(); },
+  book(d) { menuOpen = null; dlgBook(GR[d.g], !!d.early); },
+  'book-next'(d) { let pool = d.late ? lateItems() : dueItems(90).concat(lateItems()); if (d.client) pool = pool.filter(g => g.client === d.client); if (d.building) pool = pool.filter(g => g.building === d.building); pool = pool.filter(g => !g.booking).sort((x, y) => status(x).days - status(y).days); if (!pool.length) { toast('Nothing here needs booking.'); return; } dlgBook(pool[0]); },
+  unbook(d) { const g = GR[d.g]; g.booking = null; toast(`Booking cancelled for ${esc(g.label)}.`); render(); },
+  notify(d) { const g = GR[d.g]; g.notified = TODAY; toast(`${esc(BL[g.building].rp.split(': ')[1] || CL[g.client].contact)} notified about ${esc(g.label)} at ${esc(BL[g.building].name)}.`); render(); },
+  'notify-all'() { const l = lateItems().filter(g => !g.notified); if (!l.length) { toast('Every duty holder has already been told.'); return; } l.forEach(g => g.notified = TODAY); toast(`${plural(l.length, 'duty holder')} notified.`); render(); },
+  assign(d) { dlgAssign(remedials.find(r => r.id === d.r)); },
+  'close-rem'(d) { const r = remedials.find(x => x.id === d.r); r.status = 'closed'; r.closed = TODAY; if (!r.owner) r.owner = 'CS'; toast(`${r.id} closed by Cal Say, ${fmt(TODAY)}.`); render(); },
+  newreport(d) { menuOpen = null; dlgNewReport(GR[d.g], d.mode); },
+  raise() { dlgRaise(); },
+  report(d) { const e = events.find(x => x.id === d.id); if (e) dlgReport(e); },
+  statement(d) { dlgStatement(d); },
+  export(d) { toast(`${esc(d.what[0].toUpperCase() + d.what.slice(1))} would download here. Exports are outside this prototype.`); },
+  planned(d) { menuOpen = null; toast(`${esc(d.what)} is planned, not built. Nothing was changed.`); render(); },
+  'dlg-close'() { closeDlg(); },
+};
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-act]'); const go = e.target.closest('[data-go]');
+  if (t && t.tagName !== 'SELECT') { const act = ACTIONS[t.dataset.act]; if (act) { if (t.tagName === 'A' && t.dataset.act === 'planned') e.preventDefault(); act(t.dataset, t); } if (t.dataset.act !== 'menu' && menuOpen && !t.closest('.menu-pop')) { menuOpen = null; } return; }
+  if (go) { window.__go(go.dataset.go); return; }
+  if (menuOpen && !e.target.closest('.menu')) { menuOpen = null; render(); }
+  if (attnOpen && !e.target.closest('.attn-pop')) { attnOpen = false; render(); }
+});
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.dataset.act === 'dueclient') { window.__go(t.value === 'all' ? '#/due' : `#/due/${t.value}`); }
+  if (t.dataset.act === 'repclient') { window.__go(t.value === 'all' ? '#/reports' : `#/reports/${t.value}`); }
+  if (t.name === 'result' && t.form) { const f = t.form.querySelector('[data-remfield]'); if (f) { f.hidden = t.value !== 'fault'; const n = t.form.querySelector('[name=notes]'); const g = GR[t.form.dataset.g]; if (n && g) n.value = findings(g.cat, t.value === 'fault'); } }
+});
+dlg.addEventListener('submit', e => {
+  const f = e.target; const fd = new FormData(f); e.preventDefault();
+  if (f.dataset.form === 'book') {
+    const g = GR[f.dataset.g]; const date = fromISO(fd.get('date')); const eng = fd.get('eng');
+    g.booking = { date, eng, note: fd.get('note') }; const also = fd.getAll('also'); also.forEach(id => { GR[id].booking = { date, eng, note: `Same visit as ${g.label}` }; });
+    toast(`Booked ${esc(ENG[eng].name)} for ${esc(BL[g.building].name)} on ${fmt(date)}${also.length ? ` · ${plural(also.length + 1, 'item')} in one visit` : ''}.`);
+  } else if (f.dataset.form === 'assign') {
+    const r = remedials.find(x => x.id === f.dataset.r); r.owner = fd.get('eng'); r.target = fromISO(fd.get('target')); toast(`${r.id} assigned to ${esc(ENG[r.owner].full)}, target ${fmt(r.target)}.`);
+  } else if (f.dataset.form === 'newreport') {
+    fileReport(GR[f.dataset.g], fromISO(fd.get('date')), fd.get('eng'), fd.get('result'), fd.get('notes'), f.dataset.mode, fd.get('remtitle'));
+  } else if (f.dataset.form === 'raise') {
+    const a = AS[fd.get('asset')]; const id = `REM-${pad3(++remSeq)}`; const r = { id, assetId: a.id, title: fd.get('title'), raised: TODAY, owner: fd.get('eng') || null, target: fromISO(fd.get('target')), status: 'open', closed: null }; remedials.push(r); a.remedials = a.remedials || []; a.remedials.push(id); toast(`${id} raised against ${esc(a.name)} at ${esc(BL[a.building].name)}.`);
+  }
+  closeDlg(); render();
+});
+dlg.addEventListener('close', () => { dlg.innerHTML = ''; });
+
+/* -------------------------------------------------------------- search */
+function searchResults(q) {
+  q = q.trim().toLowerCase(); if (q.length < 2) return [];
+  const out = [];
+  CLIENTS.forEach(c => { if (c.name.toLowerCase().includes(q)) out.push({ ref: c.code, t: c.name, k: 'client', go: `#/portfolio/${c.code}` }); });
+  BUILDINGS.forEach(b => { if (b.name.toLowerCase().includes(q) || b.code.toLowerCase() === q) out.push({ ref: `${b.client}-${b.code}`, t: b.name, k: 'building', go: `#/portfolio/${b.client}/${b.code}` }); });
+  groups.forEach(g => { const a = AS[g.assetIds[0]]; const hay = `${g.label} ${a.id} ${a.make} ${a.loc} ${a.serial || ''} ${CATS[g.cat].label}`.toLowerCase(); if (hay.includes(q)) out.push({ ref: a.id, t: `${g.label} · ${BL[g.building].name}`, k: CATS[g.cat].label, go: pathTo(a) }); });
+  if (out.length < 8) assets.forEach(a => { if (GR[a.groupId].assetIds.length > 1 && (a.id.toLowerCase().includes(q) || a.name.toLowerCase().includes(q))) out.push({ ref: a.id, t: `${a.name} · ${BL[a.building].name}`, k: 'asset', go: pathTo(a) }); });
+  events.forEach(e => { if (e.id.toLowerCase().includes(q)) out.push({ ref: e.id, t: `${e.type} · ${GR[e.groupId].label}`, k: 'report', act: e.id }); });
+  return out.slice(0, 10);
+}
+document.addEventListener('input', e => {
+  if (e.target.id !== 'q') return; const box = document.getElementById('results'); const res = searchResults(e.target.value);
+  if (!e.target.value.trim()) { box.hidden = true; return; }
+  box.hidden = false; box.innerHTML = res.length ? res.map(r => r.act ? `<a href="#" data-act="report" data-id="${r.act}"><span class="ref">${r.ref}</span><span>${esc(r.t)}</span><span class="k">${esc(r.k)}</span></a>` : `<a href="${r.go}"><span class="ref">${r.ref}</span><span>${esc(r.t)}</span><span class="k">${esc(r.k)}</span></a>`).join('') : `<div class="none">Nothing matches “${esc(e.target.value)}”.</div>`;
+});
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && !e.target.matches('input,textarea,select') && !dlg.open) { e.preventDefault(); const q = document.getElementById('q'); q.focus(); q.select(); }
+  if (e.key === 'Escape') { const box = document.getElementById('results'); if (box) box.hidden = true; if (menuOpen || attnOpen) { menuOpen = null; attnOpen = false; render(); } const h = document.getElementById('hub'); if (h) h.remove(); }
+});
+
+/* -------------------------------------------------------------- router */
+/* Navigation is internal state first and the URL hash second, so the prototype
+   still works where the host blocks hash navigation (e.g. data: previews). */
+let cur = location.hash || '';
+function parse(h) { cur = h || ''; const parts = cur.replace(/^#\/?/, '').split('/').filter(Boolean); route = { tab: parts[0] || 'portfolio', a: parts[1] || null, b: parts[2] || null, c: parts[3] || null }; }
+window.__go = h => go(h);
+function go(h) {
+  menuOpen = null; attnOpen = false;
+  try { if (location.hash !== h) history.pushState(null, '', h); } catch (err) { /* host forbids URL changes; state still moves */ }
+  parse(h); if (route.tab === 'portfolio' && !route.a) assetFilter = 'action'; render();
+  const box = document.getElementById('results'); if (box) box.hidden = true;
+}
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[href^="#/"]'); if (!a || e.defaultPrevented || e.metaKey || e.ctrlKey) return;
+  e.preventDefault(); if (a.dataset.act === 'attn-close' || a.dataset.act === 'dlg-close') { attnOpen = false; closeDlg(); } go(a.getAttribute('href'));
+});
+const VIEWS = { portfolio: viewPortfolio, due: viewDue, overdue: viewOverdue, remedials: viewRemedials, reports: viewReports, engineers: viewEngineers, admin: viewAdmin };
+function render() {
+  const app = document.getElementById('app');
+  const scrolls = {}; app.querySelectorAll('[data-col],.view').forEach(el => { scrolls[el.dataset.col || 'view'] = el.scrollTop; });
+  const q = document.getElementById('q'); const qv = q ? q.value : ''; const qfocus = q && document.activeElement === q;
+  const view = (VIEWS[route.tab] || viewPortfolio)();
+  app.innerHTML = topbar() + hnav() + view;
+  app.querySelectorAll('[data-col],.view').forEach(el => { const k = el.dataset.col || 'view'; if (scrolls[k]) el.scrollTop = scrolls[k]; });
+  const q2 = document.getElementById('q'); if (q2) { q2.value = qv; if (qfocus) q2.focus(); }
+  const sel = app.querySelector('.arow.on, .item.on'); if (sel && !scrolls[sel.closest('[data-col]').dataset.col]) sel.scrollIntoView({ block: 'nearest' });
+}
+window.addEventListener('hashchange', () => { if (location.hash !== cur) go(location.hash); });
+window.addEventListener('popstate', () => { if (location.hash !== cur) { parse(location.hash); render(); } });
+go(location.hash && location.hash.startsWith('#/') ? location.hash : '#/portfolio/AVH/ARC/AVH-ARC-FA-01');
+})();
+
+</script>
+</body>
+</html>

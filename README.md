@@ -6,9 +6,11 @@ Compliance Management.
 ## Scope
 
 First release covers **Main Hub and Developments**. Compliance Management is
-documented future scope — its domain rules are deferred, but the shared report
-engine is proven against a Compliance-shaped fixture so it is not built around
-Developments assumptions alone.
+built as screens over invented sample data (`apps/web/lib/compliance`): the
+office portfolio browser and the engineer site view are usable end to end, but
+nothing they show or record persists. Its domain rules and store are still to
+come; the shared report engine is proven against a Compliance-shaped fixture so
+it is not built around Developments assumptions alone.
 
 ## Layout
 
@@ -46,6 +48,9 @@ PDF work runs separately from the web server. Run both the app and worker as
 described in the deployment brief below. Local outbox messages are not sent email.
 
 ## Pilot deployment
+
+Approved sign-in/company-hub designs and their implemented navigation are recorded
+in [docs/design-decisions.md](docs/design-decisions.md).
 
 The parked, exploratory commercial-product direction is captured in
 [RELAY by Leodis — initial product proposal](docs/relay-product-proposal.md).
