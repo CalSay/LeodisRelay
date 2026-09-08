@@ -25,10 +25,9 @@ function fromReport(reportId:string): Issue[] {
 /**
  * Developments policy for the shared issue mechanics.
  *
- * Closure needs someone other than the person who did the work. Everything else
- * is permitted in the prototype, because there are no real roles yet — the
- * point of injecting a policy is that adding them later changes this object,
- * not the transition rules.
+ * API guards authorize each role/command before this trusted store boundary.
+ * Shared transitions enforce state changes and independent verification using
+ * stable actor IDs; display names remain in the event history for readability.
  */
 const DEVELOPMENTS_POLICY: IssuePolicy = {
   permits: () => true,
@@ -44,7 +43,7 @@ function toContract(issue: Issue): ContractIssue {
     work: issue.work,
     ...(issue.owner ? { owner: issue.owner } : {}),
     ...(issue.targetDate ? { targetDate: issue.targetDate } : {}),
-    ...(issue.closureSubmittedBy ? { closureSubmittedBy: issue.closureSubmittedBy } : {}),
+    ...(issue.closureSubmittedBy ? { closureSubmittedBy: issue.closureSubmittedById ?? issue.closureSubmittedBy } : {}),
     raisedByRevision: issue.raisedByReport,
   } as ContractIssue;
 }
@@ -92,6 +91,7 @@ function raiseIssues(report: Report): Issue[] {
         existing.events.push({
           at: new Date().toISOString(),
           actor: report.author,
+          ...(report.authorId ? {actorId:report.authorId}:{}),
           kind: "progress",
           note: observation.whatHappened,
           photos: observation.photos,
@@ -125,6 +125,7 @@ function raiseIssues(report: Report): Issue[] {
         {
           at: new Date().toISOString(),
           actor: report.author,
+          ...(report.authorId ? {actorId:report.authorId}:{}),
           kind: "raised",
           note: observation.whatHappened,
           photos: observation.photos,
@@ -145,10 +146,10 @@ function raiseIssues(report: Report): Issue[] {
  * defect may already be repaired. Confirmation and work are separate axes for
  * exactly this reason.
  */
-export function disputeIssuesFromReport(reportId: string, actor: string): void {
-  atomic(() => disputeIssues(reportId,actor));
+export function disputeIssuesFromReport(reportId: string, actor: string, actorId?:string): void {
+  atomic(() => disputeIssues(reportId,actor,actorId));
 }
-function disputeIssues(reportId: string, actor: string): void {
+function disputeIssues(reportId: string, actor: string, actorId?:string): void {
   for (const issue of fromReport(reportId)) {
     if (issue.raisedByReport === reportId && issue.confirmation === "provisional") {
       issue.confirmation = "disputed";
@@ -157,6 +158,7 @@ function disputeIssues(reportId: string, actor: string): void {
         actor,
         kind: "confirmation",
         note: "Source report returned for correction — needs triage.",
+        ...(actorId ? {actorId}:{}),
         photos: [],
       });
       putRecord('issues',issue);
@@ -171,10 +173,10 @@ function disputeIssues(reportId: string, actor: string): void {
  * silently reinstated by approving a later report, and a withdrawn one stays
  * withdrawn.
  */
-export function confirmIssuesFromReport(reportId: string, actor: string): void {
-  atomic(() => confirmIssues(reportId,actor));
+export function confirmIssuesFromReport(reportId: string, actor: string, actorId?:string): void {
+  atomic(() => confirmIssues(reportId,actor,actorId));
 }
-function confirmIssues(reportId: string, actor: string): void {
+function confirmIssues(reportId: string, actor: string, actorId?:string): void {
   for (const issue of fromReport(reportId)) {
     if (issue.raisedByReport === reportId && issue.confirmation === "provisional") {
       issue.confirmation = "confirmed";
@@ -183,6 +185,7 @@ function confirmIssues(reportId: string, actor: string): void {
         actor,
         kind: "confirmation",
         note: "Confirmed at report review.",
+        ...(actorId ? {actorId}:{}),
         photos: [],
       });
       putRecord('issues',issue);
@@ -195,6 +198,7 @@ export type IssueOutcome =
   | { ok: false; status: number; reason: string };
 
 export interface IssueCommand {
+  actorId?: string;
   kind: "progress" | "submit_closure" | "verify" | "reopen" | "confirm" | "withdraw" | "assign";
   actor: string;
   note: string;
@@ -213,6 +217,7 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
   const event: IssueEvent = {
     at: new Date().toISOString(),
     actor: command.actor,
+    ...(command.actorId ? {actorId:command.actorId}:{}),
     kind: "progress",
     note: command.note,
     photos: command.photos ?? [],
@@ -226,7 +231,7 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
       if (issue.work === "open") {
         const moved = transition(
           toContract(issue),
-          { axis: "work", to: "in_progress", actor: command.actor as never },
+          { axis: "work", to: "in_progress", actor: (command.actorId ?? command.actor) as never },
           DEVELOPMENTS_POLICY,
         );
         if (moved.ok) next.work = moved.issue.work as typeof next.work;
@@ -236,7 +241,7 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
     case "assign": {
       const moved = transition(
         toContract(issue),
-        { axis: "work", to: "assigned", actor: command.actor as never },
+        { axis: "work", to: "assigned", actor: (command.actorId ?? command.actor) as never },
         DEVELOPMENTS_POLICY,
       );
       if (!moved.ok) return { ok: false, status: 422, reason: moved.reason };
@@ -250,21 +255,25 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
     case "submit_closure": {
       const moved = transition(
         toContract(issue),
-        { axis: "work", to: "awaiting_verification", actor: command.actor as never },
+        { axis: "work", to: "awaiting_verification", actor: (command.actorId ?? command.actor) as never },
         DEVELOPMENTS_POLICY,
       );
       if (!moved.ok) return { ok: false, status: 422, reason: moved.reason };
       next.work = moved.issue.work as typeof next.work;
       next.closureSubmittedBy = command.actor;
+      if (command.actorId) next.closureSubmittedById = command.actorId;
       event.kind = "closure_submitted";
       break;
     }
 
     case "verify": {
+      if (issue.closureSubmittedById ? issue.closureSubmittedById === command.actorId : issue.closureSubmittedBy === command.actor) {
+        return {ok:false,status:422,reason:'The person who completed the work cannot verify it.'};
+      }
       // The platform rule refuses closure by the person who did the work.
       const moved = transition(
         toContract(issue),
-        { axis: "work", to: "closed", actor: command.actor as never },
+        { axis: "work", to: "closed", actor: (command.actorId ?? command.actor) as never },
         DEVELOPMENTS_POLICY,
       );
       if (!moved.ok) return { ok: false, status: 422, reason: moved.reason };
@@ -276,7 +285,7 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
     case "reopen": {
       const moved = transition(
         toContract(issue),
-        { axis: "work", to: "open", actor: command.actor as never },
+        { axis: "work", to: "open", actor: (command.actorId ?? command.actor) as never },
         DEVELOPMENTS_POLICY,
       );
       if (!moved.ok) return { ok: false, status: 422, reason: moved.reason };
@@ -290,7 +299,7 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
       const to = command.kind === "confirm" ? "confirmed" : "withdrawn";
       const moved = transition(
         toContract(issue),
-        { axis: "confirmation", to, actor: command.actor as never, reason: command.note },
+        { axis: "confirmation", to, actor: (command.actorId ?? command.actor) as never, reason: command.note },
         DEVELOPMENTS_POLICY,
       );
       if (!moved.ok) return { ok: false, status: 422, reason: moved.reason };

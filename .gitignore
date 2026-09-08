@@ -16,3 +16,4 @@ next-env.d.ts
 .relay-prototype/
 apps/web/.env.local
 .worker/
+.deployment/

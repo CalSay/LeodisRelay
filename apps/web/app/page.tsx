@@ -1,64 +1,18 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import Link from "next/link";
-import { listProjects } from "@/lib/api";
-import type { FixtureProject } from "@/lib/fixtures";
-
-export default function ProjectsPage() {
-  const [projects, setProjects] = useState<FixtureProject[] | null>(null);
-
-  useEffect(() => {
-    listProjects().then(setProjects);
-  }, []);
-
-  return (
-    <main className="wrap">
-      <div className="pagehead">
-        <div>
-          <h1>Projects</h1>
-          <p className="sub">Open to you for reporting</p>
-        </div>
-        {projects && (
-          <span className="lbl">
-            {projects.length} project{projects.length === 1 ? "" : "s"}
-          </span>
-        )}
-      </div>
-
-      {projects === null ? (
-        <div className="empty" style={{ marginTop: 24 }}>
-          Loading
-        </div>
-      ) : projects.length === 0 ? (
-        <div className="empty" style={{ marginTop: 24 }}>
-          No projects are open to you.
-        </div>
-      ) : (
-        <div className="reg" style={{ marginTop: 24 }}>
-          {projects.map((project) => (
-            <Link key={project.id} href={`/projects/${project.id}`} className="row">
-              <span className="row-code">{project.projectNumber}</span>
-              <span className="row-main">
-                <p className="row-title">{project.projectName}</p>
-                <p className="row-meta">
-                  {project.clientName}
-                  <span className="sep">/</span>
-                  {project.division}
-                </p>
-              </span>
-              <span className="row-end">
-                <span className="row-time">{project.status}</span>
-              </span>
-            </Link>
-          ))}
-        </div>
-      )}
-
-      <p className="footnote">
-        Tenders and completed projects are not listed. If a project is missing, check its status
-        with the office.
-      </p>
-    </main>
-  );
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { currentPrincipal } from '@/lib/auth/session';
+import { canManage, isAdmin } from '@/lib/auth/access';
+import { database } from '@/lib/storage';
+import type { ReportSummary } from '@/lib/types';
+import ProjectsPage from '@/components/ProjectsPage';
+export const dynamic = 'force-dynamic';
+export default async function Home() {
+  const p = await currentPrincipal();
+  if (!p) redirect('/signin');
+  if (isAdmin(p)) redirect('/admin');
+  if (canManage(p)) redirect('/office');
+  const drafts = database().prepare("SELECT summary FROM records WHERE kind='reports' AND state='draft' AND json_extract(data,'$.authorId')=? ORDER BY updated DESC LIMIT 5").all(p.id).map(r => JSON.parse(r.summary as string) as ReportSummary);
+  return <><section className="wrap" aria-label="Your reports"><div className="pagehead"><div><h1>Site reporting</h1><p className="sub">{p.trade ? `${p.trade} Engineer` : 'Engineer'}</p></div></div>
+    {drafts.length ? <><h2>Continue my report</h2><div className="reg">{drafts.map(r => <Link className="row" key={r.id} href={`/reports/${r.id}`}><span className="row-main">{r.reference} · {r.visitDate}</span><span>Continue →</span></Link>)}</div></> : <p>Choose a project below to start a report.</p>}
+    </section><ProjectsPage /></>;
 }

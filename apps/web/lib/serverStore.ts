@@ -1,4 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
+import type { Principal } from '@relay/platform';
+import { canManage, ownsReport } from './auth/access';
 import type { Report, ReportSummary, Observation } from './types';
 import { reviewReport } from './review';
 import { FIXTURE_PROJECTS } from './fixtures';
@@ -11,13 +13,34 @@ export function listReports(projectId?: string): Report[] { return records('repo
 export function getReport(id: string): Report | undefined { return getRecord('reports', id); }
 export function reportPage(projectId?: string, offset = 0) { return pageRecords<ReportSummary>('reports', projectId, offset); }
 
-export function createReport(projectId: string, author: string): Report {
+/** Filter before pagination: another engineer's draft never reaches the response. */
+export function reportsFor(principal: Principal, projectId?: string, offset = 0) {
+  const where = ["kind='reports'"];
+  const args: string[] = [];
+  if (projectId) { where.push('project=?'); args.push(projectId); }
+  if (!canManage(principal)) {
+    where.push("(state='submitted' OR json_extract(data,'$.authorId')=?)"); args.push(principal.id);
+  }
+  const rows = database().prepare(`SELECT summary FROM records WHERE ${where.join(' AND ')} ORDER BY updated DESC,id DESC LIMIT 51 OFFSET ?`).all(...args,offset);
+  return { items: rows.slice(0,50).map(row => {
+    const r = JSON.parse(row.summary as string) as ReportSummary;
+    if (r.state === 'submitted' || ownsReport(principal,r)) return r;
+    // Explicit allowlist: no notes, signature, delivery details or correction text.
+    return { id:r.id,projectId:r.projectId,reference:r.reference,visitDate:r.visitDate,
+      author:r.author,...(r.authorId ? {authorId:r.authorId}:{}),state:r.state,
+      version:r.version,revision:r.revision,review:r.review,lastSavedAt:r.lastSavedAt,
+      observationCount:0,photoCount:0,defectCount:0 };
+  }), next: rows.length > 50 ? offset + 50 : null };
+}
+
+export function createReport(projectId: string, author: string, principal?: Principal): Report {
   return atomic(() => {
     const project = FIXTURE_PROJECTS.find(p => p.id === projectId);
     if (!project) throw new Error('Project not found.');
     const count = database().prepare("SELECT COUNT(*) AS n FROM records WHERE kind='reports' AND project=?").get(projectId)!;
     const report: Report = {
       id: 'rep-' + randomUUID(), projectId, author,
+      ...(principal ? { authorId:principal.id, ...(principal.trade ? {authorTrade:principal.trade}: {}) } : {}),
       reference: `${project.projectNumber}-SPR-${String(Number(count.n) + 1).padStart(3,'0')}`,
       visitDate: new Date().toISOString().slice(0,10), state: 'draft', version: 1,
       revision: 1, review: 'not_required', observations: [], lastSavedAt: new Date().toISOString(),
@@ -91,19 +114,19 @@ export async function submitReport(id: string, signature?: { dataUrl?: string; n
   });
 }
 
-export function reviewSubmission(id: string, decision: string, reviewer: string, note: string): StoreOutcome<Report> {
+export function reviewSubmission(id: string, decision: string, reviewer: string, note: string, reviewerId?: string): StoreOutcome<Report> {
   return atomic(() => {
     const report = getReport(id);
     if (!report) return reject('No such report.',404);
     if (!['approve','return'].includes(decision)) return reject('Choose approve or return.',422);
     if (report.state !== 'submitted' || report.review !== 'pending') return reject('This report is not awaiting review.');
-    if (report.author === reviewer) return reject('The author cannot review their own report.',422);
+    if (report.authorId ? report.authorId === reviewerId : report.author === reviewer) return reject('The author cannot review their own report.',422);
     if (decision === 'return' && !note.trim()) return reject('Say what needs changing.',422);
     // The submitted snapshot stays immutable even when changes are requested.
-    const reviewed: Report = { ...report, review: decision === 'approve' ? 'approved' : 'returned', reviewedBy: reviewer, reviewedAt: new Date().toISOString(), reviewNote: note.trim() };
+    const reviewed: Report = { ...report, review: decision === 'approve' ? 'approved' : 'returned', reviewedBy: reviewer, ...(reviewerId ? {reviewedById:reviewerId}:{}), reviewedAt: new Date().toISOString(), reviewNote: note.trim() };
     putRecord('reports',reviewed);
-    if (decision === 'approve') confirmIssuesFromReport(id,reviewer);
-    else disputeIssuesFromReport(id,reviewer);
+    if (decision === 'approve') confirmIssuesFromReport(id,reviewer,reviewerId);
+    else disputeIssuesFromReport(id,reviewer,reviewerId);
     return { ok: true, value: reviewed };
   });
 }
@@ -115,7 +138,7 @@ export function correctReport(id: string, reason: string): StoreOutcome<Report> 
     if (!reason.trim()) return reject('Say why this correction is needed.',422);
     const previous = records<Report>('reports',original.projectId).find(r => r.corrects === id);
     if (previous) return { ok: true, value: previous };
-    const { signature, issued, delivery, serverAcknowledgedAt, reviewedAt, reviewedBy, reviewNote, ...base } = original;
+    const { signature, issued, delivery, serverAcknowledgedAt, reviewedAt, reviewedBy, reviewedById, reviewNote, ...base } = original;
     const correction: Report = { ...base, id: 'rep-' + randomUUID(), state: 'draft', review: 'not_required', revision: original.revision + 1, version: 1, corrects: id, correctionReason: reason.trim(), lastSavedAt: new Date().toISOString() };
     putRecord('reports',correction);
     return { ok: true, value: correction };

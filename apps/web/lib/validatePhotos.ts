@@ -27,6 +27,14 @@ export async function validateObservations(value: unknown, reportId: string, exi
     if (!['update','defect','instruction','access'].includes(o.type)) return 'Unknown update type.';
     if (!o.id || ids.has(o.id)) return 'Update IDs must be unique.';
     ids.add(o.id);
+    if (o.linkedIssueId !== undefined) {
+      if (typeof o.linkedIssueId !== 'string') return 'Invalid linked issue.';
+      const { getIssue } = await import('./issueStore');
+      const { getReport } = await import('./serverStore');
+      const issue = getIssue(o.linkedIssueId);
+      const report = getReport(reportId);
+      if (!issue || !report || issue.projectId !== report.projectId) return 'Linked issue must belong to this project.';
+    }
     const error = await validatePhotos(o.photos, { reportId }, existing.flatMap(item => item.photos));
     if (error) return error;
   }

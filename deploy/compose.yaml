@@ -1,0 +1,49 @@
+name: relay
+x-relay: &relay
+  image: relay:pilot
+  restart: unless-stopped
+  init: true
+  env_file: .env
+  environment:
+    NODE_ENV: production
+    RELAY_DATA_ROOT: /data
+    RELAY_MEDIA_ROOT: /data/media
+    RELAY_ALLOW_LOCAL_AUTH: "no"
+    RELAY_LOCAL_HTTP: "no"
+    RELAY_MAIL_ENABLED: "no"
+  volumes:
+    - relay_data:/data
+  logging:
+    driver: local
+    options:
+      max-size: "10m"
+      max-file: "3"
+services:
+  web:
+    <<: *relay
+    build:
+      context: ..
+      dockerfile: Dockerfile
+  worker:
+    <<: *relay
+    command: ["npm", "run", "worker"]
+    stop_grace_period: 60s
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    logging:
+      driver: local
+      options:
+        max-size: "10m"
+        max-file: "3"
+volumes:
+  relay_data:
+  caddy_data:
+  caddy_config:

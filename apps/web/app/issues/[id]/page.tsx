@@ -6,6 +6,8 @@ import { getProject, readPhoto } from "@/lib/api";
 import type { Issue, Photo } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
 import { uploadPhotos } from '@/lib/localMedia';
+import { usePrincipal } from '@/components/PrincipalContext';
+import { canManage } from '@/lib/auth/access';
 
 /**
  * One issue, across every visit that touched it.
@@ -45,6 +47,8 @@ const EVENT_LABEL: Record<string, string> = {
 };
 
 export default function IssuePage({ params }: { params: Promise<{ id: string }> }) {
+  const principal = usePrincipal();
+  const manager = principal ? canManage(principal) : false;
   const { id } = use(params);
   const [issue, setIssue] = useState<Issue | null>(null);
   const [missing, setMissing] = useState(false);
@@ -249,17 +253,17 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
                     Submit as complete
                   </button>
                 )}
-                {canClose && (
+                {manager && canClose && (
                   <button className="btn-primary" onClick={() => run("verify")} disabled={busy}>
                     Verify and close
                   </button>
                 )}
-                {isClosed && (
+                {manager && isClosed && (
                   <button onClick={() => run("reopen")} disabled={busy}>
                     Reopen
                   </button>
                 )}
-                {issue.confirmation !== "confirmed" && !isClosed && (
+                {manager && issue.confirmation !== "confirmed" && !isClosed && (
                   <button onClick={() => run("confirm")} disabled={busy}>
                     Confirm observation
                   </button>

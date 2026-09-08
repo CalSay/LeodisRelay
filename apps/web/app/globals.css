@@ -206,7 +206,7 @@ a {
   max-width: 900px;
   margin: 0 auto;
   padding: 0 var(--s4);
-  height: 52px;
+  min-height: 52px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -235,7 +235,25 @@ a {
 .nav {
   display: flex;
   gap: var(--s1);
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
 }
+
+@media (max-width: 700px) {
+  .appbar-inner { flex-wrap: wrap; padding-block: 8px; gap: 8px; }
+  .nav { width: 100%; }
+  .nav a, .nav button { min-height: 44px; }
+  .nav .whoami { white-space: normal; text-align: left; }
+}
+
+.team-table { width: 100%; border-collapse: collapse; text-align: left; }
+.install-help { max-width: 900px; margin: 12px auto; padding: 0 var(--s4); }
+.install-help summary { cursor: pointer; padding: 12px 0; min-height: 44px; color: var(--brass); }
+.install-help-body { padding: 16px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); }
+.install-help-body h2 { font-size: 17px; margin-top: 20px; }
+.install-help-body li { margin-block: 8px; }
+.team-table th, .team-table td { padding: 10px 12px; border-bottom: 1px solid var(--line); }
 
 .nav a {
   font-family: var(--mono);

@@ -3,6 +3,7 @@ import { archiveFileName, sanitiseFileName } from "@relay/contracts";
 
 import { getReport } from "@/lib/serverStore";
 import { requireSession } from "@/lib/auth/guard";
+import { canReadReport } from '@/lib/auth/access';
 import { ensurePdf, readPdf } from '@/lib/pdfArtifacts';
 import { FIXTURE_PROJECTS } from '@/lib/fixtures';
 import { getRecord } from '@/lib/storage';
@@ -33,7 +34,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   }
 
   // A draft document is the author's until it is sent.
-  if (report.state !== "submitted" && report.author !== guard.principal.name) {
+  if (!canReadReport(guard.principal,report)) {
     return NextResponse.json({ reason: "This draft belongs to someone else." }, { status: 403 });
   }
 
@@ -51,7 +52,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "content-type": "application/pdf",
-      "content-disposition": `inline; filename="${fileName}"`,
+      "content-disposition": `${new URL(_request.url).searchParams.get('download') === '1' ? 'attachment' : 'inline'}; filename="${fileName}"`,
       "cache-control": "no-store",
     },
   });

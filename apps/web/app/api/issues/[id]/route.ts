@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { applyCommand, getIssue, type IssueCommand } from "@/lib/issueStore";
 import { requireSession } from "@/lib/auth/guard";
 import { validatePhotos } from '@/lib/validatePhotos';
+import { canIssueCommand } from '@/lib/auth/access';
 
 export const dynamic = "force-dynamic";
 
@@ -22,12 +23,18 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (!guard.ok) return guard.response;
   const principal = guard.principal;
 
-  const command = (await request.json()) as IssueCommand;
+  const command = (await request.json().catch(() => null)) as IssueCommand | null;
+  if (!command || typeof command.kind !== 'string' || typeof command.note !== 'string' ||
+      (command.owner !== undefined && typeof command.owner !== 'string') ||
+      (command.targetDate !== undefined && typeof command.targetDate !== 'string')) {
+    return NextResponse.json({reason:'Invalid issue action.'},{status:422});
+  }
+  if (!canIssueCommand(principal,command.kind)) return NextResponse.json({reason:'You cannot perform this issue action.'},{status:403});
   const validation = await validatePhotos(command.photos ?? [], { issueId: id });
   if (validation) return NextResponse.json({ reason: validation }, { status: 422 });
   // Attribution is the session's, not the client's: independent verification
   // means nothing if the actor can be typed in.
-  const outcome = applyCommand(id, { ...command, actor: principal.name });
+  const outcome = applyCommand(id, { ...command, actor: principal.name, actorId:principal.id });
   return outcome.ok
     ? NextResponse.json(outcome.value)
     : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });

@@ -43,6 +43,8 @@ export interface Report {
   reference: string;
   visitDate: string;
   author: string;
+  authorId?: string;
+  authorTrade?: 'Electrical' | 'HVAC' | 'P&H';
   state: ReportState;
   /**
    * Autosave counter, for optimistic concurrency. Increments on every accepted
@@ -59,6 +61,7 @@ export interface Report {
   observations: Observation[];
   review: ReviewState;
   reviewedBy?: string;
+  reviewedById?: string;
   reviewedAt?: string;
   /** Why it was returned. Required on return, so nobody has to guess. */
   reviewNote?: string;
@@ -129,6 +132,7 @@ export type IssueEventKind =
   | "assigned";
 
 export interface IssueEvent {
+  actorId?: string;
   at: string;
   actor: string;
   kind: IssueEventKind;
@@ -150,6 +154,7 @@ export interface Issue {
   targetDate: string;
   /** Who put the work forward as complete; independence is measured against this. */
   closureSubmittedBy?: string;
+  closureSubmittedById?: string;
   raisedByReport: string;
   raisedAt: string;
   events: IssueEvent[];

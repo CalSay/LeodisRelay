@@ -3,6 +3,7 @@ import type { Principal } from "@relay/platform";
 
 import { currentPrincipal } from "./session";
 import type { Report } from "../types";
+import { canReadReport } from './access';
 
 /**
  * The single place a route establishes who is asking.
@@ -42,21 +43,12 @@ export async function requireSession<T = unknown>(): Promise<Guarded<T>> {
  * the same drafts over in full, which they did — so it is enforced here, on the
  * records themselves, rather than by which endpoint happened to be called.
  *
- * A draft belongs to its author until it is sent. Submitted reports are visible
- * to any signed-in member of staff, which is as far as this can go until there
- * is a project grants model; per-project access is a separate piece of work and
- * is not pretended at here.
+ * Full draft content belongs to its stable author ID until it is sent. Other
+ * Managers/Admin get allowlisted summaries through reportsFor, never a redacted
+ * full record here. All three roles have all-project access in the pilot.
  */
 export function visibleTo(principal: Principal, report: Report): Report | null {
-  if (report.state === "submitted") return report;
-  if (report.author === principal.name) return report;
-
-  // Existence, not content: enough for the office to know work is in progress.
-  return {
-    ...report,
-    observations: [],
-    ...(report.signature ? { signature: { name: "", signedAt: report.signature.signedAt } } : {}),
-  };
+  return canReadReport(principal,report) ? report : null;
 }
 
 export function redactDrafts(principal: Principal, reports: readonly Report[]): Report[] {

@@ -6,6 +6,9 @@ import { PwaRegistration } from "@/components/PwaRegistration";
 import { currentPrincipal } from "@/lib/auth/session";
 import { resolveProvider } from "@/lib/auth/provider";
 import "./globals.css";
+import { canManage, isAdmin } from '@/lib/auth/access';
+import { PrincipalContext } from '@/components/PrincipalContext';
+import { InstallRelay } from '@/components/InstallRelay';
 
 /**
  * Archivo is a grotesque with an industrial, signage register — it sits
@@ -35,6 +38,7 @@ const plexMono = localFont({
 export const metadata: Metadata = {
   title: "Relay",
   description: "Leodis site reporting",
+  appleWebApp: { capable:true, title:'RELAY', statusBarStyle:'default' },
 };
 
 export const viewport: Viewport = {
@@ -84,12 +88,14 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <em>LEODIS</em>
             </Link>
             <nav className="nav">
-              <Link href="/">Site</Link>
-              <Link href="/office">Office</Link>
+              <Link href="/">Home</Link>
+              {principal && <Link href="/projects">Projects</Link>}
+              {principal && canManage(principal) && <Link href="/office">Office</Link>}
+              {principal && isAdmin(principal) && <Link href="/admin">Admin</Link>}
               {principal && (
                 <form action="/api/auth/signout" method="POST" style={{ display: "inline" }}>
                   <button type="submit" className="whoami" title="Sign out">
-                    {principal.name}
+                    {principal.name} · {principal.role} · Sign out
                   </button>
                 </form>
               )}
@@ -98,7 +104,8 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </div>
         </header>
 
-        {children}
+        <InstallRelay />
+        <PrincipalContext principal={principal}>{children}</PrincipalContext>
       </body>
     </html>
   );

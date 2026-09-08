@@ -1,22 +1,15 @@
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
-COPY package.json package-lock.json tsconfig.json tsconfig.base.json ./
-COPY apps/web/package.json apps/web/package.json
-COPY packages/contracts/package.json packages/contracts/package.json
-COPY packages/platform/package.json packages/platform/package.json
-COPY packages/documents/package.json packages/documents/package.json
-RUN npm ci
-COPY apps apps
-COPY packages packages
-RUN npm run build
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY . .
+RUN npm ci && npm run build
 
-FROM node:24-bookworm-slim AS runtime
+FROM node:24-bookworm-slim
 WORKDIR /app
-ENV NODE_ENV=production
-ENV PORT=4310
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/package.json ./package.json
-COPY --from=build /app/apps/web ./apps/web
-COPY --from=build /app/packages ./packages
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
+COPY --from=build --chown=node:node /app /app
+RUN mkdir -p /data && chown node:node /data
+USER node
+WORKDIR /app/apps/web
 EXPOSE 4310
-CMD ["npm", "--workspace", "@relay/web", "run", "start"]
+CMD ["npm", "start"]

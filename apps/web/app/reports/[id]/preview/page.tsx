@@ -54,12 +54,12 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
   return (
     <main className="wrap">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-        <Link href="/office" className="back">
-          &larr; Office
+        <Link href={`/reports/${id}`} className="back">
+          &larr; Report
         </Link>
-        <a href={`/api/reports/${id}/pdf`} target="_blank" rel="noreferrer" className="back" style={{ color: "var(--brass)" }}>
+        <Link href={`/reports/${id}/pdf`} className="back" style={{ color: "var(--brass)" }}>
           Open the PDF &rarr;
-        </a>
+        </Link>
       </div>
 
       <div className="doc">

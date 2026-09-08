@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 
 import { expiryFrom, isExpired, type Principal, type Session } from "@relay/platform";
 import { atomic, database, getRecord, putRecord } from '../storage';
+import { hasRole } from './access';
 
 /**
  * Server-side sessions with an opaque cookie.
@@ -93,6 +94,8 @@ export async function currentSession(): Promise<Session | null> {
   const session = getRecord<Session>('sessions',id);
   if (!session) return null;
   if (isExpired(session, new Date())) return null;
+  // Pre-role sessions must reauthenticate; never silently promote existing users.
+  if (!hasRole(session.principal)) return null;
   return session;
 }
 

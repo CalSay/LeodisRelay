@@ -6,10 +6,13 @@ import { useRouter } from "next/navigation";
 import { createReport, getProject, listReports, projectIssues, type Report } from "@/lib/api";
 import { IssueRegister } from "@/components/IssueRegister";
 import type { Issue, ReportSummary } from "@/lib/types";
+import { usePrincipal } from '@/components/PrincipalContext';
+import { ownsReport } from '@/lib/auth/access';
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
+  const principal = usePrincipal();
   const project = getProject(id);
 
   const [reports, setReports] = useState<ReportSummary[] | null>(null);
@@ -104,7 +107,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       ) : (
         <div className="reg">
           {reports.map((report) => (
-              <Link key={report.id} href={`/reports/${report.id}`} className="row">
+              <Link key={report.id} href={report.state === 'draft' && (!principal || !ownsReport(principal,report)) ? '/office' : `/reports/${report.id}`} className="row">
                 <span className="row-code">{report.reference.split("-").slice(1).join("-")}</span>
                 <span className="row-main">
                   <p className="row-title">Visit {report.visitDate}</p>

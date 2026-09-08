@@ -10,6 +10,8 @@
 import type { PrincipalId } from "@relay/contracts";
 
 export interface Principal {
+  readonly role?: 'Admin' | 'Manager' | 'Engineer';
+  readonly trade?: 'Electrical' | 'HVAC' | 'P&H';
   readonly id: PrincipalId;
   /** Entra object id. Stable for the life of the account, unlike an address. */
   readonly oid: string;

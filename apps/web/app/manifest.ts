@@ -3,6 +3,7 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Leodis Relay",
+    id: '/',
     short_name: "Relay",
     description: "Site reporting for Leodis Developments.",
     start_url: "/",

@@ -4,6 +4,7 @@ import { getReport } from '@/lib/serverStore';
 import { getIssue } from '@/lib/issueStore';
 import { getMedia, mediaBytes, putMedia, renditionBytes } from '@/lib/mediaStore';
 import { MEDIA_LIMIT, mediaId } from '@/lib/media';
+import { ownsReport, canReadReport } from '@/lib/auth/access';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -19,7 +20,7 @@ export async function PUT(request: Request, context: Context) {
   if (Boolean(reportId) === Boolean(issueId)) return NextResponse.json({ reason: 'Choose a report or issue.' }, { status: 422 });
   if (reportId) {
     const report = await getReport(reportId);
-    if (!report || report.author !== guard.principal.name || report.state !== 'draft') {
+    if (!report || !ownsReport(guard.principal,report) || report.state !== 'draft') {
       return NextResponse.json({ reason: 'This report is not editable by you.' }, { status: 403 });
     }
   } else if (!await getIssue(issueId!)) return NextResponse.json({ reason: 'Issue not found.' }, { status: 404 });
@@ -51,7 +52,7 @@ export async function GET(_request: Request, context: Context) {
   if (!record) return new NextResponse(null, { status: 404 });
   const report = record.reportId ? await getReport(record.reportId) : null;
   const issue = record.issueId ? await getIssue(record.issueId) : null;
-  if (record.ownerId !== guard.principal.id && report?.state !== 'submitted' && !issue) {
+  if (!(report && canReadReport(guard.principal,report)) && !issue) {
     return new NextResponse(null, { status: 403 });
   }
   const variant = new URL(_request.url).searchParams.get('variant');

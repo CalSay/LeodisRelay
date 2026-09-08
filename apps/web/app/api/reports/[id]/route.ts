@@ -3,6 +3,7 @@ import { getReport, reviewSubmission, saveDraft, submitReport } from "@/lib/serv
 import { requireSession, visibleTo } from "@/lib/auth/guard";
 import type { Report } from "@/lib/types";
 import { validateObservations } from '@/lib/validatePhotos';
+import { canManage, ownsReport } from '@/lib/auth/access';
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,8 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   const { id } = await context.params;
   const report = getReport(id);
   if (!report) return NextResponse.json({ reason: "No such report." }, { status: 404 });
-  return NextResponse.json(visibleTo(guard.principal, report));
+  const visible = visibleTo(guard.principal, report);
+  return visible ? NextResponse.json(visible) : NextResponse.json({reason:'This draft is private to its author.'},{status:403});
 }
 
 /** Save a draft. */
@@ -26,7 +28,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   if (!existing) return NextResponse.json({ reason: "No such report." }, { status: 404 });
   // Only the author edits their draft. Without this, any signed-in person can
   // overwrite anyone's work in progress.
-  if (existing.author !== guard.principal.name) {
+  if (!ownsReport(guard.principal,existing)) {
     return NextResponse.json({ reason: "This draft belongs to someone else." }, { status: 403 });
   }
 
@@ -78,8 +80,16 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
   const principal = guard.principal;
+  if (body.action !== undefined && body.action !== 'review') return NextResponse.json({reason:'Unknown report action.'},{status:422});
+  if (body.note !== undefined && typeof body.note !== 'string') return NextResponse.json({reason:'Review note must be text.'},{status:422});
+  if (body.signature !== undefined && (!body.signature || typeof body.signature.name !== 'string' ||
+      (body.signature.dataUrl !== undefined && (typeof body.signature.dataUrl !== 'string' ||
+       body.signature.dataUrl.length > 1000000 || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(body.signature.dataUrl))))) {
+    return NextResponse.json({reason:'Invalid signature.'},{status:422});
+  }
 
   if (body.action === "review") {
+    if (!canManage(principal)) return NextResponse.json({reason:'Manager access required.'},{status:403});
     const outcome = reviewSubmission(
       id,
       // Passed through unchanged. Coercing anything that is not "return" into
@@ -90,6 +100,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
       // reviewer would make "you cannot review your own report" a suggestion.
       principal.name,
       body.note ?? "",
+      principal.id,
     );
     return outcome.ok
       ? NextResponse.json(outcome.value)
@@ -97,7 +108,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
 
   const existing = getReport(id);
-  if (!existing || existing.author !== principal.name) {
+  if (!existing || !ownsReport(principal,existing)) {
     return NextResponse.json({ reason: 'This report belongs to someone else.' }, { status: 403 });
   }
   const outcome = await submitReport(
