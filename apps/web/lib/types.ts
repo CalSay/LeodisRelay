@@ -72,6 +72,11 @@ export interface Report {
   /** Captured at the point of sending. The drawn image is optional. */
   signature?: { dataUrl?: string; name: string; signedAt: string };
   /**
+   * Somebody in the office says they have read it. A fourth fact, kept apart
+   * from receipt, review and delivery: none of those means a person looked.
+   */
+  acknowledged?: { by: string; byId?: string; at: string; note?: string };
+  /**
    * Who received this and when, per proposal 6.2. Kept whether delivery
    * succeeded or failed: a delivery that failed silently is indistinguishable
    * from one that never happened.
@@ -99,7 +104,15 @@ export interface ReviewFinding {
 }
 
 export type ReportSummary = Omit<Report, 'observations' | 'signature'> & {
-  observationCount: number; photoCount: number; defectCount: number;
+  observationCount: number; photoCount: number;
+  /** Updates that raise an issue: defects and access restrictions. */
+  defectCount: number;
+  /**
+   * What the visit found, by kind, so a register can say "1 defect, 1
+   * variation" without loading the report. Absent on summaries written before
+   * the field existed; fall back to defectCount.
+   */
+  kindCounts?: Record<ObservationType, number>;
 };
 export type IssueSummary = Omit<Issue, 'events'>;
 
@@ -162,6 +175,12 @@ export interface Issue {
   closureSubmittedBy?: string;
   closureSubmittedById?: string;
   raisedByReport: string;
+  /**
+   * The update inside that report which raised it. A correction of the report
+   * carries the same update IDs, so the corrected update can be linked back to
+   * this issue instead of raising it a second time.
+   */
+  raisedByObservation?: string;
   raisedAt: string;
   events: IssueEvent[];
 }

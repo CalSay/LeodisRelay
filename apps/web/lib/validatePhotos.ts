@@ -2,7 +2,7 @@ import type { Photo, Observation } from './types';
 import { mediaId } from './media';
 import { getMedia } from './mediaStore';
 
-export async function validatePhotos(photos: unknown, scope: { reportId: string } | { issueId: string }, legacy: readonly Photo[] = []): Promise<string | null> {
+export async function validatePhotos(photos: unknown, scope: { reportId: string; correctsReportId?: string } | { issueId: string }, legacy: readonly Photo[] = []): Promise<string | null> {
   if (!Array.isArray(photos) || photos.length > 100) return 'Photographs must be a list of up to 100 items.';
   for (const p of photos) {
     if (!p || typeof p.id !== 'string' || typeof p.dataUrl !== 'string' || typeof p.caption !== 'string' || typeof p.capturedAt !== 'string') return 'Malformed photograph.';
@@ -14,12 +14,17 @@ export async function validatePhotos(photos: unknown, scope: { reportId: string 
     }
     if (id !== p.id) return 'Photograph ID does not match its reference.';
     const record = await getMedia(id);
-    if (!record || ('reportId' in scope ? record.reportId !== scope.reportId : record.issueId !== scope.issueId)) return 'Photograph has not been uploaded for this record.';
+    // A correction keeps the photographs of the report it corrects; they were
+    // uploaded against that report and are not re-uploaded.
+    const owned = !record ? false
+      : 'reportId' in scope ? record.reportId === scope.reportId || (!!scope.correctsReportId && record.reportId === scope.correctsReportId)
+      : record.issueId === scope.issueId;
+    if (!owned) return 'Photograph has not been uploaded for this record.';
   }
   return null;
 }
 
-export async function validateObservations(value: unknown, reportId: string, existing: readonly Observation[]): Promise<string | null> {
+export async function validateObservations(value: unknown, reportId: string, existing: readonly Observation[], correctsReportId?: string): Promise<string | null> {
   if (!Array.isArray(value) || value.length > 200) return 'Updates must be a list of up to 200 items.';
   const ids = new Set<string>();
   for (const o of value) {
@@ -35,7 +40,7 @@ export async function validateObservations(value: unknown, reportId: string, exi
       const report = getReport(reportId);
       if (!issue || !report || issue.projectId !== report.projectId) return 'Linked issue must belong to this project.';
     }
-    const error = await validatePhotos(o.photos, { reportId }, existing.flatMap(item => item.photos));
+    const error = await validatePhotos(o.photos, { reportId, ...(correctsReportId ? { correctsReportId } : {}) }, existing.flatMap(item => item.photos));
     if (error) return error;
   }
   return null;

@@ -15,6 +15,9 @@ it is not built around Developments assumptions alone.
 ## Layout
 
     apps/web/          routes, shell, client screens, HTTP adapters
+    apps/web/app/workspace.css          shared office idiom, accent as a variable
+    apps/web/components/developments/   the Developments office and Admin desk
+    apps/web/components/compliance/     the Compliance office and engineer screens
     apps/web/worker.ts separate leased PDF/outbox worker process
     packages/
       contracts/       API schemas, domain ports, versioned event types

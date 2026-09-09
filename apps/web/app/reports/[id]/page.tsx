@@ -20,6 +20,10 @@ import { ObservationEditor } from "@/components/ObservationEditor";
 import { SignaturePad } from "@/components/SignaturePad";
 import type { Issue as IssueSummary } from "@/lib/types";
 import { usePrincipal } from '@/components/PrincipalContext';
+import { useRouter } from 'next/navigation';
+import { correctReport as requestCorrection } from '@/lib/api';
+import { ownsReport } from '@/lib/auth/access';
+import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
 
 type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error";
 
@@ -45,7 +49,11 @@ const SAVE: Record<SaveState, { dot: string; text: string }> = {
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const principal = usePrincipal();
+  const router = useRouter();
   const [selectedSection,setSelectedSection] = useState<string | null>(null);
+  const [correcting,setCorrecting] = useState(false);
+  const [correctionReason,setCorrectionReason] = useState('');
+  const [correctionError,setCorrectionError] = useState('');
 
   const [report, setReport] = useState<Report | null>(null);
   const [missing, setMissing] = useState(false);
@@ -307,6 +315,19 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const note = findings.filter((f) => !f.blocking);
   const sent = report.state === "submitted";
   const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
+  const mine = principal ? ownsReport(principal, report) : false;
+  const facts = [reviewStatus(report), deliveryStatus(report), acknowledgementStatus(report)].filter((f): f is NonNullable<typeof f> => f !== null);
+
+  async function startCorrection() {
+    if (!correctionReason.trim()) { setCorrectionError('Say why this correction is needed.'); return; }
+    setCorrectionError('');
+    try {
+      const draft = await requestCorrection(report!.id, correctionReason.trim());
+      router.push(`/reports/${draft.id}`);
+    } catch (error) {
+      setCorrectionError(error instanceof Error ? error.message : 'The correction could not be started.');
+    }
+  }
 
   return (
     <main className={sent ? "wrap" : "wrap wrap-pad eng-report-editor"}>
@@ -329,24 +350,61 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         <div className="tb-cell"><dt>Photographs</dt><dd className="ref">{String(photos).padStart(2, "0")}</dd></div>
       </dl>
 
-      {report.review === "returned" && !sent && (
-        <div className="note note-bad" style={{ marginTop: 16 }}>
-          <strong>Sent back by {report.reviewedBy ?? "the office"}.</strong> {report.reviewNote}
+      {/* A correction draft says what it corrects and why, so the sent report is
+          never mistaken for something that can be edited. */}
+      {!sent && report.corrects && (
+        <div className="note" style={{ marginTop: 16, borderLeftColor: "var(--brass)" }}>
+          <strong>Correction · rev {report.revision}.</strong> {report.correctionReason}
           <br />
-          Make the changes and send it again.
+          Sending issues rev {report.revision} and supersedes rev {report.revision - 1}, which stays on file.
         </div>
       )}
 
       {sent && (
-        <div className="note note-ok" style={{ marginTop: 16 }}>
-          Received by Relay{" "}
-          {report.serverAcknowledgedAt
-            ? new Date(report.serverAcknowledgedAt).toLocaleString("en-GB")
-            : ""}
-          . It can no longer be edited — a correction is issued as a new revision.{" "}
-          <Link href={`/reports/${report.id}/preview`} style={{ color: "var(--brass)" }}>
-            View the document &rarr;
-          </Link>
+        <div className={`note ${report.review === "returned" ? "note-bad" : "note-ok"}`} style={{ marginTop: 16 }}>
+          {report.review === "returned" && (
+            <p style={{ margin: "0 0 8px" }}>
+              <strong>Sent back by {report.reviewedBy ?? "the office"}.</strong> {report.reviewNote}
+            </p>
+          )}
+          <p style={{ margin: 0 }}>
+            Received by Relay{" "}
+            {report.serverAcknowledgedAt
+              ? new Date(report.serverAcknowledgedAt).toLocaleString("en-GB")
+              : ""}
+            . It can no longer be edited — a correction is issued as a new revision.{" "}
+            <Link href={`/reports/${report.id}/preview`} style={{ color: "var(--brass)" }}>
+              View the document &rarr;
+            </Link>
+          </p>
+          {/* Review, delivery and whether anyone read it: the same three
+              facts the office sees, in the same words. */}
+          <p style={{ margin: "10px 0 0", display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {facts.map((f) => <span key={f.label} className={toneClass(f.tone)}>{f.label}</span>)}
+          </p>
+          {mine && !correcting && (
+            <div className="btn-row" style={{ marginTop: 12 }}>
+              <button className="btn-sm" onClick={() => setCorrecting(true)}>
+                {report.review === "returned" ? "Make the correction" : "Make a correction"}
+              </button>
+            </div>
+          )}
+          {mine && correcting && (
+            <div className="field" style={{ marginTop: 12 }}>
+              <label htmlFor="correction-reason">Why is a correction needed?</label>
+              <textarea
+                id="correction-reason"
+                value={correctionReason}
+                onChange={(e) => setCorrectionReason(e.target.value)}
+                placeholder="Printed on the corrected revision"
+              />
+              {correctionError && <p className="hint" style={{ color: "var(--alert)" }}>{correctionError}</p>}
+              <div className="btn-row">
+                <button className="btn-primary btn-sm" onClick={startCorrection}>Start correction</button>
+                <button className="btn-sm" onClick={() => setCorrecting(false)}>Cancel</button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

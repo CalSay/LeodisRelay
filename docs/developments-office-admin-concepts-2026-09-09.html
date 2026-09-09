@@ -1,0 +1,1367 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Developments Office Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* ---------------------------------------------------------------------------
+   Leodis Developments — Office and Administration, three ways.
+   9 September 2026.
+
+   Tokens are lifted unchanged from apps/web/app/globals.css, plus the two the
+   Compliance workspace added (--sunken, --r 2px) and the olive that the current
+   Developments chrome and the engineer hero already use. Nothing here is a new
+   colour. Three concepts share the same primitives (tags, refs, buttons, chips,
+   register tables); what changes is the information architecture and the chrome.
+--------------------------------------------------------------------------- */
+:root{color-scheme:light;
+  --ground:#f4f4f1;--sunken:#e9e9e5;--panel:#ffffff;--panel-2:#ececea;--panel-3:#e0e0dc;
+  --line:#deddd8;--line-2:#c6c5bf;--text:#1a1b19;--text-2:#55564f;--text-3:#6b6c65;
+  --brass:#7d621b;--brass-2:#a8842f;--brass-ink:#ffffff;--brass-wash:rgba(125,98,27,.09);
+  --alert:#a83c22;--alert-wash:rgba(168,60,34,.08);--caution:#7d5a12;--caution-wash:rgba(125,90,18,.1);
+  --ok:#2b6b48;--ok-wash:rgba(43,107,72,.09);--access:#5f7a9c;
+  --olive:#454b36;--olive-2:#3a3f2d;--olive-line:#5a6149;--olive-text:#f4f1e6;--olive-muted:#c3c5b3;--olive-brass:#e1cc8f;
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;--r:2px;--touch:48px;
+  --sans:"Archivo","Segoe UI",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --ground:#0e1013;--sunken:#0a0c0e;--panel:#15181b;--panel-2:#1b1f23;--panel-3:#23282d;
+  --line:#23282c;--line-2:#333a40;--text:#e9ebec;--text-2:#99a1a8;--text-3:#7a828a;
+  --brass:#d9ae4a;--brass-2:#a8842f;--brass-ink:#14171a;--brass-wash:rgba(217,174,74,.09);
+  --alert:#e2705a;--alert-wash:rgba(226,112,90,.1);--caution:#dda94f;--caution-wash:rgba(221,169,79,.1);
+  --ok:#63b78d;--ok-wash:rgba(99,183,141,.1);--access:#8fa9c9;
+  --olive:#22261b;--olive-2:#1a1d14;--olive-line:#363c2a;--olive-text:#ecebe2;--olive-muted:#9aa08f;--olive-brass:#d9ae4a}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --ground:#0e1013;--sunken:#0a0c0e;--panel:#15181b;--panel-2:#1b1f23;--panel-3:#23282d;
+  --line:#23282c;--line-2:#333a40;--text:#e9ebec;--text-2:#99a1a8;--text-3:#7a828a;
+  --brass:#d9ae4a;--brass-2:#a8842f;--brass-ink:#14171a;--brass-wash:rgba(217,174,74,.09);
+  --alert:#e2705a;--alert-wash:rgba(226,112,90,.1);--caution:#dda94f;--caution-wash:rgba(221,169,79,.1);
+  --ok:#63b78d;--ok-wash:rgba(99,183,141,.1);--access:#8fa9c9;
+  --olive:#22261b;--olive-2:#1a1d14;--olive-line:#363c2a;--olive-text:#ecebe2;--olive-muted:#9aa08f;--olive-brass:#d9ae4a}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---- Document shell ---------------------------------------------------- */
+.doc{max-width:1440px;margin:0 auto;padding:var(--s6) var(--s5) var(--s7)}
+.doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s5);flex-wrap:wrap;padding-bottom:var(--s5);border-bottom:2px solid var(--text)}
+.doc-head h1{font-size:26px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.01em;text-wrap:balance}
+.doc-head p{margin:0;color:var(--text-2);max-width:66ch}
+.eyebrow{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--brass);margin:0 0 var(--s3)}
+.themer{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;background:var(--panel);color:var(--text-2);border:1px solid var(--line-2);border-radius:var(--r);padding:var(--s2) var(--s4);white-space:nowrap}
+.themer:hover{border-color:var(--brass);color:var(--brass)}
+.brief{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin:var(--s5) 0 0;border:1px solid var(--line);background:var(--panel)}
+.brief div{padding:var(--s4);border-right:1px solid var(--line)}
+.brief div:last-child{border-right:0}
+.brief dt{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.11em;color:var(--text-3);margin-bottom:var(--s2)}
+.brief dd{margin:0;font-size:13px;color:var(--text-2)}
+.toc{display:flex;gap:var(--s4);flex-wrap:wrap;margin-top:var(--s4);font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+.toc a{color:var(--brass);border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--brass)}
+.concept{margin-top:var(--s7)}
+.concept-head{border-top:2px solid var(--brass);padding-top:var(--s4);margin-bottom:var(--s4)}
+.concept-num{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--brass);text-transform:uppercase}
+.concept-head h2{font-size:22px;font-weight:600;margin:var(--s2) 0 var(--s3);letter-spacing:-.01em}
+.concept-head>p{margin:0;color:var(--text-2);max-width:80ch}
+.cap{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);margin:var(--s5) 0 var(--s2);display:flex;gap:var(--s3);align-items:baseline}
+.cap b{color:var(--text);font-weight:500}
+.cap span{margin-left:auto;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:12px;color:var(--text-3)}
+.frame{border:1px solid var(--line-2);background:var(--sunken);overflow:auto;padding:var(--s5)}
+.frame-pad{padding:var(--s5)}
+.phones{display:flex;gap:var(--s5);align-items:flex-start;flex-wrap:wrap;justify-content:flex-start}
+.phone-wrap{display:flex;flex-direction:column;gap:var(--s2);align-items:center}
+.pcap{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:var(--s5);border:1px solid var(--line);background:var(--panel)}
+.notes section{padding:var(--s4);border-right:1px solid var(--line)}
+.notes section:last-child{border-right:0}
+.notes h5{margin:0 0 var(--s2);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.11em;color:var(--brass)}
+.notes ul{margin:0;padding-left:16px}
+.notes li{font-size:13px;color:var(--text-2);margin-bottom:var(--s1)}
+.notes li b{color:var(--text);font-weight:500}
+.verdict{margin-top:var(--s7);border-top:2px solid var(--text);padding-top:var(--s4)}
+.verdict h2{font-size:22px;font-weight:600;margin:var(--s2) 0 var(--s4)}
+.verdict table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line)}
+.verdict th{text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.11em;color:var(--text-3);padding:var(--s2) var(--s4);border-bottom:1px solid var(--line-2);background:var(--panel-2)}
+.verdict td{padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);vertical-align:top;font-size:13px;color:var(--text-2)}
+.verdict td:first-child{color:var(--text);font-weight:500;white-space:nowrap}
+.verdict tr:last-child td{border-bottom:0}
+.rec{margin-top:var(--s5);border:1px solid var(--brass);border-left-width:3px;background:var(--brass-wash);padding:var(--s4) var(--s5)}
+.rec h3{margin:0 0 var(--s3);font-size:16px;font-weight:600}
+.rec p{margin:0 0 var(--s3);font-size:13.5px;color:var(--text-2);max-width:90ch}
+.rec p:last-child{margin-bottom:0}
+.rec b{color:var(--text);font-weight:500}
+.fine{font-size:12.5px;color:var(--text-3);margin-top:var(--s5);max-width:90ch;line-height:1.5}
+@media (max-width:900px){.notes{grid-template-columns:1fr}.notes section{border-right:0;border-bottom:1px solid var(--line)}.notes section:last-child{border-bottom:0}}
+
+/* ---- Shared primitives (inside every mockup) ---------------------------- */
+.app,.phone{color:var(--text);font-family:var(--sans)}
+.app{width:1240px;min-height:760px;background:var(--ground);border:1px solid var(--line-2);display:flex;flex-direction:column;font-size:13px;line-height:1.5;position:relative;overflow:hidden}
+.app .scr{display:none;flex:1;min-height:0;flex-direction:column}
+.app .scr.on{display:flex}
+.ref{font-family:var(--mono);font-size:12px;color:var(--brass);letter-spacing:.02em;font-weight:500;font-variant-numeric:tabular-nums}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.due{font-family:var(--mono);font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.late{color:var(--alert)}.soon{color:var(--caution)}.okc{color:var(--ok)}.quiet{color:var(--text-3)}
+.tag{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;border:1px solid;border-radius:var(--r);padding:2px var(--s2)}
+.tag::before{content:"●";font-size:8px;line-height:1}
+.tag-ok{color:var(--ok);border-color:var(--ok);background:var(--ok-wash)}
+.tag-alert{color:var(--alert);border-color:var(--alert);background:var(--alert-wash)}.tag-alert::before{content:"▲"}
+.tag-caution{color:var(--caution);border-color:var(--caution);background:var(--caution-wash)}.tag-caution::before{content:"◆"}
+.tag-quiet{color:var(--text-3);border-color:var(--line-2);background:transparent}.tag-quiet::before{content:"○"}
+.tag-brass{color:var(--brass);border-color:var(--brass);background:var(--brass-wash)}.tag-brass::before{content:"■"}
+.tag-access{color:var(--access);border-color:var(--access);background:transparent}.tag-access::before{content:"◧"}
+.btn{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;background:var(--brass);color:var(--brass-ink);border:1px solid var(--brass);border-radius:var(--r);padding:var(--s2) var(--s4);white-space:nowrap}
+.btn-q{background:transparent;color:var(--text-2);border-color:var(--line-2)}
+.btn-q:hover{color:var(--brass);border-color:var(--brass)}
+.btn-sm{padding:5px var(--s3);font-size:10px}
+.drop::after{content:" ▾";opacity:.7}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.06em;border:1px solid var(--line-2);border-radius:var(--r);padding:3px var(--s3);color:var(--text-2);background:var(--panel);white-space:nowrap}
+.chip.on{border-color:var(--brass);color:var(--brass);background:var(--brass-wash)}
+.chip.warn{color:var(--alert);border-color:var(--alert)}.chip.warn.on{background:var(--alert-wash)}
+.filters{display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;padding:var(--s3) var(--s4);background:var(--panel-2);border:1px solid var(--line)}
+.filters .spacer{margin-left:auto}
+.panel{background:var(--panel);border:1px solid var(--line)}
+.panel-head{display:flex;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);border-bottom:1px solid var(--line)}
+.panel-head h4{margin:0;font-family:var(--mono);font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.12em;color:var(--text-2)}
+.panel-head .more{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--brass);letter-spacing:.06em}
+.panel-foot{padding:var(--s3) var(--s4);border-top:1px solid var(--line);font-size:12px;color:var(--text-3)}
+table.reg{width:100%;border-collapse:collapse}
+table.reg th{text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.11em;color:var(--text-3);padding:var(--s2) var(--s4);border-bottom:1px solid var(--line-2);background:var(--panel-2);white-space:nowrap}
+table.reg td{padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);vertical-align:top;font-size:13px}
+table.reg tr:last-child td{border-bottom:0}
+table.reg tbody tr:hover{background:var(--brass-wash)}
+table.reg tr.sel{background:var(--brass-wash);box-shadow:inset 2px 0 0 var(--brass)}
+table.reg.tight td,table.reg.tight th{padding:var(--s2) var(--s3);font-size:12px}
+.rowtitle{font-weight:500;font-size:14px}
+.rowsub{font-size:12px;color:var(--text-3);margin-top:2px}
+.rowsub .sep{color:var(--line-2);margin:0 6px}
+.found{display:flex;gap:6px;flex-wrap:wrap}
+.sec-h{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-3);margin:var(--s5) 0 var(--s2);display:flex;align-items:center;gap:var(--s3)}
+.sec-h a,.sec-h span.r{margin-left:auto;color:var(--brass);letter-spacing:.06em}
+.note{margin-top:var(--s3);padding:10px 12px;border:1px solid var(--line-2);border-left-width:3px;font-size:12px;display:flex;justify-content:space-between;align-items:center;gap:var(--s3);background:var(--panel-2)}
+.note.warn{border-color:var(--caution);background:var(--caution-wash)}
+.note.bad{border-color:var(--alert);background:var(--alert-wash)}
+.note.good{border-color:var(--ok);background:var(--ok-wash)}
+.note.info{border-color:var(--brass);background:var(--brass-wash)}
+.note b{font-weight:500}
+.empty{padding:var(--s6) var(--s5);color:var(--text-3);font-size:13px;text-align:center}
+.cbar{display:flex;height:6px;width:100%;background:var(--panel-3);overflow:hidden}
+.cbar i{display:block;height:100%}
+.cbar .ok{background:var(--ok)}.cbar .soon{background:var(--caution)}.cbar .late{background:var(--alert)}.cbar .none{background:var(--line-2)}
+.meta{display:flex;gap:var(--s3);margin-top:var(--s1);font-family:var(--mono);font-size:10px;letter-spacing:.04em;color:var(--text-3);font-variant-numeric:tabular-nums;flex-wrap:wrap}
+.cbar-key{display:flex;gap:var(--s3);font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--text-3);text-transform:uppercase;flex-wrap:wrap}
+.cbar-key span::before{content:"";display:inline-block;width:8px;height:8px;margin-right:6px;vertical-align:-1px}
+.cbar-key .k-ok::before{background:var(--ok)}.cbar-key .k-soon::before{background:var(--caution)}.cbar-key .k-late::before{background:var(--alert)}.cbar-key .k-none::before{background:var(--line-2)}
+.rmenu{border:1px solid var(--line);background:var(--panel)}
+.rmenu>a,.rmenu>div{display:flex;width:100%;text-align:left;align-items:center;gap:var(--s3);padding:var(--s3) var(--s4);border-bottom:1px solid var(--line)}
+.rmenu>a:last-child,.rmenu>div:last-child{border-bottom:0}
+.rmenu>a:hover{background:var(--brass-wash)}
+.rmenu .rt{flex:1;min-width:0}
+.rmenu .rt b{display:block;font-size:13px;font-weight:500}
+.rmenu .rt span{font-size:12px;color:var(--text-3)}
+.rmenu .ref{font-size:11px;width:118px;flex:none}
+.age{font-family:var(--mono);font-size:11px;color:var(--text-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.actions{display:flex;gap:var(--s2);align-items:center;flex-wrap:wrap}
+.tb{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);margin-top:var(--s3);background:var(--panel)}
+.tb>div{padding:var(--s3) var(--s4);border-right:1px solid var(--line)}
+.tb>div:last-child{border-right:0}
+.tb dt{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3)}
+.tb dd{margin:var(--s1) 0 0;font-size:13px}
+.tb.three{grid-template-columns:repeat(3,1fr)}
+.tb dd.big{font-family:var(--mono);font-size:18px;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.tb dd small{display:block;font-family:var(--sans);font-size:12px;color:var(--text-3);letter-spacing:0;margin-top:2px}
+.hist{display:flex;gap:var(--s4);padding:var(--s3) 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.hist:last-child{border-bottom:0}
+.hist .d{font-family:var(--mono);font-size:12px;color:var(--text-2);width:92px;flex:none;font-variant-numeric:tabular-nums}
+.hist .b{flex:1;min-width:0}
+.hist .b p{margin:0;font-size:13px}
+.kind{display:inline-flex;align-items:center;font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid var(--tone);color:var(--tone);white-space:nowrap}
+.tone-neutral{--tone:var(--text-3)}.tone-defect{--tone:var(--alert)}.tone-variation{--tone:var(--brass)}.tone-access{--tone:var(--access)}
+.photos{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s2);margin-top:var(--s2)}
+.ph{aspect-ratio:4/3;background:var(--panel-3);border:1px solid var(--line);display:grid;place-items:center;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--text-3);text-transform:uppercase}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.f{display:flex;flex-direction:column;gap:4px}
+.f label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3)}
+.f .in{font:inherit;font-size:13px;background:var(--sunken);color:var(--text);border:1px solid var(--line-2);border-radius:var(--r);padding:7px 10px}
+.toggle{display:inline-flex;align-items:center;gap:8px;font-size:12px;color:var(--text-2)}
+.toggle i{width:30px;height:16px;border-radius:8px;background:var(--line-2);position:relative;display:inline-block}
+.toggle i::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:6px;background:var(--panel)}
+.toggle.on i{background:var(--brass)}.toggle.on i::after{left:16px}
+
+/* ---- Phone frame --------------------------------------------------------- */
+.phone{width:390px;height:812px;background:var(--ground);border:1px solid var(--line-2);border-radius:34px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 60px rgba(0,0,0,.16),inset 0 0 0 6px var(--panel-3);position:relative;font-size:15px;line-height:1.45}
+.phone .screen{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding-bottom:20px}
+.phone .appbar{flex:none;display:flex;align-items:center;gap:10px;padding:18px 12px 10px 16px;background:var(--panel);border-bottom:1px solid var(--line-2);min-height:66px}
+.phone .brandm{display:flex;align-items:baseline;gap:8px;padding-right:8px;border-right:1px solid var(--line-2)}
+.phone .brandm b{font-size:13px;font-weight:500;letter-spacing:.12em}
+.phone .brandm span{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--brass)}
+.phone .abt{flex:1;min-width:0;display:flex;flex-direction:column}
+.phone .abt b{font-size:16px;font-weight:500;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phone .abt span{font-size:12px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phone .iconbtn{width:var(--touch);height:var(--touch);flex:none;display:grid;place-items:center;background:none;border:0;font-size:20px;color:var(--text-2);position:relative}
+.phone .iconbtn b{position:absolute;top:8px;right:8px;font-family:var(--mono);font-size:9px;min-width:16px;height:16px;display:grid;place-items:center;border-radius:8px;background:var(--alert);color:#fff;font-weight:500}
+.phone .tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);background:var(--panel);border-top:1px solid var(--line-2);height:64px}
+.phone .tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-top:2px solid transparent;position:relative}
+.phone .tabbar a i{font-style:normal;font-size:17px;line-height:1}
+.phone .tabbar a.on{color:var(--text);border-top-color:var(--brass)}
+.phone .tabbar a.on i{color:var(--brass)}
+.phone .tabbar a b{position:absolute;top:8px;right:22%;font-size:10px;min-width:18px;height:18px;display:grid;place-items:center;border-radius:9px;background:var(--brass);color:var(--brass-ink);font-weight:500}
+.phone .sec-h{margin:20px 16px 8px}
+.phone .rowtitle{font-size:15px}
+.phone .rowsub{font-size:12px}
+.phone .tag{font-size:10px;padding:2px 8px}
+.phone .btn{min-height:var(--touch);padding:0 16px;display:inline-flex;align-items:center;justify-content:center}
+.phone .btn.wide{width:calc(100% - 32px);margin:12px 16px 0}
+.phone .sum{display:grid;grid-template-columns:repeat(3,1fr);margin:16px 16px 0;border:1px solid var(--line);background:var(--panel)}
+.phone .sum div{padding:10px 12px;border-right:1px solid var(--line)}
+.phone .sum div:last-child{border-right:0}
+.phone .sum dt{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3)}
+.phone .sum dd{margin:2px 0 0;font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.phone .sum dd small{display:block;font-size:11px;color:var(--text-3);font-family:var(--sans);letter-spacing:0}
+.phone .ilist{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel)}
+.phone .irow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);min-height:var(--touch);border-left:3px solid transparent}
+.phone .irow:last-child{border-bottom:0}
+.phone .irow.late{border-left-color:var(--alert)}.phone .irow.soon{border-left-color:var(--caution)}.phone .irow.brass{border-left-color:var(--brass)}
+.phone .imain{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.phone .imain b{font-size:14px;font-weight:500}
+.phone .imain>span{font-size:12px;color:var(--text-3)}
+.phone .istat{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.phone .chev{font-family:var(--mono);color:var(--text-3);font-size:16px}
+.phone .note{margin:12px 16px 0;font-size:13px;padding:12px 14px}
+.phone .kv{margin:12px 16px 0;border:1px solid var(--line);background:var(--panel)}
+.phone .kv div{padding:10px 14px;border-bottom:1px solid var(--line)}
+.phone .kv div:last-child{border-bottom:0}
+.phone .kv dt{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3)}
+.phone .kv dd{margin:2px 0 0;font-size:14px}
+.phone .fine-print{margin:20px 16px 0;font-size:12px;color:var(--text-3);line-height:1.5}
+.phone .searchm{padding:12px 16px 4px}
+.phone .searchm div{min-height:44px;background:var(--panel);border:1px solid var(--line-2);border-radius:var(--r);padding:0 14px;display:flex;align-items:center;color:var(--text-3);font-size:14px}
+.phone .chips{display:flex;gap:6px;padding:10px 16px 0;overflow-x:auto}
+.phone .chips .chip{padding:6px 12px;font-size:11px}
+.phone .rlist{margin:12px 16px 0;display:flex;flex-direction:column;gap:8px}
+.phone .rlink{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--panel);border:1px solid var(--line);min-height:var(--touch)}
+.phone .rlink b{font-size:14px;font-weight:500;display:block}
+.phone .rlink span{font-size:12px;color:var(--text-3)}
+.phone .rlink .rt{flex:1;min-width:0}
+.phone .pcard{margin:0 16px;padding:14px 16px;background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--brass)}
+.phone .pcard .cbar{margin-top:8px}
+.phone .stick{position:sticky;bottom:0;margin-top:auto;padding:12px 16px;background:linear-gradient(to bottom,transparent,var(--ground) 30%)}
+.phone .cm-sheet{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line-2);border-radius:16px 16px 0 0;max-height:70%;overflow:auto;box-shadow:0 -12px 30px rgba(0,0,0,.18);z-index:3}
+.phone .sh-head{display:grid;grid-template-columns:1fr auto;padding:14px 8px 12px 20px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel)}
+.phone .sh-head b{font-size:17px;font-weight:500}
+.phone .sh-head span{grid-column:1;font-size:12px;color:var(--text-3)}
+.phone .sh-head .iconbtn{grid-row:1/span 2;grid-column:2}
+.phone .sh-body{padding:16px 20px;display:flex;flex-direction:column;gap:14px;font-size:14px}
+.phone .sh-body p{margin:0}
+.phone .backdrop{position:absolute;inset:0;background:rgba(20,22,24,.35);z-index:2}
+</style>
+</head>
+<body>
+<div class="doc">
+  <header class="doc-head">
+    <div>
+      <p class="eyebrow">Relay · Leodis Developments · Office and Administration · desktop and mobile</p>
+      <h1>The Developments office, three ways</h1>
+      <p>Three answers to the same brief: rebuild the Office and Admin screens for Leodis Developments at the standard of the Compliance office, with a simplified version for the phone. Same palette, same typefaces, same tags and references. What changes is the structure underneath and the chrome around it.</p>
+    </div>
+    <button class="themer" id="themer" type="button">Dark</button>
+  </header>
+
+  <dl class="brief">
+    <div><dt>Kept from Compliance</dt><dd>The 56px top bar with search and Attention. Mono tab strip with counts. Hairline panels on a recessed ground, 2px radius, sunken details column. Status as a word, a shape and a colour.</dd></div>
+    <div><dt>Accent roles</dt><dd>Brass does what aquamarine does in Compliance: the company mark, references and active state. It also stays on the one filled action per screen. Alert, caution and ok are the application’s own and are never the accent.</dd></div>
+    <div><dt>Data on these screens</dt><dd>Reports (received, review, delivery), issues (work status and confirmation as two facts), projects from the list, and the team roster with its Microsoft role. Draft contents stay private: a draft shows as a summary only.</dd></div>
+    <div><dt>Admin, everywhere</dt><dd>What Admin has today: the assignment checklist, signed-in accounts, older drafts to assign, a link to Microsoft Entra. Delivery, review and project settings are drawn as planned and tagged so.</dd></div>
+  </dl>
+  <nav class="toc"><a href="#c1">1 · Portfolio desk</a><a href="#c2">2 · Document ledger</a><a href="#c3">3 · Day board</a><a href="#verdict">Choosing between them</a></nav>
+
+<style>
+/* ---- Concept 1 skin: the Compliance office idiom ------------------------ */
+.c1 .topbar{flex:none;display:flex;align-items:center;gap:var(--s5);background:var(--panel);border-bottom:1px solid var(--line-2);padding:0 var(--s5);height:56px;position:relative;z-index:5}
+.c1 .logo{display:flex;align-items:baseline;gap:var(--s3)}
+.c1 .logo b{font-size:17px;font-weight:500;letter-spacing:.12em}
+.c1 .logo span{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--brass);border-left:1px solid var(--line-2);padding-left:var(--s3)}
+.c1 .search{flex:1;max-width:440px;position:relative}
+.c1 .search div{background:var(--sunken);border:1px solid var(--line);border-radius:var(--r);padding:var(--s2) var(--s3);color:var(--text-3);font-size:13px}
+.c1 .search kbd{position:absolute;right:10px;top:8px;font-family:var(--mono);font-size:10px;color:var(--text-3);border:1px solid var(--line-2);border-radius:2px;padding:1px 5px}
+.c1 .topbar-right{margin-left:auto;display:flex;align-items:center;gap:var(--s4)}
+.c1 .whoami{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--text-2)}
+.c1 .whoami em{font-style:normal;color:var(--brass)}
+.c1 .bell{font-family:var(--mono);font-size:11px;color:var(--text-2);letter-spacing:.08em;border:1px solid transparent;padding:4px 8px;border-radius:var(--r);background:none}
+.c1 .bell:hover{border-color:var(--line-2)}
+[hidden]{display:none!important}
+.c1 .bell b{color:var(--alert);font-weight:500}
+.c1 .tbtn{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+.c1 .hnav{flex:none;display:flex;background:var(--panel);border-bottom:1px solid var(--line-2);padding:0 var(--s5)}
+.c1 .hnav a,.c1 .hnav button{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.11em;color:var(--text-3);padding:var(--s3) var(--s4);border:0;border-bottom:2px solid transparent;background:none;display:flex;align-items:center;gap:var(--s2)}
+.c1 .hnav .on{color:var(--text);border-bottom-color:var(--brass)}
+.c1 .hnav i{font-style:normal;font-size:10px;color:var(--text-3);background:var(--panel-2);border-radius:8px;padding:0 6px;font-variant-numeric:tabular-nums}
+.c1 .hnav .on i{background:var(--brass-wash);color:var(--brass)}
+.c1 .hnav i.warn{color:var(--alert);background:var(--alert-wash)}
+.c1 .hnav .adm{margin-left:auto}
+.c1 .cols{flex:1;min-height:0;display:grid;grid-template-columns:250px 400px 1fr}
+.c1 .col{min-height:0;overflow-y:auto;border-right:1px solid var(--line-2);background:var(--panel);display:flex;flex-direction:column;min-width:0}
+.c1 .col:last-child{border-right:0;background:var(--sunken)}
+.c1 .col-head{position:sticky;top:0;z-index:1;display:flex;align-items:baseline;gap:var(--s2);padding:var(--s3) var(--s4);border-bottom:1px solid var(--line-2);background:var(--panel-2)}
+.c1 .col-head h4{margin:0;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.12em;color:var(--brass);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c1 .col-head i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:auto;white-space:nowrap}
+.c1 .col:last-child .col-head{background:var(--panel)}
+.c1 .item{display:block;padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);border-left:2px solid transparent}
+.c1 .item.on{background:var(--brass-wash);border-left-color:var(--brass)}
+.c1 .item-top{display:flex;align-items:baseline;gap:var(--s2)}
+.c1 .item-top .rowtitle{font-size:13px;flex:1;min-width:0}
+.c1 .item-top .arrow{font-family:var(--mono);font-size:12px;color:var(--text-3)}
+.c1 .item.on .arrow{color:var(--brass)}
+.c1 .item .cbar{margin-top:var(--s2)}
+.c1 .grp{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-3);padding:var(--s3) var(--s4) var(--s1);border-bottom:1px solid var(--line);display:flex;gap:var(--s2)}
+.c1 .grp i{font-style:normal;margin-left:auto}
+.c1 .arow{display:flex;align-items:center;gap:var(--s3);padding:var(--s2) var(--s4);border-bottom:1px solid var(--line);border-left:2px solid transparent}
+.c1 .arow.on{background:var(--brass-wash);border-left-color:var(--brass)}
+.c1 .arow .ref{font-size:11px;width:76px;flex:none}
+.c1 .arow .nm{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c1 .arow .nm small{display:block;font-size:11px;color:var(--text-3)}
+.c1 .arow .tag{flex:none}
+.c1 .colpad{padding:var(--s4);display:flex;flex-direction:column;gap:var(--s4)}
+.c1 .colpad.sticky-foot{margin-top:auto;border-top:1px solid var(--line);padding:var(--s3) var(--s4)}
+.c1 .sheet{background:var(--panel);border:1px solid var(--line);padding:var(--s4)}
+.c1 .sheet-title{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s4);border-bottom:1px solid var(--line-2);padding-bottom:var(--s3)}
+.c1 .sheet-title h4{margin:6px 0 var(--s1);font-size:18px;font-weight:500;letter-spacing:-.015em}
+.c1 .crumbs{font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:.03em}
+.c1 .crumbs a{font-weight:500;color:var(--brass)}
+.c1 .crumbs span{margin:0 6px;color:var(--line-2)}
+.c1 .view{flex:1;min-height:0;overflow:auto;padding:var(--s5);display:flex;flex-direction:column;gap:var(--s5)}
+.c1 .pagehead{display:flex;justify-content:space-between;align-items:flex-end;gap:var(--s4)}
+.c1 .pagehead h3{margin:0;font-size:22px;font-weight:500;letter-spacing:-.02em}
+.c1 .pagehead p{margin:var(--s1) 0 0;font-size:13px;color:var(--text-2)}
+.c1 .two-wide{display:grid;grid-template-columns:1fr 430px;gap:var(--s5);align-items:start}
+.c1 .attn-pop{position:absolute;right:24px;top:56px;width:440px;background:var(--panel);border:1px solid var(--alert);border-top:0;border-left-width:3px;box-shadow:0 12px 28px rgba(0,0,0,.14);z-index:6}
+.c1 .mini{display:flex;gap:var(--s3);padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);align-items:flex-start}
+.c1 .mini:last-child{border-bottom:0}
+.c1 .mini b{font-weight:500;font-size:13px;display:block}
+.c1 .mini .rowsub{margin-top:2px}
+.c1 .mini .btn{margin-left:auto;flex:none}
+.c1 .adm-grid{display:grid;grid-template-columns:1fr 400px;gap:var(--s5);align-items:start}
+</style>
+
+<!-- ===================== CONCEPT 1 ===================== -->
+<section class="concept" id="c1">
+  <div class="concept-head">
+    <span class="concept-num">Concept 1</span>
+    <h2>Portfolio desk</h2>
+    <p>The Compliance office, transposed. One top bar with search and an Attention bell; a mono tab strip with counts; and, under Projects, a column browser: Projects › Register › Details, with the details column recessed. The register column holds a project’s reports and issues together, because on site they are one stream. Admin is the last tab, shown only to Admins, and <code>/admin</code> lands on it. Everything on this page already exists as a primitive in <code>compliance.css</code>, so the two workspaces would share one component set with the accent swapped.</p>
+  </div>
+
+  <p class="cap"><b>Office · desktop</b> Projects, Inbox and Issues tabs are live in this frame <span>1240 × 760 · the Attention pop is drawn open; the bell or × closes it</span></p>
+  <div class="frame">
+    <div class="app c1" data-tabs>
+      <header class="topbar">
+        <a class="logo" href="#c1"><b>RELAY</b><span>LEODIS DEVELOPMENTS</span></a>
+        <div class="search"><div>Search projects, reports, issues, engineers</div><kbd>/</kbd></div>
+        <div class="topbar-right">
+          <button type="button" class="bell" data-pop>Attention <b>5</b></button>
+          <span class="whoami">Cal Say · <em>Admin</em></span>
+          <span class="tbtn">Auto</span>
+          <span class="tbtn">Companies</span>
+        </div>
+        <div class="attn-pop" data-pop-target>
+          <div class="panel-head"><h4 style="color:var(--alert)">Needs attention</h4><a class="more" href="#c1">Issues tab →</a><button type="button" class="tbtn" data-pop aria-label="Close" style="font-size:16px;line-height:1;padding:0 2px">×</button></div>
+          <div class="mini"><div><b>1 report never emailed</b><div class="rowsub"><span class="ref">011LME-SPR-013</span> · in the local outbox since Mon 8 Sep. A. Whitfield has not received it.</div></div><button class="btn btn-sm" type="button">Retry</button></div>
+          <div class="mini"><div><b>2 issues awaiting verification</b><div class="rowsub">Oldest 9 days: <span class="ref">011LME-ISS-005</span>, closure by T. Parker. Needs a second pair of eyes.</div></div><button class="btn btn-q btn-sm" type="button">Verify</button></div>
+          <div class="mini"><div><b>1 issue unassigned for 4 days</b><div class="rowsub"><span class="ref">014LME-ISS-004</span> · AHU-02 condensate trap not fitted.</div></div><button class="btn btn-q btn-sm" type="button">Assign</button></div>
+          <div class="mini"><div><b>1 issue disputed</b><div class="rowsub"><span class="ref">014LME-ISS-003</span> · Northbank say the clash is a design matter. Needs triage.</div></div><button class="btn btn-q btn-sm" type="button">Triage</button></div>
+        </div>
+      </header>
+      <nav class="hnav">
+        <button type="button" class="on" data-tab="projects">Projects <i>3</i></button>
+        <button type="button" data-tab="inbox">Inbox <i>14</i></button>
+        <button type="button" data-tab="issues">Issues <i class="warn">15</i></button>
+        <button type="button">Reports <i>184</i></button>
+        <button type="button">Team <i>17</i></button>
+        <a class="adm" href="#c1-admin">Admin</a>
+      </nav>
+
+      <!-- Projects tab: the browser -->
+      <div class="scr on" data-scr="projects">
+        <div class="cols">
+          <div class="col">
+            <div class="col-head"><h4>Projects</h4><i>3 reportable</i></div>
+            <a class="item on" href="#c1"><div class="item-top"><div class="rowtitle">Tetley Hall — Block E</div><span class="arrow">›</span></div><div class="rowsub"><span class="ref">011LME</span> · A. Whitfield · M&amp;E</div><div class="cbar"><i class="ok" style="width:58%"></i><i class="soon" style="width:8%"></i><i class="late" style="width:16%"></i><i class="none" style="width:18%"></i></div><div class="meta"><span>12 issues</span><span class="late">2 overdue</span><span class="soon">1 to verify</span></div></a>
+            <a class="item" href="#c1"><div class="item-top"><div class="rowtitle">Kirkstall Gate — Phase 2</div><span class="arrow">›</span></div><div class="rowsub"><span class="ref">014LME</span> · A. Whitfield · M&amp;E</div><div class="cbar"><i class="ok" style="width:45%"></i><i class="late" style="width:11%"></i><i class="none" style="width:44%"></i></div><div class="meta"><span>9 issues</span><span class="late">1 overdue</span><span>1 unassigned</span></div></a>
+            <a class="item" href="#c1"><div class="item-top"><div class="rowtitle">Hunslet Depot — Welfare Block</div><span class="arrow">›</span></div><div class="rowsub"><span class="ref">009LCP</span> · R. Ellison · Plumbing · Defects liability</div><div class="cbar"><i class="ok" style="width:70%"></i><i class="soon" style="width:20%"></i><i class="none" style="width:10%"></i></div><div class="meta"><span>10 issues</span><span class="soon">2 to verify</span></div></a>
+            <div class="colpad sticky-foot"><div class="cbar-key"><span class="k-ok">closed</span><span class="k-soon">to verify</span><span class="k-late">overdue</span><span class="k-none">open</span></div><div class="rowsub">Tenders and completed jobs are not listed.</div></div>
+          </div>
+          <div class="col">
+            <div class="col-head"><h4>Register · Tetley Hall — Block E</h4><i>14 reports · 12 issues</i></div>
+            <div class="filters" style="border:0;border-bottom:1px solid var(--line);padding:8px 16px"><span class="chip on">Needs action · 5</span><span class="chip">Reports · 14</span><span class="chip">Issues · 12</span></div>
+            <div class="grp">Reports · latest first<i>3 shown</i></div>
+            <a class="arow on" href="#c1"><span class="ref">SPR-014</span><span class="nm">G. Stephenson · Electrical<small>Tue 9 Sep 08:40 · 1 defect, 1 variation</small></span><span class="tag tag-quiet">Not sent</span></a>
+            <a class="arow" href="#c1"><span class="ref">SPR-013</span><span class="nm">T. Parker · Electrical<small>Mon 8 Sep 11:05 · progress only</small></span><span class="tag tag-alert">Not emailed</span></a>
+            <a class="arow" href="#c1"><span class="ref">SPR-012</span><span class="nm">A. Dyson · HVAC<small>Thu 4 Sep 15:50 · 1 access restriction</small></span><span class="tag tag-ok">Sent to 2</span></a>
+            <div class="grp">Issues · needs action<i>3 of 12</i></div>
+            <a class="arow" href="#c1"><span class="ref">ISS-006</span><span class="nm">Fire stopping missing at tray penetration<small>L2 riser · C&amp;AJ Marshall · target 02 Sep</small></span><span class="tag tag-alert">7d overdue</span></a>
+            <a class="arow" href="#c1"><span class="ref">ISS-005</span><span class="nm">L2 lighting circuits, closure submitted<small>T. Parker · 31 Aug · waiting 9 days</small></span><span class="tag tag-caution">Verify</span></a>
+            <a class="arow" href="#c1"><span class="ref">ISS-007</span><span class="nm">Damaged cable tray cover, L1 riser<small>Raised by SPR-014 this morning</small></span><span class="tag tag-quiet">Not reviewed</span></a>
+            <div class="grp">Drafts on site<i>1</i></div>
+            <div class="arow"><span class="ref quiet">DRAFT</span><span class="nm">Bryony · Electrical · visit today<small>Saved 10:41 · 3 sections · contents private until sent</small></span><span class="tag tag-caution">Draft</span></div>
+            <div class="colpad sticky-foot"><div class="rowsub">Needs action hides 9 closed issues and 11 reports that were sent and acknowledged. Reports and issues share one column because the office reads them as one stream.</div></div>
+          </div>
+          <div class="col">
+            <div class="col-head"><h4>Details</h4><i>011LME</i></div>
+            <div class="colpad">
+              <div class="sheet">
+                <div class="sheet-title"><div><div class="crumbs"><a href="#c1">Projects</a><span>›</span>Project</div><h4>Tetley Hall — Block E</h4><div class="rowsub"><span class="ref">011LME</span><span class="sep">/</span>C&amp;AJ Marshall Builders Ltd<span class="sep">/</span>Leodis M&amp;E<span class="sep">/</span>4. Active</div></div>
+                  <div class="actions"><button class="btn btn-q btn-sm" type="button">Export register</button><button class="btn btn-sm" type="button">Project details</button></div></div>
+                <dl class="tb three"><div><dt>Received this week</dt><dd class="big">4<small>1 not yet emailed</small></dd></div><div><dt>Overdue actions</dt><dd class="big late">2<small>oldest 7 days past target</small></dd></div><div><dt>Ready to verify</dt><dd class="big soon">1<small>closure submitted 31 Aug</small></dd></div></dl>
+                <div style="margin-top:12px"><div class="cbar"><i class="ok" style="width:58%"></i><i class="soon" style="width:8%"></i><i class="late" style="width:16%"></i><i class="none" style="width:18%"></i></div><div class="meta"><span>7 closed</span><span class="soon">1 to verify</span><span class="late">2 overdue</span><span>2 open</span></div></div>
+                <dl class="tb" style="margin-top:12px"><div><dt>Project manager</dt><dd>A. Whitfield<small>a.whitfield@example.invalid</small></dd></div><div><dt>Client account</dt><dd class="num">LCA0001</dd></div><div><dt>Review</dt><dd>Not required<small>reports issue on submission</small></dd></div><div><dt>Engineers this month</dt><dd>4<small>Stephenson, Parker, Dyson, Bryony</small></dd></div></dl>
+                <div class="sec-h">Needs attention<span class="r">3</span></div>
+                <div class="rmenu">
+                  <a href="#c1"><span class="ref">SPR-013</span><div class="rt"><b>Never emailed to the project manager</b><span>In the local outbox since Mon 8 Sep 11:05</span></div><span class="tag tag-alert">Delivery</span></a>
+                  <a href="#c1"><span class="ref">ISS-006</span><div class="rt"><b>Fire stopping missing at tray penetration</b><span>C&amp;AJ Marshall · target 02 Sep · 7 days overdue</span></div><span class="tag tag-alert">Overdue</span></a>
+                  <a href="#c1"><span class="ref">ISS-005</span><div class="rt"><b>L2 lighting circuits</b><span>Closure submitted by T. Parker 31 Aug · verify or reopen</span></div><span class="tag tag-caution">Verify</span></a>
+                </div>
+                <div class="sec-h">Latest reports<a href="#c1">All 14 →</a></div>
+                <table class="reg tight"><thead><tr><th>Ref</th><th>Engineer</th><th>Visit</th><th>Found</th><th>Delivery</th></tr></thead><tbody>
+                  <tr><td><span class="ref">SPR-014</span></td><td>G. Stephenson<div class="rowsub">Electrical</div></td><td class="due">09 Sep 08:40</td><td><div class="found"><span class="kind tone-defect">1 defect</span><span class="kind tone-variation">1 variation</span></div></td><td><span class="tag tag-quiet">Not sent</span></td></tr>
+                  <tr><td><span class="ref">SPR-013</span></td><td>T. Parker<div class="rowsub">Electrical</div></td><td class="due">08 Sep 11:05</td><td><span class="kind tone-neutral">Progress</span></td><td><span class="tag tag-alert">Not emailed</span></td></tr>
+                  <tr><td><span class="ref">SPR-012</span></td><td>A. Dyson<div class="rowsub">HVAC</div></td><td class="due">04 Sep 15:50</td><td><span class="kind tone-access">1 access</span></td><td><span class="tag tag-ok">Sent to 2</span></td></tr>
+                </tbody></table>
+                <p class="rowsub" style="margin-top:16px">A report is <b>received</b> when the server has it, <b>sent</b> when the email went, and <b>acknowledged</b> when someone in the office says they read it. Three facts, kept apart.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Inbox tab: register and reader -->
+      <div class="scr" data-scr="inbox">
+        <div class="view">
+          <div class="pagehead"><div><h3>Inbox</h3><p>14 reports received · 3 this week · 1 in the local outbox and never emailed · 2 drafts in progress on site</p></div>
+            <div class="actions"><button class="btn btn-q" type="button">Export register</button><button class="btn" type="button">Retry failed delivery</button></div></div>
+          <div class="filters"><span class="chip on">All · 14</span><span class="chip warn">Not emailed · 1</span><span class="chip">Not acknowledged · 4</span><span class="chip">To review · 0</span><span class="chip">Drafts on site · 2</span><span class="spacer"></span><span class="chip drop">All projects</span><span class="chip drop">All trades</span></div>
+          <div class="two-wide">
+            <div class="panel"><table class="reg"><thead><tr><th>Reference</th><th>Project</th><th>Engineer</th><th>Visit</th><th>Found</th><th>Delivery</th></tr></thead><tbody>
+              <tr class="sel"><td><span class="ref">011LME-SPR-014</span></td><td><div class="rowtitle" style="font-size:13px">Tetley Hall — Block E</div></td><td>G. Stephenson<div class="rowsub">Electrical</div></td><td class="due">09 Sep 08:40</td><td><div class="found"><span class="kind tone-defect">1 defect</span><span class="kind tone-variation">1 variation</span></div></td><td><span class="tag tag-quiet">Not sent</span></td></tr>
+              <tr><td><span class="ref">014LME-SPR-021</span></td><td><div class="rowtitle" style="font-size:13px">Kirkstall Gate — Phase 2</div></td><td>A. Dyson<div class="rowsub">HVAC</div></td><td class="due">08 Sep 16:12</td><td><span class="kind tone-defect">2 defects</span></td><td><span class="tag tag-ok">Sent to 2</span></td></tr>
+              <tr><td><span class="ref">011LME-SPR-013</span></td><td><div class="rowtitle" style="font-size:13px">Tetley Hall — Block E</div></td><td>T. Parker<div class="rowsub">Electrical</div></td><td class="due">08 Sep 11:05</td><td><span class="kind tone-neutral">Progress</span></td><td><span class="tag tag-alert">Not emailed</span></td></tr>
+              <tr><td><span class="ref">009LCP-SPR-008</span></td><td><div class="rowtitle" style="font-size:13px">Hunslet Depot — Welfare Block</div></td><td>H. O’Brien<div class="rowsub">P&amp;H</div></td><td class="due">05 Sep 14:20</td><td><span class="kind tone-access">1 access</span></td><td><span class="tag tag-ok">Sent to 1</span></td></tr>
+              <tr><td><span class="ref">011LME-SPR-012</span></td><td><div class="rowtitle" style="font-size:13px">Tetley Hall — Block E</div></td><td>A. Dyson<div class="rowsub">HVAC</div></td><td class="due">04 Sep 15:50</td><td><span class="kind tone-access">1 access</span></td><td><span class="tag tag-ok">Sent to 2</span></td></tr>
+              <tr><td><span class="ref">014LME-SPR-020</span></td><td><div class="rowtitle" style="font-size:13px">Kirkstall Gate — Phase 2</div></td><td>N. Cunningham<div class="rowsub">P&amp;H</div></td><td class="due">03 Sep 12:02</td><td><span class="kind tone-neutral">Progress</span></td><td><span class="tag tag-ok">Sent to 2</span></td></tr>
+              <tr><td><span class="ref">009LCP-SPR-007</span></td><td><div class="rowtitle" style="font-size:13px">Hunslet Depot — Welfare Block</div></td><td>N. Cunningham<div class="rowsub">P&amp;H</div></td><td class="due">01 Sep 09:15</td><td><span class="kind tone-defect">1 defect</span></td><td><span class="tag tag-ok">Sent to 1</span></td></tr>
+            </tbody></table><div class="panel-foot">Newest first. “Found” says what the visit raised, not how many sections were typed. Delivery is what actually happened to the PDF; receipt is never shown as sent.</div></div>
+            <div class="panel">
+              <div class="panel-head"><h4>Reader</h4><a class="more" href="#c1">Open full report →</a></div>
+              <div style="padding:16px">
+                <div class="crumbs"><a href="#c1">Tetley Hall — Block E</a><span>›</span>Site progress report</div>
+                <div class="rowtitle" style="font-size:17px;margin-top:6px">Visit Tuesday 9 September 2026</div>
+                <div class="rowsub"><span class="ref">011LME-SPR-014</span><span class="sep">/</span>G. Stephenson · Electrical<span class="sep">/</span>Rev 1</div>
+                <dl class="tb three" style="margin-top:12px"><div><dt>Received</dt><dd>08:40 today</dd></div><div><dt>Review</dt><dd>Not required</dd></div><div><dt>Delivery</dt><dd class="quiet">PDF ready · not sent</dd></div></dl>
+                <div class="note info"><span><b>No review on this project.</b> The PDF issues when the worker has it. Acknowledging records that the office read it; it sends nothing.</span><button class="btn btn-sm" type="button">Acknowledge</button></div>
+                <div class="sec-h">Found on this visit<span class="r">3 updates</span></div>
+                <div class="hist"><span class="d"><span class="kind tone-defect">Defect</span></span><div class="b"><p><b>L1 riser</b> — cable tray cover damaged at the 2nd floor slab, edge exposed. Needs replacing before the ceiling closes.</p><div class="rowsub">Owner: C&amp;AJ Marshall · raised <span class="ref">ISS-007</span> · 2 photographs</div></div></div>
+                <div class="hist"><span class="d"><span class="kind tone-variation">Variation</span></span><div class="b"><p><b>L2 plant room</b> — client asks for an extra 32A commando socket by the AHU. Outside scope; needs instruction before we pick it up.</p><div class="rowsub">Decision needed from A. Whitfield</div></div></div>
+                <div class="hist"><span class="d"><span class="kind tone-neutral">Progress</span></span><div class="b"><p><b>L3 riser</b> — sub-main containment complete, first fix to flats 3.01–3.06 started.</p><div class="rowsub">1 photograph</div></div></div>
+                <div class="photos"><div class="ph">Photo 1</div><div class="ph">Photo 2</div><div class="ph">Photo 3</div></div>
+                <div class="sec-h">Signature</div>
+                <div class="rowsub">Signed G. Stephenson · 09 Sep 08:39 · Generated by Leodis Relay</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Issues tab -->
+      <div class="scr" data-scr="issues">
+        <div class="view">
+          <div class="pagehead"><div><h3>Issues</h3><p>15 open across 3 projects · 3 overdue · 3 awaiting verification · 1 unassigned · 1 disputed</p></div>
+            <div class="actions"><button class="btn btn-q" type="button">Export schedule</button><button class="btn" type="button">Verify the oldest</button></div></div>
+          <div class="filters"><span class="chip on">Open · 15</span><span class="chip warn">Overdue · 3</span><span class="chip">To verify · 3</span><span class="chip">Unassigned · 1</span><span class="chip">Disputed · 1</span><span class="chip">Closed · 21</span><span class="spacer"></span><span class="chip drop">All projects</span><span class="chip drop">All trades</span><span class="chip drop">Owner</span></div>
+          <div class="panel"><table class="reg"><thead><tr><th>Ref</th><th>Issue</th><th>Project</th><th>Raised</th><th>Owner</th><th>Target</th><th>Work</th><th>Confirmation</th><th></th></tr></thead><tbody>
+            <tr><td><span class="ref">011LME-ISS-006</span></td><td><div class="rowtitle" style="font-size:13px">Fire stopping missing at tray penetration</div><div class="rowsub">L2 riser · Electrical</div></td><td>Tetley Hall — Block E</td><td class="due">21 Aug<div class="rowsub">SPR-010</div></td><td>C&amp;AJ Marshall</td><td class="due"><b class="late">02 Sep</b> · 7d late</td><td><span class="tag tag-alert">Assigned</span></td><td><span class="tag tag-ok">Confirmed</span></td><td><div class="actions" style="flex-wrap:nowrap"><button class="btn btn-q btn-sm" type="button">Chase</button><button class="btn btn-q btn-sm" type="button">Reassign</button></div></td></tr>
+            <tr><td><span class="ref">014LME-ISS-002</span></td><td><div class="rowtitle" style="font-size:13px">Extract duct unsupported over corridor</div><div class="rowsub">L1 corridor · HVAC</div></td><td>Kirkstall Gate — Phase 2</td><td class="due">18 Aug<div class="rowsub">SPR-017</div></td><td>A. Dyson</td><td class="due"><b class="late">05 Sep</b> · 4d late</td><td><span class="tag tag-alert">In progress</span></td><td><span class="tag tag-ok">Confirmed</span></td><td><div class="actions" style="flex-wrap:nowrap"><button class="btn btn-q btn-sm" type="button">Chase</button></div></td></tr>
+            <tr><td><span class="ref">011LME-ISS-005</span></td><td><div class="rowtitle" style="font-size:13px">L2 lighting circuits not tested</div><div class="rowsub">L2 · Electrical · closure submitted by T. Parker</div></td><td>Tetley Hall — Block E</td><td class="due">12 Aug<div class="rowsub">SPR-008</div></td><td>T. Parker</td><td class="due">31 Aug</td><td><span class="tag tag-caution">Verify</span></td><td><span class="tag tag-ok">Confirmed</span></td><td><div class="actions" style="flex-wrap:nowrap"><button class="btn btn-sm" type="button">Verify</button><button class="btn btn-q btn-sm" type="button">Reopen</button></div></td></tr>
+            <tr><td><span class="ref">009LCP-ISS-002</span></td><td><div class="rowtitle" style="font-size:13px">TMV commissioning certificate outstanding</div><div class="rowsub">Welfare WC · P&amp;H</div></td><td>Hunslet Depot — Welfare Block</td><td class="due">27 Aug<div class="rowsub">SPR-006</div></td><td>N. Cunningham</td><td class="due">06 Sep</td><td><span class="tag tag-caution">Verify</span></td><td><span class="tag tag-ok">Confirmed</span></td><td><div class="actions" style="flex-wrap:nowrap"><button class="btn btn-sm" type="button">Verify</button><button class="btn btn-q btn-sm" type="button">Reopen</button></div></td></tr>
+            <tr><td><span class="ref">014LME-ISS-004</span></td><td><div class="rowtitle" style="font-size:13px">AHU-02 condensate trap not fitted</div><div class="rowsub">Roof AHU deck · HVAC</div></td><td>Kirkstall Gate — Phase 2</td><td class="due">05 Sep<div class="rowsub">SPR-021</div></td><td><span class="late">Unassigned</span></td><td class="due quiet">—</td><td><span class="tag tag-quiet">Open</span></td><td><span class="tag tag-quiet">Not reviewed</span></td><td><div class="actions" style="flex-wrap:nowrap"><button class="btn btn-sm" type="button">Assign</button><button class="btn btn-q btn-sm" type="button">Confirm</button></div></td></tr>
+            <tr><td><span class="ref">014LME-ISS-003</span></td><td><div class="rowtitle" style="font-size:13px">Pipework clashes with cable tray</div><div class="rowsub">L1 plant room · variation required</div></td><td>Kirkstall Gate — Phase 2</td><td class="due">28 Aug<div class="rowsub">SPR-019</div></td><td>Northbank</td><td class="due">12 Sep · 3d</td><td><span class="tag tag-quiet">Open</span></td><td><span class="tag tag-alert">Disputed</span></td><td><div class="actions" style="flex-wrap:nowrap"><button class="btn btn-sm" type="button">Triage</button><button class="btn btn-q btn-sm" type="button">Withdraw</button></div></td></tr>
+            <tr><td><span class="ref">011LME-ISS-007</span></td><td><div class="rowtitle" style="font-size:13px">Damaged cable tray cover</div><div class="rowsub">L1 riser · Electrical</div></td><td>Tetley Hall — Block E</td><td class="due">09 Sep<div class="rowsub">SPR-014</div></td><td>C&amp;AJ Marshall</td><td class="due">23 Sep · 14d</td><td><span class="tag tag-quiet">Open</span></td><td><span class="tag tag-quiet">Not reviewed</span></td><td><div class="actions" style="flex-wrap:nowrap"><button class="btn btn-q btn-sm" type="button">Confirm</button><button class="btn btn-q btn-sm" type="button">Withdraw</button></div></td></tr>
+          </tbody></table><div class="panel-foot">Work and confirmation are two columns because they are two facts: an issue can be repaired and still disputed. Verifying needs someone other than whoever submitted the closure; the button is hidden for them.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="cap" id="c1-admin"><b>Admin · desktop</b> the last tab, Admin role only <span>Roles &amp; access shown · the chips switch sections</span></p>
+  <div class="frame">
+    <div class="app c1" data-tabs>
+      <header class="topbar">
+        <a class="logo" href="#c1"><b>RELAY</b><span>LEODIS DEVELOPMENTS</span></a>
+        <div class="search"><div>Search projects, reports, issues, engineers</div><kbd>/</kbd></div>
+        <div class="topbar-right"><span class="bell">Attention <b>5</b></span><span class="whoami">Cal Say · <em>Admin</em></span><span class="tbtn">Auto</span><span class="tbtn">Companies</span></div>
+      </header>
+      <nav class="hnav">
+        <button type="button">Projects <i>3</i></button><button type="button">Inbox <i>14</i></button><button type="button">Issues <i class="warn">15</i></button><button type="button">Reports <i>184</i></button><button type="button">Team <i>17</i></button>
+        <button type="button" class="on adm">Admin</button>
+      </nav>
+      <div class="scr on" data-scr="roles">
+        <div class="view">
+          <div class="pagehead"><div><h3>Administration</h3><p>Access, older drafts and delivery for Leodis Developments · signed in through Microsoft · 17 accounts on the checklist</p></div>
+            <div class="actions"><button class="btn btn-q" type="button">Open Microsoft Entra ↗</button></div></div>
+          <div class="filters"><button type="button" class="chip on" data-tab="roles">Roles &amp; access · 17</button><button type="button" class="chip warn" data-tab="drafts">Older drafts · 2</button><button type="button" class="chip" data-tab="delivery">Delivery &amp; processing</button><span class="chip">Projects &amp; review <span class="tag tag-quiet" style="margin-left:6px">Planned</span></span></div>
+          <div class="adm-grid">
+            <div class="panel"><div class="panel-head"><h4>Roles &amp; access</h4><span class="rowsub" style="margin-left:auto">Set in Microsoft; the app only reads the role at sign-in</span></div>
+              <table class="reg"><thead><tr><th>Account</th><th>Microsoft app role</th><th>Sees</th><th>Last signed in</th><th>Session</th></tr></thead><tbody>
+                <tr><td><div class="rowtitle" style="font-size:13px">Cal Say</div><div class="rowsub num">callum@leodisme.com</div></td><td>Admin</td><td style="font-size:12px">Everything, plus this screen</td><td class="due">Today 08:12</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                <tr><td><div class="rowtitle" style="font-size:13px">Tom</div><div class="rowsub num">tom@leodisme.com</div></td><td>Manager</td><td style="font-size:12px">Office, all projects</td><td class="due">Today 07:55</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                <tr><td><div class="rowtitle" style="font-size:13px">Ollie</div><div class="rowsub num">ollie@leodisme.com</div></td><td>Manager</td><td style="font-size:12px">Office, all projects</td><td class="due">Mon 8 Sep</td><td><span class="tag tag-quiet">Expired</span></td></tr>
+                <tr><td><div class="rowtitle" style="font-size:13px">Jonny</div><div class="rowsub num">jonny@leodisme.com</div></td><td>Manager</td><td style="font-size:12px">Office, all projects</td><td class="due">Fri 5 Sep</td><td><span class="tag tag-quiet">Expired</span></td></tr>
+                <tr><td><div class="rowtitle" style="font-size:13px">Russel</div><div class="rowsub num">russel@leodisme.com</div></td><td>Manager</td><td class="quiet" style="font-size:12px">Never signed in</td><td class="due quiet">—</td><td><span class="tag tag-quiet">Never</span></td></tr>
+                <tr><td><div class="rowtitle" style="font-size:13px">Graham Stephenson</div><div class="rowsub num">graham.stephenson@leodisme.com</div></td><td>Engineer.Electrical</td><td style="font-size:12px">Own drafts, submitted reports, issues</td><td class="due">Today 08:38</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                <tr><td><div class="rowtitle" style="font-size:13px">Tyler Parker</div><div class="rowsub num">tyler.parker@leodisme.com</div></td><td>Engineer.Electrical</td><td style="font-size:12px">Own drafts, submitted reports, issues</td><td class="due">Mon 8 Sep</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                <tr><td><div class="rowtitle" style="font-size:13px">Bryony</div><div class="rowsub num">bryony@leodisme.com</div></td><td>Engineer.Electrical</td><td style="font-size:12px">Own drafts, submitted reports, issues</td><td class="due">Today 10:41</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                <tr><td><div class="rowtitle" style="font-size:13px">Anthony Dyson</div><div class="rowsub num">anthony.dyson@leodisme.com</div></td><td>Engineer.HVAC</td><td style="font-size:12px">Own drafts, submitted reports, issues</td><td class="due">Mon 8 Sep</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                <tr><td><div class="rowtitle" style="font-size:13px">Harvey O’Brien</div><div class="rowsub num">harvey.obrien@leodisme.com</div></td><td>Engineer.PH</td><td style="font-size:12px">Own drafts, submitted reports, issues</td><td class="due">Fri 5 Sep</td><td><span class="tag tag-quiet">Expired</span></td></tr>
+                <tr><td><div class="rowtitle" style="font-size:13px">Nicky Cunningham</div><div class="rowsub num">nicky.cunningham@leodisme.com</div></td><td>Engineer.PH</td><td style="font-size:12px">Own drafts, submitted reports, issues</td><td class="due">Wed 3 Sep</td><td><span class="tag tag-quiet">Expired</span></td></tr>
+                <tr><td class="quiet" colspan="5" style="font-size:12px">… and 6 more engineers who have not signed in yet: John, Damien, Danny, Chris, Aidan, Marcus</td></tr>
+              </tbody></table>
+              <div class="panel-foot">This list is the assignment checklist against current sessions; it is not the Microsoft directory. A role change takes effect at the next sign-in, within 12 hours. Nothing on this screen grants access.</div></div>
+            <div style="display:flex;flex-direction:column;gap:24px">
+              <div class="panel"><div class="panel-head"><h4 style="color:var(--alert)">Older drafts</h4><span class="rowsub" style="margin-left:auto">2 predate account IDs</span></div>
+                <div class="rmenu" style="border:0"><div><div class="rt"><b><span class="ref">011LME-SPR-003</span> · recorded author “Damien”</b><span>Saved 14 Aug · 2 sections · contents stay private</span></div></div>
+                  <div style="flex-direction:column;align-items:stretch;gap:8px"><div class="f"><label>Verified original author</label><div class="in drop">Choose a signed-in account</div></div><button class="btn btn-q btn-sm" type="button" style="align-self:flex-start">Assign draft ownership</button></div>
+                  <div><div class="rt"><b><span class="ref">014LME-SPR-011</span> · recorded author “Chris”</b><span>Saved 20 Aug · 1 section</span></div></div></div>
+                <div class="panel-foot">Confirm the author before assigning. Only an account that has signed in can be chosen.</div></div>
+              <div class="panel"><div class="panel-head"><h4>Delivery &amp; processing</h4></div>
+                <dl class="tb" style="grid-template-columns:1fr;margin:0;border:0">
+                  <div style="border-right:0;border-bottom:1px solid var(--line)"><dt>Email transport</dt><dd><span class="tag tag-alert">Local outbox only</span><small>Nothing is emailed from the pilot. 1 message waiting since Mon 8 Sep.</small></dd></div>
+                  <div style="border-right:0;border-bottom:1px solid var(--line)"><dt>PDF worker</dt><dd><span class="tag tag-ok">Running</span><small>0 queued · last rendered 08:41 · <span class="ref" style="font-size:11px">011LME-SPR-014</span></small></dd></div>
+                  <div style="border-right:0;border-bottom:1px solid var(--line)"><dt>Backup</dt><dd class="num">08 Sep 09:07<small>Stopped-volume archive verified · off-server copy not yet tested</small></dd></div>
+                  <div style="border-right:0"><dt>SharePoint filing</dt><dd><span class="tag tag-quiet">Planned</span><small>Issued PDFs will file to the project library.</small></dd></div>
+                </dl></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="scr" data-scr="drafts"><div class="view"><div class="pagehead"><div><h3>Administration</h3><p>Older drafts</p></div></div><div class="empty">Same as the right-hand panel, at full width, with the draft summary and the author confirmation side by side.</div></div></div>
+      <div class="scr" data-scr="delivery"><div class="view"><div class="pagehead"><div><h3>Administration</h3><p>Delivery &amp; processing</p></div></div><div class="empty">Outbox contents with a retry per message, worker queue and history, backup log. Drawn only as the panel above in this pass.</div></div></div>
+    </div>
+  </div>
+
+  <p class="cap"><b>Mobile</b> the simplified version: lists, one bottom tab bar, the reader as a sheet <span>390 × 812 · Admin is reached from Office home, not a tab</span></p>
+  <div class="frame"><div class="phones">
+    <div class="phone-wrap"><div class="phone c1">
+      <div class="appbar"><div class="brandm"><b>RELAY</b><span>DEV</span></div><div class="abt"><b>Office</b><span>Tue 9 Sep · 3 projects · Cal Say</span></div><button class="iconbtn" type="button" aria-label="Attention">🔔<b>5</b></button></div>
+      <div class="screen">
+        <dl class="sum"><div><dt>Came in today</dt><dd>2</dd></div><div><dt>To verify</dt><dd class="soon">3</dd></div><div><dt>Overdue</dt><dd class="late">3</dd></div></dl>
+        <div class="sec-h">Needs attention<span class="r">5</span></div>
+        <div class="ilist">
+          <a class="irow late" href="#c1"><div class="imain"><b>Report never emailed</b><span><span class="ref">011LME-SPR-013</span> · T. Parker · since Mon</span></div><span class="chev">›</span></a>
+          <a class="irow late" href="#c1"><div class="imain"><b>Fire stopping missing at tray penetration</b><span>Tetley Hall · C&amp;AJ Marshall · 7 days overdue</span></div><span class="chev">›</span></a>
+          <a class="irow soon" href="#c1"><div class="imain"><b>L2 lighting circuits, closure submitted</b><span>Tetley Hall · T. Parker · waiting 9 days</span><div class="istat"><span class="tag tag-caution">Verify</span></div></div><span class="chev">›</span></a>
+          <a class="irow soon" href="#c1"><div class="imain"><b>AHU-02 condensate trap not fitted</b><span>Kirkstall Gate · unassigned 4 days</span></div><span class="chev">›</span></a>
+          <a class="irow" href="#c1"><div class="imain"><b>Pipework clashes with cable tray</b><span>Kirkstall Gate · Northbank · disputed</span></div><span class="chev">›</span></a>
+        </div>
+        <div class="sec-h">Projects<span class="r">3</span></div>
+        <div class="ilist">
+          <a class="irow" href="#c1"><div class="imain"><b>Tetley Hall — Block E</b><span><span class="ref">011LME</span> · A. Whitfield</span><div class="cbar" style="margin-top:6px"><i class="ok" style="width:58%"></i><i class="soon" style="width:8%"></i><i class="late" style="width:16%"></i><i class="none" style="width:18%"></i></div><span>12 issues · 2 overdue · 1 to verify</span></div><span class="chev">›</span></a>
+          <a class="irow" href="#c1"><div class="imain"><b>Kirkstall Gate — Phase 2</b><span><span class="ref">014LME</span> · A. Whitfield</span><div class="cbar" style="margin-top:6px"><i class="ok" style="width:45%"></i><i class="late" style="width:11%"></i><i class="none" style="width:44%"></i></div><span>9 issues · 1 overdue · 1 unassigned</span></div><span class="chev">›</span></a>
+          <a class="irow" href="#c1"><div class="imain"><b>Hunslet Depot — Welfare Block</b><span><span class="ref">009LCP</span> · R. Ellison · defects liability</span><div class="cbar" style="margin-top:6px"><i class="ok" style="width:70%"></i><i class="soon" style="width:20%"></i><i class="none" style="width:10%"></i></div><span>10 issues · 2 to verify</span></div><span class="chev">›</span></a>
+        </div>
+        <div class="sec-h">Office</div>
+        <div class="ilist"><a class="irow" href="#c1"><div class="imain"><b>Administration</b><span>Roles, older drafts, delivery · Admin only</span></div><span class="chev">›</span></a><a class="irow" href="#c1"><div class="imain"><b>Engineer view</b><span>Start or continue a site update</span></div><span class="chev">›</span></a></div>
+      </div>
+      <nav class="tabbar"><a class="on" href="#c1"><i>◧</i>Home</a><a href="#c1"><i>▤</i>Inbox<b>2</b></a><a href="#c1"><i>▲</i>Issues<b>3</b></a><a href="#c1"><i>▦</i>Projects</a></nav>
+    </div><span class="pcap">Office · home</span></div>
+
+    <div class="phone-wrap"><div class="phone c1">
+      <div class="appbar"><div class="brandm"><b>RELAY</b><span>DEV</span></div><div class="abt"><b>Inbox</b><span>14 received · 1 not emailed</span></div><button class="iconbtn" type="button" aria-label="Search">⌕</button></div>
+      <div class="screen">
+        <div class="chips"><span class="chip on">All · 14</span><span class="chip warn">Not emailed · 1</span><span class="chip">Not acknowledged · 4</span><span class="chip">Drafts · 2</span></div>
+        <div class="sec-h">Today</div>
+        <div class="ilist">
+          <a class="irow brass" href="#c1"><div class="imain"><b>Tetley Hall — Block E</b><span><span class="ref">SPR-014</span> · G. Stephenson · Electrical · 08:40</span><div class="istat"><span class="kind tone-defect">1 defect</span><span class="kind tone-variation">1 variation</span><span class="tag tag-quiet">Not sent</span></div></div><span class="chev">›</span></a>
+        </div>
+        <div class="sec-h">Yesterday · Mon 8 Sep</div>
+        <div class="ilist">
+          <a class="irow" href="#c1"><div class="imain"><b>Kirkstall Gate — Phase 2</b><span><span class="ref">SPR-021</span> · A. Dyson · HVAC · 16:12</span><div class="istat"><span class="kind tone-defect">2 defects</span><span class="tag tag-ok">Sent to 2</span></div></div><span class="chev">›</span></a>
+          <a class="irow late" href="#c1"><div class="imain"><b>Tetley Hall — Block E</b><span><span class="ref">SPR-013</span> · T. Parker · Electrical · 11:05</span><div class="istat"><span class="kind tone-neutral">Progress</span><span class="tag tag-alert">Not emailed</span></div></div><span class="chev">›</span></a>
+        </div>
+        <div class="sec-h">Last week</div>
+        <div class="ilist">
+          <a class="irow" href="#c1"><div class="imain"><b>Hunslet Depot — Welfare Block</b><span><span class="ref">SPR-008</span> · H. O’Brien · P&amp;H · Fri 5 Sep</span><div class="istat"><span class="kind tone-access">1 access</span><span class="tag tag-ok">Sent to 1</span></div></div><span class="chev">›</span></a>
+          <a class="irow" href="#c1"><div class="imain"><b>Tetley Hall — Block E</b><span><span class="ref">SPR-012</span> · A. Dyson · HVAC · Thu 4 Sep</span></div><span class="chev">›</span></a>
+        </div>
+      </div>
+      <div class="backdrop"></div>
+      <div class="cm-sheet"><div class="sh-head"><b>011LME-SPR-014</b><span>Tetley Hall — Block E · G. Stephenson · Tue 9 Sep 08:40</span><button class="iconbtn" type="button" aria-label="Close">×</button></div>
+        <div class="sh-body">
+          <div class="found"><span class="tag tag-ok">Received</span><span class="tag tag-quiet">No review</span><span class="tag tag-quiet">Not sent</span></div>
+          <p><span class="kind tone-defect">Defect</span> &nbsp;<b>L1 riser</b> — cable tray cover damaged at the 2nd floor slab. Owner C&amp;AJ Marshall · raised <span class="ref">ISS-007</span>.</p>
+          <p><span class="kind tone-variation">Variation</span> &nbsp;<b>L2 plant room</b> — extra 32A commando socket by the AHU. Needs instruction.</p>
+          <p><span class="kind tone-neutral">Progress</span> &nbsp;<b>L3 riser</b> — sub-main containment complete.</p>
+          <div class="photos"><div class="ph">Photo 1</div><div class="ph">Photo 2</div><div class="ph">Photo 3</div></div>
+          <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:8px"><button class="btn btn-q" type="button">Open PDF</button><button class="btn" type="button">Acknowledge</button></div>
+        </div></div>
+      <nav class="tabbar"><a href="#c1"><i>◧</i>Home</a><a class="on" href="#c1"><i>▤</i>Inbox<b>2</b></a><a href="#c1"><i>▲</i>Issues<b>3</b></a><a href="#c1"><i>▦</i>Projects</a></nav>
+    </div><span class="pcap">Office · inbox, reader open</span></div>
+
+    <div class="phone-wrap"><div class="phone c1">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>Administration</b><span>Cal Say · Admin · Leodis Developments</span></div></div>
+      <div class="screen">
+        <div class="note bad"><span><b>1 report in the local outbox</b> has not been emailed since Mon 8 Sep.</span><button class="btn btn-sm" type="button">Retry</button></div>
+        <div class="sec-h">Roles &amp; access<span class="r">17</span></div>
+        <div class="ilist">
+          <a class="irow" href="#c1"><div class="imain"><b>Admin</b><span>Cal Say · signed in today</span></div><span class="tag tag-ok">1</span><span class="chev">›</span></a>
+          <a class="irow" href="#c1"><div class="imain"><b>Managers</b><span>Tom, Ollie, Jonny, Russel · 1 never signed in</span></div><span class="tag tag-quiet">4</span><span class="chev">›</span></a>
+          <a class="irow" href="#c1"><div class="imain"><b>Engineers · Electrical</b><span>5 accounts · 3 signed in this week</span></div><span class="tag tag-quiet">5</span><span class="chev">›</span></a>
+          <a class="irow" href="#c1"><div class="imain"><b>Engineers · HVAC</b><span>2 accounts</span></div><span class="tag tag-quiet">2</span><span class="chev">›</span></a>
+          <a class="irow" href="#c1"><div class="imain"><b>Engineers · P&amp;H</b><span>5 accounts · 3 never signed in</span></div><span class="tag tag-quiet">5</span><span class="chev">›</span></a>
+        </div>
+        <p class="fine-print">Roles are set in Microsoft Entra and read at sign-in. This screen cannot grant or remove access.</p>
+        <div class="sec-h">Older drafts<span class="r late">2</span></div>
+        <div class="ilist">
+          <div class="irow soon"><div class="imain"><b><span class="ref">011LME-SPR-003</span> · “Damien”</b><span>Saved 14 Aug · confirm the author on a desktop</span></div><span class="chev">›</span></div>
+          <div class="irow soon"><div class="imain"><b><span class="ref">014LME-SPR-011</span> · “Chris”</b><span>Saved 20 Aug</span></div><span class="chev">›</span></div>
+        </div>
+        <div class="sec-h">Delivery &amp; processing</div>
+        <dl class="kv"><div><dt>Email transport</dt><dd><span class="tag tag-alert">Local outbox only</span></dd></div><div><dt>PDF worker</dt><dd><span class="tag tag-ok">Running</span> · 0 queued · last 08:41</dd></div><div><dt>Last backup</dt><dd class="num">08 Sep 09:07</dd></div><div><dt>SharePoint filing</dt><dd><span class="tag tag-quiet">Planned</span></dd></div></dl>
+        <a class="btn btn-q wide" href="#c1">Open Microsoft Entra ↗</a>
+      </div>
+    </div><span class="pcap">Admin · from Office home</span></div>
+  </div></div>
+
+  <div class="notes">
+    <section><h5>What it answers first</h5><ul><li><b>“Where do we stand on each job?”</b> The project column with its bar is the home; the details column is the project sheet until you pick a row.</li><li>The Inbox and Issues tabs are the flat registers for when the question is “what came in?” or “what is late?” regardless of project.</li><li>Admin is a tab, not a separate site: same chrome, same search, same Attention bell.</li></ul></section>
+    <section><h5>What it assumes</h5><ul><li>The issue bar needs four counts per project: closed, open, awaiting verification, overdue. All exist today.</li><li>“Not emailed” is a delivery state styled at its severity, not a timestamp.</li><li>Acknowledgement (FE-4) as an explicit office action, separate from receipt and delivery.</li><li>On the phone the browser collapses to lists; the reader is a bottom sheet; Admin is a page off Home.</li></ul></section>
+    <section><h5>Build cost from today</h5><ul><li><b>Low–medium.</b> The primitives are already in <code>compliance.css</code>; scoping them to a shared stylesheet with an accent variable is the first step.</li><li>The Office page already fetches every report and issue; this is a re-layout of the same data plus per-project roll-ups.</li><li>Admin gains a session table with last sign-in, which the session store can answer today.</li></ul></section>
+  </div>
+</section>
+
+<style>
+/* ---- Concept 2 skin: document control ------------------------------------ */
+.c2 .topbar{flex:none;display:flex;align-items:center;gap:var(--s4);background:var(--panel);border-bottom:1px solid var(--line-2);padding:0 var(--s4);height:44px}
+.c2 .brand{font-family:var(--mono);font-size:12px;font-weight:500;letter-spacing:.22em;display:flex;align-items:baseline;gap:var(--s2)}
+.c2 .brand span{color:var(--brass)}
+.c2 .brand em{font-style:normal;color:var(--text-3);font-size:9px;letter-spacing:.14em}
+.c2 .topbar .search{margin-left:auto;width:360px;background:var(--sunken);border:1px solid var(--line);border-radius:var(--r);padding:5px 10px;color:var(--text-3);font-size:12px;font-family:var(--mono)}
+.c2 .whoami{font-family:var(--mono);font-size:11px;color:var(--text-2);letter-spacing:.04em}
+.c2 .whoami em{font-style:normal;color:var(--brass)}
+.c2 .shell{flex:1;min-height:0;display:grid;grid-template-columns:224px 1fr;position:relative}
+.c2 .rail{background:var(--panel);border-right:1px solid var(--line-2);overflow:auto;padding:var(--s3) 0}
+.c2 .rail-grp{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.13em;color:var(--text-3);padding:var(--s3) var(--s4) var(--s1)}
+.c2 .rail a,.c2 .rail button{display:flex;align-items:center;gap:var(--s2);width:100%;text-align:left;padding:7px var(--s4);border:0;border-left:2px solid transparent;background:none;font-size:13px;color:var(--text-2)}
+.c2 .rail .on{color:var(--brass);border-left-color:var(--brass);background:var(--brass-wash)}
+.c2 .rail i{font-style:normal;margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums}
+.c2 .rail i.warn{color:var(--alert)}
+.c2 .rail .sub{padding-left:28px;font-size:12.5px}
+.c2 .rail .sub::before{content:"";width:5px;height:5px;background:var(--line-2);display:inline-block;margin-right:2px}
+.c2 .rail .sub.late::before{background:var(--alert)}
+.c2 .main{overflow:auto;padding:var(--s5);background:var(--sunken);display:flex;flex-direction:column;gap:var(--s5)}
+.c2 .sheet{background:var(--panel);border:1px solid var(--line-2);border-top:2px solid var(--text)}
+.c2 .sheet-h{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s4);padding:var(--s4) var(--s5) var(--s3)}
+.c2 .sheet-h h3{margin:0;font-size:20px;font-weight:600;letter-spacing:-.02em}
+.c2 .sheet-h .kick{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--brass);margin-bottom:4px}
+.c2 .titleblock{display:grid;grid-template-columns:repeat(6,1fr);border-top:1px solid var(--line-2);border-bottom:1px solid var(--line-2);margin:0}
+.c2 .titleblock div{padding:8px 14px;border-right:1px solid var(--line);min-width:0}
+.c2 .titleblock div:last-child{border-right:0}
+.c2 .titleblock dt{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+.c2 .titleblock dd{margin:2px 0 0;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c2 .toolbar{display:flex;align-items:center;gap:var(--s2);padding:var(--s2) var(--s4);border-bottom:1px solid var(--line);background:var(--panel-2)}
+.c2 .toolbar .spacer{margin-left:auto}
+.c2 table.ledger{width:100%;border-collapse:collapse}
+.c2 table.ledger th{text-align:left;font-family:var(--mono);font-size:9.5px;font-weight:500;text-transform:uppercase;letter-spacing:.12em;color:var(--text-3);padding:7px 14px;border-bottom:1px solid var(--line-2);white-space:nowrap}
+.c2 table.ledger td{padding:9px 14px;border-bottom:1px solid var(--line);vertical-align:top;font-size:13px}
+.c2 table.ledger tr.dayrow td{background:var(--panel-2);font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-2);padding:5px 14px;border-bottom:1px solid var(--line-2)}
+.c2 table.ledger tr.sel td{background:var(--brass-wash)}
+.c2 table.ledger tr.sel td:first-child{box-shadow:inset 2px 0 0 var(--brass)}
+.c2 table.ledger .typ{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text-3);white-space:nowrap}
+.c2 table.ledger .typ.doc{color:var(--brass)}
+.c2 table.ledger .rev{font-family:var(--mono);font-size:11px;color:var(--text-2);border:1px solid var(--line-2);padding:0 5px;border-radius:2px}
+.c2 .drawer{position:absolute;top:0;right:0;bottom:0;width:480px;background:var(--panel);border-left:1px solid var(--line-2);box-shadow:-16px 0 40px rgba(0,0,0,.14);z-index:3;overflow:auto;display:flex;flex-direction:column}
+.c2 .drawer-h{display:flex;align-items:flex-start;gap:var(--s3);padding:var(--s4) var(--s5);border-bottom:2px solid var(--text)}
+.c2 .drawer-h .kick{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--brass);margin-bottom:4px}
+.c2 .drawer-h h2{margin:0;font-size:19px;font-weight:600;letter-spacing:-.02em}
+.c2 .drawer-h .x{margin-left:auto;background:none;border:0;color:var(--text-3);font-size:18px;line-height:1}
+.c2 .drawer-b{padding:var(--s4) var(--s5) var(--s5);display:flex;flex-direction:column;gap:var(--s3)}
+.c2 .drawer .tb{margin:0;grid-template-columns:1fr 1fr}
+.c2 .drawer .tb div:nth-child(2n){border-right:0}
+.c2 .drawer .tb div:nth-child(-n+2){border-bottom:1px solid var(--line)}
+.c2 .doc-h2{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--brass);border-bottom:1px solid var(--line);padding-bottom:5px;margin:var(--s3) 0 var(--s2)}
+.c2 .obs{padding:var(--s2) 0;border-bottom:1px solid var(--line);font-size:13px}
+.c2 .obs:last-child{border-bottom:0}
+.c2 .obs b{font-weight:600}
+.c2 .obs .kind{margin-left:8px;vertical-align:1px}
+.c2 .drawer-f{margin-top:auto;padding:var(--s3) var(--s5);border-top:1px solid var(--line);background:var(--panel-2);display:flex;gap:var(--s2);justify-content:flex-end}
+.c2 .adm-grid{display:grid;grid-template-columns:1fr 340px;gap:var(--s5);align-items:start}
+.c2 .revs{border-top:1px solid var(--line-2)}
+.c2 .revs div{display:grid;grid-template-columns:28px 64px 1fr;gap:var(--s3);padding:8px 14px;border-bottom:1px solid var(--line);font-size:12px}
+.c2 .revs div:last-child{border-bottom:0}
+.c2 .revs b{font-family:var(--mono);font-weight:500;color:var(--brass)}
+.c2 .revs span{font-family:var(--mono);color:var(--text-3);font-variant-numeric:tabular-nums}
+/* phone */
+.phone.c2 .appbar{min-height:52px;padding:14px 12px 8px 16px}
+.phone.c2 .brand{font-family:var(--mono);font-size:12px;letter-spacing:.2em;font-weight:500}
+.phone.c2 .brand span{color:var(--brass)}
+.phone.c2 .day{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-2);padding:10px 16px 4px;background:var(--panel-2);border-top:1px solid var(--line-2);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:1;margin-top:12px}
+.phone.c2 .lrow{display:grid;grid-template-columns:52px 1fr auto;gap:10px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--panel);min-height:var(--touch);align-items:start}
+.phone.c2 .lrow .t{font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--text-3);padding-top:3px}
+.phone.c2 .lrow .t.doc{color:var(--brass)}
+.phone.c2 .lrow b{font-size:14px;font-weight:500;display:block}
+.phone.c2 .lrow span.s{font-size:12px;color:var(--text-3)}
+.phone.c2 .lrow .found{margin-top:6px}
+.phone.c2 .page{padding:0 16px}
+.phone.c2 .page h2{font-size:19px;font-weight:600;letter-spacing:-.02em;margin:14px 0 4px}
+.phone.c2 .page .kick{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--brass);margin-top:16px}
+.phone.c2 .tbm{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line-2);border-top:2px solid var(--text);margin:12px 0 0}
+.phone.c2 .tbm div{padding:8px 12px;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+.phone.c2 .tbm div:nth-child(2n){border-right:0}
+.phone.c2 .tbm div:nth-last-child(-n+2){border-bottom:0}
+.phone.c2 .tbm dt{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
+.phone.c2 .tbm dd{margin:2px 0 0;font-size:13px;font-weight:500}
+.phone.c2 .obs{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.phone.c2 .obs b{font-weight:600}
+</style>
+
+<!-- ===================== CONCEPT 2 ===================== -->
+<section class="concept" id="c2">
+  <div class="concept-head">
+    <span class="concept-num">Concept 2</span>
+    <h2>Document ledger</h2>
+    <p>Construction runs on document control, so the office is drawn as one: a sheet with a title block, a dated ledger of everything that arrived or changed, and a reader that slides in from the right when a row is selected. Reports and issues sit in one ledger, typed in the first column, grouped by day. The rail on the left is the filing structure, not a menu: projects with their counts, and under each the states that need someone. Admin is a schedule of accounts on the same kind of sheet, with a revision history down the side, because that is what an access list is.</p>
+  </div>
+
+  <p class="cap"><b>Office · desktop</b> the ledger with the reader open <span>1240 × 760 · Issues in the rail switches to the issue schedule</span></p>
+  <div class="frame">
+    <div class="app c2" data-tabs>
+      <header class="topbar"><span class="brand"><span>RELAY</span><em>LEODIS DEVELOPMENTS</em></span><span class="search">/ search the ledger — refs, projects, engineers, locations</span><span class="whoami">Cal Say · <em>Admin</em></span><span class="tbtn">Companies</span></header>
+      <div class="shell">
+        <nav class="rail">
+          <div class="rail-grp">Ledger</div>
+          <button type="button" class="on" data-tab="ledger">Everything <i>34</i></button>
+          <button type="button" class="sub late" data-tab="ledger">Needs someone <i class="warn">7</i></button>
+          <button type="button" class="sub" data-tab="ledger">Received this week <i>5</i></button>
+          <button type="button" class="sub" data-tab="issues">Issue schedule <i>15</i></button>
+          <div class="rail-grp">Projects</div>
+          <a href="#c2">Tetley Hall — Block E <i>011LME</i></a>
+          <a class="sub late" href="#c2">2 overdue · 1 to verify</a>
+          <a href="#c2">Kirkstall Gate — Phase 2 <i>014LME</i></a>
+          <a class="sub late" href="#c2">1 overdue · 1 unassigned</a>
+          <a href="#c2">Hunslet Depot — Welfare <i>009LCP</i></a>
+          <a class="sub" href="#c2">2 to verify</a>
+          <div class="rail-grp">Register</div>
+          <a href="#c2">Engineers <i>17</i></a>
+          <a href="#c2">Clients <i>3</i></a>
+          <a href="#c2">Drafts on site <i>2</i></a>
+          <div class="rail-grp">Administration</div>
+          <a href="#c2-admin">Schedule of accounts</a>
+          <a href="#c2-admin">Delivery &amp; processing</a>
+        </nav>
+        <div class="main">
+          <div class="scr on" data-scr="ledger">
+            <div class="sheet">
+              <div class="sheet-h"><div><div class="kick">Site reporting ledger · Leodis Developments</div><h3>Everything, newest first</h3></div><div class="actions"><button class="btn btn-q btn-sm" type="button">Export sheet</button><button class="btn btn-sm" type="button">Retry failed delivery</button></div></div>
+              <dl class="titleblock"><div><dt>Sheet</dt><dd class="num">LDG-2026-37</dd></div><div><dt>Period</dt><dd>Week 37 · 7–13 Sep</dd></div><div><dt>Entries</dt><dd class="num">34 · 5 this week</dd></div><div><dt>Needs someone</dt><dd class="late">7</dd></div><div><dt>Prepared for</dt><dd>Cal Say · Admin</dd></div><div><dt>As at</dt><dd class="num">Tue 9 Sep 10:52</dd></div></dl>
+              <div class="toolbar"><span class="chip on">All types</span><span class="chip">Reports · 14</span><span class="chip">Issues · 15 open</span><span class="chip">Drafts · 2</span><span class="spacer"></span><span class="chip drop">All projects</span><span class="chip drop">All trades</span><span class="chip drop">Delivery</span></div>
+              <table class="ledger"><thead><tr><th>Type</th><th>Reference</th><th>Rev</th><th>Project</th><th>Entry</th><th>By</th><th>Found / status</th><th>Delivery</th></tr></thead><tbody>
+                <tr class="dayrow"><td colspan="8">Tuesday 9 September</td></tr>
+                <tr class="sel"><td class="typ doc">RPT 08:40</td><td><span class="ref">011LME-SPR-014</span></td><td><span class="rev">1</span></td><td>Tetley Hall — Block E</td><td>Site progress report · L1–L3 risers, plant room</td><td>G. Stephenson<div class="rowsub">Electrical</div></td><td><div class="found"><span class="kind tone-defect">1 defect</span><span class="kind tone-variation">1 variation</span></div></td><td><span class="tag tag-quiet">Not sent</span></td></tr>
+                <tr><td class="typ">ISS 08:40</td><td><span class="ref">011LME-ISS-007</span></td><td class="quiet">—</td><td>Tetley Hall — Block E</td><td>Damaged cable tray cover, L1 riser · raised by SPR-014</td><td>C&amp;AJ Marshall<div class="rowsub">owner</div></td><td><span class="tag tag-quiet">Not reviewed</span></td><td class="quiet">—</td></tr>
+                <tr class="dayrow"><td colspan="8">Monday 8 September</td></tr>
+                <tr><td class="typ doc">RPT 16:12</td><td><span class="ref">014LME-SPR-021</span></td><td><span class="rev">1</span></td><td>Kirkstall Gate — Phase 2</td><td>Site progress report · roof AHU deck</td><td>A. Dyson<div class="rowsub">HVAC</div></td><td><span class="kind tone-defect">2 defects</span></td><td><span class="tag tag-ok">Sent to 2</span></td></tr>
+                <tr><td class="typ">ISS 16:12</td><td><span class="ref">014LME-ISS-004</span></td><td class="quiet">—</td><td>Kirkstall Gate — Phase 2</td><td>AHU-02 condensate trap not fitted</td><td><span class="late">Unassigned</span></td><td><span class="tag tag-quiet">Open</span></td><td class="quiet">—</td></tr>
+                <tr><td class="typ doc">RPT 11:05</td><td><span class="ref">011LME-SPR-013</span></td><td><span class="rev">1</span></td><td>Tetley Hall — Block E</td><td>Site progress report · L3 containment</td><td>T. Parker<div class="rowsub">Electrical</div></td><td><span class="kind tone-neutral">Progress</span></td><td><span class="tag tag-alert">Not emailed</span></td></tr>
+                <tr><td class="typ">ISS 09:30</td><td><span class="ref">011LME-ISS-006</span></td><td class="quiet">—</td><td>Tetley Hall — Block E</td><td>Fire stopping missing at tray penetration · target passed 02 Sep</td><td>C&amp;AJ Marshall</td><td><span class="tag tag-alert">7d overdue</span></td><td class="quiet">—</td></tr>
+                <tr class="dayrow"><td colspan="8">Friday 5 September</td></tr>
+                <tr><td class="typ doc">RPT 14:20</td><td><span class="ref">009LCP-SPR-008</span></td><td><span class="rev">1</span></td><td>Hunslet Depot — Welfare Block</td><td>Site progress report · welfare WC, compound</td><td>H. O’Brien<div class="rowsub">P&amp;H</div></td><td><span class="kind tone-access">1 access</span></td><td><span class="tag tag-ok">Sent to 1</span></td></tr>
+                <tr class="dayrow"><td colspan="8">Thursday 4 September</td></tr>
+                <tr><td class="typ doc">RPT 15:50</td><td><span class="ref">011LME-SPR-012</span></td><td><span class="rev">1</span></td><td>Tetley Hall — Block E</td><td>Site progress report · L2 plant room</td><td>A. Dyson<div class="rowsub">HVAC</div></td><td><span class="kind tone-access">1 access</span></td><td><span class="tag tag-ok">Sent to 2</span></td></tr>
+                <tr><td class="typ">ISS 15:50</td><td><span class="ref">009LCP-ISS-002</span></td><td class="quiet">—</td><td>Hunslet Depot — Welfare Block</td><td>TMV commissioning certificate · closure submitted by N. Cunningham</td><td>N. Cunningham</td><td><span class="tag tag-caution">Verify</span></td><td class="quiet">—</td></tr>
+                <tr class="dayrow"><td colspan="8">Wednesday 3 September</td></tr>
+                <tr><td class="typ doc">RPT 12:02</td><td><span class="ref">014LME-SPR-020</span></td><td><span class="rev">1</span></td><td>Kirkstall Gate — Phase 2</td><td>Site progress report · L1 corridor</td><td>N. Cunningham<div class="rowsub">P&amp;H</div></td><td><span class="kind tone-neutral">Progress</span></td><td><span class="tag tag-ok">Sent to 2</span></td></tr>
+              </tbody></table>
+              <div class="panel-foot">One ledger, one order: when it happened. A report is a document with a revision; an issue is a register entry with a history. Rev moves only when a correction supersedes an issued document, never on autosave.</div>
+            </div>
+          </div>
+          <div class="scr" data-scr="issues">
+            <div class="sheet">
+              <div class="sheet-h"><div><div class="kick">Issue schedule · all projects</div><h3>Open issues, oldest target first</h3></div><div class="actions"><button class="btn btn-q btn-sm" type="button">Export schedule</button><button class="btn btn-sm" type="button">Verify the oldest</button></div></div>
+              <dl class="titleblock"><div><dt>Sheet</dt><dd class="num">ISS-2026-37</dd></div><div><dt>Open</dt><dd class="num">15</dd></div><div><dt>Overdue</dt><dd class="late">3</dd></div><div><dt>To verify</dt><dd class="soon">3</dd></div><div><dt>Unassigned</dt><dd class="late">1</dd></div><div><dt>Disputed</dt><dd class="late">1</dd></div></dl>
+              <table class="ledger"><thead><tr><th>Reference</th><th>Issue</th><th>Project</th><th>Raised by</th><th>Owner</th><th>Target</th><th>Work</th><th>Confirmation</th></tr></thead><tbody>
+                <tr><td><span class="ref">011LME-ISS-006</span></td><td>Fire stopping missing at tray penetration<div class="rowsub">L2 riser</div></td><td>Tetley Hall — Block E</td><td><span class="ref">SPR-010</span> · 21 Aug</td><td>C&amp;AJ Marshall</td><td class="due"><b class="late">02 Sep</b> · 7d late</td><td><span class="tag tag-alert">Assigned</span></td><td><span class="tag tag-ok">Confirmed</span></td></tr>
+                <tr><td><span class="ref">014LME-ISS-002</span></td><td>Extract duct unsupported over corridor<div class="rowsub">L1 corridor</div></td><td>Kirkstall Gate — Phase 2</td><td><span class="ref">SPR-017</span> · 18 Aug</td><td>A. Dyson</td><td class="due"><b class="late">05 Sep</b> · 4d late</td><td><span class="tag tag-alert">In progress</span></td><td><span class="tag tag-ok">Confirmed</span></td></tr>
+                <tr><td><span class="ref">011LME-ISS-005</span></td><td>L2 lighting circuits not tested<div class="rowsub">closure submitted by T. Parker, 31 Aug</div></td><td>Tetley Hall — Block E</td><td><span class="ref">SPR-008</span> · 12 Aug</td><td>T. Parker</td><td class="due">31 Aug</td><td><span class="tag tag-caution">Verify</span></td><td><span class="tag tag-ok">Confirmed</span></td></tr>
+                <tr><td><span class="ref">009LCP-ISS-002</span></td><td>TMV commissioning certificate outstanding<div class="rowsub">Welfare WC</div></td><td>Hunslet Depot — Welfare Block</td><td><span class="ref">SPR-006</span> · 27 Aug</td><td>N. Cunningham</td><td class="due">06 Sep</td><td><span class="tag tag-caution">Verify</span></td><td><span class="tag tag-ok">Confirmed</span></td></tr>
+                <tr><td><span class="ref">014LME-ISS-003</span></td><td>Pipework clashes with cable tray<div class="rowsub">L1 plant room · variation required</div></td><td>Kirkstall Gate — Phase 2</td><td><span class="ref">SPR-019</span> · 28 Aug</td><td>Northbank</td><td class="due">12 Sep · 3d</td><td><span class="tag tag-quiet">Open</span></td><td><span class="tag tag-alert">Disputed</span></td></tr>
+                <tr><td><span class="ref">014LME-ISS-004</span></td><td>AHU-02 condensate trap not fitted<div class="rowsub">Roof AHU deck</div></td><td>Kirkstall Gate — Phase 2</td><td><span class="ref">SPR-021</span> · 05 Sep</td><td><span class="late">Unassigned</span></td><td class="due quiet">—</td><td><span class="tag tag-quiet">Open</span></td><td><span class="tag tag-quiet">Not reviewed</span></td></tr>
+                <tr><td><span class="ref">011LME-ISS-007</span></td><td>Damaged cable tray cover<div class="rowsub">L1 riser</div></td><td>Tetley Hall — Block E</td><td><span class="ref">SPR-014</span> · 09 Sep</td><td>C&amp;AJ Marshall</td><td class="due">23 Sep · 14d</td><td><span class="tag tag-quiet">Open</span></td><td><span class="tag tag-quiet">Not reviewed</span></td></tr>
+              </tbody></table>
+              <div class="panel-foot">Selecting a row opens the same reader with the issue’s history: raised, assigned, progress, closure submitted, verified. Actions live in the reader, so the schedule stays a schedule.</div>
+            </div>
+          </div>
+        </div>
+        <aside class="drawer">
+          <div class="drawer-h"><div><div class="kick">Site progress report · Rev 1</div><h2>Tetley Hall — Block E</h2><div class="rowsub"><span class="ref">011LME-SPR-014</span><span class="sep">/</span>Visit Tue 9 Sep 2026</div></div><button class="x" type="button" aria-label="Close">×</button></div>
+          <div class="drawer-b">
+            <dl class="tb"><div><dt>Engineer</dt><dd>G. Stephenson · Electrical</dd></div><div><dt>Received</dt><dd class="num">09 Sep 08:40</dd></div><div><dt>Review</dt><dd>Not required</dd></div><div><dt>Delivery</dt><dd><span class="tag tag-quiet">PDF ready · not sent</span></dd></div></dl>
+            <div class="doc-h2">Action and decisions</div>
+            <div class="obs"><b>Decision needed</b> — extra 32A commando socket by the AHU, L2 plant room. Outside scope. A. Whitfield to instruct.</div>
+            <div class="obs"><b>Action for C&amp;AJ Marshall</b> — replace damaged tray cover at the 2nd floor slab before the ceiling closes. Raised as <span class="ref">ISS-007</span>, target 23 Sep.</div>
+            <div class="doc-h2">Updates · 3</div>
+            <div class="obs"><b>L1 riser</b><span class="kind tone-defect">Defect</span><br>Cable tray cover damaged at the 2nd floor slab, edge exposed. 2 photographs.</div>
+            <div class="obs"><b>L2 plant room</b><span class="kind tone-variation">Variation</span><br>Client asks for an extra 32A commando socket by the AHU. Needs instruction before we pick it up.</div>
+            <div class="obs"><b>L3 riser</b><span class="kind tone-neutral">Progress</span><br>Sub-main containment complete; first fix to flats 3.01–3.06 started. 1 photograph.</div>
+            <div class="photos"><div class="ph">Photo 1</div><div class="ph">Photo 2</div><div class="ph">Photo 3</div></div>
+            <div class="doc-h2">Signature and issue</div>
+            <p class="rowsub" style="margin:0">Signed G. Stephenson, 09 Sep 08:39. Not yet emailed: the pilot holds outgoing mail in a local outbox. Generated by Leodis Relay.</p>
+          </div>
+          <div class="drawer-f"><button class="btn btn-q" type="button">Open PDF</button><button class="btn btn-q" type="button">Full report</button><button class="btn" type="button">Acknowledge</button></div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <p class="cap" id="c2-admin"><b>Admin · desktop</b> a schedule of accounts, with its revision history <span>the rail’s Administration group · Admin role only</span></p>
+  <div class="frame">
+    <div class="app c2">
+      <header class="topbar"><span class="brand"><span>RELAY</span><em>LEODIS DEVELOPMENTS</em></span><span class="search">/ search the ledger — refs, projects, engineers, locations</span><span class="whoami">Cal Say · <em>Admin</em></span><span class="tbtn">Companies</span></header>
+      <div class="shell">
+        <nav class="rail">
+          <div class="rail-grp">Ledger</div><a href="#c2">Everything <i>34</i></a><a class="sub late" href="#c2">Needs someone <i class="warn">7</i></a><a class="sub" href="#c2">Received this week <i>5</i></a><a class="sub" href="#c2">Issue schedule <i>15</i></a>
+          <div class="rail-grp">Projects</div><a href="#c2">Tetley Hall — Block E <i>011LME</i></a><a href="#c2">Kirkstall Gate — Phase 2 <i>014LME</i></a><a href="#c2">Hunslet Depot — Welfare <i>009LCP</i></a>
+          <div class="rail-grp">Register</div><a href="#c2">Engineers <i>17</i></a><a href="#c2">Clients <i>3</i></a><a href="#c2">Drafts on site <i>2</i></a>
+          <div class="rail-grp">Administration</div><a class="on" href="#c2-admin">Schedule of accounts</a><a class="sub late" href="#c2-admin">Older drafts <i class="warn">2</i></a><a href="#c2-admin">Delivery &amp; processing</a><a href="#c2-admin">Projects &amp; review <i>planned</i></a>
+        </nav>
+        <div class="main">
+          <div class="adm-grid">
+            <div style="display:flex;flex-direction:column;gap:24px">
+              <div class="sheet">
+                <div class="sheet-h"><div><div class="kick">Schedule of accounts and access · Leodis Developments</div><h3>Who can sign in, and as what</h3></div><div class="actions"><button class="btn btn-q btn-sm" type="button">Export schedule</button><button class="btn btn-q btn-sm" type="button">Open Microsoft Entra ↗</button></div></div>
+                <dl class="titleblock"><div><dt>Sheet</dt><dd class="num">ADM-01</dd></div><div><dt>Revision</dt><dd class="num">C · 09 Sep 2026</dd></div><div><dt>Source of truth</dt><dd>Microsoft Entra app roles</dd></div><div><dt>Accounts</dt><dd class="num">17 · 9 signed in</dd></div><div><dt>Prepared by</dt><dd>Cal Say</dd></div><div><dt>Session life</dt><dd>12 hours</dd></div></dl>
+                <table class="ledger"><thead><tr><th>#</th><th>Account</th><th>App role</th><th>Trade</th><th>First seen</th><th>Last sign-in</th><th>Session</th></tr></thead><tbody>
+                  <tr class="dayrow"><td colspan="7">Admin · 1</td></tr>
+                  <tr><td class="num quiet">01</td><td>Cal Say<div class="rowsub num">callum@leodisme.com</div></td><td>Admin</td><td class="quiet">—</td><td class="due">06 Sep</td><td class="due">Today 08:12</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                  <tr class="dayrow"><td colspan="7">Managers · 4</td></tr>
+                  <tr><td class="num quiet">02</td><td>Tom<div class="rowsub num">tom@leodisme.com</div></td><td>Manager</td><td class="quiet">—</td><td class="due">08 Sep</td><td class="due">Today 07:55</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                  <tr><td class="num quiet">03</td><td>Ollie<div class="rowsub num">ollie@leodisme.com</div></td><td>Manager</td><td class="quiet">—</td><td class="due">08 Sep</td><td class="due">Mon 8 Sep</td><td><span class="tag tag-quiet">Expired</span></td></tr>
+                  <tr><td class="num quiet">04</td><td>Jonny<div class="rowsub num">jonny@leodisme.com</div></td><td>Manager</td><td class="quiet">—</td><td class="due">05 Sep</td><td class="due">Fri 5 Sep</td><td><span class="tag tag-quiet">Expired</span></td></tr>
+                  <tr><td class="num quiet">05</td><td>Russel<div class="rowsub num">russel@leodisme.com</div></td><td>Manager</td><td class="quiet">—</td><td class="due quiet">never</td><td class="due quiet">—</td><td><span class="tag tag-quiet">Never</span></td></tr>
+                  <tr class="dayrow"><td colspan="7">Engineers · Electrical · 5</td></tr>
+                  <tr><td class="num quiet">06</td><td>Graham Stephenson<div class="rowsub num">graham.stephenson@leodisme.com</div></td><td>Engineer.Electrical</td><td>Electrical</td><td class="due">08 Sep</td><td class="due">Today 08:38</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                  <tr><td class="num quiet">07</td><td>Tyler Parker<div class="rowsub num">tyler.parker@leodisme.com</div></td><td>Engineer.Electrical</td><td>Electrical</td><td class="due">08 Sep</td><td class="due">Mon 8 Sep</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                  <tr><td class="num quiet">08</td><td>Bryony<div class="rowsub num">bryony@leodisme.com</div></td><td>Engineer.Electrical</td><td>Electrical</td><td class="due">09 Sep</td><td class="due">Today 10:41</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                  <tr><td class="num quiet">09</td><td>John<div class="rowsub num">john@leodisme.com</div></td><td>Engineer.Electrical</td><td>Electrical</td><td class="due quiet">never</td><td class="due quiet">—</td><td><span class="tag tag-quiet">Never</span></td></tr>
+                  <tr><td class="num quiet">10</td><td>Damien<div class="rowsub num">damien@leodisme.com</div></td><td>Engineer.Electrical</td><td>Electrical</td><td class="due quiet">never</td><td class="due quiet">—</td><td><span class="tag tag-quiet">Never</span></td></tr>
+                  <tr class="dayrow"><td colspan="7">Engineers · HVAC · 2 &nbsp;·&nbsp; P&amp;H · 5</td></tr>
+                  <tr><td class="num quiet">11</td><td>Anthony Dyson<div class="rowsub num">anthony.dyson@leodisme.com</div></td><td>Engineer.HVAC</td><td>HVAC</td><td class="due">08 Sep</td><td class="due">Mon 8 Sep</td><td><span class="tag tag-ok">Signed in</span></td></tr>
+                  <tr><td class="num quiet">12</td><td>Harvey O’Brien<div class="rowsub num">harvey.obrien@leodisme.com</div></td><td>Engineer.PH</td><td>P&amp;H</td><td class="due">05 Sep</td><td class="due">Fri 5 Sep</td><td><span class="tag tag-quiet">Expired</span></td></tr>
+                  <tr><td class="num quiet">13</td><td>Nicky Cunningham<div class="rowsub num">nicky.cunningham@leodisme.com</div></td><td>Engineer.PH</td><td>P&amp;H</td><td class="due">03 Sep</td><td class="due">Wed 3 Sep</td><td><span class="tag tag-quiet">Expired</span></td></tr>
+                  <tr><td class="quiet" colspan="7" style="font-size:12px">14–17 · Danny, Chris, Aidan, Marcus · not yet signed in</td></tr>
+                </tbody></table>
+                <div class="panel-foot">The schedule is the assignment checklist reconciled with the session store. Roles are read from Microsoft at sign-in and cannot be edited here; a change shows on the next sign-in, within 12 hours.</div>
+              </div>
+              <div class="sheet">
+                <div class="sheet-h"><div><div class="kick">Schedule of older drafts</div><h3>Two drafts predate account IDs</h3></div></div>
+                <table class="ledger"><thead><tr><th>Reference</th><th>Recorded author</th><th>Saved</th><th>Sections</th><th>Verified original author</th><th></th></tr></thead><tbody>
+                  <tr><td><span class="ref">011LME-SPR-003</span></td><td>“Damien”</td><td class="due">14 Aug</td><td class="num">2</td><td><div class="f" style="max-width:280px"><div class="in drop">Choose a signed-in account</div></div></td><td><button class="btn btn-q btn-sm" type="button">Assign</button></td></tr>
+                  <tr><td><span class="ref">014LME-SPR-011</span></td><td>“Chris”</td><td class="due">20 Aug</td><td class="num">1</td><td><div class="f" style="max-width:280px"><div class="in drop">Choose a signed-in account</div></div></td><td><button class="btn btn-q btn-sm" type="button">Assign</button></td></tr>
+                </tbody></table>
+                <div class="panel-foot">Confirm the author before assigning. Draft contents stay private; assignment writes an audit event and a new version.</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:24px">
+              <div class="sheet">
+                <div class="sheet-h"><div><div class="kick">Revision history</div><h3>ADM-01</h3></div></div>
+                <div class="revs">
+                  <div><b>C</b><span>09 Sep</span><div>Harvey O’Brien and Nicky Cunningham signed in for the first time; Engineer.PH confirmed.</div></div>
+                  <div><b>B</b><span>08 Sep</span><div>Roles rollout. Sessions issued before roles were rejected; everyone signed in again.</div></div>
+                  <div><b>A</b><span>07 Sep</span><div>Initial roster: 1 Admin, 4 Managers, 12 Engineers across three trades.</div></div>
+                </div>
+              </div>
+              <div class="sheet">
+                <div class="sheet-h"><div><div class="kick">Delivery &amp; processing</div><h3>State of the pilot</h3></div></div>
+                <dl class="tb" style="grid-template-columns:1fr;margin:0;border:0;border-top:1px solid var(--line-2)">
+                  <div style="border-right:0;border-bottom:1px solid var(--line)"><dt>Email transport</dt><dd><span class="tag tag-alert">Local outbox only</span><small>1 message waiting since Mon 8 Sep. Nothing is emailed from the pilot.</small></dd></div>
+                  <div style="border-right:0;border-bottom:1px solid var(--line)"><dt>PDF worker</dt><dd><span class="tag tag-ok">Running</span><small>0 queued · last rendered 08:41</small></dd></div>
+                  <div style="border-right:0;border-bottom:1px solid var(--line)"><dt>Backup</dt><dd class="num">08 Sep 09:07<small>Archive verified · restore not yet tested</small></dd></div>
+                  <div style="border-right:0"><dt>SharePoint filing</dt><dd><span class="tag tag-quiet">Planned</span></dd></div>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="cap"><b>Mobile</b> the ledger as a day-grouped list; the reader is a page, not a sheet <span>390 × 812 · thinner app bar, mono day headers</span></p>
+  <div class="frame"><div class="phones">
+    <div class="phone-wrap"><div class="phone c2">
+      <div class="appbar"><span class="brand"><span>RELAY</span> LEDGER</span><div class="abt" style="align-items:flex-end"><span>Cal Say · Admin</span></div><button class="iconbtn" type="button" aria-label="Search">⌕</button></div>
+      <div class="screen">
+        <div class="chips"><span class="chip on">Everything · 34</span><span class="chip warn">Needs someone · 7</span><span class="chip">Reports</span><span class="chip">Issues</span></div>
+        <div class="day">Tuesday 9 September</div>
+        <a class="lrow" href="#c2"><span class="t doc">RPT<br>08:40</span><div><b>Tetley Hall — Block E</b><span class="s"><span class="ref">SPR-014</span> · G. Stephenson · Electrical</span><div class="found"><span class="kind tone-defect">1 defect</span><span class="kind tone-variation">1 variation</span></div></div><span class="tag tag-quiet">Not sent</span></a>
+        <a class="lrow" href="#c2"><span class="t">ISS<br>08:40</span><div><b>Damaged cable tray cover, L1 riser</b><span class="s"><span class="ref">ISS-007</span> · C&amp;AJ Marshall · target 23 Sep</span></div><span class="tag tag-quiet">Open</span></a>
+        <div class="day">Monday 8 September</div>
+        <a class="lrow" href="#c2"><span class="t doc">RPT<br>16:12</span><div><b>Kirkstall Gate — Phase 2</b><span class="s"><span class="ref">SPR-021</span> · A. Dyson · HVAC</span><div class="found"><span class="kind tone-defect">2 defects</span></div></div><span class="tag tag-ok">Sent</span></a>
+        <a class="lrow" href="#c2"><span class="t">ISS<br>16:12</span><div><b>AHU-02 condensate trap not fitted</b><span class="s"><span class="ref">ISS-004</span> · <span class="late">unassigned</span></span></div><span class="tag tag-quiet">Open</span></a>
+        <a class="lrow" href="#c2"><span class="t doc">RPT<br>11:05</span><div><b>Tetley Hall — Block E</b><span class="s"><span class="ref">SPR-013</span> · T. Parker · Electrical</span><div class="found"><span class="kind tone-neutral">Progress</span></div></div><span class="tag tag-alert">Not emailed</span></a>
+        <a class="lrow" href="#c2"><span class="t">ISS<br>09:30</span><div><b>Fire stopping missing at tray penetration</b><span class="s"><span class="ref">ISS-006</span> · C&amp;AJ Marshall · target 02 Sep</span></div><span class="tag tag-alert">7d late</span></a>
+        <div class="day">Friday 5 September</div>
+        <a class="lrow" href="#c2"><span class="t doc">RPT<br>14:20</span><div><b>Hunslet Depot — Welfare Block</b><span class="s"><span class="ref">SPR-008</span> · H. O’Brien · P&amp;H</span><div class="found"><span class="kind tone-access">1 access</span></div></div><span class="tag tag-ok">Sent</span></a>
+      </div>
+      <nav class="tabbar"><a class="on" href="#c2"><i>▤</i>Ledger</a><a href="#c2"><i>▲</i>Issues<b>3</b></a><a href="#c2"><i>▦</i>Projects</a><a href="#c2"><i>≡</i>More</a></nav>
+    </div><span class="pcap">Office · ledger</span></div>
+
+    <div class="phone-wrap"><div class="phone c2">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>011LME-SPR-014</b><span>Site progress report · Rev 1</span></div><button class="iconbtn" type="button" aria-label="Open PDF">⎙</button></div>
+      <div class="screen">
+        <div class="page">
+          <h2>Tetley Hall — Block E</h2>
+          <div class="rowsub">Visit Tuesday 9 September 2026 · G. Stephenson · Electrical</div>
+          <dl class="tbm"><div><dt>Received</dt><dd class="num">09 Sep 08:40</dd></div><div><dt>Review</dt><dd>Not required</dd></div><div><dt>Delivery</dt><dd class="quiet">PDF ready · not sent</dd></div><div><dt>Raised</dt><dd><span class="ref">ISS-007</span></dd></div></dl>
+          <div class="kick">Action and decisions</div>
+          <div class="obs"><b>Decision needed</b> — extra 32A commando socket by the AHU, L2 plant room. A. Whitfield to instruct.</div>
+          <div class="obs"><b>Action for C&amp;AJ Marshall</b> — replace damaged tray cover before the ceiling closes. Target 23 Sep.</div>
+          <div class="kick">Updates · 3</div>
+          <div class="obs"><b>L1 riser</b> <span class="kind tone-defect">Defect</span><br>Cable tray cover damaged at the 2nd floor slab, edge exposed.</div>
+          <div class="obs"><b>L2 plant room</b> <span class="kind tone-variation">Variation</span><br>Client asks for an extra 32A commando socket by the AHU.</div>
+          <div class="obs"><b>L3 riser</b> <span class="kind tone-neutral">Progress</span><br>Sub-main containment complete; first fix to flats 3.01–3.06 started.</div>
+          <div class="photos" style="margin-top:12px"><div class="ph">Photo 1</div><div class="ph">Photo 2</div><div class="ph">Photo 3</div></div>
+          <div class="kick">Signature</div>
+          <p class="rowsub">Signed G. Stephenson, 09 Sep 08:39 · Generated by Leodis Relay</p>
+        </div>
+        <div class="stick"><button class="btn" type="button" style="width:100%">Acknowledge</button></div>
+      </div>
+    </div><span class="pcap">Office · reader page</span></div>
+
+    <div class="phone-wrap"><div class="phone c2">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>Schedule of accounts</b><span>ADM-01 · Rev C · 17 accounts</span></div></div>
+      <div class="screen">
+        <div class="note bad"><span><b>1 message in the local outbox</b> since Mon 8 Sep.</span><button class="btn btn-sm" type="button">Retry</button></div>
+        <div class="day">Admin · 1</div>
+        <div class="lrow"><span class="t">01</span><div><b>Cal Say</b><span class="s">Admin · signed in today 08:12</span></div><span class="tag tag-ok">In</span></div>
+        <div class="day">Managers · 4</div>
+        <div class="lrow"><span class="t">02</span><div><b>Tom</b><span class="s">Manager · today 07:55</span></div><span class="tag tag-ok">In</span></div>
+        <div class="lrow"><span class="t">03</span><div><b>Ollie</b><span class="s">Manager · Mon 8 Sep</span></div><span class="tag tag-quiet">Exp</span></div>
+        <div class="lrow"><span class="t">04</span><div><b>Jonny</b><span class="s">Manager · Fri 5 Sep</span></div><span class="tag tag-quiet">Exp</span></div>
+        <div class="lrow"><span class="t">05</span><div><b>Russel</b><span class="s">Manager · never signed in</span></div><span class="tag tag-quiet">Never</span></div>
+        <div class="day">Engineers · 12</div>
+        <div class="lrow"><span class="t">06</span><div><b>Graham Stephenson</b><span class="s">Electrical · today 08:38</span></div><span class="tag tag-ok">In</span></div>
+        <div class="lrow"><span class="t">07</span><div><b>Tyler Parker</b><span class="s">Electrical · Mon 8 Sep</span></div><span class="tag tag-ok">In</span></div>
+        <div class="lrow"><span class="t">08</span><div><b>Bryony</b><span class="s">Electrical · today 10:41</span></div><span class="tag tag-ok">In</span></div>
+        <div class="lrow"><span class="t">11</span><div><b>Anthony Dyson</b><span class="s">HVAC · Mon 8 Sep</span></div><span class="tag tag-ok">In</span></div>
+        <div class="lrow"><span class="t">12</span><div><b>Harvey O’Brien</b><span class="s">P&amp;H · Fri 5 Sep</span></div><span class="tag tag-quiet">Exp</span></div>
+        <p class="fine-print">Roles are read from Microsoft Entra at sign-in. Older drafts and delivery are separate schedules under More.</p>
+      </div>
+    </div><span class="pcap">Admin · schedule</span></div>
+  </div></div>
+
+  <div class="notes">
+    <section><h5>What it answers first</h5><ul><li><b>“What happened, and when?”</b> One chronological ledger, reports and issues interleaved, with the day as the grouping.</li><li>The reader follows the issued document: actions and decisions first, then the updates, then the signature.</li><li>Admin is a schedule with a revision history: the office can see when access changed and why.</li></ul></section>
+    <section><h5>What it assumes</h5><ul><li>An “action and decisions” summary derived from update kinds: variations become decisions, defects become actions with an owner.</li><li>A revision history for access. Sessions and the audit log exist; the rendering does not.</li><li>The rail carries per-project counts of what needs someone. Same four counts as Concept 1.</li><li>On the phone there is no project browser; the ledger is filtered by chips, and the reader is a full page so it can scroll.</li></ul></section>
+    <section><h5>Build cost from today</h5><ul><li><b>Medium.</b> The ledger is a merge of two lists the Office page already loads, sorted by time; the reader is the preview page in a drawer.</li><li>The title block and sheet chrome are new CSS, not new data.</li><li>The revision history needs the audit events surfaced through an Admin endpoint.</li></ul></section>
+  </div>
+</section>
+
+<style>
+/* ---- Concept 3 skin: the olive rail and the day board ------------------- */
+.c3 .shell{flex:1;min-height:0;display:grid;grid-template-columns:232px 1fr}
+.c3 .rail{background:var(--olive);color:var(--olive-text);display:flex;flex-direction:column;min-height:0}
+.c3 .rail .brand{padding:20px 20px 16px;border-bottom:1px solid var(--olive-line);display:flex;flex-direction:column;gap:2px}
+.c3 .rail .brand b{font-size:17px;font-weight:500;letter-spacing:.14em}
+.c3 .rail .brand span{font-family:var(--mono);font-size:9px;letter-spacing:.18em;color:var(--olive-brass)}
+.c3 .rail .grp{font-family:var(--mono);font-size:9.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--olive-muted);opacity:.8;padding:18px 20px 6px}
+.c3 .rail a,.c3 .rail button{display:flex;align-items:center;gap:var(--s2);width:100%;text-align:left;padding:9px 20px;border:0;border-left:2px solid transparent;background:none;font-size:13.5px;color:var(--olive-muted)}
+.c3 .rail .on{color:var(--olive-text);background:var(--olive-2);border-left-color:var(--olive-brass)}
+.c3 .rail i{font-style:normal;margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--olive-muted);font-variant-numeric:tabular-nums;opacity:.9}
+.c3 .rail i.warn{color:#f0927f;opacity:1}
+.c3 .rail .foot{margin-top:auto;padding:14px 20px 18px;border-top:1px solid var(--olive-line);font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;color:var(--olive-muted);display:flex;flex-direction:column;gap:6px}
+.c3 .rail .foot b{color:var(--olive-text);font-weight:500}
+.c3 .rail .foot em{font-style:normal;color:var(--olive-brass)}
+.c3 .main{overflow:auto;padding:var(--s5);display:flex;flex-direction:column;gap:var(--s5);background:var(--ground)}
+.c3 .dayhead{display:flex;align-items:flex-end;justify-content:space-between;gap:var(--s4);border-bottom:1px solid var(--line-2);padding-bottom:var(--s3)}
+.c3 .dayhead h3{margin:0;font-size:24px;font-weight:500;letter-spacing:-.02em}
+.c3 .dayhead .d{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--brass);margin-bottom:6px}
+.c3 .ticks{display:flex;gap:var(--s5);font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--text-3);font-variant-numeric:tabular-nums}
+.c3 .ticks b{font-weight:500;font-size:20px;letter-spacing:-.02em;margin-right:6px;color:var(--text)}
+.c3 .ticks b.late{color:var(--alert)}.c3 .ticks b.soon{color:var(--caution)}
+.c3 .search{width:100%;background:var(--panel);border:1px solid var(--line-2);border-radius:var(--r);padding:8px 12px;color:var(--text-3);font-size:13px}
+.c3 .lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s4);align-items:start}
+.c3 .lane{background:var(--panel);border:1px solid var(--line)}
+.c3 .lane-h{display:flex;align-items:center;gap:8px;padding:var(--s3) var(--s4);border-bottom:1px solid var(--line-2);font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2)}
+.c3 .lane-h::before{content:"";width:8px;height:8px;background:var(--lane,var(--line-2))}
+.c3 .lane-h i{font-style:normal;margin-left:auto;color:var(--text-3)}
+.c3 .lane.in{--lane:var(--brass)}.c3 .lane.decide{--lane:var(--caution)}.c3 .lane.late{--lane:var(--alert)}
+.c3 .card{padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);border-left:3px solid var(--stripe,transparent)}
+.c3 .card:last-child{border-bottom:0}
+.c3 .card.s-late{--stripe:var(--alert)}.c3 .card.s-soon{--stripe:var(--caution)}.c3 .card.s-brass{--stripe:var(--brass)}.c3 .card.s-quiet{--stripe:var(--line-2)}
+.c3 .card b{display:block;font-size:13.5px;font-weight:500}
+.c3 .card .rowsub{margin-top:2px}
+.c3 .card .cf{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
+.c3 .card .cf .age{margin-left:auto}
+.c3 .strip{display:grid;grid-template-columns:repeat(3,1fr);gap:var(--s4)}
+.c3 .tile{background:var(--panel);border:1px solid var(--line);padding:var(--s3) var(--s4);text-align:left;display:flex;flex-direction:column;gap:6px}
+.c3 .tile.on{border-color:var(--brass);background:var(--brass-wash)}
+.c3 .tile .tt{display:flex;align-items:baseline;gap:8px}
+.c3 .tile .tt b{font-size:14px;font-weight:500;flex:1}
+.c3 .figs{display:flex;gap:var(--s4);font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--text-3);text-transform:uppercase}
+.c3 .figs b{display:block;font-size:18px;letter-spacing:-.02em;font-weight:500;color:var(--text);font-variant-numeric:tabular-nums}
+.c3 .figs b.late{color:var(--alert)}.c3 .figs b.soon{color:var(--caution)}
+.c3 .two{display:grid;grid-template-columns:1.4fr 1fr;gap:var(--s4);align-items:start}
+.c3 .settings{display:grid;grid-template-columns:240px 1fr;gap:var(--s4);align-items:start}
+.c3 .snav{background:var(--panel);border:1px solid var(--line)}
+.c3 .snav button{display:block;width:100%;text-align:left;padding:var(--s3) var(--s4);border:0;border-bottom:1px solid var(--line);border-left:2px solid transparent;background:none}
+.c3 .snav button:last-child{border-bottom:0}
+.c3 .snav button.on{border-left-color:var(--brass);background:var(--brass-wash)}
+.c3 .snav b{display:block;font-size:13.5px;font-weight:500}
+.c3 .snav span{font-size:12px;color:var(--text-3)}
+.c3 .spane{background:var(--panel);border:1px solid var(--line)}
+.c3 .spane-h{padding:var(--s4) var(--s5);border-bottom:1px solid var(--line-2)}
+.c3 .spane-h h4{margin:0;font-size:18px;font-weight:500;letter-spacing:-.015em}
+.c3 .spane-h p{margin:4px 0 0;font-size:13px;color:var(--text-2)}
+.c3 .srow{display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:var(--s4);align-items:center;padding:var(--s3) var(--s5);border-bottom:1px solid var(--line)}
+.c3 .srow:last-child{border-bottom:0}
+.c3 .srow.head{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);background:var(--panel-2);padding:8px var(--s5)}
+.c3 .srow b{font-weight:500;font-size:13.5px;display:block}
+.c3 .srow .rowsub{margin-top:1px}
+.c3 .srow .in{width:100%}
+.c3 .prow{display:flex;align-items:center;gap:var(--s4);padding:var(--s3) var(--s5);border-bottom:1px solid var(--line)}
+.c3 .prow:last-child{border-bottom:0}
+.c3 .prow .rt{flex:1}
+.c3 .prow b{font-weight:500;display:block}
+/* phone */
+.phone.c3 .appbar{background:var(--olive);color:var(--olive-text);border-bottom:1px solid var(--olive-line)}
+.phone.c3 .appbar .brandm{border-right-color:var(--olive-line)}
+.phone.c3 .appbar .brandm span{color:var(--olive-brass)}
+.phone.c3 .appbar .abt span{color:var(--olive-muted)}
+.phone.c3 .appbar .iconbtn{color:var(--olive-text)}
+.phone.c3 .tabbar{background:var(--olive);border-top-color:var(--olive-line)}
+.phone.c3 .tabbar a{color:var(--olive-muted)}
+.phone.c3 .tabbar a.on{color:var(--olive-text);border-top-color:var(--olive-brass)}
+.phone.c3 .tabbar a.on i{color:var(--olive-brass)}
+.phone.c3 .seg{display:grid;grid-template-columns:repeat(3,1fr);margin:14px 16px 0;border:1px solid var(--line-2);border-radius:var(--r);overflow:hidden;background:var(--panel)}
+.phone.c3 .seg span{display:flex;flex-direction:column;align-items:center;padding:8px 4px 6px;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-right:1px solid var(--line-2)}
+.phone.c3 .seg span:last-child{border-right:0}
+.phone.c3 .seg b{font-size:18px;font-weight:500;letter-spacing:-.02em;color:var(--text);font-family:var(--mono)}
+.phone.c3 .seg span.on{background:var(--brass-wash);color:var(--brass)}
+.phone.c3 .seg b.late{color:var(--alert)}.phone.c3 .seg b.soon{color:var(--caution)}
+.phone.c3 .hstrip{display:flex;gap:10px;padding:12px 16px 0;overflow-x:auto}
+.phone.c3 .htile{flex:none;width:200px;background:var(--panel);border:1px solid var(--line);padding:10px 12px}
+.phone.c3 .htile.on{border-color:var(--brass);background:var(--brass-wash)}
+.phone.c3 .htile b{display:block;font-size:13.5px;font-weight:500}
+.phone.c3 .htile span{font-size:11px;color:var(--text-3)}
+.phone.c3 .htile .figs{display:flex;gap:12px;margin-top:8px;font-family:var(--mono);font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-3)}
+.phone.c3 .htile .figs b{font-size:16px;font-family:var(--mono);letter-spacing:-.02em}
+.phone.c3 .htile .figs b.late{color:var(--alert)}.phone.c3 .htile .figs b.soon{color:var(--caution)}
+.phone.c3 .sgrp{margin:16px 16px 0;background:var(--panel);border:1px solid var(--line)}
+.phone.c3 .sgrp .srow{display:flex;align-items:center;gap:12px;padding:12px 14px;border-bottom:1px solid var(--line);min-height:var(--touch)}
+.phone.c3 .sgrp .srow:last-child{border-bottom:0}
+.phone.c3 .sgrp .srow .rt{flex:1;min-width:0}
+.phone.c3 .sgrp b{font-size:14px;font-weight:500;display:block}
+.phone.c3 .sgrp span.s{font-size:12px;color:var(--text-3)}
+</style>
+
+<!-- ===================== CONCEPT 3 ===================== -->
+<section class="concept" id="c3">
+  <div class="concept-head">
+    <span class="concept-num">Concept 3</span>
+    <h2>Day board</h2>
+    <p>The office as a control room. A dark olive rail carries the product, the same olive the Developments chrome and the engineer’s project band already use, with brass for the mark and the active item. Today opens on three lanes: what came in, what needs a decision, what is late. Every card carries its action. Under the lanes, a strip of project tiles that filter everything above them. Admin is a settings screen in the same room: a list of sections on the left, one section on the right, with the things that can actually be changed drawn as controls and the things Microsoft owns drawn as facts.</p>
+  </div>
+
+  <p class="cap"><b>Office · desktop</b> Today, with Kirkstall Gate selected in the strip <span>1240 × 760 · Inbox and Issues in the rail switch the board</span></p>
+  <div class="frame">
+    <div class="app c3" data-tabs>
+      <div class="shell">
+        <nav class="rail">
+          <div class="brand"><b>RELAY</b><span>LEODIS DEVELOPMENTS</span></div>
+          <div class="grp">Office</div>
+          <button type="button" class="on" data-tab="today">Today <i class="warn">7</i></button>
+          <button type="button" data-tab="inbox">Inbox <i>14</i></button>
+          <button type="button" data-tab="issues">Issues <i class="warn">15</i></button>
+          <a href="#c3">Projects <i>3</i></a>
+          <a href="#c3">Team <i>17</i></a>
+          <div class="grp">Reference</div>
+          <a href="#c3">Reports <i>184</i></a>
+          <a href="#c3">Clients <i>3</i></a>
+          <div class="grp">Administration</div>
+          <a href="#c3-admin">Settings</a>
+          <div class="foot"><span><b>Cal Say</b> · <em>Admin</em></span><span>Appearance · Auto</span><span>Companies ↗</span></div>
+        </nav>
+        <div class="main">
+          <div class="scr on" data-scr="today">
+            <div class="dayhead"><div><div class="d">Tuesday 9 September 2026 · week 37</div><h3>Today across three projects</h3></div><div class="ticks"><span><b>2</b>came in</span><span><b class="soon">4</b>need a decision</span><span><b class="late">3</b>late</span></div></div>
+            <div class="search">/ search projects, reports, issues, engineers</div>
+            <div class="lanes">
+              <div class="lane in"><div class="lane-h">Came in<i>2 today · 5 this week</i></div>
+                <div class="card s-brass"><b>Tetley Hall — Block E</b><div class="rowsub"><span class="ref">SPR-014</span> · G. Stephenson · Electrical · 08:40</div><div class="cf"><span class="kind tone-defect">1 defect</span><span class="kind tone-variation">1 variation</span><span class="age">not sent</span></div><div class="cf"><button class="btn btn-sm" type="button">Read</button><button class="btn btn-q btn-sm" type="button">Acknowledge</button></div></div>
+                <div class="card s-quiet"><b>Tetley Hall — Block E</b><div class="rowsub">Draft on site · Bryony · saved 10:41 · 3 sections</div><div class="cf"><span class="tag tag-caution">Draft</span><span class="age">private until sent</span></div></div>
+                <div class="card s-quiet"><b>Kirkstall Gate — Phase 2</b><div class="rowsub"><span class="ref">SPR-021</span> · A. Dyson · HVAC · yesterday 16:12</div><div class="cf"><span class="kind tone-defect">2 defects</span><span class="tag tag-ok">Sent to 2</span></div><div class="cf"><button class="btn btn-q btn-sm" type="button">Read</button></div></div>
+              </div>
+              <div class="lane decide"><div class="lane-h">Needs a decision<i>4</i></div>
+                <div class="card s-soon"><b>Verify: L2 lighting circuits</b><div class="rowsub"><span class="ref">011LME-ISS-005</span> · closure by T. Parker · waiting 9 days</div><div class="cf"><button class="btn btn-sm" type="button">Verify</button><button class="btn btn-q btn-sm" type="button">Reopen</button></div></div>
+                <div class="card s-soon"><b>Verify: TMV commissioning certificate</b><div class="rowsub"><span class="ref">009LCP-ISS-002</span> · closure by N. Cunningham · 3 days</div><div class="cf"><button class="btn btn-sm" type="button">Verify</button><button class="btn btn-q btn-sm" type="button">Reopen</button></div></div>
+                <div class="card s-soon"><b>Assign: AHU-02 condensate trap</b><div class="rowsub"><span class="ref">014LME-ISS-004</span> · nobody owns it · 4 days</div><div class="cf"><button class="btn btn-sm" type="button">Assign</button><button class="btn btn-q btn-sm" type="button">Confirm</button></div></div>
+                <div class="card s-soon"><b>Triage: pipework clashes with cable tray</b><div class="rowsub"><span class="ref">014LME-ISS-003</span> · Northbank dispute it · variation?</div><div class="cf"><button class="btn btn-sm" type="button">Triage</button><button class="btn btn-q btn-sm" type="button">Withdraw</button></div></div>
+              </div>
+              <div class="lane late"><div class="lane-h">Late<i>3</i></div>
+                <div class="card s-late"><b>Report never emailed</b><div class="rowsub"><span class="ref">011LME-SPR-013</span> · in the local outbox since Mon 8 Sep</div><div class="cf"><button class="btn btn-sm" type="button">Retry</button><span class="age">A. Whitfield has not got it</span></div></div>
+                <div class="card s-late"><b>Fire stopping missing at tray penetration</b><div class="rowsub"><span class="ref">011LME-ISS-006</span> · C&amp;AJ Marshall · target 02 Sep</div><div class="cf"><button class="btn btn-q btn-sm" type="button">Chase</button><span class="age">7 days</span></div></div>
+                <div class="card s-late"><b>Extract duct unsupported over corridor</b><div class="rowsub"><span class="ref">014LME-ISS-002</span> · A. Dyson · target 05 Sep</div><div class="cf"><button class="btn btn-q btn-sm" type="button">Chase</button><span class="age">4 days</span></div></div>
+              </div>
+            </div>
+            <div class="strip">
+              <button class="tile" type="button"><div class="tt"><b>Tetley Hall — Block E</b><span class="ref">011LME</span></div><div class="rowsub">A. Whitfield · M&amp;E · C&amp;AJ Marshall</div><div class="figs"><span><b>4</b>open</span><span><b class="soon">1</b>verify</span><span><b class="late">2</b>late</span><span><b>4</b>this wk</span></div></button>
+              <button class="tile on" type="button"><div class="tt"><b>Kirkstall Gate — Phase 2</b><span class="ref">014LME</span></div><div class="rowsub">A. Whitfield · M&amp;E · Northbank</div><div class="figs"><span><b>4</b>open</span><span><b class="soon">2</b>decide</span><span><b class="late">1</b>late</span><span><b>2</b>this wk</span></div></button>
+              <button class="tile" type="button"><div class="tt"><b>Hunslet Depot — Welfare Block</b><span class="ref">009LCP</span></div><div class="rowsub">R. Ellison · Plumbing · defects liability</div><div class="figs"><span><b>1</b>open</span><span><b class="soon">2</b>verify</span><span><b>0</b>late</span><span><b>1</b>this wk</span></div></button>
+            </div>
+            <div class="two">
+              <div class="panel"><div class="panel-head"><h4>Kirkstall Gate — Phase 2 · this week</h4><a class="more" href="#c3">Project →</a></div>
+                <table class="reg tight"><thead><tr><th>When</th><th>Ref</th><th>Entry</th><th>By</th><th>Status</th></tr></thead><tbody>
+                  <tr><td class="due">Mon 16:12</td><td><span class="ref">SPR-021</span></td><td>Site progress report · roof AHU deck</td><td>A. Dyson</td><td><span class="tag tag-ok">Sent to 2</span></td></tr>
+                  <tr><td class="due">Mon 16:12</td><td><span class="ref">ISS-004</span></td><td>AHU-02 condensate trap not fitted</td><td class="late">Unassigned</td><td><span class="tag tag-quiet">Open</span></td></tr>
+                  <tr><td class="due">Wed 12:02</td><td><span class="ref">SPR-020</span></td><td>Site progress report · L1 corridor</td><td>N. Cunningham</td><td><span class="tag tag-ok">Sent to 2</span></td></tr>
+                </tbody></table></div>
+              <div class="panel"><div class="panel-head"><h4>On site today</h4><a class="more" href="#c3">Team →</a></div>
+                <div class="rmenu" style="border:0">
+                  <div><div class="rt"><b>Graham Stephenson</b><span>Electrical · Tetley Hall · sent SPR-014 08:40</span></div><span class="tag tag-ok">Sent</span></div>
+                  <div><div class="rt"><b>Bryony</b><span>Electrical · Tetley Hall · draft saved 10:41</span></div><span class="tag tag-caution">Drafting</span></div>
+                  <div><div class="rt"><b>Anthony Dyson</b><span>HVAC · Kirkstall Gate · last report yesterday</span></div><span class="tag tag-quiet">—</span></div>
+                </div>
+                <div class="panel-foot">From reports and draft summaries only. Relay does not track location.</div></div>
+            </div>
+          </div>
+          <div class="scr" data-scr="inbox">
+            <div class="dayhead"><div><div class="d">Inbox · newest first</div><h3>14 reports received</h3></div><div class="ticks"><span><b>5</b>this week</span><span><b class="late">1</b>not emailed</span><span><b>4</b>not acknowledged</span></div></div>
+            <div class="filters"><span class="chip on">All · 14</span><span class="chip warn">Not emailed · 1</span><span class="chip">Not acknowledged · 4</span><span class="chip">Drafts on site · 2</span><span class="spacer"></span><span class="chip drop">All projects</span><span class="chip drop">All trades</span></div>
+            <div class="panel"><table class="reg"><thead><tr><th>Reference</th><th>Project</th><th>Engineer</th><th>Visit</th><th>Found</th><th>Delivery</th><th></th></tr></thead><tbody>
+              <tr><td><span class="ref">011LME-SPR-014</span></td><td>Tetley Hall — Block E</td><td>G. Stephenson<div class="rowsub">Electrical</div></td><td class="due">09 Sep 08:40</td><td><div class="found"><span class="kind tone-defect">1 defect</span><span class="kind tone-variation">1 variation</span></div></td><td><span class="tag tag-quiet">Not sent</span></td><td><button class="btn btn-q btn-sm" type="button">Read</button></td></tr>
+              <tr><td><span class="ref">014LME-SPR-021</span></td><td>Kirkstall Gate — Phase 2</td><td>A. Dyson<div class="rowsub">HVAC</div></td><td class="due">08 Sep 16:12</td><td><span class="kind tone-defect">2 defects</span></td><td><span class="tag tag-ok">Sent to 2</span></td><td><button class="btn btn-q btn-sm" type="button">Read</button></td></tr>
+              <tr><td><span class="ref">011LME-SPR-013</span></td><td>Tetley Hall — Block E</td><td>T. Parker<div class="rowsub">Electrical</div></td><td class="due">08 Sep 11:05</td><td><span class="kind tone-neutral">Progress</span></td><td><span class="tag tag-alert">Not emailed</span></td><td><button class="btn btn-sm" type="button">Retry</button></td></tr>
+              <tr><td><span class="ref">009LCP-SPR-008</span></td><td>Hunslet Depot — Welfare Block</td><td>H. O’Brien<div class="rowsub">P&amp;H</div></td><td class="due">05 Sep 14:20</td><td><span class="kind tone-access">1 access</span></td><td><span class="tag tag-ok">Sent to 1</span></td><td><button class="btn btn-q btn-sm" type="button">Read</button></td></tr>
+              <tr><td><span class="ref">011LME-SPR-012</span></td><td>Tetley Hall — Block E</td><td>A. Dyson<div class="rowsub">HVAC</div></td><td class="due">04 Sep 15:50</td><td><span class="kind tone-access">1 access</span></td><td><span class="tag tag-ok">Sent to 2</span></td><td><button class="btn btn-q btn-sm" type="button">Read</button></td></tr>
+            </tbody></table><div class="panel-foot">Reading opens the report full-width in the same room, with the rail still there. The board is one click back.</div></div>
+          </div>
+          <div class="scr" data-scr="issues">
+            <div class="dayhead"><div><div class="d">Issues · all projects</div><h3>15 open</h3></div><div class="ticks"><span><b class="late">3</b>overdue</span><span><b class="soon">3</b>to verify</span><span><b>1</b>unassigned</span><span><b>1</b>disputed</span></div></div>
+            <div class="filters"><span class="chip on">Open · 15</span><span class="chip warn">Overdue · 3</span><span class="chip">To verify · 3</span><span class="chip">Closed · 21</span><span class="spacer"></span><span class="chip drop">All projects</span><span class="chip drop">Owner</span></div>
+            <div class="panel"><table class="reg"><thead><tr><th>Ref</th><th>Issue</th><th>Project</th><th>Owner</th><th>Target</th><th>Work</th><th>Confirmation</th></tr></thead><tbody>
+              <tr><td><span class="ref">011LME-ISS-006</span></td><td>Fire stopping missing at tray penetration<div class="rowsub">L2 riser</div></td><td>Tetley Hall — Block E</td><td>C&amp;AJ Marshall</td><td class="due"><b class="late">02 Sep</b> · 7d late</td><td><span class="tag tag-alert">Assigned</span></td><td><span class="tag tag-ok">Confirmed</span></td></tr>
+              <tr><td><span class="ref">014LME-ISS-002</span></td><td>Extract duct unsupported over corridor<div class="rowsub">L1 corridor</div></td><td>Kirkstall Gate — Phase 2</td><td>A. Dyson</td><td class="due"><b class="late">05 Sep</b> · 4d late</td><td><span class="tag tag-alert">In progress</span></td><td><span class="tag tag-ok">Confirmed</span></td></tr>
+              <tr><td><span class="ref">011LME-ISS-005</span></td><td>L2 lighting circuits not tested<div class="rowsub">closure submitted by T. Parker</div></td><td>Tetley Hall — Block E</td><td>T. Parker</td><td class="due">31 Aug</td><td><span class="tag tag-caution">Verify</span></td><td><span class="tag tag-ok">Confirmed</span></td></tr>
+              <tr><td><span class="ref">014LME-ISS-004</span></td><td>AHU-02 condensate trap not fitted<div class="rowsub">Roof AHU deck</div></td><td>Kirkstall Gate — Phase 2</td><td class="late">Unassigned</td><td class="due quiet">—</td><td><span class="tag tag-quiet">Open</span></td><td><span class="tag tag-quiet">Not reviewed</span></td></tr>
+              <tr><td><span class="ref">014LME-ISS-003</span></td><td>Pipework clashes with cable tray<div class="rowsub">L1 plant room</div></td><td>Kirkstall Gate — Phase 2</td><td>Northbank</td><td class="due">12 Sep · 3d</td><td><span class="tag tag-quiet">Open</span></td><td><span class="tag tag-alert">Disputed</span></td></tr>
+            </tbody></table></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="cap" id="c3-admin"><b>Admin · desktop</b> Settings, with Roles &amp; access open <span>the left list switches sections · controls only where the app owns the setting</span></p>
+  <div class="frame">
+    <div class="app c3" data-tabs>
+      <div class="shell">
+        <nav class="rail">
+          <div class="brand"><b>RELAY</b><span>LEODIS DEVELOPMENTS</span></div>
+          <div class="grp">Office</div><a href="#c3">Today <i class="warn">7</i></a><a href="#c3">Inbox <i>14</i></a><a href="#c3">Issues <i class="warn">15</i></a><a href="#c3">Projects <i>3</i></a><a href="#c3">Team <i>17</i></a>
+          <div class="grp">Reference</div><a href="#c3">Reports <i>184</i></a><a href="#c3">Clients <i>3</i></a>
+          <div class="grp">Administration</div><a class="on" href="#c3-admin">Settings</a>
+          <div class="foot"><span><b>Cal Say</b> · <em>Admin</em></span><span>Appearance · Auto</span><span>Companies ↗</span></div>
+        </nav>
+        <div class="main">
+          <div class="dayhead"><div><div class="d">Administration · Leodis Developments</div><h3>Settings</h3></div><div class="actions"><button class="btn btn-q" type="button">Open Microsoft Entra ↗</button></div></div>
+          <div class="settings">
+            <div class="snav">
+              <button type="button" class="on" data-tab="roles"><b>Roles &amp; access</b><span>17 accounts · read from Microsoft</span></button>
+              <button type="button" data-tab="drafts"><b>Older drafts</b><span class="late">2 to assign</span></button>
+              <button type="button" data-tab="delivery"><b>Delivery &amp; processing</b><span class="late">Outbox holding 1</span></button>
+              <button type="button" data-tab="review"><b>Projects &amp; review</b><span>Review off on all 3</span></button>
+              <button type="button"><b>Backups</b><span>Last 08 Sep 09:07</span></button>
+              <button type="button"><b>About this pilot</b><span>Version, banner, limits</span></button>
+            </div>
+            <div class="scr on" data-scr="roles"><div class="spane">
+              <div class="spane-h"><h4>Roles &amp; access</h4><p>Everyone who can sign in, as Microsoft has told the app. Roles are changed in Entra, not here; a change shows at the next sign-in, within 12 hours.</p></div>
+              <div class="srow head"><span>Account</span><span>App role</span><span>Last sign-in</span><span>Session</span></div>
+              <div class="srow"><div><b>Cal Say</b><div class="rowsub num">callum@leodisme.com</div></div><span>Admin</span><span class="due">Today 08:12</span><span class="tag tag-ok">Signed in</span></div>
+              <div class="srow"><div><b>Tom</b><div class="rowsub num">tom@leodisme.com</div></div><span>Manager</span><span class="due">Today 07:55</span><span class="tag tag-ok">Signed in</span></div>
+              <div class="srow"><div><b>Ollie</b><div class="rowsub num">ollie@leodisme.com</div></div><span>Manager</span><span class="due">Mon 8 Sep</span><span class="tag tag-quiet">Expired</span></div>
+              <div class="srow"><div><b>Jonny</b><div class="rowsub num">jonny@leodisme.com</div></div><span>Manager</span><span class="due">Fri 5 Sep</span><span class="tag tag-quiet">Expired</span></div>
+              <div class="srow"><div><b>Russel</b><div class="rowsub num">russel@leodisme.com</div></div><span>Manager</span><span class="due quiet">never</span><span class="tag tag-quiet">Never</span></div>
+              <div class="srow"><div><b>Graham Stephenson</b><div class="rowsub num">graham.stephenson@leodisme.com</div></div><span>Engineer · Electrical</span><span class="due">Today 08:38</span><span class="tag tag-ok">Signed in</span></div>
+              <div class="srow"><div><b>Tyler Parker</b><div class="rowsub num">tyler.parker@leodisme.com</div></div><span>Engineer · Electrical</span><span class="due">Mon 8 Sep</span><span class="tag tag-ok">Signed in</span></div>
+              <div class="srow"><div><b>Bryony</b><div class="rowsub num">bryony@leodisme.com</div></div><span>Engineer · Electrical</span><span class="due">Today 10:41</span><span class="tag tag-ok">Signed in</span></div>
+              <div class="srow"><div><b>Anthony Dyson</b><div class="rowsub num">anthony.dyson@leodisme.com</div></div><span>Engineer · HVAC</span><span class="due">Mon 8 Sep</span><span class="tag tag-ok">Signed in</span></div>
+              <div class="srow"><div><b>Harvey O’Brien</b><div class="rowsub num">harvey.obrien@leodisme.com</div></div><span>Engineer · P&amp;H</span><span class="due">Fri 5 Sep</span><span class="tag tag-quiet">Expired</span></div>
+              <div class="srow"><div><b>Nicky Cunningham</b><div class="rowsub num">nicky.cunningham@leodisme.com</div></div><span>Engineer · P&amp;H</span><span class="due">Wed 3 Sep</span><span class="tag tag-quiet">Expired</span></div>
+              <div class="srow"><div class="quiet" style="font-size:12px">6 more engineers have not signed in yet: John, Damien, Danny, Chris, Aidan, Marcus</div><span></span><span></span><span></span></div>
+              <div class="panel-foot">Nothing on this screen grants access. Company selection on the hub is navigation; these rows are what actually decides.</div>
+            </div></div>
+            <div class="scr" data-scr="drafts"><div class="spane">
+              <div class="spane-h"><h4>Older drafts</h4><p>Two drafts predate account IDs. Confirm the original author, then assign; the draft’s contents stay private and the assignment is audited.</p></div>
+              <div class="prow"><div class="rt"><b><span class="ref">011LME-SPR-003</span> · recorded author “Damien”</b><span class="rowsub">Saved 14 Aug · 2 sections</span></div><div class="f" style="width:260px"><label>Verified original author</label><div class="in drop">Choose a signed-in account</div></div><button class="btn btn-q btn-sm" type="button">Assign</button></div>
+              <div class="prow"><div class="rt"><b><span class="ref">014LME-SPR-011</span> · recorded author “Chris”</b><span class="rowsub">Saved 20 Aug · 1 section</span></div><div class="f" style="width:260px"><label>Verified original author</label><div class="in drop">Choose a signed-in account</div></div><button class="btn btn-q btn-sm" type="button">Assign</button></div>
+            </div></div>
+            <div class="scr" data-scr="delivery"><div class="spane">
+              <div class="spane-h"><h4>Delivery &amp; processing</h4><p>What happens to a report after it is sent from site. The pilot renders PDFs but does not email; outgoing mail is held in a local outbox.</p></div>
+              <div class="prow"><div class="rt"><b>Email transport</b><span class="rowsub">No mail server is configured for the pilot.</span></div><span class="tag tag-alert">Local outbox only</span></div>
+              <div class="prow"><div class="rt"><b>Outbox</b><span class="rowsub"><span class="ref">011LME-SPR-013</span> to a.whitfield@example.invalid · waiting since Mon 8 Sep 11:06</span></div><button class="btn btn-sm" type="button">Retry</button></div>
+              <div class="prow"><div class="rt"><b>PDF worker</b><span class="rowsub">0 queued · last rendered 08:41 · <span class="ref">011LME-SPR-014</span></span></div><span class="tag tag-ok">Running</span></div>
+              <div class="prow"><div class="rt"><b>SharePoint filing</b><span class="rowsub">Issued PDFs will file to the project library.</span></div><span class="tag tag-quiet">Planned</span></div>
+              <div class="prow"><div class="rt"><b>Also email the office copy</b><span class="rowsub">Send every issued PDF to office@leodisme.com as well as the project manager.</span></div><span class="toggle"><i></i>Off</span></div>
+            </div></div>
+            <div class="scr" data-scr="review"><div class="spane">
+              <div class="spane-h"><h4>Projects &amp; review</h4><p>Which projects need a person to approve a report before it issues. Off by default; turning it on holds every new report on that project for review.</p></div>
+              <div class="prow"><div class="rt"><b>Tetley Hall — Block E</b><span class="rowsub"><span class="ref">011LME</span> · A. Whitfield · reports issue on submission</span></div><span class="toggle"><i></i>Review off</span></div>
+              <div class="prow"><div class="rt"><b>Kirkstall Gate — Phase 2</b><span class="rowsub"><span class="ref">014LME</span> · A. Whitfield</span></div><span class="toggle"><i></i>Review off</span></div>
+              <div class="prow"><div class="rt"><b>Hunslet Depot — Welfare Block</b><span class="rowsub"><span class="ref">009LCP</span> · R. Ellison · defects liability</span></div><span class="toggle"><i></i>Review off</span></div>
+              <div class="panel-foot">Projects come from the fixture list today; the SharePoint project list is planned. <span class="tag tag-quiet">Planned</span></div>
+            </div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="cap"><b>Mobile</b> the board as a feed: three counters, one lane at a time, the project strip scrolls sideways <span>390 × 812 · olive app bar and tab bar</span></p>
+  <div class="frame"><div class="phones">
+    <div class="phone-wrap"><div class="phone c3">
+      <div class="appbar"><div class="brandm"><b>RELAY</b><span>DEV</span></div><div class="abt"><b>Today</b><span>Tue 9 Sep · week 37</span></div><button class="iconbtn" type="button" aria-label="Search">⌕</button></div>
+      <div class="screen">
+        <div class="seg"><span><b>2</b>came in</span><span class="on"><b class="soon">4</b>decide</span><span><b class="late">3</b>late</span></div>
+        <div class="hstrip"><button class="htile" type="button"><b>All projects</b><span>3 reportable</span><div class="figs"><span><b>9</b>open</span><span><b class="soon">4</b>decide</span><span><b class="late">3</b>late</span></div></button><button class="htile on" type="button"><b>Kirkstall Gate — Phase 2</b><span>014LME · A. Whitfield</span><div class="figs"><span><b>4</b>open</span><span><b class="soon">2</b>decide</span><span><b class="late">1</b>late</span></div></button><button class="htile" type="button"><b>Tetley Hall — Block E</b><span>011LME</span><div class="figs"><span><b>4</b>open</span><span><b class="soon">1</b>verify</span><span><b class="late">2</b>late</span></div></button></div>
+        <div class="sec-h">Needs a decision · Kirkstall Gate<span class="r">2</span></div>
+        <div class="ilist">
+          <a class="irow soon" href="#c3"><div class="imain"><b>Assign: AHU-02 condensate trap</b><span><span class="ref">ISS-004</span> · nobody owns it · 4 days</span><div class="istat"><span class="btn btn-sm">Assign</span><span class="btn btn-q btn-sm">Confirm</span></div></div></a>
+          <a class="irow soon" href="#c3"><div class="imain"><b>Triage: pipework clashes with cable tray</b><span><span class="ref">ISS-003</span> · Northbank dispute it</span><div class="istat"><span class="btn btn-sm">Triage</span><span class="btn btn-q btn-sm">Withdraw</span></div></div></a>
+        </div>
+        <div class="sec-h">Late · Kirkstall Gate<span class="r late">1</span></div>
+        <div class="ilist"><a class="irow late" href="#c3"><div class="imain"><b>Extract duct unsupported over corridor</b><span><span class="ref">ISS-002</span> · A. Dyson · target 05 Sep · 4 days</span></div><span class="chev">›</span></a></div>
+        <div class="sec-h">Came in · Kirkstall Gate<span class="r">1</span></div>
+        <div class="ilist"><a class="irow brass" href="#c3"><div class="imain"><b><span class="ref">SPR-021</span> · A. Dyson · HVAC</b><span>Yesterday 16:12 · roof AHU deck</span><div class="istat"><span class="kind tone-defect">2 defects</span><span class="tag tag-ok">Sent to 2</span></div></div><span class="chev">›</span></a></div>
+      </div>
+      <nav class="tabbar"><a class="on" href="#c3"><i>◧</i>Today<b>7</b></a><a href="#c3"><i>▤</i>Inbox</a><a href="#c3"><i>▲</i>Issues</a><a href="#c3"><i>≡</i>More</a></nav>
+    </div><span class="pcap">Office · today, one project</span></div>
+
+    <div class="phone-wrap"><div class="phone c3">
+      <div class="appbar"><div class="brandm"><b>RELAY</b><span>DEV</span></div><div class="abt"><b>Today</b><span>Tue 9 Sep · all projects</span></div><button class="iconbtn" type="button" aria-label="Search">⌕</button></div>
+      <div class="screen">
+        <div class="seg"><span><b>2</b>came in</span><span><b class="soon">4</b>decide</span><span class="on"><b class="late">3</b>late</span></div>
+        <div class="sec-h">Late · all projects<span class="r late">3</span></div>
+        <div class="ilist">
+          <div class="irow late"><div class="imain"><b>Report never emailed</b><span><span class="ref">011LME-SPR-013</span> · in the outbox since Mon</span><div class="istat"><span class="btn btn-sm">Retry</span></div></div></div>
+          <a class="irow late" href="#c3"><div class="imain"><b>Fire stopping missing at tray penetration</b><span>Tetley Hall · C&amp;AJ Marshall · 7 days</span><div class="istat"><span class="btn btn-q btn-sm">Chase</span></div></div><span class="chev">›</span></a>
+          <a class="irow late" href="#c3"><div class="imain"><b>Extract duct unsupported over corridor</b><span>Kirkstall Gate · A. Dyson · 4 days</span><div class="istat"><span class="btn btn-q btn-sm">Chase</span></div></div><span class="chev">›</span></a>
+        </div>
+        <div class="sec-h">On site today<span class="r">3</span></div>
+        <div class="ilist">
+          <div class="irow"><div class="imain"><b>Graham Stephenson</b><span>Electrical · Tetley Hall · sent SPR-014 08:40</span></div><span class="tag tag-ok">Sent</span></div>
+          <div class="irow"><div class="imain"><b>Bryony</b><span>Electrical · Tetley Hall · draft saved 10:41</span></div><span class="tag tag-caution">Drafting</span></div>
+          <div class="irow"><div class="imain"><b>Anthony Dyson</b><span>HVAC · Kirkstall Gate · last report yesterday</span></div><span class="tag tag-quiet">—</span></div>
+        </div>
+        <p class="fine-print">From reports and draft summaries only. Relay does not track anyone’s location.</p>
+      </div>
+      <nav class="tabbar"><a class="on" href="#c3"><i>◧</i>Today<b>7</b></a><a href="#c3"><i>▤</i>Inbox</a><a href="#c3"><i>▲</i>Issues</a><a href="#c3"><i>≡</i>More</a></nav>
+    </div><span class="pcap">Office · today, late lane</span></div>
+
+    <div class="phone-wrap"><div class="phone c3">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>Settings</b><span>Administration · Cal Say</span></div></div>
+      <div class="screen">
+        <div class="sgrp">
+          <a class="srow" href="#c3"><div class="rt"><b>Roles &amp; access</b><span class="s">17 accounts · 9 signed in · read from Microsoft</span></div><span class="chev">›</span></a>
+          <a class="srow" href="#c3"><div class="rt"><b>Older drafts</b><span class="s late">2 to assign · needs a desktop</span></div><span class="chev">›</span></a>
+        </div>
+        <div class="sec-h">Delivery &amp; processing</div>
+        <div class="sgrp">
+          <div class="srow"><div class="rt"><b>Email transport</b><span class="s">No mail server in the pilot</span></div><span class="tag tag-alert">Outbox only</span></div>
+          <div class="srow"><div class="rt"><b>Outbox</b><span class="s"><span class="ref">011LME-SPR-013</span> · since Mon</span></div><span class="btn btn-sm">Retry</span></div>
+          <div class="srow"><div class="rt"><b>PDF worker</b><span class="s">0 queued · last 08:41</span></div><span class="tag tag-ok">Running</span></div>
+          <div class="srow"><div class="rt"><b>Also email the office copy</b><span class="s">office@leodisme.com</span></div><span class="toggle"><i></i></span></div>
+        </div>
+        <div class="sec-h">Projects &amp; review</div>
+        <div class="sgrp">
+          <div class="srow"><div class="rt"><b>Tetley Hall — Block E</b><span class="s">Review off · reports issue on submission</span></div><span class="toggle"><i></i></span></div>
+          <div class="srow"><div class="rt"><b>Kirkstall Gate — Phase 2</b><span class="s">Review off</span></div><span class="toggle"><i></i></span></div>
+          <div class="srow"><div class="rt"><b>Hunslet Depot — Welfare Block</b><span class="s">Review off</span></div><span class="toggle"><i></i></span></div>
+        </div>
+        <div class="sec-h">About</div>
+        <div class="sgrp"><div class="srow"><div class="rt"><b>Backups</b><span class="s">Last 08 Sep 09:07 · restore not yet tested</span></div></div><div class="srow"><div class="rt"><b>Pilot banner</b><span class="s">Shown until delivery and backups are proven</span></div><span class="toggle on"><i></i></span></div></div>
+        <a class="btn btn-q wide" href="#c3">Open Microsoft Entra ↗</a>
+      </div>
+    </div><span class="pcap">Admin · settings</span></div>
+  </div></div>
+
+  <div class="notes">
+    <section><h5>What it answers first</h5><ul><li><b>“What do I do this morning?”</b> Three lanes, every card carrying its verb. Nothing on the board is a link with no action.</li><li>The project strip is the filter, so the same board answers “and just Kirkstall?” with one click.</li><li>Admin is settings: sections on the left, controls on the right, facts where Microsoft owns the answer.</li></ul></section>
+    <section><h5>What it assumes</h5><ul><li>A “needs a decision” rule: verify, assign, triage, and (when review is on) approve. All are existing commands.</li><li>The olive rail in light mode is a departure for the office; the engineer band already uses it, so it reads as Developments, not as a new brand.</li><li>Two settings that do not exist yet are drawn as toggles: an office copy of every email, and review per project. Both are tagged where they appear.</li></ul></section>
+    <section><h5>Build cost from today</h5><ul><li><b>Medium.</b> The lanes are three filtered views of data the Office page already holds. The rail is new chrome.</li><li>Per-project figures are the same four counts as Concept 1.</li><li>Settings needs a small Admin API for the two toggles, or they ship as facts until it exists.</li></ul></section>
+  </div>
+</section>
+
+<!-- ===================== VERDICT ===================== -->
+<section class="verdict" id="verdict">
+  <h2>Choosing between them</h2>
+  <table>
+    <thead><tr><th>Concept</th><th>Answers first</th><th>Best when</th><th>Mobile</th><th>Build cost from today</th></tr></thead>
+    <tbody>
+      <tr><td>1 · Portfolio desk</td><td>“Where do we stand on each job?” then “what came in?”</td><td>The office thinks in projects and wants one workspace that looks and behaves like Compliance.</td><td>Collapses cleanly: lists, one tab bar, the reader as a sheet.</td><td>Low–medium. The primitives exist; this is layout over data already loaded.</td></tr>
+      <tr><td>2 · Document ledger</td><td>“What happened, and when?”</td><td>Most office time is reading and filing, and the record has to look like a record.</td><td>A day-grouped list and a full-page reader. No browser to collapse.</td><td>Medium. Merge two lists, sheet chrome, the audit surfaced for Admin.</td></tr>
+      <tr><td>3 · Day board</td><td>“What do I do this morning?”</td><td>One or two people triage across every project and want the verbs in front of them.</td><td>Counters and one lane at a time; the strip scrolls sideways.</td><td>Medium. Three filtered views plus new rail chrome and a small settings API.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="rec">
+    <h3>My recommendation: build Concept 1, and take two things from the others</h3>
+    <p><b>Concept 1 is the workspace.</b> It is what was asked for, and it has a structural advantage the other two do not: it shares its component set with the Compliance office. One scoped stylesheet with an accent variable — brass here, aquamarine there — and the two companies stop drifting apart. Projects › Register › Details is also the right spine for Developments: the office already navigates by project, and the register column puts reports and issues in one stream, which is how site actually produces them.</p>
+    <p><b>Take the reader from Concept 2.</b> Actions and decisions first, then the updates, then the signature. That ordering is the issued document’s, and it belongs in Concept 1’s details column and in the phone sheet exactly as drawn there. The title block is worth borrowing for the project sheet too; it says what a project is in one row instead of a paragraph.</p>
+    <p><b>Take the lanes from Concept 3.</b> The Attention pop in Concept 1 should be the three lanes with their verbs, not a list of links, and the phone’s Home should be the same three counters over the same three lists. The olive rail I would hold: it is a good room, but it makes the Developments office look unlike the Compliance one, and sharing the chrome is worth more right now than a second identity.</p>
+    <p><b>Order of work:</b> a shared workspace stylesheet lifted from <code>compliance.css</code>; the Projects browser with the project sheet; the Inbox with the reader; Issues; Admin as a tab with the session table and older drafts; then the phone layouts, which are the same components under a 700px breakpoint. Acknowledgement and a Team tab are drawn but not built, and should be marked as planned until they are.</p>
+  </div>
+
+  <p class="fine">All three are static mockups. Nothing here is wired to the application. Projects, references, engineers, dates, counts and delivery states are examples in the Leodis format, chosen to show how the screens behave. The roster names are the assignment checklist as it stands; last sign-in times are invented. The pilot facts on the Admin screens (a local outbox rather than email, a backup on 8 September, no SharePoint filing yet) are as recorded in the deployment handoff and should be read as illustrative, not as a live status.</p>
+</section>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('themer');
+  var root = document.documentElement;
+  function current() {
+    var set = root.getAttribute('data-theme');
+    if (set) return set;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function label() { btn.textContent = current() === 'dark' ? 'Light' : 'Dark'; }
+  label();
+  btn.addEventListener('click', function () { root.setAttribute('data-theme', current() === 'dark' ? 'light' : 'dark'); label(); });
+
+  /* The Attention pop in Concept 1: the bell and the × toggle it. */
+  document.querySelectorAll('[data-pop]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var pop = b.closest('.app').querySelector('[data-pop-target]');
+      if (pop) pop.hidden = !pop.hidden;
+    });
+  });
+
+  /* Tabs inside a mockup: [data-tab] switches the sibling .scr[data-scr] of the same frame. */
+  document.querySelectorAll('[data-tabs]').forEach(function (app) {
+    app.querySelectorAll('[data-tab]').forEach(function (tab) {
+      tab.addEventListener('click', function (e) {
+        e.preventDefault();
+        var key = tab.getAttribute('data-tab');
+        app.querySelectorAll('[data-tab]').forEach(function (t) { t.classList.toggle('on', t === tab || (t.getAttribute('data-tab') === key && t.parentElement === tab.parentElement)); });
+        app.querySelectorAll('.scr[data-scr]').forEach(function (s) { s.classList.toggle('on', s.getAttribute('data-scr') === key); });
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

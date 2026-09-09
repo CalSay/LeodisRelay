@@ -59,11 +59,14 @@ try {
   const admin = await status('/admin','Admin',200); assert.match(await admin.text(),/Team assignment checklist/);
   await status('/office','Engineer',307);
   await status('/office','Manager',200);
-  const home = await status('/','Engineer',200); assert.match(await home.text(),/Site companion navigation/);
+  // `/` is company selection for every signed-in role; `/developments` routes by role (design decision, 8 Sep 2026).
+  const hub = await status('/','Engineer',200); assert.match(await hub.text(),/Select your company/);
+  const engineerHome = await status('/developments','Engineer',307); assert.equal(engineerHome.headers.get('location'),'/engineer');
+  const engineerView = await status('/engineer','Engineer',200); assert.match(await engineerView.text(),/Site companion navigation/);
   await status('/engineer','forged',307);
   const engineerPreview = await status('/engineer','Admin',200); assert.match(await engineerPreview.text(),/Engineer layout preview/);
-  const managerHome = await status('/','Manager',307); assert.equal(managerHome.headers.get('location'),'/office');
-  const adminHome = await status('/','Admin',307); assert.equal(adminHome.headers.get('location'),'/admin');
+  const managerHome = await status('/developments','Manager',307); assert.equal(managerHome.headers.get('location'),'/office');
+  const adminHome = await status('/developments','Admin',307); assert.equal(adminHome.headers.get('location'),'/admin');
   const page = await (await status('/api/reports','Engineer',200)).json();
   assert.ok(page.reports.some(r => r.id === own.id));
   assert.ok(!page.reports.some(r => r.id === other.id));

@@ -10,6 +10,22 @@ import { usePrincipal } from './PrincipalContext';
 import { ownsReport } from '@/lib/auth/access';
 import {EngineerIssueList} from './EngineerIssueList';
 import {IndividualDefect} from './IndividualDefect';
+import {deliveryStatus,reviewStatus,toneClass} from '@/lib/status';
+
+/**
+ * The same words the office uses. A report is received when the server has
+ * it, reviewed when a person decided, and delivered when the email went; an
+ * engineer who can only see "Received" assumes the project manager has it.
+ */
+function ReportTags({r}:{r:ReportSummary}) {
+  if (r.state === 'draft') return <span className="tag tag-draft">{r.corrects ? 'Correction draft' : 'Your draft'}</span>;
+  const review = reviewStatus(r), delivery = deliveryStatus(r);
+  return <span style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}>
+    <span className="tag tag-sent">Received</span>
+    {review && review.label !== 'No review required' && <span className={toneClass(review.tone)}>{review.label}</span>}
+    {delivery && <span className={toneClass(delivery.tone)}>{delivery.label}</span>}
+  </span>;
+}
 
 type View = 'home' | 'projects' | 'issues' | 'reports' | 'defect';
 const viewOf = (value?:string):View => ['projects','issues','reports','defect'].includes(value ?? '') ? value as View : 'home';
@@ -97,7 +113,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
         </div></div>
       </>}
       {view==='projects' && <><div className="eng-heading"><h1>Choose your project</h1><p>All projects open to your role. Existing drafts stay with their original project.</p></div><div className="eng-project-list">{projects.map(p=><button key={p.id} className="eng-panel" onClick={()=>selectProject(p.id)} aria-pressed={p.id===projectId}><strong>{p.projectName}</strong><small>{p.projectNumber} · {p.projectManager}</small><span>{p.id===projectId?'Current project':'Select project →'}</span></button>)}</div></>}
-      {view==='reports' && <><div className="eng-heading"><h1>Reports · {project.projectName}</h1><p>Your drafts and submitted project reports from all trades.</p></div><button onClick={startReport} disabled={creating}>{creating?'Starting…':'Start another site update'}</button>{reports===null ? !error && <p role="status">Loading reports…</p> : <section className="eng-panel">{reports.length ? reports.map(r=><Link className="eng-report-link" href={`/reports/${r.id}`} key={r.id}><span><strong>{r.reference}</strong><small>{r.author} · {r.authorTrade ?? 'Trade not recorded'} · {r.visitDate}</small></span><span className={`tag ${r.state==='draft'?'tag-draft':'tag-sent'}`}>{r.state==='draft'?'Your draft':'Received'}</span></Link>) : <p>No reports on this page.</p>}</section>}<div className="btn-row">{offset>0 && <button onClick={()=>setOffset(Math.max(0,offset-50))}>Newer reports</button>}{next!==null && <button onClick={()=>setOffset(next)}>Older reports</button>}</div></>}
+      {view==='reports' && <><div className="eng-heading"><h1>Reports · {project.projectName}</h1><p>Your drafts and submitted project reports from all trades.</p></div><button onClick={startReport} disabled={creating}>{creating?'Starting…':'Start another site update'}</button>{reports===null ? !error && <p role="status">Loading reports…</p> : <section className="eng-panel">{reports.length ? reports.map(r=><Link className="eng-report-link" href={`/reports/${r.id}`} key={r.id}><span><strong>{r.reference}</strong><small>{r.author} · {r.authorTrade ?? 'Trade not recorded'} · {r.visitDate}</small></span><ReportTags r={r}/></Link>) : <p>No reports on this page.</p>}</section>}<div className="btn-row">{offset>0 && <button onClick={()=>setOffset(Math.max(0,offset-50))}>Newer reports</button>}{next!==null && <button onClick={()=>setOffset(next)}>Older reports</button>}</div></>}
       {view==='issues' && <><div className="eng-heading"><h1>Issues · {scope==='all'?'All projects':project.projectName}</h1><p>{scope==='all'?'Each issue group names its project.':'Showing issues only for the selected project.'}</p><button onClick={()=>navigate('defect')}>Flag a defect</button></div><div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Project scope<select id="eng-issue-scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="current">{project.projectName}</option><option value="all">All projects</option></select></label><div><button disabled aria-describedby="eng-assignment-unavailable">Assigned to me · Coming soon</button><p id="eng-assignment-unavailable" className="eng-help">Issue owners are currently names or companies, not linked user accounts.</p></div></div>{issues===null ? !error && <p role="status">Loading issues…</p> : (scope==='all'?projects: [project]).map(p=><section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList issues={issues.filter(i=>i.projectId===p.id)} projectName={p.projectName}/></section>)}</>}
       {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues')}/>}
     </>}

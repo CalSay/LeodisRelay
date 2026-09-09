@@ -1,73 +1,12 @@
-'use client';
-import {useCallback,useEffect,useRef,useState} from 'react';
-import Link from 'next/link';
-import {useRouter,useSearchParams} from 'next/navigation';
-import {officeView,getReport,type OfficeDraftSummary} from '@/lib/api';
-import {FIXTURE_PROJECTS} from '@/lib/fixtures';
-import {canAccessProject} from '@/lib/auth/access';
-import {usePrincipal} from '@/components/PrincipalContext';
-import {ReviewPanel} from '@/components/ReviewPanel';
-import {PhotoImage} from '@/components/PhotoImage';
-import {InstallRelay} from '@/components/InstallRelay';
-import {deliveryStatus,reviewStatus} from '@/lib/status';
-import type {Issue,Report,ReportSummary} from '@/lib/types';
+import { OfficeDesk } from '@/components/developments/office/OfficeDesk';
 
-type View='home'|'projects'|'reports'|'issues'|'help';
-type Snapshot={reports:ReportSummary[];drafts:OfficeDraftSummary[];issues:Issue[]};
-const labels:Record<View,string>={home:'Office home',projects:'Projects',reports:'Reports',issues:'Issues & actions',help:'Help & install'};
-const active=(i:Issue)=>i.work!=='closed'&&i.confirmation!=='withdrawn';
-const day=(value:string)=>new Date(value).toLocaleDateString('en-CA',{timeZone:'Europe/London'});
-const date=(value?:string)=>value?new Date(value).toLocaleString('en-GB',{timeZone:'Europe/London',day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'}):'Not recorded';
+export const dynamic = 'force-dynamic';
 
-export default function OfficePage(){
- const principal=usePrincipal(),router=useRouter(),query=useSearchParams();
- const view:View=Object.hasOwn(labels,query.get('view')??'')?query.get('view') as View:'home';
- const project=query.get('project')??'',filter=query.get('filter')??'';
- const [search,setSearch]=useState(''),[data,setData]=useState<Snapshot|null>(null),[error,setError]=useState('');
- const [selected,setSelected]=useState(''),[report,setReport]=useState<Report|null>(null),[readError,setReadError]=useState('');
- const generation=useRef(0);
- const projects=FIXTURE_PROJECTS.filter(p=>principal&&canAccessProject(principal,p.id)&&['4. Active','5. Defects Liability'].includes(p.status));
- const projectName=(id:string)=>FIXTURE_PROJECTS.find(p=>p.id===id)?.projectName??id;
- const refresh=useCallback(async()=>{
-  const request=++generation.current;
-  try{
-   // Fetch every page before publishing totals, never represent a page as the portfolio.
-   const reports:ReportSummary[]=[],drafts:OfficeDraftSummary[]=[];let offset:number|null=0;
-   while(offset!==null){const page=await officeView(offset);if(request!==generation.current)return;reports.push(...page.awaitingReview,...page.submitted);drafts.push(...page.drafts);offset=page.next;}
-   const response=await fetch('/api/issues',{cache:'no-store'});if(!response.ok)throw Error('Unable to load issues.');
-   const issues=(await response.json()).issues as Issue[];
-   if(request===generation.current){setData({reports:[...new Map(reports.map(r=>[r.id,r])).values()].sort((a,b)=>(b.serverAcknowledgedAt??'').localeCompare(a.serverAcknowledgedAt??'')),drafts:[...new Map(drafts.map(r=>[r.id,r])).values()],issues});setError('');}
-  }catch(e){if(request===generation.current)setError(e instanceof Error?e.message:'Unable to refresh office records.');}
- },[]);
- useEffect(()=>{let stopped=false;let timer:ReturnType<typeof setTimeout>;async function poll(){if(document.visibilityState==='visible')await refresh();if(!stopped)timer=setTimeout(poll,15000);}void poll();return()=>{stopped=true;clearTimeout(timer);generation.current++;};},[refresh]);
- useEffect(()=>{let stopped=false;setReport(null);setReadError('');if(selected)void getReport(selected).then(r=>{if(!stopped){if(r?.state==='submitted')setReport(r);else setReadError('Submitted report is unavailable.');}}).catch(e=>{if(!stopped)setReadError(e.message);});return()=>{stopped=true;};},[selected]);
- function navigate(next:View,projectId='',nextFilter=''){const q=new URLSearchParams({view:next});if(projectId)q.set('project',projectId);if(nextFilter)q.set('filter',nextFilter);router.push('/office?'+q);setSelected('');setSearch('');}
- const matches=(text:string)=>text.toLowerCase().includes(search.toLowerCase());
- const today=day(new Date().toISOString());
- const overdue=(i:Issue)=>active(i)&&/^\d{4}-\d{2}-\d{2}$/.test(i.targetDate)&&i.targetDate<today;
- const issues=(data?.issues??[]).filter(i=>(!project||i.projectId===project)&&matches(`${i.reference} ${i.description} ${i.owner} ${i.affectedTrade??''} ${projectName(i.projectId)}`));
- const reports=(data?.reports??[]).filter(r=>(!project||r.projectId===project)&&matches(`${r.reference} ${r.author} ${r.authorTrade??''} ${projectName(r.projectId)}`));
- const drafts=(data?.drafts??[]).filter(r=>(!project||r.projectId===project)&&matches(`${r.reference} ${r.author} ${projectName(r.projectId)}`));
- const attention=issues.filter(i=>active(i)&&(overdue(i)||i.work==='awaiting_verification'||!i.owner||i.confirmation==='provisional')).sort((a,b)=>Number(overdue(b))-Number(overdue(a)));
- const issueRows=(items:Issue[])=>items.length?items.map(i=><Link className="of-item" key={i.id} href={`/issues/${i.id}`}><span className={`tag ${overdue(i)?'tag-returned':''}`}>{overdue(i)?'Overdue':i.work==='awaiting_verification'?'Ready to verify':i.confirmation==='withdrawn'?'Withdrawn':i.work.replaceAll('_',' ')}</span><div><strong>{i.description}</strong><p>{projectName(i.projectId)} · {i.affectedTrade??'Trade not recorded'}</p><small>{i.owner||'Unassigned'}{i.targetDate?` · Due ${i.targetDate}`:''} · {i.reference}</small></div><span className="of-arrow">Open →</span></Link>):<p className="of-empty">No matching issues.</p>;
- const reportRows=(items:ReportSummary[])=>items.length?items.map(r=><button className={`of-item of-report ${selected===r.id?'selected':''}`} key={r.id} onClick={()=>{if(view!=='reports')navigate('reports',r.projectId);setSelected(r.id);}}><div><small>{r.reference}</small><strong>{projectName(r.projectId)}</strong><p>{r.author} · {r.authorTrade??'Trade not recorded'}</p><span className="tag tag-received">Received</span> <small>{date(r.serverAcknowledgedAt)}</small></div><span className="of-arrow">Read →</span></button>):<p className="of-empty">No matching reports.</p>;
- const panel=(title:string,children:React.ReactNode,action?:React.ReactNode)=><section className="of-panel"><header><h2>{title}</h2>{action}</header>{children}</section>;
- const go=(text:string,v:View,p='',f='')=><button className="of-link" onClick={()=>navigate(v,p,f)}>{text}</button>;
- const scopedProjects=projects.filter(p=>(!project||p.id===project)&&matches(`${p.projectName} ${p.projectNumber} ${p.projectManager}`));
- return <div className="of-shell"><header className="of-top"><Link className="of-brand" href="/office">RELAY <small>LEODIS</small></Link><label><span className="sr-only">Search office records</span><input type="search" value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search projects, reports or issues"/></label><span>{principal?.name}<small>{principal?.role} · Office view</small></span></header>
- <aside className="of-side"><p className="lbl">Workspace</p>{(['home','projects','reports','issues'] as View[]).map(v=><button key={v} aria-current={view===v?'page':undefined} onClick={()=>navigate(v)}>{labels[v]}</button>)}<button disabled title="A live people directory is not available yet">People & trades · Soon</button><p className="lbl">Resources</p><button disabled>Activity log · Soon</button>{principal?.role==='Admin'&&<Link href="/admin">Administration</Link>}<button aria-current={view==='help'?'page':undefined} onClick={()=>navigate('help')}>Help & install</button><Link href="/engineer">Engineer view →</Link></aside>
- <main className="of-main"><div className="of-crumb"><span>OFFICE / {labels[view].toUpperCase()}</span><span>{project?projectName(project):'All projects'} · {principal?.role} view</span></div>
- {error&&<div role="alert" className="note note-bad">{error} {data?'Showing previously loaded records.':''}<button onClick={()=>void refresh()}>Retry</button></div>}
- <div className="of-heading"><div><h1>{view==='home'?'Your office, connected.':view==='reports'?'Report inbox':labels[view]}</h1><p>{view==='home'?'See what needs attention, then go straight to the project or report.':view==='reports'?'Read submitted reports and review what needs a decision.':'Your projects, reports and next actions.'}</p></div>{view==='home'&&<div className="btn-row">{go('Browse projects','projects')}<button className="of-primary" onClick={()=>navigate('reports')}>Open report inbox →</button></div>}</div>
- {view!=='home'&&view!=='help'&&<div className="of-filter"><label>Project scope<select value={project} onChange={e=>navigate(view,e.target.value,filter)}><option value="">All projects</option>{projects.map(p=><option key={p.id} value={p.id}>{p.projectName}</option>)}</select></label>{view==='issues'&&<label>Show<select value={filter} onChange={e=>navigate(view,project,e.target.value)}><option value="">All issues</option><option value="open">Open issues</option><option value="overdue">Overdue actions</option><option value="verify">Ready to verify</option></select></label>}{view==='reports'&&<label>Folder<select value={filter} onChange={e=>navigate(view,project,e.target.value)}><option value="">All submitted</option><option value="review">To review</option><option value="drafts">In progress on site</option></select></label>}</div>}
- {!data&&view!=='help'?<p role="status">Loading office records…</p>:<>
- {view==='home'&&<><div className="of-stats">{[[issues.filter(overdue).length,'Overdue actions','Past the agreed target date','issues','overdue'],[issues.filter(i=>active(i)&&i.work==='awaiting_verification').length,'Ready to verify','Completion evidence received','issues','verify'],[reports.filter(r=>r.serverAcknowledgedAt&&Date.now()-Date.parse(r.serverAcknowledgedAt)<7*86400000).length,'Reports in last 7 days','Received by RELAY','reports',''],[scopedProjects.length,'Active reporting projects','Active and defects liability','projects','']].map(([n,title,sub,v,f])=><button className="of-stat" key={title} onClick={()=>navigate(v as View,'',String(f))}><span>{title}</span><strong>{n}</strong><small>{sub}</small></button>)}</div>
- <div className="of-launchers"><button onClick={()=>navigate('projects')}><small>PROJECT WORKSPACE</small><h2>Everything about each site</h2><p>Reports, issues and project information</p><span>Browse projects →</span></button><button onClick={()=>navigate('reports')}><small>REPORT INBOX</small><h2>Read, understand, act</h2><p>Site updates with a preview beside the list</p><span>Open latest reports →</span></button></div>
- <div className="of-columns"><div>{panel('Needs attention',<>{reports.filter(r=>r.review==='pending').length>0&&<div className="of-item">{go(`${reports.filter(r=>r.review==='pending').length} reports need review →`,'reports','','review')}</div>}{issueRows(attention.slice(0,5))}</>,go('All actions →','issues'))}{panel('Latest site reports',reportRows(reports.slice(0,5)),go('All reports →','reports'))}</div><div>{panel('Project watch',scopedProjects.slice(0,6).map(p=><div className="of-item" key={p.id}><div>{go(p.projectName,'projects',p.id)}<p>{p.projectNumber} · {p.projectManager}</p><small>{issues.filter(i=>i.projectId===p.id&&active(i)).length} open issues · {issues.filter(i=>i.projectId===p.id&&overdue(i)).length} overdue</small></div></div>),go('View all →','projects'))}{panel('From site today',<div className="of-pad"><strong>{reports.filter(r=>r.serverAcknowledgedAt&&day(r.serverAcknowledgedAt)===today).length} reports received</strong><p>{drafts.length} server-saved drafts in progress</p><small>Unfinished report contents stay private.</small>{go('View draft summaries →','reports','','drafts')}</div>)}</div></div></>}
- {view==='projects'&&<><div className="of-projects">{scopedProjects.map(p=><button className="of-project" key={p.id} onClick={()=>navigate('projects',p.id)}><small>{p.projectNumber} · {p.status}</small><h2>{p.projectName}</h2><p>Manager: {p.projectManager}</p><strong>{issues.filter(i=>i.projectId===p.id&&active(i)).length} open issues</strong><span>Open workspace →</span></button>)}</div>{!scopedProjects.length&&<p>No matching projects.</p>}{project&&<div className="of-columns"><div>{panel('Project reports',reportRows(reports),go('Report inbox →','reports',project))}</div><div>{panel('Project issues',issueRows(issues),<Link href={`/projects/${project}`}>Project details →</Link>)}</div></div>}</>}
- {view==='issues'&&panel('Issues & actions',issueRows(issues.filter(i=>filter==='open'?active(i):filter==='overdue'?overdue(i):filter==='verify'?active(i)&&i.work==='awaiting_verification':true)))}
- {view==='reports'&&(filter==='drafts'?panel('In progress on site',<>{drafts.length?drafts.map(d=><div className="of-item" key={d.id}><div><strong>{projectName(d.projectId)}</strong><p>{d.author} · {d.reference}</p><small>Last saved {date(d.lastSavedAt)}</small></div><span className="tag tag-draft">Draft summary only</span></div>):<p className="of-empty">No matching drafts saved to the server.</p>}<p className="of-pad">Draft content is private until submitted. Work held only on an engineer’s device is not visible here.</p></>):<div className="of-inbox">{panel(filter==='review'?'To review':'Submitted reports',reportRows(reports.filter(r=>filter!=='review'||r.review==='pending')))}{panel('Report preview',!selected?<p className="of-empty">Choose a report to read it here.</p>:readError?<p role="alert" className="of-pad">{readError}</p>:!report?<p className="of-empty">Loading report…</p>:<div className="of-pad"><small>{report.reference} · Visit {report.visitDate}</small><h2>{projectName(report.projectId)}</h2><p>{report.author} · {report.authorTrade??'Trade not recorded'}</p><p>{reviewStatus(report)?.label} · {deliveryStatus(report)?.label}</p><div className="btn-row"><Link href={`/reports/${report.id}/preview`}>Open full report →</Link><Link href={`/reports/${report.id}/pdf`}>View PDF →</Link></div>{report.observations.map(o=><section className="of-observation" key={o.id}><small>{o.type==='update'?'Progress update':o.type==='instruction'?'Variation required':o.type==='access'?'Access restriction':'Defect'}</small><h3>{o.location||'Location not recorded'}</h3><p>{o.whatHappened}</p>{o.actionNeeded&&<p>Action: {o.actionNeeded}</p>}{o.owner&&<p>Owner: {o.owner}</p>}<div className="of-photos">{o.photos.map(p=><figure key={p.id}><PhotoImage src={p.dataUrl} alt={p.caption||'Site photograph'}/><figcaption>{p.caption}</figcaption></figure>)}</div></section>)}{report.review==='pending'&&data?.reports.find(r=>r.id===report.id)&&<ReviewPanel report={data.reports.find(r=>r.id===report.id)!} onDone={()=>{setSelected('');void refresh();}}/>}</div>)}</div>)}
- {view==='help'&&panel('Install RELAY',<div className="of-pad"><InstallRelay alwaysShow/><p>Use Engineer view for site updates and individual defects. Office provides submitted reports and project issues; unfinished draft contents remain private.</p></div>)}
- </>}
- </main></div>;
+/**
+ * The Developments office. The layout has already required a Manager or
+ * Admin; the desk routes by hash from here (Projects › Register › Details,
+ * Inbox, Issues, Team, and Admin for the Admin role).
+ */
+export default function OfficePage() {
+  return <OfficeDesk fallback="#/projects" />;
 }

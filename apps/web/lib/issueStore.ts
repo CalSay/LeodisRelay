@@ -93,7 +93,8 @@ function raiseIssues(report: Report): Issue[] {
           actor: report.author,
           ...(report.authorId ? {actorId:report.authorId}:{}),
           kind: "progress",
-          note: observation.whatHappened,
+          // A correction says so, so the history does not read as a second visit.
+          note: report.corrects ? `Corrected in ${report.reference} rev ${report.revision}: ${observation.whatHappened}` : observation.whatHappened,
           photos: observation.photos,
         });
         putRecord('issues',existing);
@@ -124,6 +125,7 @@ function raiseIssues(report: Report): Issue[] {
       owner: observation.owner,
       targetDate: "",
       raisedByReport: report.id,
+      raisedByObservation: observation.id,
       raisedAt: new Date().toISOString(),
       events: [
         {
@@ -243,13 +245,20 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
       break;
 
     case "assign": {
-      const moved = transition(
-        toContract(issue),
-        { axis: "work", to: "assigned", actor: (command.actorId ?? command.actor) as never },
-        DEVELOPMENTS_POLICY,
-      );
-      if (!moved.ok) return { ok: false, status: 422, reason: moved.reason };
-      next.work = moved.issue.work as typeof next.work;
+      // Reassigning, or giving an already-assigned issue a target date, is
+      // not a state change and the state graph rightly refuses one. Only an
+      // open issue moves; the rest keep their work status and gain an event.
+      if (issue.work === "open") {
+        const moved = transition(
+          toContract(issue),
+          { axis: "work", to: "assigned", actor: (command.actorId ?? command.actor) as never },
+          DEVELOPMENTS_POLICY,
+        );
+        if (!moved.ok) return { ok: false, status: 422, reason: moved.reason };
+        next.work = moved.issue.work as typeof next.work;
+      } else if (issue.work !== "assigned" && issue.work !== "in_progress") {
+        return { ok: false, status: 422, reason: `An issue that is ${issue.work.replaceAll('_', ' ')} cannot be reassigned. Reopen it first.` };
+      }
       next.owner = command.owner ?? issue.owner;
       next.targetDate = command.targetDate ?? issue.targetDate;
       event.kind = "assigned";
@@ -287,9 +296,12 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
     }
 
     case "reopen": {
+      // A closure the office is not satisfied with goes back to in progress:
+      // the work has an owner and a history, so "open" would be a lie. Only a
+      // verified closure reopens fully.
       const moved = transition(
         toContract(issue),
-        { axis: "work", to: "open", actor: (command.actorId ?? command.actor) as never },
+        { axis: "work", to: issue.work === "awaiting_verification" ? "in_progress" : "open", actor: (command.actorId ?? command.actor) as never },
         DEVELOPMENTS_POLICY,
       );
       if (!moved.ok) return { ok: false, status: 422, reason: moved.reason };

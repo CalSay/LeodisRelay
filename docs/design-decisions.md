@@ -67,3 +67,71 @@ sign-in errors, appearance control and installation guidance remain available.
   date. Marking a visit on site does not file anything.
 - The Compliance workspace owns its chrome; the Developments navigation is hidden
   under `/compliance`. Authentication and role checks are unchanged.
+
+9 September 2026 — Developments Office and Administration rebuilt from the
+approved Portfolio desk concept.
+
+- Concept 1, "Portfolio desk", in `developments-office-admin-concepts-2026-09-09.html`
+  is approved for desktop and mobile. Concepts 2 and 3 are retained as history;
+  their reader ordering (actions and decisions first) and action lanes (every
+  attention item carries its verb) were folded into the build as recommended.
+- One workspace stylesheet, `apps/web/app/workspace.css` (scope `.ws`), lifted
+  from `compliance.css` with the accent as a variable: gold for Developments,
+  aquamarine for Compliance. Neutrals are the Compliance workspace's, so both
+  offices sit on one palette and differ only in the accent role. Compliance
+  still loads its own `compliance.css`; moving it onto `workspace.css` is a
+  follow-up, not a change made here.
+- `/office` is the desk for Managers and Admins: Projects › Register › Details,
+  Inbox with the reader beside it, Issues, Team, and Admin for the Admin role
+  only. `/admin` opens the same desk on the Admin tab, so the hub's Admin
+  destination and older links keep working. Hash routes carry the position:
+  `#/projects/011LME/report/<id>`, `#/projects/011LME/issue/<id>`,
+  `#/inbox/<id>`, `#/issues`, `#/team`, `#/admin/roles|drafts|delivery|help`.
+- Below 700px the tab strip is a bottom bar, the column browser shows one
+  level at a time with a back link, and tables scroll inside their panel. The
+  phone lists drawn in the concept were not rebuilt as cards in this pass.
+- The engineer side was changed so the two sides marry (findings and order in
+  `office-engineer-reconciliation-2026-09-09.md`): the engineer's report list
+  and page use the office's review, notification and read words; the email to
+  the project manager is shown for what it is, a notification that a report
+  came in ("PM notified" or "PM not notified", quiet), never as delivery of the
+  report, which is on file the moment it is received; report summaries carry
+  per-kind counts so the register can say what a visit found; the office sees
+  the section count and trade on another engineer's draft, never its contents;
+  the author of a sent report can start a correction (a new revision that keeps
+  the photographs and links its defects to the issues already raised, so
+  sending it adds a sighting rather than a duplicate); the office can
+  acknowledge a report, and the engineer sees who read it.
+- Two store rules met while building. An issue raised with an owner named on
+  site is already "assigned", so assigning again updates the owner and target
+  without a state change instead of being refused. A closure the office is not
+  satisfied with goes back to in progress ("Not finished"), because the state
+  graph does not allow awaiting verification to reopen.
+- Development only: `RELAY_LOCAL_ROLE=Manager` or `Admin` in
+  `apps/web/.env.local` lets local sign-in open the office. A production build
+  ignores it, so a demonstration build still receives Engineer only.
+- Not built, on purpose: Chase (no command behind it), Projects & review
+  settings (shown as planned), Team as an assignee list (issue owners are names
+  or companies typed on site, not accounts).
+
+## Implementation verification, 9 September 2026
+
+- Production build passed under Node 24, including the worker build.
+- 145 shared tests and 18 web tests passed, the web set including new checks
+  for corrections (no duplicate issues, photographs kept), acknowledgement,
+  the draft allowlist, reassignment of an assigned issue and the quiet
+  notification words.
+- `scripts/verify-role-access.mjs` passed 61 checks against the production
+  build. Three of its landing-page assertions were brought in line with the
+  8 September decision that `/` is company selection and `/developments`
+  routes by role; they had not been updated when the hub landed.
+- Local browser checks on the development server with a seeded store: the
+  Projects browser, project sheet, report reader, issue sheet, Inbox with
+  reader, Issues, Team and the Admin sections rendered; an Assign command was
+  run end to end from the issue sheet; the phone layout was checked at 375
+  pixels (one column per level, back links, fixed bottom tab bar, no
+  horizontal scroll); the engineer's returned report showed the reviewer's
+  note and the same status words as the office.
+- Not exercised: the Playwright engineer-layout script (Playwright is not
+  installed in this checkout), live Microsoft sign-in, and the worker sending
+  a notification, which the pilot does not do.

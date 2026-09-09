@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getReport, reviewSubmission, saveDraft, submitReport } from "@/lib/serverStore";
+import { acknowledgeReport, correctReport, getReport, reviewSubmission, saveDraft, submitReport } from "@/lib/serverStore";
 import { requireSession, visibleTo } from "@/lib/auth/guard";
 import type { Report } from "@/lib/types";
 import { validateObservations } from '@/lib/validatePhotos';
@@ -46,7 +46,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   if (body.requestId !== undefined && (typeof body.requestId !== 'string' || !/^[a-f0-9-]{36}$/.test(body.requestId))) {
     return NextResponse.json({reason:'Invalid save request ID.'},{status:422});
   }
-  const validation = await validateObservations(body.observations, id, existing.observations);
+  const validation = await validateObservations(body.observations, id, existing.observations, existing.corrects);
   if (validation) return NextResponse.json({ reason: validation }, { status: 422 });
 
   const outcome = saveDraft(
@@ -69,10 +69,11 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const body = (await request.json().catch(() => ({}))) as {
-    action?: "review";
+    action?: "review" | "correct" | "acknowledge";
     decision?: "approve" | "return";
     reviewer?: string;
     note?: string;
+    reason?: string;
     signature?: { dataUrl?: string; name: string };
     expectedVersion?: number;
   };
@@ -80,8 +81,25 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
   const principal = guard.principal;
-  if (body.action !== undefined && body.action !== 'review') return NextResponse.json({reason:'Unknown report action.'},{status:422});
+  if (body.action !== undefined && !['review','correct','acknowledge'].includes(body.action)) return NextResponse.json({reason:'Unknown report action.'},{status:422});
   if (body.note !== undefined && typeof body.note !== 'string') return NextResponse.json({reason:'Review note must be text.'},{status:422});
+
+  // The office has read it. A manager's act, recorded against the session.
+  if (body.action === 'acknowledge') {
+    if (!canManage(principal)) return NextResponse.json({reason:'Manager access required.'},{status:403});
+    const outcome = acknowledgeReport(id, principal, body.note ?? '');
+    return outcome.ok ? NextResponse.json(outcome.value) : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });
+  }
+
+  // A new revision, by the author, of a report already sent. The sent one is
+  // never edited; the correction is a draft that supersedes it once sent.
+  if (body.action === 'correct') {
+    if (typeof body.reason !== 'string') return NextResponse.json({reason:'Say why this correction is needed.'},{status:422});
+    const original = getReport(id);
+    if (!original || !ownsReport(principal,original)) return NextResponse.json({ reason: 'Only the author can correct a report.' }, { status: 403 });
+    const outcome = correctReport(id, body.reason);
+    return outcome.ok ? NextResponse.json(outcome.value, { status: 201 }) : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });
+  }
   if (body.signature !== undefined && (!body.signature || typeof body.signature.name !== 'string' ||
       (body.signature.dataUrl !== undefined && (typeof body.signature.dataUrl !== 'string' ||
        body.signature.dataUrl.length > 1000000 || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(body.signature.dataUrl))))) {

@@ -60,6 +60,19 @@ affected trade and reporter. Open, Reported by me, and All issues filters are
 available within the selected project scope. Older issues without trade metadata
 are labelled as not recorded.
 
+## What the office sees, and what comes back
+
+Added 9 September 2026 with the office desk. The Reports list and a submitted
+report show the same words the office uses: received, then review (awaiting,
+approved, returned for changes, or no review required), the PDF and the
+notification email to the project manager (PDF queued, PM notified, PM not
+notified) and whether someone in the office has read it. A
+report the office sent back shows the reviewer's note; its author can start a
+correction from the report page. The correction is a new draft revision that
+keeps the photographs and links its defects to the issues the original raised,
+so sending it adds a sighting to each issue instead of raising them again. The
+sent revision stays on file and the office sees which revision supersedes which.
+
 ## Visible but disabled
 
 - **Trade affected inside report sections:** the report observation model does

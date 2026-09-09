@@ -116,12 +116,17 @@ export function localProvider(): AuthProvider {
       // The "code" is the name typed on the local sign-in screen.
       const name = decodeURIComponent(code).trim() || "Local user";
       const oid = `local-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+      // Engineer, always, for a demonstration build. In development only,
+      // RELAY_LOCAL_ROLE=Manager or Admin lets the office be worked on without
+      // a tenant; a production build ignores it even with local auth allowed.
+      const wanted = process.env.RELAY_LOCAL_ROLE;
+      const role = process.env.NODE_ENV !== "production" && (wanted === "Admin" || wanted === "Manager") ? wanted : "Engineer";
       return {
         id: principalIdFor(oid),
         oid,
         name,
-        email: "",
-        role: 'Engineer',
+        email: role === "Engineer" ? "" : `${oid}@local.invalid`,
+        role,
       };
     },
   };

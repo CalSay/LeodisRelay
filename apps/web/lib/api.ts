@@ -131,6 +131,28 @@ export async function reviewReportDecision(
   );
 }
 
+/** A new revision of a sent report, by its author. Returns the draft to edit. */
+export async function correctReport(reportId: string, reason: string): Promise<Report> {
+  return parse<Report>(
+    await request(`/api/reports/${reportId}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "correct", reason }),
+    }),
+  );
+}
+
+/** The office has read it. Managers and Admins only; the server records who. */
+export async function acknowledgeReport(reportId: string, note = ""): Promise<Report> {
+  return parse<Report>(
+    await request(`/api/reports/${reportId}`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ action: "acknowledge", note }),
+    }),
+  );
+}
+
 export interface OfficeDraftSummary {
   id: string;
   projectId: string;
@@ -144,10 +166,53 @@ export interface OfficeDraftSummary {
 export async function officeView(offset = 0): Promise<{
   awaitingReview: ReportSummary[];
   submitted: ReportSummary[];
-  drafts: OfficeDraftSummary[];
+  /** Other people's drafts arrive allowlisted: reference, author, trade, counts, last saved. Never contents. */
+  drafts: ReportSummary[];
   next:number | null;
 }> {
   return parse(await request(`/api/reports?view=office&offset=${offset}`, { cache: "no-store" }));
+}
+
+/** Every submitted report and every draft summary the office may see, across all pages. */
+export async function officeAll(): Promise<{ reports: ReportSummary[]; drafts: ReportSummary[] }> {
+  const reports: ReportSummary[] = [], drafts: ReportSummary[] = [];
+  let offset: number | null = 0;
+  while (offset !== null) {
+    const page = await officeView(offset);
+    reports.push(...page.awaitingReview, ...page.submitted); drafts.push(...page.drafts);
+    offset = page.next;
+  }
+  const unique = <T extends { id: string }>(items: T[]) => [...new Map(items.map(i => [i.id, i])).values()];
+  return { reports: unique(reports), drafts: unique(drafts) };
+}
+
+export async function allIssues(): Promise<Issue[]> {
+  const data = await parse<{ issues: Issue[] }>(await request('/api/issues', { cache: 'no-store' }));
+  return data.issues;
+}
+
+/** One issue command, attributed by the server to whoever is signed in. */
+export async function issueCommand(issueId: string, body: { kind: string; note: string; owner?: string; targetDate?: string }): Promise<Issue> {
+  return parse<Issue>(await request(`/api/issues/${issueId}`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  }));
+}
+
+export interface TeamMember {
+  email: string; assignment: string; name?: string; role?: string; trade?: string;
+  lastSignedIn?: string; session: 'active' | 'expired' | 'never'; id?: string; onChecklist: boolean;
+}
+export interface OfficeTeam {
+  members: TeamMember[];
+  legacyDrafts?: { id: string; reference: string; author: string; lastSavedAt?: string }[];
+  processing?: {
+    mail: 'live' | 'outbox';
+    jobs: { kind: string; status: string; count: number }[];
+    outbox: { id: string; reference: string; projectId: string; delivery?: string; error?: string; since?: string }[];
+  };
+}
+export async function officeTeam(): Promise<OfficeTeam> {
+  return parse<OfficeTeam>(await request('/api/office/team', { cache: 'no-store' }));
 }
 
 export async function openIssues(projectId: string): Promise<Issue[]> {

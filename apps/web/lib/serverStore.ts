@@ -1,7 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type { Principal } from '@relay/platform';
 import { canManage, ownsReport } from './auth/access';
-import type { Report, ReportSummary, Observation } from './types';
+import type { Issue, Report, ReportSummary, Observation } from './types';
 import { reviewReport } from './review';
 import { FIXTURE_PROJECTS } from './fixtures';
 import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } from './issueStore';
@@ -25,11 +25,15 @@ export function reportsFor(principal: Principal, projectId?: string, offset = 0)
   return { items: rows.slice(0,50).map(row => {
     const r = JSON.parse(row.summary as string) as ReportSummary;
     if (r.state === 'submitted' || ownsReport(principal,r)) return r;
-    // Explicit allowlist: no notes, signature, delivery details or correction text.
-    return { id:r.id,projectId:r.projectId,reference:r.reference,visitDate:r.visitDate,
-      author:r.author,...(r.authorId ? {authorId:r.authorId}:{}),state:r.state,
-      version:r.version,revision:r.revision,review:r.review,lastSavedAt:r.lastSavedAt,
-      observationCount:0,photoCount:0,defectCount:0 };
+    // Explicit allowlist: no notes, signature, delivery details or correction
+    // text. A section count and the author's trade are not contents; they let
+    // the office say "3 sections, Electrical" without reading a word.
+    const allowed: ReportSummary = { id:r.id,projectId:r.projectId,reference:r.reference,visitDate:r.visitDate,
+      author:r.author,...(r.authorId ? {authorId:r.authorId}:{}),...(r.authorTrade ? {authorTrade:r.authorTrade}:{}),
+      state:r.state,version:r.version,revision:r.revision,review:r.review,
+      ...(r.lastSavedAt ? {lastSavedAt:r.lastSavedAt}:{}),...(r.corrects ? {corrects:r.corrects}:{}),
+      observationCount:r.observationCount,photoCount:0,defectCount:0 };
+    return allowed;
   }), next: rows.length > 50 ? offset + 50 : null };
 }
 
@@ -138,10 +142,33 @@ export function correctReport(id: string, reason: string): StoreOutcome<Report> 
     if (!reason.trim()) return reject('Say why this correction is needed.',422);
     const previous = records<Report>('reports',original.projectId).find(r => r.corrects === id);
     if (previous) return { ok: true, value: previous };
-    const { signature, issued, delivery, serverAcknowledgedAt, reviewedAt, reviewedBy, reviewedById, reviewNote, ...base } = original;
-    const correction: Report = { ...base, id: 'rep-' + randomUUID(), state: 'draft', review: 'not_required', revision: original.revision + 1, version: 1, corrects: id, correctionReason: reason.trim(), lastSavedAt: new Date().toISOString() };
+    const { signature, issued, delivery, serverAcknowledgedAt, reviewedAt, reviewedBy, reviewedById, reviewNote, acknowledged, ...base } = original;
+    // The original's defects already raised issues. Point the copied updates at
+    // them, so sending the correction adds a sighting to each issue rather than
+    // raising the same defect again under a new reference.
+    const raised = records<Issue>('issues',original.projectId).filter(i => i.raisedByReport === id);
+    const observations = base.observations.map(o => {
+      if (o.linkedIssueId || (o.type !== 'defect' && o.type !== 'access')) return o;
+      const match = raised.find(i => i.raisedByObservation === o.id)
+        ?? raised.find(i => !i.raisedByObservation && i.location === o.location && i.description === o.whatHappened);
+      return match ? { ...o, linkedIssueId: match.id } : o;
+    });
+    const correction: Report = { ...base, observations, id: 'rep-' + randomUUID(), state: 'draft', review: 'not_required', revision: original.revision + 1, version: 1, corrects: id, correctionReason: reason.trim(), lastSavedAt: new Date().toISOString() };
     putRecord('reports',correction);
     return { ok: true, value: correction };
+  });
+}
+
+/** The office has read it. Recorded once; a second acknowledgement returns the first. */
+export function acknowledgeReport(id: string, principal: Principal, note: string): StoreOutcome<Report> {
+  return atomic(() => {
+    const report = getReport(id);
+    if (!report) return reject('No such report.',404);
+    if (report.state !== 'submitted') return reject('Only a submitted report can be acknowledged.');
+    if (report.acknowledged) return { ok: true, value: report };
+    const acknowledged: Report = { ...report, acknowledged: { by: principal.name, byId: principal.id, at: new Date().toISOString(), ...(note.trim() ? { note: note.trim() } : {}) } };
+    putRecord('reports',acknowledged);
+    return { ok: true, value: acknowledged };
   });
 }
 

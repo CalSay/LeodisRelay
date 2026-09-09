@@ -81,6 +81,10 @@ export function putRecord(kind: string, row: { id: string; [key: string]: any })
     ...small, observationCount: observations?.length ?? 0,
     photoCount: observations?.reduce((n: number, o: any) => n + o.photos.length, 0) ?? 0,
     defectCount: observations?.filter((o: any) => o.type === 'defect' || o.type === 'access').length ?? 0,
+    // Per kind, so the office can say what a visit found rather than how many sections were typed.
+    kindCounts: ['update','defect','instruction','access'].reduce((acc: Record<string, number>, kind) => {
+      acc[kind] = observations?.filter((o: any) => o.type === kind).length ?? 0; return acc;
+    }, {}),
   } : small;
   database().prepare(`INSERT INTO records VALUES (?,?,?,?,?,?,?)
     ON CONFLICT(kind,id) DO UPDATE SET project=excluded.project,state=excluded.state,
