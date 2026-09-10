@@ -1,0 +1,22 @@
+{
+  "@microsoft/generator-sharepoint": {
+    "whichFolder": "subdir",
+    "solutionName": "leodis-operations-dashboard",
+    "useGulp": false,
+    "componentType": "webpart",
+    "template": "none",
+    "componentName": "OperationsDashboard",
+    "plusBeta": false,
+    "isCreatingSolution": true,
+    "nodeVersion": "22.23.2",
+    "sdksVersions": {},
+    "version": "1.23.2",
+    "libraryName": "leodis-operations-dashboard",
+    "libraryId": "0f6235ee-9644-474b-911b-b18641b04a1b",
+    "environment": "spo",
+    "packageManager": "npm",
+    "solutionShortDescription": "leodis-operations-dashboard description",
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "523b834b-1bb8-43a8-a8f1-4566719d2ec4",
+  "alias": "OperationsDashboardWebPart",
+  "componentType": "WebPart",
+  "version": "*",
+  "manifestVersion": 2,
+  "requiresCustomScript": false,
+  "supportedHosts": [
+    "SharePointWebPart",
+    "SharePointFullPage"
+  ],
+  "supportsFullBleed": true,
+  "supportsThemeVariants": false,
+  "preconfiguredEntries": [
+    {
+      "groupId": "5c03119e-3074-46fd-976b-c60198311f70",
+      "group": {
+        "default": "Advanced"
+      },
+      "title": {
+        "default": "Leodis Operations Dashboard"
+      },
+      "description": {
+        "default": "The approved Leodis dashboard with cards, search and company links."
+      },
+      "officeFabricIconFontName": "ViewDashboard",
+      "properties": {}
+    }
+  ]
+}

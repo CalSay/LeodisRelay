@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "leodis-operations-dashboard-client-side-solution",
+    "id": "0f6235ee-9644-474b-911b-b18641b04a1b",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": false,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "Leodis Developments",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.23.2"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "Leodis Operations Dashboard"
+      },
+      "longDescription": {
+        "default": "Approved Leodis dashboard with project shortcuts, report queues, company hubs and searchable resource directory. No API permissions requested."
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "leodis-operations-dashboard Feature",
+        "description": "The feature that activates elements of the leodis-operations-dashboard solution.",
+        "id": "713342a1-3524-4abb-8fd2-47519796c0c9",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/leodis-operations-dashboard.sppkg"
+  }
+}

@@ -1,0 +1,981 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Developments Hub Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Relay · Leodis Developments · hub concepts, 9 September 2026.
+
+   Three working prototypes of the Developments office hub, drawn over one
+   invented data set. Palette and type are the app's own (globals.css); the only
+   added token is --sunken, a recessed ground so a panel reads as raised without
+   a shadow or radius. Nothing here is wired to the application. */
+:root {
+  color-scheme: light;
+  --ground: #f1f1ee; --sunken: #e7e7e3; --panel: #ffffff; --panel-2: #ececea; --panel-3: #e0e0dc;
+  --line: #dcdbd6; --line-2: #c6c5bf;
+  --text: #1a1b19; --text-2: #55564f; --text-3: #6b6c65;
+  --brass: #7d621b; --brass-2: #a8842f; --brass-ink: #ffffff; --brass-wash: rgba(125,98,27,.09);
+  --alert: #a83c22; --alert-wash: rgba(168,60,34,.09);
+  --caution: #7d5a12; --caution-wash: rgba(125,90,18,.11);
+  --ok: #2b6b48; --ok-wash: rgba(43,107,72,.10);
+  --rail: #3a3f31; --rail-2: #454b36; --rail-line: #555c45; --rail-text: #f3f2ec; --rail-dim: #b9bba9; --rail-brass: #d9ae4a;
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px;
+  --r: 2px;
+  --sans: "Archivo", "Segoe UI", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #0e1013; --sunken: #0a0c0e; --panel: #15181b; --panel-2: #1b1f23; --panel-3: #23282d;
+    --line: #23282c; --line-2: #333a40;
+    --text: #e9ebec; --text-2: #99a1a8; --text-3: #7a828a;
+    --brass: #d9ae4a; --brass-2: #a8842f; --brass-ink: #14171a; --brass-wash: rgba(217,174,74,.09);
+    --alert: #e2705a; --alert-wash: rgba(226,112,90,.11);
+    --caution: #dda94f; --caution-wash: rgba(221,169,79,.11);
+    --ok: #63b78d; --ok-wash: rgba(99,183,141,.11);
+    --rail: #0a0c0e; --rail-2: #111417; --rail-line: #23282c; --rail-text: #e9ebec; --rail-dim: #8c949b; --rail-brass: #d9ae4a;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #0e1013; --sunken: #0a0c0e; --panel: #15181b; --panel-2: #1b1f23; --panel-3: #23282d;
+  --line: #23282c; --line-2: #333a40;
+  --text: #e9ebec; --text-2: #99a1a8; --text-3: #7a828a;
+  --brass: #d9ae4a; --brass-2: #a8842f; --brass-ink: #14171a; --brass-wash: rgba(217,174,74,.09);
+  --alert: #e2705a; --alert-wash: rgba(226,112,90,.11);
+  --caution: #dda94f; --caution-wash: rgba(221,169,79,.11);
+  --ok: #63b78d; --ok-wash: rgba(99,183,141,.11);
+  --rail: #0a0c0e; --rail-2: #111417; --rail-line: #23282c; --rail-text: #e9ebec; --rail-dim: #8c949b; --rail-brass: #d9ae4a;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; background: var(--ground); color: var(--text); font-family: var(--sans); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; overflow: hidden; }
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; color: inherit; }
+:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+/* ---- Concept switcher (document chrome, not part of any concept) ---- */
+#sw { height: 42px; display: flex; align-items: center; gap: var(--s4); padding: 0 var(--s4); background: var(--text); color: var(--ground); font-family: var(--mono); font-size: 11px; letter-spacing: .08em; }
+#sw .t { text-transform: uppercase; opacity: .7; }
+#sw .seg { display: flex; border: 1px solid rgba(255,255,255,.25); border-radius: var(--r); overflow: hidden; }
+#sw .seg button { background: none; border: 0; color: inherit; padding: 6px 14px; font: inherit; letter-spacing: .08em; opacity: .7; border-right: 1px solid rgba(255,255,255,.25); }
+#sw .seg button:last-child { border-right: 0; }
+#sw .seg button.on { background: var(--brass); color: var(--brass-ink); opacity: 1; }
+#sw .seg button:hover { opacity: 1; }
+#sw .sp { margin-left: auto; }
+#sw .lk { background: none; border: 1px solid rgba(255,255,255,.25); color: inherit; padding: 5px 10px; font: inherit; letter-spacing: .08em; text-transform: uppercase; border-radius: var(--r); opacity: .85; }
+#sw .lk:hover { opacity: 1; border-color: var(--brass); }
+#stage { height: calc(100vh - 42px); min-width: 1180px; overflow: hidden; }
+#stage > div { height: 100%; display: flex; flex-direction: column; }
+
+/* ---- Brief drawer ---- */
+#brief { position: fixed; top: 42px; right: 0; bottom: 0; width: 470px; background: var(--panel); border-left: 1px solid var(--line-2); box-shadow: -12px 0 32px rgba(0,0,0,.14); z-index: 60; overflow: auto; padding: var(--s5); transform: translateX(100%); transition: transform .18s ease; }
+#brief.open { transform: none; }
+#brief h2 { font-size: 18px; font-weight: 500; margin: 0 0 var(--s2); letter-spacing: -.01em; }
+#brief .kick { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--brass); margin-bottom: var(--s2); }
+#brief h4 { font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--text-3); margin: var(--s5) 0 var(--s2); font-weight: 500; }
+#brief p, #brief li { font-size: 13px; color: var(--text-2); margin: 0 0 var(--s2); }
+#brief ul { padding-left: 18px; margin: 0; }
+#brief li b { color: var(--text); font-weight: 500; }
+#brief .x { position: absolute; top: var(--s3); right: var(--s3); background: none; border: 0; font-size: 18px; color: var(--text-3); }
+#brief table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: var(--s2); }
+#brief th { text-align: left; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); font-weight: 500; padding: 6px 8px; border-bottom: 1px solid var(--line-2); }
+#brief td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; color: var(--text-2); }
+#brief td:first-child { color: var(--text); font-weight: 500; white-space: nowrap; }
+#brief .rec { margin-top: var(--s4); border: 1px solid var(--brass); border-left-width: 3px; background: var(--brass-wash); padding: var(--s3) var(--s4); }
+#brief .rec p { margin: 0 0 var(--s2); }
+#toasts { position: fixed; right: 24px; bottom: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 80; }
+.toast { background: var(--text); color: var(--ground); font-size: 13px; padding: 10px 14px; border-left: 3px solid var(--brass); box-shadow: 0 8px 24px rgba(0,0,0,.2); max-width: 440px; }
+
+/* ---- Shared register primitives (the system's own idiom) ---- */
+.tag { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-family: var(--mono); font-size: 10px; letter-spacing: .07em; text-transform: uppercase; border: 1px solid; border-radius: var(--r); padding: 2px var(--s2); }
+.tag::before { content: "\25CF"; font-size: 8px; line-height: 1; }
+.tag-ok { color: var(--ok); border-color: var(--ok); background: var(--ok-wash); }
+.tag-alert { color: var(--alert); border-color: var(--alert); background: var(--alert-wash); }
+.tag-alert::before { content: "\25B2"; }
+.tag-caution { color: var(--caution); border-color: var(--caution); background: var(--caution-wash); }
+.tag-caution::before { content: "\25C6"; }
+.tag-quiet { color: var(--text-3); border-color: var(--line-2); background: transparent; }
+.tag-quiet::before { content: "\25CB"; }
+.tag-brass { color: var(--brass); border-color: var(--brass); background: var(--brass-wash); }
+.tag-brass::before { content: "\25A0"; }
+.ref { font-family: var(--mono); font-size: 12px; color: var(--brass); letter-spacing: .02em; font-weight: 500; white-space: nowrap; }
+.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.due { font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.late { color: var(--alert); } .soon { color: var(--caution); } .fine { color: var(--text-3); } .okc { color: var(--ok); }
+.btn { font-family: var(--mono); font-size: 11px; letter-spacing: .09em; text-transform: uppercase; background: var(--brass); color: var(--brass-ink); border: 1px solid var(--brass); border-radius: var(--r); padding: var(--s2) var(--s4); white-space: nowrap; }
+.btn:hover { filter: brightness(1.08); }
+.btn-q { background: transparent; color: var(--text-2); border-color: var(--line-2); }
+.btn-q:hover { color: var(--brass); border-color: var(--brass); filter: none; }
+.btn-sm { padding: 5px var(--s3); font-size: 10px; }
+.actions { display: flex; gap: var(--s2); align-items: center; flex-wrap: wrap; }
+.panel { background: var(--panel); border: 1px solid var(--line); min-width: 0; }
+.panel-head { display: flex; align-items: center; gap: var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); }
+.panel-head h4 { margin: 0; font-family: var(--mono); font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: .12em; color: var(--text-2); }
+.panel-head .more { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--brass); letter-spacing: .06em; background: none; border: 0; padding: 0; }
+.panel-head .more:hover { text-decoration: underline; }
+.panel-foot { padding: var(--s3) var(--s4); border-top: 1px solid var(--line); font-size: 12px; color: var(--text-3); display: flex; gap: var(--s3); align-items: center; }
+.panel-foot .more { margin-left: auto; font-family: var(--mono); font-size: 11px; color: var(--brass); background: none; border: 0; padding: 0; }
+table.reg { width: 100%; border-collapse: collapse; }
+table.reg th { text-align: left; font-family: var(--mono); font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .11em; color: var(--text-3); padding: var(--s2) var(--s4); border-bottom: 1px solid var(--line-2); background: var(--panel-2); white-space: nowrap; }
+table.reg td { padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); vertical-align: top; font-size: 13px; }
+table.reg tr:last-child td { border-bottom: 0; }
+table.reg tbody tr.go { cursor: pointer; }
+table.reg tbody tr.go:hover { background: var(--brass-wash); }
+table.reg tr.sel { background: var(--brass-wash); box-shadow: inset 2px 0 0 var(--brass); }
+table.reg td.r, table.reg th.r { text-align: right; }
+table.reg .arrow { color: var(--text-3); font-family: var(--mono); }
+.rowtitle { font-weight: 500; font-size: 13.5px; }
+.rowsub { font-size: 12px; color: var(--text-3); margin-top: 2px; }
+.rowsub .sep { color: var(--line-2); margin: 0 6px; }
+.mini { display: flex; gap: var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); align-items: flex-start; width: 100%; text-align: left; background: none; border-left: 2px solid transparent; border-right: 0; border-top: 0; }
+.mini:last-child { border-bottom: 0; }
+.mini:hover { background: var(--brass-wash); }
+.mini.on { background: var(--brass-wash); border-left-color: var(--brass); }
+.mini-b { flex: 1; min-width: 0; }
+.mini-b p { margin: 0; font-size: 13px; }
+.age { font-family: var(--mono); font-size: 11px; color: var(--text-3); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.empty { padding: var(--s6) var(--s5); color: var(--text-3); font-size: 13px; text-align: center; }
+.chip { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; border: 1px solid var(--line-2); border-radius: var(--r); padding: 3px var(--s3); color: var(--text-2); background: var(--panel); white-space: nowrap; cursor: pointer; }
+.chip:hover { border-color: var(--brass); }
+.chip.on { border-color: var(--brass); color: var(--brass); background: var(--brass-wash); }
+.chip.warn { color: var(--alert); }
+.chip.warn.on { border-color: var(--alert); background: var(--alert-wash); }
+.chip i { font-style: normal; opacity: .75; margin-left: 4px; }
+.filters { display: flex; align-items: center; gap: var(--s2); flex-wrap: wrap; padding: var(--s3) var(--s4); background: var(--panel-2); border: 1px solid var(--line); }
+.filters .spacer { margin-left: auto; }
+.cbar { display: flex; height: 6px; width: 100%; background: var(--panel-3); border-radius: 1px; overflow: hidden; }
+.cbar i { display: block; height: 100%; }
+.cbar .late { background: var(--alert); } .cbar .verify { background: var(--brass-2); } .cbar .open { background: var(--line-2); }
+.cbar-key { display: flex; gap: var(--s4); font-family: var(--mono); font-size: 10px; letter-spacing: .06em; color: var(--text-3); text-transform: uppercase; flex-wrap: wrap; }
+.cbar-key span::before { content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 6px; vertical-align: -1px; }
+.cbar-key .k-late::before { background: var(--alert); } .cbar-key .k-verify::before { background: var(--brass-2); } .cbar-key .k-open::before { background: var(--line-2); }
+.figs { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--line); background: var(--panel); }
+.figs button { text-align: left; padding: var(--s4); border: 0; border-right: 1px solid var(--line); background: none; display: block; }
+.figs button:last-child { border-right: 0; }
+.figs button:hover { background: var(--brass-wash); }
+.figs button.hot { box-shadow: inset 0 3px 0 var(--alert); }
+.figs button.hot dd { color: var(--alert); }
+.figs dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .11em; color: var(--text-3); }
+.figs dd { margin: var(--s2) 0 0; font-family: var(--mono); font-size: 26px; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1.1; }
+.figs dd small { font-size: 12px; color: var(--text-3); letter-spacing: 0; margin-left: 6px; font-family: var(--sans); }
+.figs .go { display: block; margin-top: var(--s2); font-family: var(--mono); font-size: 10px; letter-spacing: .08em; color: var(--brass); text-transform: uppercase; }
+.sheet { background: var(--panel); border: 1px solid var(--line); padding: var(--s4) var(--s5) var(--s5); min-width: 0; }
+.sheet-title { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--s4); border-bottom: 1px solid var(--line-2); padding-bottom: var(--s3); }
+.sheet-title h4 { margin: 6px 0 var(--s1); font-size: 18px; font-weight: 500; letter-spacing: -.015em; }
+.sheet-title .rowsub { margin-top: 0; }
+.crumbs { font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: .03em; }
+.crumbs button, .crumbs a { font-weight: 500; color: var(--brass); background: none; border: 0; padding: 0; font: inherit; }
+.crumbs button:hover { text-decoration: underline; }
+.crumbs span { margin: 0 6px; color: var(--line-2); }
+.tb { display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--line); margin-top: var(--s3); }
+.tb div { padding: var(--s3) var(--s4); border-right: 1px solid var(--line); min-width: 0; }
+.tb div:last-child { border-right: 0; }
+.tb dt { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .1em; color: var(--text-3); }
+.tb dd { margin: var(--s1) 0 0; font-size: 13px; overflow-wrap: anywhere; }
+.tb.three { grid-template-columns: repeat(3, 1fr); }
+.sec-h { font-family: var(--mono); font-size: 10px; text-transform: uppercase; letter-spacing: .12em; color: var(--text-3); margin: var(--s5) 0 var(--s2); display: flex; align-items: center; gap: var(--s3); }
+.sec-h .more { margin-left: auto; color: var(--brass); background: none; border: 0; font: inherit; letter-spacing: .06em; }
+.obs { padding: var(--s3) 0; border-bottom: 1px solid var(--line); }
+.obs:last-child { border-bottom: 0; }
+.obs .k { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--brass); }
+.obs .k.defect { color: var(--alert); } .obs .k.variation { color: var(--caution); } .obs .k.access { color: var(--text-3); }
+.obs h5 { margin: 2px 0 4px; font-size: 14px; font-weight: 500; }
+.obs p { margin: 0 0 4px; font-size: 13px; color: var(--text-2); }
+.obs p b { color: var(--text); font-weight: 500; }
+.photos { display: flex; gap: var(--s2); margin-top: var(--s2); flex-wrap: wrap; }
+.ph { width: 96px; height: 72px; background: linear-gradient(135deg, var(--panel-3), var(--panel-2)); border: 1px solid var(--line); display: grid; place-items: center; font-family: var(--mono); font-size: 10px; color: var(--text-3); letter-spacing: .06em; }
+.hist { display: flex; gap: var(--s4); padding: var(--s3) 0; border-bottom: 1px solid var(--line); align-items: flex-start; }
+.hist:last-child { border-bottom: 0; }
+.hist .d { font-family: var(--mono); font-size: 12px; color: var(--text-2); width: 96px; flex: none; font-variant-numeric: tabular-nums; }
+.hist .b { flex: 1; min-width: 0; }
+.hist .b p { margin: 0; font-size: 13px; }
+.hist .b p b { font-weight: 500; }
+.note { margin-top: var(--s3); padding: 10px 12px; border: 1px solid var(--line-2); border-left-width: 3px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: var(--s3); background: var(--panel-2); }
+.note.warn { border-color: var(--caution); background: var(--caution-wash); }
+.note.bad { border-color: var(--alert); background: var(--alert-wash); }
+.note.good { border-color: var(--ok); background: var(--ok-wash); }
+.note.brass { border-color: var(--brass); background: var(--brass-wash); }
+.note b { font-weight: 500; }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5); align-items: start; }
+.two-wide { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: var(--s5); align-items: start; }
+.two-read { display: grid; grid-template-columns: minmax(360px, .85fr) minmax(0, 1.15fr); gap: var(--s5); align-items: start; }
+.stack { display: flex; flex-direction: column; gap: var(--s5); min-width: 0; }
+.search { position: relative; }
+.search input { width: 100%; background: var(--sunken); border: 1px solid var(--line); border-radius: var(--r); padding: var(--s2) var(--s3); color: var(--text); font: inherit; font-size: 13px; }
+.search input::placeholder { color: var(--text-3); }
+.search kbd { position: absolute; right: 10px; top: 8px; font-family: var(--mono); font-size: 10px; color: var(--text-3); border: 1px solid var(--line-2); border-radius: 2px; padding: 1px 5px; pointer-events: none; }
+.whoami { font-family: var(--mono); font-size: 11px; letter-spacing: .06em; color: var(--text-2); white-space: nowrap; }
+.whoami em { font-style: normal; color: var(--brass); }
+.tbtn { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); background: none; border: 0; padding: 4px 6px; white-space: nowrap; }
+.tbtn:hover { color: var(--text); }
+.help-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5); }
+.help-grid p { font-size: 13px; color: var(--text-2); margin: 0 0 var(--s3); }
+.help-grid ol { padding-left: 20px; margin: 0; font-size: 13px; color: var(--text-2); }
+.help-grid li { margin-bottom: var(--s2); }
+.pagehead { display: flex; justify-content: space-between; align-items: flex-end; gap: var(--s4); }
+.pagehead h3 { margin: 0; font-size: 22px; font-weight: 500; letter-spacing: -.02em; }
+.pagehead p { margin: var(--s1) 0 0; font-size: 13px; color: var(--text-2); }
+.pagehead .kick { font-family: var(--mono); font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--brass); margin-bottom: 4px; }
+.proto { position: fixed; left: 16px; bottom: 16px; font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); background: var(--panel); border: 1px solid var(--line-2); padding: 4px 8px; z-index: 30; }
+
+/* =====================================================================
+   Concept 1 · Desk. Horizontal tab bar with live counts, a scope strip
+   that follows you from tab to tab, and a register-first home.
+   ===================================================================== */
+.c1 .topbar { flex: none; display: flex; align-items: center; gap: var(--s5); background: var(--panel); border-bottom: 1px solid var(--line-2); padding: 0 var(--s5); height: 56px; }
+.c1 .logo { display: flex; align-items: baseline; gap: var(--s3); }
+.c1 .logo b { font-size: 17px; font-weight: 500; letter-spacing: .12em; }
+.c1 .logo span { font-family: var(--mono); font-size: 10px; letter-spacing: .18em; color: var(--brass); border-left: 1px solid var(--line-2); padding-left: var(--s3); }
+.c1 .search { flex: 1; max-width: 440px; }
+.c1 .topbar-right { margin-left: auto; display: flex; align-items: center; gap: var(--s4); }
+.c1 .bell { font-family: var(--mono); font-size: 11px; color: var(--text-2); letter-spacing: .08em; background: none; border: 1px solid transparent; padding: 4px 8px; border-radius: var(--r); }
+.c1 .bell:hover { border-color: var(--line-2); }
+.c1 .bell b { color: var(--alert); font-weight: 500; }
+.c1 .hnav { flex: none; display: flex; background: var(--panel); border-bottom: 1px solid var(--line-2); padding: 0 var(--s5); }
+.c1 .hnav button { font-family: var(--mono); font-size: 11px; text-transform: uppercase; letter-spacing: .11em; color: var(--text-3); padding: var(--s3) var(--s4); border: 0; background: none; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: var(--s2); }
+.c1 .hnav button:hover { color: var(--text); }
+.c1 .hnav button.on { color: var(--text); border-bottom-color: var(--brass); }
+.c1 .hnav button i { font-style: normal; font-size: 10px; color: var(--text-3); background: var(--panel-2); border-radius: 8px; padding: 0 6px; font-variant-numeric: tabular-nums; }
+.c1 .hnav button.on i { background: var(--brass-wash); color: var(--brass); }
+.c1 .hnav button i.warn { color: var(--alert); background: var(--alert-wash); }
+.c1 .hnav .right { margin-left: auto; display: flex; align-items: center; gap: var(--s2); }
+.c1 .scope { flex: none; display: flex; align-items: center; gap: var(--s2); padding: var(--s2) var(--s5); background: var(--sunken); border-bottom: 1px solid var(--line); font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); }
+.c1 .scope .chip { text-transform: none; letter-spacing: .04em; }
+.c1 .scope .chip .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--alert); margin-left: 6px; vertical-align: 1px; }
+.c1 .scope .dsc { margin-left: auto; text-transform: none; letter-spacing: 0; font-family: var(--sans); font-size: 12px; }
+.c1 .view { flex: 1; min-height: 0; overflow: auto; padding: var(--s5); display: flex; flex-direction: column; gap: var(--s5); }
+.c1 .proj { display: block; width: 100%; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: var(--s3) var(--s4); }
+.c1 .proj:last-child { border-bottom: 0; }
+.c1 .proj:hover { background: var(--brass-wash); }
+.c1 .proj .top { display: flex; align-items: baseline; gap: var(--s2); }
+.c1 .proj .top .rowtitle { flex: 1; min-width: 0; }
+.c1 .proj .top .arrow { font-family: var(--mono); font-size: 12px; color: var(--text-3); }
+.c1 .proj .cbar { margin-top: var(--s2); }
+.c1 .proj .meta { display: flex; gap: var(--s3); margin-top: var(--s1); font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--text-3); font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+.c1 .proj .meta b { font-weight: 500; color: var(--alert); }
+.c1 .today { padding: var(--s4); }
+.c1 .today .big { font-family: var(--mono); font-size: 26px; letter-spacing: -.02em; line-height: 1.1; }
+.c1 .today .big small { font-family: var(--sans); font-size: 12px; color: var(--text-3); letter-spacing: 0; margin-left: 6px; }
+.c1 .today p { margin: var(--s2) 0 0; font-size: 12px; color: var(--text-3); }
+.c1 .drafts { border-top: 1px solid var(--line); margin-top: var(--s3); padding-top: var(--s3); }
+.c1 .drafts div { display: flex; gap: var(--s3); font-size: 12px; padding: 3px 0; align-items: baseline; }
+.c1 .drafts .age { margin-left: auto; }
+
+/* =====================================================================
+   Concept 2 · Rail. A dark rail carries navigation, counts and project
+   scope on every page; the home is a project matrix whose every cell is
+   a door into the tabs.
+   ===================================================================== */
+.c2 { flex-direction: row !important; }
+.c2 .rail { flex: none; width: 248px; background: var(--rail); color: var(--rail-text); display: flex; flex-direction: column; min-height: 0; overflow: auto; }
+.c2 .rail .brand { padding: var(--s4) var(--s5); border-bottom: 1px solid var(--rail-line); display: flex; align-items: baseline; gap: var(--s3); }
+.c2 .rail .brand b { font-size: 18px; font-weight: 500; letter-spacing: .14em; }
+.c2 .rail .brand span { font-family: var(--mono); font-size: 9px; letter-spacing: .2em; color: var(--rail-brass); }
+.c2 .rail .lbl { font-family: var(--mono); font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--rail-dim); padding: var(--s4) var(--s5) var(--s2); display: flex; align-items: center; }
+.c2 .rail .lbl button { margin-left: auto; background: none; border: 0; color: var(--rail-brass); font: inherit; letter-spacing: .1em; padding: 0; }
+.c2 .rail .nav button { display: flex; align-items: center; gap: var(--s3); width: 100%; text-align: left; background: none; border: 0; border-left: 3px solid transparent; padding: 10px var(--s5) 10px 21px; color: var(--rail-dim); font-size: 13.5px; }
+.c2 .rail .nav button:hover { color: var(--rail-text); background: var(--rail-2); }
+.c2 .rail .nav button.on { color: var(--rail-text); border-left-color: var(--rail-brass); background: var(--rail-2); }
+.c2 .rail .nav button i { margin-left: auto; font-style: normal; font-family: var(--mono); font-size: 10px; letter-spacing: .04em; color: var(--rail-dim); font-variant-numeric: tabular-nums; }
+.c2 .rail .nav button i.warn { color: var(--rail-brass); }
+.c2 .rail .nav button i.bad { color: #ee8f7a; }
+.c2 .rail .scope button { display: block; width: 100%; text-align: left; background: none; border: 0; border-left: 3px solid transparent; padding: 8px var(--s5) 8px 21px; color: var(--rail-dim); }
+.c2 .rail .scope button:hover { background: var(--rail-2); color: var(--rail-text); }
+.c2 .rail .scope button.on { border-left-color: var(--rail-brass); background: var(--rail-2); color: var(--rail-text); }
+.c2 .rail .scope .nm { font-size: 12.5px; line-height: 1.3; }
+.c2 .rail .scope .nb { font-family: var(--mono); font-size: 9.5px; letter-spacing: .06em; color: var(--rail-dim); margin-top: 2px; display: flex; flex-wrap: wrap; gap: 2px var(--s2); }
+.c2 .rail .scope .nb > * { white-space: nowrap; }
+.c2 .rail .scope .nb b { font-weight: 500; color: #ee8f7a; }
+.c2 .rail .scope .nb em { font-style: normal; color: var(--rail-brass); }
+.c2 .rail .foot { margin-top: auto; border-top: 1px solid var(--rail-line); padding: var(--s4) var(--s5); font-size: 12px; color: var(--rail-dim); }
+.c2 .rail .foot b { display: block; color: var(--rail-text); font-weight: 500; }
+.c2 .rail .foot .links { display: flex; flex-wrap: wrap; gap: var(--s2) var(--s3); margin-top: var(--s3); }
+.c2 .rail .foot .links button { background: none; border: 0; padding: 0; color: var(--rail-brass); font-family: var(--mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+.c2 .main { flex: 1; min-width: 0; display: flex; flex-direction: column; min-height: 0; }
+.c2 .crumbbar { flex: none; display: flex; align-items: center; gap: var(--s4); padding: 0 var(--s5); height: 52px; background: var(--panel); border-bottom: 1px solid var(--line-2); }
+.c2 .crumbbar .crumbs { font-size: 11px; }
+.c2 .crumbbar .trail { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 10px; letter-spacing: .06em; color: var(--brass); background: var(--brass-wash); border: 1px solid var(--brass); border-radius: var(--r); padding: 3px 8px; }
+.c2 .crumbbar .trail button { background: none; border: 0; padding: 0; color: inherit; font: inherit; }
+.c2 .crumbbar .search { width: 360px; margin-left: auto; }
+.c2 .crumbbar .date { font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: .04em; white-space: nowrap; }
+.c2 .view { flex: 1; min-height: 0; overflow: auto; padding: var(--s5); display: flex; flex-direction: column; gap: var(--s5); }
+.c2 .strip { display: flex; align-items: stretch; border: 1px solid var(--line); background: var(--panel); }
+.c2 .strip button { flex: 1; text-align: left; background: none; border: 0; border-right: 1px solid var(--line); padding: var(--s3) var(--s4); display: flex; align-items: baseline; gap: var(--s3); }
+.c2 .strip button:last-child { border-right: 0; }
+.c2 .strip button:hover { background: var(--brass-wash); }
+.c2 .strip b { font-family: var(--mono); font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+.c2 .strip b.hot { color: var(--alert); }
+.c2 .strip span { font-size: 12px; color: var(--text-2); }
+.c2 table.matrix { width: 100%; border-collapse: collapse; }
+.c2 table.matrix th { text-align: left; font-family: var(--mono); font-size: 10px; font-weight: 500; text-transform: uppercase; letter-spacing: .11em; color: var(--text-3); padding: var(--s2) var(--s3); border-bottom: 1px solid var(--line-2); background: var(--panel-2); white-space: nowrap; }
+.c2 table.matrix th.c { text-align: center; }
+.c2 table.matrix td { padding: 0; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); vertical-align: middle; }
+.c2 table.matrix td:last-child { border-right: 0; }
+.c2 table.matrix tr:last-child td { border-bottom: 0; }
+.c2 table.matrix td.name { padding: var(--s3) var(--s4); width: 30%; }
+.c2 table.matrix td.name button { background: none; border: 0; padding: 0; text-align: left; }
+.c2 table.matrix td.name button:hover .rowtitle { color: var(--brass); }
+.c2 table.matrix td.stage { padding: var(--s3) var(--s4); font-size: 12px; color: var(--text-2); width: 22%; }
+.c2 table.matrix td.last { width: 190px; }
+.c2 .cell { display: block; width: 100%; height: 100%; min-height: 56px; background: none; border: 0; font-family: var(--mono); font-size: 18px; font-variant-numeric: tabular-nums; color: var(--text-3); padding: var(--s2); text-align: center; }
+.c2 .cell:hover { background: var(--brass-wash); color: var(--text); }
+.c2 .cell.n1 { color: var(--text); }
+.c2 .cell.bad { background: var(--alert-wash); color: var(--alert); font-weight: 500; }
+.c2 .cell.warn { background: var(--brass-wash); color: var(--brass); font-weight: 500; }
+.c2 .cell.good { color: var(--ok); }
+.c2 .cell small { display: block; font-family: var(--sans); font-size: 10px; color: var(--text-3); letter-spacing: 0; margin-top: 2px; font-weight: 400; }
+.c2 .cell.txt { font-family: var(--sans); font-size: 12px; color: var(--text-2); text-align: left; padding: var(--s2) var(--s3); }
+.c2 .cell.txt b { display: block; font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--text); }
+.c2 .grp-h { display: flex; align-items: baseline; gap: var(--s3); padding: var(--s3) var(--s4) var(--s2); border-bottom: 1px solid var(--line); background: var(--panel-2); }
+.c2 .grp-h button { background: none; border: 0; padding: 0; font-weight: 500; font-size: 13px; }
+.c2 .grp-h button:hover { color: var(--brass); }
+.c2 .grp-h i { font-style: normal; margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--text-3); letter-spacing: .06em; }
+.c2 .day { display: grid; grid-template-columns: 72px 1fr; border-bottom: 1px solid var(--line); }
+.c2 .day:last-child { border-bottom: 0; }
+.c2 .day .d { padding: var(--s3) var(--s4); font-family: var(--mono); font-size: 11px; color: var(--text-3); letter-spacing: .04em; border-right: 1px solid var(--line); text-align: right; }
+.c2 .day .d b { display: block; font-size: 16px; color: var(--text); font-weight: 500; }
+.c2 .day .items { display: flex; flex-direction: column; }
+.c2 .day .items .mini { border-left: 0; }
+.c2 .psheet { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s5); }
+.c2 .ph-head { display: flex; align-items: flex-start; gap: var(--s4); }
+.c2 .ph-head h3 { margin: 0; font-size: 20px; font-weight: 500; letter-spacing: -.02em; }
+.c2 .ph-head .cbar { width: 220px; margin-top: 10px; }
+
+/* =====================================================================
+   Concept 3 · Triage. One queue, one reader. The tabs are lenses on the
+   same three-pane workbench, so nothing changes shape as you move.
+   ===================================================================== */
+.c3 .bar { flex: none; display: flex; align-items: center; gap: var(--s5); padding: 0 var(--s5); height: 52px; background: var(--panel); border-bottom: 1px solid var(--line-2); }
+.c3 .bar .logo { display: flex; align-items: baseline; gap: var(--s3); }
+.c3 .bar .logo b { font-size: 16px; font-weight: 500; letter-spacing: .12em; }
+.c3 .bar .logo span { font-family: var(--mono); font-size: 9px; letter-spacing: .18em; color: var(--brass); }
+.c3 .segs { display: flex; border: 1px solid var(--line-2); border-radius: var(--r); overflow: hidden; }
+.c3 .segs button { background: var(--panel); border: 0; border-right: 1px solid var(--line-2); padding: 6px 14px; font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); display: flex; gap: 6px; align-items: center; }
+.c3 .segs button:last-child { border-right: 0; }
+.c3 .segs button:hover { color: var(--text); }
+.c3 .segs button.on { background: var(--text); color: var(--ground); }
+.c3 .segs button i { font-style: normal; font-size: 10px; font-variant-numeric: tabular-nums; opacity: .8; }
+.c3 .segs button i.warn { color: var(--alert); opacity: 1; }
+.c3 .segs button.on i.warn { color: #ffb3a3; }
+.c3 .bar .search { width: 320px; margin-left: auto; }
+.c3 .panes { flex: 1; min-height: 0; display: grid; grid-template-columns: 208px 440px minmax(0, 1fr); }
+.c3 .lenses { min-height: 0; overflow: auto; background: var(--panel); border-right: 1px solid var(--line-2); padding-bottom: var(--s5); }
+.c3 .lenses .lbl { font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em; text-transform: uppercase; color: var(--text-3); padding: var(--s4) var(--s4) var(--s2); }
+.c3 .lenses button { display: flex; align-items: center; gap: var(--s2); width: 100%; text-align: left; background: none; border: 0; border-left: 2px solid transparent; padding: 7px var(--s4) 7px 14px; font-size: 13px; color: var(--text-2); }
+.c3 .lenses button:hover { background: var(--sunken); color: var(--text); }
+.c3 .lenses button.on { border-left-color: var(--brass); background: var(--brass-wash); color: var(--text); }
+.c3 .lenses button i { margin-left: auto; font-style: normal; font-family: var(--mono); font-size: 10.5px; color: var(--text-3); font-variant-numeric: tabular-nums; }
+.c3 .lenses button i.warn { color: var(--alert); }
+.c3 .lenses button i.brass { color: var(--brass); }
+.c3 .lenses button.sub { padding-left: 26px; font-size: 12.5px; }
+.c3 .list { min-height: 0; overflow: auto; background: var(--panel); border-right: 1px solid var(--line-2); display: flex; flex-direction: column; }
+.c3 .list-head { position: sticky; top: 0; z-index: 1; background: var(--panel-2); border-bottom: 1px solid var(--line-2); padding: var(--s3) var(--s4); display: flex; align-items: baseline; gap: var(--s2); }
+.c3 .list-head h4 { margin: 0; font-family: var(--mono); font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--brass); font-weight: 500; }
+.c3 .list-head i { font-style: normal; margin-left: auto; font-family: var(--mono); font-size: 10px; color: var(--text-3); }
+.c3 .row { display: grid; grid-template-columns: 22px 1fr auto; gap: var(--s3); padding: var(--s3) var(--s4); border-bottom: 1px solid var(--line); border-left: 2px solid transparent; background: none; border-right: 0; border-top: 0; width: 100%; text-align: left; align-items: start; }
+.c3 .row:hover { background: var(--sunken); }
+.c3 .row.on { background: var(--brass-wash); border-left-color: var(--brass); }
+.c3 .row .g { font-family: var(--mono); font-size: 11px; color: var(--text-3); padding-top: 2px; }
+.c3 .row .g.rep { color: var(--brass); }
+.c3 .row .g.bad { color: var(--alert); }
+.c3 .row .t { min-width: 0; }
+.c3 .row .t .rowtitle { font-size: 13px; line-height: 1.35; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.c3 .row .t .rowsub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.c3 .row .a { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.c3 .row.done { opacity: .55; }
+.c3 .reader { min-height: 0; overflow: auto; background: var(--sunken); padding: var(--s5); }
+.c3 .reader .sheet { max-width: 880px; }
+.c3 .rd-nav { display: flex; align-items: center; gap: var(--s2); margin-bottom: var(--s3); font-family: var(--mono); font-size: 10.5px; letter-spacing: .08em; color: var(--text-3); text-transform: uppercase; max-width: 880px; }
+.c3 .rd-nav button { background: none; border: 1px solid var(--line-2); border-radius: var(--r); padding: 4px 10px; font: inherit; letter-spacing: .08em; color: var(--text-2); }
+.c3 .rd-nav button:hover { border-color: var(--brass); color: var(--brass); }
+.c3 .rd-nav .sp { margin-left: auto; }
+.c3 .daysheet .figs { grid-template-columns: repeat(4, 1fr); margin-top: var(--s4); }
+.c3 .daysheet .figs dd { font-size: 22px; }
+.c3 .week { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--line); margin-top: var(--s3); }
+.c3 .week > div { border-right: 1px solid var(--line); padding: var(--s3); min-height: 110px; }
+.c3 .week > div:last-child { border-right: 0; }
+.c3 .week > div.today { background: var(--brass-wash); }
+.c3 .week .d { font-family: var(--mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-3); margin-bottom: var(--s2); }
+.c3 .week .d b { color: var(--text); font-weight: 500; }
+.c3 .week button { display: block; width: 100%; text-align: left; background: none; border: 0; padding: 3px 0; font-size: 12px; color: var(--text-2); line-height: 1.35; }
+.c3 .week button:hover { color: var(--brass); }
+.c3 .week button b { font-weight: 500; color: var(--alert); }
+.c3 .week button em { font-style: normal; color: var(--brass); }
+.c3 .week .none { font-size: 12px; color: var(--text-3); }
+</style>
+</head>
+<body>
+<div id="sw">
+  <span class="t">Developments hub · concepts · 09 Sep 2026</span>
+  <div class="seg" id="swseg">
+    <button data-c="1" type="button">1 · Desk</button>
+    <button data-c="2" type="button">2 · Rail</button>
+    <button data-c="3" type="button">3 · Triage</button>
+  </div>
+  <span class="sp"></span>
+  <button class="lk" data-act="brief" type="button">About this concept</button>
+  <button class="lk" data-act="compare" type="button">Compare &amp; recommendation</button>
+  <button class="lk" id="themer" type="button">Dark</button>
+</div>
+<div id="stage"></div>
+<aside id="brief" aria-hidden="true"></aside>
+<div id="toasts"></div>
+<div class="proto">Prototype · invented data · office view · A. Whitfield, Manager</div>
+<script>
+(function () {
+'use strict';
+/* ------------------------------------------------------------------ utils */
+const pad = n => String(n).padStart(2, '0');
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const TODAY = '2026-09-09';
+const MS = 864e5;
+const iso = s => new Date(s.slice(0, 10) + 'T12:00:00');
+const dayDiff = (a, b) => Math.round((iso(a) - iso(b)) / MS);
+const fmt = s => { if (!s) return '—'; const d = iso(s); return `${pad(d.getDate())} ${MON[d.getMonth()]}`; };
+const fmtL = s => { const d = iso(s); return `${DAYS[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}`; };
+const fmtDT = s => s && s.length > 10 ? `${fmt(s)} ${s.slice(11, 16)}` : fmt(s);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
+const ago = s => { const d = dayDiff(TODAY, s); return d === 0 ? 'today' : d === 1 ? 'yesterday' : `${d}d ago`; };
+const dueWord = t => { const d = dayDiff(t, TODAY); return d < 0 ? `${-d}d overdue` : d === 0 ? 'due today' : d === 1 ? 'due tomorrow' : `due in ${d}d`; };
+const dueCls = t => { const d = dayDiff(t, TODAY); return d < 0 ? 'late' : d <= 3 ? 'soon' : 'fine'; };
+// Issue-aware wording: work put forward as complete is not "overdue".
+const whenWord = i => !active(i) ? 'closed' : verify(i) ? 'put forward as complete' : dueWord(i.target);
+const dueClsI = i => !active(i) ? 'fine' : verify(i) ? 'okc' : dueCls(i.target);
+
+/* --------------------------------------------------------------- the data
+   Invented, in the Leodis format. Three projects are the app's own fixtures;
+   two more are added so the desk has enough on it to be worth looking at. */
+const PROJECTS = [
+  { id: 'p011', num: '011LME', name: 'Tetley Hall - Block E', client: 'C&AJ Marshall Builders Ltd', pm: 'A. Whitfield', status: '4. Active', div: 'Leodis M&E', review: false, stage: 'First fix complete; second fix on levels 1–3', next: 'Client walk-round Fri 11 Sep' },
+  { id: 'p014', num: '014LME', name: 'Kirkstall Gate - Phase 2', client: 'Northbank Construction Ltd', pm: 'A. Whitfield', status: '4. Active', div: 'Leodis M&E', review: true, stage: 'Plantroom pipework; AHU delivery w/c 14 Sep', next: 'Commissioning plan due to Northbank 18 Sep' },
+  { id: 'p009', num: '009LCP', name: 'Hunslet Depot - Welfare Block', client: 'C&AJ Marshall Builders Ltd', pm: 'R. Ellison', status: '5. Defects Liability', div: 'Leodis Commercial Plumbing', review: false, stage: 'Defects liability to 31 Mar 2027', next: 'Quarterly defects visit Oct' },
+  { id: 'p017', num: '017LME', name: 'Meanwood Vale - Block B', client: 'Verity Estates plc', pm: 'A. Whitfield', status: '4. Active', div: 'Leodis M&E', review: true, stage: 'Containment and first fix, levels 2–4', next: 'Level 3 access resumes 12 Sep' },
+  { id: 'p012', num: '012LCP', name: 'Armley Mills - Heating Replacement', client: 'Northbank Construction Ltd', pm: 'R. Ellison', status: '4. Active', div: 'Leodis Commercial Plumbing', review: false, stage: 'Boiler swap; commissioning 22 Sep', next: 'Gas Safe sign-off 23 Sep' },
+];
+const P = Object.fromEntries(PROJECTS.map(p => [p.id, p]));
+const ENGINEERS = { 'D. Priestley': 'Electrical', 'M. Osei': 'Electrical', 'J. Whitaker': 'HVAC', 'T. Bright': 'HVAC', 'S. Kaur': 'P&H' };
+
+// [id, project, seq, location, description, action needed, trade, owner, work, confirmation, target, raised, raised by, extra]
+const I = (id, pj, n, loc, desc, act, trade, owner, work, conf, target, raised, by, x) => Object.assign({ id, pj, ref: `${P[pj].num}-ISS-${pad(n).padStart(3, '0')}`, loc, desc, act, trade, owner, work, conf, target, raised, by }, x || {});
+const ISSUES = [
+  I('i1', 'p014', 1, 'Plantroom, level -1', 'Flow and return to AHU-2 reversed at the valve set', 'Swap connections and re-label before commissioning', 'HVAC', 'J. Whitaker', 'in_progress', 'confirmed', '2026-09-05', '2026-08-28', 'J. Whitaker',
+    { events: [['2026-08-28', 'J. Whitaker', 'Raised from 014LME-SPR-010.'], ['2026-08-29', 'A. Whitfield', 'Confirmed as a defect. Target 5 Sep agreed with Northbank.'], ['2026-09-04', 'J. Whitaker', 'Isolated and drained. Awaiting valve gaskets from stores.']] }),
+  I('i2', 'p014', 2, 'Riser 3, level 2', 'Fire-stopping missing around 100 mm pipe penetration', 'Install intumescent collar and seal both faces', 'P&H', '', 'open', 'provisional', '2026-09-12', '2026-09-07', 'J. Whitaker'),
+  I('i3', 'p011', 4, 'Level 3 corridor', 'Cable tray unsupported over 2 m span above ceiling grid', 'Add Unistrut drops at 1.2 m centres', 'Electrical', 'D. Priestley', 'awaiting_verification', 'confirmed', '2026-09-08', '2026-08-30', 'M. Osei',
+    { closedBy: 'D. Priestley', events: [['2026-08-30', 'M. Osei', 'Raised from 011LME-SPR-019.'], ['2026-09-01', 'A. Whitfield', 'Confirmed. Assigned to D. Priestley.'], ['2026-09-08', 'D. Priestley', 'Drops installed at 1.2 m centres, 3 photos attached. Put forward as complete.']] }),
+  I('i4', 'p011', 5, 'Flat 3.07 bathroom', 'Extract fan wired to lighting circuit rather than dedicated supply', 'Rewire to dedicated fused spur per drawing E-301', 'Electrical', 'M. Osei', 'assigned', 'confirmed', '2026-09-16', '2026-09-04', 'M. Osei'),
+  I('i5', 'p009', 2, 'Drying room', 'Radiator valve weeping at tail', 'Replace TRV and tail; check remaining radiators', 'P&H', 'S. Kaur', 'open', 'confirmed', '2026-09-02', '2026-08-20', 'S. Kaur',
+    { events: [['2026-08-20', 'S. Kaur', 'Raised on defects visit.'], ['2026-08-21', 'R. Ellison', 'Confirmed. Target 2 Sep.']] }),
+  I('i6', 'p009', 3, 'Shower room 2', 'Thermostatic mixing valve fails to shut on cold water loss', 'Replace TMV3 valve and re-commission', 'P&H', 'S. Kaur', 'awaiting_verification', 'confirmed', '2026-09-04', '2026-08-25', 'S. Kaur', { closedBy: 'S. Kaur' }),
+  I('i7', 'p017', 1, 'Level 2, apartment 2.04', 'Containment clashes with structural downstand', 'Reroute below downstand; drawing revision required from consultant', 'Electrical', 'A. Whitfield', 'in_progress', 'confirmed', '2026-09-19', '2026-09-01', 'D. Priestley'),
+  I('i8', 'p017', 2, 'Basement car park', 'Emergency lighting not yet fitted on escape route to stair 2', 'Fit and test 6 luminaires before car park is used for storage', 'Electrical', '', 'open', 'provisional', '2026-09-11', '2026-09-08', 'D. Priestley'),
+  I('i9', 'p012', 1, 'Boiler house', 'Existing flue not to current spec; cannot be reused for new boilers', 'Variation: new twin-wall flue system, quote to Northbank', 'HVAC', 'T. Bright', 'in_progress', 'confirmed', '2026-09-15', '2026-08-27', 'T. Bright', { kind: 'variation' }),
+  I('i10', 'p012', 2, 'Boiler house', 'Gas supply isolation valve seized', 'Replace isolation valve under gas isolation permit', 'HVAC', 'T. Bright', 'awaiting_verification', 'confirmed', '2026-09-03', '2026-08-27', 'T. Bright', { closedBy: 'T. Bright' }),
+  I('i11', 'p014', 3, 'Roof plant deck', 'Access hatch restraint chain missing', 'Northbank to fit restraint before AHU delivery', 'Other / non-Leodis', 'Northbank site manager', 'assigned', 'confirmed', '2026-08-29', '2026-08-21', 'T. Bright'),
+  I('i12', 'p011', 6, 'Level 1 electrical riser', 'Distribution board DB-1B labelled as DB-1A', 'Re-label and update schedule', 'Electrical', 'M. Osei', 'assigned', 'confirmed', '2026-09-20', '2026-09-05', 'M. Osei'),
+  I('i13', 'p014', 4, 'Level 4 plant', 'Pressurisation unit low-pressure alarm not wired to BMS', 'Northbank BMS contractor to terminate before commissioning', 'Other / non-Leodis', 'J. Whitaker', 'open', 'confirmed', '2026-09-25', '2026-09-09', 'J. Whitaker'),
+  I('i14', 'p009', 1, 'Kitchen', 'Boiling water tap supply unlagged in ceiling void', 'Lag pipework', 'P&H', 'S. Kaur', 'closed', 'confirmed', '2026-08-15', '2026-08-10', 'S. Kaur'),
+  I('i15', 'p011', 3, 'Level 2 corridor', 'Ceiling grid cut around sprinkler drop not made good', 'C&AJ to make good', 'Other / non-Leodis', 'C&AJ site agent', 'closed', 'confirmed', '2026-08-28', '2026-08-19', 'D. Priestley'),
+  I('i16', 'p017', 3, 'Level 3', 'Access to level 3 refused; screed curing until 12 Sep', 'Re-sequence first fix to level 4 this week', 'Other / non-Leodis', '', 'open', 'confirmed', '2026-09-12', '2026-09-08', 'D. Priestley', { kind: 'access' }),
+];
+const IS = Object.fromEntries(ISSUES.map(i => [i.id, i]));
+
+// Observations: [kind, location, what happened, action needed, owner, photos]
+const O = (k, loc, text, act, owner, ph) => ({ k, loc, text, act, owner, ph: ph || 0 });
+const Rp = (id, pj, n, author, visit, received, review, delivery, obs) => ({ id, pj, ref: `${P[pj].num}-SPR-${pad(n).padStart(3, '0')}`, author, trade: ENGINEERS[author], visit, received, review, delivery, obs, photos: obs.reduce((a, o) => a + o.ph, 0), defects: obs.filter(o => o.k === 'defect').length });
+const REPORTS = [
+  Rp('r1', 'p014', 12, 'J. Whitaker', '2026-09-09', '2026-09-09T07:52', 'pending', 'not sent', [
+    O('update', 'Plantroom, level -1', 'AHU-2 valve set drained and gaskets fitted. Flow and return swapped and re-labelled. Awaiting Northbank to release the level -1 corridor so pipe insulation can follow.', '', '', 2),
+    O('defect', 'Level 4 plant', 'Pressurisation unit low-pressure alarm is not wired back to the BMS panel. Cable is in place, not terminated.', 'Northbank BMS contractor to terminate before commissioning', 'J. Whitaker', 2),
+    O('update', 'Roof plant deck', 'AHU-1 and AHU-2 delivery confirmed for w/c 14 Sep. Crane booked for Tuesday 15th; roof restraint chain (014LME-ISS-003) still outstanding.', '', '', 2),
+  ]),
+  Rp('r2', 'p017', 4, 'D. Priestley', '2026-09-08', '2026-09-08T16:41', 'pending', 'PDF ready, not emailed', [
+    O('update', 'Level 4', 'Containment complete on level 4 corridors and apartments 4.01–4.06. First fix cabling started 4.01–4.03.', '', '', 3),
+    O('defect', 'Basement car park', 'Emergency lighting luminaires on the escape route to stair 2 not yet fitted. Verity intend to use the car park for material storage from next week.', 'Fit and test 6 luminaires before car park is used for storage', '', 2),
+    O('access', 'Level 3', 'Access to level 3 refused by Verity site manager; screed curing until 12 Sep. First fix on level 3 re-sequenced to follow level 4.', '', '', 1),
+    O('update', 'Apartment 2.04', 'Downstand clash: reroute agreed in principle with consultant. Drawing revision awaited before containment continues.', '', 'A. Whitfield', 3),
+  ]),
+  Rp('r3', 'p011', 21, 'M. Osei', '2026-09-08', '2026-09-08T15:10', 'not_required', 'Sent to 2', [
+    O('update', 'Levels 1–3', 'Second fix continuing. Level 1 accessories complete, level 2 at 60%, level 3 started.', '', '', 2),
+    O('update', 'Level 1 electrical riser', 'DB-1B re-labelled and schedule updated. Put forward for 011LME-ISS-006 closure next visit.', '', '', 2),
+  ]),
+  Rp('r4', 'p012', 7, 'T. Bright', '2026-09-08', '2026-09-08T12:03', 'not_required', 'Sent to 3', [
+    O('update', 'Boiler house', 'Old boilers removed and the base made good. New Remeha units positioned; flue route surveyed with the flue supplier.', '', '', 3),
+    O('variation', 'Boiler house', 'Existing flue cannot be reused. Twin-wall system priced; quote with Northbank for instruction.', 'Northbank to instruct before 15 Sep to hold commissioning date', 'T. Bright', 1),
+    O('update', 'Plant corridor', 'Isolation valve replacement complete under permit. Put forward for verification.', '', '', 1),
+  ]),
+  Rp('r5', 'p009', 9, 'S. Kaur', '2026-09-05', '2026-09-05T14:22', 'not_required', 'Sent to 2', [
+    O('update', 'Shower room 2', 'TMV3 replaced and commissioned; fail-safe test passed. Put forward for verification.', '', '', 2),
+    O('update', 'Drying room', 'TRV still weeping; part on order. Client aware.', '', 'S. Kaur', 1),
+  ]),
+  Rp('r6', 'p014', 11, 'J. Whitaker', '2026-09-04', '2026-09-04T17:05', 'approved', 'Sent to 3', [
+    O('update', 'Plantroom, level -1', 'AHU-2 valve set isolated and drained ahead of correction.', '', '', 2),
+    O('update', 'Riser 3', 'Pipework through level 2 slab complete; fire-stopping to follow.', '', '', 3),
+    O('update', 'General', 'Northbank programme review: plantroom handover moved to 2 Oct.', '', '', 2),
+  ]),
+  Rp('r7', 'p017', 3, 'D. Priestley', '2026-09-03', '2026-09-03T16:30', 'returned', 'not sent', [
+    O('update', 'Level 2', 'Containment 80% complete. Apartment 2.04 downstand clash identified.', '', '', 2),
+    O('defect', 'Level 2, apartment 2.04', 'Containment clashes with structural downstand; cannot maintain route shown on E-204.', 'Reroute below downstand; consultant to revise drawing', 'A. Whitfield', 2),
+    O('update', 'Site', 'Returned by A. Whitfield: photo of the downstand needed for the consultant, and progress percentage by level.', '', '', 1),
+  ]),
+  Rp('r8', 'p011', 20, 'D. Priestley', '2026-09-02', '2026-09-02T15:48', 'not_required', 'Sent to 2', [
+    O('update', 'Level 3 corridor', 'Tray supports added at 1.2 m centres over the 2 m span.', '', '', 3),
+    O('defect', 'Flat 3.07 bathroom', 'Extract fan found wired to the lighting circuit.', 'Rewire to dedicated fused spur', 'M. Osei', 2),
+    O('defect', 'Level 1 electrical riser', 'DB-1B labelled as DB-1A.', 'Re-label and update schedule', 'M. Osei', 1),
+    O('update', 'General', 'Second fix started on level 1.', '', '', 2),
+  ]),
+  Rp('r9', 'p012', 6, 'T. Bright', '2026-09-01', '2026-09-01T13:12', 'not_required', 'Sent to 3', [O('update', 'Boiler house', 'Strip-out started; gas isolated under permit.', '', '', 3)]),
+  Rp('r10', 'p014', 10, 'J. Whitaker', '2026-08-28', '2026-08-28T16:00', 'approved', 'Sent to 3', [O('defect', 'Plantroom, level -1', 'Flow and return to AHU-2 reversed at the valve set.', 'Swap and re-label', 'J. Whitaker', 2), O('update', 'General', 'Pipework 70% on level -1.', '', '', 2)]),
+  Rp('r11', 'p011', 19, 'M. Osei', '2026-08-27', '2026-08-27T16:20', 'not_required', 'Sent to 2', [O('update', 'Levels 1–3', 'First fix complete and inspected.', '', '', 4)]),
+  Rp('r12', 'p017', 2, 'D. Priestley', '2026-08-26', '2026-08-26T17:10', 'approved', 'Sent to 2', [O('update', 'Level 2', 'Containment started.', '', '', 3)]),
+  Rp('r13', 'p009', 8, 'S. Kaur', '2026-08-25', '2026-08-25T11:45', 'not_required', 'Sent to 2', [O('defect', 'Shower room 2', 'TMV fails to shut on cold water loss.', 'Replace TMV3', 'S. Kaur', 2)]),
+  Rp('r14', 'p014', 9, 'T. Bright', '2026-08-21', '2026-08-21T15:30', 'approved', 'Sent to 3', [O('defect', 'Roof plant deck', 'Access hatch restraint chain missing.', 'Northbank to fit', 'Northbank site manager', 1)]),
+];
+const RS = Object.fromEntries(REPORTS.map(r => [r.id, r]));
+const DRAFTS = [
+  { id: 'd1', pj: 'p011', ref: '011LME-SPR-022', author: 'M. Osei', saved: '2026-09-09T09:14' },
+  { id: 'd2', pj: 'p012', ref: '012LCP-SPR-008', author: 'T. Bright', saved: '2026-09-09T08:40' },
+  { id: 'd3', pj: 'p017', ref: '017LME-SPR-005', author: 'D. Priestley', saved: '2026-09-08T17:55' },
+];
+
+/* ------------------------------------------------------------ derivations */
+const active = i => i.work !== 'closed' && i.conf !== 'withdrawn';
+// Work put forward as complete is waiting on the office, not the site, so it
+// is "ready to verify" rather than overdue even when its target has passed.
+const verify = i => active(i) && i.work === 'awaiting_verification';
+const overdue = i => active(i) && !verify(i) && i.target < TODAY;
+const unassigned = i => active(i) && !i.owner;
+const provisional = i => active(i) && i.conf === 'provisional';
+const attention = i => active(i) && (overdue(i) || verify(i) || unassigned(i) || provisional(i));
+const week = r => dayDiff(TODAY, r.received) < 7;
+const todayR = r => r.received.slice(0, 10) === TODAY;
+const toReview = r => r.review === 'pending';
+const urgency = i => overdue(i) ? 0 : unassigned(i) ? 1 : verify(i) ? 2 : provisional(i) ? 3 : 4;
+const byUrgency = (a, b) => urgency(a) - urgency(b) || a.target.localeCompare(b.target);
+const byReceived = (a, b) => b.received.localeCompare(a.received);
+const projectRoll = pj => { const list = ISSUES.filter(i => i.pj === pj && active(i)); return { open: list.length, late: list.filter(overdue).length, ver: list.filter(verify).length, review: REPORTS.filter(r => r.pj === pj && toReview(r)).length, week: REPORTS.filter(r => r.pj === pj && week(r)).length, drafts: DRAFTS.filter(d => d.pj === pj).length, last: REPORTS.filter(r => r.pj === pj).sort(byReceived)[0] }; };
+
+/* ----------------------------------------------------------------- state */
+const S = { c: 1, tab: 'home', pj: '', f: '', sel: '', q: '', from: null };
+const TABS = ['home', 'projects', 'reports', 'issues', 'help'];
+const hashOf = () => `#/c${S.c}/${S.tab}/${S.pj || '-'}/${S.f || '-'}/${S.sel || '-'}`;
+function parse(h) {
+  const p = (h || '').replace(/^#\/?/, '').split('/');
+  S.c = Number((p[0] || 'c1').slice(1)) || 1;
+  S.tab = TABS.includes(p[1]) ? p[1] : 'home';
+  S.pj = p[2] && p[2] !== '-' && P[p[2]] ? p[2] : '';
+  S.f = p[3] && p[3] !== '-' ? p[3] : '';
+  S.sel = p[4] && p[4] !== '-' ? p[4] : '';
+}
+// go: tab, project, filter, selection. Empty string clears; undefined keeps.
+function go(tab, pj, f, sel, from) {
+  if (tab !== undefined) { if (tab !== S.tab) { S.f = ''; S.sel = ''; S.q = ''; } S.tab = tab; }
+  if (pj !== undefined) S.pj = pj;
+  if (f !== undefined) S.f = f;
+  if (sel !== undefined) S.sel = sel;
+  S.from = from || (tab === 'home' ? null : S.from);
+  commit();
+}
+// The hash is a bookmark of the state, not the trigger for rendering, so the
+// page still works where the address bar cannot be written (sandboxed previews).
+function commit() { const h = hashOf(); try { if (location.hash !== h) location.hash = h; } catch (e) {} render(); }
+const G = (tab, pj, f, sel) => `data-go="${[tab, pj, f, sel].map(v => v === undefined ? '*' : v).join('|')}"`;
+const inScope = x => !S.pj || x.pj === S.pj;
+const matches = text => !S.q || text.toLowerCase().includes(S.q.toLowerCase());
+const issueText = i => `${i.ref} ${i.desc} ${i.loc} ${i.owner} ${i.trade} ${P[i.pj].name}`;
+const reportText = r => `${r.ref} ${r.author} ${r.trade} ${P[r.pj].name}`;
+const scopedIssues = () => ISSUES.filter(i => inScope(i) && matches(issueText(i)));
+const scopedReports = () => REPORTS.filter(r => inScope(r) && matches(reportText(r))).sort(byReceived);
+const scopedDrafts = () => DRAFTS.filter(inScope);
+const scopedProjects = () => PROJECTS.filter(p => (!S.pj || p.id === S.pj) && matches(`${p.num} ${p.name} ${p.client} ${p.pm}`));
+const counts = () => { const is = scopedIssues(), rs = scopedReports(); return { late: is.filter(overdue).length, ver: is.filter(verify).length, un: is.filter(unassigned).length, prov: is.filter(provisional).length, attn: is.filter(attention).length, open: is.filter(active).length, review: rs.filter(toReview).length, returned: rs.filter(r => r.review === 'returned').length, week: rs.filter(week).length, today: rs.filter(todayR).length, drafts: scopedDrafts().length, projects: scopedProjects().length }; };
+const issueFilter = i => S.f === 'overdue' ? overdue(i) : S.f === 'verify' ? verify(i) : S.f === 'unassigned' ? unassigned(i) : S.f === 'attention' ? attention(i) : S.f === 'closed' ? !active(i) : S.f === 'all' ? true : active(i);
+const reportFilter = r => S.f === 'review' ? toReview(r) : S.f === 'returned' ? r.review === 'returned' : S.f === 'week' ? week(r) : S.f === 'today' ? todayR(r) : true;
+
+/* ------------------------------------------------------ shared components */
+function tag(k, label) { return `<span class="tag tag-${k}">${esc(label)}</span>`; }
+function issueTag(i) {
+  if (!active(i)) return tag('ok', i.conf === 'withdrawn' ? 'Withdrawn' : 'Closed');
+  if (overdue(i)) return tag('alert', 'Overdue');
+  if (verify(i)) return tag('brass', 'Ready to verify');
+  if (!i.owner) return tag('caution', 'Unassigned');
+  if (i.conf === 'provisional') return tag('caution', 'Provisional');
+  return tag('quiet', i.work === 'in_progress' ? 'In progress' : i.work === 'assigned' ? 'Assigned' : 'Open');
+}
+function reportTag(r) { return r.review === 'pending' ? tag('caution', 'Awaiting review') : r.review === 'returned' ? tag('alert', 'Returned') : r.review === 'approved' ? tag('ok', 'Approved') : tag('quiet', 'Received'); }
+function reviewWord(r) { return r.review === 'pending' ? 'Awaiting review' : r.review === 'returned' ? 'Returned for changes' : r.review === 'approved' ? 'Approved' : 'No review required'; }
+const KIND = { update: 'Progress update', defect: 'Defect', variation: 'Variation required', access: 'Access restriction' };
+function photos(n) { return n ? `<div class="photos">${Array.from({ length: Math.min(n, 4) }, (_, k) => `<div class="ph">PHOTO ${k + 1}</div>`).join('')}${n > 4 ? `<div class="ph">+${n - 4}</div>` : ''}</div>` : ''; }
+function crumbs(parts) { return `<div class="crumbs">${parts.map((p, k) => (k ? '<span>/</span>' : '') + (p.go ? `<button type="button" ${p.go}>${esc(p.t)}</button>` : esc(p.t))).join('')}</div>`; }
+
+function issueRow(i, opts) {
+  opts = opts || {};
+  const sel = S.sel === i.id;
+  return `<tr class="go ${sel ? 'sel' : ''}" ${G(opts.tab || 'issues', opts.keepScope ? undefined : (S.pj || ''), opts.filter === undefined ? undefined : opts.filter, i.id)}>
+    <td><span class="ref">${i.ref}</span></td>
+    <td><div class="rowtitle">${esc(i.desc)}</div><div class="rowsub">${esc(i.loc)}${opts.project === false ? '' : `<span class="sep">|</span>${esc(P[i.pj].name)}`}</div></td>
+    <td>${i.owner ? esc(i.owner) : '<span class="soon">Unassigned</span>'}<div class="rowsub">${esc(i.trade)}</div></td>
+    <td><span class="due ${dueClsI(i)}"><b>${fmt(i.target)}</b></span><div class="rowsub">${active(i) ? whenWord(i) : 'closed'}</div></td>
+    <td>${issueTag(i)}</td><td class="r"><span class="arrow">›</span></td></tr>`;
+}
+function reportRow(r, opts) {
+  opts = opts || {};
+  const sel = S.sel === r.id;
+  return `<tr class="go ${sel ? 'sel' : ''}" ${G(opts.tab || 'reports', opts.keepScope ? undefined : (S.pj || ''), opts.filter === undefined ? undefined : opts.filter, r.id)}>
+    <td><span class="ref">${r.ref}</span></td>
+    <td><div class="rowtitle">${esc(P[r.pj].name)}</div><div class="rowsub">${esc(r.author)}<span class="sep">|</span>${esc(r.trade)}<span class="sep">|</span>${plural(r.obs.length, 'update')}${r.defects ? `, <b class="late">${plural(r.defects, 'defect')}</b>` : ''}</div></td>
+    <td><span class="due">${fmtDT(r.received)}</span><div class="rowsub">${ago(r.received)}</div></td>
+    <td>${reportTag(r)}</td><td class="r"><span class="arrow">›</span></td></tr>`;
+}
+function issueTable(list, opts) {
+  opts = opts || {};
+  return `<table class="reg"><thead><tr><th>Ref</th><th>Issue</th><th>Owner</th><th>Target</th><th>Status</th><th></th></tr></thead><tbody>${list.length ? list.map(i => issueRow(i, opts)).join('') : `<tr><td colspan="6" class="empty">${esc(opts.empty || 'Nothing here.')}</td></tr>`}</tbody></table>`;
+}
+function reportTable(list, opts) {
+  opts = opts || {};
+  return `<table class="reg"><thead><tr><th>Ref</th><th>Report</th><th>Received</th><th>Status</th><th></th></tr></thead><tbody>${list.length ? list.map(r => reportRow(r, opts)).join('') : `<tr><td colspan="5" class="empty">${esc(opts.empty || 'Nothing here.')}</td></tr>`}</tbody></table>`;
+}
+function issueSheet(i, home) {
+  const p = P[i.pj];
+  const ev = (i.events || [[i.raised, i.by, `Raised from site report.`]]);
+  return `<div class="sheet">
+    ${crumbs([{ t: home || 'Issues', go: G('issues', S.pj || '', '', '') }, { t: p.name, go: G('issues', p.id, '', '') }, { t: i.ref }])}
+    <div class="sheet-title"><div><h4>${esc(i.desc)}</h4><div class="rowsub">${esc(i.loc)}<span class="sep">|</span>${esc(p.name)}<span class="sep">|</span>${esc(i.trade)}</div></div>${issueTag(i)}</div>
+    <dl class="tb"><div><dt>Owner</dt><dd>${i.owner ? esc(i.owner) : '<span class="soon">Unassigned</span>'}</dd></div><div><dt>Target</dt><dd><span class="due ${dueClsI(i)}"><b>${fmt(i.target)}</b></span> <span class="rowsub" style="display:inline">${active(i) ? whenWord(i) : ''}</span></dd></div><div><dt>Raised</dt><dd>${fmt(i.raised)} by ${esc(i.by)}</dd></div><div><dt>Confirmation</dt><dd>${i.conf === 'provisional' ? 'Provisional, not yet confirmed by the office' : esc(i.conf[0].toUpperCase() + i.conf.slice(1))}</dd></div></dl>
+    <div class="sec-h">Action needed</div><p style="margin:0;font-size:13.5px">${esc(i.act)}</p>
+    ${verify(i) ? `<div class="note brass"><span><b>${esc(i.closedBy || i.owner)}</b> put this forward as complete. Verification must be independent of the person who did the work.</span><span class="actions"><button class="btn btn-sm" data-act="verify" type="button">Verify closed</button><button class="btn btn-q btn-sm" data-act="reopen" type="button">Reopen</button></span></div>` : ''}
+    ${unassigned(i) ? `<div class="note warn"><span>No owner. Nothing moves until someone is named.</span><button class="btn btn-sm" data-act="assign" type="button">Assign owner</button></div>` : ''}
+    ${provisional(i) ? `<div class="note"><span>Raised on site and not yet confirmed. Confirming makes it a defect on the register; the target date starts then.</span><span class="actions"><button class="btn btn-sm" data-act="confirm" type="button">Confirm</button><button class="btn btn-q btn-sm" data-act="dispute" type="button">Dispute</button></span></div>` : ''}
+    ${overdue(i) && !verify(i) ? `<div class="note bad"><span>Past the agreed target. ${esc(p.client)} will see this on the next issued report.</span><button class="btn btn-q btn-sm" data-act="retarget" type="button">Agree new target</button></div>` : ''}
+    <div class="sec-h">History</div>${ev.map(e => `<div class="hist"><div class="d">${fmt(e[0])}</div><div class="b"><p><b>${esc(e[1])}</b> ${esc(e[2])}</p></div></div>`).join('')}
+    <div class="sec-h">Reports mentioning this issue <button class="more" type="button" ${G('reports', p.id, '', '')}>Project reports →</button></div>
+    ${REPORTS.filter(r => r.pj === i.pj).slice(0, 2).map(r => `<button class="mini" type="button" ${G('reports', p.id, '', r.id)}><span class="ref">${r.ref}</span><div class="mini-b"><p>${esc(r.author)}, visit ${fmt(r.visit)}</p></div><span class="age">${ago(r.received)}</span></button>`).join('')}
+  </div>`;
+}
+function reportSheet(r, home) {
+  const p = P[r.pj];
+  return `<div class="sheet">
+    ${crumbs([{ t: home || 'Reports', go: G('reports', S.pj || '', '', '') }, { t: p.name, go: G('reports', p.id, '', '') }, { t: r.ref }])}
+    <div class="sheet-title"><div><h4>${esc(p.name)} · site progress report</h4><div class="rowsub">${esc(r.author)}<span class="sep">|</span>${esc(r.trade)}<span class="sep">|</span>Visit ${fmtL(r.visit)}</div></div>${reportTag(r)}</div>
+    <dl class="tb"><div><dt>Received by Relay</dt><dd>${fmtDT(r.received)}</dd></div><div><dt>Review</dt><dd>${reviewWord(r)}</dd></div><div><dt>Delivery</dt><dd>${esc(r.delivery)}</dd></div><div><dt>Contents</dt><dd>${plural(r.obs.length, 'update')}, ${plural(r.defects, 'defect')}, ${plural(r.photos, 'photo')}</dd></div></dl>
+    <div class="actions" style="margin-top:12px"><button class="btn btn-q btn-sm" data-act="open" type="button">Open full report</button><button class="btn btn-q btn-sm" data-act="pdf" type="button">View PDF</button><span class="spacer" style="margin-left:auto"></span>${r.review === 'pending' ? `<button class="btn btn-sm" data-act="approve" type="button">Approve and issue</button><button class="btn btn-q btn-sm" data-act="return" type="button">Return for changes</button>` : r.review === 'returned' ? `<span class="rowsub">Returned to ${esc(r.author)}; awaiting a resubmission.</span>` : `<button class="btn btn-q btn-sm" data-act="resend" type="button">Send again</button>`}</div>
+    ${p.review && r.review === 'pending' ? `<div class="note warn"><span>${esc(p.name)} requires office review before a report issues. Nothing has been sent to ${esc(p.client)}.</span></div>` : ''}
+    <div class="sec-h">What the visit found</div>
+    ${r.obs.map(o => `<div class="obs"><div class="k ${o.k}">${KIND[o.k]}</div><h5>${esc(o.loc)}</h5><p>${esc(o.text)}</p>${o.act ? `<p><b>Action:</b> ${esc(o.act)}${o.owner ? ` <span class="rowsub" style="display:inline">(${esc(o.owner)})</span>` : ' <span class="soon">(no owner)</span>'}</p>` : ''}${photos(o.ph)}</div>`).join('')}
+    <div class="sec-h">Open issues on this project <button class="more" type="button" ${G('issues', p.id, '', '')}>All ${plural(projectRoll(p.id).open, 'issue')} →</button></div>
+    ${ISSUES.filter(i => i.pj === r.pj && attention(i)).slice(0, 3).map(i => `<button class="mini" type="button" ${G('issues', p.id, '', i.id)}><span class="ref">${i.ref}</span><div class="mini-b"><p>${esc(i.desc)}</p><div class="rowsub">${esc(i.owner || 'Unassigned')} · ${whenWord(i)}</div></div>${issueTag(i)}</button>`).join('') || '<div class="rowsub">Nothing needs attention on this project.</div>'}
+  </div>`;
+}
+function projectSheet(p, opts) {
+  opts = opts || {};
+  const roll = projectRoll(p.id);
+  const is = ISSUES.filter(i => i.pj === p.id && active(i)).sort(byUrgency);
+  const rs = REPORTS.filter(r => r.pj === p.id).sort(byReceived);
+  return `<div class="sheet">
+    ${crumbs([{ t: 'Projects', go: G('projects', '', '', '') }, { t: p.num }])}
+    <div class="sheet-title"><div><h4>${esc(p.name)}</h4><div class="rowsub">${esc(p.client)}<span class="sep">|</span>${esc(p.div)}<span class="sep">|</span>${esc(p.status)}</div></div>${roll.late ? tag('alert', `${roll.late} overdue`) : roll.open ? tag('quiet', `${roll.open} open`) : tag('ok', 'Nothing open')}</div>
+    <dl class="tb"><div><dt>Project manager</dt><dd>${esc(p.pm)}</dd></div><div><dt>Stage</dt><dd>${esc(p.stage)}</dd></div><div><dt>Next</dt><dd>${esc(p.next)}</dd></div><div><dt>Review</dt><dd>${p.review ? 'Office review before issue' : 'Issues on receipt'}</dd></div></dl>
+    <dl class="figs" style="margin-top:12px;grid-template-columns:repeat(4,1fr)">
+      <button type="button" class="${roll.late ? 'hot' : ''}" ${G('issues', p.id, 'overdue', '')}><dt>Overdue</dt><dd>${roll.late}</dd></button>
+      <button type="button" ${G('issues', p.id, 'verify', '')}><dt>Ready to verify</dt><dd>${roll.ver}</dd></button>
+      <button type="button" ${G('reports', p.id, 'review', '')}><dt>Awaiting review</dt><dd>${roll.review}</dd></button>
+      <button type="button" ${G('reports', p.id, 'week', '')}><dt>Reports, 7 days</dt><dd>${roll.week}</dd></button>
+    </dl>
+    ${opts.compact ? '' : `<div class="two" style="margin-top:8px">
+      <div><div class="sec-h">Issues <button class="more" type="button" ${G('issues', p.id, '', '')}>All →</button></div>${is.slice(0, 5).map(i => `<button class="mini" type="button" ${G('issues', p.id, '', i.id)}><div class="mini-b"><p>${esc(i.desc)}</p><div class="rowsub">${esc(i.owner || 'Unassigned')} · ${whenWord(i)}</div></div>${issueTag(i)}</button>`).join('') || '<div class="rowsub">No open issues.</div>'}</div>
+      <div><div class="sec-h">Reports <button class="more" type="button" ${G('reports', p.id, '', '')}>Inbox →</button></div>${rs.slice(0, 5).map(r => `<button class="mini" type="button" ${G('reports', p.id, '', r.id)}><span class="ref">${r.ref}</span><div class="mini-b"><p>${esc(r.author)}, ${fmt(r.visit)}</p></div>${reportTag(r)}</button>`).join('')}</div>
+    </div>`}
+  </div>`;
+}
+function helpView() {
+  return `<div class="pagehead"><div><div class="kick">Help &amp; install</div><h3>Relay on your phone and desk</h3><p>Office provides submitted reports and project issues; unfinished draft contents stay private to the engineer.</p></div></div>
+  <div class="help-grid"><div class="panel"><div class="panel-head"><h4>Install Relay</h4></div><div style="padding:16px"><p>Relay installs as a web app. There is nothing to download from a store.</p><ol><li>Open <span class="ref">leodisfinance.com</span> in Safari (iPhone) or Chrome (Android).</li><li>Choose Share, then Add to Home Screen.</li><li>Sign in with your Microsoft account. Your role decides what you see.</li></ol><div class="actions" style="margin-top:12px"><button class="btn btn-sm" data-act="pdf-install" type="button">Installation guide PDF</button><button class="btn btn-q btn-sm" data-act="pdf-engineer" type="button">Engineer companion PDF</button></div></div></div>
+  <div class="panel"><div class="panel-head"><h4>Who sees what</h4></div><div style="padding:16px"><p><b>Engineers</b> capture site updates and individual defects. Their drafts are private until submitted.</p><p><b>Managers</b> see every submitted report, review where a project requires it, and own the issues register.</p><p><b>Admin</b> adds project access and the people roster.</p><p style="margin:0">Status never depends on colour alone, and every word here is one of the app's own: received, awaiting review, returned, approved; open, assigned, in progress, ready to verify, closed.</p></div></div></div>`;
+}
+function scopeWord() { return S.pj ? P[S.pj].name : 'All projects'; }
+
+/* ======================================================= Concept 1 · Desk */
+function c1() {
+  const c = counts();
+  const tabs = [['home', 'Home', 0, ''], ['projects', 'Projects', c.projects, ''], ['reports', 'Reports', c.review, 'warn'], ['issues', 'Issues', c.late, 'warn'], ['help', 'Help & install', 0, '']];
+  return `<div class="c1">
+    <header class="topbar"><div class="logo"><b>RELAY</b><span>DEVELOPMENTS</span></div>
+      <div class="search"><input id="q" type="search" placeholder="Search projects, reports, issues" value="${esc(S.q)}" autocomplete="off"><kbd>/</kbd></div>
+      <div class="topbar-right"><button class="bell" type="button" ${G('issues', '', 'attention', '')}>ATTENTION <b>${c.attn}</b></button><span class="whoami"><em>A. Whitfield</em> · MANAGER</span><button class="tbtn" type="button" data-act="engineer">Engineer view</button><button class="tbtn" type="button" data-act="companies">Companies</button><button class="tbtn" type="button" data-act="signout">Sign out</button></div>
+    </header>
+    <nav class="hnav">${tabs.map(t => `<button type="button" class="${S.tab === t[0] ? 'on' : ''}" ${G(t[0], undefined, '', '')}>${t[1]}${t[2] ? `<i class="${t[3]}">${t[2]}</i>` : ''}</button>`).join('')}<div class="right"><span class="whoami">${fmtL(TODAY).toUpperCase()}</span></div></nav>
+    <div class="scope">Scope <button class="chip ${S.pj ? '' : 'on'}" type="button" ${G(undefined, '', undefined, '')}>All projects</button>${PROJECTS.map(p => { const r = projectRoll(p.id); return `<button class="chip ${S.pj === p.id ? 'on' : ''}" type="button" ${G(undefined, p.id, undefined, '')}>${esc(p.num)} · ${esc(p.name.split(' - ')[0])}${r.late ? '<span class="dot"></span>' : ''}</button>`; }).join('')}<span class="dsc">${S.pj ? `Every tab is filtered to ${esc(P[S.pj].name)}.` : 'Pick a project and every tab follows it.'}</span></div>
+    <div class="view">${S.tab === 'home' ? c1Home(c) : S.tab === 'projects' ? c1Projects() : S.tab === 'reports' ? c1Reports(c) : S.tab === 'issues' ? c1Issues(c) : helpView()}</div>
+  </div>`;
+}
+function c1Home(c) {
+  const is = scopedIssues(), rs = scopedReports(), ds = scopedDrafts();
+  const attn = is.filter(attention).sort(byUrgency);
+  return `<div class="pagehead"><div><div class="kick">Office desk · ${esc(scopeWord())}</div><h3>${fmtL(TODAY)}</h3><p>${plural(c.open, 'open issue')} across ${plural(c.projects, 'project')}; ${plural(c.week, 'report')} received this week, ${c.review} awaiting your review.</p></div><div class="actions"><button class="btn btn-q" type="button" ${G('projects', undefined, '', '')}>Browse projects</button><button class="btn" type="button" ${G('reports', undefined, 'review', '')}>Open report inbox</button></div></div>
+  <dl class="figs">
+    <button type="button" class="${c.late ? 'hot' : ''}" ${G('issues', undefined, 'overdue', '')}><dt>Overdue actions</dt><dd>${c.late}</dd><span class="go">Issues › Overdue</span></button>
+    <button type="button" ${G('issues', undefined, 'verify', '')}><dt>Ready to verify</dt><dd>${c.ver}</dd><span class="go">Issues › Ready to verify</span></button>
+    <button type="button" ${G('issues', undefined, 'unassigned', '')}><dt>Without an owner</dt><dd>${c.un}</dd><span class="go">Issues › Unassigned</span></button>
+    <button type="button" ${G('reports', undefined, 'review', '')}><dt>Awaiting review</dt><dd>${c.review}<small>+${c.returned} returned</small></dd><span class="go">Reports › To review</span></button>
+    <button type="button" ${G('reports', undefined, 'week', '')}><dt>Reports, 7 days</dt><dd>${c.week}<small>${c.today} today</small></dd><span class="go">Reports › This week</span></button>
+  </dl>
+  <div class="two-wide"><div class="stack">
+    <div class="panel"><div class="panel-head"><h4>Needs attention</h4><span class="rowsub">Overdue first, then unowned, then ready to verify</span><button class="more" type="button" ${G('issues', undefined, 'attention', '')}>All ${attn.length} →</button></div>${issueTable(attn.slice(0, 6), { filter: 'attention', empty: 'Nothing needs attention in this scope.' })}${attn.length > 6 ? `<div class="panel-foot">Showing 6 of ${attn.length}.<button class="more" type="button" ${G('issues', undefined, 'attention', '')}>Open the full list →</button></div>` : ''}</div>
+    <div class="panel"><div class="panel-head"><h4>Latest site reports</h4><button class="more" type="button" ${G('reports', undefined, '', '')}>Inbox →</button></div>${reportTable(rs.slice(0, 5), { filter: '' })}</div>
+  </div><div class="stack">
+    <div class="panel"><div class="panel-head"><h4>Live projects</h4><button class="more" type="button" ${G('projects', undefined, '', '')}>All →</button></div>${scopedProjects().map(p => c1ProjRow(p)).join('')}<div class="panel-foot"><div class="cbar-key"><span class="k-late">overdue</span><span class="k-verify">to verify</span><span class="k-open">open</span></div></div></div>
+    <div class="panel"><div class="panel-head"><h4>From site today</h4></div><div class="today"><div class="big">${c.today}<small>${c.today === 1 ? 'report' : 'reports'} received</small></div><p>${plural(ds.length, 'draft')} in progress on site. Draft contents stay private until submitted.</p><div class="drafts">${ds.map(d => `<div><span class="ref">${d.ref}</span><span>${esc(d.author)}</span><span class="age">saved ${fmtDT(d.saved)}</span></div>`).join('')}</div></div></div>
+  </div></div>`;
+}
+function c1ProjRow(p) {
+  const r = projectRoll(p.id), t = Math.max(r.open, 1);
+  return `<button class="proj" type="button" ${G('projects', p.id, '', '')}><div class="top"><span class="ref">${p.num}</span><div class="rowtitle">${esc(p.name)}</div><span class="arrow">›</span></div><div class="cbar"><i class="late" style="width:${r.late / t * 100}%"></i><i class="verify" style="width:${r.ver / t * 100}%"></i><i class="open" style="width:${(r.open - r.late - r.ver) / t * 100}%"></i></div><div class="meta"><span>${r.open} open</span>${r.late ? `<b>${r.late} overdue</b>` : ''}<span>${r.ver} to verify</span><span>${r.review ? `${r.review} to review` : `last report ${ago(r.last.received)}`}</span></div></button>`;
+}
+function c1Projects() {
+  if (S.pj) return `<div class="pagehead"><div><div class="kick">Projects</div><h3>${esc(P[S.pj].name)}</h3><p>${esc(P[S.pj].client)} · ${esc(P[S.pj].pm)}</p></div><div class="actions"><button class="btn btn-q btn-sm" type="button" ${G('projects', '', '', '')}>All projects</button></div></div>${projectSheet(P[S.pj])}`;
+  return `<div class="pagehead"><div><div class="kick">Projects</div><h3>Active reporting projects</h3><p>Active and defects liability. Select a row to open the project sheet; the scope strip follows.</p></div></div>
+  <div class="panel"><table class="reg"><thead><tr><th>Number</th><th>Project</th><th>Manager</th><th class="r">Open</th><th class="r">Overdue</th><th class="r">To verify</th><th class="r">To review</th><th>Last report</th><th></th></tr></thead><tbody>${scopedProjects().map(p => { const r = projectRoll(p.id); return `<tr class="go" ${G('projects', p.id, '', '')}><td><span class="ref">${p.num}</span></td><td><div class="rowtitle">${esc(p.name)}</div><div class="rowsub">${esc(p.client)}<span class="sep">|</span>${esc(p.stage)}</div></td><td>${esc(p.pm)}<div class="rowsub">${esc(p.status)}</div></td><td class="r num">${r.open}</td><td class="r num ${r.late ? 'late' : ''}">${r.late}</td><td class="r num">${r.ver}</td><td class="r num ${r.review ? 'soon' : ''}">${r.review}</td><td><span class="due">${fmt(r.last.received)}</span><div class="rowsub">${esc(r.last.author)}</div></td><td class="r"><span class="arrow">›</span></td></tr>`; }).join('')}</tbody></table></div>`;
+}
+function c1Reports(c) {
+  const rs = scopedReports().filter(reportFilter), sel = RS[S.sel];
+  const chips = [['', 'All submitted', scopedReports().length], ['review', 'To review', c.review, 'warn'], ['returned', 'Returned', c.returned], ['week', 'This week', c.week], ['drafts', 'In progress on site', c.drafts]];
+  return `<div class="pagehead"><div><div class="kick">Reports · ${esc(scopeWord())}</div><h3>Report inbox</h3><p>Read submitted reports and review what needs a decision. The list stays put while you read.</p></div></div>
+  <div class="filters">${chips.map(ch => `<button class="chip ${ch[3] || ''} ${S.f === ch[0] ? 'on' : ''}" type="button" ${G(undefined, undefined, ch[0], '')}>${ch[1]}<i>· ${ch[2]}</i></button>`).join('')}<span class="spacer"></span><span class="rowsub">Newest first</span></div>
+  ${S.f === 'drafts' ? `<div class="panel"><div class="panel-head"><h4>In progress on site</h4></div><table class="reg"><thead><tr><th>Ref</th><th>Project</th><th>Engineer</th><th>Last saved</th><th></th></tr></thead><tbody>${scopedDrafts().map(d => `<tr><td><span class="ref">${d.ref}</span></td><td>${esc(P[d.pj].name)}</td><td>${esc(d.author)}</td><td><span class="due">${fmtDT(d.saved)}</span></td><td>${tag('quiet', 'Draft, summary only')}</td></tr>`).join('')}</tbody></table><div class="panel-foot">Draft contents are private until submitted. Work held only on an engineer's device is not visible here.</div></div>`
+  : `<div class="two-read"><div class="panel"><div class="panel-head"><h4>${S.f === 'review' ? 'To review' : S.f === 'returned' ? 'Returned to site' : 'Submitted reports'}</h4><i class="rowsub">${rs.length}</i></div>${reportTable(rs, { empty: 'No reports match.' })}</div>${sel ? reportSheet(sel) : `<div class="panel"><div class="empty">Choose a report to read it here.<br>${c.review ? `${plural(c.review, 'report')} awaiting your review.` : 'Nothing is waiting on you.'}</div></div>`}</div>`}`;
+}
+function c1Issues(c) {
+  const is = scopedIssues().filter(issueFilter).sort(byUrgency), sel = IS[S.sel];
+  const chips = [['', 'Open', c.open], ['attention', 'Needs attention', c.attn, 'warn'], ['overdue', 'Overdue', c.late, 'warn'], ['verify', 'Ready to verify', c.ver], ['unassigned', 'Unassigned', c.un], ['closed', 'Closed', scopedIssues().filter(i => !active(i)).length]];
+  return `<div class="pagehead"><div><div class="kick">Issues &amp; actions · ${esc(scopeWord())}</div><h3>Issues register</h3><p>Every defect, variation and access restriction raised from site, with an owner and a target date.</p></div></div>
+  <div class="filters">${chips.map(ch => `<button class="chip ${ch[3] || ''} ${S.f === ch[0] ? 'on' : ''}" type="button" ${G(undefined, undefined, ch[0], '')}>${ch[1]}<i>· ${ch[2]}</i></button>`).join('')}<span class="spacer"></span><span class="rowsub">Most urgent first</span></div>
+  <div class="${sel ? 'two-read' : ''}"><div class="panel">${issueTable(is, { empty: 'No issues match.', project: !S.pj })}</div>${sel ? issueSheet(sel) : ''}</div>`;
+}
+
+/* ======================================================= Concept 2 · Rail */
+function c2() {
+  const c = counts();
+  const nav = [['home', 'Home', 0], ['projects', 'Projects', c.projects], ['reports', 'Reports', c.review, 'warn'], ['issues', 'Issues', c.late, 'bad']];
+  return `<div class="c2">
+    <aside class="rail">
+      <div class="brand"><b>RELAY</b><span>DEVELOPMENTS</span></div>
+      <div class="lbl">Workspace</div>
+      <div class="nav">${nav.map(n => `<button type="button" class="${S.tab === n[0] ? 'on' : ''}" ${G(n[0], undefined, '', '')}>${n[1]}${n[2] ? `<i class="${n[3] || ''}">${n[2]}</i>` : ''}</button>`).join('')}</div>
+      <div class="lbl">Scope${S.pj ? `<button type="button" ${G(undefined, '', undefined, '')}>Clear</button>` : ''}</div>
+      <div class="scope"><button type="button" class="${S.pj ? '' : 'on'}" ${G(undefined, '', undefined, '')}><div class="nm">All projects</div><div class="nb"><span>${c.open} open</span>${ISSUES.filter(overdue).length ? `<b>${ISSUES.filter(overdue).length} overdue</b>` : ''}</div></button>
+      ${PROJECTS.map(p => { const r = projectRoll(p.id); return `<button type="button" class="${S.pj === p.id ? 'on' : ''}" ${G(undefined, p.id, undefined, '')}><div class="nm">${esc(p.name)}</div><div class="nb"><span>${p.num}</span><span>${r.open} open</span>${r.late ? `<b>${r.late} overdue</b>` : ''}${r.review ? `<em>${r.review} to review</em>` : ''}</div></button>`; }).join('')}</div>
+      <div class="lbl">Resources</div>
+      <div class="nav"><button type="button" class="${S.tab === 'help' ? 'on' : ''}" ${G('help', undefined, '', '')}>Help &amp; install</button><button type="button" data-act="engineer">Engineer view</button><button type="button" data-act="companies">Companies</button></div>
+      <div class="foot"><b>A. Whitfield</b>Manager · Office view<div class="links"><button type="button" data-act="signout">Sign out</button><button type="button" data-act="theme">Appearance</button></div></div>
+    </aside>
+    <div class="main">
+      <div class="crumbbar">${crumbs([{ t: 'DEVELOPMENTS', go: G('home', undefined, '', '') }, { t: S.tab.toUpperCase() }].concat(S.pj ? [{ t: P[S.pj].num }] : []))}${S.from && S.tab !== 'home' ? `<span class="trail">From home › ${esc(S.from)} <button type="button" ${G('home', undefined, '', '')}>← back</button></span>` : ''}<div class="search"><input id="q" type="search" placeholder="Search ${S.pj ? esc(P[S.pj].name) : 'all projects'}" value="${esc(S.q)}" autocomplete="off"><kbd>/</kbd></div><span class="date">${fmtL(TODAY).toUpperCase()}</span></div>
+      <div class="view">${S.tab === 'home' ? c2Home(c) : S.tab === 'projects' ? c2Projects() : S.tab === 'reports' ? c2Reports(c) : S.tab === 'issues' ? c2Issues(c) : helpView()}</div>
+    </div>
+  </div>`;
+}
+function c2Home(c) {
+  const is = scopedIssues(), rs = scopedReports();
+  const attn = is.filter(attention).sort(byUrgency);
+  const cell = (n, tab, f, pj, cls) => `<td><button class="cell ${n ? 'n1' : ''} ${cls || ''}" type="button" ${G(tab, pj, f, '')} data-from="${esc(f || tab)}">${n}</button></td>`;
+  const days = [...new Set(rs.filter(week).map(r => r.received.slice(0, 10)))].sort().reverse();
+  const groups = PROJECTS.filter(p => !S.pj || p.id === S.pj).map(p => ({ p, list: attn.filter(i => i.pj === p.id) })).filter(g => g.list.length);
+  return `<div class="pagehead"><div><div class="kick">${esc(scopeWord())}</div><h3>Portfolio at a glance</h3><p>Every cell is a door. Click a number and you land on that tab, already filtered to that project; the rail remembers where you came from.</p></div><div class="actions"><button class="btn" type="button" ${G('reports', undefined, 'review', '')} data-from="review">Review ${c.review} ${c.review === 1 ? 'report' : 'reports'}</button></div></div>
+  <div class="strip"><button type="button" ${G('issues', undefined, 'overdue', '')} data-from="overdue"><b class="${c.late ? 'hot' : ''}">${c.late}</b><span>overdue actions</span></button><button type="button" ${G('issues', undefined, 'verify', '')} data-from="verify"><b>${c.ver}</b><span>ready to verify</span></button><button type="button" ${G('issues', undefined, 'unassigned', '')} data-from="unassigned"><b>${c.un}</b><span>without an owner</span></button><button type="button" ${G('reports', undefined, 'review', '')} data-from="review"><b>${c.review}</b><span>awaiting review</span></button><button type="button" ${G('reports', undefined, 'week', '')} data-from="week"><b>${c.week}</b><span>reports this week, ${c.today} today</span></button><button type="button" ${G('reports', undefined, 'drafts', '')} data-from="drafts"><b>${c.drafts}</b><span>drafts on site</span></button></div>
+  <div class="panel"><div class="panel-head"><h4>Project matrix</h4><span class="rowsub">Rows are projects; columns are the tabs</span><button class="more" type="button" ${G('projects', undefined, '', '')}>Project sheets →</button></div>
+  <table class="matrix"><thead><tr><th>Project</th><th>Stage</th><th class="c">Open</th><th class="c">Overdue</th><th class="c">To verify</th><th class="c">To review</th><th class="c">Reports 7d</th><th>Last from site</th></tr></thead><tbody>
+  ${scopedProjects().map(p => { const r = projectRoll(p.id); return `<tr><td class="name"><button type="button" ${G('projects', p.id, '', '')} data-from="project"><div class="rowtitle">${esc(p.name)}</div><div class="rowsub"><span class="ref">${p.num}</span><span class="sep">|</span>${esc(p.pm)}</div></button></td><td class="stage">${esc(p.stage)}</td>${cell(r.open, 'issues', '', p.id)}${cell(r.late, 'issues', 'overdue', p.id, r.late ? 'bad' : '')}${cell(r.ver, 'issues', 'verify', p.id, r.ver ? 'warn' : '')}${cell(r.review, 'reports', 'review', p.id, r.review ? 'warn' : '')}${cell(r.week, 'reports', 'week', p.id)}<td class="last"><button class="cell txt" type="button" ${G('reports', p.id, '', r.last.id)} data-from="report"><b>${r.last.ref}</b>${esc(r.last.author)}, ${ago(r.last.received)}${r.drafts ? ` · ${plural(r.drafts, 'draft')} open` : ''}</button></td></tr>`; }).join('')}
+  </tbody></table></div>
+  <div class="two"><div class="panel"><div class="panel-head"><h4>Needs attention, by project</h4><button class="more" type="button" ${G('issues', undefined, 'attention', '')} data-from="attention">All ${attn.length} →</button></div>
+    ${groups.length ? groups.map(g => `<div class="grp-h"><button type="button" ${G('issues', g.p.id, 'attention', '')} data-from="attention">${esc(g.p.name)}</button><i>${g.list.length}</i></div>${g.list.slice(0, 3).map(i => `<button class="mini" type="button" ${G('issues', g.p.id, 'attention', i.id)} data-from="attention"><div class="mini-b"><p>${esc(i.desc)}</p><div class="rowsub">${esc(i.owner || 'Unassigned')}<span class="sep">|</span>${whenWord(i)}</div></div>${issueTag(i)}</button>`).join('')}`).join('') : '<div class="empty">Nothing needs attention in this scope.</div>'}</div>
+  <div class="panel"><div class="panel-head"><h4>This week from site</h4><button class="more" type="button" ${G('reports', undefined, 'week', '')} data-from="week">Inbox →</button></div>
+    ${days.map(d => `<div class="day"><div class="d">${DAYS[iso(d).getDay()].slice(0, 3).toUpperCase()}<b>${iso(d).getDate()}</b></div><div class="items">${rs.filter(r => r.received.slice(0, 10) === d).map(r => `<button class="mini" type="button" ${G('reports', r.pj, '', r.id)} data-from="report"><div class="mini-b"><p>${esc(P[r.pj].name)}</p><div class="rowsub">${esc(r.author)}<span class="sep">|</span>${r.ref}${r.defects ? `<span class="sep">|</span><b class="late">${plural(r.defects, 'defect')}</b>` : ''}</div></div>${reportTag(r)}</button>`).join('')}</div></div>`).join('')}
+    ${c.drafts ? `<div class="panel-foot">${plural(c.drafts, 'draft')} being written on site now. Contents stay private until submitted.</div>` : ''}</div></div>`;
+}
+function c2Projects() {
+  const list = scopedProjects();
+  return `<div class="pagehead"><div><div class="kick">Projects</div><h3>${S.pj ? esc(P[S.pj].name) : 'Project sheets'}</h3><p>${S.pj ? esc(P[S.pj].client) : 'One sheet per active project. Choose a project in the rail to work on it alone.'}</p></div></div>
+  ${S.pj ? projectSheet(P[S.pj]) : `<div class="psheet">${list.map(p => projectSheet(p, { compact: true })).join('')}</div>`}`;
+}
+function c2Reports(c) {
+  const rs = scopedReports().filter(reportFilter), sel = RS[S.sel];
+  const chips = [['', 'All submitted', scopedReports().length], ['review', 'To review', c.review, 'warn'], ['returned', 'Returned', c.returned], ['week', 'This week', c.week], ['drafts', 'Drafts on site', c.drafts]];
+  return `<div class="pagehead"><div><div class="kick">Reports · ${esc(scopeWord())}</div><h3>Report inbox</h3></div></div>
+  <div class="filters">${chips.map(ch => `<button class="chip ${ch[3] || ''} ${S.f === ch[0] ? 'on' : ''}" type="button" ${G(undefined, undefined, ch[0], '')}>${ch[1]}<i>· ${ch[2]}</i></button>`).join('')}</div>
+  ${S.f === 'drafts' ? `<div class="panel"><table class="reg"><thead><tr><th>Ref</th><th>Project</th><th>Engineer</th><th>Last saved</th><th></th></tr></thead><tbody>${scopedDrafts().map(d => `<tr><td><span class="ref">${d.ref}</span></td><td>${esc(P[d.pj].name)}</td><td>${esc(d.author)}</td><td><span class="due">${fmtDT(d.saved)}</span></td><td>${tag('quiet', 'Draft, summary only')}</td></tr>`).join('')}</tbody></table><div class="panel-foot">Draft contents are private until submitted.</div></div>`
+  : `<div class="two-read"><div class="panel">${reportTable(rs, { empty: 'No reports match.' })}</div>${sel ? reportSheet(sel, 'Reports') : `<div class="panel"><div class="empty">Choose a report to read it here.</div></div>`}</div>`}`;
+}
+function c2Issues(c) {
+  const is = scopedIssues().filter(issueFilter).sort(byUrgency), sel = IS[S.sel];
+  const chips = [['', 'Open', c.open], ['attention', 'Needs attention', c.attn, 'warn'], ['overdue', 'Overdue', c.late, 'warn'], ['verify', 'Ready to verify', c.ver], ['unassigned', 'Unassigned', c.un], ['closed', 'Closed', scopedIssues().filter(i => !active(i)).length]];
+  const groups = S.pj ? [{ p: P[S.pj], list: is }] : PROJECTS.map(p => ({ p, list: is.filter(i => i.pj === p.id) })).filter(g => g.list.length);
+  return `<div class="pagehead"><div><div class="kick">Issues · ${esc(scopeWord())}</div><h3>Issues register</h3></div></div>
+  <div class="filters">${chips.map(ch => `<button class="chip ${ch[3] || ''} ${S.f === ch[0] ? 'on' : ''}" type="button" ${G(undefined, undefined, ch[0], '')}>${ch[1]}<i>· ${ch[2]}</i></button>`).join('')}</div>
+  <div class="${sel ? 'two-read' : ''}"><div class="stack">${groups.length ? groups.map(g => `<div class="panel"><div class="grp-h"><button type="button" ${G('projects', g.p.id, '', '')}>${esc(g.p.name)}</button><span class="rowsub"><span class="ref">${g.p.num}</span></span><i>${g.list.length}</i></div>${issueTable(g.list, { project: false })}</div>`).join('') : '<div class="panel"><div class="empty">No issues match.</div></div>'}</div>${sel ? issueSheet(sel, 'Issues') : ''}</div>`;
+}
+
+/* ===================================================== Concept 3 · Triage */
+function c3() {
+  const c = counts();
+  const segs = [['home', 'Queue', c.attn + c.review, 'warn'], ['projects', 'Projects', c.projects], ['reports', 'Reports', c.review, 'warn'], ['issues', 'Issues', c.late, 'warn'], ['help', 'Help', 0]];
+  return `<div class="c3">
+    <header class="bar"><div class="logo"><b>RELAY</b><span>DEVELOPMENTS</span></div>
+      <div class="segs">${segs.map(s => `<button type="button" class="${S.tab === s[0] ? 'on' : ''}" ${G(s[0], undefined, '', '')}>${s[1]}${s[2] ? `<i class="${s[3] || ''}">${s[2]}</i>` : ''}</button>`).join('')}</div>
+      <div class="search"><input id="q" type="search" placeholder="Search everything" value="${esc(S.q)}" autocomplete="off"><kbd>/</kbd></div>
+      <span class="whoami"><em>A. Whitfield</em> · MANAGER</span><button class="tbtn" type="button" data-act="engineer">Engineer view</button><button class="tbtn" type="button" data-act="companies">Companies</button>
+    </header>
+    ${S.tab === 'help' ? `<div class="view" style="flex:1;min-height:0;overflow:auto;padding:24px;display:flex;flex-direction:column;gap:24px">${helpView()}</div>` : `<div class="panes">${c3Lenses(c)}${c3List(c)}${c3Reader(c)}</div>`}
+  </div>`;
+}
+function lens(label, n, f, cls, sub) { return `<button type="button" class="${S.f === f ? 'on' : ''} ${sub ? 'sub' : ''}" ${G(undefined, undefined, f, '')}>${label}${n !== null ? `<i class="${cls || ''}">${n}</i>` : ''}</button>`; }
+function c3Lenses(c) {
+  const proj = `<div class="lbl">Project</div><button type="button" class="${S.pj ? '' : 'on'}" ${G(undefined, '', undefined, '')}>All projects<i>${PROJECTS.length}</i></button>${PROJECTS.map(p => { const r = projectRoll(p.id); return `<button type="button" class="${S.pj === p.id ? 'on' : ''}" ${G(undefined, p.id, undefined, '')}>${esc(p.name.split(' - ')[0])}<i class="${r.late ? 'warn' : ''}">${r.late || r.open}</i></button>`; }).join('')}`;
+  if (S.tab === 'home') return `<aside class="lenses"><div class="lbl">Queue</div>${lens('Needs you', c.attn + c.review + c.returned, '', 'warn')}${lens('Overdue', c.late, 'overdue', 'warn', true)}${lens('To review', c.review, 'review', 'warn', true)}${lens('Ready to verify', c.ver, 'verify', 'brass', true)}${lens('Without an owner', c.un, 'unassigned', '', true)}${lens('Provisional', c.prov, 'provisional', '', true)}${lens('Returned to site', c.returned, 'returned', '', true)}<div class="lbl">Arrivals</div>${lens('Received today', c.today, 'today')}${lens('This week', c.week, 'week')}${lens('Everything open', c.open + scopedReports().length, 'all')}${proj}</aside>`;
+  if (S.tab === 'reports') return `<aside class="lenses"><div class="lbl">Reports</div>${lens('All submitted', scopedReports().length, '')}${lens('To review', c.review, 'review', 'warn')}${lens('Returned', c.returned, 'returned')}${lens('This week', c.week, 'week')}${lens('Drafts on site', c.drafts, 'drafts')}${proj}</aside>`;
+  if (S.tab === 'issues') return `<aside class="lenses"><div class="lbl">Issues</div>${lens('Open', c.open, '')}${lens('Needs attention', c.attn, 'attention', 'warn')}${lens('Overdue', c.late, 'overdue', 'warn')}${lens('Ready to verify', c.ver, 'verify', 'brass')}${lens('Unassigned', c.un, 'unassigned')}${lens('Closed', scopedIssues().filter(i => !active(i)).length, 'closed')}${proj}</aside>`;
+  return `<aside class="lenses"><div class="lbl">Projects</div>${lens('Active', PROJECTS.filter(p => p.status.startsWith('4')).length, '')}${lens('Defects liability', PROJECTS.filter(p => p.status.startsWith('5')).length, 'dl')}${lens('With overdue actions', PROJECTS.filter(p => projectRoll(p.id).late).length, 'late', 'warn')}<div class="lbl">Manager</div>${lens('A. Whitfield', 3, 'aw')}${lens('R. Ellison', 2, 're')}</aside>`;
+}
+function queueItems() {
+  const is = scopedIssues(), rs = scopedReports();
+  let items = [];
+  const f = S.f;
+  const push = (kind, x, pri) => items.push({ kind, x, pri, id: x.id });
+  if (f === '' || f === 'all') { is.filter(f === 'all' ? active : attention).forEach(i => push('issue', i, urgency(i))); rs.filter(r => f === 'all' ? true : (toReview(r) || r.review === 'returned')).forEach(r => push('report', r, toReview(r) ? 1.5 : 3.5)); }
+  else if (f === 'overdue') is.filter(overdue).forEach(i => push('issue', i, 0));
+  else if (f === 'verify') is.filter(verify).forEach(i => push('issue', i, 2));
+  else if (f === 'unassigned') is.filter(unassigned).forEach(i => push('issue', i, 1));
+  else if (f === 'provisional') is.filter(provisional).forEach(i => push('issue', i, 3));
+  else if (f === 'review') rs.filter(toReview).forEach(r => push('report', r, 1.5));
+  else if (f === 'returned') rs.filter(r => r.review === 'returned').forEach(r => push('report', r, 3.5));
+  else if (f === 'today') rs.filter(todayR).forEach(r => push('report', r, 0));
+  else if (f === 'week') rs.filter(week).forEach(r => push('report', r, 0));
+  return items.sort((a, b) => a.pri - b.pri || (a.kind === 'issue' ? a.x.target : a.x.received).localeCompare(b.kind === 'issue' ? b.x.target : b.x.received));
+}
+function c3Row(kind, x) {
+  const on = S.sel === x.id;
+  if (kind === 'issue') return `<button class="row ${on ? 'on' : ''} ${active(x) ? '' : 'done'}" type="button" ${G(undefined, undefined, undefined, x.id)}><span class="g ${overdue(x) ? 'bad' : ''}">${overdue(x) ? '▲' : verify(x) ? '■' : '●'}</span><div class="t"><div class="rowtitle">${esc(x.desc)}</div><div class="rowsub">${esc(P[x.pj].name)}<span class="sep">|</span>${esc(x.owner || 'Unassigned')}<span class="sep">|</span><span class="${dueClsI(x)}">${active(x) ? whenWord(x) : 'closed'}</span></div></div><div class="a">${issueTag(x)}<span class="age">${x.ref}</span></div></button>`;
+  return `<button class="row ${on ? 'on' : ''}" type="button" ${G(undefined, undefined, undefined, x.id)}><span class="g rep">▤</span><div class="t"><div class="rowtitle">${esc(P[x.pj].name)} · report</div><div class="rowsub">${esc(x.author)}<span class="sep">|</span>${plural(x.obs.length, 'update')}${x.defects ? `, <b class="late">${plural(x.defects, 'defect')}</b>` : ''}<span class="sep">|</span>${ago(x.received)}</div></div><div class="a">${reportTag(x)}<span class="age">${x.ref}</span></div></button>`;
+}
+function c3List(c) {
+  let title, items;
+  if (S.tab === 'home') { items = queueItems().map(q => c3Row(q.kind, q.x)); title = { '': 'Needs you', overdue: 'Overdue', review: 'To review', verify: 'Ready to verify', unassigned: 'Without an owner', provisional: 'Provisional', returned: 'Returned to site', today: 'Received today', week: 'This week', all: 'Everything open' }[S.f] || 'Queue'; }
+  else if (S.tab === 'reports') { if (S.f === 'drafts') { items = scopedDrafts().map(d => `<div class="row"><span class="g">◌</span><div class="t"><div class="rowtitle">${esc(P[d.pj].name)}</div><div class="rowsub">${esc(d.author)}<span class="sep">|</span>saved ${fmtDT(d.saved)}</div></div><div class="a">${tag('quiet', 'Draft')}<span class="age">${d.ref}</span></div></div>`); title = 'Drafts on site'; } else { items = scopedReports().filter(reportFilter).map(r => c3Row('report', r)); title = { '': 'All submitted', review: 'To review', returned: 'Returned', week: 'This week' }[S.f]; } }
+  else if (S.tab === 'issues') { items = scopedIssues().filter(issueFilter).sort(byUrgency).map(i => c3Row('issue', i)); title = { '': 'Open', attention: 'Needs attention', overdue: 'Overdue', verify: 'Ready to verify', unassigned: 'Unassigned', closed: 'Closed' }[S.f]; }
+  else { const list = PROJECTS.filter(p => S.f === 'dl' ? p.status.startsWith('5') : S.f === 'late' ? projectRoll(p.id).late : S.f === 'aw' ? p.pm === 'A. Whitfield' : S.f === 're' ? p.pm === 'R. Ellison' : p.status.startsWith('4')).filter(p => matches(`${p.num} ${p.name} ${p.client}`)); items = list.map(p => { const r = projectRoll(p.id); return `<button class="row ${S.sel === p.id ? 'on' : ''}" type="button" ${G(undefined, undefined, undefined, p.id)}><span class="g ${r.late ? 'bad' : ''}">${r.late ? '▲' : '▣'}</span><div class="t"><div class="rowtitle">${esc(p.name)}</div><div class="rowsub">${esc(p.pm)}<span class="sep">|</span>${r.open} open${r.late ? `, <b class="late">${r.late} overdue</b>` : ''}<span class="sep">|</span>last ${ago(r.last.received)}</div></div><div class="a"><span class="age">${p.num}</span></div></button>`; }); title = { '': 'Active', dl: 'Defects liability', late: 'With overdue actions', aw: 'A. Whitfield', re: 'R. Ellison' }[S.f]; }
+  return `<section class="list"><div class="list-head"><h4>${esc(title)}${S.pj ? ` · ${esc(P[S.pj].num)}` : ''}</h4><i>${items.length}</i></div>${items.join('') || '<div class="empty">Nothing here. That is the good outcome.</div>'}</section>`;
+}
+function c3Reader(c) {
+  const sel = S.sel;
+  let body, nav = '';
+  const ids = S.tab === 'home' ? queueItems().map(q => q.id) : S.tab === 'reports' ? scopedReports().filter(reportFilter).map(r => r.id) : S.tab === 'issues' ? scopedIssues().filter(issueFilter).sort(byUrgency).map(i => i.id) : [];
+  const k = ids.indexOf(sel);
+  if (sel && ids.length) nav = `<div class="rd-nav"><span>${k + 1} of ${ids.length}</span><span class="sp"></span><button type="button" ${G(undefined, undefined, undefined, k > 0 ? ids[k - 1] : ids[ids.length - 1])}>← prev</button><button type="button" ${G(undefined, undefined, undefined, k < ids.length - 1 ? ids[k + 1] : ids[0])}>next →</button><button type="button" ${G(undefined, undefined, undefined, '')}>close</button></div>`;
+  if (IS[sel]) body = issueSheet(IS[sel], 'Queue');
+  else if (RS[sel]) body = reportSheet(RS[sel], 'Queue');
+  else if (P[sel]) body = projectSheet(P[sel]);
+  else body = c3DaySheet(c);
+  return `<section class="reader">${nav}${body}</section>`;
+}
+function c3DaySheet(c) {
+  const is = scopedIssues();
+  const wk = Array.from({ length: 5 }, (_, k) => { const d = new Date(iso(TODAY)); d.setDate(d.getDate() - d.getDay() + 1 + k); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; });
+  const dayCol = d => { const due = is.filter(i => active(i) && i.target === d), got = scopedReports().filter(r => r.received.slice(0, 10) === d); const today = d === TODAY; return `<div class="${today ? 'today' : ''}"><div class="d">${DAYS[iso(d).getDay()].slice(0, 3)} <b>${iso(d).getDate()}</b>${today ? ' · today' : ''}</div>${got.map(r => `<button type="button" ${G(undefined, undefined, 'week', r.id)}><em>▤</em> ${esc(P[r.pj].name.split(' - ')[0])}, ${esc(r.author)}</button>`).join('')}${due.map(i => `<button type="button" ${G(undefined, undefined, 'all', i.id)}>${overdue(i) ? '<b>▲</b>' : verify(i) ? '<em>■</em>' : '●'} ${esc(i.desc)}</button>`).join('')}${!got.length && !due.length ? '<div class="none">Nothing due or received.</div>' : ''}</div>`; };
+  const late = is.filter(overdue).sort(byUrgency);
+  return `<div class="sheet daysheet">
+    ${crumbs([{ t: 'Queue' }, { t: 'Day sheet' }])}
+    <div class="sheet-title"><div><h4>${fmtL(TODAY)}</h4><div class="rowsub">${esc(scopeWord())}<span class="sep">|</span>${plural(c.attn + c.review, 'item')} need you<span class="sep">|</span>${plural(c.today, 'report')} in so far today</div></div></div>
+    <dl class="figs"><button type="button" class="${c.late ? 'hot' : ''}" ${G(undefined, undefined, 'overdue', '')}><dt>Overdue</dt><dd>${c.late}</dd></button><button type="button" ${G(undefined, undefined, 'review', '')}><dt>To review</dt><dd>${c.review}</dd></button><button type="button" ${G(undefined, undefined, 'verify', '')}><dt>Ready to verify</dt><dd>${c.ver}</dd></button><button type="button" ${G(undefined, undefined, 'unassigned', '')}><dt>Without an owner</dt><dd>${c.un}</dd></button></dl>
+    <div class="sec-h">This week: due and received</div>
+    <div class="week">${wk.map(dayCol).join('')}</div>
+    ${late.length ? `<div class="sec-h">Start here</div>${late.slice(0, 3).map(i => `<button class="mini" type="button" ${G(undefined, undefined, 'overdue', i.id)}><span class="ref">${i.ref}</span><div class="mini-b"><p>${esc(i.desc)}</p><div class="rowsub">${esc(P[i.pj].name)}<span class="sep">|</span>${esc(i.owner || 'Unassigned')}<span class="sep">|</span><span class="late">${whenWord(i)}</span></div></div>${issueTag(i)}</button>`).join('')}` : ''}
+    <div class="sec-h">Live projects <button class="more" type="button" ${G('projects', undefined, '', '')}>Sheets →</button></div>
+    <table class="reg"><thead><tr><th>Project</th><th class="r">Open</th><th class="r">Overdue</th><th class="r">To verify</th><th class="r">To review</th><th>Last from site</th></tr></thead><tbody>${scopedProjects().map(p => { const r = projectRoll(p.id); return `<tr class="go" ${G('projects', undefined, '', p.id)}><td><div class="rowtitle">${esc(p.name)}</div><div class="rowsub">${p.num}</div></td><td class="r num">${r.open}</td><td class="r num ${r.late ? 'late' : ''}">${r.late}</td><td class="r num">${r.ver}</td><td class="r num ${r.review ? 'soon' : ''}">${r.review}</td><td><span class="due">${fmt(r.last.received)}</span> <span class="rowsub" style="display:inline">${esc(r.last.author)}</span></td></tr>`; }).join('')}</tbody></table>
+    ${c.drafts ? `<div class="note" style="margin-top:16px"><span>${plural(c.drafts, 'draft')} being written on site now. Contents stay private until submitted.</span><button class="btn btn-q btn-sm" type="button" ${G('reports', undefined, 'drafts', '')}>See who</button></div>` : ''}
+  </div>`;
+}
+
+/* ------------------------------------------------------------- briefs */
+const BRIEFS = {
+  1: `<div class="kick">Concept 1</div><h2>Desk</h2><p>The shell you liked in the Compliance prototype, applied to Developments: a fixed-height app with a horizontal tab bar, a register-first home and a reader beside every list.</p>
+    <h4>How home connects to the rest</h4><ul><li><b>Tabs carry live counts.</b> Reports shows how many need review, Issues how many are overdue. The numbers on the home figures are the same numbers, so the tab bar is a summary of the home page at all times.</li><li><b>Every figure names its destination.</b> "Issues › Overdue" is printed under the number; clicking lands you on that tab with that filter selected and the same chip highlighted.</li><li><b>The scope strip persists.</b> Choose a project once and home, Projects, Reports and Issues are all filtered to it. The strip says so in words.</li><li><b>The reader is a column, not a page.</b> Reports and Issues keep their list on the left while you read on the right, so you never lose the queue.</li></ul>
+    <h4>What changes from today</h4><ul><li>The global app bar and the office sidebar collapse into one tab bar, as Compliance already does.</li><li>Stats become a bordered figures strip instead of four floating cards.</li><li>"Needs attention" becomes a table with owner, target and status columns rather than a stacked list.</li><li>Disabled "Soon" items leave the navigation.</li></ul>
+    <h4>Build cost</h4><p>Low to medium. The office page already routes by query string (view, project, filter); this is a re-skin of that with counts in the tabs and a reader column.</p>`,
+  2: `<div class="kick">Concept 2</div><h2>Rail</h2><p>A dark rail on the left that never moves. It holds navigation, live counts and, crucially, the project scope, so the answer to "where am I and what am I looking at" is always in the same place.</p>
+    <h4>How home connects to the rest</h4><ul><li><b>The matrix is the map.</b> Rows are projects, columns are the tabs. Every cell is a door to that tab, filtered to that project. Shaded cells are the ones that need you.</li><li><b>Scope lives in the rail.</b> Pick a project in the rail and the crumb bar, the search placeholder and every view change together. Clear it from the same place.</li><li><b>A trail chip remembers the door you used.</b> Land on Issues from the "Overdue" cell and the crumb bar says "From home › overdue" with a way back.</li><li><b>Attention is grouped by project</b> on the home, and Issues keeps the same grouping, so the two pages have the same shape.</li></ul>
+    <h4>What changes from today</h4><ul><li>The dark band that is currently only a header becomes the rail; the olive charcoal is kept and refined.</li><li>The four launch tiles disappear; the matrix does their job with real numbers.</li><li>Projects become one-page sheets with the same four figures as the matrix row.</li></ul>
+    <h4>Build cost</h4><p>Medium. The rail is a layout change; the matrix needs per-project counts, which the office page already computes for its project watch panel.</p>`,
+  3: `<div class="kick">Concept 3</div><h2>Triage</h2><p>One queue, one reader. The home is not a summary of work, it is the work: everything that needs a decision, in priority order, with the thing you are deciding about open beside it. The other tabs are lenses on the same three panes.</p>
+    <h4>How home connects to the rest</h4><ul><li><b>Nothing changes shape.</b> Queue, Projects, Reports and Issues are all lenses, list and reader. Moving between tabs changes what is in the list, not how the screen works.</li><li><b>The day sheet is the reader's empty state.</b> Before you pick anything, the reader shows the day: figures, the week's due and received, and the projects table. Pick an item and it becomes the reader; close it and the day sheet returns.</li><li><b>Prev and next walk the queue.</b> You can clear the morning's items without going back to a list.</li><li><b>Project lenses appear under every tab</b>, so scope is one click away wherever you are.</li></ul>
+    <h4>What changes from today</h4><ul><li>Reports and issues share one list for the first time, ranked by what needs doing rather than by type.</li><li>Project tiles and launchers go; projects are a lens and a sheet.</li><li>The reader takes the whole right side of the screen.</li></ul>
+    <h4>Build cost</h4><p>Medium to high. The unified queue needs a shared ranking across issues and reports, and the reader already exists as the preview page. Best on a wide monitor; it does not fold down to a phone well.</p>`,
+};
+const COMPARE = `<div class="kick">Choosing between them</div><h2>Compare and recommendation</h2>
+  <table><thead><tr><th>Concept</th><th>Answers first</th><th>Best when</th><th>Cost</th></tr></thead><tbody>
+  <tr><td>1 · Desk</td><td>"What is wrong, and what came in?"</td><td>The office triages across projects and wants one place to stand, on any screen size.</td><td>Low–medium</td></tr>
+  <tr><td>2 · Rail</td><td>"Where is each job, and what does it need?"</td><td>The office thinks project-first and runs client meetings from the app.</td><td>Medium</td></tr>
+  <tr><td>3 · Triage</td><td>"What do I deal with next?"</td><td>One person clears a queue every morning on a wide monitor.</td><td>Medium–high</td></tr>
+  </tbody></table>
+  <div class="rec"><h4 style="margin-top:0">My recommendation: build Concept 1, borrow the matrix from Concept 2</h4>
+  <p><b>Desk is the right shell.</b> It is the feel you pointed at, it costs least, and it fixes the two complaints directly: the tab bar with counts makes the home and the tabs the same thing seen twice, and the scope strip is the missing connective tissue. It also still works on a laptop, which Triage does not.</p>
+  <p><b>Take the project matrix from Rail</b> and make it the Projects tab's overview instead of the current tile grid. It is the single best "dashboard" element in the three and it is cheap: the counts already exist.</p>
+  <p><b>Hold Triage.</b> The unified queue is the most useful idea here, but it needs issues and reports to share one status vocabulary before a ranking means anything. Once they do, it can be added as a "Queue" tab inside the Desk shell without rebuilding anything.</p></div>
+  <h4>Things I would change regardless of concept</h4><ul><li><b>Two navigations become one.</b> Today the global app bar (Home, Companies, Projects, Engineer view, Office, Admin) sits above the office sidebar, and they overlap. Compliance already hides the app bar under its own chrome; Developments should do the same under /office.</li><li><b>No disabled "Soon" items in navigation.</b> "People &amp; trades · Soon" and "Activity log · Soon" teach people to ignore the sidebar. Put them in the backlog, not the UI.</li><li><b>Figures link, cards do not.</b> A number that goes nowhere is decoration. Every figure in all three concepts is a button that lands on a filtered list, and the filter chip is highlighted when you arrive.</li><li><b>"Needs attention" is a table.</b> Owner, target and status are columns, so the office can scan down them. A stacked list hides exactly the two facts the office acts on.</li><li><b>Say what scope you are in, in words.</b> "Every tab is filtered to Kirkstall Gate" beats a highlighted chip.</li></ul>
+  <p style="margin-top:16px">All three are static prototypes over invented data in the Leodis format. Nothing here is wired to the application, and no button changes anything.</p>`;
+
+/* ------------------------------------------------------------- runtime */
+const stage = document.getElementById('stage'), brief = document.getElementById('brief');
+function toast(msg) { const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = msg; document.getElementById('toasts').appendChild(t); setTimeout(() => t.remove(), 4000); }
+const ACTS = { verify: 'Prototype: this would record an independent verification and close the issue.', reopen: 'Prototype: this would reopen the issue and notify the owner.', assign: 'Prototype: this would open the people roster to name an owner.', confirm: 'Prototype: this would confirm the defect and start its target clock.', dispute: 'Prototype: this would mark the item disputed and ask the engineer for more.', retarget: 'Prototype: this would agree a new target date with the client on record.', open: 'Prototype: this would open the full report preview.', pdf: 'Prototype: this would open the issued PDF.', approve: 'Prototype: this would approve the report and queue the PDF for issue.', 'return': 'Prototype: this would return the report to the engineer with a note.', resend: 'Prototype: this would re-send the issued PDF to the distribution list.', engineer: 'Prototype: this would switch to the Engineer view.', companies: 'Prototype: this would return to company selection.', signout: 'Prototype: this would sign you out.', 'pdf-install': 'Prototype: this would open the installation guide PDF.', 'pdf-engineer': 'Prototype: this would open the engineer companion PDF.' };
+function render() {
+  const view = stage.querySelector('.view, .reader, .list'); const scrolls = {}; stage.querySelectorAll('.view,.reader,.list,.lenses,.rail').forEach((el, k) => { scrolls[el.className + k] = el.scrollTop; });
+  const q = document.getElementById('q'); const focus = q && document.activeElement === q; const pos = q ? q.selectionStart : 0;
+  stage.innerHTML = (S.c === 2 ? c2 : S.c === 3 ? c3 : c1)();
+  stage.querySelectorAll('.view,.reader,.list,.lenses,.rail').forEach((el, k) => { const v = scrolls[el.className + k]; if (v) el.scrollTop = v; });
+  const q2 = document.getElementById('q'); if (q2 && focus) { q2.focus(); q2.setSelectionRange(pos, pos); }
+  document.querySelectorAll('#swseg button').forEach(b => b.classList.toggle('on', Number(b.dataset.c) === S.c));
+  if (brief.classList.contains('open') && brief.dataset.mode !== 'compare') brief.innerHTML = `<button class="x" type="button" data-act="close-brief">×</button>` + BRIEFS[S.c];
+}
+stage.addEventListener('click', e => {
+  const a = e.target.closest('[data-act]');
+  if (a && stage.contains(a)) { e.preventDefault(); if (a.dataset.act === 'theme') { document.getElementById('themer').click(); return; } toast(ACTS[a.dataset.act] || 'Prototype.'); return; }
+  const g = e.target.closest('[data-go]');
+  if (!g) return;
+  e.preventDefault();
+  const v = g.dataset.go.split('|').map(x => x === '*' ? undefined : x);
+  go(v[0], v[1], v[2], v[3], g.dataset.from || (S.tab === 'home' && v[0] && v[0] !== 'home' ? (v[2] || v[0]) : undefined));
+});
+stage.addEventListener('input', e => { if (e.target.id === 'q') { S.q = e.target.value; render(); } });
+document.addEventListener('keydown', e => { if (e.key === '/' && document.activeElement.tagName !== 'INPUT') { const q = document.getElementById('q'); if (q) { e.preventDefault(); q.focus(); } } if (e.key === 'Escape' && brief.classList.contains('open')) closeBrief(); });
+document.getElementById('swseg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { S.c = Number(b.dataset.c); S.tab = 'home'; S.pj = ''; S.f = ''; S.sel = ''; S.q = ''; S.from = null; commit(); } });
+function closeBrief() { brief.classList.remove('open'); brief.setAttribute('aria-hidden', 'true'); }
+document.getElementById('sw').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  if (b.dataset.act === 'brief') { brief.dataset.mode = 'brief'; brief.innerHTML = `<button class="x" type="button" data-act="close-brief">×</button>` + BRIEFS[S.c]; brief.classList.add('open'); brief.setAttribute('aria-hidden', 'false'); }
+  if (b.dataset.act === 'compare') { brief.dataset.mode = 'compare'; brief.innerHTML = `<button class="x" type="button" data-act="close-brief">×</button>` + COMPARE; brief.classList.add('open'); brief.setAttribute('aria-hidden', 'false'); }
+});
+brief.addEventListener('click', e => { if (e.target.closest('[data-act="close-brief"]')) closeBrief(); });
+window.addEventListener('hashchange', () => { if (location.hash !== hashOf()) { parse(location.hash); render(); } });
+(function () {
+  const btn = document.getElementById('themer'), root = document.documentElement;
+  const current = () => root.getAttribute('data-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  const label = () => { btn.textContent = current() === 'dark' ? 'Light' : 'Dark'; };
+  label();
+  btn.addEventListener('click', () => { root.setAttribute('data-theme', current() === 'dark' ? 'light' : 'dark'); label(); });
+})();
+parse(location.hash);
+commit();
+})();
+</script>
+</body>
+</html>
