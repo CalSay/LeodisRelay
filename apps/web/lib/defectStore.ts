@@ -1,7 +1,9 @@
+import { saveIssue } from './sharepoint/issues';
+import { sharePointMode } from './sharepoint/config';
 import {createHash} from 'node:crypto';
 import type {Principal} from '@relay/platform';
 import {canAccessProject} from './auth/access';
-import {FIXTURE_PROJECTS} from './fixtures';
+import { cachedProject, refreshProjects, reportableProject } from './projects';
 import {validateDefect,type DefectInput} from './defects';
 import {atomic,database,getRecord,putRecord} from './storage';
 import {putMedia} from './mediaStore';
@@ -11,8 +13,10 @@ import type {Issue} from './types';
 export class DefectError extends Error { constructor(message:string,readonly status=422){super(message);} }
 export async function submitIndividualDefect(principal:Principal,input:DefectInput,files:{id:string;mime:string;bytes:Buffer}[]):Promise<Issue> {
   const invalid=validateDefect(input);if(invalid)throw new DefectError(invalid);
-  const project=FIXTURE_PROJECTS.find(p=>p.id===input.projectId);
-  if(!project||!['4. Active','5. Defects Liability'].includes(project.status))throw new DefectError('This project is not open for reporting.');
+  if (sharePointMode() === 'read') throw new DefectError('Defect capture is disabled while the connection is read-only.',409);
+  await refreshProjects();
+  const project=cachedProject(input.projectId);
+  if(!project||!reportableProject(project))throw new DefectError('This project is not open for reporting.');
   if(!canAccessProject(principal,project.id))throw new DefectError('You cannot report on this project.',403);
   if(files.length!==input.photos.length || new Set(files.map(f=>f.id)).size!==files.length || input.photos.some(p=>!files.some(f=>f.id===p.id)))throw new DefectError('Attach the original photograph for each photo.');
   if(files.some(f=>!f.bytes.length||f.bytes.length>MEDIA_LIMIT)||files.reduce((n,f)=>n+f.bytes.length,0)>40*1024*1024)throw new DefectError('Use photos up to 20 MB each and 40 MB in total.',413);
@@ -32,11 +36,11 @@ export async function submitIndividualDefect(principal:Principal,input:DefectInp
     const repeated=receipt();if(repeated)return repeated;
     const sequence=Number(database().prepare("SELECT count(*) AS n FROM records WHERE kind='issues' AND project=?").get(project.id)!.n)+1;
     const at=new Date().toISOString();
-    const issue:Issue={id,reference:`${project.projectNumber}-ISS-${String(sequence).padStart(3,'0')}`,projectId:project.id,
+    const issue:Issue={id,reference:`${project.source ? 'DEMO-' : ''}${project.projectNumber}-ISS-${String(sequence).padStart(3,'0')}`,projectId:project.id,
       description:content.description,location:content.location,affectedTrade:content.affectedTrade,source:'individual',
       reportedBy:principal.name,reportedById:principal.id,...(principal.trade?{reporterTrade:principal.trade}:{}),
       confirmation:'provisional',work:'open',owner:'',targetDate:'',actionNeeded:'',raisedByReport:'',raisedAt:at,
       events:[{at,actor:principal.name,actorId:principal.id,kind:'raised',note:content.description,photos:content.photos}]};
-    putRecord('issues',issue);putRecord('defect-receipts',{id,digest});return issue;
+    saveIssue(issue);putRecord('defect-receipts',{id,digest});return issue;
   });
 }

@@ -1,8 +1,10 @@
 "use client";
+import { IssueSyncStatus } from '@/components/SharePointStatus';
+import { useProjectLookup } from "@/components/ProjectContext";
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { getProject, readPhoto } from "@/lib/api";
+import { readPhoto } from "@/lib/api";
 import type { Issue, Photo } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
 import { uploadPhotos } from '@/lib/localMedia';
@@ -47,6 +49,7 @@ const EVENT_LABEL: Record<string, string> = {
 };
 
 export default function IssuePage({ params }: { params: Promise<{ id: string }> }) {
+  const getProject = useProjectLookup();
   const principal = usePrincipal();
   const manager = principal ? canManage(principal) : false;
   const { id } = use(params);
@@ -81,7 +84,7 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
       const response = await fetch(`/api/issues/${issue.id}`, {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ kind, note: note.trim(), photos }),
+        body: JSON.stringify({ expectedEtag: issue.sync?.etag, kind, note: note.trim(), photos }),
       });
       const body = await response.json();
       if (!response.ok) {
@@ -124,6 +127,7 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
         &larr; {project?.projectName ?? "Project"}
       </Link>
 
+      <IssueSyncStatus issue={issue} />
       <div className="pagehead">
         <div>
           <h1 className="ref" style={{ fontSize: 22 }}>{issue.reference}</h1>

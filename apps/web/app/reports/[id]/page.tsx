@@ -1,9 +1,9 @@
 "use client";
+import { useProjectLookup } from "@/components/ProjectContext";
 
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  getProject,
   getReport,
   newObservation,
   openIssues as fetchOpenIssues,
@@ -47,6 +47,7 @@ const SAVE: Record<SaveState, { dot: string; text: string }> = {
 };
 
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
+  const getProject = useProjectLookup();
   const { id } = use(params);
   const principal = usePrincipal();
   const router = useRouter();
@@ -309,7 +310,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     );
   }
 
-  const project = getProject(report.projectId);
+  const project = report.projectSnapshot ?? getProject(report.projectId);
   const findings = reviewReport(report);
   const stop = findings.filter((f) => f.blocking);
   const note = findings.filter((f) => !f.blocking);

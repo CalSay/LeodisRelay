@@ -50,6 +50,7 @@ export function reviewStatus(report: Report): StatusLine | null {
  * a processing failure carries alert weight.
  */
 export function deliveryStatus(report: Report): StatusLine | null {
+  if (report.sharepoint?.status === 'failed') return {label:'SharePoint needs attention',tone:'alert'};
   if (report.delivery === 'pending') return { label:'PDF queued', tone:'draft' };
   if (report.delivery === 'rendered') return { label:'PDF ready', tone:'draft' };
   if (report.delivery === 'failed') return { label:'Processing needs attention', tone:'alert' };

@@ -12,6 +12,9 @@ import { WorkspaceChrome } from '@/components/WorkspaceChrome';
 import { canManage, isAdmin } from '@/lib/auth/access';
 import { PrincipalContext } from '@/components/PrincipalContext';
 import { InstallRelay } from '@/components/InstallRelay';
+import { ProjectContext } from '@/components/ProjectContext';
+import { refreshProjects, reportableProject, type ConnectedProject } from '@/lib/projects';
+import { sharePointMode } from '@/lib/sharepoint/config';
 
 /**
  * Archivo is a grotesque with an industrial, signage register — it sits
@@ -58,6 +61,12 @@ export const viewport: Viewport = {
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const principal = await currentPrincipal();
   const { provider } = resolveProvider();
+  let projects: ConnectedProject[] = [];
+  let projectError: string | undefined;
+  if (principal) {
+    try { projects = (await refreshProjects()).filter(p => reportableProject(p)); }
+    catch { projectError = 'SharePoint projects are unavailable. Please retry before starting a report.'; }
+  }
   return (
     <html lang="en-GB" className={`${archivo.variable} ${plexMono.variable}`} suppressHydrationWarning>
       <head>
@@ -80,7 +89,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           it for the real thing.
         */}
         <div className="banner">
-          PROTOTYPE — EXAMPLE DATA — NOT FOR REAL SITE WORK
+          {sharePointMode() === 'off' ? 'PROTOTYPE — EXAMPLE DATA — NOT FOR REAL SITE WORK' : 'SHAREPOINT CONNECTION TEST — NOT FOR REAL SITE WORK'}
           {provider.kind === "local" ? " — IDENTITY NOT CHECKED" : ""}
         </div>
 
@@ -110,7 +119,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </header>
 
         <InstallRelay /></WorkspaceChrome>
-        <PrincipalContext principal={principal}>{children}</PrincipalContext>
+        <PrincipalContext principal={principal}><ProjectContext projects={projects} error={projectError}>{children}</ProjectContext></PrincipalContext>
       </body>
     </html>
   );

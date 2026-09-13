@@ -21,7 +21,7 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
     <ProjectsCol ctx={ctx} current={s} />
     <RegisterCol ctx={ctx} s={s} kind={kind} id={id} />
     <div className="col">
-      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h4>Details</h4><i>{s ? s.code : 'Office'}</i></div>
+      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h4>Details</h4><i>{s ? s.project.projectNumber : 'Office'}</i></div>
       <div className="colpad">
         {!ctx.snap ? <div className="loading">Loading office records</div>
           : kind === 'report' && id ? <ReportReader ctx={ctx} id={id} />
@@ -36,8 +36,8 @@ function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
   return <div className="col">
     <div className="col-head"><h4>Projects</h4><i>{ctx.projects.length} reportable</i></div>
     {ctx.projects.map(p => {
-      const s = ctx.statOf(p.projectNumber);
-      return <a key={p.id} className={`item ${current?.code === p.projectNumber ? 'on' : ''}`} href={`#/projects/${p.projectNumber}`}>
+      const s = ctx.statOf(p.id);
+      return <a key={p.id} className={`item ${current?.code === p.id ? 'on' : ''}`} href={`#/projects/${p.id}`}>
         <div className="item-top"><div className="rowtitle">{p.projectName}</div><span className="arrow">›</span></div>
         <div className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager} · {p.division.replace('Leodis ', '')}{p.status === '5. Defects Liability' ? ' · Defects liability' : ''}</div>
         {s ? <><Bar c={s.rollup} /><Meta c={s.rollup} /></> : <div className="cbar" style={{ marginTop: 8 }} />}
@@ -135,7 +135,7 @@ function AttentionList({ ctx, s, limit }: { ctx: Ctx; s?: ProjectStats; limit: n
 }
 
 function LatestReports({ ctx, reports, showProject }: { ctx: Ctx; reports: ReportSummary[]; showProject?: boolean }) {
-  const code = (r: ReportSummary) => ctx.projects.find(p => p.id === r.projectId)?.projectNumber ?? '';
+  const code = (r: ReportSummary) => ctx.projects.find(p => p.id === r.projectId)?.id ?? '';
   return <table className="reg tight"><thead><tr><th>Ref</th>{showProject && <th>Project</th>}<th>Engineer</th><th>Received</th><th>Found</th><th>Status</th></tr></thead><tbody>
     {reports.length ? reports.map(r => <tr key={r.id} className="clickable" onClick={() => ctx.go(`#/projects/${code(r)}/report/${r.id}`)}><td><span className="ref">{shortRef(r.reference)}</span></td>{showProject && <td>{ctx.projects.find(p => p.id === r.projectId)?.projectName ?? r.projectId}</td>}<td>{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due">{fmtDay(r.serverAcknowledgedAt)} {r.serverAcknowledgedAt ? new Date(r.serverAcknowledgedAt).toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit' }) : ''}</td><td><Found r={r} /></td><td>{r.review === 'pending' ? <Tag label="To review" cls="tag-caution" /> : r.review === 'returned' ? <Tag label="Returned" cls="tag-alert" /> : r.acknowledged ? <Tag label="Read" cls="tag-ok" /> : <DeliveryTag r={r} />}</td></tr>) : <tr><td colSpan={showProject ? 6 : 5} className="empty">No reports received yet.</td></tr>}
   </tbody></table>;
@@ -173,7 +173,7 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
   if (error) return <div className="sheet"><div className="empty">{error}</div></div>;
   if (!report) return <div className="sheet"><div className="loading" style={{ minHeight: 160 }}>Loading report</div></div>;
   const project = ctx.projects.find(p => p.id === report.projectId);
-  const code = project?.projectNumber ?? '';
+  const code = project?.id ?? '';
   const summary = ctx.snap?.reports.find(r => r.id === report.id);
   const review = reviewStatus(report), delivery = deliveryStatus(report), ack = acknowledgementStatus(report);
   const superseded = ctx.snap?.reports.find(r => r.corrects === report.id);
@@ -228,7 +228,7 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
   }, [id, ctx.snap?.loadedAt]);
   if (error) return <div className="sheet"><div className="empty">{error}</div></div>;
   if (!issue) return <div className="sheet"><div className="loading" style={{ minHeight: 160 }}>Loading issue</div></div>;
-  const project = ctx.projects.find(p => p.id === issue.projectId); const code = project?.projectNumber ?? '';
+  const project = ctx.projects.find(p => p.id === issue.projectId); const code = project?.id ?? '';
   const source = issue.raisedByReport ? ctx.snap?.reports.find(r => r.id === issue.raisedByReport) : undefined;
   const active = isActive(issue); const overdue = isOverdue(issue, ctx.day);
   const closureMine = issue.closureSubmittedById ? issue.closureSubmittedById === ctx.me.id : issue.closureSubmittedBy === ctx.me.name;

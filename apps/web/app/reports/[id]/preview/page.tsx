@@ -1,8 +1,9 @@
 "use client";
+import { useProjectLookup } from "@/components/ProjectContext";
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { getProject, getReport } from "@/lib/api";
+import { getReport } from "@/lib/api";
 import { OBSERVATION_TYPES } from "@/lib/fixtures";
 import type { Report } from "@/lib/types";
 
@@ -22,6 +23,7 @@ import type { Report } from "@/lib/types";
  * Unknown owners and dates are labelled, never invented.
  */
 export default function PreviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const getProject = useProjectLookup();
   const { id } = use(params);
   const [report, setReport] = useState<Report | null>(null);
   const [missing, setMissing] = useState(false);
@@ -45,7 +47,7 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
     );
   }
 
-  const project = getProject(report.projectId);
+  const project = report.projectSnapshot ?? getProject(report.projectId);
   const actions = report.observations.filter(
     (o) => o.actionNeeded.trim().length > 0 || o.type === "defect",
   );

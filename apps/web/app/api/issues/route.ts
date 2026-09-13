@@ -1,3 +1,4 @@
+import { refreshIssues, IssueSyncError } from '@/lib/sharepoint/issues';
 import { NextResponse } from "next/server";
 import { listIssues, openIssues } from "@/lib/issueStore";
 import { requireSession } from "@/lib/auth/guard";
@@ -11,6 +12,7 @@ export async function GET(request: Request) {
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
 
+  try { await refreshIssues(); } catch { return NextResponse.json({reason:'SharePoint issues could not be refreshed. Please retry.'},{status:503}); }
   const url = new URL(request.url);
   const projectId = url.searchParams.get("projectId") ?? undefined;
   const only = url.searchParams.get("only");

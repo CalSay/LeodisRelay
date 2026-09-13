@@ -1,7 +1,7 @@
 import { archiveFileName, sanitiseFileName } from "@relay/contracts";
 import { alreadyDelivered, resolveRecipients, type IssueRecord } from "@relay/platform";
 
-import { FIXTURE_PROJECTS } from "../fixtures";
+import { cachedProject } from '../projects';
 import { resolveTransport } from "./transport";
 import type { Report } from "../types";
 
@@ -56,7 +56,7 @@ export async function issueReport(
   existing: readonly IssueRecord[],
   pdf: Uint8Array,
 ): Promise<IssueOutcome> {
-  const project = FIXTURE_PROJECTS.find((p) => p.id === report.projectId);
+  const project = report.projectSnapshot ?? cachedProject(report.projectId);
 
   const { send, unaddressed } = resolveRecipients([
     {

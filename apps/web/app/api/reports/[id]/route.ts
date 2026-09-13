@@ -4,6 +4,7 @@ import { requireSession, visibleTo } from "@/lib/auth/guard";
 import type { Report } from "@/lib/types";
 import { validateObservations } from '@/lib/validatePhotos';
 import { canManage, ownsReport } from '@/lib/auth/access';
+import { IssueSyncError } from '@/lib/sharepoint/issues';
 
 export const dynamic = "force-dynamic";
 
@@ -84,6 +85,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if (body.action !== undefined && !['review','correct','acknowledge'].includes(body.action)) return NextResponse.json({reason:'Unknown report action.'},{status:422});
   if (body.note !== undefined && typeof body.note !== 'string') return NextResponse.json({reason:'Review note must be text.'},{status:422});
 
+  try {
   // The office has read it. A manager's act, recorded against the session.
   if (body.action === 'acknowledge') {
     if (!canManage(principal)) return NextResponse.json({reason:'Manager access required.'},{status:403});
@@ -137,4 +139,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   return outcome.ok
     ? NextResponse.json(outcome.value)
     : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });
+  } catch (error) {
+    if (error instanceof IssueSyncError) return NextResponse.json({ reason: error.message }, { status: 409 });
+    throw error;
+  }
 }

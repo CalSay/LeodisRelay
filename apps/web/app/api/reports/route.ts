@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { createReport, reportsFor } from "@/lib/serverStore";
 import { requireSession } from "@/lib/auth/guard";
 import { canManage } from '@/lib/auth/access';
-import { FIXTURE_PROJECTS } from '@/lib/fixtures';
+import { cachedProject, refreshProjects, reportableProject } from '@/lib/projects';
+import { sharePointMode } from '@/lib/sharepoint/config';
 
 export const dynamic = "force-dynamic";
 
@@ -40,8 +41,10 @@ export async function POST(request: Request) {
 
   // Authorship comes from the session. A client-supplied author is not an
   // author, and the review rules depend on knowing who actually wrote this.
-  const project = FIXTURE_PROJECTS.find(p => p.id === body.projectId);
-  if (!project || !['4. Active','5. Defects Liability'].includes(project.status)) {
+  if (sharePointMode() === 'read') return NextResponse.json({reason:'Report capture is disabled while the connection is read-only.'},{status:409});
+  try { await refreshProjects(); } catch { return NextResponse.json({reason:'SharePoint projects could not be refreshed. Please retry.'},{status:503}); }
+  const project = cachedProject(body.projectId);
+  if (!project || !reportableProject(project)) {
     return NextResponse.json({reason:'This project is not open for reporting.'},{status:422});
   }
   return NextResponse.json(createReport(body.projectId, principal.name, principal), { status: 201 });

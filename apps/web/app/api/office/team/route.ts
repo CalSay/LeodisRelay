@@ -1,3 +1,4 @@
+import { sharePointMode } from '@/lib/sharepoint/config';
 import { NextResponse } from 'next/server';
 import type { Session } from '@relay/platform';
 import { requireSession } from '@/lib/auth/guard';
@@ -77,6 +78,7 @@ export async function GET() {
   return NextResponse.json({
     members, legacyDrafts,
     processing: {
+      sharepoint: sharePointMode(),
       mail: process.env.RELAY_MAIL_ENABLED === 'yes' ? 'live' : 'outbox',
       jobs: jobs.map(j => ({ kind: j.kind, status: j.status, count: Number(j.n) })),
       outbox: outbox.map(r => ({ id: r.id, reference: r.reference, projectId: r.projectId, delivery: r.delivery, error: r.deliveryError, since: r.serverAcknowledgedAt })),

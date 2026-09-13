@@ -1,10 +1,13 @@
+import { saveIssue } from './sharepoint/issues';
+import { sharePointMode, pilotItemIds } from './sharepoint/config';
+import { projectIdentity } from './projects';
 import { atomic, database, getRecord, putRecord, records } from './storage';
 
 import { transition, type IssuePolicy } from "@relay/platform";
 import type { Issue as ContractIssue } from "@relay/contracts";
 
 import type { Issue, IssueEvent, Photo, Report } from "./types";
-import { FIXTURE_PROJECTS } from "./fixtures";
+import { cachedProject } from './projects';
 
 /**
  * Issue records for the prototype.
@@ -49,7 +52,10 @@ function toContract(issue: Issue): ContractIssue {
 }
 
 export function listIssues(projectId?: string): Issue[] {
-  return records<Issue>('issues',projectId);
+  const issues = records<Issue>('issues',projectId);
+  if (sharePointMode() === 'off') return issues;
+  const allowed = pilotItemIds().map(projectIdentity);
+  return issues.filter(i => allowed.includes(i.projectId));
 }
 
 export function getIssue(issueId: string): Issue | undefined {
@@ -79,7 +85,7 @@ export function raiseFromReport(report: Report): Issue[] {
 }
 function raiseIssues(report: Report): Issue[] {
   let sequence = Number(database().prepare("SELECT count(*) AS n FROM records WHERE kind='issues' AND project=?").get(report.projectId)!.n);
-  const project = FIXTURE_PROJECTS.find((p) => p.id === report.projectId);
+  const project = cachedProject(report.projectId);
   const raised: Issue[] = [];
 
   for (const observation of report.observations) {
@@ -97,7 +103,7 @@ function raiseIssues(report: Report): Issue[] {
           note: report.corrects ? `Corrected in ${report.reference} rev ${report.revision}: ${observation.whatHappened}` : observation.whatHappened,
           photos: observation.photos,
         });
-        putRecord('issues',existing);
+        saveIssue(existing);
         continue;
       }
     }
@@ -109,7 +115,7 @@ function raiseIssues(report: Report): Issue[] {
 
     const issue: Issue = {
       id: `iss-${Math.random().toString(36).slice(2, 10)}`,
-      reference: `${project?.projectNumber ?? "UNKNOWN"}-ISS-${String(sequence).padStart(3, "0")}`,
+      reference: `${project?.source ? "DEMO-" : ""}${project?.projectNumber ?? "UNKNOWN"}-ISS-${String(sequence).padStart(3, "0")}`,
       projectId: report.projectId,
       source: 'report',
       reportedBy: report.author,
@@ -138,7 +144,7 @@ function raiseIssues(report: Report): Issue[] {
         },
       ],
     };
-    putRecord('issues',issue);
+    saveIssue(issue);
     raised.push(issue);
   }
 
@@ -167,7 +173,7 @@ function disputeIssues(reportId: string, actor: string, actorId?:string): void {
         ...(actorId ? {actorId}:{}),
         photos: [],
       });
-      putRecord('issues',issue);
+      saveIssue(issue);
     }
   }
 }
@@ -194,7 +200,7 @@ function confirmIssues(reportId: string, actor: string, actorId?:string): void {
         ...(actorId ? {actorId}:{}),
         photos: [],
       });
-      putRecord('issues',issue);
+      saveIssue(issue);
     }
   }
 }
@@ -204,6 +210,7 @@ export type IssueOutcome =
   | { ok: false; status: number; reason: string };
 
 export interface IssueCommand {
+  expectedEtag?: string;
   actorId?: string;
   kind: "progress" | "submit_closure" | "verify" | "reopen" | "confirm" | "withdraw" | "assign";
   actor: string;
@@ -280,6 +287,7 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
     }
 
     case "verify": {
+      if (issue.sync && !issue.closureSubmittedById) return {ok:false,status:422,reason:'The closure submitter must be resolved in SharePoint before verification.'};
       if (issue.closureSubmittedById ? issue.closureSubmittedById === command.actorId : issue.closureSubmittedBy === command.actor) {
         return {ok:false,status:422,reason:'The person who completed the work cannot verify it.'};
       }
@@ -326,6 +334,6 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
   }
 
   next = { ...next, events: [...issue.events, event] };
-  putRecord('issues',next);
+  saveIssue(next);
   return { ok: true, value: next };
 }

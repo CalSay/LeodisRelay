@@ -1,9 +1,10 @@
 "use client";
+import { useProjectLookup } from "@/components/ProjectContext";
 
 import { useState } from "react";
 import Link from "next/link";
 import { reviewReportDecision } from "@/lib/api";
-import { getProject } from "@/lib/api";
+
 import type { ReportSummary } from "@/lib/types";
 
 /**
@@ -19,11 +20,12 @@ import type { ReportSummary } from "@/lib/types";
  * left to be discovered.
  */
 export function ReviewPanel({ report, onDone }: { report: ReportSummary; onDone: () => void }) {
+  const getProject = useProjectLookup();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const project = getProject(report.projectId);
+  const project = report.projectSnapshot ?? getProject(report.projectId);
   const defects = report.defectCount;
 
   async function decide(decision: "approve" | "return") {

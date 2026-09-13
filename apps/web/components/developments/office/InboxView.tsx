@@ -24,7 +24,7 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
   const shown = filter === 'notNotified' ? reports.filter(notNotified) : filter === 'failed' ? reports.filter(processingFailed) : filter === 'notAck' ? reports.filter(notAcknowledged) : filter === 'review' ? reports.filter(awaitingReview) : filter === 'returned' ? reports.filter(returned) : reports;
   const week = Date.now() - 7 * 86400000;
   const name = (id: string) => ctx.projects.find(p => p.id === id)?.projectName ?? id;
-  const code = (id: string) => ctx.projects.find(p => p.id === id)?.projectNumber ?? '';
+  const code = (id: string) => ctx.projects.find(p => p.id === id)?.id ?? '';
   return <div className="view">
     <div className="pagehead"><div><h3>Inbox</h3><p>{snap.reports.length} reports received · {snap.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week).length} this week · {counts.notAck} not yet read · {snap.drafts.length} draft{snap.drafts.length === 1 ? '' : 's'} in progress on site</p></div></div>
     <div className="filters">

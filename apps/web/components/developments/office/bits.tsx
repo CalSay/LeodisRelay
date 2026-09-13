@@ -1,12 +1,13 @@
 'use client';
 import type { ReactNode } from 'react';
+import { IssueSyncStatus } from '@/components/SharePointStatus';
 import type { Issue, ReportSummary } from '@/lib/types';
 import { deliveryStatus, reviewStatus } from '@/lib/status';
 import { KIND, confirmTag, found, toneTag, workTag, type Rollup } from './model';
 
 /** Status as a word, a shape and a colour; never colour alone. */
 export const Tag = ({ label, cls }: { label: string; cls: string }) => <span className={`tag ${cls}`}>{label}</span>;
-export const WorkTag = ({ i, day }: { i: Issue; day: string }) => <Tag {...workTag(i, day)} />;
+export const WorkTag = ({ i, day }: { i: Issue; day: string }) => <><Tag {...workTag(i, day)} /><IssueSyncStatus issue={i} /></>;
 export const ConfirmTag = ({ i }: { i: Issue }) => <Tag {...confirmTag(i)} />;
 export function DeliveryTag({ r }: { r: ReportSummary }) {
   const s = deliveryStatus(r); if (!s) return null;

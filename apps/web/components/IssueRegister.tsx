@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState } from 'react';
+import { IssueSyncStatus } from './SharePointStatus';
 import Link from "next/link";
 import type { Issue } from "@/lib/types";
 
@@ -124,7 +125,7 @@ export function IssueRegister({ issues }: { issues: Issue[] | null }) {
                 </p>
               </span>
               <span className="row-end">
-                <span className={statusTone(issue)}>{statusLabel(issue)}</span>
+                <span className={statusTone(issue)}>{statusLabel(issue)}</span><IssueSyncStatus issue={issue} />
                 <span className="row-time">{issue.owner.trim() || "no owner"}</span>
               </span>
             </Link>
