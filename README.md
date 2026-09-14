@@ -70,3 +70,7 @@ The agreed low-cost PWA pilot, its Microsoft Entra setup, deployment
 prerequisites and go-live checklist are documented in
 [docs/deployment-pilot.md](docs/deployment-pilot.md). This is the intended
 route to an installable iOS/Android web app without app-store distribution.
+
+To administer the RELAY server from another Windows computer, follow the
+[home laptop server-access guide](docs/home-laptop-server-access.md). It creates
+a separate SSH key for that computer and preserves the existing work-PC access.
