@@ -59,7 +59,9 @@ export function fieldsEqual(actual: Record<string, unknown>, desired: Record<str
     if (value === null || value === '') return other === undefined || other === null || other === '';
     if (key.endsWith('LookupId')) return String(other) === String(value);
     if (['Target_x0020_Date','VisitDate'].includes(key)) return siteDate(other) === siteDate(value);
-    if (key.endsWith('_At') || ['ReceivedAt','ReviewedAt'].includes(key)) return Date.parse(String(other)) === Date.parse(String(value));
+    if (key.endsWith('_At') || ['ReceivedAt','ReviewedAt'].includes(key)) {
+      return Math.trunc(Date.parse(String(other)) / 1000) === Math.trunc(Date.parse(String(value)) / 1000);
+    }
     return other === value;
   });
 }
