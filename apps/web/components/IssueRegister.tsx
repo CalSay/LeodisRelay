@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { IssueSyncStatus } from './SharePointStatus';
 import Link from "next/link";
 import type { Issue } from "@/lib/types";
+import { withViewReturn } from '@/lib/viewNavigation';
 
 /**
  * Issues on a project.
@@ -60,7 +61,7 @@ const EMPTY: Record<Filter, string> = {
   all: "No issues have been raised on this project.",
 };
 
-export function IssueRegister({ issues }: { issues: Issue[] | null }) {
+export function IssueRegister({ issues, returnTo }: { issues: Issue[] | null; returnTo?: string }) {
   const [filter, setFilter] = useState<Filter>("open");
 
   const counts = {
@@ -112,7 +113,7 @@ export function IssueRegister({ issues }: { issues: Issue[] | null }) {
       ) : (
         <div className="reg">
           {shown.map((issue) => (
-            <Link key={issue.id} href={`/issues/${issue.id}`} className="row">
+            <Link key={issue.id} href={returnTo ? withViewReturn(`/issues/${issue.id}`, returnTo) : `/issues/${issue.id}`} className="row">
               <span className="row-code">
                 {issue.reference.split("-").slice(1).join("-")}
               </span>

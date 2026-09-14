@@ -3,10 +3,12 @@
 import {use, useEffect, useRef, useState} from 'react';
 import Link from 'next/link';
 import type {PDFDocumentProxy, RenderTask} from 'pdfjs-dist';
+import {safeViewReturn, withViewReturn} from '@/lib/viewNavigation';
 
 /** Render locally: never navigate the installed app into the device PDF viewer. */
-export default function PdfPage({params}: {params:Promise<{id:string}>}) {
+export default function PdfPage({params,searchParams}: {params:Promise<{id:string}>;searchParams:Promise<{returnTo?:string}>}) {
   const {id} = use(params);
+  const returnTo=safeViewReturn(use(searchParams).returnTo,'/projects');
   const [doc,setDoc] = useState<PDFDocumentProxy | null>(null);
   const [page,setPage] = useState(1);
   const [zoom,setZoom] = useState(1);
@@ -86,7 +88,7 @@ export default function PdfPage({params}: {params:Promise<{id:string}>}) {
     return () => {active=false;render?.cancel();};
   },[doc,page,width,zoom]);
   return <main className="wrap">
-    <Link href={`/reports/${id}`} replace className="back">← Back to report</Link>
+    <Link href={withViewReturn(`/reports/${id}`,returnTo)} replace className="back">← Back to report</Link>
     <div className="pagehead"><div><h1>Report PDF</h1><p className="sub">View the document without leaving RELAY</p></div></div>
     <div className="btn-row" style={{flexWrap:'wrap'}}>
       <button disabled={!doc || page === 1 || loading} onClick={() => setPage(p => p-1)}>Previous page</button>
@@ -101,6 +103,6 @@ export default function PdfPage({params}: {params:Promise<{id:string}>}) {
       {doc && <canvas key={`${page}-${width}-${zoom}`} ref={canvas} role="img" aria-label={`Report PDF, page ${page}. Text is available below.`} style={{display:error ? 'none':'block',background:'#fff'}} />}
     </div>
     {pageText && <details style={{marginTop:16}}><summary>Read page text</summary><p>{pageText}</p></details>}
-    <Link href={`/reports/${id}/preview`} replace className="back">View report summary</Link>
+    <Link href={withViewReturn(`/reports/${id}/preview`,returnTo)} replace className="back">View report summary</Link>
   </main>;
 }

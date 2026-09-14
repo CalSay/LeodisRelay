@@ -13,6 +13,7 @@ import { IndividualDefect } from './IndividualDefect';
 import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
 import { fmtMoney, variationValue } from '@/lib/variations';
 import { projectStatusGroups } from '@/lib/projectGroups';
+import { withViewReturn } from '@/lib/viewNavigation';
 
 /**
  * The same words the office uses. A report is received when the server has
@@ -73,6 +74,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   const ownDrafts = drafts.filter(r => r.projectId === projectId);
   const currentDraft = ownDrafts[0];
   const preference = `relay-project:${principal?.id}`;
+  const engineerReturn = (target: View = 'home') => `/engineer?project=${encodeURIComponent(projectId)}${target === 'home' ? '' : `&view=${target}`}`;
 
   useEffect(() => {
     if (!initialProject) {
@@ -104,9 +106,10 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
       Promise.all([listReports(projectId,0),projectIssues(projectId),projectVariations(projectId)]).then(([page,all,variations]) => {
         if(cancelled)return;
         const rows:Back[] = [];
-        for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) rows.push({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:`/reports/${r.id}`, title:`Site update ${r.reference.split('-').slice(1).join('-')}`, sub:`Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned' });
-        for (const i of all) if (i.reportedById === principal.id || i.events[0]?.actorId === principal.id) rows.push({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:`/issues/${i.id}`, title:i.description, sub:`${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'} · you raised it ${fmtDay(i.raisedAt)}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed' });
-        for (const v of variations) if (v.raisedById === principal.id) rows.push({ at:v.events.at(-1)?.at ?? v.raisedAt, key:v.id, href:`/variations/${v.id}`, title:v.description, sub:`${v.reference.split('-').slice(1).join('-')} · ${v.location || 'no location'} · you raised it ${fmtDay(v.raisedAt)}`, tags:<VariationTags v={v}/>, late:v.workDone && v.instruction === 'pending' });
+        const returnTo = engineerReturn();
+        for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) rows.push({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:withViewReturn(`/reports/${r.id}`,returnTo), title:`Site update ${r.reference.split('-').slice(1).join('-')}`, sub:`Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned' });
+        for (const i of all) if (i.reportedById === principal.id || i.events[0]?.actorId === principal.id) rows.push({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}`,returnTo), title:i.description, sub:`${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'} · you raised it ${fmtDay(i.raisedAt)}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed' });
+        for (const v of variations) if (v.raisedById === principal.id) rows.push({ at:v.events.at(-1)?.at ?? v.raisedAt, key:v.id, href:withViewReturn(`/variations/${v.id}`,returnTo), title:v.description, sub:`${v.reference.split('-').slice(1).join('-')} · ${v.location || 'no location'} · you raised it ${fmtDay(v.raisedAt)}`, tags:<VariationTags v={v}/>, late:v.workDone && v.instruction === 'pending' });
         rows.sort((a,b) => b.at.localeCompare(a.at));
         setBack({ rows:rows.slice(0,6), open:all.filter(i => i.work !== 'closed' && i.confirmation !== 'withdrawn').length, reports:page.reports.filter(r => r.state === 'submitted').length });
       }).catch(() => { if(!cancelled) setBack({ rows:[], open:0, reports:0 }); });
@@ -121,12 +124,12 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   }
   async function startReport(add?: 'instruction') {
     if(!project || creating)return;
-    if (currentDraft && add) { router.push(`/reports/${currentDraft.id}?add=${add}`); return; }
+    if (currentDraft && add) { router.push(withViewReturn(`/reports/${currentDraft.id}?add=${add}`,engineerReturn(view))); return; }
     setCreating(true);setError('');
-    try {const report = await createReport(project.id,principal?.name ?? '');router.push(`/reports/${report.id}${add ? `?add=${add}` : ''}`);}
+    try {const report = await createReport(project.id,principal?.name ?? '');router.push(withViewReturn(`/reports/${report.id}${add ? `?add=${add}` : ''}`,engineerReturn(view)));}
     catch(e){setError(e instanceof Error?e.message:'Unable to start a report. Please try again.');setCreating(false);}
   }
-  const draftLink = (r:ReportSummary) => <Link key={r.id} href={`/reports/${r.id}`} className="eng-report-link"><span><strong>{r.reference}</strong><small>Visit {r.visitDate} · {r.observationCount} card{r.observationCount===1?'':'s'} · {r.photoCount} photographs</small></span><span>Continue →</span></Link>;
+  const draftLink = (r:ReportSummary) => <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className="eng-report-link"><span><strong>{r.reference}</strong><small>Visit {r.visitDate} · {r.observationCount} card{r.observationCount===1?'':'s'} · {r.photoCount} photographs</small></span><span>Continue →</span></Link>;
 
   return <main className="eng-workspace">
     {principal?.role !== 'Engineer' && <p className="eng-preview">Engineer layout preview · Signed in as {principal?.role}. Your permissions and report authorship are unchanged.</p>}
@@ -142,7 +145,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
           <section className="eng-band"><span className="lbl">Current project</span><h2>{project.projectName}</h2><p><span className="ref" style={{color:'inherit'}}>{project.projectNumber}</span> · {project.projectManager}, project manager · <button type="button" onClick={()=>navigate('projects')}>Change ›</button></p></section>
           <div className="eng-tiles">
             {currentDraft
-              ? <Link className="eng-tile big" href={`/reports/${currentDraft.id}`}><span className="kind tone-neutral">Site update</span><div><b>{currentDraft.corrects ? 'Continue the correction' : 'Continue today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'on server'}</small></div><span className="arrow">→</span></Link>
+              ? <Link className="eng-tile big" href={withViewReturn(`/reports/${currentDraft.id}`,engineerReturn())}><span className="kind tone-neutral">Site update</span><div><b>{currentDraft.corrects ? 'Continue the correction' : 'Continue today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'on server'}</small></div><span className="arrow">→</span></Link>
               : <button type="button" className="eng-tile big" onClick={()=>void startReport()} disabled={creating}><span className="kind tone-neutral">Site update</span><div><b>{creating?'Starting…':'Start a site update'}</b><small>Progress, defects, variations and access, one card at a time</small></div><span className="arrow">→</span></button>}
             <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo + a short note · sent on its own</small></div></button>
             <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work needing instruction · goes in your site update</small></div></button>
@@ -164,9 +167,9 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
         </div></div>
       </>}
       {view==='projects' && <><div className="eng-heading"><h1>Choose your project</h1><p>All projects open to your role. Existing drafts stay with their original project.</p></div><div className="eng-project-groups">{projectStatusGroups(projects).map(group=><section key={group.status} className={`eng-project-group eng-project-group-${group.tone}`}><div className="eng-section-title"><h2>{group.label}</h2><span className="r">{group.projects.length}</span></div><div className="eng-project-list">{group.projects.map(p=><button key={p.id} className="eng-panel" onClick={()=>selectProject(p.id)} aria-pressed={p.id===projectId}><strong>{p.projectName}</strong><small>{p.projectNumber} · {p.projectManager}</small><span>{p.id===projectId?'Current project':'Select project →'}</span></button>)}</div></section>)}</div></>}
-      {view==='reports' && <><div className="eng-heading"><h1>Reports · {project.projectName}</h1><p>Your drafts and submitted project reports from all trades.</p></div><button onClick={()=>void startReport()} disabled={creating}>{creating?'Starting…':'Start another site update'}</button>{reports===null ? !error && <p role="status">Loading reports…</p> : <section className="eng-panel">{reports.length ? reports.map(r=><Link className="eng-report-link" href={`/reports/${r.id}`} key={r.id}><span><strong>{r.reference}</strong><small>{r.author} · {r.authorTrade ?? 'Trade not recorded'} · {r.visitDate}</small></span><span style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}><ReportTags r={r}/></span></Link>) : <p>No reports on this page.</p>}</section>}<div className="btn-row">{offset>0 && <button onClick={()=>setOffset(Math.max(0,offset-50))}>Newer reports</button>}{next!==null && <button onClick={()=>setOffset(next)}>Older reports</button>}</div></>}
-      {view==='issues' && <><div className="eng-heading"><h1>Issues · {scope==='all'?'All projects':project.projectName}</h1><p>{scope==='all'?'Each issue group names its project.':'Showing issues only for the selected project.'}</p><button onClick={()=>navigate('defect')}>Flag a defect</button></div><div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Project scope<select id="eng-issue-scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="current">{project.projectName}</option><option value="all">All projects</option></select></label><div><button disabled aria-describedby="eng-assignment-unavailable">Assigned to me · Coming soon</button><p id="eng-assignment-unavailable" className="eng-help">Issue owners are currently names or companies, not linked user accounts.</p></div></div>{issues===null ? !error && <p role="status">Loading issues…</p> : (scope==='all'?projects: [project]).map(p=><section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList issues={issues.filter(i=>i.projectId===p.id)} projectName={p.projectName}/></section>)}</>}
-      {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues')}/>}
+      {view==='reports' && <><div className="eng-heading"><h1>Reports · {project.projectName}</h1><p>Your drafts and submitted project reports from all trades.</p></div><button onClick={()=>void startReport()} disabled={creating}>{creating?'Starting…':'Start another site update'}</button>{reports===null ? !error && <p role="status">Loading reports…</p> : <section className="eng-panel">{reports.length ? reports.map(r=><Link className="eng-report-link" href={withViewReturn(`/reports/${r.id}`,engineerReturn('reports'))} key={r.id}><span><strong>{r.reference}</strong><small>{r.author} · {r.authorTrade ?? 'Trade not recorded'} · {r.visitDate}</small></span><span style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}><ReportTags r={r}/></span></Link>) : <p>No reports on this page.</p>}</section>}<div className="btn-row">{offset>0 && <button onClick={()=>setOffset(Math.max(0,offset-50))}>Newer reports</button>}{next!==null && <button onClick={()=>setOffset(next)}>Older reports</button>}</div></>}
+      {view==='issues' && <><div className="eng-heading"><h1>Issues · {scope==='all'?'All projects':project.projectName}</h1><p>{scope==='all'?'Each issue group names its project.':'Showing issues only for the selected project.'}</p><button onClick={()=>navigate('defect')}>Flag a defect</button></div><div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Project scope<select id="eng-issue-scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="current">{project.projectName}</option><option value="all">All projects</option></select></label><div><button disabled aria-describedby="eng-assignment-unavailable">Assigned to me · Coming soon</button><p id="eng-assignment-unavailable" className="eng-help">Issue owners are currently names or companies, not linked user accounts.</p></div></div>{issues===null ? !error && <p role="status">Loading issues…</p> : (scope==='all'?projects: [project]).map(p=><section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList issues={issues.filter(i=>i.projectId===p.id)} projectName={p.projectName} returnTo={engineerReturn('issues')}/></section>)}</>}
+      {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues')} returnTo={engineerReturn('issues')}/>}
     </>}
   </main>;
 }

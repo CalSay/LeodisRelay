@@ -10,6 +10,7 @@ import { PhotoImage } from '@/components/PhotoImage';
 import { uploadPhotos } from '@/lib/localMedia';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { canManage } from '@/lib/auth/access';
+import { safeViewReturn } from '@/lib/viewNavigation';
 
 /**
  * One issue, across every visit that touched it.
@@ -48,11 +49,12 @@ const EVENT_LABEL: Record<string, string> = {
   assigned: "Assigned",
 };
 
-export default function IssuePage({ params }: { params: Promise<{ id: string }> }) {
+export default function IssuePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
   const getProject = useProjectLookup();
   const principal = usePrincipal();
   const manager = principal ? canManage(principal) : false;
   const { id } = use(params);
+  const returnTo = use(searchParams).returnTo;
   const [issue, setIssue] = useState<Issue | null>(null);
   const [missing, setMissing] = useState(false);
   const [note, setNote] = useState("");
@@ -123,7 +125,7 @@ export default function IssuePage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <main className="wrap">
-      <Link href={`/engineer?project=${encodeURIComponent(issue.projectId)}&view=issues`} className="back">
+      <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(issue.projectId)}&view=issues`)} className="back">
         &larr; {project?.projectName ?? "Project"}
       </Link>
 

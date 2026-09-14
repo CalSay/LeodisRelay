@@ -26,6 +26,7 @@ import { correctReport as requestCorrection } from '@/lib/api';
 import { ownsReport } from '@/lib/auth/access';
 import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
 import { OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
+import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 
 type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error";
 
@@ -51,9 +52,10 @@ const SAVE: Record<SaveState, { dot: string; text: string }> = {
 const KINDS: ObservationType[] = ['update', 'defect', 'instruction', 'access'];
 const fmtWhen = (iso?: string) => iso ? new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
 
-export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ReportPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
   const getProject = useProjectLookup();
   const { id } = use(params);
+  const returnTo = use(searchParams).returnTo;
   const principal = usePrincipal();
   const router = useRouter();
   const [selectedSection,setSelectedSection] = useState<string | null>(null);
@@ -274,7 +276,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     if (!KINDS.includes(add as ObservationType)) return;
     addedFromLink.current = true;
     addCard(add as ObservationType);
-    try { window.history.replaceState(null, '', window.location.pathname); } catch {}
+    try { const url = new URL(window.location.href); url.searchParams.delete('add'); window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`); } catch {}
   }, [report?.id, report?.state, addCard]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function send() {
@@ -363,10 +365,12 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
   async function startCorrection() {
     if (!correctionReason.trim()) { setCorrectionError('Say why this correction is needed.'); return; }
+    if (!report) return;
     setCorrectionError('');
     try {
-      const draft = await requestCorrection(report!.id, correctionReason.trim());
-      router.push(`/reports/${draft.id}`);
+      const projectId = report.projectId;
+      const draft = await requestCorrection(report.id, correctionReason.trim());
+      router.push(withViewReturn(`/reports/${draft.id}`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(projectId)}`)));
     } catch (error) {
       setCorrectionError(error instanceof Error ? error.message : 'The correction could not be started.');
     }
@@ -379,7 +383,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
 
   return (
     <main className={sent ? "wrap eng-page" : "wrap wrap-pad eng-report-editor"}>
-      <Link href={`/engineer?project=${encodeURIComponent(report.projectId)}`} className="back">
+      <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`)} className="back">
         &larr; {project?.projectName ?? "Project"}
       </Link>
 
@@ -410,7 +414,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
           )}
           <p style={{ margin: 0 }}>
             Received by Relay {fmtWhen(report.serverAcknowledgedAt)}. It can no longer be edited — a correction is issued as a new revision.{" "}
-            <Link href={`/reports/${report.id}/preview`} style={{ color: "var(--brass)" }}>
+            <Link href={withViewReturn(`/reports/${report.id}/preview`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))} style={{ color: "var(--brass)" }}>
               View the document &rarr;
             </Link>
           </p>

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { getReport } from "@/lib/api";
 import { OBSERVATION_TYPES } from "@/lib/fixtures";
 import type { Report } from "@/lib/types";
+import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 
 /**
  * What the issued document would say.
@@ -22,9 +23,10 @@ import type { Report } from "@/lib/types";
  *
  * Unknown owners and dates are labelled, never invented.
  */
-export default function PreviewPage({ params }: { params: Promise<{ id: string }> }) {
+export default function PreviewPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
   const getProject = useProjectLookup();
   const { id } = use(params);
+  const returnTo = safeViewReturn(use(searchParams).returnTo, '/projects');
   const [report, setReport] = useState<Report | null>(null);
   const [missing, setMissing] = useState(false);
 
@@ -56,10 +58,10 @@ export default function PreviewPage({ params }: { params: Promise<{ id: string }
   return (
     <main className="wrap">
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
-        <Link href={`/reports/${id}`} className="back">
+        <Link href={withViewReturn(`/reports/${id}`, returnTo)} className="back">
           &larr; Report
         </Link>
-        <Link href={`/reports/${id}/pdf`} className="back" style={{ color: "var(--brass)" }}>
+        <Link href={withViewReturn(`/reports/${id}/pdf`, returnTo)} className="back" style={{ color: "var(--brass)" }}>
           Open the PDF &rarr;
         </Link>
       </div>

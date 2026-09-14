@@ -6,6 +6,7 @@ import { getReport, getVariation } from '@/lib/api';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { acknowledgementStatus, deliveryStatus, reviewStatus } from '@/lib/status';
 import { projectStatusGroups } from '@/lib/projectGroups';
+import { withViewReturn } from '@/lib/viewNavigation';
 import type { Issue, Report, ReportSummary, Variation } from '@/lib/types';
 import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
@@ -33,6 +34,11 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
       </div>
     </div>
   </div>;
+}
+
+function officeReturn(ctx: Ctx): string {
+  const route = [ctx.route.tab, ctx.route.a, ctx.route.b, ctx.route.c].filter((part): part is string => !!part);
+  return `/office#/${route.join('/')}`;
 }
 
 function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
@@ -172,7 +178,7 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   const thisWeek = s.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week);
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h4>{p.projectName}</h4><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
-      <div className="actions"><Link className="btn btn-q btn-sm" href={`/projects/${p.id}`}>Project page</Link><a className="btn btn-sm" href={`#/inbox`}>Inbox</a></div></div>
+      <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link><a className="btn btn-sm" href={`#/inbox`}>Inbox</a></div></div>
     <dl className="tb"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{s.reports.length ? `${s.reports.length} on file` : 'none yet'}{s.notNotified.length ? ` · ${s.notNotified.length} PM notification${s.notNotified.length === 1 ? '' : 's'} pending` : ''}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Ready to verify</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `closure submitted ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing awaiting verification'}</small></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></dd></div></dl>
     <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
     <dl className="tb" style={{ marginTop: 12 }}><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
@@ -187,14 +193,15 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
 /* ---------------------------------------------------------------- reader */
 export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; crumbsHome?: string }) {
   const [report, setReport] = useState<Report | null>(null);
+  const [loadedId, setLoadedId] = useState('');
   const [error, setError] = useState('');
   useEffect(() => {
-    let stopped = false; setReport(null); setError('');
-    getReport(id).then(r => { if (stopped) return; if (r && r.state === 'submitted') setReport(r); else setError(r ? 'This is a draft. Its contents are private to the author until it is sent.' : 'That report could not be found.'); }).catch(e => { if (!stopped) setError(e.message); });
+    let stopped = false; setError('');
+    getReport(id).then(r => { if (stopped) return; if (r && r.state === 'submitted') { setReport(r); setLoadedId(id); } else setError(r ? 'This is a draft. Its contents are private to the author until it is sent.' : 'That report could not be found.'); }).catch(e => { if (!stopped) setError(e.message); });
     return () => { stopped = true; };
   }, [id, ctx.snap?.loadedAt]);
-  if (error) return <div className="sheet"><div className="empty">{error}</div></div>;
-  if (!report) return <div className="sheet"><div className="loading" style={{ minHeight: 160 }}>Loading report</div></div>;
+  if (error && loadedId !== id) return <div className="sheet"><div className="empty">{error}</div></div>;
+  if (!report || loadedId !== id) return <div className="sheet"><div className="loading" style={{ minHeight: 160 }}>Loading report</div></div>;
   const project = ctx.projects.find(p => p.id === report.projectId);
   const code = project?.id ?? '';
   const summary = ctx.snap?.reports.find(r => r.id === report.id);
@@ -206,7 +213,7 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
   const canReview = report.review === 'pending' && report.authorId !== ctx.me.id;
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href={crumbsHome ?? `#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Site progress report</div><h4>Visit {fmtDate(report.visitDate)}</h4><div className="rowsub"><span className="ref">{report.reference}</span><span className="sep">/</span>{report.author}{report.authorTrade ? ` · ${report.authorTrade}` : ''}<span className="sep">/</span>Rev {report.revision}</div></div>
-      <div className="actions"><Link className="btn btn-q btn-sm" href={`/reports/${report.id}/preview`}>Full report</Link><Link className="btn btn-q btn-sm" href={`/reports/${report.id}/pdf`}>PDF</Link>
+      <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/preview`, officeReturn(ctx))}>Full report</Link><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/pdf`, officeReturn(ctx))}>PDF</Link>
         {canReview ? <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'review', report: summary })}>Review</Btn>
           : !report.acknowledged ? <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'acknowledge', report: summary })}>Acknowledge</Btn> : null}</div></div>
     <dl className="tb"><div><dt>Received</dt><dd>{fmtWhen(report.serverAcknowledgedAt)}</dd></div><div><dt>Review</dt><dd>{review ? <Tag label={review.label} cls={toneTag(review.tone)} /> : '—'}</dd></div><div><dt>PDF and notification</dt><dd>{delivery ? <Tag label={delivery.label} cls={toneTag(delivery.tone)} /> : '—'}</dd></div><div><dt>Read</dt><dd>{ack ? <Tag label={ack.label} cls={toneTag(ack.tone)} /> : '—'}{report.acknowledged && <small>{fmtWhen(report.acknowledged.at)}{report.acknowledged.note ? ` · ${report.acknowledged.note}` : ''}</small>}</dd></div></dl>
@@ -263,7 +270,7 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h4>{issue.description}</h4><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div></div>
       <div className="actions">
-        <Link className="btn btn-q btn-sm" href={`/issues/${issue.id}`}>Issue page</Link>
+        <Link className="btn btn-q btn-sm" href={withViewReturn(`/issues/${issue.id}`, officeReturn(ctx))}>Issue page</Link>
         {active && issue.work !== 'awaiting_verification' && (issue.owner ? <BtnQ className="btn-sm" onClick={() => d('assign')}>Reassign</BtnQ> : <Btn className="btn-sm" onClick={() => d('assign')}>Assign</Btn>)}
         {active && issue.work === 'awaiting_verification' && !closureMine && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue })}>Verify</Btn>}
         {active && issue.work === 'awaiting_verification' && <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'reopen', issue })}>Not finished</BtnQ>}

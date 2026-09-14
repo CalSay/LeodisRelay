@@ -9,10 +9,12 @@ import { IssueRegister } from "@/components/IssueRegister";
 import type { Issue, ReportSummary } from "@/lib/types";
 import { usePrincipal } from '@/components/PrincipalContext';
 import { ownsReport } from '@/lib/auth/access';
+import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 
-export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ProjectPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
   const getProject = useProjectLookup();
   const { id } = use(params);
+  const returnTo = safeViewReturn(use(searchParams).returnTo, '/projects');
   const router = useRouter();
   const principal = usePrincipal();
   const project = getProject(id);
@@ -35,7 +37,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
     setCreating(true);
     try {
       const report = await createReport(id, "You");
-      router.push(`/reports/${report.id}`);
+      router.push(withViewReturn(`/reports/${report.id}`, returnTo));
     } finally {
       setCreating(false);
     }
@@ -44,7 +46,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
   if (!project) {
     return (
       <main className="wrap">
-        <Link href="/projects" className="back">
+        <Link href={returnTo} className="back">
           &larr; Projects
         </Link>
         <div className="empty">That project could not be found.</div>
@@ -54,7 +56,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
 
   return (
     <main className="wrap">
-      <Link href="/projects" className="back">
+      <Link href={returnTo} className="back">
         &larr; Projects
       </Link>
 
@@ -96,7 +98,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       {/* Outstanding work comes before the report history: what is still owed
           matters more than what has already been written up. Rendered whether
           or not there is anything in it. */}
-      <IssueRegister issues={issues} />
+      <IssueRegister issues={issues} returnTo={returnTo} />
 
       <div className="sec">
         <span className="lbl">Reports</span>
@@ -109,7 +111,7 @@ export default function ProjectPage({ params }: { params: Promise<{ id: string }
       ) : (
         <div className="reg">
           {reports.map((report) => (
-              <Link key={report.id} href={report.state === 'draft' && (!principal || !ownsReport(principal,report)) ? '/office' : `/reports/${report.id}`} className="row">
+              <Link key={report.id} href={report.state === 'draft' && (!principal || !ownsReport(principal,report)) ? '/office' : withViewReturn(`/reports/${report.id}`, returnTo)} className="row">
                 <span className="row-code">{report.reference.split("-").slice(1).join("-")}</span>
                 <span className="row-main">
                   <p className="row-title">Visit {report.visitDate}</p>
