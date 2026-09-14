@@ -50,7 +50,7 @@ export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done
     const i = d.issue;
     return <Modal className="ws-dialog" onClose={close}><form onSubmit={submit(async v => {
       const owner = v.owner?.trim() ?? ''; if (!owner) throw new Error('Name who is responsible.');
-      await issueCommand(i.id, { kind: 'assign', owner, targetDate: v.target ?? '', note: v.note ?? '' });
+      await issueCommand(i.id, { expectedEtag:i.sync?.etag, kind: 'assign', owner, targetDate: v.target ?? '', note: v.note ?? '' });
       return `${i.reference} assigned to ${owner}${v.target ? `, target ${v.target}` : ''}.`;
     })}>
       {shell(i.owner ? 'Reassign' : 'Assign', `${i.reference} · ${i.location || 'no location'}`, <>
@@ -69,7 +69,7 @@ export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done
     const pending = i.work === 'awaiting_verification';
     const title = verify ? 'Verify and close' : pending ? 'Not finished' : 'Reopen';
     return <Modal className="ws-dialog" onClose={close}><form onSubmit={submit(async v => {
-      await issueCommand(i.id, { kind: verify ? 'verify' : 'reopen', note: v.note ?? '' });
+      await issueCommand(i.id, { expectedEtag:i.sync?.etag, kind: verify ? 'verify' : 'reopen', note: v.note ?? '' });
       return verify ? `${i.reference} verified and closed.` : pending ? `${i.reference} sent back to in progress.` : `${i.reference} reopened.`;
     })}>
       {shell(title, `${i.reference} · ${i.location || 'no location'}`, <>
@@ -82,7 +82,7 @@ export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done
     const i = d.issue;
     const decide = (kind: 'confirm' | 'withdraw', note: string) => run(async () => {
       if (!note.trim()) throw new Error('Say why. The reason is recorded on the issue.');
-      await issueCommand(i.id, { kind, note: note.trim() });
+      await issueCommand(i.id, { expectedEtag:i.sync?.etag, kind, note: note.trim() });
       return kind === 'confirm' ? `${i.reference} confirmed.` : `${i.reference} withdrawn.`;
     });
     return <Modal className="ws-dialog" onClose={close}><TriageForm d={d} busy={busy} shell={shell} close={close} decide={decide} />

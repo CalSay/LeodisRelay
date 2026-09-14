@@ -7,7 +7,7 @@
  * POST sends it to the office.
  */
 
-import { FIXTURE_PROJECTS, type FixtureProject } from "./fixtures";
+import type { FixtureProject } from "./fixtures";
 import type { Issue, Observation, Photo, Report, ReportSummary, Variation } from "./types";
 import { capturePhoto, uploadPhotos } from './localMedia';
 import { localSaveJournal } from './localSaveJournal';
@@ -56,12 +56,11 @@ async function parse<T>(response: Response): Promise<T> {
  * tender is never returned to a device at all.
  */
 export async function listProjects(): Promise<FixtureProject[]> {
-  return FIXTURE_PROJECTS.filter((p) => REPORTABLE_STATUSES.includes(p.status));
+  const result = await parse<{projects: FixtureProject[]}>(await request('/api/projects', {cache:'no-store'}));
+  return result.projects;
 }
 
-export function getProject(projectId: string): FixtureProject | undefined {
-  return FIXTURE_PROJECTS.find((p) => p.id === projectId);
-}
+
 
 export async function listReports(projectId: string, offset = 0): Promise<{ reports: ReportSummary[]; next:number | null }> {
   return parse(
@@ -192,7 +191,7 @@ export async function allIssues(): Promise<Issue[]> {
 }
 
 /** One issue command, attributed by the server to whoever is signed in. */
-export async function issueCommand(issueId: string, body: { kind: string; note: string; owner?: string; targetDate?: string }): Promise<Issue> {
+export async function issueCommand(issueId: string, body: { kind: string; note: string; owner?: string; targetDate?: string; expectedEtag?: string }): Promise<Issue> {
   return parse<Issue>(await request(`/api/issues/${issueId}`, {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
   }));
@@ -207,6 +206,7 @@ export interface OfficeTeam {
   legacyDrafts?: { id: string; reference: string; author: string; lastSavedAt?: string }[];
   processing?: {
     mail: 'live' | 'outbox';
+    sharepoint?: 'off' | 'read' | 'write';
     jobs: { kind: string; status: string; count: number }[];
     outbox: { id: string; reference: string; projectId: string; delivery?: string; error?: string; since?: string }[];
   };

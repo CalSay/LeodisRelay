@@ -24,7 +24,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const shown = scoped.filter(pick[filter]).sort((a, b) => rank(a) - rank(b) || (a.targetDate || '9999').localeCompare(b.targetDate || '9999') || b.raisedAt.localeCompare(a.raisedAt));
   const owners = [...new Set(snap.issues.map(i => i.owner.trim()).filter(Boolean))].sort();
   const name = (id: string) => ctx.projects.find(p => p.id === id)?.projectName ?? id;
-  const code = (id: string) => ctx.projects.find(p => p.id === id)?.projectNumber ?? '';
+  const code = (id: string) => ctx.projects.find(p => p.id === id)?.id ?? '';
   const source = (i: Issue) => { const r = i.raisedByReport ? snap.reports.find(x => x.id === i.raisedByReport) : undefined; return r ? shortRef(r.reference) : i.source === 'individual' ? 'Flagged on site' : '—'; };
   const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
   return <div className="view">

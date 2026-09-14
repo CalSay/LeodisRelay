@@ -50,6 +50,8 @@ export type ReportState = "draft" | "submitted";
 export type ReviewState = "not_required" | "pending" | "approved" | "returned";
 
 export interface Report {
+  projectSnapshot?: import('./projects').ConnectedProject;
+  sharepoint?: { status: 'pending' | 'registered' | 'filed' | 'failed'; url?: string; itemId?: string; error?: string };
   delivery?: 'pending' | 'rendered' | 'filed' | 'sent' | 'outbox' | 'failed';
   deliveryError?: string;
   corrects?: string;
@@ -170,12 +172,13 @@ export interface IssueEvent {
 }
 
 export interface Issue {
+  sync?: import('./sharepoint/issues').IssueSync | undefined;
   /** Individual defects have no source report; older report-raised issues retain it. */
   source?: 'individual' | 'report';
-  affectedTrade?: 'Electrical' | 'HVAC' | 'P&H' | 'Other / non-Leodis';
-  reportedBy?: string;
-  reportedById?: string;
-  reporterTrade?: 'Electrical' | 'HVAC' | 'P&H';
+  affectedTrade?: 'Electrical' | 'HVAC' | 'P&H' | 'Other / non-Leodis' | undefined;
+  reportedBy?: string | undefined;
+  reportedById?: string | undefined;
+  reporterTrade?: 'Electrical' | 'HVAC' | 'P&H' | undefined;
   id: string;
   reference: string;
   projectId: string;
@@ -188,8 +191,8 @@ export interface Issue {
   owner: string;
   targetDate: string;
   /** Who put the work forward as complete; independence is measured against this. */
-  closureSubmittedBy?: string;
-  closureSubmittedById?: string;
+  closureSubmittedBy?: string | undefined;
+  closureSubmittedById?: string | undefined;
   raisedByReport: string;
   /**
    * The update inside that report which raised it. A correction of the report

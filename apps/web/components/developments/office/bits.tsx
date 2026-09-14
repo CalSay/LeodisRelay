@@ -1,5 +1,6 @@
 'use client';
 import type { ReactNode } from 'react';
+import { IssueSyncStatus } from '@/components/SharePointStatus';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import { deliveryStatus, reviewStatus } from '@/lib/status';
 import { fmtMoney } from '@/lib/variations';
@@ -7,7 +8,7 @@ import { KIND, confirmTag, found, instructionTag, toneTag, workTag, type Rollup 
 
 /** Status as a word, a shape and a colour; never colour alone. */
 export const Tag = ({ label, cls }: { label: string; cls: string }) => <span className={`tag ${cls}`}>{label}</span>;
-export const WorkTag = ({ i, day }: { i: Issue; day: string }) => <Tag {...workTag(i, day)} />;
+export const WorkTag = ({ i, day }: { i: Issue; day: string }) => <><Tag {...workTag(i, day)} /><IssueSyncStatus issue={i} /></>;
 export const ConfirmTag = ({ i }: { i: Issue }) => <Tag {...confirmTag(i)} />;
 export const InstructionTag = ({ v }: { v: Variation }) => <Tag {...instructionTag(v)} />;
 /** A sum of money, set in mono so figures align down a column; a dash when there is none. */

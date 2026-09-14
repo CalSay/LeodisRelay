@@ -5,7 +5,7 @@ import { getReport } from "@/lib/serverStore";
 import { requireSession } from "@/lib/auth/guard";
 import { canReadReport } from '@/lib/auth/access';
 import { ensurePdf, readPdf } from '@/lib/pdfArtifacts';
-import { FIXTURE_PROJECTS } from '@/lib/fixtures';
+import { cachedProject } from '@/lib/projects';
 import { getRecord } from '@/lib/storage';
 import type { Report } from '@/lib/types';
 
@@ -43,7 +43,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   if (!buffer) return NextResponse.json({ reason:'PDF is queued for preparation. Try again shortly.' },{ status:409, headers:{ 'retry-after':'3' } });
 
   const fileName = archiveFileName({
-    projectNumber: FIXTURE_PROJECTS.find(p => p.id === report.projectId)?.projectNumber || "UNKNOWN",
+    projectNumber: (report.projectSnapshot ?? cachedProject(report.projectId))?.projectNumber || "UNKNOWN",
     reportNumber: sanitiseFileName(report.reference),
     revision: report.revision,
     visitDate: report.visitDate,

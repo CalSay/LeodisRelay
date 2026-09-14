@@ -15,8 +15,12 @@
  ['Operations site',`/sites/${site}?$select=id`],
  ['Project Tracker records',`/sites/${site}/lists/3e2035e6-3d28-4fe4-9e24-888ffd8e9ef4/items?$top=1&$select=id`],
  ['Client Database records',`/sites/${site}/lists/9174b22f-a49a-4a0f-9be0-ce9d70be5287/items?$top=1&$select=id`],
+ ['Report Register records',`/sites/${site}/lists/f916d018-d7a7-4703-a9cc-b722fa20b430/items?$top=1&$select=id`],
+ ['Issue Tracker records',`/sites/${site}/lists/4b49efb5-df01-4097-ab64-dae248d5c114/items?$top=1&$select=id`],
+ ['Filed PDF column',`/sites/${site}/lists/f916d018-d7a7-4703-a9cc-b722fa20b430/columns`],
+ ['Tetley pilot item 102',`/sites/${site}/lists/3e2035e6-3d28-4fe4-9e24-888ffd8e9ef4/items/102?$expand=fields($select=Title)`],
  ['Documents library',`/drives/${drive}?$select=id`],
  ['Tetley Hall Reports folder',`/drives/${drive}/items/01UMGXW5IIWI2AUN3LCJHZE7SZLD36PEKL?$select=id,folder`]
- ]){try{const r=await fetch('https://graph.microsoft.com/v1.0'+path,{headers:{Authorization:'Bearer '+token},redirect:'error',signal:AbortSignal.timeout(30000)});if(!r.ok){failed++;console.log('FAIL: '+label+' (HTTP '+r.status+')');continue;}const data=await r.json();if(label.endsWith('folder')&&!data.folder){failed++;console.log('FAIL: Expected a folder');continue;}console.log('PASS: '+label);}catch{failed++;console.log('FAIL: '+label+' (network error or invalid response)');}}
+ ]){try{const r=await fetch('https://graph.microsoft.com/v1.0'+path,{headers:{Authorization:'Bearer '+token},redirect:'error',signal:AbortSignal.timeout(30000)});if(!r.ok){failed++;console.log('FAIL: '+label+' (HTTP '+r.status+')');continue;}const data=await r.json();if(label==='Tetley pilot item 102'&&data.fields?.Title!=='Tetley Hall - Block E'){failed++;console.log('FAIL: Pilot project identity changed');continue;}if(label==='Filed PDF column'&&!data.value?.some(c=>c.name==='RelayPdfUrl'&&c.text)){failed++;console.log('FAIL: Filed PDF column is not a text column');continue;}if(label.endsWith('folder')&&!data.folder){failed++;console.log('FAIL: Expected a folder');continue;}console.log('PASS: '+label);}catch{failed++;console.log('FAIL: '+label+' (network error or invalid response)');}}
  console.log(failed?'Read access checks incomplete.':'All read access checks passed. No SharePoint content changed.');process.exitCode=failed?1:0;
 })().catch(e=>{console.error(e instanceof TypeError||e?.name==='TimeoutError'?'FAIL: Network request failed.':'FAIL: '+e.message);process.exitCode=1;});

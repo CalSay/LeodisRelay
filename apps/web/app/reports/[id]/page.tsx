@@ -1,9 +1,9 @@
 "use client";
+import { useProjectLookup } from "@/components/ProjectContext";
 
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  getProject,
   getReport,
   newObservation,
   openIssues as fetchOpenIssues,
@@ -52,6 +52,7 @@ const KINDS: ObservationType[] = ['update', 'defect', 'instruction', 'access'];
 const fmtWhen = (iso?: string) => iso ? new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
 
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
+  const getProject = useProjectLookup();
   const { id } = use(params);
   const principal = usePrincipal();
   const router = useRouter();
@@ -346,7 +347,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     );
   }
 
-  const project = getProject(report.projectId);
+  const project = report.projectSnapshot ?? getProject(report.projectId);
   const findings = reviewReport(report);
   const stop = findings.filter((f) => f.blocking);
   const note = findings.filter((f) => !f.blocking);

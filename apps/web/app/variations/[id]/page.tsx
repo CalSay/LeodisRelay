@@ -2,7 +2,8 @@
 
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
-import { getProject, getVariation, variationCommand } from "@/lib/api";
+import { getVariation, variationCommand } from "@/lib/api";
+import { useProjectLookup } from '@/components/ProjectContext';
 import type { Variation } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
 import { VariationTags } from '@/components/EngineerWorkspace';
@@ -22,6 +23,7 @@ const fmtDay = (iso?: string) => iso ? new Date(iso).toLocaleDateString('en-GB',
 
 export default function VariationPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const getProject = useProjectLookup();
   const [v, setV] = useState<Variation | null>(null);
   const [missing, setMissing] = useState(false);
   const [note, setNote] = useState('');

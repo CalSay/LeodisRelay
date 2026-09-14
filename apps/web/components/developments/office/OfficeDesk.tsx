@@ -4,9 +4,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { Toasts, parseHash, useHashRoute } from '@/components/workspace/hooks';
-import { allIssues, allVariations, officeAll, officeTeam, type OfficeTeam } from '@/lib/api';
+import { allIssues, allVariations, listProjects, officeAll, officeTeam, type OfficeTeam } from '@/lib/api';
 import { canAccessProject, isAdmin } from '@/lib/auth/access';
-import { FIXTURE_PROJECTS } from '@/lib/fixtures';
+import { useProjects } from '@/components/ProjectContext';
+import type { FixtureProject } from '@/lib/fixtures';
 import type { Issue } from '@/lib/types';
 import type { Ctx, Route } from './ctx';
 import { Dialogs, type Dialog } from './Dialogs';
@@ -31,6 +32,8 @@ const REPORTABLE = ['4. Active', '5. Defects Liability'];
  */
 export function OfficeDesk({ fallback }: { fallback: string }) {
   const principal = usePrincipal();
+  const initialProjects = useProjects();
+  const [projectData, setProjectData] = useState<FixtureProject[]>(initialProjects);
   const { hash, go } = useHashRoute(fallback);
   const parts = parseHash(hash);
   const route: Route = { tab: parts[0] ?? 'projects', a: parts[1] ?? null, b: parts[2] ?? null, c: parts[3] ?? null };
@@ -47,8 +50,14 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const refresh = useCallback(async () => {
     const g = ++generation.current;
     try {
-      const [{ reports, drafts }, issues, variations] = await Promise.all([officeAll(), allIssues(), allVariations()]);
+      const [{ reports, drafts }, issues, variations, currentProjects] = await Promise.all([
+        officeAll(),
+        allIssues(),
+        allVariations(),
+        listProjects(),
+      ]);
       if (g !== generation.current) return;
+      setProjectData(currentProjects);
       setSnap({ reports, drafts, issues, variations, loadedAt: new Date().toISOString() });
       setError('');
     } catch (e) {
@@ -70,7 +79,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   useEffect(() => { setAttnOpen(false); setQ(''); }, [hash]);
 
   const day = today();
-  const projects = useMemo(() => FIXTURE_PROJECTS.filter(p => principal && canAccessProject(principal, p.id) && REPORTABLE.includes(p.status)), [principal]);
+  const projects = useMemo(() => projectData.filter(p => principal && canAccessProject(principal, p.id) && REPORTABLE.includes(p.status)), [principal, projectData]);
   const stats = useMemo(() => snap ? projects.map(p => projectStats(p, snap, day)) : [], [snap, projects, day]);
   const statOf = useCallback((code: string) => stats.find(s => s.code === code), [stats]);
   const attn = useMemo(() => attention(stats, day), [stats, day]);

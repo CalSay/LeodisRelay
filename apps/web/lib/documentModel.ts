@@ -1,11 +1,12 @@
 import type { DocReport } from '@relay/documents';
-import { FIXTURE_PROJECTS, OBSERVATION_TYPES } from './fixtures';
+import { OBSERVATION_TYPES } from './fixtures';
+import { cachedProject } from './projects';
 import type { Report } from './types';
 import { documentPhotoUrl } from './mediaStore';
 
 /** Both PDF download and delivery use the same snapshot mapping. */
 export async function documentModel(report: Report): Promise<DocReport> {
-  const project = FIXTURE_PROJECTS.find(p => p.id === report.projectId);
+  const project = report.projectSnapshot ?? cachedProject(report.projectId);
   const observations: DocReport['observations'] = [];
   for (const o of report.observations) {
     const kind = OBSERVATION_TYPES.find(t => t.value === o.type);

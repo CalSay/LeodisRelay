@@ -29,9 +29,9 @@ export const isUnpriced = (v: Variation): boolean => v.instruction === 'pending'
 export const isExposed = (v: Variation): boolean => v.instruction === 'pending' && v.workDone;
 
 /** The notification email to the project manager has not gone. A quiet fact: the report is on file regardless. */
-export const notNotified = (r: ReportSummary): boolean => r.state === 'submitted' && (r.delivery === 'outbox' || r.issued?.transport === 'outbox' || (!!r.issued && r.issued.records.length === 0));
+export const notNotified = (r: ReportSummary): boolean => r.state === 'submitted' && (r.delivery === 'filed' || r.delivery === 'outbox' || r.issued?.transport === 'outbox' || (!!r.issued && r.issued.records.length === 0));
 /** The worker could not process it. This one does need a person. */
-export const processingFailed = (r: ReportSummary): boolean => r.state === 'submitted' && (r.delivery === 'failed' || (r.issued?.records ?? []).some(x => x.failure));
+export const processingFailed = (r: ReportSummary): boolean => r.state === 'submitted' && (r.sharepoint?.status === 'failed' || r.delivery === 'failed' || (r.issued?.records ?? []).some(x => x.failure));
 export const notAcknowledged = (r: ReportSummary): boolean => r.state === 'submitted' && !r.acknowledged;
 export const awaitingReview = (r: ReportSummary): boolean => r.state === 'submitted' && r.review === 'pending';
 export const returned = (r: ReportSummary): boolean => r.state === 'submitted' && r.review === 'returned';
@@ -80,7 +80,7 @@ export function projectStats(project: FixtureProject, snap: Snapshot, day: strin
   const drafts = snap.drafts.filter(r => r.projectId === project.id);
   const variations = snap.variations.filter(v => v.projectId === project.id).sort(byRaised);
   const s: ProjectStats = {
-    project, code: project.projectNumber, issues,
+    project, code: project.id, issues,
     active: issues.filter(isActive),
     overdue: issues.filter(i => isOverdue(i, day)),
     verify: issues.filter(isVerify),

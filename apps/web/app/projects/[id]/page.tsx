@@ -1,15 +1,17 @@
 "use client";
+import { useProjectLookup } from "@/components/ProjectContext";
 
 import { use, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createReport, getProject, listReports, projectIssues, type Report } from "@/lib/api";
+import { createReport, listReports, projectIssues, type Report } from "@/lib/api";
 import { IssueRegister } from "@/components/IssueRegister";
 import type { Issue, ReportSummary } from "@/lib/types";
 import { usePrincipal } from '@/components/PrincipalContext';
 import { ownsReport } from '@/lib/auth/access';
 
 export default function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
+  const getProject = useProjectLookup();
   const { id } = use(params);
   const router = useRouter();
   const principal = usePrincipal();

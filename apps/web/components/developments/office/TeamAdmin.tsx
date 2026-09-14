@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { SharePointStatus } from '@/components/SharePointStatus';
 import type { TeamMember } from '@/lib/api';
 import { InstallRelay } from '@/components/InstallRelay';
 import { toast } from '@/components/workspace/hooks';
@@ -56,15 +57,15 @@ export function AdminView({ ctx }: { ctx: Ctx }) {
     {section === 'delivery' && <div className="adm-grid">
       <div className="panel"><div className="panel-head"><h4>Notifications waiting</h4><span className="rowsub" style={{ marginLeft: 'auto' }}>Emails telling the project manager a report came in</span></div>
         {processing ? <table className="reg"><thead><tr><th>Reference</th><th>Project</th><th>Received</th><th>State</th></tr></thead><tbody>
-          {processing.outbox.length ? processing.outbox.map(o => { const code = ctx.projects.find(p => p.id === o.projectId)?.projectNumber ?? ''; return <tr key={o.id} className="clickable" onClick={() => ctx.go(`#/projects/${code}/report/${o.id}`)}><td><span className="ref">{o.reference}</span></td><td>{ctx.projects.find(p => p.id === o.projectId)?.projectName ?? o.projectId}</td><td className="due">{fmtWhen(o.since)}</td><td>{o.delivery === 'failed' ? <><Tag label="Processing failed" cls="tag-alert" /><div className="rowsub">{o.error}</div></> : <Tag label="PM not notified" cls="tag-quiet" />}</td></tr>; }) : <tr><td colSpan={4} className="empty">Nothing is waiting.</td></tr>}
+          {processing.outbox.length ? processing.outbox.map(o => { const code = ctx.projects.find(p => p.id === o.projectId)?.id ?? ''; return <tr key={o.id} className="clickable" onClick={() => ctx.go(`#/projects/${code}/report/${o.id}`)}><td><span className="ref">{o.reference}</span></td><td>{ctx.projects.find(p => p.id === o.projectId)?.projectName ?? o.projectId}</td><td className="due">{fmtWhen(o.since)}</td><td>{o.delivery === 'failed' ? <><Tag label="Processing failed" cls="tag-alert" /><div className="rowsub">{o.error}</div></> : <Tag label="PM not notified" cls="tag-quiet" />}</td></tr>; }) : <tr><td colSpan={4} className="empty">Nothing is waiting.</td></tr>}
         </tbody></table> : <div className="loading">Loading</div>}
         <div className="panel-foot">{processing?.mail === 'live' ? 'Live email is configured.' : 'No mail server is configured for the pilot, so notification emails are held here until the mailbox is connected. The reports themselves are on file and readable in the Inbox.'}</div></div>
-      <div className="stack">
+      <div className="stack"><SharePointStatus />
         <div className="panel"><div className="panel-head"><h4>Processing</h4></div>
           <dl className="tb" style={{ gridTemplateColumns: '1fr', margin: 0, border: 0 }}>
             <div style={{ borderRight: 0, borderBottom: '1px solid var(--line)' }}><dt>Notification email</dt><dd>{processing ? <Tag label={processing.mail === 'live' ? 'Live' : 'Held locally'} cls={processing.mail === 'live' ? 'tag-ok' : 'tag-quiet'} /> : '—'}<small>{processing?.mail === 'live' ? 'The project manager is emailed when a report comes in.' : 'The pilot does not send the notification email yet.'}</small></dd></div>
             <div style={{ borderRight: 0, borderBottom: '1px solid var(--line)' }}><dt>PDF and delivery jobs</dt><dd>{processing ? (processing.jobs.length ? processing.jobs.map(j => <div key={`${j.kind}-${j.status}`} className="num" style={{ fontSize: 12 }}>{j.kind} · {j.status} · {j.count}</div>) : <span className="fine">No jobs recorded</span>) : '—'}<small>Run by the separate worker process. A job that fails is retried with a delay.</small></dd></div>
-            <div style={{ borderRight: 0 }}><dt>SharePoint filing</dt><dd><Tag label="Planned" cls="tag-quiet" /><small>Issued PDFs will file to the project library.</small></dd></div>
+            <div style={{ borderRight: 0 }}><dt>SharePoint filing</dt><dd><Tag label={processing?.sharepoint === 'write' ? 'Test connection' : processing?.sharepoint === 'read' ? 'Read only' : 'Not enabled'} cls="tag-quiet" /><small>File receipt and retry status appear under SharePoint connection.</small></dd></div>
           </dl></div>
       </div>
     </div>}

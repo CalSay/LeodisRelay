@@ -3,7 +3,8 @@ import type { Principal } from '@relay/platform';
 import { canManage, ownsReport } from './auth/access';
 import type { Issue, Report, ReportSummary, Observation } from './types';
 import { reviewReport } from './review';
-import { FIXTURE_PROJECTS } from './fixtures';
+import { cachedProject, reportableProject, projectIdentity } from './projects';
+import { sharePointMode, pilotItemIds } from './sharepoint/config';
 import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } from './issueStore';
 import { raiseVariationsFromReport } from './variationStore';
 import { atomic, getRecord, putRecord, records, pageRecords, enqueue, database } from './storage';
@@ -18,6 +19,11 @@ export function reportPage(projectId?: string, offset = 0) { return pageRecords<
 export function reportsFor(principal: Principal, projectId?: string, offset = 0) {
   const where = ["kind='reports'"];
   const args: string[] = [];
+  if (sharePointMode() !== 'off') {
+    const allowed = pilotItemIds().map(projectIdentity);
+    where.push(allowed.length ? `project IN (${allowed.map(() => '?').join(',')})` : '0');
+    args.push(...allowed);
+  }
   if (projectId) { where.push('project=?'); args.push(projectId); }
   if (!canManage(principal)) {
     where.push("(state='submitted' OR json_extract(data,'$.authorId')=?)"); args.push(principal.id);
@@ -40,13 +46,14 @@ export function reportsFor(principal: Principal, projectId?: string, offset = 0)
 
 export function createReport(projectId: string, author: string, principal?: Principal): Report {
   return atomic(() => {
-    const project = FIXTURE_PROJECTS.find(p => p.id === projectId);
+    if (sharePointMode() === 'read') throw new Error('Report capture is disabled while SharePoint is read-only.');
+    const project = cachedProject(projectId);
     if (!project) throw new Error('Project not found.');
     const count = database().prepare("SELECT COUNT(*) AS n FROM records WHERE kind='reports' AND project=?").get(projectId)!;
     const report: Report = {
-      id: 'rep-' + randomUUID(), projectId, author,
+      id: 'rep-' + randomUUID(), projectId, author, projectSnapshot: structuredClone(project),
       ...(principal ? { authorId:principal.id, ...(principal.trade ? {authorTrade:principal.trade}: {}) } : {}),
-      reference: `${project.projectNumber}-SPR-${String(Number(count.n) + 1).padStart(3,'0')}`,
+      reference: `${project.source ? 'DEMO-' : ''}${project.projectNumber}-SPR-${String(Number(count.n) + 1).padStart(3,'0')}`,
       visitDate: new Date().toISOString().slice(0,10), state: 'draft', version: 1,
       revision: 1, review: 'not_required', observations: [], lastSavedAt: new Date().toISOString(),
     };
@@ -102,12 +109,15 @@ export async function submitReport(id: string, signature?: { dataUrl?: string; n
     const existing = getReport(id);
     if (!existing) return reject('No such report.',404);
     if (existing.state === 'submitted') return { ok: true, value: existing }; // Lost receipt, safe retry.
+    if (sharePointMode() === 'read') return reject('Report submission is disabled while SharePoint is read-only.',409);
     if (expectedVersion !== existing.version) return reject('Save the latest changes before submitting.');
+    const project = cachedProject(existing.projectId);
+    if (!project || !reportableProject(project)) return reject('This project is no longer open for reporting.',422);
     const blocking = reviewReport(existing).filter(f => f.blocking);
     if (blocking.length) return reject(`${blocking.length} item(s) need completing before sending.`,422);
     const submitted: Report = {
       ...existing, state: 'submitted', serverAcknowledgedAt: new Date().toISOString(),
-      review: FIXTURE_PROJECTS.find(p => p.id === existing.projectId)?.reviewRequired ? 'pending' : 'not_required',
+      review: cachedProject(existing.projectId)?.reviewRequired ? 'pending' : 'not_required',
       delivery: 'pending',
       ...(signature ? { signature: { ...signature, signedAt: new Date().toISOString() } } : {}),
     };
@@ -117,6 +127,10 @@ export async function submitReport(id: string, signature?: { dataUrl?: string; n
     // Variations are raised beside issues, so the office sees both the moment the report lands.
     raiseVariationsFromReport(submitted);
     enqueue('pdf:' + id,'pdf',{ reportId: id });
+    if (sharePointMode() === 'write') {
+      enqueue('sharepoint-register:' + id,'sharepoint-register',{reportId:id});
+      if (submitted.corrects) enqueue('sharepoint-correction:' + id,'sharepoint-register',{reportId:submitted.corrects});
+    }
     return { ok: true, value: submitted };
   });
 }
@@ -132,6 +146,7 @@ export function reviewSubmission(id: string, decision: string, reviewer: string,
     // The submitted snapshot stays immutable even when changes are requested.
     const reviewed: Report = { ...report, review: decision === 'approve' ? 'approved' : 'returned', reviewedBy: reviewer, ...(reviewerId ? {reviewedById:reviewerId}:{}), reviewedAt: new Date().toISOString(), reviewNote: note.trim() };
     putRecord('reports',reviewed);
+    if (sharePointMode() === 'write') enqueue('sharepoint-review:' + id + ':' + reviewed.reviewedAt,'sharepoint-register',{reportId:id});
     if (decision === 'approve') confirmIssuesFromReport(id,reviewer,reviewerId);
     else disputeIssuesFromReport(id,reviewer,reviewerId);
     return { ok: true, value: reviewed };
@@ -145,7 +160,7 @@ export function correctReport(id: string, reason: string): StoreOutcome<Report> 
     if (!reason.trim()) return reject('Say why this correction is needed.',422);
     const previous = records<Report>('reports',original.projectId).find(r => r.corrects === id);
     if (previous) return { ok: true, value: previous };
-    const { signature, issued, delivery, serverAcknowledgedAt, reviewedAt, reviewedBy, reviewedById, reviewNote, acknowledged, ...base } = original;
+    const { signature, issued, delivery, sharepoint, deliveryError, serverAcknowledgedAt, reviewedAt, reviewedBy, reviewedById, reviewNote, acknowledged, ...base } = original;
     // The original's defects already raised issues. Point the copied updates at
     // them, so sending the correction adds a sighting to each issue rather than
     // raising the same defect again under a new reference.

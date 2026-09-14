@@ -74,6 +74,7 @@ export async function createSession(principal: Principal): Promise<Session> {
   atomic(() => {
     database().prepare("DELETE FROM records WHERE kind='sessions' AND json_extract(data,'$.expiresAt')<=?").run(issuedAt.toISOString());
     putRecord('sessions',session);
+    putRecord('identities',{id:principal.id,email:principal.email,oid:principal.oid,name:principal.name});
   });
 
   const jar = await cookies();
@@ -96,6 +97,7 @@ export async function currentSession(): Promise<Session | null> {
   if (isExpired(session, new Date())) return null;
   // Pre-role sessions must reauthenticate; never silently promote existing users.
   if (!hasRole(session.principal)) return null;
+  if (!getRecord('identities',session.principal.id)) putRecord('identities',{id:session.principal.id,email:session.principal.email,oid:session.principal.oid,name:session.principal.name});
   return session;
 }
 
