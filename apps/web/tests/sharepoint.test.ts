@@ -143,6 +143,33 @@ test('filing retries reuse and verify exact stored PDF bytes without replacing e
   graph.transfer = async()=>new Response(Buffer.from('modified PDF!!!!'));
   await assert.rejects(fileReport(report),/different PDF/);assert.equal(writes,0);
 });
+test('new PDF upload sessions use SharePoint conflict defaults without rejected optional metadata', async () => {
+  prepareIssue();
+  process.env.RELAY_SHAREPOINT_MODE = 'write';
+  process.env.RELAY_SHAREPOINT_WRITE_PROJECT_IDS = '7';
+  process.env.RELAY_SHAREPOINT_ARCHIVE_FOLDERS = JSON.stringify({'7':{driveId:'drive',itemId:'folder'}});
+  const { fileReport } = await import('../lib/sharepoint/reports');
+  const { ensurePdf } = await import('../lib/pdfArtifacts');
+  const report = {id:'rep-new-file-test',projectId:projectIdentity('7'),reference:'DEMO-011-SPR-002',revision:1,state:'submitted',version:1} as import('../lib/types').Report;
+  const bytes = Buffer.from('new frozen PDF');
+  await ensurePdf(report,async()=>bytes);
+  let lookupCount = 0;
+  graph.request = (async (path:string,init?:RequestInit) => {
+    if(path.endsWith('/folder'))return {id:'folder',folder:{}};
+    if(path.endsWith('/createUploadSession')) {
+      assert.equal(init?.method,'POST');
+      assert.equal(init?.body,undefined);
+      return {uploadUrl:'https://leodisdevelopments.sharepoint.com/upload'};
+    }
+    if(++lookupCount === 1)throw new GraphError(404);
+    return {id:'new-file',size:bytes.length,webUrl:'https://leodisdevelopments.sharepoint.com/new.pdf','@microsoft.graph.downloadUrl':'https://leodisdevelopments.sharepoint.com/download'};
+  }) as typeof graph.request;
+  graph.transfer = async (url,init) => url.endsWith('/upload')
+    ? (assert.equal(init?.method,'PUT'),new Response(null,{status:201}))
+    : new Response(bytes);
+  const receipt = await fileReport(report);
+  assert.equal(receipt.itemId,'new-file');
+});
 test('unknown transfer hosts are refused before any preauthenticated upload', async()=>{
   process.env.RELAY_SHAREPOINT_MODE='write';
   const client = new GraphClient((async()=>{throw Error('No network');}) as typeof fetch);

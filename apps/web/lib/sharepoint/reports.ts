@@ -29,9 +29,10 @@ export async function fileReport(report: Report): Promise<FilingReceipt> {
   try { item = await graph.request<DriveItem>(path); }
   catch (error) { if (!(error instanceof GraphError) || error.status !== 404) throw error; }
   if (!item) {
-    const session = await graph.request<{ uploadUrl: string }>(`${path}:/createUploadSession`, {
-      method: 'POST', body: JSON.stringify({ item: { name, '@microsoft.graph.conflictBehavior': 'fail' } }),
-    });
+    // SharePoint already defaults new upload sessions to fail on a name conflict.
+    // Sending the optional uploadable-properties body causes some document
+    // libraries to reject an otherwise valid path-based request with HTTP 400.
+    const session = await graph.request<{ uploadUrl: string }>(`${path}:/createUploadSession`, { method: 'POST' });
     const chunk = 10 * 320 * 1024;
     for (let offset = 0; offset < bytes.length; offset += chunk) {
       const part = bytes.subarray(offset, Math.min(bytes.length, offset + chunk));
