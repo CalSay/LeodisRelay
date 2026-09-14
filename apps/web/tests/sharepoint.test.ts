@@ -163,6 +163,9 @@ test('report variations are durably queued, reconciled, and protected from exter
   graph.byKey = async () => ({id:'52',eTag:'"v3"',fields:{...desired,Description:'Changed in SharePoint'}});
   await assert.rejects(sendVariationOperation({variation:pending,itemId:'52',baseEtag:'"v2"'},'later-op'),error=>error instanceof GraphError && error.status===412);
 });
+test('SharePoint date-only variation fields tolerate its midnight timestamp readback', () => {
+  assert.equal(fieldsEqual({InstructedOn:'2026-09-14T00:00:00Z'},{InstructedOn:'2026-09-14'}),true);
+});
 test('filing retries reuse and verify exact stored PDF bytes without replacing existing files', async () => {
   prepareIssue();
   process.env.RELAY_SHAREPOINT_ARCHIVE_FOLDERS = JSON.stringify({'7':{driveId:'drive',itemId:'folder'}});

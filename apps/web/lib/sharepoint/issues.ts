@@ -77,7 +77,7 @@ export function fieldsEqual(actual: Record<string, unknown>, desired: Record<str
     if (other && typeof other === 'object' && ('Url' in other || 'url' in other)) other = (other as {Url?:string;url?:string}).Url ?? (other as {url?:string}).url;
     if (value === null || value === '') return other === undefined || other === null || other === '';
     if (key.endsWith('LookupId')) return String(other) === String(value);
-    if (['Target_x0020_Date','VisitDate'].includes(key)) return siteDate(other) === siteDate(value);
+    if (['Target_x0020_Date','VisitDate','InstructedOn'].includes(key)) return siteDate(other) === siteDate(value);
     if (key.endsWith('_At') || ['ReceivedAt','ReviewedAt'].includes(key)) {
       return Math.trunc(Date.parse(String(other)) / 1000) === Math.trunc(Date.parse(String(value)) / 1000);
     }
