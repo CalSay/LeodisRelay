@@ -188,6 +188,14 @@ test('new PDF upload sessions use SharePoint conflict defaults without rejected 
   const receipt = await fileReport(report);
   assert.equal(receipt.itemId,'new-file');
 });
+test('an exact orphaned pending Report Register row can be completed but not overwritten', async () => {
+  const { recoverablePendingReport } = await import('../lib/sharepoint/reports');
+  const desired = {Title:'DEMO-SPR-005',RelayReportId:'rep-5',ProjectLookupId:'102',FilingStatus:'Filed',RelayPdfUrl:'https://leodisdevelopments.sharepoint.com/file.pdf'};
+  const pending = {Title:'DEMO-SPR-005',RelayReportId:'rep-5',ProjectLookupId:'102',FilingStatus:'Pending',RelayPdfUrl:null};
+  assert.equal(recoverablePendingReport(pending,desired),true);
+  assert.equal(recoverablePendingReport({...pending,Title:'Changed in SharePoint'},desired),false);
+  assert.equal(recoverablePendingReport({...pending,RelayPdfUrl:'https://example.invalid/other.pdf'},desired),false);
+});
 test('unknown transfer hosts are refused before any preauthenticated upload', async()=>{
   process.env.RELAY_SHAREPOINT_MODE='write';
   const client = new GraphClient((async()=>{throw Error('No network');}) as typeof fetch);

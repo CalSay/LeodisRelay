@@ -10,6 +10,12 @@ import { fieldsEqual } from './issues';
 
 interface DriveItem { id: string; name: string; size: number; webUrl: string; folder?: unknown; parentReference?: { id?: string; driveId?: string }; '@microsoft.graph.downloadUrl'?: string }
 interface FilingReceipt { id: string; driveId: string; itemId: string; webUrl: string; digest: string }
+/** A lost create acknowledgement may leave the exact pre-filing row behind. */
+export function recoverablePendingReport(actual: Record<string, unknown>, desired: Record<string, unknown>): boolean {
+  const pending: Record<string, unknown> = { ...desired, FilingStatus: 'Pending' };
+  delete pending.RelayPdfUrl;
+  return fieldsEqual(actual, pending) && fieldsEqual({ RelayPdfUrl: actual.RelayPdfUrl }, { RelayPdfUrl: '' });
+}
 /** One immutable revision, one deterministic file; a retry cannot replace an existing file. */
 export async function fileReport(report: Report): Promise<FilingReceipt> {
   const project = report.projectSnapshot ?? cachedProject(report.projectId);
@@ -81,9 +87,10 @@ export async function registerReport(snapshot: Report): Promise<void> {
       if (!remote || !fieldsEqual(remote.fields, fields)) throw error;
     }
   } else if (!fieldsEqual(remote.fields, fields)) {
-    if (!previous || previous.etag !== remote.eTag) throw new GraphError(412);
+    const recoveredPending = !!receipt && !previous && recoverablePendingReport(remote.fields, fields);
+    if ((!previous && !recoveredPending) || (previous && previous.etag !== remote.eTag)) throw new GraphError(412);
     await graph.request(`${graph.listPath(OPERATIONS.reports)}/items/${encodeURIComponent(remote.id)}/fields`, {
-      method: 'PATCH', headers: { 'If-Match': remote.eTag }, body: JSON.stringify(fields),
+      method: 'PATCH', headers: { 'If-Match': previous?.etag ?? remote.eTag }, body: JSON.stringify(fields),
     });
   }
   const saved = await graph.byKey(OPERATIONS.reports, 'RelayReportId', snapshot.id);
