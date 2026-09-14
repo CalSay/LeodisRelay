@@ -115,6 +115,22 @@
   if (stale.status !== 409) throw new Error(`Stale issue update returned HTTP ${stale.status}, expected 409.`);
   console.log('PASS: stale issue update was refused');
 
+  const remoteBeforeEdit = await graph.byKey('4b49efb5-df01-4097-ab64-dae248d5c114', 'RELAY_x0020_Issue_x0020_ID', issue.id);
+  if (!remoteBeforeEdit) throw new Error('The synchronized issue disappeared before the external-edit test.');
+  const externallyEditedDescription = `${observation.whatHappened} Externally edited during automated acceptance.`;
+  await graph.request(`/sites/leodisdevelopments.sharepoint.com%2C7fc89dbf-9b60-4018-bb49-1bcdb28a5fd6%2C5213073c-845c-4e0f-aac1-a3e7e1bcfa9e/lists/4b49efb5-df01-4097-ab64-dae248d5c114/items/${encodeURIComponent(remoteBeforeEdit.id)}/fields`, {
+    method: 'PATCH', headers: { 'If-Match': remoteBeforeEdit.eTag }, body: JSON.stringify({ Description: externallyEditedDescription }),
+  });
+  const externalStale = await fetch(origin + `/api/issues/${issue.id}`, {
+    method: 'POST', headers: { Cookie: `relay_session=${actor.id}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ kind: 'assign', note: 'This externally stale request must be refused.', owner: 'Nobody', expectedEtag: issue.sync.etag }),
+    signal: AbortSignal.timeout(60000),
+  });
+  if (externalStale.status !== 409) throw new Error(`Externally stale issue update returned HTTP ${externalStale.status}, expected 409.`);
+  issue = await api(`/api/issues/${issue.id}`);
+  if (issue.description !== externallyEditedDescription) throw new Error('The external SharePoint edit was not refreshed into RELAY.');
+  console.log('PASS: external SharePoint edit refreshed and the stale RELAY write was refused');
+
   await api(`/api/issues/${issue.id}`, 'POST', { kind: 'progress', note: 'Automated acceptance progress.', expectedEtag: issue.sync.etag });
   issue = await waitFor('Issue progress synchronization', async () => {
     const current = await api(`/api/issues/${issue.id}`);
