@@ -126,6 +126,21 @@ test('lost create response is recovered by stable identity without a second writ
   await assert.rejects(sendIssueOperation({issue,itemId:'42',baseEtag:'"v2"'},'op'),e=>e instanceof GraphError && e.status===412);
   assert.equal(writes,0);
 });
+test('a retained false conflict reconciles only when SharePoint already matches the original operation', async () => {
+  const issue=prepareIssue();
+  const { issueFields } = await import('../lib/sharepoint/issues');
+  const desired=await issueFields(issue);
+  putRecord('issues',{...issue,sync:{status:'conflict',operationId:'op',error:'SharePoint changed this record.'}});
+  graph.byKey = async () => ({id:'42',eTag:'"v2"',fields:desired});
+  graph.request = (async () => { throw Error('A matching remote row must not be overwritten'); }) as typeof graph.request;
+  await sendIssueOperation({issue},'op');
+  assert.equal(getRecord<Issue>('issues',issue.id)!.sync?.status,'synced');
+
+  putRecord('issues',{...issue,sync:{status:'conflict',operationId:'op2',error:'SharePoint changed this record.'}});
+  graph.byKey = async () => ({id:'42',eTag:'"v3"',fields:{...desired,Description:'A genuine external edit'}});
+  await assert.rejects(sendIssueOperation({issue},'op2'),e=>e instanceof GraphError && e.status===412);
+  assert.equal(getRecord<Issue>('issues',issue.id)!.sync?.status,'conflict');
+});
 test('filing retries reuse and verify exact stored PDF bytes without replacing existing files', async () => {
   prepareIssue();
   process.env.RELAY_SHAREPOINT_ARCHIVE_FOLDERS = JSON.stringify({'7':{driveId:'drive',itemId:'folder'}});
