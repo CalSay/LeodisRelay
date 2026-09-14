@@ -7,6 +7,7 @@ import {
   getReport,
   newObservation,
   openIssues as fetchOpenIssues,
+  projectLocations,
   reviewReport,
   saveReport,
   submitReport,
@@ -16,7 +17,7 @@ import {
 import { ApiError } from "@/lib/api";
 import { clientId } from '@/lib/clientId';
 import { hasUnsent, keep, recover, releaseIfCurrent } from "@/lib/localDraft";
-import { ObservationEditor } from "@/components/ObservationEditor";
+import { KindPicker, ObservationEditor } from "@/components/ObservationEditor";
 import { SignaturePad } from "@/components/SignaturePad";
 import type { Issue as IssueSummary } from "@/lib/types";
 import { usePrincipal } from '@/components/PrincipalContext';
@@ -24,6 +25,7 @@ import { useRouter } from 'next/navigation';
 import { correctReport as requestCorrection } from '@/lib/api';
 import { ownsReport } from '@/lib/auth/access';
 import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
+import { OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
 
 type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error";
 
@@ -46,14 +48,20 @@ const SAVE: Record<SaveState, { dot: string; text: string }> = {
   error: { dot: "dot dot-bad", text: "Not saved — check connection" },
 };
 
+const KINDS: ObservationType[] = ['update', 'defect', 'instruction', 'access'];
+const fmtWhen = (iso?: string) => iso ? new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+
 export default function ReportPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const principal = usePrincipal();
   const router = useRouter();
   const [selectedSection,setSelectedSection] = useState<string | null>(null);
+  /** Cards added this session whose kind has not been chosen yet: they show the picker, not the form. */
+  const [picking,setPicking] = useState<string[]>([]);
   const [correcting,setCorrecting] = useState(false);
   const [correctionReason,setCorrectionReason] = useState('');
   const [correctionError,setCorrectionError] = useState('');
+  const [locations,setLocations] = useState<string[]>([]);
 
   const [report, setReport] = useState<Report | null>(null);
   const [missing, setMissing] = useState(false);
@@ -90,6 +98,8 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const serverVersion = useRef<number | undefined>(undefined);
   const sending = useRef(false);
   const [recovered,setRecovered] = useState(false);
+  /** `?add=instruction` from the home tile opens the draft with a new card of that kind. Honoured once. */
+  const addedFromLink = useRef(false);
 
   useEffect(() => {
     fetch("/api/auth/me", { cache: "no-store" })
@@ -225,12 +235,14 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   }, [report]);
 
   // Context from previous visits. Fetched once the report is known so the
-  // engineer can attach a repeat sighting instead of raising a duplicate.
+  // engineer can attach a repeat sighting instead of raising a duplicate, and
+  // pick a place already used here rather than typing it again.
   useEffect(() => {
     if (!report) return;
     fetchOpenIssues(report.projectId)
       .then(setProjectIssues)
       .catch(() => setProjectIssues([]));
+    projectLocations(report.projectId).then(setLocations).catch(() => setLocations([]));
   }, [report?.projectId]);
 
   function update(next: Report) {
@@ -238,6 +250,31 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     setReport(next);
     if (next.state === "draft") scheduleSave(next);
   }
+
+  const addCard = useCallback((kind?: ObservationType) => {
+    const current = latest.current;
+    if (!current || current.state !== 'draft' || sending.current) return;
+    const o = newObservation();
+    if (kind) {
+      o.type = kind;
+      if (kind === 'defect' && principal?.trade) o.affectedTrade = principal.trade;
+    } else {
+      setPicking(p => [...p, o.id]);
+    }
+    update({ ...current, observations: [...current.observations, o] });
+    setSelectedSection(o.id);
+  }, [principal?.trade]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The home screen's "Request a variation" lands here with the card already started.
+  useEffect(() => {
+    if (!report || report.state !== 'draft' || addedFromLink.current) return;
+    let add = '';
+    try { add = new URLSearchParams(window.location.search).get('add') ?? ''; } catch {}
+    if (!KINDS.includes(add as ObservationType)) return;
+    addedFromLink.current = true;
+    addCard(add as ObservationType);
+    try { window.history.replaceState(null, '', window.location.pathname); } catch {}
+  }, [report?.id, report?.state, addCard]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function send() {
     if (!report || sending.current) return;
@@ -317,6 +354,11 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
   const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
   const mine = principal ? ownsReport(principal, report) : false;
   const facts = [reviewStatus(report), deliveryStatus(report), acknowledgementStatus(report)].filter((f): f is NonNullable<typeof f> => f !== null);
+  const counts = Object.fromEntries(KINDS.map(k => [k, report.observations.filter(o => o.type === k).length])) as Record<ObservationType, number>;
+  const selected = report.observations.some(o => o.id === selectedSection) ? selectedSection : report.observations.at(-1)?.id ?? null;
+  const shortRef = report.reference.split('-').slice(1).join('-');
+  const kindOf = (o: Observation) => OBSERVATION_TYPES.find(t => t.value === o.type);
+  const extras = (o: Observation) => [o.affectedTrade && `Trade: ${o.affectedTrade}`, o.variationReason, o.workDone && 'already carried out', o.askedBy && `asked for by ${o.askedBy}`, o.roughSize && ({ 'half-day': 'about half a day', day: 'about a day', 'two-days': 'about two days', more: 'more than two days' })[o.roughSize], o.partsEstimate !== undefined && `parts about £${o.partsEstimate}`].filter(Boolean).join(' · ');
 
   async function startCorrection() {
     if (!correctionReason.trim()) { setCorrectionError('Say why this correction is needed.'); return; }
@@ -329,8 +371,13 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
     }
   }
 
+  const findingRows = (items: typeof findings, kind: 'stop' | 'note') => items.map((f, i) => <button key={`${kind}${i}`} type="button" className={`find ${kind === 'stop' ? 'find-stop' : 'find-note'}`} style={{ width: '100%', textAlign: 'left', minHeight: 0, background: 'none', font: 'inherit', cursor: f.observationId ? 'pointer' : 'default' }} onClick={() => { if (f.observationId) { setSelectedSection(f.observationId); document.getElementById('card-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }}>
+    <span className="find-kind">{kind === 'stop' ? 'Stop' : 'Check'}</span>
+    <span>{f.message}</span>
+  </button>);
+
   return (
-    <main className={sent ? "wrap" : "wrap wrap-pad eng-report-editor"}>
+    <main className={sent ? "wrap eng-page" : "wrap wrap-pad eng-report-editor"}>
       <Link href={`/engineer?project=${encodeURIComponent(report.projectId)}`} className="back">
         &larr; {project?.projectName ?? "Project"}
       </Link>
@@ -338,17 +385,10 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
       <div className="pagehead">
         <div>
           <h1>{sent ? report.reference : 'Site update'}</h1>
-          <p className="sub">{project?.projectName} · {report.reference}</p>
+          <p className="sub">{project?.projectName} · <span className="ref">{report.reference}</span>{sent ? '' : ' · draft'}{report.corrects && !sent ? ` · correction, rev ${report.revision}` : ''}</p>
         </div>
-        <span className={sent ? "tag tag-sent" : "tag tag-draft"}>{sent ? "Submitted" : "Draft"}</span>
+        <span className={sent ? "tag tag-sent" : "tag tag-draft"}>{sent ? "Sent" : "Draft"}</span>
       </div>
-
-      <dl className="titleblock" style={{ marginTop: 24 }}>
-        <div className="tb-cell"><dt>Visit date</dt><dd className="ref">{report.visitDate}</dd></div>
-        <div className="tb-cell"><dt>Engineer</dt><dd>{report.author}</dd></div>
-        <div className="tb-cell"><dt>Updates</dt><dd className="ref">{String(report.observations.length).padStart(2, "0")}</dd></div>
-        <div className="tb-cell"><dt>Photographs</dt><dd className="ref">{String(photos).padStart(2, "0")}</dd></div>
-      </dl>
 
       {/* A correction draft says what it corrects and why, so the sent report is
           never mistaken for something that can be edited. */}
@@ -368,11 +408,7 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
             </p>
           )}
           <p style={{ margin: 0 }}>
-            Received by Relay{" "}
-            {report.serverAcknowledgedAt
-              ? new Date(report.serverAcknowledgedAt).toLocaleString("en-GB")
-              : ""}
-            . It can no longer be edited — a correction is issued as a new revision.{" "}
+            Received by Relay {fmtWhen(report.serverAcknowledgedAt)}. It can no longer be edited — a correction is issued as a new revision.{" "}
             <Link href={`/reports/${report.id}/preview`} style={{ color: "var(--brass)" }}>
               View the document &rarr;
             </Link>
@@ -408,119 +444,112 @@ export default function ReportPage({ params }: { params: Promise<{ id: string }>
         </div>
       )}
 
-      {!sent && <div className="eng-editor-intro"><p>Build your visit report section by section. Each section uses the existing observation fields.</p><a href="#report-check">Check report ↓</a></div>}
-      <div className={sent ? '' : 'eng-editor-grid'}>
-      {!sent && <aside className="eng-sections" aria-label="Report sections"><h2>Report sections · {report.observations.length}</h2>
-        {report.observations.map((o,i)=><button type="button" key={o.id} aria-pressed={(report.observations.some(x=>x.id===selectedSection)?selectedSection:report.observations[0]?.id)===o.id} onClick={()=>setSelectedSection(o.id)}><span>{String(i+1).padStart(2,'0')}</span><span><strong>{o.location || `Section ${i+1}`}</strong><small>{o.type} · {o.photos.length} photo{o.photos.length===1?'':'s'}</small></span></button>)}
-        <button type="button" className="eng-add-section" disabled={submitting} onClick={()=>{const o=newObservation();update({...report,observations:[...report.observations,o]});setSelectedSection(o.id);}}>+ Add section</button>
-      </aside>}
-      <div>
-      <div className="sec"><span className="lbl">{sent?'Updates':'Selected section'}</span></div>
-
-      {report.observations.length === 0 ? (
-        <div className="empty">No updates recorded yet.</div>
-      ) : (
-        report.observations.map((observation, index) =>
-          sent ? (
-            <section key={observation.id} className="panel">
-              <div className="panel-head">
-                <span className="lbl">Update {String(index + 1).padStart(2, "0")}</span>
-                <span className="lbl">{observation.location || "No location"}</span>
+      {sent ? <>
+        <div className="sec"><span className="lbl">{report.observations.length} card{report.observations.length === 1 ? '' : 's'} · {photos} photograph{photos === 1 ? '' : 's'}</span></div>
+        {report.observations.length === 0 ? <div className="empty">No updates were recorded on this visit.</div> : report.observations.map((o, i) => { const k = kindOf(o); return <section key={o.id} className={`eng-sent-card tone-${k?.tone ?? 'neutral'}`}>
+          <div className="head"><span className="lbl">Card {String(i + 1).padStart(2, '0')} · {o.location || 'No location'}</span><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{k?.short ?? o.type}</span></div>
+          <p>{o.whatHappened}</p>
+          {(o.actionNeeded.trim() || o.owner.trim()) && <small>{o.actionNeeded.trim() && `Action: ${o.actionNeeded}`}{o.actionNeeded.trim() && o.owner.trim() && ' · '}{o.owner.trim() && `For: ${o.owner}`}</small>}
+          {extras(o) && <small>{extras(o)}</small>}
+          {o.photos.length > 0 && <small>{o.photos.length} photograph{o.photos.length === 1 ? '' : 's'}</small>}
+        </section>; })}
+      </> : <>
+        <div className="eng-editor-grid">
+          <aside className="eng-rail" aria-label="Cards in this update">
+            <div className="eng-section-title" style={{ margin: 0 }}><h2>Cards</h2><span className="r">{report.observations.length}</span></div>
+            <div className="eng-list">
+              {report.observations.length === 0 && <div className="eng-empty">No cards yet. Add one for each thing you did, found or need.</div>}
+              {report.observations.map((o, i) => { const k = kindOf(o); const stopped = stop.some(f => f.observationId === o.id); return <button type="button" key={o.id} className={`eng-row ${selected === o.id ? 'on' : ''} ${stopped ? 'late' : ''}`} onClick={() => { setSelectedSection(o.id); document.getElementById('card-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>
+                <span className="no">{String(i + 1).padStart(2, '0')}</span>
+                <div className="main"><b>{o.location || (picking.includes(o.id) ? 'New card' : `Card ${i + 1}`)}</b><span>{picking.includes(o.id) ? 'choose a kind' : `${k?.short ?? o.type} · ${o.whatHappened.trim() ? o.whatHappened.trim().slice(0, 48) + (o.whatHappened.trim().length > 48 ? '…' : '') : 'nothing written yet'} · ${o.photos.length} photo${o.photos.length === 1 ? '' : 's'}`}{stopped ? ' · needs something' : ''}</span></div>
+              </button>; })}
+            </div>
+            <button type="button" className="eng-add" disabled={submitting} onClick={() => addCard()}>+ Add a card</button>
+            {findings.length > 0 && <div className="eng-finds"><span className="lbl">Before you send</span>{findingRows(stop, 'stop')}{findingRows(note.slice(0, 3), 'note')}</div>}
+          </aside>
+          <div id="card-editor" style={{ scrollMarginTop: 24 }}>
+            {report.observations.length === 0 ? <KindPicker onPick={k => addCard(k)} /> : report.observations.map((observation, index) => (
+              <div key={observation.id} hidden={selected !== observation.id}>
+                {picking.includes(observation.id)
+                  ? <KindPicker onPick={k => { setPicking(p => p.filter(x => x !== observation.id)); const copy: Observation = { ...observation, type: k }; if (k === 'defect' && principal?.trade) copy.affectedTrade = principal.trade; update({ ...report, observations: report.observations.map(o => o.id === observation.id ? copy : o) }); }} />
+                  : <ObservationEditor
+                      observation={observation}
+                      index={index}
+                      openIssues={projectIssues}
+                      locations={locations}
+                      onChange={(next) => update({ ...report, observations: report.observations.map((o) => (o.id === next.id ? next : o)) })}
+                      onRemove={() => { setPicking(p => p.filter(x => x !== observation.id)); update({ ...report, observations: report.observations.filter((o) => o.id !== observation.id) }); }}
+                    />}
+                {!picking.includes(observation.id) && <div className="btn-row" style={{ marginTop: 12 }}><button type="button" onClick={() => addCard()} disabled={submitting}>Done · add another card</button><a href="#report-check" className="btn-quiet" style={{ display: 'inline-flex', alignItems: 'center', padding: '0 20px', border: '1px solid var(--line-2)', borderRadius: 'var(--r)' }}>Check &amp; send ↓</a></div>}
               </div>
-              <div className="panel-body">
-                <p style={{ margin: 0 }}>{observation.whatHappened}</p>
-                {observation.photos.length > 0 && (
-                  <p className="hint">{observation.photos.length} photograph{observation.photos.length === 1 ? "" : "s"}</p>
-                )}
-              </div>
-            </section>
-          ) : (
-            <div key={observation.id} hidden={(report.observations.some(o=>o.id===selectedSection)?selectedSection:report.observations[0]?.id)!==observation.id}>
-            <ObservationEditor
-              observation={observation}
-              index={index}
-              openIssues={projectIssues}
-              onChange={(next) =>
-                update({
-                  ...report,
-                  observations: report.observations.map((o) => (o.id === next.id ? next : o)),
-                })
-              }
-              onRemove={() =>
-                update({
-                  ...report,
-                  observations: report.observations.filter((o) => o.id !== observation.id),
-                })
-              }
-            />
-            </div>
-          ),
-        )
-      )}
-      </div></div>
-
-      {!sent && (
-        <>
-          <div id="report-check" className="sec"><span className="lbl">Before you send · All sections</span></div>
-
-          {findings.length === 0 ? (
-            <div className="note note-ok">Everything needed is here.</div>
-          ) : (
-            <div>
-              {/* Blocking omissions and things worth a look are separated: an
-                  engineer should be stopped by a defect with no photograph, and
-                  not stopped by a missing caption. */}
-              {stop.map((f, i) => (
-                <div key={`s${i}`} className="find find-stop">
-                  <span className="find-kind">Needed</span>
-                  <span>{f.message}</span>
-                </div>
-              ))}
-              {note.map((f, i) => (
-                <div key={`n${i}`} className="find find-note">
-                  <span className="find-kind">Check</span>
-                  <span>{f.message}</span>
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="sec"><span className="lbl">Sign off</span></div>
-
-          <section className="panel">
-            <div className="panel-body">
-              <SignaturePad
-                name={signerName}
-                onNameChange={setSignerName}
-                onChange={setSignatureImage}
-              />
-            </div>
-          </section>
-
-          {submitError && (
-            <div className="note note-bad" style={{ marginTop: 16 }}>{submitError}</div>
-          )}
-
-          {/* One primary action, always reachable, with the save state beside
-              it so the two are never read separately. */}
-          <div className="actionbar">
-            <div className="actionbar-inner">
-              <span className="savestate">
-                <span className={SAVE[saveState].dot} />
-                <b>{SAVE[saveState].text}</b>
-                {stop.length > 0 && (
-                  <span style={{ color: "var(--alert)" }}>
-                    · {stop.length} outstanding
-                  </span>
-                )}
-              </span>
-              <button className="btn-primary" onClick={send} disabled={submitting || stop.length > 0}>
-                {submitting ? "Sending…" : "Send to office"}
-              </button>
-            </div>
+            ))}
           </div>
-        </>
-      )}
+        </div>
+
+        <div id="report-check" className="sec"><span className="lbl">Check &amp; send</span></div>
+        <dl className="eng-sum">
+          <div><dt>Progress</dt><dd>{counts.update}</dd></div>
+          <div><dt>Defects</dt><dd className={counts.defect ? 'late' : ''}>{counts.defect}<small>{counts.defect ? 'raise issues' : ''}</small></dd></div>
+          <div><dt>Variations</dt><dd className={counts.instruction ? 'soon' : ''}>{counts.instruction}<small>{counts.instruction ? 'raise VOs' : ''}</small></dd></div>
+          <div><dt>Access</dt><dd>{counts.access}<small>{counts.access ? 'raise issues' : ''}</small></dd></div>
+        </dl>
+
+        {findings.length === 0 ? (
+          <div className="note note-ok">Everything needed is here.</div>
+        ) : (
+          <div className="eng-finds">
+            {/* Blocking omissions and things worth a look are separated: an
+                engineer should be stopped by a defect with no photograph, and
+                not stopped by a missing caption. */}
+            {findingRows(stop, 'stop')}
+            {findingRows(note, 'note')}
+          </div>
+        )}
+
+        {report.observations.length > 0 && <div className="eng-does">
+          <span className="lbl">What sending does</span>
+          <div className="eng-list" style={{ marginTop: 8 }}>
+            {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{counts.defect + counts.access} issue{counts.defect + counts.access === 1 ? '' : 's'} raised · not yet reviewed</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Linked ones add a sighting to the existing issue. ' : ''}The office assigns them; you’ll see who and when on your home screen.</span></div></div>}
+            {counts.instruction > 0 && <div className="eng-row"><div className="main"><b>{counts.instruction} variation{counts.instruction === 1 ? '' : 's'} raised · need a quote</b><span>{report.observations.some(o => o.type === 'instruction' && o.workDone) ? 'Marked as already done: the office gets the client’s sign-off before it is invoiced. ' : ''}The office prices it and puts it to the client.</span></div></div>}
+            <div className="eng-row"><div className="main"><b>Received the moment it lands</b><span>{project?.projectManager ?? 'The project manager'} is emailed when the mailbox is live; the office can read it straight away.</span></div></div>
+          </div>
+        </div>}
+
+        <div className="sec"><span className="lbl">Sign</span></div>
+
+        <section className="panel">
+          <div className="panel-body">
+            <SignaturePad
+              name={signerName}
+              onNameChange={setSignerName}
+              onChange={setSignatureImage}
+            />
+          </div>
+        </section>
+
+        {submitError && (
+          <div className="note note-bad" style={{ marginTop: 16 }}>{submitError}</div>
+        )}
+
+        {/* One primary action, always reachable, with the save state beside
+            it so the two are never read separately. */}
+        <div className="actionbar">
+          <div className="actionbar-inner">
+            <span className="savestate">
+              <span className={SAVE[saveState].dot} />
+              <b>{SAVE[saveState].text}</b>
+              {stop.length > 0 && (
+                <span style={{ color: "var(--alert)" }}>
+                  · {stop.length} outstanding
+                </span>
+              )}
+            </span>
+            <button className="btn-primary" onClick={send} disabled={submitting || stop.length > 0}>
+              {submitting ? "Sending…" : "Send to office"}
+            </button>
+          </div>
+        </div>
+      </>}
     </main>
   );
 }

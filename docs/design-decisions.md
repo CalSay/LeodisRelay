@@ -114,6 +114,87 @@ approved Portfolio desk concept.
   settings (shown as planned), Team as an assignee list (issue owners are names
   or companies typed on site, not accounts).
 
+10 September 2026 — Variation register built into the Developments office;
+engineer views drafted for review.
+
+- A "Variation required" update now raises a variation record at submission,
+  beside the issues a report raises, numbered `011LME-VO-001` per project.
+  The record mirrors the Variation Register list on the Operations site field
+  for field (columns recorded in
+  [sharepoint-lists-created-2026-09-09.md](sharepoint-lists-created-2026-09-09.md));
+  expected cost, estimated margin and margin % are worked in
+  `apps/web/lib/variations.ts` exactly as the list's calculated columns.
+- Instruction is one state: pending, instructed, declined. The office prices
+  (labour, rate, parts, plant, uplift, quoted value), then records the client's
+  instruction (reference, who, when, value, signed copy link) or declines with
+  a reason; reopening needs a reason. An instructed value is fixed until the
+  variation is reopened. Every act is an event on the record.
+- `workDone` (work carried out on a say-so before any written instruction,
+  EXP-3) is a fact of its own, set by the office for now. It outranks
+  everything but overdue issues in Attention as "Done, not instructed", and
+  the sheet carries the sign-off warning from
+  [variation-signoff.md](variation-signoff.md). It is not yet a list column;
+  add one before synchronisation.
+- Desk: a Variations tab (chips for awaiting instruction, needs a quote, done
+  not instructed, instructed, declined; project, trade and reason filters;
+  totals in the footer), a Variations chip in the project register, a
+  variation sheet at `#/projects/011LME/variation/<id>`, the reader's
+  "Actions and decisions" linking each variation to its VO reference and
+  state, and a "Variations pending" figure on the office and project sheets.
+  Engineers may add a note to a variation; pricing, instructing, declining,
+  reopening and editing details are Manager and Admin acts, enforced on the
+  route.
+- Engineer views: three concepts for phone and tablet in
+  [engineer-views-concepts-2026-09-10.html](engineer-views-concepts-2026-09-10.html),
+  with a section 0 audit of what the office extracts from each kind of update
+  and the five optional observation fields any concept needs (affected trade
+  on a defect; reason, already done, who asked, rough size on a variation).
+  Recommendation in the document: build Concept 1 (one thing at a time), take
+  the "what came back" list and entry page from Concept 2 and the area chips
+  and "still open here" from Concept 3. Nothing engineer-side was changed in
+  the app in this pass.
+- Later the same day: Concept 1 (one thing at a time) approved for the
+  engineer views on phone and tablet. The olive band behind the current
+  project is dropped in favour of the sign-in and hub charcoal (`#282b2d` on
+  the light theme, `#202224` on dark, gold label), so the engineer screens sit
+  on the same palette as the hub and the office. The engineer view as built
+  still uses the olive; it changes when Concept 1 is built.
+
+10 September 2026 (evening) — Concept 1 built into the app.
+
+- Engineer home: the charcoal current-project band, one big tile to start or
+  continue today's update, tiles to flag a defect (still sent on its own) or
+  request a variation (opens the site update with a variation card started),
+  then "Came back from the office": the engineer's own reports, issues and
+  variations on the project with the office's tags (received, read, PM
+  notified; assigned, ready for verification; with the office, quoted,
+  instructed, done not instructed). Olive is gone from the engineer screens.
+- Report editor: cards, not sections. A new card shows the kind picker first
+  (progress, defect, variation, access) and then only that kind's questions.
+  Where offers the places already typed on this project (a new
+  `/api/locations` route over submitted reports, issues and variations; free
+  text always allowed, no catalogue). A defect asks the trade affected, what
+  needs doing and who, and offers open issues as pictures and words for a
+  repeat sighting. A variation asks what extra work and why, the reason (the
+  register's six), whether it has already been done on a say-so, who asked,
+  a rough size (½ day, 1 day, 2 days, more) and the cost of parts if known.
+  Check & send: counts by kind, stops and checks, "what sending does", sign.
+- Five optional fields on an observation carry this (`affectedTrade`,
+  `variationReason`, `workDone`, `askedBy`, `roughSize`, `partsEstimate`).
+  At submission the trade lands on the issue; the reason, already-done, who
+  asked, parts and a starting labour figure (4, 8 or 16 hours) land on the
+  variation, so the office's Price dialog opens prefilled.
+- `/variations/<id>` is the engineer's view of a variation after sending:
+  the office's answer in the band, the words and pictures as sent, the
+  history, and a note back (the only variation act an engineer has).
+- Defect cards are allowed in a site update again. The option had been
+  disabled on 8 September without a recorded reason; the approved concept
+  draws it, the store has always raised issues from it, and the individual
+  defect remains for a photo-and-note sent on its own.
+- Verified: typecheck; 26 web tests including a new check that card fields
+  reach the issue and the variation; phone (375px) and tablet (1024px)
+  layouts in the browser through a full send; no console errors.
+
 ## Implementation verification, 9 September 2026
 
 - Production build passed under Node 24, including the worker build.

@@ -5,6 +5,7 @@ import type { Issue, Report, ReportSummary, Observation } from './types';
 import { reviewReport } from './review';
 import { FIXTURE_PROJECTS } from './fixtures';
 import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } from './issueStore';
+import { raiseVariationsFromReport } from './variationStore';
 import { atomic, getRecord, putRecord, records, pageRecords, enqueue, database } from './storage';
 
 export type StoreOutcome<T> = { ok: true; value: T } | { ok: false; status: number; reason: string };
@@ -113,6 +114,8 @@ export async function submitReport(id: string, signature?: { dataUrl?: string; n
     putRecord('reports',submitted);
     putRecord('snapshots',submitted);
     raiseFromReport(submitted);
+    // Variations are raised beside issues, so the office sees both the moment the report lands.
+    raiseVariationsFromReport(submitted);
     enqueue('pdf:' + id,'pdf',{ reportId: id });
     return { ok: true, value: submitted };
   });

@@ -32,3 +32,9 @@ export function canIssueCommand(p: Principal, kind: string): boolean {
   if (kind === 'progress' || kind === 'submit_closure') return true;
   return canManage(p) && ['assign','verify','reopen','confirm','withdraw'].includes(kind);
 }
+/** Anyone on the project can add a note to a variation; pricing, instructing, declining and reopening are office acts. */
+export function canVariationCommand(p: Principal, kind: string): boolean {
+  if (!hasRole(p)) return false;
+  if (kind === 'note') return true;
+  return canManage(p) && ['details','price','instruct','decline','reopen'].includes(kind);
+}

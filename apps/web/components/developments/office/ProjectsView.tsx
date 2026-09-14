@@ -2,19 +2,20 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { PhotoImage } from '@/components/PhotoImage';
-import { getReport } from '@/lib/api';
+import { getReport, getVariation } from '@/lib/api';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { acknowledgementStatus, deliveryStatus, reviewStatus } from '@/lib/status';
-import type { Issue, Report, ReportSummary } from '@/lib/types';
+import type { Issue, Report, ReportSummary, Variation } from '@/lib/types';
+import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
-import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, Found, Meta, ReviewTag, SecH, Tag, WorkTag } from './bits';
+import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, Found, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
 import { CONFIRM_LABEL, WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, shortRef, toneTag, type ProjectStats } from './model';
 
 /* --------------------------------------------------------------- columns */
 export function ProjectsView({ ctx }: { ctx: Ctx }) {
   const s = ctx.route.a ? ctx.statOf(ctx.route.a) : undefined;
-  const kind = s && (ctx.route.b === 'report' || ctx.route.b === 'issue') ? ctx.route.b : null;
+  const kind = s && (ctx.route.b === 'report' || ctx.route.b === 'issue' || ctx.route.b === 'variation') ? ctx.route.b : null;
   const id = kind ? ctx.route.c : null;
   const depth = !s ? 1 : !kind ? 2 : 3;
   return <div className="cols" data-depth={depth}>
@@ -26,6 +27,7 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
         {!ctx.snap ? <div className="loading">Loading office records</div>
           : kind === 'report' && id ? <ReportReader ctx={ctx} id={id} />
           : kind === 'issue' && id ? <IssueSheet ctx={ctx} id={id} />
+          : kind === 'variation' && id ? <VariationSheet ctx={ctx} id={id} />
           : s ? <ProjectSheet ctx={ctx} s={s} /> : <OfficeSheet ctx={ctx} />}
       </div>
     </div>
@@ -40,18 +42,18 @@ function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
       return <a key={p.id} className={`item ${current?.code === p.projectNumber ? 'on' : ''}`} href={`#/projects/${p.projectNumber}`}>
         <div className="item-top"><div className="rowtitle">{p.projectName}</div><span className="arrow">›</span></div>
         <div className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager} · {p.division.replace('Leodis ', '')}{p.status === '5. Defects Liability' ? ' · Defects liability' : ''}</div>
-        {s ? <><Bar c={s.rollup} /><Meta c={s.rollup} /></> : <div className="cbar" style={{ marginTop: 8 }} />}
+        {s ? <><Bar c={s.rollup} /><Meta c={s.rollup} />{s.pendingVariations.length > 0 && <div className="meta"><span className={s.exposedVariations.length ? 'late' : ''}>{s.pendingVariations.length} variation{s.pendingVariations.length === 1 ? '' : 's'} awaiting instruction</span></div>}</> : <div className="cbar" style={{ marginTop: 8 }} />}
       </a>;
     })}
     <div className="colpad sticky-foot"><BarKey /><div className="rowsub">Tenders and completed jobs are not listed.</div></div>
   </div>;
 }
 
-type Filter = 'action' | 'reports' | 'issues' | 'drafts';
+type Filter = 'action' | 'reports' | 'issues' | 'variations' | 'drafts';
 function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s?: ProjectStats; kind: string | null; id: string | null }) {
   const [filter, setFilter] = useState<Filter>('action');
   useEffect(() => { setFilter('action'); }, [s?.code]);
-  if (!s) return <div className="col"><div className="col-head"><h4>Register</h4></div><div className="empty">Select a project to see its reports and issues.</div></div>;
+  if (!s) return <div className="col"><div className="col-head"><h4>Register</h4></div><div className="empty">Select a project to see its reports, issues and variations.</div></div>;
   const day = ctx.day;
   const reportRow = (r: ReportSummary) => <a key={r.id} className={`arow ${kind === 'report' && id === r.id ? 'on' : ''}`} href={`#/projects/${s.code}/report/${r.id}`}>
     <span className="ref">{shortRef(r.reference)}{r.revision > 1 ? ` r${r.revision}` : ''}</span>
@@ -63,20 +65,28 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s?: ProjectStats; kind: s
     <span className="nm">{i.description}<small>{i.location || 'no location'} · {i.owner || 'unassigned'}{i.targetDate ? ` · target ${i.targetDate}` : ''}</small></span>
     <WorkTag i={i} day={day} />
   </a>;
+  const variationRow = (v: Variation) => <a key={v.id} className={`arow ${kind === 'variation' && id === v.id ? 'on' : ''}`} href={`#/projects/${s.code}/variation/${v.id}`}>
+    <span className="ref">{shortRef(v.reference)}</span>
+    <span className="nm">{v.description}<small>{v.location || 'no location'} · {v.instruction === 'instructed' ? `${fmtMoney(variationValue(v))} · ${v.instructionReference}` : v.quotedValue !== undefined ? `quoted ${fmtMoney(v.quotedValue)}` : 'not priced'}{v.workDone && v.instruction === 'pending' ? ' · work done' : ''}</small></span>
+    <InstructionTag v={v} />
+  </a>;
   const draftRow = (r: ReportSummary) => <div key={r.id} className="arow"><span className="ref fine">DRAFT</span><span className="nm">{r.author}{r.authorTrade ? ` · ${r.authorTrade}` : ''} · visit {r.visitDate}<small>Saved {fmtWhen(r.lastSavedAt)} · {r.observationCount} section{r.observationCount === 1 ? '' : 's'} · {r.corrects ? 'correction in progress' : 'contents private until sent'}</small></span><Tag label="Draft" cls="tag-caution" /></div>;
   const attnReports = [...s.failed, ...s.pendingReview, ...s.returned];
   const attnIssues = [...new Map([...s.overdue, ...s.disputed, ...s.verify, ...s.unassigned].map(i => [i.id, i])).values()];
+  const attnVariations = [...new Map([...s.exposedVariations, ...s.unpricedVariations].map(v => [v.id, v])).values()];
   const closed = s.issues.filter(i => !isActive(i));
+  const settled = s.variations.filter(v => v.instruction !== 'pending');
   return <div className="col">
     <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h4>Register · {s.project.projectName}</h4><i>{s.reports.length} reports · {s.active.length} open</i></div>
     <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
-      {([['action', `Needs action · ${s.needsAction}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
+      {([['action', `Needs action · ${s.needsAction}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
     </div>
     {filter === 'action' && <>
       <div className="grp">Reports needing attention<i>{attnReports.length}</i></div>
       {attnReports.length ? attnReports.map(reportRow) : <div className="empty" style={{ padding: 14 }}>Nothing waits for review or correction.</div>}
       <div className="grp">Issues needing action<i>{attnIssues.length} of {s.active.length}</i></div>
       {attnIssues.length ? attnIssues.map(issueRow) : <div className="empty" style={{ padding: 14 }}>Nothing overdue, unassigned, disputed or waiting to be verified.</div>}
+      {attnVariations.length > 0 && <><div className="grp">Variations needing a quote or an instruction<i>{attnVariations.length} of {s.pendingVariations.length}</i></div>{attnVariations.map(variationRow)}</>}
       {s.drafts.length > 0 && <><div className="grp">Drafts on site<i>{s.drafts.length}</i></div>{s.drafts.map(draftRow)}</>}
     </>}
     {filter === 'reports' && (s.reports.length ? s.reports.map(reportRow) : <div className="empty">No reports received on this project.</div>)}
@@ -86,8 +96,14 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s?: ProjectStats; kind: s
       <div className="grp">Closed or withdrawn<i>{closed.length}</i></div>
       {closed.map(issueRow)}
     </>}
+    {filter === 'variations' && <>
+      <div className="grp">Awaiting instruction<i>{s.pendingVariations.length}</i></div>
+      {s.pendingVariations.length ? s.pendingVariations.map(variationRow) : <div className="empty" style={{ padding: 14 }}>Nothing awaiting instruction.</div>}
+      <div className="grp">Instructed or declined<i>{settled.length}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</i></div>
+      {settled.length ? settled.map(variationRow) : <div className="empty" style={{ padding: 14 }}>No variations instructed or declined yet.</div>}
+    </>}
     {filter === 'drafts' && (s.drafts.length ? s.drafts.map(draftRow) : <div className="empty">No drafts saved to the server on this project.</div>)}
-    <div className="colpad sticky-foot"><div className="rowsub">{filter === 'action' ? `Needs action hides ${s.reports.length - attnReports.length} reports and ${s.issues.length - attnIssues.length} issues that need nobody.` : ''} Reports and issues share one column because the office reads them as one stream. Work held only on an engineer’s device is not visible here.</div></div>
+    <div className="colpad sticky-foot"><div className="rowsub">{filter === 'action' ? `Needs action hides ${s.reports.length - attnReports.length} reports, ${s.issues.length - attnIssues.length} issues and ${s.variations.length - attnVariations.length} variations that need nobody.` : ''} Reports, issues and variations share one column because the office reads them as one stream. Work held only on an engineer’s device is not visible here.</div></div>
   </div>;
 }
 
@@ -108,11 +124,12 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const week = Date.now() - 7 * 86400000;
   const thisWeek = snap.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week);
   const overdue = ctx.stats.flatMap(s => s.overdue), verify = ctx.stats.flatMap(s => s.verify), notNotified = ctx.stats.flatMap(s => s.notNotified);
+  const pendingVariations = ctx.stats.flatMap(s => s.pendingVariations), exposed = ctx.stats.flatMap(s => s.exposedVariations);
   const latest = snap.reports.slice(0, 6);
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h4>Office position</h4><div className="rowsub">{ctx.projects.length} reportable projects · {snap.reports.length} reports received · {snap.issues.filter(isActive).length} open issues · {fmtDate(snap.loadedAt)}</div></div>
-      <div className="actions"><a className="btn btn-q btn-sm" href="#/inbox">Inbox</a><a className="btn btn-sm" href="#/issues">Issues</a></div></div>
-    <dl className="tb three"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{notNotified.length ? `${notNotified.length} PM notification${notNotified.length === 1 ? '' : 's'} pending` : 'project managers notified'}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Ready to verify</dt><dd className={`big ${verify.length ? 'soon' : ''}`}>{verify.length}<small>{verify.length ? 'closure submitted, needs a second pair of eyes' : 'nothing awaiting verification'}</small></dd></div></dl>
+    <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h4>Office position</h4><div className="rowsub">{ctx.projects.length} reportable projects · {snap.reports.length} reports received · {snap.issues.filter(isActive).length} open issues · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
+      <div className="actions"><a className="btn btn-q btn-sm" href="#/inbox">Inbox</a><a className="btn btn-q btn-sm" href="#/variations">Variations</a><a className="btn btn-sm" href="#/issues">Issues</a></div></div>
+    <dl className="tb"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{notNotified.length ? `${notNotified.length} PM notification${notNotified.length === 1 ? '' : 's'} pending` : 'project managers notified'}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Ready to verify</dt><dd className={`big ${verify.length ? 'soon' : ''}`}>{verify.length}<small>{verify.length ? 'closure submitted, needs a second pair of eyes' : 'nothing awaiting verification'}</small></dd></div><div><dt>Variations pending</dt><dd className={`big ${exposed.length ? 'late' : pendingVariations.length ? 'soon' : ''}`}>{pendingVariations.length}<small>{exposed.length ? `${exposed.length} done without an instruction` : pendingVariations.some(v => v.quotedValue === undefined) ? `${pendingVariations.filter(v => v.quotedValue === undefined).length} still to price` : 'all priced, awaiting the client'}</small></dd></div></dl>
     <SecH right={<a href="#/issues">All →</a>}>Needs attention</SecH>
     <AttentionList ctx={ctx} limit={6} />
     <SecH right={<a href="#/inbox">All {snap.reports.length} →</a>}>Latest reports</SecH>
@@ -126,9 +143,11 @@ function AttentionList({ ctx, s, limit }: { ctx: Ctx; s?: ProjectStats; limit: n
     ...st.failed.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Report could not be processed', sub: `${st.project.projectName} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${st.code}/report/${r.id}` })),
     ...st.pendingReview.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Awaiting review', sub: `${st.project.projectName} · ${r.author}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${st.code}/report/${r.id}` })),
     ...st.overdue.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · ${i.owner || 'unassigned'} · target ${i.targetDate}`, tag: { label: `${daysLate(i.targetDate, ctx.day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
+    ...st.exposedVariations.map(v => ({ key: v.id, ref: shortRef(v.reference), b: v.description, sub: `${st.project.projectName} · work done, no written instruction`, tag: { label: 'Not instructed', cls: 'tag-alert' }, go: `#/projects/${st.code}/variation/${v.id}` })),
     ...st.disputed.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · disputed at review`, tag: { label: 'Triage', cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
     ...st.verify.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · closure by ${i.closureSubmittedBy ?? 'unknown'}`, tag: { label: 'Verify', cls: 'tag-caution' }, go: `#/projects/${st.code}/issue/${i.id}` })),
     ...st.unassigned.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · nobody owns it · raised ${fmtDay(i.raisedAt)}`, tag: { label: 'Unassigned', cls: 'tag-caution' }, go: `#/projects/${st.code}/issue/${i.id}` })),
+    ...st.unpricedVariations.filter(v => !v.workDone).map(v => ({ key: v.id, ref: shortRef(v.reference), b: v.description, sub: `${st.project.projectName} · variation, no quote yet · raised ${fmtDay(v.raisedAt)}`, tag: { label: 'Needs a quote', cls: 'tag-caution' }, go: `#/projects/${st.code}/variation/${v.id}` })),
   ]);
   const shown = [...new Map(items.map(i => [i.key, i])).values()].slice(0, limit);
   return <div className="rmenu">{shown.length ? shown.map(i => <a key={i.key} href={i.go}><span className="ref">{i.ref}</span><div className="rt"><b>{i.b}</b><span>{i.sub}</span></div><Tag {...i.tag} /></a>) : <div className="empty" style={{ padding: 14 }}>Nothing needs attention.</div>}</div>;
@@ -150,7 +169,7 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h4>{p.projectName}</h4><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={`/projects/${p.id}`}>Project page</Link><a className="btn btn-sm" href={`#/inbox`}>Inbox</a></div></div>
-    <dl className="tb three"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{s.reports.length ? `${s.reports.length} on file` : 'none yet'}{s.notNotified.length ? ` · ${s.notNotified.length} PM notification${s.notNotified.length === 1 ? '' : 's'} pending` : ''}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Ready to verify</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `closure submitted ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing awaiting verification'}</small></dd></div></dl>
+    <dl className="tb"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{s.reports.length ? `${s.reports.length} on file` : 'none yet'}{s.notNotified.length ? ` · ${s.notNotified.length} PM notification${s.notNotified.length === 1 ? '' : 's'} pending` : ''}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Ready to verify</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `closure submitted ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing awaiting verification'}</small></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></dd></div></dl>
     <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
     <dl className="tb" style={{ marginTop: 12 }}><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
     <SecH>Needs attention</SecH>
@@ -178,6 +197,7 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
   const review = reviewStatus(report), delivery = deliveryStatus(report), ack = acknowledgementStatus(report);
   const superseded = ctx.snap?.reports.find(r => r.corrects === report.id);
   const raised = ctx.snap?.issues.filter(i => i.raisedByReport === report.id) ?? [];
+  const variationOf = (observationId: string) => ctx.snap?.variations.find(v => v.raisedByObservation === observationId);
   const decisions = report.observations.filter(o => o.type === 'instruction' || o.actionNeeded.trim());
   const canReview = report.review === 'pending' && report.authorId !== ctx.me.id;
   return <div className="sheet">
@@ -193,17 +213,19 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
     {report.delivery === 'failed' && <div className="note bad"><span><b>Could not be processed.</b> {report.deliveryError ?? 'The worker gave up on this report.'} The report is on file; the PDF and the notification are what failed.</span></div>}
     {(report.delivery === 'outbox' || report.issued?.transport === 'outbox') && <div className="note"><span>{project?.projectManager ?? 'The project manager'} has not been notified by email yet: the pilot holds notification emails in a local outbox. The report is on file and readable here.</span></div>}
     {decisions.length > 0 && <><SecH>Actions and decisions</SecH>
-      <div className="rmenu">{decisions.map(o => <div key={o.id}><div className="rt"><b>{o.type === 'instruction' ? 'Decision needed' : `Action for ${o.owner.trim() || 'nobody yet'}`} · {o.location || 'no location'}</b><span>{o.type === 'instruction' ? o.whatHappened : o.actionNeeded}{o.type !== 'instruction' && !o.owner.trim() && ' · no owner named'}</span></div>{o.type === 'instruction' ? <span className="kind tone-variation">Variation</span> : raisedRef(o.id, raised, code)}</div>)}</div></>}
+      <div className="rmenu">{decisions.map(o => { const vo = o.type === 'instruction' ? variationOf(o.id) : undefined; return <div key={o.id}><div className="rt"><b>{o.type === 'instruction' ? 'Variation to instruct' : `Action for ${o.owner.trim() || 'nobody yet'}`} · {o.location || 'no location'}</b><span>{o.type === 'instruction' ? o.whatHappened : o.actionNeeded}{o.type !== 'instruction' && !o.owner.trim() && ' · no owner named'}</span></div>{o.type === 'instruction' ? (vo ? <><a className="ref" href={`#/projects/${code}/variation/${vo.id}`}>{shortRef(vo.reference)}</a><InstructionTag v={vo} /></> : <span className="kind tone-variation">Variation</span>) : raisedRef(o.id, raised, code)}</div>; })}</div></>}
     <SecH right={<span className="r">{report.observations.length} update{report.observations.length === 1 ? '' : 's'}</span>}>Found on this visit</SecH>
     {report.observations.length ? report.observations.map(o => {
       const type = OBSERVATION_TYPES.find(t => t.value === o.type);
       const linked = o.linkedIssueId ? ctx.snap?.issues.find(i => i.id === o.linkedIssueId) : undefined;
       const mine = raised.find(i => i.raisedByObservation === o.id);
+      const vo = o.type === 'instruction' ? variationOf(o.id) : undefined;
       return <div key={o.id} className="hist"><span className="d"><span className={`kind tone-${type?.tone ?? 'neutral'}`}>{type?.label.split(' ')[0] ?? o.type}</span></span>
         <div className="b"><p><b>{o.location || 'Location not recorded'}</b> — {o.whatHappened}</p>
-          <div className="rowsub">{o.actionNeeded && <>Action: {o.actionNeeded} · </>}{o.owner && <>Owner: {o.owner} · </>}{o.photos.length} photograph{o.photos.length === 1 ? '' : 's'}
+          <div className="rowsub">{o.actionNeeded && <>Action: {o.actionNeeded} · </>}{o.owner && <>Owner: {o.owner} · </>}{o.affectedTrade && <>Trade: {o.affectedTrade} · </>}{o.variationReason && <>{o.variationReason} · </>}{o.workDone && <><span className="late">already carried out</span> · </>}{o.askedBy && <>asked for by {o.askedBy} · </>}{o.photos.length} photograph{o.photos.length === 1 ? '' : 's'}
             {linked && <> · further sighting of <a className="ref" href={`#/projects/${code}/issue/${linked.id}`}>{shortRef(linked.reference)}</a></>}
-            {mine && <> · raised <a className="ref" href={`#/projects/${code}/issue/${mine.id}`}>{shortRef(mine.reference)}</a> · <ConfirmTag i={mine} /></>}</div>
+            {mine && <> · raised <a className="ref" href={`#/projects/${code}/issue/${mine.id}`}>{shortRef(mine.reference)}</a> · <ConfirmTag i={mine} /></>}
+            {vo && <> · raised <a className="ref" href={`#/projects/${code}/variation/${vo.id}`}>{shortRef(vo.reference)}</a> · <InstructionTag v={vo} /></>}</div>
           {o.photos.length > 0 && <div className="photos">{o.photos.map(ph => <figure key={ph.id}><PhotoImage src={ph.dataUrl} alt={ph.caption || 'Site photograph'} /><figcaption>{ph.caption}</figcaption></figure>)}</div>}
         </div></div>;
     }) : <div className="empty">No updates were recorded on this visit.</div>}
@@ -233,6 +255,7 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
   const active = isActive(issue); const overdue = isOverdue(issue, ctx.day);
   const closureMine = issue.closureSubmittedById ? issue.closureSubmittedById === ctx.me.id : issue.closureSubmittedBy === ctx.me.name;
   const d = (kind: string) => ctx.setDialog(dialogFor(kind, issue, ctx));
+  const linkedVariations = ctx.snap?.variations.filter(v => v.linkedIssueId === issue.id) ?? [];
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h4>{issue.description}</h4><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div></div>
       <div className="actions">
@@ -248,8 +271,51 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
     {issue.actionNeeded && <div className="note info"><span><b>Action needed.</b> {issue.actionNeeded}</span></div>}
     {issue.confirmation === 'disputed' && <div className="note bad"><span><b>Disputed.</b> The report that raised this was sent back. Any work already done stands; the observation needs a decision.</span></div>}
     {issue.work === 'awaiting_verification' && <div className={`note ${closureMine ? 'warn' : 'good'}`}><span><b>Closure submitted by {issue.closureSubmittedBy ?? 'unknown'}</b> · waiting {daysSince(issue.events.at(-1)?.at)} days. {closureMine ? 'You submitted this closure, so someone else has to verify it.' : 'Verify it if the work is done, or send it back as not finished.'}</span></div>}
+    {linkedVariations.length > 0 && <div className="note info"><span><b>Variation{linkedVariations.length === 1 ? '' : 's'} on this issue:</b> {linkedVariations.map((v, i) => <span key={v.id}>{i > 0 && ', '}<a className="ref" href={`#/projects/${code}/variation/${v.id}`}>{shortRef(v.reference)}</a> {INSTRUCTION_LABEL[v.instruction].toLowerCase()}</span>)}.</span></div>}
     <dl className="tb two" style={{ marginTop: 12 }}><div><dt>Source</dt><dd>{source ? <>Raised by <a className="ref" href={`#/projects/${code}/report/${source.id}`}>{shortRef(source.reference)}</a> · {fmtDay(issue.raisedAt)}</> : issue.source === 'individual' ? <>Flagged on site by {issue.reportedBy ?? 'unknown'} · {fmtDay(issue.raisedAt)}</> : <>Raised {fmtDay(issue.raisedAt)}</>}<small>{issue.reportedBy ?? issue.events[0]?.actor ?? 'Reporter not recorded'}{issue.reporterTrade ? ` · ${issue.reporterTrade}` : ''}</small></dd></div><div><dt>Progress notes</dt><dd>Add updates and photographs on the issue page.<small>Engineers can submit the work as complete there; the office verifies here.</small></dd></div></dl>
     <SecH right={<span className="r">{issue.events.length}</span>}>History</SecH>
     {issue.events.slice().reverse().map((e, i) => <div key={i} className="hist"><span className="d">{fmtDay(e.at)}<div className="rowsub">{EVENT_LABEL[e.kind] ?? e.kind}</div></span><div className="b"><p>{e.note || <span className="fine">No note</span>}</p><div className="rowsub">{e.actor}</div>{e.photos.length > 0 && <div className="photos">{e.photos.map((ph, pi) => <figure key={ph.id}><PhotoImage src={ph.dataUrl} alt={ph.caption || `Photograph ${pi + 1}`} /><figcaption>{ph.caption}</figcaption></figure>)}</div>}</div></div>)}
+  </div>;
+}
+
+/* ------------------------------------------------------------- variation */
+const VARIATION_EVENT: Record<string, string> = { raised: 'Raised', details: 'Details', priced: 'Priced', instructed: 'Instructed', declined: 'Declined', reopened: 'Reopened', note: 'Note' };
+export function VariationSheet({ ctx, id }: { ctx: Ctx; id: string }) {
+  const [v, setV] = useState<Variation | null>(null);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    let stopped = false; setError('');
+    getVariation(id).then(x => { if (!stopped) setV(x); }).catch(e => { if (!stopped) setError(e instanceof Error ? e.message : 'That variation could not be found.'); });
+    return () => { stopped = true; };
+  }, [id, ctx.snap?.loadedAt]);
+  if (error) return <div className="sheet"><div className="empty">{error}</div></div>;
+  if (!v) return <div className="sheet"><div className="loading" style={{ minHeight: 160 }}>Loading variation</div></div>;
+  const project = ctx.projects.find(p => p.id === v.projectId); const code = project?.projectNumber ?? '';
+  const source = v.raisedByReport ? ctx.snap?.reports.find(r => r.id === v.raisedByReport) : undefined;
+  const linked = v.linkedIssueId ? ctx.snap?.issues.find(i => i.id === v.linkedIssueId) : undefined;
+  const cost = expectedCost(v), value = variationValue(v), margin = estimatedMargin(v), pct = marginPct(v);
+  const evidence = v.events.find(e => e.kind === 'raised')?.photos ?? [];
+  const d = (kind: 'variation-price' | 'variation-instruct' | 'variation-decline' | 'variation-reopen' | 'variation-details') => ctx.setDialog({ kind, variation: v });
+  return <div className="sheet">
+    <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Variation</div><h4>{v.description}</h4><div className="rowsub"><span className="ref">{v.reference}</span><span className="sep">/</span>{v.location || 'Location not recorded'}<span className="sep">/</span>{v.trade ?? 'trade not set'}<span className="sep">/</span>{v.reason ?? 'reason not set'}</div></div>
+      <div className="actions">
+        <BtnQ className="btn-sm" onClick={() => d('variation-details')}>Edit details</BtnQ>
+        {v.instruction === 'pending' && (v.quotedValue === undefined ? <Btn className="btn-sm" onClick={() => d('variation-price')}>Price</Btn> : <BtnQ className="btn-sm" onClick={() => d('variation-price')}>Reprice</BtnQ>)}
+        {v.instruction === 'pending' && (v.quotedValue === undefined ? <BtnQ className="btn-sm" onClick={() => d('variation-instruct')}>Instruct</BtnQ> : <Btn className="btn-sm" onClick={() => d('variation-instruct')}>Instruct</Btn>)}
+        {v.instruction === 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-decline')}>Decline</BtnQ>}
+        {v.instruction !== 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-reopen')}>Reopen</BtnQ>}
+      </div></div>
+    <dl className="tb"><div><dt>Instruction</dt><dd><InstructionTag v={v} /><small>{v.instruction === 'instructed' ? `${v.instructionReference} · ${v.instructedBy} · ${v.instructedOn}` : v.instruction === 'declined' ? 'the client will not instruct it' : v.quotedValue === undefined ? 'price it before it can be put to the client' : 'quoted, waiting on the client'}</small></dd></div><div><dt>Quoted</dt><dd><Money n={v.quotedValue} /><small>{cost !== undefined ? `expected cost ${fmtMoney(cost)}` : 'not costed'}</small></dd></div><div><dt>Instructed value</dt><dd><Money n={v.instruction === 'instructed' ? value : undefined} /><small>{v.instruction === 'instructed' ? (v.instructedValue === undefined ? 'on rates; quote carried' : v.instructedValue === v.quotedValue ? 'as quoted' : `quoted ${fmtMoney(v.quotedValue)}`) : 'fixed once instructed'}</small></dd></div><div><dt>Estimated margin</dt><dd className={margin !== undefined && margin < 0 ? 'late' : ''}><Money n={v.instruction === 'declined' ? undefined : margin} /><small>{pct !== undefined && v.instruction !== 'declined' ? `${fmtPct(pct)} of ${v.instruction === 'instructed' ? 'the instructed value' : 'the quote'}` : 'needs a cost and a value'}</small></dd></div></dl>
+    {v.workDone && v.instruction === 'pending' && <div className="note bad"><span><b>Work already carried out with nothing in writing.</b> Get the client’s sign-off recorded as a chargeable variation before it is invoiced; a signature that only confirms attendance is not an instruction. See the variation sign-off note in the docs.</span></div>}
+    {v.instruction === 'pending' && v.quotedValue === undefined && !v.workDone && <div className="note warn"><span><b>Not yet priced.</b> Labour, parts, plant and an uplift give the expected cost and a suggested quote; the quoted value is the office’s call.</span></div>}
+    {v.instruction === 'instructed' && v.signedInstruction && <div className="note good"><span><b>Signed copy on file.</b></span><a className="btn btn-q btn-sm" href={v.signedInstruction} target="_blank" rel="noreferrer">Open signed copy ↗</a></div>}
+    {v.instruction === 'instructed' && !v.signedInstruction && <div className="note warn"><span><b>No signed copy linked.</b> The instruction is recorded as {v.instructionReference}; add the link to the signed document when it is filed.</span></div>}
+    <dl className="tb two" style={{ marginTop: 12 }}>
+      <div><dt>Source</dt><dd>{source ? <>Raised by <a className="ref" href={`#/projects/${code}/report/${source.id}`}>{shortRef(source.reference)}</a> · {fmtDay(v.raisedAt)}</> : <>Raised {fmtDay(v.raisedAt)}</>}<small>{v.raisedBy}{v.raiserTrade ? ` · ${v.raiserTrade}` : ''}{v.askedBy && <> · asked for on site by {v.askedBy}</>}{linked && <> · on issue <a className="ref" href={`#/projects/${code}/issue/${linked.id}`}>{shortRef(linked.reference)}</a></>}</small></dd></div>
+      <div><dt>Expected cost</dt><dd>{cost === undefined ? <span className="fine">Not costed</span> : <span className="money">{fmtMoney(cost)}</span>}<small>{cost === undefined ? 'labour × rate + parts + plant' : `${fmtHours(v.labourHours)} × ${fmtMoney(v.labourRate)} labour · ${fmtMoney(v.partsCost)} parts · ${fmtMoney(v.plantSubcontract)} plant${v.upliftPct !== undefined ? ` · ${v.upliftPct}% uplift` : ''}`}</small></dd></div>
+    </dl>
+    {evidence.length > 0 && <><SecH right={<span className="r">{evidence.length}</span>}>Evidence from the visit</SecH><div className="photos">{evidence.map((ph, pi) => <figure key={ph.id}><PhotoImage src={ph.dataUrl} alt={ph.caption || `Photograph ${pi + 1}`} /><figcaption>{ph.caption}</figcaption></figure>)}</div></>}
+    <SecH right={<span className="r">{v.events.length}</span>}>History</SecH>
+    {v.events.slice().reverse().map((e, i) => <div key={i} className="hist"><span className="d">{fmtDay(e.at)}<div className="rowsub">{VARIATION_EVENT[e.kind] ?? e.kind}</div></span><div className="b"><p>{e.note || <span className="fine">No note</span>}</p><div className="rowsub">{e.actor}</div>{e.photos.length > 0 && e.kind !== 'raised' && <div className="photos">{e.photos.map((ph, pi) => <figure key={ph.id}><PhotoImage src={ph.dataUrl} alt={ph.caption || `Photograph ${pi + 1}`} /><figcaption>{ph.caption}</figcaption></figure>)}</div>}</div></div>)}
   </div>;
 }

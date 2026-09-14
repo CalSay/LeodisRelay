@@ -1,5 +1,11 @@
 # Engineer site companion — phone and tablet
 
+**10 September 2026:** rebuilt as Concept 1 from
+[engineer-views-concepts-2026-09-10.html](engineer-views-concepts-2026-09-10.html):
+kind first, then only that kind's questions; home leads with what came back
+from the office. The sections below describe the routes and rules, which are
+unchanged; "section" reads as "card" on screen.
+
 The Option 3 design is now connected to the existing application. Engineers land
 on it at `/`; authenticated users can also open `/engineer`. Admin and Manager
 navigation includes **Engineer view** for testing. This changes presentation,
@@ -73,11 +79,20 @@ keeps the photographs and links its defects to the issues the original raised,
 so sending it adds a sighting to each issue instead of raising them again. The
 sent revision stays on file and the office sees which revision supersedes which.
 
+## Variations (10 September 2026)
+
+A variation card raises a variation on the office's register the moment the
+report is received, with the card's location, wording and photographs, and
+what the engineer said about it: the reason, whether the work has already been
+done on a say-so, who asked, a rough size and the cost of parts if known. All
+of those are optional. The office prices and instructs it; the engineer sees
+the office's answer on the home screen and at `/variations/<id>`, and can add
+a note there. "Request a variation" on home opens the site update with a
+variation card started, so a variation is always part of a signed report.
+
 ## Visible but disabled
 
-- **Trade affected inside report sections:** the report observation model does
-  not yet store an affected trade. This selector stays disabled; individual
-  defects support affected trade now.
+- **Trade affected** is now asked on a defect card and lands on the issue.
 - **Assigned to me:** issue owners are free-text names/companies, not user IDs.
   Do not infer account assignments from names.
 - **Team & contacts** and **Project documents:** no complete destinations yet.

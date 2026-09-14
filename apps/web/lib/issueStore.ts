@@ -115,6 +115,8 @@ function raiseIssues(report: Report): Issue[] {
       reportedBy: report.author,
       ...(report.authorId ? {reportedById:report.authorId}:{}),
       ...(report.authorTrade ? {reporterTrade:report.authorTrade}:{}),
+      // The trade whose work it is, named on site; falls back to nothing, not to the reporter's trade.
+      ...(observation.affectedTrade ? {affectedTrade:observation.affectedTrade}:{}),
       location: observation.location,
       description: observation.whatHappened,
       // The required action is the clearest instruction on an issue and was

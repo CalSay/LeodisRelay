@@ -21,7 +21,23 @@ export interface Observation {
    * rather than creating a second record of the same thing.
    */
   linkedIssueId?: string;
+  /**
+   * What the office needs beyond the words, asked only where the kind calls
+   * for it and never required. A defect names the trade whose work it is; a
+   * variation says why it is extra, whether it has already been done on a
+   * say-so, who asked, and the engineer's rough size, so the office can price
+   * it without a phone call.
+   */
+  affectedTrade?: 'Electrical' | 'HVAC' | 'P&H' | 'Other / non-Leodis';
+  variationReason?: VariationReason;
+  workDone?: boolean;
+  askedBy?: string;
+  roughSize?: RoughSize;
+  /** The engineer's estimate of parts, in pounds, if known. */
+  partsEstimate?: number;
 }
+/** Half a day, a day, two days, or more: the size an engineer can say without pricing. */
+export type RoughSize = 'half-day' | 'day' | 'two-days' | 'more';
 
 export type ReportState = "draft" | "submitted";
 
@@ -183,4 +199,68 @@ export interface Issue {
   raisedByObservation?: string;
   raisedAt: string;
   events: IssueEvent[];
+}
+
+/**
+ * A variation: work outside the original scope, needing instruction.
+ *
+ * Raised from a "Variation required" update at submission, in the same
+ * breath as issues are raised from defects, and then priced and instructed by
+ * the office. Instruction is a single state — pending, instructed, declined —
+ * because that is the only question the register answers: has the client
+ * told us to do it? The money is kept as the figures the office typed; the
+ * derived ones (expected cost, margin) are worked in `variations.ts` so the
+ * app and the SharePoint list agree on the arithmetic.
+ *
+ * `workDone` records EXP-3: work already carried out on a verbal say-so,
+ * before any written instruction. It is the commercial risk the register
+ * exists to surface, so it is a fact of its own and never inferred.
+ */
+export type VariationTrade = 'Electrical' | 'HVAC' | 'P&H' | 'Multi';
+export type VariationReason = 'Client instruction' | 'Design change' | 'Site condition' | 'Damage by others' | 'Omission' | 'Spec change';
+export type Instruction = 'pending' | 'instructed' | 'declined';
+export type VariationEventKind = 'raised' | 'details' | 'priced' | 'instructed' | 'declined' | 'reopened' | 'note';
+export interface VariationEvent {
+  at: string;
+  actor: string;
+  actorId?: string;
+  kind: VariationEventKind;
+  note: string;
+  photos: Photo[];
+}
+export interface Variation {
+  id: string;
+  /** `011LME-VO-001`: the project, then VO, then a sequence per project. */
+  reference: string;
+  projectId: string;
+  description: string;
+  location: string;
+  trade?: VariationTrade;
+  reason?: VariationReason;
+  workDone: boolean;
+  instruction: Instruction;
+  /** The client's reference for the instruction (a CVI number, an email subject), who gave it and when. */
+  instructionReference?: string;
+  instructedBy?: string;
+  instructedOn?: string;
+  /** Where the signed copy lives, once there is one. A link, not an upload. */
+  signedInstruction?: string;
+  labourHours?: number;
+  labourRate?: number;
+  partsCost?: number;
+  plantSubcontract?: number;
+  upliftPct?: number;
+  quotedValue?: number;
+  instructedValue?: number;
+  source: 'report' | 'office';
+  raisedBy: string;
+  raisedById?: string;
+  raiserTrade?: 'Electrical' | 'HVAC' | 'P&H';
+  raisedAt: string;
+  raisedByReport?: string;
+  raisedByObservation?: string;
+  linkedIssueId?: string;
+  /** Who asked for the work on site, as the engineer recorded it. Not an instruction. */
+  askedBy?: string;
+  events: VariationEvent[];
 }

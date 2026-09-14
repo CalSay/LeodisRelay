@@ -30,6 +30,12 @@ export function reviewReport(report: Report): ReviewFinding[] {
         blocking: true,
       });
     }
+    if (observation.type === "instruction" && observation.photos.length === 0) {
+      findings.push({ observationId: observation.id, field: "photos", message: `${label}: a variation with no photograph is harder to price`, blocking: false });
+    }
+    if (observation.type === "instruction" && observation.workDone && !observation.askedBy?.trim()) {
+      findings.push({ observationId: observation.id, field: "askedBy", message: `${label}: work already done, but nobody named who asked for it`, blocking: false });
+    }
     if (observation.actionNeeded.trim().length > 0 && observation.owner.trim().length === 0) {
       findings.push({
         observationId: observation.id,

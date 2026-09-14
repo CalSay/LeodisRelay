@@ -94,3 +94,43 @@ Indexes: RELAY Issue ID, Project, Work Status, Target Date.
 - RELAY should fill trade and identity fields automatically, default affected trade from the engineer, and keep the engineer submission form minimal. Not specified is a storage fallback, not an extra mandatory engineer selection.
 - Next: implement project/client reads, issue synchronization and report registration against these IDs; agree narrowly scoped write access; test retries, duplicate prevention, conflict handling, corrected reports, report filing and access controls on a designated test project before enabling production writes.
 - Photos/PDFs belong in the existing project document folders. A URL column alone does not upload a file. Email delivery still requires a separately configured sender and authorization.
+
+## Variation Register (added 10 September 2026)
+
+Created on the Operations site on 10 September 2026. List ID `78ba0d7f-64df-4284-b95f-8036cea718fc`. [Open](https://leodisdevelopments.sharepoint.com/sites/Operations/Lists/Variation%20Register/AllItems.aspx). Two DEMO rows are in it for layout checking. Columns were read back from the list's field definitions through the signed-in browser on 10 September; the app's `Variation` record in `apps/web/lib/types.ts` mirrors them field for field, and `apps/web/lib/variations.ts` works the three calculated columns the same way.
+
+| Display name | Internal name | Type / configuration | RELAY field |
+|---|---|---|---|
+| Reference | `Title` | Required text, `011LME-VO-001 \| short description` | `reference` + `description` |
+| Project | `Project` | Single project lookup | `projectId` (resolve to the Project Tracker item) |
+| Linked Issue | `LinkedIssue` | Single lookup to Issue Tracker | `linkedIssueId` |
+| Source Report ID | `SourceReportId` | Text | `raisedByReport` |
+| RELAY Link | `RelayLink` | Hyperlink | `/office#/projects/<code>/variation/<id>` |
+| Evidence Link | `EvidenceLink` | Hyperlink | Report photographs; filed with the report PDF |
+| Raised By | `RaisedBy` | Person | `raisedBy` / `raisedById` |
+| Raised At | `RaisedAt` | Date and time | `raisedAt` |
+| Description | `Description` | Plain multiline text, 6 lines | `description` (engineer's wording; office edits recorded as events) |
+| Trade | `Trade` | Choice: Electrical, HVAC, P&H, Multi | `trade` (defaults to the reporting engineer's trade) |
+| Reason | `Reason` | Choice: Client instruction, Design change, Site condition, Damage by others, Omission, Spec change | `reason` (set by the office) |
+| Location | `Location` | Text | `location` |
+| Instruction | `Instruction` | Choice: Instructed, Pending, Declined; default Pending | `instruction` (`instructed` / `pending` / `declined`) |
+| Instruction Reference | `InstructionReference` | Text | `instructionReference` |
+| Instructed By | `InstructedBy` | Text | `instructedBy` |
+| Instructed On | `InstructedOn` | Date only | `instructedOn` |
+| Signed Instruction | `SignedInstruction` | Hyperlink | `signedInstruction` |
+| Expected Labour (hours) | `ExpectedLabour` | Number, 1 decimal | `labourHours` |
+| Labour Rate | `LabourRate` | Currency | `labourRate` |
+| Expected Parts Cost | `ExpectedPartsCost` | Currency | `partsCost` |
+| Plant and Subcontract | `PlantSubcontract` | Currency | `plantSubcontract` |
+| Uplift % | `Uplift` | Number, whole | `upliftPct` |
+| Quoted Value | `QuotedValue` | Currency | `quotedValue` |
+| Instructed Value | `InstructedValue` | Currency | `instructedValue` |
+| Expected Cost | `ExpectedCost` | Calculated: labour × rate + parts + plant | `expectedCost()` |
+| Estimated Margin | `EstimatedMargin` | Calculated: (instructed value if instructed, else quoted) − expected cost | `estimatedMargin()` |
+| Margin % | `MarginPct` | Calculated: margin ÷ value, 0 when value ≤ 0 | `marginPct()` (undefined rather than 0 when there is no value) |
+
+Views: All Variations (default, newest raised first), Pending, Instructed (grouped by project, instructed value and margin totalled), Declined.
+
+Not on the list, held in RELAY only: `workDone` (work already carried out on a verbal say-so, before any written instruction; EXP-3), the event history, and the reporting engineer's own trade. `workDone` is the fact the office needs most and should be added as a Yes/No column ("Work Undertaken Before Instruction") before synchronisation is enabled; until then it is flagged in the RELAY register and the Attention list only.
+
+Integration notes: the app writes the engineer's wording to Description and never overwrites a value typed directly in SharePoint without recording an event; Reference is `<ref> | <first line of the description>` to match the demo rows; people resolve to SharePoint user IDs as for the other two lists.

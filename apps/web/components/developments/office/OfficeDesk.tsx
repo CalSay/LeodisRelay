@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { Toasts, parseHash, useHashRoute } from '@/components/workspace/hooks';
-import { allIssues, officeAll, officeTeam, type OfficeTeam } from '@/lib/api';
+import { allIssues, allVariations, officeAll, officeTeam, type OfficeTeam } from '@/lib/api';
 import { canAccessProject, isAdmin } from '@/lib/auth/access';
 import { FIXTURE_PROJECTS } from '@/lib/fixtures';
 import type { Issue } from '@/lib/types';
@@ -14,6 +14,7 @@ import { attention, isActive, isOverdue, projectStats, shortRef, today, type Sna
 import { ProjectsView } from './ProjectsView';
 import { InboxView } from './InboxView';
 import { IssuesView } from './IssuesView';
+import { VariationsView } from './VariationsView';
 import { AdminView, TeamView } from './TeamAdmin';
 import { Btn, BtnQ } from './bits';
 
@@ -22,11 +23,11 @@ const REPORTABLE = ['4. Active', '5. Defects Liability'];
 /**
  * The Developments office: one workspace for Managers and Admins.
  *
- * Projects › Register › Details is the spine; Inbox and Issues are the flat
- * registers across projects; Team is the roster as the office can know it;
- * Admin is a tab, Admin role only. Every record shown here comes from the
- * report and issue endpoints the engineer side writes to, and every action
- * here is a command the server already enforces.
+ * Projects › Register › Details is the spine; Inbox, Issues and Variations
+ * are the flat registers across projects; Team is the roster as the office
+ * can know it; Admin is a tab, Admin role only. Every record shown here comes
+ * from the report, issue and variation endpoints the engineer side writes to,
+ * and every action here is a command the server already enforces.
  */
 export function OfficeDesk({ fallback }: { fallback: string }) {
   const principal = usePrincipal();
@@ -46,9 +47,9 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const refresh = useCallback(async () => {
     const g = ++generation.current;
     try {
-      const [{ reports, drafts }, issues] = await Promise.all([officeAll(), allIssues()]);
+      const [{ reports, drafts }, issues, variations] = await Promise.all([officeAll(), allIssues(), allVariations()]);
       if (g !== generation.current) return;
-      setSnap({ reports, drafts, issues, loadedAt: new Date().toISOString() });
+      setSnap({ reports, drafts, issues, variations, loadedAt: new Date().toISOString() });
       setError('');
     } catch (e) {
       if (g === generation.current) setError(e instanceof Error ? e.message : 'Unable to refresh office records.');
@@ -84,19 +85,30 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
 
   const openIssues = snap ? snap.issues.filter(isActive) : [];
   const overdue = openIssues.filter(i => isOverdue(i, day)).length;
+  const pendingVariations = snap ? snap.variations.filter(v => v.instruction === 'pending').length : null;
   const tabs: [string, string, number | null, boolean][] = [
     ['projects', 'Projects', projects.length, false],
     ['inbox', 'Inbox', snap ? snap.reports.length : null, stats.some(s => s.failed.length > 0 || s.pendingReview.length > 0)],
     ['issues', 'Issues', snap ? openIssues.length : null, overdue > 0],
+    ['variations', 'Variations', pendingVariations, stats.some(s => s.exposedVariations.length > 0)],
     ['team', 'Team', team ? team.members.length : null, false],
   ];
   const results = q.trim().length >= 2 ? search(q, ctx) : [];
+
+  const actionFor = (i: typeof attn[number]) => {
+    const a = i.action; if (!a) return null;
+    const B = a.primary ? Btn : BtnQ;
+    if (a.kind === 'review' && a.report) return <BtnQ className="btn-sm" onClick={() => setDialog({ kind: 'review', report: a.report! })}>Review</BtnQ>;
+    if (a.variation) return <B className="btn-sm" onClick={() => setDialog({ kind: a.kind === 'instruct' ? 'variation-instruct' : 'variation-price', variation: a.variation! })}>{a.label}</B>;
+    if (a.issue) return <B className="btn-sm" onClick={() => setDialog(dialogFor(a.kind, a.issue!, ctx))}>{a.label}</B>;
+    return null;
+  };
 
   return <div className="ws" onClick={onRootClick}>
     <header className="topbar">
       <a className="logo" href="#/projects" aria-label="Projects"><b>RELAY</b><span>LEODIS DEVELOPMENTS</span></a>
       <div className="search">
-        <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="Search projects, reports, issues, engineers" autoComplete="off" aria-label="Search" />
+        <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="Search projects, reports, issues, variations, engineers" autoComplete="off" aria-label="Search" />
         <kbd>/</kbd>
         {q.trim() !== '' && <div className="results">{results.length ? results.map(r => <a key={r.key} href={r.go}><span className="ref">{r.ref}</span><span>{r.t}</span><span className="k">{r.k}</span></a>) : <div className="none">Nothing matches “{q}”.</div>}</div>}
       </div>
@@ -112,8 +124,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
         <div className="panel-head"><h4 style={{ color: attn.length ? 'var(--alert)' : 'var(--ok)' }}>Needs attention</h4><a className="more" href="#/issues">Issues →</a></div>
         {attn.length ? attn.map(i => <div key={i.key} className="mini">
           <div className="mini-b"><a href={i.go}><b>{i.title}</b></a><div className="rowsub">{i.sub}</div><div style={{ marginTop: 6 }}><span className={`tag ${i.tag.cls}`}>{i.tag.label}</span></div></div>
-          {i.action && (i.action.kind === 'review' && i.action.report ? <BtnQ className="btn-sm" onClick={() => setDialog({ kind: 'review', report: i.action!.report! })}>Review</BtnQ>
-            : i.action.issue ? (i.action.primary ? <Btn className="btn-sm" onClick={() => setDialog(dialogFor(i.action!.kind, i.action!.issue!, ctx))}>{i.action.label}</Btn> : <BtnQ className="btn-sm" onClick={() => setDialog(dialogFor(i.action!.kind, i.action!.issue!, ctx))}>{i.action.label}</BtnQ>) : null)}
+          {actionFor(i)}
         </div>) : <div className="empty">Nothing needs attention.</div>}
       </div>}
     </header>
@@ -122,7 +133,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
       {me.admin && <a href="#/admin" className={`adm ${route.tab === 'admin' ? 'on' : ''}`}>Admin</a>}
     </nav>
     {error && <div className="note bad" style={{ margin: '12px 24px 0' }} role="alert"><span>{error} {snap ? 'Showing previously loaded records.' : ''}</span><BtnQ className="btn-sm" onClick={() => void refresh()}>Retry</BtnQ></div>}
-    {route.tab === 'inbox' ? <InboxView ctx={ctx} /> : route.tab === 'issues' ? <IssuesView ctx={ctx} /> : route.tab === 'team' ? <TeamView ctx={ctx} /> : route.tab === 'admin' ? <AdminView ctx={ctx} /> : <ProjectsView ctx={ctx} />}
+    {route.tab === 'inbox' ? <InboxView ctx={ctx} /> : route.tab === 'issues' ? <IssuesView ctx={ctx} /> : route.tab === 'variations' ? <VariationsView ctx={ctx} /> : route.tab === 'team' ? <TeamView ctx={ctx} /> : route.tab === 'admin' ? <AdminView ctx={ctx} /> : <ProjectsView ctx={ctx} />}
     {dialog && <Dialogs d={dialog} close={() => setDialog(null)} done={() => { void refresh(); if (route.tab === 'team' || route.tab === 'admin') loadTeam(); }} />}
     <Toasts />
   </div>;
@@ -148,6 +159,9 @@ function search(raw: string, ctx: Ctx): Hit[] {
   }
   for (const s of ctx.stats) for (const i of s.issues) {
     if (`${i.reference} ${i.description} ${i.location} ${i.owner} ${i.affectedTrade ?? ''}`.toLowerCase().includes(q)) out.push({ key: i.id, ref: shortRef(i.reference), t: `${i.description} · ${s.project.projectName}`, k: 'issue', go: `#/projects/${s.code}/issue/${i.id}` });
+  }
+  for (const s of ctx.stats) for (const v of s.variations) {
+    if (`${v.reference} ${v.description} ${v.location} ${v.instructionReference ?? ''} ${v.instructedBy ?? ''} ${v.reason ?? ''}`.toLowerCase().includes(q)) out.push({ key: v.id, ref: shortRef(v.reference), t: `${v.description} · ${s.project.projectName}`, k: 'variation', go: `#/projects/${s.code}/variation/${v.id}` });
   }
   return out.slice(0, 12);
 }

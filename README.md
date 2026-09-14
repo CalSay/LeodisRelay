@@ -43,6 +43,7 @@ rule tests need neither Graph nor a browser.
 | --- | --- |
 | Reports, immutable snapshots, jobs, sessions | Local SQLite |
 | Issue tracking | Local prototype today; authoritative SharePoint Lists at deployment |
+| Variation register | Local prototype today; the SharePoint Variation Register at deployment |
 | Photograph originals and generated PDFs | Private local volume |
 | Project reference data | Fixtures today; SharePoint integration planned |
 | Distributed PDFs | SharePoint library integration planned |

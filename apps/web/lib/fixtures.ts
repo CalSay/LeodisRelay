@@ -115,33 +115,50 @@ export type UpdateTone = "neutral" | "defect" | "variation" | "access";
 
 export const OBSERVATION_TYPES: {
   value: ObservationType;
+  /** The document's word. */
   label: string;
   hint: string;
   tone: UpdateTone;
+  /** The site's words, for the card picker: what it is, and what it will ask for. */
+  short: string;
+  pick: string;
+  asks: string;
 }[] = [
   {
     value: "update",
     label: "Progress update",
     hint: "Work carried out or progressed",
     tone: "neutral",
+    short: "Progress",
+    pick: "Work done or progressed",
+    asks: "Where and what. Photos if useful.",
   },
   {
     value: "defect",
     label: "Defect",
     hint: "Something wrong that needs putting right",
     tone: "defect",
+    short: "Defect",
+    pick: "Something wrong",
+    asks: "Needs a photo, what needs doing, who.",
   },
   {
     value: "instruction",
     label: "Variation required",
     hint: "Work outside the original scope, needing instruction",
     tone: "variation",
+    short: "Variation",
+    pick: "Extra work needed",
+    asks: "Outside scope; the office will price it.",
   },
   {
     value: "access",
     label: "Access restriction",
     hint: "You could not get to the work",
     tone: "access",
+    short: "Access",
+    pick: "Couldn't get to it",
+    asks: "What was blocked and by whom.",
   },
 ];
 

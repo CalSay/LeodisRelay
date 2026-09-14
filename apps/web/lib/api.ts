@@ -8,7 +8,7 @@
  */
 
 import { FIXTURE_PROJECTS, type FixtureProject } from "./fixtures";
-import type { Issue, Observation, Photo, Report, ReportSummary } from "./types";
+import type { Issue, Observation, Photo, Report, ReportSummary, Variation } from "./types";
 import { capturePhoto, uploadPhotos } from './localMedia';
 import { localSaveJournal } from './localSaveJournal';
 import { saveWithJournal, type SaveRequest } from './saveRequest';
@@ -252,3 +252,32 @@ export function readPhoto(file: File): Promise<Photo> {
 // this module for the real client does not ripple through every component.
 export type { Issue, IssueEvent, Observation, Photo, Report, ReportState, ReviewState, ReviewFinding } from "./types";
 export { reviewReport } from "./review";
+
+/** Places already typed on this project, newest first, for the Where chips. Never a catalogue. */
+export async function projectLocations(projectId: string): Promise<string[]> {
+  const data = await parse<{ locations: string[] }>(await request(`/api/locations?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
+  return data.locations;
+}
+
+/* --------------------------------------------------------------- variations */
+export async function allVariations(): Promise<Variation[]> {
+  const data = await parse<{ variations: Variation[] }>(await request('/api/variations', { cache: 'no-store' }));
+  return data.variations;
+}
+export async function projectVariations(projectId: string): Promise<Variation[]> {
+  const data = await parse<{ variations: Variation[] }>(await request(`/api/variations?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
+  return data.variations;
+}
+export async function getVariation(id: string): Promise<Variation> {
+  return parse<Variation>(await request(`/api/variations/${id}`, { cache: 'no-store' }));
+}
+/** One variation command, attributed by the server to whoever is signed in. */
+export async function variationCommand(id: string, body: {
+  kind: 'details' | 'price' | 'instruct' | 'decline' | 'reopen' | 'note'; note: string;
+  details?: { description?: string; location?: string; trade?: string; reason?: string; workDone?: boolean };
+  costing?: Record<string, string | number | undefined>;
+  instruction?: { reference?: string; by?: string; on?: string; value?: string | number; signedInstruction?: string };
+}): Promise<Variation> {
+  return parse<Variation>(await request(`/api/variations/${id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }));
+}
+export type { Variation } from './types';

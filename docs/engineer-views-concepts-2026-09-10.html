@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Engineer Views Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* ---------------------------------------------------------------------------
+   Leodis Developments — Engineer site companion, three ways.
+   10 September 2026.
+
+   Tokens are lifted unchanged from apps/web/app/globals.css and the office
+   concepts of 9 September. The band behind the current project is the sign-in and hub charcoal; the green band the engineer view uses today is dropped. The three concepts
+   share the same primitives (tags, refs, fields, kind chips, charcoal band);
+   what changes is how a visit is captured and what the engineer sees come
+   back from the office.
+--------------------------------------------------------------------------- */
+:root{color-scheme:light;
+  --ground:#f4f4f1;--sunken:#e9e9e5;--panel:#ffffff;--panel-2:#ececea;--panel-3:#e0e0dc;
+  --line:#deddd8;--line-2:#c6c5bf;--text:#1a1b19;--text-2:#55564f;--text-3:#6b6c65;
+  --brass:#7d621b;--brass-2:#a8842f;--brass-ink:#ffffff;--brass-wash:rgba(125,98,27,.09);
+  --alert:#a83c22;--alert-wash:rgba(168,60,34,.08);--caution:#7d5a12;--caution-wash:rgba(125,90,18,.1);
+  --ok:#2b6b48;--ok-wash:rgba(43,107,72,.09);--access:#5f7a9c;
+  --band:#282b2d;--band-2:#202224;--band-line:#484c4e;--band-text:#f0efeb;--band-muted:#b5b7b6;--band-brass:#ccb071;
+  --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:32px;--s7:48px;--r:3px;--touch:48px;
+  --sans:"Archivo","Segoe UI",system-ui,sans-serif;--mono:"IBM Plex Mono",ui-monospace,Consolas,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --ground:#0e1013;--sunken:#0a0c0e;--panel:#15181b;--panel-2:#1b1f23;--panel-3:#23282d;
+  --line:#23282c;--line-2:#333a40;--text:#e9ebec;--text-2:#99a1a8;--text-3:#7a828a;
+  --brass:#d9ae4a;--brass-2:#a8842f;--brass-ink:#14171a;--brass-wash:rgba(217,174,74,.09);
+  --alert:#e2705a;--alert-wash:rgba(226,112,90,.1);--caution:#dda94f;--caution-wash:rgba(221,169,79,.1);
+  --ok:#63b78d;--ok-wash:rgba(99,183,141,.1);--access:#8fa9c9;
+  --band:#202224;--band-2:#1a1c1e;--band-line:#3a3e41;--band-text:#f0efeb;--band-muted:#b5b7b6;--band-brass:#d9ae4a}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --ground:#0e1013;--sunken:#0a0c0e;--panel:#15181b;--panel-2:#1b1f23;--panel-3:#23282d;
+  --line:#23282c;--line-2:#333a40;--text:#e9ebec;--text-2:#99a1a8;--text-3:#7a828a;
+  --brass:#d9ae4a;--brass-2:#a8842f;--brass-ink:#14171a;--brass-wash:rgba(217,174,74,.09);
+  --alert:#e2705a;--alert-wash:rgba(226,112,90,.1);--caution:#dda94f;--caution-wash:rgba(221,169,79,.1);
+  --ok:#63b78d;--ok-wash:rgba(99,183,141,.1);--access:#8fa9c9;
+  --band:#202224;--band-2:#1a1c1e;--band-line:#3a3e41;--band-text:#f0efeb;--band-muted:#b5b7b6;--band-brass:#d9ae4a}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--ground);color:var(--text);font-family:var(--sans);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ---- Document shell ---------------------------------------------------- */
+.doc{max-width:1440px;margin:0 auto;padding:var(--s6) var(--s5) var(--s7)}
+.doc-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s5);flex-wrap:wrap;padding-bottom:var(--s5);border-bottom:2px solid var(--text)}
+.doc-head h1{font-size:26px;font-weight:600;margin:0 0 var(--s2);letter-spacing:-.01em;text-wrap:balance}
+.doc-head p{margin:0;color:var(--text-2);max-width:70ch}
+.eyebrow{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:var(--brass);margin:0 0 var(--s3)}
+.themer{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;background:var(--panel);color:var(--text-2);border:1px solid var(--line-2);border-radius:var(--r);padding:var(--s2) var(--s4);white-space:nowrap}
+.themer:hover{border-color:var(--brass);color:var(--brass)}
+.brief{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));margin:var(--s5) 0 0;border:1px solid var(--line);background:var(--panel)}
+.brief div{padding:var(--s4);border-right:1px solid var(--line)}
+.brief div:last-child{border-right:0}
+.brief dt{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.11em;color:var(--text-3);margin-bottom:var(--s2)}
+.brief dd{margin:0;font-size:13px;color:var(--text-2)}
+.toc{display:flex;gap:var(--s4);flex-wrap:wrap;margin-top:var(--s4);font-family:var(--mono);font-size:11px;letter-spacing:.06em}
+.toc a{color:var(--brass);border-bottom:1px solid transparent}
+.toc a:hover{border-bottom-color:var(--brass)}
+.concept{margin-top:var(--s7)}
+.concept-head{border-top:2px solid var(--brass);padding-top:var(--s4);margin-bottom:var(--s4)}
+.concept-num{font-family:var(--mono);font-size:11px;letter-spacing:.12em;color:var(--brass);text-transform:uppercase}
+.concept-head h2{font-size:22px;font-weight:600;margin:var(--s2) 0 var(--s3);letter-spacing:-.01em}
+.concept-head>p{margin:0;color:var(--text-2);max-width:80ch}
+.cap{font-family:var(--mono);font-size:10px;letter-spacing:.11em;text-transform:uppercase;color:var(--text-3);margin:var(--s5) 0 var(--s2);display:flex;gap:var(--s3);align-items:baseline}
+.cap b{color:var(--text);font-weight:500}
+.cap span{margin-left:auto;text-transform:none;letter-spacing:0;font-family:var(--sans);font-size:12px;color:var(--text-3)}
+.frame{border:1px solid var(--line-2);background:var(--sunken);overflow:auto;padding:var(--s5)}
+.phones{display:flex;gap:var(--s5);align-items:flex-start;flex-wrap:wrap}
+.phone-wrap{display:flex;flex-direction:column;gap:var(--s2);align-items:center}
+.pcap{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+.notes{display:grid;grid-template-columns:repeat(3,1fr);margin-top:var(--s5);border:1px solid var(--line);background:var(--panel)}
+.notes section{padding:var(--s4);border-right:1px solid var(--line)}
+.notes section:last-child{border-right:0}
+.notes h5{margin:0 0 var(--s2);font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.11em;color:var(--brass)}
+.notes ul{margin:0;padding-left:16px}
+.notes li{font-size:13px;color:var(--text-2);margin-bottom:var(--s1)}
+.notes li b{color:var(--text);font-weight:500}
+.audit{margin-top:var(--s5);border-top:2px solid var(--text);padding-top:var(--s4)}
+.audit h2{font-size:22px;font-weight:600;margin:var(--s2) 0 var(--s3)}
+.audit>p{margin:0 0 var(--s4);color:var(--text-2);max-width:90ch}
+table.aud{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);margin-bottom:var(--s4)}
+table.aud th{text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.11em;color:var(--text-3);padding:var(--s2) var(--s4);border-bottom:1px solid var(--line-2);background:var(--panel-2);white-space:nowrap}
+table.aud td{padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);vertical-align:top;font-size:13px;color:var(--text-2)}
+table.aud td:first-child{color:var(--text);font-weight:500;white-space:nowrap}
+table.aud tr:last-child td{border-bottom:0}
+table.aud .gap{color:var(--alert);font-weight:500}
+table.aud .new{color:var(--ok);font-weight:500}
+table.aud .kind{margin-right:6px}
+.verdict{margin-top:var(--s7);border-top:2px solid var(--text);padding-top:var(--s4)}
+.verdict h2{font-size:22px;font-weight:600;margin:var(--s2) 0 var(--s4)}
+.verdict table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line)}
+.verdict th{text-align:left;font-family:var(--mono);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.11em;color:var(--text-3);padding:var(--s2) var(--s4);border-bottom:1px solid var(--line-2);background:var(--panel-2)}
+.verdict td{padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);vertical-align:top;font-size:13px;color:var(--text-2)}
+.verdict td:first-child{color:var(--text);font-weight:500;white-space:nowrap}
+.verdict tr:last-child td{border-bottom:0}
+.rec{margin-top:var(--s5);border:1px solid var(--brass);border-left-width:3px;background:var(--brass-wash);padding:var(--s4) var(--s5)}
+.rec h3{margin:0 0 var(--s3);font-size:16px;font-weight:600}
+.rec p{margin:0 0 var(--s3);font-size:13.5px;color:var(--text-2);max-width:90ch}
+.rec p:last-child{margin-bottom:0}
+.rec b{color:var(--text);font-weight:500}
+.fine{font-size:12.5px;color:var(--text-3);margin-top:var(--s5);max-width:90ch;line-height:1.5}
+@media (max-width:900px){.notes{grid-template-columns:1fr}.notes section{border-right:0;border-bottom:1px solid var(--line)}.notes section:last-child{border-bottom:0}}
+
+/* ---- Shared primitives (inside every mockup) ---------------------------- */
+.ref{font-family:var(--mono);font-size:12px;color:var(--brass);letter-spacing:.02em;font-weight:500;font-variant-numeric:tabular-nums}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.late{color:var(--alert)}.soon{color:var(--caution)}.okc{color:var(--ok)}.quiet{color:var(--text-3)}
+.tag{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-family:var(--mono);font-size:10px;letter-spacing:.07em;text-transform:uppercase;border:1px solid;border-radius:var(--r);padding:2px 8px}
+.tag::before{content:"●";font-size:8px;line-height:1}
+.tag-ok{color:var(--ok);border-color:var(--ok);background:var(--ok-wash)}
+.tag-alert{color:var(--alert);border-color:var(--alert);background:var(--alert-wash)}.tag-alert::before{content:"▲"}
+.tag-caution{color:var(--caution);border-color:var(--caution);background:var(--caution-wash)}.tag-caution::before{content:"◆"}
+.tag-quiet{color:var(--text-3);border-color:var(--line-2);background:transparent}.tag-quiet::before{content:"○"}
+.tag-brass{color:var(--brass);border-color:var(--brass);background:var(--brass-wash)}.tag-brass::before{content:"■"}
+.kind{display:inline-flex;align-items:center;font-family:var(--mono);font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid var(--tone);color:var(--tone);white-space:nowrap}
+.tone-neutral{--tone:var(--text-3)}.tone-defect{--tone:var(--alert)}.tone-variation{--tone:var(--brass)}.tone-access{--tone:var(--access)}
+.btn{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;background:var(--brass);color:var(--brass-ink);border:1px solid var(--brass);border-radius:var(--r);padding:0 16px;min-height:var(--touch);display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+.btn-q{background:transparent;color:var(--text-2);border-color:var(--line-2)}
+.btn-sm{min-height:36px;padding:0 12px;font-size:10px}
+.btn.wide{width:100%}
+.lbl{font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3)}
+.sec-h{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-3);display:flex;align-items:center;gap:var(--s3)}
+.sec-h .r{margin-left:auto;color:var(--brass);letter-spacing:.06em}
+.note{padding:10px 12px;border:1px solid var(--line-2);border-left-width:3px;font-size:12.5px;background:var(--panel-2);line-height:1.45}
+.note.warn{border-color:var(--caution);background:var(--caution-wash)}
+.note.bad{border-color:var(--alert);background:var(--alert-wash)}
+.note.good{border-color:var(--ok);background:var(--ok-wash)}
+.note.info{border-color:var(--brass);background:var(--brass-wash)}
+.note b{font-weight:500}
+.ph{aspect-ratio:4/3;background:var(--panel-3);border:1px solid var(--line);display:grid;place-items:center;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--text-3);text-transform:uppercase}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-3)}
+.fld .in{min-height:var(--touch);font:inherit;font-size:15px;background:var(--ground);color:var(--text);border:1px solid var(--line-2);border-radius:var(--r);padding:12px 13px;display:flex;align-items:center}
+.fld .in.ta{min-height:96px;align-items:flex-start}
+.fld .in.empty{color:var(--text-3)}
+.fld .hint{font-size:12px;color:var(--text-3)}
+.camera{display:flex;align-items:center;justify-content:center;gap:8px;min-height:56px;border:1px dashed var(--line-2);border-radius:var(--r);background:var(--ground);color:var(--brass);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+.shots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.seg{display:flex;gap:6px}
+.seg span{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line-2);border-radius:var(--r);font-size:13px;background:var(--panel)}
+.seg span.on{border-color:var(--brass);background:var(--brass-wash);color:var(--brass);font-weight:500}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font-family:var(--mono);font-size:11px;letter-spacing:.06em;border:1px solid var(--line-2);border-radius:var(--r);padding:6px 12px;color:var(--text-2);background:var(--panel);white-space:nowrap}
+.chip.on{border-color:var(--brass);color:var(--brass);background:var(--brass-wash)}
+.ynq{display:flex;gap:8px;align-items:center}
+.ynq span{flex:1;min-height:44px;border:1px solid var(--line-2);border-radius:var(--r);display:flex;align-items:center;justify-content:center;font-size:13px;background:var(--panel)}
+.ynq span.on{border-color:var(--alert);color:var(--alert);background:var(--alert-wash);font-weight:500}
+.ynq span.on.ok{border-color:var(--ok);color:var(--ok);background:var(--ok-wash)}
+
+/* ---- Phone frame --------------------------------------------------------- */
+.phone{width:390px;height:812px;background:var(--ground);border:1px solid var(--line-2);border-radius:34px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 60px rgba(0,0,0,.16),inset 0 0 0 6px var(--panel-3);position:relative;font-size:15px;line-height:1.45;color:var(--text);font-family:var(--sans)}
+.phone .screen{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:14px;padding:14px 16px 24px}
+.phone .appbar{flex:none;display:flex;align-items:center;gap:10px;padding:18px 12px 10px 16px;background:var(--panel);border-bottom:1px solid var(--line-2);min-height:66px}
+.phone .brandm{display:flex;align-items:baseline;gap:8px;padding-right:8px;border-right:1px solid var(--line-2)}
+.phone .brandm b{font-size:13px;font-weight:500;letter-spacing:.12em}
+.phone .brandm span{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--brass)}
+.phone .abt{flex:1;min-width:0;display:flex;flex-direction:column}
+.phone .abt b{font-size:16px;font-weight:500;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phone .abt span{font-size:12px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phone .iconbtn{width:var(--touch);height:var(--touch);flex:none;display:grid;place-items:center;background:none;border:0;font-size:20px;color:var(--text-2);position:relative}
+.phone .tabbar{flex:none;display:grid;grid-template-columns:repeat(4,1fr);background:var(--panel);border-top:1px solid var(--line-2);height:64px}
+.phone .tabbar a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);border-top:2px solid transparent;position:relative}
+.phone .tabbar a i{font-style:normal;font-size:17px;line-height:1}
+.phone .tabbar a.on{color:var(--text);border-top-color:var(--brass)}
+.phone .tabbar a.on i{color:var(--brass)}
+.phone .tabbar a b{position:absolute;top:8px;right:22%;font-size:10px;min-width:18px;height:18px;display:grid;place-items:center;border-radius:9px;background:var(--brass);color:var(--brass-ink);font-weight:500}
+.phone .actionbar{flex:none;display:flex;align-items:center;gap:12px;padding:10px 16px calc(10px + 6px);background:var(--panel);border-top:1px solid var(--line-2)}
+.phone .actionbar .save{flex:1;min-width:0;font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--text-2);display:flex;align-items:center;gap:8px}
+.phone .actionbar .save i{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:none}
+.phone .actionbar .save i.busy{background:var(--caution)}
+.band{background:var(--band);color:var(--band-text);border:1px solid var(--band-line);border-radius:12px;padding:16px 18px}
+.band .lbl{color:var(--band-brass)}
+.band h2{margin:6px 0 4px;font-size:22px;font-weight:500;line-height:1.2;letter-spacing:-.01em}
+.band p{margin:0;font-size:13px;color:var(--band-muted)}
+.band .row{display:flex;gap:10px;margin-top:12px}
+.band .btn{flex:1}
+.band .btn-q{color:var(--band-text);border-color:var(--band-line)}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tile{min-height:104px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px;display:flex;flex-direction:column;justify-content:space-between}
+.tile b{font-size:15px;font-weight:500}
+.tile small{font-size:12px;color:var(--text-3);line-height:1.4}
+.tile .kind{align-self:flex-start;margin-bottom:8px}
+.tile.big{grid-column:1/-1;min-height:0;flex-direction:row;align-items:center;gap:12px;border-color:var(--brass)}
+.tile.big .kind{margin:0}
+.list{border:1px solid var(--line);background:var(--panel);border-radius:9px;overflow:hidden}
+.list .row{display:flex;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line);min-height:var(--touch);border-left:3px solid transparent}
+.list .row:last-child{border-bottom:0}
+.list .row.on{border-left-color:var(--brass);background:var(--brass-wash)}
+.list .row.late{border-left-color:var(--alert)}
+.list .main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.list .main b{font-size:14px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.list .main>span{font-size:12px;color:var(--text-3)}
+.list .stat{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
+.list .chev{font-family:var(--mono);color:var(--text-3);font-size:16px}
+.list .no{font-family:var(--mono);font-size:11px;color:var(--text-3);width:22px;flex:none}
+.steps{display:flex;gap:6px;align-items:center;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3)}
+.steps i{flex:1;height:3px;background:var(--line-2);border-radius:2px}
+.steps i.done{background:var(--brass)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.card.toned{border-left:3px solid var(--tone)}
+.card .head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.diary .entry{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.diary .entry:last-child{border-bottom:0}
+.diary .t{font-family:var(--mono);font-size:11px;color:var(--text-3);width:44px;flex:none;padding-top:3px;font-variant-numeric:tabular-nums}
+.diary .b{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.diary .b p{margin:0;font-size:14px}
+.diary .b small{font-size:12px;color:var(--text-3)}
+.diary .b .kind{align-self:flex-start}
+.diary .b .shots{grid-template-columns:repeat(4,1fr)}
+.fab{position:absolute;right:18px;bottom:82px;width:60px;height:60px;border-radius:30px;background:var(--brass);color:var(--brass-ink);display:grid;place-items:center;font-size:28px;box-shadow:0 10px 24px rgba(0,0,0,.25)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line-2);border-radius:18px 18px 0 0;padding:12px 16px 20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 -20px 40px rgba(0,0,0,.2);z-index:3}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--line-2);margin:0 auto 4px}
+.backdrop{position:absolute;inset:0;background:rgba(20,22,24,.35);z-index:2}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);background:var(--panel);border-radius:9px;overflow:hidden}
+.sum div{padding:10px 12px;border-right:1px solid var(--line)}
+.sum div:last-child{border-right:0}
+.sum dt{font-family:var(--mono);font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3)}
+.sum dd{margin:2px 0 0;font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.sum dd small{display:block;font-size:11px;color:var(--text-3);font-family:var(--sans);letter-spacing:0}
+.locs{display:flex;flex-direction:column;gap:8px}
+.loc{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:12px 14px;min-height:56px}
+.loc b{flex:1;font-size:15px;font-weight:500}
+.loc .cnt{display:flex;gap:5px}
+.loc .cnt i{font-style:normal;font-family:var(--mono);font-size:10px;padding:2px 6px;border-radius:2px;border:1px solid var(--tone);color:var(--tone)}
+.loc.on{border-color:var(--brass);background:var(--brass-wash)}
+.loc.add{border-style:dashed;color:var(--brass);justify-content:center}
+.finds{border:1px solid var(--line);background:var(--panel);border-radius:9px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.find{display:flex;gap:10px;align-items:flex-start;font-size:13px}
+.find .k{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:2px;flex:none;margin-top:2px}
+.find .k.stop{background:var(--alert-wash);color:var(--alert)}
+.find .k.chk{background:var(--caution-wash);color:var(--caution)}
+
+/* ---- Tablet frame -------------------------------------------------------- */
+.tablet{width:1024px;height:700px;background:var(--ground);border:1px solid var(--line-2);border-radius:22px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 30px 60px rgba(0,0,0,.16),inset 0 0 0 8px var(--panel-3);font-size:14px;line-height:1.45;color:var(--text);font-family:var(--sans)}
+.tablet .appbar{flex:none;display:flex;align-items:center;gap:16px;padding:14px 24px;background:var(--panel);border-bottom:1px solid var(--line-2)}
+.tablet .appbar .brandm{display:flex;align-items:baseline;gap:8px;padding-right:12px;border-right:1px solid var(--line-2)}
+.tablet .appbar .brandm b{font-size:13px;font-weight:500;letter-spacing:.14em}
+.tablet .appbar .brandm span{font-family:var(--mono);font-size:9px;letter-spacing:.16em;color:var(--brass)}
+.tablet .appbar .abt{display:flex;flex-direction:column;flex:1;min-width:0}
+.tablet .appbar .abt b{font-size:16px;font-weight:500}
+.tablet .appbar .abt span{font-size:12px;color:var(--text-3)}
+.tablet .appbar nav{display:flex;gap:4px}
+.tablet .appbar nav a{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);padding:10px 12px;border-radius:var(--r)}
+.tablet .appbar nav a.on{color:var(--brass);background:var(--brass-wash)}
+.tablet .body{flex:1;min-height:0;display:grid;grid-template-columns:280px 1fr;overflow:hidden}
+.tablet .body.three{grid-template-columns:260px 1fr 300px}
+.tablet .rail{border-right:1px solid var(--line-2);background:var(--panel);overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:16px}
+.tablet .main{overflow-y:auto;padding:20px 24px;display:flex;flex-direction:column;gap:14px}
+.tablet .side{border-left:1px solid var(--line-2);background:var(--panel);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px}
+.tablet .actionbar{flex:none;display:flex;align-items:center;gap:16px;padding:12px 24px;background:var(--panel);border-top:1px solid var(--line-2)}
+.tablet .actionbar .save{flex:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--text-2);display:flex;align-items:center;gap:8px}
+.tablet .actionbar .save i{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.tablet .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.tablet .fld .in{font-size:14px}
+</style>
+</head>
+<body>
+<div class="doc">
+
+<header class="doc-head">
+  <div>
+    <p class="eyebrow">Leodis Developments · Engineer site companion · drafts for review</p>
+    <h1>The engineer views, three ways: phone and tablet</h1>
+    <p>What an engineer captures on site is what the office and the two SharePoint registers run on. Section 0 audits what each report kind has to carry, read off the office desk and the Variation Register built today. Concepts 1–3 are three ways of asking for it. Nothing here is wired to the app.</p>
+  </div>
+  <button class="themer" id="themer" type="button">Dark</button>
+</header>
+
+<dl class="brief">
+  <div><dt>Read against</dt><dd>The office desk as built (Inbox, Issues, Variations, the report reader), the Issue Tracker and Variation Register lists, and <code>EngineerWorkspace</code>, <code>ObservationEditor</code>, <code>IndividualDefect</code> and the report page as they stand.</dd></div>
+  <div><dt>Devices</dt><dd>Phone at 390 × 812 and tablet at 1024 × 700 landscape. Below 900 CSS pixels is the phone layout, above it the tablet; rotation only changes width, never state, as today.</dd></div>
+  <div><dt>What does not change</dt><dd>Status never depends on colour alone; anything tapped is 48px; a device save is never shown as a Leodis save; drafts stay private until sent; a defect needs a photograph; the office's words (received, awaiting review, PM notified, read) are reused unchanged.</dd></div>
+  <div><dt>Status</dt><dd>Drafts, 10 September 2026. Pick one (or parts of several) and it gets built against the existing routes. The field additions in section 0 are the only data changes any concept needs.</dd></div>
+</dl>
+<nav class="toc"><a href="#audit">0 · What the office needs</a><a href="#c1">1 · One thing at a time</a><a href="#c2">2 · Site diary</a><a href="#c3">3 · Walk by location</a><a href="#verdict">Verdict</a></nav>
+
+<!-- ===================== 0 · AUDIT ===================== -->
+<section class="audit" id="audit">
+  <h2>0 · What the office extracts from each kind of update, and what it cannot get today</h2>
+  <p>Three things leave an engineer's phone: a progress <b>update</b>, an <b>issue</b> (a defect or an access restriction, raised at submission or flagged individually) and a <b>variation request</b>. The office reads each of them in different places, and the gaps below are where the desk shows “not set”, “trade not recorded” or has to type what the engineer already knew.</p>
+
+  <table class="aud">
+    <thead><tr><th>Update · progress</th><th>Captured today</th><th>Where the office reads it</th><th>Gap</th></tr></thead>
+    <tbody>
+      <tr><td><span class="kind tone-neutral">Progress</span>Where</td><td>Free text with a fixture datalist</td><td>Reader (“L3 riser — …”), PDF, Found column</td><td>Datalist is fixture-only. Suggest from this project's previous entries instead (FE-1); never a maintained catalogue (EXP-4).</td></tr>
+      <tr><td>What happened</td><td>Free text</td><td>Reader, PDF, living diary (EXP-1)</td><td>None.</td></tr>
+      <tr><td>Photographs</td><td>Any number, caption optional</td><td>Reader, PDF</td><td>A caption is a “check” finding, not a stop. Fine.</td></tr>
+    </tbody>
+  </table>
+
+  <table class="aud">
+    <thead><tr><th>Issue · defect or access restriction</th><th>Captured today</th><th>Where the office reads it</th><th>Gap</th></tr></thead>
+    <tbody>
+      <tr><td><span class="kind tone-defect">Defect</span>Where · what happened</td><td>Free text</td><td>Issue description and location on the register, the sheet, Attention</td><td>None.</td></tr>
+      <tr><td>What needs doing</td><td>Free text, revealed for defect and access only</td><td>“Action needed” on the issue sheet; the Assign dialog</td><td>None.</td></tr>
+      <tr><td>Who needs to respond</td><td>Free text name or company; blank is allowed</td><td>Owner; raised as <i>assigned</i> if named, <i>unassigned</i> in Attention if not</td><td>None, and blank-means-unknown is right.</td></tr>
+      <tr><td>Trade affected</td><td><span class="gap">Not captured in a report section</span>; only on an individual defect</td><td>Trade filter on Issues, the Issue Tracker's Affected Trade, Responsibility</td><td><span class="gap">Gap.</span> Report-raised issues show “reported by Electrical” instead. One field, defaulting to the engineer's trade, with “Other / non-Leodis” as on the individual defect.</td></tr>
+      <tr><td>Already raised?</td><td>Dropdown of open issues by ref and location</td><td>“Further sighting of ISS-00x” in the reader; an event on the issue</td><td>Refs alone are hard to pick from on site. Show the description and a thumbnail (FE-5).</td></tr>
+      <tr><td>Photograph</td><td>At least one for a defect (stop); none required for access</td><td>Issue history, Evidence Link</td><td>None.</td></tr>
+      <tr><td>Target date</td><td>Not asked</td><td>Set by the office when assigning</td><td>Correct as is: the office owns the date.</td></tr>
+    </tbody>
+  </table>
+
+  <table class="aud">
+    <thead><tr><th>Variation request</th><th>Captured today</th><th>Where the office reads it</th><th>Gap</th></tr></thead>
+    <tbody>
+      <tr><td><span class="kind tone-variation">Variation</span>Where · what is needed</td><td>Free text, same fields as progress</td><td>Description and Location on the Variation Register; the Variations tab; “Actions and decisions” in the reader</td><td>None, but the prompt should say <i>what extra work and why</i>, not “what happened”.</td></tr>
+      <tr><td>Reason</td><td><span class="gap">Not asked</span></td><td>Reason choice: Client instruction, Design change, Site condition, Damage by others, Omission, Spec change</td><td><span class="gap">Gap.</span> The engineer knows; the office guesses. Six chips.</td></tr>
+      <tr><td>Trade</td><td>Inferred from the engineer's trade</td><td>Trade choice, including Multi</td><td>Default is right; allow “Multi” to be picked.</td></tr>
+      <tr><td>Already done?</td><td><span class="gap">Not asked</span></td><td><i>workDone</i>: top of Attention as “Done, not instructed”; the sign-off rule in EXP-3</td><td><span class="gap">The important one.</span> Yes/No, and if yes, who asked for it on site and when. That is the difference between a quote and an invoice at risk.</td></tr>
+      <tr><td>Who asked</td><td><span class="gap">Not asked</span></td><td>Instructed By is an office field, but the site manager's name is the lead</td><td>One optional name. It is not an instruction; the office records that.</td></tr>
+      <tr><td>Rough size</td><td><span class="gap">Not asked</span></td><td>Expected labour (hours) and parts on the register; the Price dialog</td><td>Optional: hours as a chip (½ day, 1 day, 2 days, more) and the cost of parts if known. The office prices; the engineer's guess speeds it up.</td></tr>
+      <tr><td>Linked issue</td><td>Only for defect and access</td><td>Linked Issue lookup; “variation on this issue” on the sheet</td><td>Offer it for variations too: a defect that turns out to be someone else's damage becomes a chargeable variation.</td></tr>
+      <tr><td>Photographs</td><td>Optional</td><td>Evidence from the visit on the sheet</td><td>Make one a “check” finding, not a stop.</td></tr>
+    </tbody>
+  </table>
+
+  <p>So the data changes behind every concept are the same five optional fields on an observation (<span class="new">affected trade</span> for defects; <span class="new">reason</span>, <span class="new">already done</span>, <span class="new">asked by</span>, <span class="new">rough hours and cost of parts</span> for variations), all of which the store already has somewhere to put. What the engineer sees <i>come back</i> is the other half: each concept below also shows the office's state on the things the engineer raised, in the office's own words.</p>
+</section>
+
+<!-- ===================== CONCEPT 1 ===================== -->
+<section class="concept" id="c1">
+  <div class="concept-head">
+    <div class="concept-num">Concept 1</div>
+    <h2>One thing at a time</h2>
+    <p>The site update becomes a deck of cards: pick the kind first, answer only that kind's questions, add the next card. Home is four big actions and what came back from the office. The tablet is the same deck with the cards listed down the left, which is roughly the section list the editor has now, tidied.</p>
+  </div>
+
+  <p class="cap"><b>Phone</b> home, the kind picker, a variation card, and check &amp; send <span>390 × 812 · one card per screen · the bottom bar is the tab bar on home and the save state inside a report</span></p>
+  <div class="frame"><div class="phones">
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><div class="brandm"><b>RELAY</b><span>DEV</span></div><div class="abt"><b>On site</b><span>G. Stephenson · Electrical · Wed 10 Sep</span></div><button class="iconbtn" type="button" aria-label="Attention">🔔</button></div>
+      <div class="screen">
+        <div class="band"><span class="lbl">Current project</span><h2>Tetley Hall — Block E</h2><p><span class="num">011LME</span> · A. Whitfield, project manager · Change ›</p></div>
+        <div class="tiles">
+          <a class="tile big" href="#c1"><span class="kind tone-neutral">Site update</span><div><b>Continue today's update</b><br><small>3 cards · saved on server 09:41</small></div><span class="ref" style="margin-left:auto">→</span></a>
+          <a class="tile" href="#c1"><span class="kind tone-defect">Defect</span><b>Flag a defect</b><small>Photo + a short note · sent on its own</small></a>
+          <a class="tile" href="#c1"><span class="kind tone-variation">Variation</span><b>Request a variation</b><small>Extra work needing instruction</small></a>
+        </div>
+        <div class="sec-h">Came back from the office<span class="r">3</span></div>
+        <div class="list">
+          <a class="row" href="#c1"><div class="main"><b>Additional socket outlets, plantroom</b><span><span class="ref">VO-001</span> · you raised it Mon</span><div class="stat"><span class="tag tag-ok">Instructed</span><span class="quiet" style="font-size:12px">CVI-014 · £1,860</span></div></div><span class="chev">›</span></a>
+          <a class="row" href="#c1"><div class="main"><b>Cable tray cover damaged, L1 riser</b><span><span class="ref">ISS-007</span> · from SPR-014</span><div class="stat"><span class="tag tag-brass">Assigned</span><span class="quiet" style="font-size:12px">C&amp;AJ Marshall · target 19 Sep</span></div></div><span class="chev">›</span></a>
+          <a class="row" href="#c1"><div class="main"><b>Site progress report SPR-014</b><span>Sent Mon 08:40</span><div class="stat"><span class="tag tag-ok">Received</span><span class="tag tag-ok">Read by Tom</span><span class="tag tag-quiet">PM not notified</span></div></div><span class="chev">›</span></a>
+        </div>
+        <div class="sec-h">This project<span class="r">issues 3 open</span></div>
+        <div class="list"><a class="row" href="#c1"><div class="main"><b>Site issues</b><span>3 open · 1 assigned to Marshall · 1 waiting for verification</span></div><span class="chev">›</span></a><a class="row" href="#c1"><div class="main"><b>Latest reports</b><span>Every trade · 7 on file</span></div><span class="chev">›</span></a></div>
+      </div>
+      <nav class="tabbar"><a class="on" href="#c1"><i>◧</i>Site</a><a href="#c1"><i>▲</i>Issues<b>3</b></a><a href="#c1"><i>▤</i>Reports</a><a href="#c1"><i>▦</i>Projects</a></nav>
+    </div><span class="pcap">Home · what to do, and what came back</span></div>
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>Site update · card 4</b><span>Tetley Hall — Block E · <span class="num">SPR-015</span> draft</span></div></div>
+      <div class="screen">
+        <div class="steps"><i class="done"></i><i class="done"></i><i class="done"></i><i></i><span>4 of 4</span></div>
+        <div class="fld"><label>What kind of update is this?</label></div>
+        <div class="tiles">
+          <a class="tile" href="#c1"><span class="kind tone-neutral">Progress</span><b>Work done or progressed</b><small>Where and what. Photos if useful.</small></a>
+          <a class="tile" href="#c1"><span class="kind tone-defect">Defect</span><b>Something wrong</b><small>Needs a photo, what needs doing, who</small></a>
+          <a class="tile" href="#c1"><span class="kind tone-variation">Variation</span><b>Extra work needed</b><small>Outside scope; the office will price it</small></a>
+          <a class="tile" href="#c1"><span class="kind tone-access">Access</span><b>Couldn't get to it</b><small>What was blocked and by whom</small></a>
+        </div>
+        <div class="sec-h">Cards so far<span class="r">3</span></div>
+        <div class="list">
+          <a class="row" href="#c1"><span class="no">01</span><div class="main"><b>L3 riser</b><span>Progress · sub-main containment complete · 2 photos</span></div><span class="chev">›</span></a>
+          <a class="row" href="#c1"><span class="no">02</span><div class="main"><b>L1 riser</b><span>Defect · tray cover damaged · Marshall · 1 photo</span></div><span class="chev">›</span></a>
+          <a class="row" href="#c1"><span class="no">03</span><div class="main"><b>Roof — AHU deck</b><span>Progress · AHU-02 set on plinth · 3 photos</span></div><span class="chev">›</span></a>
+        </div>
+        <p class="note">Every card is saved as you type. You can leave and come back; nothing is sent until you sign.</p>
+      </div>
+      <div class="actionbar"><span class="save"><i></i>Saved on server 09:44</span><a class="btn btn-q btn-sm" href="#c1">Check &amp; send</a></div>
+    </div><span class="pcap">Kind first · then only that kind's questions</span></div>
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>Card 4 · Variation</b><span>Tetley Hall — Block E · <span class="num">SPR-015</span> draft</span></div><span class="kind tone-variation">Variation</span></div>
+      <div class="screen">
+        <div class="fld"><label>Where</label><div class="in">Block E · Ground floor · Plantroom</div><div class="chips"><span class="chip">L1 riser</span><span class="chip">L3 riser</span><span class="chip on">Plantroom</span><span class="chip">Roof — AHU deck</span></div><span class="hint">Places you have used on this project. Type anything.</span></div>
+        <div class="fld"><label>What extra work, and why</label><div class="in ta">Four twin sockets on the east wall for the BMS panel. Not on the drawings; asked for on site.</div></div>
+        <div class="fld"><label>Reason</label><div class="chips"><span class="chip on">Client instruction</span><span class="chip">Design change</span><span class="chip">Site condition</span><span class="chip">Damage by others</span><span class="chip">Omission</span><span class="chip">Spec change</span></div></div>
+        <div class="fld"><label>Has the work already been done?</label><div class="ynq"><span class="on">Yes, on a say-so</span><span>Not yet</span></div><span class="hint late">The office gets the client to sign for it as chargeable before it is invoiced.</span></div>
+        <div class="fld"><label>Who asked for it on site · optional</label><div class="in">G. Marshall, C&amp;AJ Marshall</div></div>
+        <div class="fld"><label>Rough size · optional</label><div class="chips"><span class="chip">½ day</span><span class="chip on">1 day</span><span class="chip">2 days</span><span class="chip">More</span></div><div class="in empty">Cost of parts, if you know them · £</div></div>
+        <div class="fld"><label>Photographs · 2</label><div class="camera">📷 Take photograph</div><div class="shots"><div class="ph">Photo 01</div><div class="ph">Photo 02</div></div></div>
+        <a class="btn wide" href="#c1">Done · add another card</a>
+      </div>
+      <div class="actionbar"><span class="save"><i class="busy"></i>Saving to server</span><a class="btn btn-q btn-sm" href="#c1">Check &amp; send</a></div>
+    </div><span class="pcap">Variation card · the register's questions, in site words</span></div>
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>Check &amp; send</b><span>Tetley Hall — Block E · <span class="num">SPR-015</span> · 4 cards</span></div></div>
+      <div class="screen">
+        <dl class="sum"><div><dt>Progress</dt><dd>2</dd></div><div><dt>Defects</dt><dd class="late">1<small>raises ISS</small></dd></div><div><dt>Variations</dt><dd class="soon">1<small>raises VO</small></dd></div></dl>
+        <div class="finds">
+          <div class="find"><span class="k stop">Stop</span><span>L1 riser: a defect needs at least one photograph</span></div>
+          <div class="find"><span class="k chk">Check</span><span>Plantroom: a photograph has no caption</span></div>
+          <div class="find"><span class="k chk">Check</span><span>L1 riser: action recorded but nobody named to do it — the office will assign it</span></div>
+        </div>
+        <div class="sec-h">What sending does</div>
+        <div class="list">
+          <div class="row"><div class="main"><b>1 issue raised · not reviewed</b><span>The office assigns it; you'll see who and when here.</span></div></div>
+          <div class="row"><div class="main"><b>1 variation raised · needs a quote</b><span>Marked as already done: the office chases the client's sign-off.</span></div></div>
+          <div class="row"><div class="main"><b>PDF and notification</b><span>Received the moment it lands. A. Whitfield is emailed when the mailbox is live.</span></div></div>
+        </div>
+        <div class="fld"><label>Sign</label><div class="in" style="min-height:96px;border-style:dashed;justify-content:center;color:var(--text-3)">Draw your signature</div><div class="in">G. Stephenson</div></div>
+      </div>
+      <div class="actionbar"><span class="save"><i></i>Saved on server · <span class="late">1 outstanding</span></span><a class="btn" href="#c1" style="opacity:.5">Send to office</a></div>
+    </div><span class="pcap">Check &amp; send · stops, checks, and what happens next</span></div>
+
+  </div></div>
+
+  <p class="cap"><b>Tablet</b> the same deck, cards down the left, one card open <span>1024 × 700 landscape · rotation to portrait gives the phone layout</span></p>
+  <div class="frame"><div class="tablet">
+    <div class="appbar"><div class="brandm"><b>RELAY</b><span>DEV</span></div><div class="abt"><b>Tetley Hall — Block E</b><span><span class="num">011LME</span> · Site update <span class="num">SPR-015</span> · draft · G. Stephenson</span></div><nav><a class="on" href="#c1">Site</a><a href="#c1">Issues</a><a href="#c1">Reports</a><a href="#c1">Projects</a></nav></div>
+    <div class="body">
+      <div class="rail">
+        <div class="sec-h">Cards<span class="r">4</span></div>
+        <div class="list">
+          <a class="row" href="#c1"><span class="no">01</span><div class="main"><b>L3 riser</b><span>Progress · 2 photos</span></div></a>
+          <a class="row late" href="#c1"><span class="no">02</span><div class="main"><b>L1 riser</b><span>Defect · needs a photo</span></div></a>
+          <a class="row" href="#c1"><span class="no">03</span><div class="main"><b>Roof — AHU deck</b><span>Progress · 3 photos</span></div></a>
+          <a class="row on" href="#c1"><span class="no">04</span><div class="main"><b>Plantroom</b><span>Variation · 2 photos</span></div></a>
+        </div>
+        <a class="btn btn-q wide" href="#c1">+ Add a card</a>
+        <div class="sec-h" style="margin-top:8px">Before you send</div>
+        <div class="finds"><div class="find"><span class="k stop">Stop</span><span>L1 riser: defect needs a photograph</span></div><div class="find"><span class="k chk">Check</span><span>Plantroom: photo has no caption</span></div></div>
+      </div>
+      <div class="main">
+        <div class="card toned tone-variation">
+          <div class="head"><span class="lbl">Card 04</span><span class="kind tone-variation">Variation</span></div>
+          <div class="two">
+            <div class="fld"><label>Where</label><div class="in">Block E · Ground floor · Plantroom</div></div>
+            <div class="fld"><label>Reason</label><div class="chips"><span class="chip on">Client instruction</span><span class="chip">Design change</span><span class="chip">Site condition</span><span class="chip">Damage by others</span><span class="chip">Omission</span><span class="chip">Spec change</span></div></div>
+          </div>
+          <div class="fld"><label>What extra work, and why</label><div class="in ta">Four twin sockets on the east wall for the BMS panel. Not on the drawings; asked for on site.</div></div>
+          <div class="two">
+            <div class="fld"><label>Has the work already been done?</label><div class="ynq"><span class="on">Yes, on a say-so</span><span>Not yet</span></div><span class="hint late">The office gets the client to sign for it as chargeable before it is invoiced.</span></div>
+            <div class="fld"><label>Who asked for it on site · optional</label><div class="in">G. Marshall, C&amp;AJ Marshall</div></div>
+          </div>
+          <div class="two">
+            <div class="fld"><label>Rough size · optional</label><div class="chips"><span class="chip">½ day</span><span class="chip on">1 day</span><span class="chip">2 days</span><span class="chip">More</span></div></div>
+            <div class="fld"><label>Cost of parts · optional</label><div class="in empty">If you know them · £</div></div>
+          </div>
+          <div class="fld"><label>Photographs · 2</label><div class="two"><div class="camera">📷 Take photograph</div><div class="shots"><div class="ph">Photo 01</div><div class="ph">Photo 02</div></div></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="actionbar"><span class="save"><i></i>Saved on server 09:44 · <span class="late">1 outstanding</span></span><a class="btn btn-q" href="#c1">Check &amp; send</a></div>
+  </div></div>
+
+  <div class="notes">
+    <section><h5>What it answers first</h5><ul><li><b>“What kind of thing is this?”</b> Asked once per card, then only that kind's questions. A progress card is three taps; a variation card is the register's six questions in site words.</li><li>Home leads with <b>what came back</b>: instructed, assigned, read, in the office's own tags.</li><li>Check &amp; send says what sending <i>does</i> (raises ISS-, raises VO-, who gets emailed), not just what is missing.</li></ul></section>
+    <section><h5>What it assumes</h5><ul><li>The five optional fields from section 0 on an observation. Nothing else in the store changes.</li><li>Location chips from this project's previous entries (FE-1), free text always allowed (EXP-4).</li><li>Home's “came back” list is the engineer's own reports, issues and variations filtered from endpoints that already exist.</li></ul></section>
+    <section><h5>Build cost from today</h5><ul><li><b>Low–medium.</b> The editor already keeps one section visible at a time; this is the kind picker moved in front of the fields and the section list restyled.</li><li>The variation card is the new work: one component, five fields, all optional.</li><li>Home is a re-layout of <code>EngineerWorkspace</code> with one new list.</li></ul></section>
+  </div>
+</section>
+
+<!-- ===================== CONCEPT 2 ===================== -->
+<section class="concept" id="c2">
+  <div class="concept-head">
+    <div class="concept-num">Concept 2</div>
+    <h2>Site diary</h2>
+    <p>The visit is a running diary: every entry gets a time, entries are added from a single + button that asks what kind, and sending is signing off the day. What the office does with an entry shows on the entry itself, so the diary is also the engineer's view of the job. On the tablet the diary runs down the left and the open entry sits on the right.</p>
+  </div>
+
+  <p class="cap"><b>Phone</b> today's diary, the add sheet, an entry with its office state, and sign-off <span>390 × 812 · the + is always reachable · the diary is EXP-1 as a capture surface, not a second entry</span></p>
+  <div class="frame"><div class="phones">
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><div class="brandm"><b>RELAY</b><span>DEV</span></div><div class="abt"><b>Wed 10 Sep · diary</b><span>Tetley Hall — Block E · G. Stephenson · Electrical</span></div><button class="iconbtn" type="button" aria-label="Project">▦</button></div>
+      <div class="screen">
+        <dl class="sum"><div><dt>Entries</dt><dd>4</dd></div><div><dt>Photos</dt><dd>8</dd></div><div><dt>Saved</dt><dd class="okc" style="font-size:14px;padding-top:4px">server<small>09:44</small></dd></div></dl>
+        <div class="card diary">
+          <div class="entry"><span class="t">08:12</span><div class="b"><span class="kind tone-neutral">Progress</span><p><b>L3 riser</b> — sub-main containment complete to level 3.</p><div class="shots"><div class="ph">01</div><div class="ph">02</div></div></div></div>
+          <div class="entry"><span class="t">08:40</span><div class="b"><span class="kind tone-defect">Defect</span><p><b>L1 riser</b> — cable tray cover damaged at the 2nd floor slab. Marshall to replace.</p><small class="late">Needs a photograph before you can sign off</small></div></div>
+          <div class="entry"><span class="t">09:05</span><div class="b"><span class="kind tone-neutral">Progress</span><p><b>Roof — AHU deck</b> — AHU-02 set on plinth, flexible connections on.</p><div class="shots"><div class="ph">01</div><div class="ph">02</div><div class="ph">03</div></div></div></div>
+          <div class="entry"><span class="t">09:41</span><div class="b"><span class="kind tone-variation">Variation</span><p><b>Plantroom</b> — four twin sockets on the east wall for the BMS panel. Asked for by G. Marshall; already done.</p><small>Client instruction · about 1 day · 2 photos</small></div></div>
+        </div>
+        <div class="sec-h">Earlier on this job<span class="r">Mon 8 Sep</span></div>
+        <div class="card diary">
+          <div class="entry"><span class="t">Mon</span><div class="b"><span class="kind tone-defect">Defect</span><p><b>L1 riser</b> — tray cover damaged. <span class="ref">ISS-007</span></p><div class="stat" style="display:flex;gap:6px"><span class="tag tag-brass">Assigned</span><small>C&amp;AJ Marshall · target 19 Sep</small></div></div></div>
+          <div class="entry"><span class="t">Mon</span><div class="b"><span class="kind tone-variation">Variation</span><p><b>Plantroom</b> — additional socket outlets. <span class="ref">VO-001</span></p><div class="stat" style="display:flex;gap:6px"><span class="tag tag-ok">Instructed</span><small>CVI-014 · £1,860</small></div></div></div>
+        </div>
+      </div>
+      <a class="fab" href="#c2" aria-label="Add an entry">+</a>
+      <nav class="tabbar"><a class="on" href="#c2"><i>▤</i>Diary</a><a href="#c2"><i>▲</i>Issues<b>3</b></a><a href="#c2"><i>◧</i>Reports</a><a href="#c2"><i>▦</i>Projects</a></nav>
+    </div><span class="pcap">Diary · today above, earlier below with the office's state</span></div>
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><div class="brandm"><b>RELAY</b><span>DEV</span></div><div class="abt"><b>Wed 10 Sep · diary</b><span>Tetley Hall — Block E</span></div></div>
+      <div class="screen" style="opacity:.5">
+        <dl class="sum"><div><dt>Entries</dt><dd>4</dd></div><div><dt>Photos</dt><dd>8</dd></div><div><dt>Saved</dt><dd class="okc" style="font-size:14px;padding-top:4px">server</dd></div></dl>
+        <div class="card diary"><div class="entry"><span class="t">08:12</span><div class="b"><span class="kind tone-neutral">Progress</span><p><b>L3 riser</b> — sub-main containment complete.</p></div></div></div>
+      </div>
+      <div class="backdrop"></div>
+      <div class="sheet">
+        <div class="grab"></div>
+        <div class="sec-h">New entry · 09:52</div>
+        <div class="seg"><span>Progress</span><span class="on" style="border-color:var(--alert);color:var(--alert);background:var(--alert-wash)">Defect</span><span>Variation</span><span>Access</span></div>
+        <div class="fld"><label>Photograph · needed for a defect</label><div class="camera">📷 Take photograph</div></div>
+        <div class="fld"><label>Where</label><div class="chips"><span class="chip">L1 riser</span><span class="chip">L3 riser</span><span class="chip on">Plantroom</span><span class="chip">Roof — AHU deck</span><span class="chip">Other…</span></div></div>
+        <div class="fld"><label>What's wrong</label><div class="in ta empty">Say what you saw</div></div>
+        <div class="fld"><label>Trade affected</label><div class="seg"><span class="on">Electrical</span><span>HVAC</span><span>P&amp;H</span><span>Other</span></div></div>
+        <div class="fld"><label>What needs doing · who</label><div class="in empty">Leave who blank if you don't know</div></div>
+        <div class="fld"><label>Already raised?</label><div class="list"><div class="row"><div class="ph" style="width:44px;aspect-ratio:1">·</div><div class="main"><b>ISS-007 · tray cover damaged</b><span>L1 riser · assigned to Marshall</span></div><span class="chev">›</span></div></div></div>
+        <a class="btn wide" href="#c2">Add to diary</a>
+      </div>
+    </div><span class="pcap">Add sheet · defect · trade affected and “already raised?” with pictures</span></div>
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>Diary entry · Mon 8 Sep 09:41</b><span>Tetley Hall — Block E · sent in <span class="num">SPR-014</span></span></div><span class="kind tone-variation">Variation</span></div>
+      <div class="screen">
+        <div class="band"><span class="lbl">The office</span><h2 style="font-size:18px">Instructed · CVI-014</h2><p>G. Marshall, C&amp;AJ Marshall · 8 Sep · £1,860.00 · signed copy on file</p><div class="row"><a class="btn btn-q" href="#c2" style="flex:0 0 auto">Open <span class="ref" style="color:inherit">VO-001</span></a></div></div>
+        <div class="card"><div class="head"><b>Plantroom</b><span class="ref">VO-001</span></div><p style="margin:0">Additional socket outlets for the BMS panel, client asked for four twin sockets on the east wall.</p><small class="quiet">Client instruction · already done when raised · asked for by G. Marshall · about 1 day</small><div class="shots"><div class="ph">01</div><div class="ph">02</div></div></div>
+        <div class="sec-h">History<span class="r">4</span></div>
+        <div class="card diary">
+          <div class="entry"><span class="t">Tue</span><div class="b"><p>Instructed by G. Marshall, CVI-014, £1,860.00.</p><small>Tom Office</small></div></div>
+          <div class="entry"><span class="t">Tue</span><div class="b"><p>Quoted £1,860.00. Sent to G. Marshall by email.</p><small>Tom Office</small></div></div>
+          <div class="entry"><span class="t">Mon</span><div class="b"><p>Details updated: reason set to client instruction.</p><small>Tom Office</small></div></div>
+          <div class="entry"><span class="t">Mon</span><div class="b"><p>Raised in <span class="ref">SPR-014</span>.</p><small>G. Stephenson</small></div></div>
+        </div>
+        <div class="fld"><label>Add a note</label><div class="in empty">Anything the office should know</div></div>
+        <a class="btn btn-q wide" href="#c2">Send note</a>
+      </div>
+    </div><span class="pcap">An entry after sending · the office's answer at the top</span></div>
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>Sign off Wed 10 Sep</b><span>Tetley Hall — Block E · becomes <span class="num">SPR-015</span></span></div></div>
+      <div class="screen">
+        <dl class="sum"><div><dt>Progress</dt><dd>2</dd></div><div><dt>Defects</dt><dd class="late">1</dd></div><div><dt>Variations</dt><dd class="soon">1</dd></div></dl>
+        <div class="finds"><div class="find"><span class="k stop">Stop</span><span>08:40 L1 riser: a defect needs at least one photograph</span></div><div class="find"><span class="k chk">Check</span><span>09:41 Plantroom: a photograph has no caption</span></div></div>
+        <div class="note info"><b>Sending the day</b> files it as site progress report <span class="num">SPR-015</span>, raises 1 issue and 1 variation, and tells the office a report came in. Entries stay on your phone until the server has them.</div>
+        <div class="fld"><label>Sign</label><div class="in" style="min-height:96px;border-style:dashed;justify-content:center;color:var(--text-3)">Draw your signature</div><div class="in">G. Stephenson</div></div>
+        <a class="btn wide" href="#c2" style="opacity:.5">Sign off and send · 1 outstanding</a>
+        <p class="note">You can keep adding to today after sending; that becomes a correction, rev 2, and the office sees which supersedes which.</p>
+      </div>
+    </div><span class="pcap">Sign off · the day becomes the report</span></div>
+
+  </div></div>
+
+  <p class="cap"><b>Tablet</b> diary on the left, the open entry on the right, sign-off in the bar <span>1024 × 700 landscape</span></p>
+  <div class="frame"><div class="tablet">
+    <div class="appbar"><div class="brandm"><b>RELAY</b><span>DEV</span></div><div class="abt"><b>Tetley Hall — Block E · Wed 10 Sep</b><span>Diary · 4 entries today · G. Stephenson · Electrical</span></div><nav><a class="on" href="#c2">Diary</a><a href="#c2">Issues</a><a href="#c2">Reports</a><a href="#c2">Projects</a></nav></div>
+    <div class="body" style="grid-template-columns:400px 1fr">
+      <div class="rail">
+        <div class="seg"><span class="on">Today</span><span>Mon 8 Sep</span><span>Earlier</span></div>
+        <div class="card diary" style="padding:4px 14px">
+          <div class="entry"><span class="t">08:12</span><div class="b"><span class="kind tone-neutral">Progress</span><p><b>L3 riser</b> — containment complete.</p><small>2 photos</small></div></div>
+          <div class="entry"><span class="t">08:40</span><div class="b"><span class="kind tone-defect">Defect</span><p><b>L1 riser</b> — tray cover damaged.</p><small class="late">needs a photo</small></div></div>
+          <div class="entry"><span class="t">09:05</span><div class="b"><span class="kind tone-neutral">Progress</span><p><b>Roof — AHU deck</b> — AHU-02 set.</p><small>3 photos</small></div></div>
+          <div class="entry" style="background:var(--brass-wash);margin:0 -14px;padding:12px 14px"><span class="t">09:41</span><div class="b"><span class="kind tone-variation">Variation</span><p><b>Plantroom</b> — four twin sockets for the BMS panel.</p><small>already done · 2 photos</small></div></div>
+        </div>
+        <a class="btn wide" href="#c2">+ New entry</a>
+      </div>
+      <div class="main">
+        <div class="card toned tone-variation">
+          <div class="head"><span class="lbl">09:41 · Variation</span><a class="btn btn-q btn-sm" href="#c2">Remove</a></div>
+          <div class="two">
+            <div class="fld"><label>Where</label><div class="in">Block E · Ground floor · Plantroom</div></div>
+            <div class="fld"><label>Reason</label><div class="chips"><span class="chip on">Client instruction</span><span class="chip">Design change</span><span class="chip">Site condition</span><span class="chip">Damage by others</span><span class="chip">Omission</span><span class="chip">Spec change</span></div></div>
+          </div>
+          <div class="fld"><label>What extra work, and why</label><div class="in ta">Four twin sockets on the east wall for the BMS panel. Not on the drawings; asked for on site.</div></div>
+          <div class="two">
+            <div class="fld"><label>Already done?</label><div class="ynq"><span class="on">Yes, on a say-so</span><span>Not yet</span></div></div>
+            <div class="fld"><label>Who asked · optional</label><div class="in">G. Marshall, C&amp;AJ Marshall</div></div>
+          </div>
+          <div class="two">
+            <div class="fld"><label>Rough size · optional</label><div class="chips"><span class="chip">½ day</span><span class="chip on">1 day</span><span class="chip">2 days</span><span class="chip">More</span></div></div>
+            <div class="fld"><label>Photographs · 2</label><div class="shots"><div class="ph">01</div><div class="ph">02</div><div class="camera" style="min-height:0">📷</div></div></div>
+          </div>
+        </div>
+        <div class="note warn"><b>Before sign-off:</b> 08:40 L1 riser needs a photograph. 09:41 has a photo with no caption.</div>
+      </div>
+    </div>
+    <div class="actionbar"><span class="save"><i></i>Saved on server 09:44</span><a class="btn" href="#c2">Sign off the day</a></div>
+  </div></div>
+
+  <div class="notes">
+    <section><h5>What it answers first</h5><ul><li><b>“What did I do today, and what happened to what I raised?”</b> One surface for both. The diary is the living site diary (EXP-1) written once, on site, not assembled afterwards.</li><li>The office's decisions come back onto the entry that caused them, in the office's words: instructed, assigned, verify, read.</li><li>Sign-off is the report. The document is generated from the day; the engineer never fills in “a report”.</li></ul></section>
+    <section><h5>What it assumes</h5><ul><li>Same five fields as Concept 1, plus a time on each observation (the store has capturedAt on photos; the entry needs its own).</li><li>“Earlier on this job” is the engineer's submitted reports joined to the issues and variations they raised — three existing endpoints, one join in the client.</li><li>Adding to a day after sending is the existing correction flow, presented as “rev 2”.</li></ul></section>
+    <section><h5>Build cost from today</h5><ul><li><b>Medium.</b> The editor is turned inside out: the list is the screen and the form is a sheet. The autosave, recovery, findings and signature code is unchanged underneath.</li><li>The entry-after-sending page is new: report observation plus the raised record's history.</li><li>The tablet is the phone with the sheet docked to the right.</li></ul></section>
+  </div>
+</section>
+
+<!-- ===================== CONCEPT 3 ===================== -->
+<section class="concept" id="c3">
+  <div class="concept-head">
+    <div class="concept-num">Concept 3</div>
+    <h2>Walk by location</h2>
+    <p>Engineers walk a building, not a form. Say where you are, log what is there (any kind, as many as needed), move on. The report is grouped by location and the summary at the end shows per-area counts, which is also how a project manager reads it. On the tablet the areas run down the left, the entries for the chosen area in the middle, and the running summary on the right.</p>
+  </div>
+
+  <p class="cap"><b>Phone</b> where are you, an area's entries, a variation inside an area, and the walk summary <span>390 × 812 · areas come from this project's previous entries, never a set-up list</span></p>
+  <div class="frame"><div class="phones">
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><div class="brandm"><b>RELAY</b><span>DEV</span></div><div class="abt"><b>Site walk · Wed 10 Sep</b><span>Tetley Hall — Block E · <span class="num">SPR-015</span> draft</span></div></div>
+      <div class="screen">
+        <div class="band"><span class="lbl">Where are you?</span><h2 style="font-size:18px">Pick an area or type one</h2><p>Areas you have logged on this job before. Free text is fine; nothing has to match.</p></div>
+        <div class="fld"><div class="in empty">Type an area…</div></div>
+        <div class="locs">
+          <a class="loc" href="#c3"><b>L3 riser</b><span class="cnt"><i class="tone-neutral">1</i></span><span class="chev">›</span></a>
+          <a class="loc" href="#c3"><b>L1 riser</b><span class="cnt"><i class="tone-defect">1</i></span><span class="chev">›</span></a>
+          <a class="loc on" href="#c3"><b>Plantroom</b><span class="cnt"><i class="tone-variation">1</i><i class="tone-neutral">1</i></span><span class="chev">›</span></a>
+          <a class="loc" href="#c3"><b>Roof — AHU deck</b><span class="cnt"><i class="tone-neutral">1</i></span><span class="chev">›</span></a>
+          <a class="loc" href="#c3"><b>L2 riser</b><span class="quiet" style="font-size:12px">nothing today</span><span class="chev">›</span></a>
+          <a class="loc add" href="#c3">+ Somewhere else</a>
+        </div>
+        <div class="sec-h">Open on this job<span class="r">3 issues · 1 variation</span></div>
+        <div class="list"><a class="row" href="#c3"><div class="main"><b>L1 riser · tray cover damaged</b><span><span class="ref">ISS-007</span> · Marshall · target 19 Sep</span></div><span class="tag tag-brass">Assigned</span></a><a class="row" href="#c3"><div class="main"><b>Plantroom · additional sockets</b><span><span class="ref">VO-001</span> · CVI-014</span></div><span class="tag tag-ok">Instructed</span></a></div>
+      </div>
+      <div class="actionbar"><span class="save"><i></i>Saved on server 09:44</span><a class="btn btn-q btn-sm" href="#c3">Summary</a></div>
+    </div><span class="pcap">Where are you · areas with today's counts</span></div>
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>Plantroom</b><span>Tetley Hall — Block E · 2 entries today</span></div></div>
+      <div class="screen">
+        <div class="list">
+          <a class="row" href="#c3"><div class="main"><span class="kind tone-neutral" style="align-self:flex-start">Progress</span><b>Distribution board DB-G1 terminated and tested</b><span>09:20 · 1 photo</span></div><span class="chev">›</span></a>
+          <a class="row on" href="#c3"><div class="main"><span class="kind tone-variation" style="align-self:flex-start">Variation</span><b>Four twin sockets, east wall, for the BMS panel</b><span>09:41 · already done · 2 photos</span></div><span class="chev">›</span></a>
+        </div>
+        <div class="sec-h">Add here</div>
+        <div class="tiles">
+          <a class="tile" href="#c3"><span class="kind tone-neutral">Progress</span><b>Work done</b></a>
+          <a class="tile" href="#c3"><span class="kind tone-defect">Defect</span><b>Something wrong</b></a>
+          <a class="tile" href="#c3"><span class="kind tone-variation">Variation</span><b>Extra work</b></a>
+          <a class="tile" href="#c3"><span class="kind tone-access">Access</span><b>Couldn't get in</b></a>
+        </div>
+        <div class="sec-h">Still open here<span class="r">from earlier visits</span></div>
+        <div class="list"><a class="row" href="#c3"><div class="ph" style="width:44px;aspect-ratio:1">·</div><div class="main"><b>Additional socket outlets</b><span><span class="ref">VO-001</span> · instructed CVI-014 · £1,860</span></div><span class="chev">›</span></a></div>
+        <p class="note">Seen one of these again? Open it and add a sighting instead of logging it twice.</p>
+      </div>
+      <div class="actionbar"><span class="save"><i></i>Saved on server 09:44</span><a class="btn btn-q btn-sm" href="#c3">Next area ›</a></div>
+    </div><span class="pcap">An area · what's logged, add more, what's still open here</span></div>
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>Plantroom · variation</b><span>09:41 · Tetley Hall — Block E</span></div><span class="kind tone-variation">Variation</span></div>
+      <div class="screen">
+        <div class="fld"><label>What extra work, and why</label><div class="in ta">Four twin sockets on the east wall for the BMS panel. Not on the drawings; asked for on site.</div></div>
+        <div class="fld"><label>Why is it extra?</label><div class="chips"><span class="chip on">Client asked</span><span class="chip">Drawing changed</span><span class="chip">Found on site</span><span class="chip">Someone else's damage</span><span class="chip">Missed off</span><span class="chip">Spec changed</span></div><span class="hint">Stored as the register's reason: client instruction, design change, site condition, damage by others, omission, spec change.</span></div>
+        <div class="fld"><label>Done already?</label><div class="ynq"><span class="on">Yes, on a say-so</span><span>Not yet</span></div></div>
+        <div class="fld"><label>Who asked · when</label><div class="in">G. Marshall · Tue 9 Sep</div></div>
+        <div class="fld"><label>Is this on an issue already?</label><div class="list"><div class="row"><div class="ph" style="width:44px;aspect-ratio:1">·</div><div class="main"><b>No — it's new</b></div></div></div></div>
+        <div class="fld"><label>Roughly</label><div class="chips"><span class="chip">½ day</span><span class="chip on">1 day</span><span class="chip">2 days</span><span class="chip">More</span></div><div class="in">4 × twin 13A, 20m of 2.5mm T&amp;E, trunking</div></div>
+        <div class="fld"><label>Photographs · 2</label><div class="camera">📷 Take photograph</div><div class="shots"><div class="ph">01</div><div class="ph">02</div></div></div>
+        <div class="note bad"><b>Already done, not yet instructed.</b> The office will ask the client to sign for this as chargeable. Get the site manager's name right.</div>
+      </div>
+      <div class="actionbar"><span class="save"><i class="busy"></i>Saving to server</span><a class="btn btn-sm" href="#c3">Done</a></div>
+    </div><span class="pcap">Variation · site words, stored as the register's choices</span></div>
+
+    <div class="phone-wrap"><div class="phone">
+      <div class="appbar"><button class="iconbtn" type="button" aria-label="Back">‹</button><div class="abt"><b>Walk summary</b><span>Wed 10 Sep · 5 areas · 6 entries</span></div></div>
+      <div class="screen">
+        <dl class="sum"><div><dt>Areas</dt><dd>5</dd></div><div><dt>Raises</dt><dd class="late">1 <small>issue</small></dd></div><div><dt>Raises</dt><dd class="soon">1 <small>variation</small></dd></div></dl>
+        <div class="locs">
+          <div class="loc"><b>L3 riser</b><span class="cnt"><i class="tone-neutral">1</i></span></div>
+          <div class="loc" style="border-left:3px solid var(--alert)"><b>L1 riser <small class="late">· needs a photo</small></b><span class="cnt"><i class="tone-defect">1</i></span></div>
+          <div class="loc"><b>Plantroom</b><span class="cnt"><i class="tone-variation">1</i><i class="tone-neutral">1</i></span></div>
+          <div class="loc"><b>Roof — AHU deck</b><span class="cnt"><i class="tone-neutral">1</i></span></div>
+          <div class="loc"><b>External — compound</b><span class="cnt"><i class="tone-access">1</i></span></div>
+        </div>
+        <div class="finds"><div class="find"><span class="k stop">Stop</span><span>L1 riser: a defect needs at least one photograph</span></div><div class="find"><span class="k chk">Check</span><span>External — compound: access restriction, nobody named</span></div></div>
+        <div class="fld"><label>Sign</label><div class="in" style="min-height:80px;border-style:dashed;justify-content:center;color:var(--text-3)">Draw your signature</div></div>
+        <a class="btn wide" href="#c3" style="opacity:.5">Send to office · 1 outstanding</a>
+      </div>
+    </div><span class="pcap">Summary · per area, then sign</span></div>
+
+  </div></div>
+
+  <p class="cap"><b>Tablet</b> areas · entries · running summary <span>1024 × 700 landscape · three columns; portrait drops the right column under the middle one</span></p>
+  <div class="frame"><div class="tablet">
+    <div class="appbar"><div class="brandm"><b>RELAY</b><span>DEV</span></div><div class="abt"><b>Tetley Hall — Block E · site walk</b><span>Wed 10 Sep · <span class="num">SPR-015</span> draft · G. Stephenson · Electrical</span></div><nav><a class="on" href="#c3">Walk</a><a href="#c3">Issues</a><a href="#c3">Reports</a><a href="#c3">Projects</a></nav></div>
+    <div class="body three">
+      <div class="rail">
+        <div class="fld"><div class="in empty" style="min-height:44px">Type an area…</div></div>
+        <div class="locs">
+          <a class="loc" href="#c3"><b>L3 riser</b><span class="cnt"><i class="tone-neutral">1</i></span></a>
+          <a class="loc" href="#c3" style="border-left:3px solid var(--alert)"><b>L1 riser</b><span class="cnt"><i class="tone-defect">1</i></span></a>
+          <a class="loc on" href="#c3"><b>Plantroom</b><span class="cnt"><i class="tone-variation">1</i><i class="tone-neutral">1</i></span></a>
+          <a class="loc" href="#c3"><b>Roof — AHU deck</b><span class="cnt"><i class="tone-neutral">1</i></span></a>
+          <a class="loc" href="#c3"><b>External — compound</b><span class="cnt"><i class="tone-access">1</i></span></a>
+          <a class="loc add" href="#c3">+ Somewhere else</a>
+        </div>
+      </div>
+      <div class="main">
+        <div class="sec-h">Plantroom · today<span class="r">2 entries</span></div>
+        <div class="card toned tone-neutral"><div class="head"><span class="kind tone-neutral">Progress · 09:20</span><a class="btn btn-q btn-sm" href="#c3">Edit</a></div><p style="margin:0">Distribution board DB-G1 terminated and tested.</p><div class="shots" style="grid-template-columns:repeat(6,1fr)"><div class="ph">01</div></div></div>
+        <div class="card toned tone-variation">
+          <div class="head"><span class="kind tone-variation">Variation · 09:41</span><span class="tag tag-alert">Already done</span></div>
+          <div class="fld"><label>What extra work, and why</label><div class="in ta">Four twin sockets on the east wall for the BMS panel. Not on the drawings; asked for on site.</div></div>
+          <div class="two"><div class="fld"><label>Why is it extra?</label><div class="chips"><span class="chip on">Client asked</span><span class="chip">Drawing changed</span><span class="chip">Found on site</span><span class="chip">Someone else's damage</span><span class="chip">Missed off</span><span class="chip">Spec changed</span></div></div><div class="fld"><label>Who asked · when</label><div class="in">G. Marshall · Tue 9 Sep</div></div></div>
+          <div class="two"><div class="fld"><label>Roughly</label><div class="chips"><span class="chip">½ day</span><span class="chip on">1 day</span><span class="chip">2 days</span><span class="chip">More</span></div></div><div class="fld"><label>Materials</label><div class="in">4 × twin 13A, 20m 2.5mm T&amp;E, trunking</div></div></div>
+          <div class="fld"><label>Photographs · 2</label><div class="shots" style="grid-template-columns:repeat(6,1fr)"><div class="ph">01</div><div class="ph">02</div><div class="camera" style="min-height:0">📷</div></div></div>
+        </div>
+        <div class="tiles" style="grid-template-columns:repeat(4,1fr)"><a class="tile" href="#c3" style="min-height:64px"><b>+ Progress</b></a><a class="tile" href="#c3" style="min-height:64px"><b>+ Defect</b></a><a class="tile" href="#c3" style="min-height:64px"><b>+ Variation</b></a><a class="tile" href="#c3" style="min-height:64px"><b>+ Access</b></a></div>
+      </div>
+      <div class="side">
+        <div class="sec-h">Walk so far<span class="r">6</span></div>
+        <dl class="sum" style="grid-template-columns:1fr 1fr"><div><dt>Areas</dt><dd>5</dd></div><div><dt>Photos</dt><dd>9</dd></div></dl>
+        <div class="finds"><div class="find"><span class="k stop">Stop</span><span>L1 riser: defect needs a photograph</span></div><div class="find"><span class="k chk">Check</span><span>Compound: access, nobody named</span></div></div>
+        <div class="sec-h">Still open here</div>
+        <div class="list"><a class="row" href="#c3"><div class="main"><b>Additional socket outlets</b><span><span class="ref">VO-001</span> · £1,860</span></div><span class="tag tag-ok">Instructed</span></a></div>
+        <div class="note">Seen it again? Add a sighting from the issue rather than logging it twice.</div>
+      </div>
+    </div>
+    <div class="actionbar"><span class="save"><i></i>Saved on server 09:44 · <span class="late">1 outstanding</span></span><a class="btn btn-q" href="#c3">Summary &amp; sign</a></div>
+  </div></div>
+
+  <div class="notes">
+    <section><h5>What it answers first</h5><ul><li><b>“Where am I, and what's here?”</b> The walk order is the capture order. Open issues and variations for the area sit under the new entries, so a repeat sighting is one tap, not a dropdown of refs.</li><li>The summary is per area, which is how the PDF and the project manager read it.</li><li>The variation asks its questions in site words (“Why is it extra?”) and stores the register's choices.</li></ul></section>
+    <section><h5>What it assumes</h5><ul><li>Areas are the distinct locations already typed on this project, counted from previous reports. No hierarchy, no naming rule (EXP-4).</li><li>Issues and variations have a location string to group by. They do.</li><li>Same five optional fields as the other two; the site-words chips are labels over the same stored values.</li></ul></section>
+    <section><h5>Build cost from today</h5><ul><li><b>Medium.</b> Grouping observations by location is a client-side sort; the area rail is new; the section editor is reused per entry.</li><li>“Still open here” is the project's open issues and variations filtered by location match, loose (contains), never exact.</li><li>The three-column tablet is the most layout work of the three.</li></ul></section>
+  </div>
+</section>
+
+<!-- ===================== VERDICT ===================== -->
+<section class="verdict" id="verdict">
+  <h2>Choosing between them</h2>
+  <table>
+    <thead><tr><th>Concept</th><th>Answers first</th><th>Best when</th><th>Tablet</th><th>Build cost from today</th></tr></thead>
+    <tbody>
+      <tr><td>1 · One thing at a time</td><td>“What kind of thing is this?” then only that kind's questions</td><td>Engineers capture in short bursts between jobs and want the fewest fields on screen.</td><td>Cards down the left, one open. Closest to the editor as built.</td><td>Low–medium. Kind picker in front, variation card, home re-laid.</td></tr>
+      <tr><td>2 · Site diary</td><td>“What did I do today, and what came of it?”</td><td>The diary is wanted for its own sake (EXP-1) and engineers want to see the office's answers on the things they raised.</td><td>Diary left, entry right. The sheet docks.</td><td>Medium. List-first editor, entry-after-sending page.</td></tr>
+      <tr><td>3 · Walk by location</td><td>“Where am I, and what's here?”</td><td>Visits are walks through a building and the PM reads by area; repeat sightings are common.</td><td>Three columns; the most layout work.</td><td>Medium. Area rail, grouping, loose location match.</td></tr>
+    </tbody>
+  </table>
+
+  <div class="rec">
+    <h3>My recommendation: build Concept 1, and take two things from the others</h3>
+    <p><b>Concept 1 is the capture spine.</b> It is the shortest path from the current editor to something that is not gross: the section list becomes cards, the kind is chosen before the fields appear, and the variation card asks the six questions the register actually needs, in the order an engineer would answer them. Everything else in the editor (autosave, device recovery, findings, signature, corrections) is untouched underneath it, which is why it is the cheapest of the three and the one I would put on a phone first.</p>
+    <p><b>Take “what came back” from Concept 2.</b> The engineer's home should lead with the office's answers to the things they raised, in the office's tags: instructed, assigned, verify, read, PM notified. The desk already produces every one of those words; the engineer side only has to show them. The entry-after-sending page (the office's answer at the top, history below, add a note) is worth building as the engineer's view of an issue or a variation, replacing the current issue page's layout.</p>
+    <p><b>Take the area chips and “still open here” from Concept 3.</b> Location suggestions drawn from this project's previous entries, and the open issues and variations for the chosen area shown as pictures with descriptions, are what make a repeat sighting one tap. Both are FE-1 and FE-5 as already agreed, and neither needs a location catalogue. I would not build the area rail or the per-area report: the PDF groups by update, and changing that is a document decision, not a phone one.</p>
+    <p><b>The data change is the same whichever is chosen:</b> five optional fields on an observation, listed in section 0. The office side built today already has somewhere to put each of them (affected trade on the issue; reason, already done, who asked, and a rough size on the variation), so the phone can start sending them the day the fields exist. I would ship the variation card and the “came back” list first, because they close the loop the Variations tab now opens, and the defect card's trade field second.</p>
+  </div>
+
+  <p class="fine">All three are static mockups. Nothing here is wired to the application. Projects, references, engineers, dates, counts and office states are examples in the Leodis format, chosen to show how the screens behave. The site-words chips in Concept 3 map one to one onto the Variation Register's Reason choices and would be stored as those. The signature, autosave and offline rules shown are the app's existing rules, drawn where they would appear; they are not new behaviour.</p>
+</section>
+</div>
+
+<script>
+(function () {
+  var btn = document.getElementById('themer');
+  var root = document.documentElement;
+  function current() {
+    var set = root.getAttribute('data-theme');
+    if (set) return set;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  function label() { btn.textContent = current() === 'dark' ? 'Light' : 'Dark'; }
+  label();
+  btn.addEventListener('click', function () { root.setAttribute('data-theme', current() === 'dark' ? 'light' : 'dark'); label(); });
+})();
+</script>
+</body>
+</html>

@@ -32,6 +32,12 @@ export async function validateObservations(value: unknown, reportId: string, exi
     if (!['update','defect','instruction','access'].includes(o.type)) return 'Unknown update type.';
     if (!o.id || ids.has(o.id)) return 'Update IDs must be unique.';
     ids.add(o.id);
+    if (o.affectedTrade !== undefined && !['Electrical','HVAC','P&H','Other / non-Leodis'].includes(o.affectedTrade)) return 'Unknown trade.';
+    if (o.variationReason !== undefined && !['Client instruction','Design change','Site condition','Damage by others','Omission','Spec change'].includes(o.variationReason)) return 'Unknown variation reason.';
+    if (o.workDone !== undefined && typeof o.workDone !== 'boolean') return 'Malformed update.';
+    if (o.askedBy !== undefined && (typeof o.askedBy !== 'string' || o.askedBy.length > 200)) return 'Keep who asked under 200 characters.';
+    if (o.roughSize !== undefined && !['half-day','day','two-days','more'].includes(o.roughSize)) return 'Unknown rough size.';
+    if (o.partsEstimate !== undefined && (typeof o.partsEstimate !== 'number' || !Number.isFinite(o.partsEstimate) || o.partsEstimate < 0 || o.partsEstimate > 10_000_000)) return 'Parts estimate must be a number of pounds.';
     if (o.linkedIssueId !== undefined) {
       if (typeof o.linkedIssueId !== 'string') return 'Invalid linked issue.';
       const { getIssue } = await import('./issueStore');

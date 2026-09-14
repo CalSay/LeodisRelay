@@ -1,14 +1,15 @@
 import type { FixtureProject, ObservationType } from '@/lib/fixtures';
-import type { Issue, ReportSummary } from '@/lib/types';
+import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import type { Tone } from '@/lib/status';
+import { INSTRUCTION_LABEL } from '@/lib/variations';
 
 /**
  * What the office desk derives from the records it loads. Pure functions over
- * report summaries and issues, so the screens stay layout and the rules stay
- * testable. Nothing here invents a figure the store cannot answer.
+ * report summaries, issues and variations, so the screens stay layout and the
+ * rules stay testable. Nothing here invents a figure the store cannot answer.
  */
 
-export interface Snapshot { reports: ReportSummary[]; drafts: ReportSummary[]; issues: Issue[]; loadedAt: string }
+export interface Snapshot { reports: ReportSummary[]; drafts: ReportSummary[]; issues: Issue[]; variations: Variation[]; loadedAt: string }
 
 /** Today in the office's calendar, as YYYY-MM-DD, so target dates compare as strings. */
 export const today = (): string => new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
@@ -20,6 +21,12 @@ export const isUnassigned = (i: Issue): boolean => isActive(i) && i.owner.trim()
 export const isNotReviewed = (i: Issue): boolean => isActive(i) && i.confirmation === 'provisional';
 export const isDisputed = (i: Issue): boolean => isActive(i) && i.confirmation === 'disputed';
 export const isClosed = (i: Issue): boolean => i.work === 'closed';
+
+/** Awaiting instruction with no quote yet: the office has not priced it, so nobody can be asked to instruct it. */
+export const isPending = (v: Variation): boolean => v.instruction === 'pending';
+export const isUnpriced = (v: Variation): boolean => v.instruction === 'pending' && v.quotedValue === undefined;
+/** Work already done on a say-so and still not instructed: the commercial exposure the register exists to show. */
+export const isExposed = (v: Variation): boolean => v.instruction === 'pending' && v.workDone;
 
 /** The notification email to the project manager has not gone. A quiet fact: the report is on file regardless. */
 export const notNotified = (r: ReportSummary): boolean => r.state === 'submitted' && (r.delivery === 'outbox' || r.issued?.transport === 'outbox' || (!!r.issued && r.issued.records.length === 0));
@@ -57,6 +64,13 @@ export interface ProjectStats {
   failed: ReportSummary[];
   pendingReview: ReportSummary[];
   returned: ReportSummary[];
+  /** Newest first. */
+  variations: Variation[];
+  pendingVariations: Variation[];
+  unpricedVariations: Variation[];
+  exposedVariations: Variation[];
+  /** Sum of instructed values on this project. */
+  instructedValue: number;
   rollup: Rollup;
   needsAction: number;
 }
@@ -64,6 +78,7 @@ export function projectStats(project: FixtureProject, snap: Snapshot, day: strin
   const issues = snap.issues.filter(i => i.projectId === project.id);
   const reports = snap.reports.filter(r => r.projectId === project.id).sort(byReceived);
   const drafts = snap.drafts.filter(r => r.projectId === project.id);
+  const variations = snap.variations.filter(v => v.projectId === project.id).sort(byRaised);
   const s: ProjectStats = {
     project, code: project.projectNumber, issues,
     active: issues.filter(isActive),
@@ -77,14 +92,21 @@ export function projectStats(project: FixtureProject, snap: Snapshot, day: strin
     failed: reports.filter(processingFailed),
     pendingReview: reports.filter(awaitingReview),
     returned: reports.filter(returned),
+    variations,
+    pendingVariations: variations.filter(isPending),
+    unpricedVariations: variations.filter(isUnpriced),
+    exposedVariations: variations.filter(isExposed),
+    instructedValue: variations.filter(v => v.instruction === 'instructed').reduce((n, v) => n + (v.instructedValue ?? v.quotedValue ?? 0), 0),
     rollup: rollup(issues, day),
     needsAction: 0,
   };
-  s.needsAction = new Set([...s.overdue, ...s.verify, ...s.unassigned, ...s.disputed].map(i => i.id)).size + s.failed.length + s.pendingReview.length;
+  s.needsAction = new Set([...s.overdue, ...s.verify, ...s.unassigned, ...s.disputed].map(i => i.id)).size + s.failed.length + s.pendingReview.length
+    + new Set([...s.unpricedVariations, ...s.exposedVariations].map(v => v.id)).size;
   return s;
 }
 
 export const byReceived = (a: ReportSummary, b: ReportSummary): number => (b.serverAcknowledgedAt ?? b.lastSavedAt ?? '').localeCompare(a.serverAcknowledgedAt ?? a.lastSavedAt ?? '');
+export const byRaised = (a: Variation, b: Variation): number => b.raisedAt.localeCompare(a.raisedAt);
 
 /** What a visit found, by kind. Summaries written before kind counts existed fall back to the issue-raising count. */
 export function found(r: ReportSummary): { kind: ObservationType; n: number }[] {
@@ -115,6 +137,17 @@ export function workTag(i: Issue, day: string): { label: string; cls: string } {
 export function confirmTag(i: Issue): { label: string; cls: string } {
   return { label: CONFIRM_LABEL[i.confirmation], cls: i.confirmation === 'confirmed' ? 'tag-ok' : i.confirmation === 'disputed' ? 'tag-alert' : 'tag-quiet' };
 }
+/**
+ * The instruction state as a word and a shape. Work done without an
+ * instruction outranks "awaiting", because it is the one that costs money.
+ */
+export function instructionTag(v: Variation): { label: string; cls: string } {
+  if (v.instruction === 'instructed') return { label: 'Instructed', cls: 'tag-ok' };
+  if (v.instruction === 'declined') return { label: 'Declined', cls: 'tag-quiet' };
+  if (v.workDone) return { label: 'Done, not instructed', cls: 'tag-alert' };
+  if (v.quotedValue === undefined) return { label: 'Needs a quote', cls: 'tag-caution' };
+  return { label: INSTRUCTION_LABEL.pending, cls: 'tag-acc' };
+}
 export const toneTag = (tone: Tone): string => tone === 'sent' ? 'tag-ok' : tone === 'alert' ? 'tag-alert' : 'tag-quiet';
 
 /** Whole days between two YYYY-MM-DD dates. */
@@ -139,18 +172,21 @@ export function fmtDate(iso?: string): string {
 export const shortRef = (reference: string): string => reference.split('-').slice(1).join('-') || reference;
 
 /** Everything that needs a person, across the portfolio, most urgent first. */
-export interface AttentionItem { key: string; title: string; sub: string; tag: { label: string; cls: string }; go: string; action?: { label: string; primary?: boolean; kind: 'retry' | 'verify' | 'assign' | 'triage' | 'review' | 'chase' | 'confirm'; issue?: Issue; report?: ReportSummary } }
+export interface AttentionItem { key: string; title: string; sub: string; tag: { label: string; cls: string }; go: string; action?: { label: string; primary?: boolean; kind: 'retry' | 'verify' | 'assign' | 'triage' | 'review' | 'chase' | 'confirm' | 'price' | 'instruct'; issue?: Issue; report?: ReportSummary; variation?: Variation } }
 export function attention(stats: ProjectStats[], day: string): AttentionItem[] {
   const out: AttentionItem[] = [];
   for (const s of stats) {
     for (const r of s.failed) out.push({ key: `ne-${r.id}`, title: 'Report could not be processed', sub: `${r.reference} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}. ${r.deliveryError ?? 'The worker gave up on it.'}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${s.code}/report/${r.id}` });
     for (const r of s.pendingReview) out.push({ key: `rv-${r.id}`, title: 'Report awaiting review', sub: `${r.reference} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${s.code}/report/${r.id}`, action: { label: 'Review', kind: 'review', report: r } });
     for (const i of s.overdue) out.push({ key: `od-${i.id}`, title: i.description, sub: `${s.project.projectName} · ${i.owner || 'unassigned'} · target ${i.targetDate}`, tag: { label: `${daysLate(i.targetDate, day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${s.code}/issue/${i.id}` });
+    // Work done on a say-so with nothing in writing: every day it waits is a day harder to invoice.
+    for (const v of s.exposedVariations) out.push({ key: `vx-${v.id}`, title: v.description, sub: `${s.project.projectName} · work done, no written instruction · ${v.quotedValue === undefined ? 'not yet priced' : 'quoted, awaiting instruction'}`, tag: { label: 'Not instructed', cls: 'tag-alert' }, go: `#/projects/${s.code}/variation/${v.id}`, action: v.quotedValue === undefined ? { label: 'Price', kind: 'price', primary: true, variation: v } : { label: 'Instruct', kind: 'instruct', primary: true, variation: v } });
     for (const i of s.verify) out.push({ key: `vf-${i.id}`, title: i.description, sub: `${s.project.projectName} · closure by ${i.closureSubmittedBy ?? 'unknown'} · waiting ${daysSince(i.events.at(-1)?.at)} days`, tag: { label: 'Verify', cls: 'tag-caution' }, go: `#/projects/${s.code}/issue/${i.id}`, action: { label: 'Verify', kind: 'verify', primary: true, issue: i } });
     for (const i of s.unassigned) out.push({ key: `ua-${i.id}`, title: i.description, sub: `${s.project.projectName} · nobody owns it · raised ${fmtDay(i.raisedAt)}`, tag: { label: 'Unassigned', cls: 'tag-caution' }, go: `#/projects/${s.code}/issue/${i.id}`, action: { label: 'Assign', kind: 'assign', primary: true, issue: i } });
     for (const i of s.disputed) out.push({ key: `dp-${i.id}`, title: i.description, sub: `${s.project.projectName} · the report that raised it was returned · needs a decision`, tag: { label: 'Disputed', cls: 'tag-alert' }, go: `#/projects/${s.code}/issue/${i.id}`, action: { label: 'Triage', kind: 'triage', issue: i } });
+    for (const v of s.unpricedVariations.filter(v => !v.workDone)) out.push({ key: `vq-${v.id}`, title: v.description, sub: `${s.project.projectName} · variation raised ${fmtDay(v.raisedAt)} by ${v.raisedBy} · no quote yet`, tag: { label: 'Needs a quote', cls: 'tag-caution' }, go: `#/projects/${s.code}/variation/${v.id}`, action: { label: 'Price', kind: 'price', variation: v } });
   }
-  const rank = (t: AttentionItem) => t.key.startsWith('ne') ? 0 : t.key.startsWith('od') ? 1 : t.key.startsWith('rv') ? 2 : t.key.startsWith('dp') ? 3 : t.key.startsWith('vf') ? 4 : 5;
+  const rank = (t: AttentionItem) => t.key.startsWith('ne') ? 0 : t.key.startsWith('od') ? 1 : t.key.startsWith('vx') ? 2 : t.key.startsWith('rv') ? 3 : t.key.startsWith('dp') ? 4 : t.key.startsWith('vf') ? 5 : t.key.startsWith('ua') ? 6 : 7;
   return out.sort((a, b) => rank(a) - rank(b));
 }
 
