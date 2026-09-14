@@ -10,6 +10,7 @@ export const OPERATIONS = {
   clients: '9174b22f-a49a-4a0f-9be0-ce9d70be5287',
   reports: 'f916d018-d7a7-4703-a9cc-b722fa20b430',
   issues: '4b49efb5-df01-4097-ab64-dae248d5c114',
+  variations: '78ba0d7f-64df-4284-b95f-8036cea718fc',
 } as const;
 function itemIds(value: string | undefined): string[] {
   const ids = (value ?? '').split(',').map(s => s.trim()).filter(Boolean);

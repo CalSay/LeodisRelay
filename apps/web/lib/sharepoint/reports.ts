@@ -3,6 +3,7 @@ import type { Report } from '../types';
 import { cachedProject } from '../projects';
 import { atomic, getRecord, putRecord, records } from '../storage';
 import { readPdf } from '../pdfArtifacts';
+import { reportFileName, reportYear } from '../reportFiles';
 import { archiveFolder, assertProjectWrite, OPERATIONS } from './config';
 import { graph, GraphError, type ListItem } from './graph';
 import { personLookup } from './people';
@@ -16,6 +17,36 @@ export function recoverablePendingReport(actual: Record<string, unknown>, desire
   delete pending.RelayPdfUrl;
   return fieldsEqual(actual, pending) && fieldsEqual({ RelayPdfUrl: actual.RelayPdfUrl }, { RelayPdfUrl: '' });
 }
+
+async function findDriveItem(path: string): Promise<DriveItem | undefined> {
+  try { return await graph.request<DriveItem>(path); }
+  catch (error) { if (error instanceof GraphError && error.status === 404) return undefined; throw error; }
+}
+
+async function verifiedReceipt(report: Report, item: DriveItem, driveId: string, bytes: Buffer, digest: string): Promise<FilingReceipt> {
+  if (item.size !== bytes.length || !item['@microsoft.graph.downloadUrl']) throw new Error('Filed PDF could not be verified.');
+  const downloaded = await graph.transfer(item['@microsoft.graph.downloadUrl']);
+  const remoteDigest = createHash('sha256').update(Buffer.from(await downloaded.arrayBuffer())).digest('hex');
+  if (remoteDigest !== digest) throw new Error('A different PDF already occupies the revision filename. Nothing was overwritten.');
+  return { id: report.id, driveId, itemId: item.id, webUrl: item.webUrl, digest };
+}
+
+/** Find or create only the four-digit year below the already-approved project Reports folder. */
+async function yearFolder(base: string, year: string): Promise<DriveItem> {
+  const path = `${base}:/${encodeURIComponent(year)}`;
+  let folder = await findDriveItem(path);
+  if (!folder) {
+    try {
+      folder = await graph.request<DriveItem>(`${base}/children`, { method: 'POST', body: JSON.stringify({ name: year, folder: {}, '@microsoft.graph.conflictBehavior': 'fail' }) });
+    } catch (error) {
+      if (!(error instanceof GraphError) || error.status !== 409) throw error;
+      folder = await findDriveItem(path);
+    }
+  }
+  if (!folder?.folder) throw new Error('The report year destination is not a folder.');
+  return folder;
+}
+
 /** One immutable revision, one deterministic file; a retry cannot replace an existing file. */
 export async function fileReport(report: Report): Promise<FilingReceipt> {
   const project = report.projectSnapshot ?? cachedProject(report.projectId);
@@ -28,12 +59,33 @@ export async function fileReport(report: Report): Promise<FilingReceipt> {
   const base = `/drives/${encodeURIComponent(folder.driveId)}/items/${encodeURIComponent(folder.itemId)}`;
   const destination = await graph.request<DriveItem>(base);
   if (!destination.folder) throw new Error('Configured report destination is not a folder.');
+
+  // Successful historical filings retain their exact item and URL. This is
+  // checked before applying the new naming/folder convention, so deployment
+  // cannot duplicate or silently relocate an old report.
+  const previous = getRecord<FilingReceipt>('sharepoint-files', report.id);
+  if (previous) {
+    if (previous.driveId !== folder.driveId) throw new Error('The filed PDF belongs to a different document library.');
+    const existing = await graph.request<DriveItem>(`/drives/${encodeURIComponent(previous.driveId)}/items/${encodeURIComponent(previous.itemId)}`);
+    return verifiedReceipt(report, existing, previous.driveId, bytes, digest);
+  }
+
+  // A deployment predating filing receipts may already have written the old
+  // UUID filename. Adopt it in place rather than create a cleaner duplicate.
   const safe = report.reference.replace(/[^A-Za-z0-9._-]/g, '_');
-  const name = `${safe}-r${report.revision}-${report.id}.pdf`;
-  const path = `${base}:/${encodeURIComponent(name)}`;
-  let item: DriveItem | undefined;
-  try { item = await graph.request<DriveItem>(path); }
-  catch (error) { if (!(error instanceof GraphError) || error.status !== 404) throw error; }
+  const legacyName = `${safe}-r${report.revision}-${report.id}.pdf`;
+  const legacy = await findDriveItem(`${base}:/${encodeURIComponent(legacyName)}`);
+  if (legacy) {
+    const receipt = await verifiedReceipt(report, legacy, folder.driveId, bytes, digest);
+    putRecord('sharepoint-files', receipt);
+    return receipt;
+  }
+
+  const destinationYear = await yearFolder(base, reportYear(report));
+  const yearBase = `/drives/${encodeURIComponent(folder.driveId)}/items/${encodeURIComponent(destinationYear.id)}`;
+  const name = reportFileName(report);
+  const path = `${yearBase}:/${encodeURIComponent(name)}`;
+  let item = await findDriveItem(path);
   if (!item) {
     // SharePoint already defaults new upload sessions to fail on a name conflict.
     // Sending the optional uploadable-properties body causes some document
@@ -49,11 +101,7 @@ export async function fileReport(report: Report): Promise<FilingReceipt> {
     }
     item = await graph.request<DriveItem>(path);
   }
-  if (item.size !== bytes.length || !item['@microsoft.graph.downloadUrl']) throw new Error('Filed PDF could not be verified.');
-  const downloaded = await graph.transfer(item['@microsoft.graph.downloadUrl']);
-  const remoteDigest = createHash('sha256').update(Buffer.from(await downloaded.arrayBuffer())).digest('hex');
-  if (remoteDigest !== digest) throw new Error('A different PDF already occupies the revision filename. Nothing was overwritten.');
-  const receipt: FilingReceipt = { id: report.id, driveId: folder.driveId, itemId: item.id, webUrl: item.webUrl, digest };
+  const receipt = await verifiedReceipt(report, item, folder.driveId, bytes, digest);
   putRecord('sharepoint-files', receipt);
   return receipt;
 }

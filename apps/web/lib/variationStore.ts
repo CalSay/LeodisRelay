@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 import type { Report, Variation, VariationEvent, VariationReason, VariationTrade } from './types';
 import { FIXTURE_PROJECTS } from './fixtures';
 import { VARIATION_REASONS, VARIATION_TRADES, readCosting, type Costing } from './variations';
-import { atomic, database, getRecord, putRecord, records } from './storage';
+import { atomic, database, getRecord, records } from './storage';
+import { saveVariation, VariationSyncError } from './sharepoint/variations';
 
 /**
  * Variation records for the prototype.
@@ -39,7 +40,7 @@ export function raiseVariationsFromReport(report: Report): Variation[] {
       if (already) {
         if (report.corrects) {
           already.events.push({ at, ...actor, kind: 'note', note: `Corrected in ${report.reference} rev ${report.revision}: ${o.whatHappened}`, photos: o.photos });
-          putRecord('variations', already);
+          saveVariation(already);
         }
         continue;
       }
@@ -72,8 +73,8 @@ export function raiseVariationsFromReport(report: Report): Variation[] {
         ...(o.linkedIssueId ? { linkedIssueId: o.linkedIssueId } : {}),
         events: [{ at, ...actor, kind: 'raised', note: extras.length ? `${o.whatHappened}\n\n${extras.join(' · ')}.` : o.whatHappened, photos: o.photos }],
       };
-      putRecord('variations', variation);
-      raised.push(variation);
+      saveVariation(variation);
+      raised.push(getVariation(variation.id) ?? variation);
     }
     return raised;
   });
@@ -165,8 +166,12 @@ export function applyVariationCommand(id: string, command: VariationCommand): Va
     }
 
     next = { ...next, events: [...current.events, event] };
-    putRecord('variations', next);
-    return { ok: true, value: next };
+    try { saveVariation(next); }
+    catch (error) {
+      if (error instanceof VariationSyncError) return refuse(error.message, 409);
+      throw error;
+    }
+    return { ok: true, value: getVariation(next.id) ?? next };
   });
 }
 

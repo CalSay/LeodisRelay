@@ -1,4 +1,4 @@
-import { archiveFileName, sanitiseFileName } from "@relay/contracts";
+import { reportFileName } from '../reportFiles';
 import { alreadyDelivered, resolveRecipients, type IssueRecord } from "@relay/platform";
 
 import { cachedProject } from '../projects';
@@ -73,12 +73,7 @@ export async function issueReport(
     return { records, unaddressed, transport: transport.kind, ...(missing.length ? {} : {}) };
   }
 
-  const fileName = archiveFileName({
-    projectNumber: project?.projectNumber ?? "UNKNOWN",
-    reportNumber: sanitiseFileName(report.reference),
-    revision: report.revision,
-    visitDate: report.visitDate,
-  });
+  const fileName = reportFileName(report);
 
   const revisionId = report.id as never;
 

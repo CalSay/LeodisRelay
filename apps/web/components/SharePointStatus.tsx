@@ -1,11 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
-import type { Issue } from '@/lib/types';
+import type { Issue, Variation } from '@/lib/types';
 export function IssueSyncStatus({ issue }: { issue: Issue }) {
   if (!issue.sync || issue.sync.status === 'synced') return null;
   return <p role="status" className="rowsub">{issue.sync.status === 'pending' ? 'Change saved in RELAY; waiting for SharePoint.' : 'SharePoint needs attention: ' + (issue.sync.error ?? issue.sync.status)}</p>;
 }
-type Status = {mode:string; jobs:{id:string;kind:string;status:string;attempts:number;error?:string}[];issues:{id:string;reference:string;sync:Issue['sync']}[]};
+type Status = {mode:string; jobs:{id:string;kind:string;status:string;attempts:number;error?:string}[];issues:{id:string;reference:string;sync:Issue['sync']}[];variations:{id:string;reference:string;sync:Variation['sync']}[]};
 export function SharePointStatus() {
   const [status,setStatus] = useState<Status | null>(null);
   const [error,setError] = useState('');
@@ -26,6 +26,7 @@ export function SharePointStatus() {
     {error && <p role="alert">{error}</p>}
     {notice && <p role="status">{notice}</p>}
     {status?.issues.map(i=><p key={i.id}><a href={`/issues/${i.id}`}>{i.reference}</a> · {i.sync?.status}{i.sync?.error ? ` · ${i.sync.error}` : ''}</p>)}
+    {status?.variations?.map(v=><p key={v.id}><a href={`/variations/${v.id}`}>{v.reference}</a> · {v.sync?.status}{v.sync?.error ? ` · ${v.sync.error}` : ''}</p>)}
     {status?.jobs.map(j=><div key={j.id} style={{marginTop:12}}><span>{j.kind} · {j.status} · attempt {j.attempts}</span>{j.error && <p>{j.error}</p>}{j.status==='failed' && <button type="button" disabled={busy || status.mode!=='write'} onClick={()=>void retry(j.id)}>Retry</button>}</div>)}
     {status && !status.jobs.length && <p>No outstanding SharePoint jobs.</p>}
   </div></div>;

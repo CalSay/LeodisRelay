@@ -2,15 +2,29 @@ import { randomUUID } from 'node:crypto';
 import type { Issue } from '../types';
 import { atomic, database, enqueue, getRecord, putRecord, records } from '../storage';
 import { cachedProject, projectIdentity, refreshProjects, reportableProject } from '../projects';
-import { assertProjectWrite, OPERATIONS, sharePointMode } from './config';
+import { assertProjectWrite, OPERATIONS, sharePointMode, writableProjectItemIds } from './config';
 import { graph, GraphError, type ListItem } from './graph';
 import { personLookup, principalForPerson, sitePeople } from './people';
 
 const CONFIRMATION = { provisional: 'Provisional', confirmed: 'Confirmed', disputed: 'Disputed', withdrawn: 'Withdrawn' } as const;
 const WORK = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Awaiting verification', closed: 'Closed' } as const;
-export interface IssueSync { status: 'pending' | 'synced' | 'conflict' | 'failed'; itemId?: string | undefined; etag?: string | undefined; operationId?: string; error?: string }
+export interface IssueSync { status: 'pending' | 'synced' | 'conflict' | 'failed'; itemId?: string | undefined; etag?: string | undefined; operationId?: string; error?: string; evidenceUrl?: string }
 export interface IssueOperation { issue: Issue; baseEtag?: string | undefined; itemId?: string | undefined }
 export class IssueSyncError extends Error {}
+
+/** Add filed-report evidence links to report-raised issues created before links were synchronized. */
+export function queueIssueSourceLinkBackfill(): void {
+  if (sharePointMode() !== 'write') return;
+  const allowed = new Set(writableProjectItemIds());
+  atomic(() => {
+    for (const issue of records<Issue>('issues')) {
+      if (!issue.raisedByReport || issue.sync?.status !== 'synced') continue;
+      const project = cachedProject(issue.projectId);
+      const receipt = getRecord<{webUrl:string}>('sharepoint-files', issue.raisedByReport);
+      if (project?.source && allowed.has(project.source.itemId) && receipt?.webUrl && issue.sync.evidenceUrl !== receipt.webUrl) saveIssue(issue);
+    }
+  });
+}
 
 /** Local edits are explicitly pending until the authoritative List acknowledges them. */
 export function saveIssue(issue: Issue): void {
@@ -33,6 +47,9 @@ export async function issueFields(issue: Issue): Promise<Record<string, unknown>
   if (!project?.source) throw new Error('The issue has no SharePoint project identity.');
   assertProjectWrite(project.source.itemId);
   const verified = [...issue.events].reverse().find(e => e.kind === 'verified');
+  const receipt = issue.raisedByReport ? getRecord<{webUrl:string}>('sharepoint-files', issue.raisedByReport) : undefined;
+  let origin = 'https://app.relaybyleodis.com';
+  try { origin = new URL(process.env.ENTRA_REDIRECT_URI ?? origin).origin; } catch { /* retain the production origin */ }
   if (issue.work === 'closed' && !verified) throw new Error('Closure verification is missing from this issue history.');
   return {
     Title: issue.reference, RELAY_x0020_Issue_x0020_ID: issue.id, ProjectLookupId: project.source.itemId,
@@ -43,6 +60,8 @@ export async function issueFields(issue: Issue): Promise<Record<string, unknown>
     External_x0020_Owner: issue.owner, Target_x0020_Date: issue.targetDate || null,
     Raised_x0020_ByLookupId: await personLookup(issue.reportedById ?? issue.events[0]?.actorId), Raised_x0020_At: issue.raisedAt,
     Source_x0020_Report_x0020_ID: issue.raisedByReport || '',
+    Evidence_x0020_Link: receipt?.webUrl ?? null,
+    RELAY_x0020_Link: `${origin}/issues/${encodeURIComponent(issue.id)}`,
     ...(issue.closureSubmittedById ? { Closure_x0020_Submitted_x0020_ByLookupId: await personLookup(issue.closureSubmittedById) } : {}),
     ...(issue.work === 'closed' && verified ? { Verified_x0020_ByLookupId: await personLookup(verified.actorId), Verified_x0020_At: verified.at } : {}),
   };
@@ -55,7 +74,7 @@ function enumKey<T extends string>(values: Record<T, string>, value: unknown): T
 export function fieldsEqual(actual: Record<string, unknown>, desired: Record<string, unknown>): boolean {
   return Object.entries(desired).every(([key, value]) => {
     let other = actual[key];
-    if (key === 'PdfLink' && other && typeof other === 'object') other = (other as {Url?:string;url?:string}).Url ?? (other as {url?:string}).url;
+    if (other && typeof other === 'object' && ('Url' in other || 'url' in other)) other = (other as {Url?:string;url?:string}).Url ?? (other as {url?:string}).url;
     if (value === null || value === '') return other === undefined || other === null || other === '';
     if (key.endsWith('LookupId')) return String(other) === String(value);
     if (['Target_x0020_Date','VisitDate'].includes(key)) return siteDate(other) === siteDate(value);
@@ -101,7 +120,8 @@ export async function sendIssueOperation(operation: IssueOperation, operationId:
   if (!saved || !fieldsEqual(saved.fields, fields)) throw new GraphError(412);
   atomic(() => {
     const current = getRecord<Issue>('issues', operation.issue.id);
-    if (current?.sync?.operationId === operationId) putRecord('issues', { ...current, sync: { status: 'synced', itemId: saved.id, etag: saved.eTag } });
+    const evidenceUrl = typeof fields.Evidence_x0020_Link === 'string' ? fields.Evidence_x0020_Link : undefined;
+    if (current?.sync?.operationId === operationId) putRecord('issues', { ...current, sync: { status: 'synced', itemId: saved.id, etag: saved.eTag, ...(evidenceUrl ? {evidenceUrl}: {}) } });
   });
 }
 let refreshing: Promise<void> | undefined;
@@ -143,7 +163,10 @@ export async function refreshIssues(): Promise<void> {
         affectedTrade: affected === 'Other' ? 'Other / non-Leodis' : ['Electrical', 'HVAC', 'P&H'].includes(affected) ? affected as Issue['affectedTrade'] : undefined,
         events: local?.events ?? [], sync: closedWithoutIndependentVerification
           ? {status:'conflict', itemId:row.id, etag:row.eTag, error:'SharePoint closure lacks independent verification. Review the source item before continuing.'}
-          : { status: 'synced', itemId: row.id, etag: row.eTag },
+          : { status: 'synced', itemId: row.id, etag: row.eTag,
+              ...(typeof f.Evidence_x0020_Link === 'object' && f.Evidence_x0020_Link
+                ? {evidenceUrl:String((f.Evidence_x0020_Link as {Url?:string}).Url ?? '')}
+                : text(f.Evidence_x0020_Link) ? {evidenceUrl:text(f.Evidence_x0020_Link)} : {}) },
       });
     }
     atomic(() => {

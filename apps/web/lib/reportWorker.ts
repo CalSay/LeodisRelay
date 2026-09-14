@@ -3,12 +3,15 @@ import { ensurePdf } from './pdfArtifacts';
 import type { Report } from './types';
 import { sharePointMode } from './sharepoint/config';
 import { GraphError } from './sharepoint/graph';
-import { failIssueOperation, sendIssueOperation, type IssueOperation } from './sharepoint/issues';
+import { failIssueOperation, queueIssueSourceLinkBackfill, sendIssueOperation, type IssueOperation } from './sharepoint/issues';
 import { fileReport, registerReport } from './sharepoint/reports';
 import { checkSchema } from './sharepoint/preflight';
+import { failVariationOperation, queueVariationBackfill, sendVariationOperation, type VariationOperation } from './sharepoint/variations';
 
 /** One process, one expensive render at a time; web requests only enqueue work. */
 export async function runOneJob(): Promise<boolean> {
+  queueVariationBackfill();
+  queueIssueSourceLinkBackfill();
   const job = claimJob();
   if (!job) return false;
   if (job.kind.startsWith('sharepoint-') && sharePointMode() !== 'write') {
@@ -25,6 +28,8 @@ export async function runOneJob(): Promise<boolean> {
       await checkSchema();
       if (job.kind === 'sharepoint-issue') {
         await sendIssueOperation(JSON.parse(job.payload) as IssueOperation, job.id);
+      } else if (job.kind === 'sharepoint-variation') {
+        await sendVariationOperation(JSON.parse(job.payload) as VariationOperation, job.id);
       } else {
         const submitted = getRecord<Report>('snapshots', reportId);
         if (!submitted) throw new Error('The submitted snapshot is missing.');
@@ -75,6 +80,8 @@ export async function runOneJob(): Promise<boolean> {
         const permanent = error instanceof GraphError && [400,403,404,409,412,422].includes(error.status);
         if (job.kind === 'sharepoint-issue') {
           if (permanent || job.attempts >= 8) failIssueOperation(JSON.parse(job.payload) as IssueOperation, error, job.id);
+        } else if (job.kind === 'sharepoint-variation') {
+          if (permanent || job.attempts >= 8) failVariationOperation(JSON.parse(job.payload) as VariationOperation, error, job.id);
         } else {
           const current = getRecord<Report>('reports', reportId);
           if (current) putRecord('reports', { ...current, sharepoint: { ...current.sharepoint, status:'failed', error:reason } });

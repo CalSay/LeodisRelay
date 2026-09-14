@@ -232,6 +232,7 @@ export interface VariationEvent {
   photos: Photo[];
 }
 export interface Variation {
+  sync?: import('./sharepoint/variations').VariationSync;
   id: string;
   /** `011LME-VO-001`: the project, then VO, then a sequence per project. */
   reference: string;

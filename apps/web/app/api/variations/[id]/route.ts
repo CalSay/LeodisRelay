@@ -2,12 +2,14 @@ import { NextResponse } from 'next/server';
 import { applyVariationCommand, getVariation, type VariationCommand } from '@/lib/variationStore';
 import { requireSession } from '@/lib/auth/guard';
 import { canAccessProject, canVariationCommand } from '@/lib/auth/access';
+import { refreshVariations } from '@/lib/sharepoint/variations';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(_r: Request, context: { params: Promise<{ id: string }> }) {
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
+  try { await refreshVariations(); } catch { return NextResponse.json({reason:'SharePoint variations could not be refreshed. Please retry.'},{status:503}); }
   const { id } = await context.params;
   const variation = getVariation(id);
   if (variation && !canAccessProject(guard.principal, variation.projectId)) return NextResponse.json({ reason: 'Project access required.' }, { status: 403 });
@@ -22,6 +24,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const { id } = await context.params;
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
+  try { await refreshVariations(); } catch { return NextResponse.json({reason:'SharePoint variations could not be refreshed. Please retry.'},{status:503}); }
   const principal = guard.principal;
   const variation = getVariation(id);
   if (!variation) return NextResponse.json({ reason: 'No such variation.' }, { status: 404 });

@@ -8,7 +8,8 @@ import { assertProjectWrite, OPERATIONS } from '../lib/sharepoint/config';
 import { projectIdentity, reportableProject } from '../lib/projects';
 import { atomic, getRecord, putRecord, database } from '../lib/storage';
 import { fieldsEqual, saveIssue, sendIssueOperation } from '../lib/sharepoint/issues';
-import type { Issue } from '../lib/types';
+import type { Issue, Variation } from '../lib/types';
+import { saveVariation, sendVariationOperation, variationFields } from '../lib/sharepoint/variations';
 
 process.env.RELAY_DATA_ROOT = mkdtempSync(join(tmpdir(), 'relay-sharepoint-'));
 process.env.ENTRA_TENANT_ID = '1431dac1-21c1-4c06-959a-9a437f51401c';
@@ -141,6 +142,27 @@ test('a retained false conflict reconciles only when SharePoint already matches 
   await assert.rejects(sendIssueOperation({issue},'op2'),e=>e instanceof GraphError && e.status===412);
   assert.equal(getRecord<Issue>('issues',issue.id)!.sync?.status,'conflict');
 });
+test('report variations are durably queued, reconciled, and protected from external edits', async () => {
+  const issue = prepareIssue();
+  const variation: Variation = {
+    id:'var-sync-test',reference:'011LME-VO-001',projectId:issue.projectId,description:'Extra isolator',location:'Plantroom',
+    workDone:true,instruction:'pending',source:'report',raisedBy:'Actor',raisedById:'actor',raisedAt:'2026-09-14T09:00:00Z',
+    raisedByReport:'rep-source',raisedByObservation:'obs-source',events:[],
+  };
+  atomic(() => saveVariation(variation));
+  const pending = getRecord<Variation>('variations',variation.id)!;
+  assert.equal(pending.sync?.status,'pending');
+  assert.ok(database().prepare('SELECT id FROM jobs WHERE id=?').get(pending.sync!.operationId!));
+  const desired = await variationFields(pending);
+  assert.equal(desired.WorkUndertakenBeforeInstruction,true);
+  assert.match(String(desired.RelayLink),/\/variations\/var-sync-test$/);
+  graph.byKey = async () => ({id:'52',eTag:'"v2"',fields:desired});
+  graph.request = (async () => { throw Error('A matching remote variation must not be overwritten'); }) as typeof graph.request;
+  await sendVariationOperation({variation:pending},pending.sync!.operationId!);
+  assert.equal(getRecord<Variation>('variations',variation.id)!.sync?.status,'synced');
+  graph.byKey = async () => ({id:'52',eTag:'"v3"',fields:{...desired,Description:'Changed in SharePoint'}});
+  await assert.rejects(sendVariationOperation({variation:pending,itemId:'52',baseEtag:'"v2"'},'later-op'),error=>error instanceof GraphError && error.status===412);
+});
 test('filing retries reuse and verify exact stored PDF bytes without replacing existing files', async () => {
   prepareIssue();
   process.env.RELAY_SHAREPOINT_ARCHIVE_FOLDERS = JSON.stringify({'7':{driveId:'drive',itemId:'folder'}});
@@ -168,18 +190,27 @@ test('new PDF upload sessions use SharePoint conflict defaults without rejected 
   process.env.RELAY_SHAREPOINT_ARCHIVE_FOLDERS = JSON.stringify({'7':{driveId:'drive',itemId:'folder'}});
   const { fileReport } = await import('../lib/sharepoint/reports');
   const { ensurePdf } = await import('../lib/pdfArtifacts');
-  const report = {id:'rep-new-file-test',projectId:projectIdentity('7'),reference:'DEMO-011-SPR-002',revision:1,state:'submitted',version:1} as import('../lib/types').Report;
+  const report = {id:'rep-new-file-test',projectId:projectIdentity('7'),reference:'DEMO-011LME-SPR-002',visitDate:'2026-09-14',revision:1,state:'submitted',version:1} as import('../lib/types').Report;
   const bytes = Buffer.from('new frozen PDF');
   await ensurePdf(report,async()=>bytes);
-  let lookupCount = 0;
+  let fileLookupCount = 0;
   graph.request = (async (path:string,init?:RequestInit) => {
     if(path.endsWith('/folder'))return {id:'folder',folder:{}};
+    if(path.endsWith(':/2026'))throw new GraphError(404);
+    if(path.endsWith('/folder/children')) {
+      assert.equal(init?.method,'POST');
+      assert.deepEqual(JSON.parse(String(init.body)),{name:'2026',folder:{},'@microsoft.graph.conflictBehavior':'fail'});
+      return {id:'year-folder',folder:{}};
+    }
+    if(path.includes('rep-new-file-test'))throw new GraphError(404);
     if(path.endsWith('/createUploadSession')) {
       assert.equal(init?.method,'POST');
       assert.equal(init?.body,undefined);
+      assert.match(path,/year-folder/);
+      assert.match(decodeURIComponent(path),/DEMO-011LME - SPR-002 - 2026-09-14 - Rev 1\.pdf/);
       return {uploadUrl:'https://leodisdevelopments.sharepoint.com/upload'};
     }
-    if(++lookupCount === 1)throw new GraphError(404);
+    if(path.includes('/year-folder') && ++fileLookupCount === 1)throw new GraphError(404);
     return {id:'new-file',size:bytes.length,webUrl:'https://leodisdevelopments.sharepoint.com/new.pdf','@microsoft.graph.downloadUrl':'https://leodisdevelopments.sharepoint.com/download'};
   }) as typeof graph.request;
   graph.transfer = async (url,init) => url.endsWith('/upload')

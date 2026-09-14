@@ -34,6 +34,8 @@ trap on_error ERR
 
 echo 'Building the new image; the current application remains running.'
 docker build --tag "$candidate" .
+echo 'Checking the SharePoint Variation Register synchronization fields.'
+docker run --rm --env-file deploy/.env "$candidate" node /app/scripts/ensure-sharepoint-variation-schema.cjs
 echo 'Pausing web and worker to take a consistent backup of reports and photographs.'
 recover=1
 docker compose -f deploy/compose.yaml stop -t 60 web worker
