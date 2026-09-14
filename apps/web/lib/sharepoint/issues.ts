@@ -58,9 +58,21 @@ export function fieldsEqual(actual: Record<string, unknown>, desired: Record<str
     if (key === 'PdfLink' && other && typeof other === 'object') other = (other as {Url?:string;url?:string}).Url ?? (other as {url?:string}).url;
     if (value === null || value === '') return other === undefined || other === null || other === '';
     if (key.endsWith('LookupId')) return String(other) === String(value);
-    if (key.endsWith('_At') || ['Target_x0020_Date','ReceivedAt','ReviewedAt','VisitDate'].includes(key)) return Date.parse(String(other)) === Date.parse(String(value));
+    if (['Target_x0020_Date','VisitDate'].includes(key)) return siteDate(other) === siteDate(value);
+    if (key.endsWith('_At') || ['ReceivedAt','ReviewedAt'].includes(key)) return Date.parse(String(other)) === Date.parse(String(value));
     return other === value;
   });
+}
+function siteDate(value: unknown): string {
+  const text = String(value);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
+  const date = new Date(text);
+  if (Number.isNaN(date.getTime())) return text;
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(valuePart => valuePart.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
 }
 export async function sendIssueOperation(operation: IssueOperation, operationId: string): Promise<void> {
   const fields = await issueFields(operation.issue);

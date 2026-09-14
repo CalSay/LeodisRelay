@@ -82,7 +82,9 @@ test('project identity uses item IDs rather than duplicated project numbers', ()
   assert.equal(reportableProject(project),true);
 });
 test('readback comparison normalizes SharePoint lookups, dates, empty fields and hyperlink objects', () => {
-  assert.equal(fieldsEqual({ProjectLookupId:7,VisitDate:'2026-09-13T00:00:00Z',PdfLink:{Url:'https://example.com/a'}},{ProjectLookupId:'7',VisitDate:'2026-09-13',Location:'',PdfLink:'https://example.com/a'}),true);
+  assert.equal(fieldsEqual({ProjectLookupId:7,VisitDate:'2026-09-13T23:00:00Z',PdfLink:{Url:'https://example.com/a'}},{ProjectLookupId:'7',VisitDate:'2026-09-14',Location:'',PdfLink:'https://example.com/a'}),true);
+  assert.equal(fieldsEqual({Target_x0020_Date:'2026-12-14T00:00:00Z'},{Target_x0020_Date:'2026-12-14'}),true);
+  assert.equal(fieldsEqual({ReceivedAt:'2026-09-14T10:32:19.000Z'},{ReceivedAt:'2026-09-14T10:32:19Z'}),true);
   assert.equal(fieldsEqual({Work_x0020_Status:'Closed'},{Work_x0020_Status:'Open'}),false);
 });
 function prepareIssue(): Issue {
