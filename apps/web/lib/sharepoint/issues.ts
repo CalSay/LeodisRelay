@@ -15,6 +15,7 @@ export class IssueSyncError extends Error {}
 /** Local edits are explicitly pending until the authoritative List acknowledges them. */
 export function saveIssue(issue: Issue): void {
   if (sharePointMode() === 'off') { putRecord('issues', issue); return; }
+  if (sharePointMode() === 'read') throw new IssueSyncError('Issue updates are disabled while SharePoint is read-only.');
   const project = cachedProject(issue.projectId);
   if (!project?.source) throw new IssueSyncError('This example issue cannot be sent to SharePoint.');
   assertProjectWrite(project.source.itemId);
