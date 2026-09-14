@@ -19,7 +19,10 @@ const originalItems = graph.items;
 const originalByKey = graph.byKey;
 const originalTransfer = graph.transfer;
 afterEach(() => {
-  process.env.RELAY_SHAREPOINT_MODE = 'off'; delete process.env.RELAY_SHAREPOINT_PROJECT_IDS;
+  process.env.RELAY_SHAREPOINT_MODE = 'off';
+  delete process.env.RELAY_SHAREPOINT_PROJECT_IDS;
+  delete process.env.RELAY_SHAREPOINT_READ_PROJECT_IDS;
+  delete process.env.RELAY_SHAREPOINT_WRITE_PROJECT_IDS;
   graph.request = originalRequest; graph.items = originalItems; graph.byKey = originalByKey;
   graph.transfer = originalTransfer;
 });
@@ -73,6 +76,10 @@ test('project identity uses item IDs rather than duplicated project numbers', ()
   assert.equal(reportableProject({...project,status:'1. Tender'}),false);
   assert.equal(reportableProject({...project,projectNumber:''}),false);
   assert.equal(reportableProject({...project,tombstoned:true}),false);
+  process.env.RELAY_SHAREPOINT_READ_PROJECT_IDS='8';
+  assert.equal(reportableProject(project),false);
+  process.env.RELAY_SHAREPOINT_READ_PROJECT_IDS='7';
+  assert.equal(reportableProject(project),true);
 });
 test('readback comparison normalizes SharePoint lookups, dates, empty fields and hyperlink objects', () => {
   assert.equal(fieldsEqual({ProjectLookupId:7,VisitDate:'2026-09-13T00:00:00Z',PdfLink:{Url:'https://example.com/a'}},{ProjectLookupId:'7',VisitDate:'2026-09-13',Location:'',PdfLink:'https://example.com/a'}),true);

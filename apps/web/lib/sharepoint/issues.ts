@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { Issue } from '../types';
 import { atomic, database, enqueue, getRecord, putRecord, records } from '../storage';
-import { cachedProject, projectIdentity } from '../projects';
-import { assertProjectWrite, OPERATIONS, pilotItemIds, sharePointMode } from './config';
+import { cachedProject, projectIdentity, refreshProjects, reportableProject } from '../projects';
+import { assertProjectWrite, OPERATIONS, sharePointMode } from './config';
 import { graph, GraphError, type ListItem } from './graph';
 import { personLookup, principalForPerson, sitePeople } from './people';
 
@@ -94,13 +94,15 @@ export async function refreshIssues(): Promise<void> {
   if (sharePointMode() === 'off') return;
   if (refreshing) return refreshing;
   refreshing = (async () => {
+    await refreshProjects();
     const [rows, people] = await Promise.all([graph.items(OPERATIONS.issues), sitePeople()]);
-    const allowed = pilotItemIds();
     const seen = new Set<string>();
     const next: Issue[] = [];
     for (const row of rows) {
       const f = row.fields;
-      if (!allowed.includes(String(f.ProjectLookupId))) continue;
+      const projectId = projectIdentity(String(f.ProjectLookupId));
+      const project = cachedProject(projectId);
+      if (!project || !reportableProject(project)) continue;
       const id = String(f.RELAY_x0020_Issue_x0020_ID ?? '');
       if (!id) throw new Error('A SharePoint issue has no RELAY identity.');
       if (seen.has(id)) throw new Error('Duplicate issue identity in SharePoint.');
@@ -114,7 +116,7 @@ export async function refreshIssues(): Promise<void> {
       const reporting = text(f.Reporting_x0020_Trade);
       const work = enumKey(WORK, f.Work_x0020_Status);
       const closedWithoutIndependentVerification = work === 'closed' && (!f.Verified_x0020_ByLookupId || !f.Closure_x0020_Submitted_x0020_ByLookupId || String(f.Verified_x0020_ByLookupId) === String(f.Closure_x0020_Submitted_x0020_ByLookupId));
-      next.push({ ...local, id, reference: text(f.Title), projectId: projectIdentity(String(f.ProjectLookupId)),
+      next.push({ ...local, id, reference: text(f.Title), projectId,
         description: text(f.Description), location: text(f.Location), actionNeeded: text(f.Required_x0020_Action),
         confirmation: enumKey(CONFIRMATION, f.Confirmation_x0020_Status), work,
         owner: text(f.External_x0020_Owner) || people.find(p => p.id === String(f.Assigned_x0020_ToLookupId))?.name || '',

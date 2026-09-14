@@ -11,13 +11,22 @@ export const OPERATIONS = {
   reports: 'f916d018-d7a7-4703-a9cc-b722fa20b430',
   issues: '4b49efb5-df01-4097-ab64-dae248d5c114',
 } as const;
-export function pilotItemIds(): string[] {
-  const ids = (process.env.RELAY_SHAREPOINT_PROJECT_IDS ?? '').split(',').map(s => s.trim()).filter(Boolean);
+function itemIds(value: string | undefined): string[] {
+  const ids = (value ?? '').split(',').map(s => s.trim()).filter(Boolean);
   if (ids.some(id => !/^\d+$/.test(id))) throw new Error('Use SharePoint project item IDs, not project numbers.');
   return ids;
 }
+/** Optional read scope. Blank means every project with a reportable SharePoint status. */
+export function readableProjectItemIds(): string[] | null {
+  const ids = itemIds(process.env.RELAY_SHAREPOINT_READ_PROJECT_IDS);
+  return ids.length ? ids : null;
+}
+/** Writes always require an explicit item-ID allowlist. The old name remains a safe migration fallback. */
+export function writableProjectItemIds(): string[] {
+  return itemIds(process.env.RELAY_SHAREPOINT_WRITE_PROJECT_IDS ?? process.env.RELAY_SHAREPOINT_PROJECT_IDS);
+}
 export function assertProjectWrite(itemId: string): void {
-  if (sharePointMode() !== 'write' || !pilotItemIds().includes(itemId)) {
+  if (sharePointMode() !== 'write' || !writableProjectItemIds().includes(itemId)) {
     throw new Error('SharePoint writes are not enabled for this project.');
   }
 }

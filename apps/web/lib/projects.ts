@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { FIXTURE_PROJECTS, type FixtureProject } from './fixtures';
 import { atomic, getRecord, putRecord, records } from './storage';
-import { OPERATIONS, pilotItemIds, sharePointMode } from './sharepoint/config';
+import { OPERATIONS, readableProjectItemIds, sharePointMode } from './sharepoint/config';
 import { graph, type Column } from './sharepoint/graph';
 
 export interface ConnectedProject extends FixtureProject {
@@ -24,9 +24,9 @@ export function cachedProject(id: string): ConnectedProject | undefined {
   return cachedProjects().find(p => p.id === id);
 }
 export function reportableProject(p: ConnectedProject): boolean {
-  const allowed = pilotItemIds();
+  const readable = readableProjectItemIds();
   return !p.tombstoned && !!p.projectNumber && ['4. Active', '5. Defects Liability'].includes(p.status) &&
-    (!p.source || allowed.includes(p.source.itemId));
+    (!p.source || readable === null || readable.includes(p.source.itemId));
 }
 let refreshing: Promise<ConnectedProject[]> | undefined;
 export async function refreshProjects(force = false): Promise<ConnectedProject[]> {

@@ -2,14 +2,14 @@ import { NextResponse } from 'next/server';
 import { requireSession } from '@/lib/auth/guard';
 import { isAdmin } from '@/lib/auth/access';
 import { atomic, database, getRecord, putRecord, records } from '@/lib/storage';
-import { sharePointMode, pilotItemIds } from '@/lib/sharepoint/config';
+import { readableProjectItemIds, sharePointMode, writableProjectItemIds } from '@/lib/sharepoint/config';
 import type { Issue, Report } from '@/lib/types';
 export const dynamic = 'force-dynamic';
 export async function GET() {
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
   if (!isAdmin(guard.principal)) return NextResponse.json({reason:'Admin access required.'},{status:403});
-  return NextResponse.json({ mode:sharePointMode(), projectItemIds:pilotItemIds(),
+  return NextResponse.json({ mode:sharePointMode(), readableProjectItemIds:readableProjectItemIds() ?? 'all-reportable', writableProjectItemIds:writableProjectItemIds(),
     jobs:database().prepare("SELECT id,kind,status,attempts,error FROM jobs WHERE kind LIKE 'sharepoint-%' AND status!='complete' ORDER BY available,id").all(),
     issues:records<Issue>('issues').filter(i=>i.sync && i.sync.status!=='synced').map(i=>({id:i.id,reference:i.reference,sync:i.sync})),
     reports:records<Report>('reports').filter(r=>r.sharepoint).map(r=>({id:r.id,reference:r.reference,sharepoint:r.sharepoint})),

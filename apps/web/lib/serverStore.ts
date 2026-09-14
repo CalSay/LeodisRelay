@@ -3,8 +3,8 @@ import type { Principal } from '@relay/platform';
 import { canManage, ownsReport } from './auth/access';
 import type { Issue, Report, ReportSummary, Observation } from './types';
 import { reviewReport } from './review';
-import { cachedProject, reportableProject, projectIdentity } from './projects';
-import { sharePointMode, pilotItemIds } from './sharepoint/config';
+import { cachedProject, cachedProjects, reportableProject } from './projects';
+import { sharePointMode } from './sharepoint/config';
 import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } from './issueStore';
 import { raiseVariationsFromReport } from './variationStore';
 import { atomic, getRecord, putRecord, records, pageRecords, enqueue, database } from './storage';
@@ -20,7 +20,7 @@ export function reportsFor(principal: Principal, projectId?: string, offset = 0)
   const where = ["kind='reports'"];
   const args: string[] = [];
   if (sharePointMode() !== 'off') {
-    const allowed = pilotItemIds().map(projectIdentity);
+    const allowed = cachedProjects().filter(reportableProject).map(project => project.id);
     where.push(allowed.length ? `project IN (${allowed.map(() => '?').join(',')})` : '0');
     args.push(...allowed);
   }

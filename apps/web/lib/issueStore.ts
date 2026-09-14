@@ -1,13 +1,12 @@
 import { saveIssue } from './sharepoint/issues';
-import { sharePointMode, pilotItemIds } from './sharepoint/config';
-import { projectIdentity } from './projects';
+import { sharePointMode } from './sharepoint/config';
 import { atomic, database, getRecord, putRecord, records } from './storage';
 
 import { transition, type IssuePolicy } from "@relay/platform";
 import type { Issue as ContractIssue } from "@relay/contracts";
 
 import type { Issue, IssueEvent, Photo, Report } from "./types";
-import { cachedProject } from './projects';
+import { cachedProject, cachedProjects, reportableProject } from './projects';
 
 /**
  * Issue records for the prototype.
@@ -54,7 +53,7 @@ function toContract(issue: Issue): ContractIssue {
 export function listIssues(projectId?: string): Issue[] {
   const issues = records<Issue>('issues',projectId);
   if (sharePointMode() === 'off') return issues;
-  const allowed = pilotItemIds().map(projectIdentity);
+  const allowed = cachedProjects().filter(reportableProject).map(project => project.id);
   return issues.filter(i => allowed.includes(i.projectId));
 }
 
