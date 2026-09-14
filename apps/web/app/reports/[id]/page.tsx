@@ -485,7 +485,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
                       onChange={(next) => update({ ...report, observations: report.observations.map((o) => (o.id === next.id ? next : o)) })}
                       onRemove={() => { setPicking(p => p.filter(x => x !== observation.id)); update({ ...report, observations: report.observations.filter((o) => o.id !== observation.id) }); }}
                     />}
-                {!picking.includes(observation.id) && <div className="btn-row" style={{ marginTop: 12 }}><button type="button" onClick={() => addCard()} disabled={submitting}>Done · add another card</button><a href="#report-check" className="btn-quiet" style={{ display: 'inline-flex', alignItems: 'center', padding: '0 20px', border: '1px solid var(--line-2)', borderRadius: 'var(--r)' }}>Check &amp; send ↓</a></div>}
+                {!picking.includes(observation.id) && <div className="eng-card-actions"><button type="button" onClick={() => addCard()} disabled={submitting}>+ Add another card</button><a href="#report-check" className="eng-review-link">Review &amp; send ↓</a></div>}
               </div>
             ))}
           </div>
@@ -540,14 +540,11 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             it so the two are never read separately. */}
         <div className="actionbar">
           <div className="actionbar-inner">
-            <span className="savestate">
+            <span className="savestate" aria-live="polite">
               <span className={SAVE[saveState].dot} />
-              <b>{SAVE[saveState].text}</b>
-              {stop.length > 0 && (
-                <span style={{ color: "var(--alert)" }}>
-                  · {stop.length} outstanding
-                </span>
-              )}
+              {stop.length > 0
+                ? <a className="actionbar-warning" href="#report-check"><b>{stop.length} item{stop.length === 1 ? '' : 's'} need attention</b><span>Review before sending ↑</span></a>
+                : <b>{SAVE[saveState].text || 'Ready to send'}</b>}
             </span>
             <button className="btn-primary" onClick={send} disabled={submitting || stop.length > 0}>
               {submitting ? "Sending…" : "Send to office"}

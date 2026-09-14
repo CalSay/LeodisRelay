@@ -47,6 +47,7 @@ export function ObservationEditor({
 }) {
   const principal = usePrincipal();
   const [photoError, setPhotoError] = useState<string | null>(null);
+  const [showAllLocations, setShowAllLocations] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof Observation>(key: K, value: Observation[K]) => onChange({ ...observation, [key]: value });
@@ -71,6 +72,8 @@ export function ObservationEditor({
   const kind = observation.type;
   const raisesIssue = kind === "defect" || kind === "access";
   const id = observation.id;
+  const visibleLocations = showAllLocations ? locations : locations.slice(0, 3);
+  const hiddenLocationCount = Math.max(0, locations.length - visibleLocations.length);
 
   function changeKind(next: ObservationType) {
     const copy: Observation = { ...observation, type: next };
@@ -87,8 +90,12 @@ export function ObservationEditor({
   const where = <div className="field">
     <label htmlFor={`loc-${id}`}>Where</label>
     <input id={`loc-${id}`} type="text" value={observation.location} onChange={(e) => set("location", e.target.value)} placeholder="Level 2 — Riser" autoComplete="off" />
-    {locations.length > 0 && <div className="eng-chips">{locations.slice(0, 8).map(l => <button key={l} type="button" className="eng-chip" aria-pressed={observation.location.trim().toLowerCase() === l.toLowerCase()} onClick={() => set("location", l)}>{l}</button>)}</div>}
-    <p className="hint">Places already used on this project. Type anything; nothing has to match.</p>
+    {locations.length > 0 && <div className="eng-suggestions">
+      <div className="eng-suggestions-head"><span>Recent places</span><span>{locations.length}</span></div>
+      <div className="eng-chips">{visibleLocations.map(l => <button key={l} type="button" className="eng-chip" aria-pressed={observation.location.trim().toLowerCase() === l.toLowerCase()} onClick={() => set("location", l)}>{l}</button>)}</div>
+      {(hiddenLocationCount > 0 || showAllLocations) && <button type="button" className="eng-suggestions-toggle" onClick={() => setShowAllLocations(value => !value)}>{showAllLocations ? 'Show fewer places' : `Show ${hiddenLocationCount} more`}</button>}
+    </div>}
+    <p className="hint">Choose a recent place or type anything; it does not have to match.</p>
   </div>;
 
   const alreadyRaised = raisesIssue && openIssues.length > 0 && <div className="field">
@@ -134,7 +141,8 @@ export function ObservationEditor({
 
       <div className="field">
         <label>Kind</label>
-        <div className="kindrow">{OBSERVATION_TYPES.map(t => <button key={t.value} type="button" aria-pressed={kind === t.value} onClick={() => changeKind(t.value)}>{t.short}</button>)}</div>
+        <div className="kindrow">{OBSERVATION_TYPES.map(t => <button key={t.value} type="button" className={`tone-${t.tone}`} aria-pressed={kind === t.value} onClick={() => changeKind(t.value)}>{kind === t.value && <span aria-hidden="true">✓</span>}{t.short}</button>)}</div>
+        {type && <p className="eng-kind-selected" aria-live="polite"><span aria-hidden="true">✓</span> Selected: <strong>{type.short}</strong></p>}
       </div>
 
       {where}
