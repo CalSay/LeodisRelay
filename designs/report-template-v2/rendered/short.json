@@ -1,0 +1,33 @@
+{
+  "reference": "DESIGN-011LME-SPR-009",
+  "projectName": "Tetley Hall - Block E",
+  "projectNumber": "011LME",
+  "clientName": "C&AJ Marshall Builders Ltd",
+  "clientAccountNumber": "LCA0001",
+  "visitDate": "2026-09-14",
+  "author": "Cal Say | Leodis M&E",
+  "revision": 2,
+  "approved": false,
+  "observations": [
+    {
+      "id": "01",
+      "location": "Level 02 - corridor containment",
+      "typeLabel": "Progress update",
+      "tone": "neutral",
+      "whatHappened": "First-fix containment is complete along the east corridor. The remaining connections will follow once the adjacent riser is available.",
+      "actionNeeded": "",
+      "owner": "",
+      "photos": []
+    },
+    {
+      "id": "02",
+      "location": "Riser E02 - access for first fix",
+      "typeLabel": "Access restriction",
+      "tone": "access",
+      "whatHappened": "Stored materials prevent access to the riser work area. The next installation sequence depends on this area being released.",
+      "actionNeeded": "Confirm when the riser will be cleared and agree the revised access slot.",
+      "owner": "Principal contractor",
+      "photos": []
+    }
+  ]
+}

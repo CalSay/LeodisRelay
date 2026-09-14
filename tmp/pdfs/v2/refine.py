@@ -1,0 +1,12 @@
+from pathlib import Path
+p=Path('designs/report-template-v2/src/ReportDocument.tsx');s=p.read_text(encoding='utf-8')
+s=s.replace('lineHeight: 1.48','lineHeight: 1.4').replace('marginBottom: 15, paddingTop: 10','marginBottom: 10, paddingTop: 7')
+s=s.replace('marginTop: 19, marginBottom: 9','marginTop: 15, marginBottom: 8')
+s=s.replace('<View key={observation.id} style={s.obs}>','<View key={observation.id} style={s.obs} wrap={(observation.whatHappened.length + observation.actionNeeded.length) > 1800}>')
+s=s.replace('minPresenceAhead={105}','minPresenceAhead={80}')
+s=s.replace('signSpace: { height: 31','signSpace: { height: 28')
+p.write_text(s,encoding='utf-8')
+p=Path('designs/report-template-v2/render-examples.mjs');s=p.read_text(encoding='utf-8').replace('Illustrative content for design review. ','')
+p.write_text(s,encoding='utf-8')
+p=Path('designs/report-template-v2/src/footer.ts');s=p.read_text(encoding='utf-8').replace('page.drawText(text.left,','page.drawText("DESIGN EXAMPLE - Illustrative content", { x: MARGIN, y: 74, size: 6.5, font: medium, color: FAINT });\n\n    page.drawText(text.left,')
+p.write_text(s,encoding='utf-8')
