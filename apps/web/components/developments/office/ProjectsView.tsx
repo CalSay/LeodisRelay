@@ -38,8 +38,8 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
 function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
   return <div className="col">
     <div className="col-head"><h4>Projects</h4><i>{ctx.projects.length} reportable</i></div>
-    {projectStatusGroups(ctx.projects).map(group => <div key={group.status}>
-      <div className="grp">{group.label}<i>{group.projects.length}</i></div>
+    {projectStatusGroups(ctx.projects).map(group => <div key={group.status} className={`project-group project-group-${group.tone}`}>
+      <div className="grp project-group-title">{group.label}<i>{group.projects.length}</i></div>
       {group.projects.map(p => {
       const s = ctx.statOf(p.id);
       return <a key={p.id} className={`item ${current?.code === p.id ? 'on' : ''}`} href={`#/projects/${p.id}`}>

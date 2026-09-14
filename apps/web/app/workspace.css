@@ -197,6 +197,11 @@ body:has(.ws){overflow:hidden auto}
 .ws .item .cbar{margin-top:var(--s2)}
 .ws .grp{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-3);padding:var(--s3) var(--s4) var(--s1);border-bottom:1px solid var(--line);display:flex;gap:var(--s2)}
 .ws .grp i{font-style:normal;margin-left:auto}
+.ws .project-group{--project-tone:var(--text-3);--project-wash:transparent}
+.ws .project-group+.project-group{margin-top:var(--s2);border-top:1px solid var(--line-2)}
+.ws .project-group>.project-group-title{min-height:40px;align-items:center;padding:var(--s2) var(--s4);border-left:4px solid var(--project-tone);background:var(--project-wash);color:var(--project-tone);font-weight:600}
+.ws .project-group-active{--project-tone:var(--ok);--project-wash:var(--ok-wash)}
+.ws .project-group-dlp{--project-tone:var(--caution);--project-wash:var(--caution-wash)}
 .ws .arow{display:flex;align-items:center;gap:var(--s3);padding:var(--s2) var(--s4);border-bottom:1px solid var(--line);border-left:2px solid transparent;width:100%;text-align:left}
 .ws .arow:hover{background:var(--sunken)}
 .ws .arow.on{background:var(--acc-wash);border-left-color:var(--acc)}

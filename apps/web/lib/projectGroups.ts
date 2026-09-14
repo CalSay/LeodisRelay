@@ -4,6 +4,7 @@ export const DLP_PROJECT_STATUS = '5. Defects Liability';
 export interface ProjectStatusGroup<T> {
   status: typeof ACTIVE_PROJECT_STATUS | typeof DLP_PROJECT_STATUS;
   label: string;
+  tone: 'active' | 'dlp';
   projects: T[];
 }
 
@@ -22,11 +23,13 @@ export function projectStatusGroups<T extends { status: string }>(projects: T[])
     {
       status: ACTIVE_PROJECT_STATUS,
       label: 'Active',
+      tone: 'active',
       projects: projects.filter(project => project.status === ACTIVE_PROJECT_STATUS),
     },
     {
       status: DLP_PROJECT_STATUS,
       label: 'Defects liability period',
+      tone: 'dlp',
       projects: projects.filter(project => project.status === DLP_PROJECT_STATUS),
     },
   ];
