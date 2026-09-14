@@ -5,6 +5,7 @@ import { PhotoImage } from '@/components/PhotoImage';
 import { getReport, getVariation } from '@/lib/api';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { acknowledgementStatus, deliveryStatus, reviewStatus } from '@/lib/status';
+import { projectStatusGroups } from '@/lib/projectGroups';
 import type { Issue, Report, ReportSummary, Variation } from '@/lib/types';
 import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
@@ -37,14 +38,17 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
 function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
   return <div className="col">
     <div className="col-head"><h4>Projects</h4><i>{ctx.projects.length} reportable</i></div>
-    {ctx.projects.map(p => {
+    {projectStatusGroups(ctx.projects).map(group => <div key={group.status}>
+      <div className="grp">{group.label}<i>{group.projects.length}</i></div>
+      {group.projects.map(p => {
       const s = ctx.statOf(p.id);
       return <a key={p.id} className={`item ${current?.code === p.id ? 'on' : ''}`} href={`#/projects/${p.id}`}>
         <div className="item-top"><div className="rowtitle">{p.projectName}</div><span className="arrow">›</span></div>
-        <div className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager} · {p.division.replace('Leodis ', '')}{p.status === '5. Defects Liability' ? ' · Defects liability' : ''}</div>
+        <div className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager} · {p.division.replace('Leodis ', '')}</div>
         {s ? <><Bar c={s.rollup} /><Meta c={s.rollup} />{s.pendingVariations.length > 0 && <div className="meta"><span className={s.exposedVariations.length ? 'late' : ''}>{s.pendingVariations.length} variation{s.pendingVariations.length === 1 ? '' : 's'} awaiting instruction</span></div>}</> : <div className="cbar" style={{ marginTop: 8 }} />}
       </a>;
-    })}
+      })}
+    </div>)}
     <div className="colpad sticky-foot"><BarKey /><div className="rowsub">Tenders and completed jobs are not listed.</div></div>
   </div>;
 }

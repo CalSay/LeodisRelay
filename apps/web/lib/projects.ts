@@ -3,9 +3,12 @@ import { FIXTURE_PROJECTS, type FixtureProject } from './fixtures';
 import { atomic, getRecord, putRecord, records } from './storage';
 import { OPERATIONS, readableProjectItemIds, sharePointMode } from './sharepoint/config';
 import { graph, type Column } from './sharepoint/graph';
+import { sharePointOrdered } from './projectGroups';
 
 export interface ConnectedProject extends FixtureProject {
   source?: { siteId: string; listId: string; itemId: string };
+  /** Zero-based position in the Project Tracker response from SharePoint. */
+  sharePointOrder?: number;
   refreshedAt?: string;
   tombstoned?: boolean;
 }
@@ -18,7 +21,8 @@ export function columnName(columns: Column[], displayName: string): string {
   return matches[0]!.name;
 }
 export function cachedProjects(): ConnectedProject[] {
-  return sharePointMode() === 'off' ? FIXTURE_PROJECTS : records<ConnectedProject>('projects');
+  if (sharePointMode() === 'off') return FIXTURE_PROJECTS;
+  return sharePointOrdered(records<ConnectedProject>('projects'));
 }
 export function cachedProject(id: string): ConnectedProject | undefined {
   return cachedProjects().find(p => p.id === id);
@@ -47,7 +51,9 @@ export async function refreshProjects(force = false): Promise<ConnectedProject[]
     const people = await sitePeople();
     const text = (v: unknown) => typeof v === 'string' ? v : '';
     const now = new Date().toISOString();
-    const next: ConnectedProject[] = items.filter(item => ['4. Active', '5. Defects Liability'].includes(text(item.fields[names.status]))).map(item => {
+    const next: ConnectedProject[] = items.map((item, sharePointOrder) => ({ item, sharePointOrder }))
+      .filter(({ item }) => ['4. Active', '5. Defects Liability'].includes(text(item.fields[names.status])))
+      .map(({ item, sharePointOrder }) => {
       const client = clients.find(c => c.id === String(item.fields[names.client + 'LookupId']));
       if (!client) throw new Error(`Project item ${item.id} has an unresolved Client lookup.`);
       const manager = people.find(p => p.id === String(item.fields[names.manager + 'LookupId']));
@@ -55,7 +61,7 @@ export async function refreshProjects(force = false): Promise<ConnectedProject[]
         clientName: text(client.fields.Title) || `Client ${client.id}`, clientAccountNumber: text(client.fields[account]),
         division: text(item.fields[names.division]), status: text(item.fields[names.status]),
         projectManager: manager?.name ?? '', projectManagerEmail: manager?.email ?? '', reviewRequired: false,
-        source: { siteId: OPERATIONS.site, listId: OPERATIONS.projects, itemId: item.id }, refreshedAt: now };
+        source: { siteId: OPERATIONS.site, listId: OPERATIONS.projects, itemId: item.id }, sharePointOrder, refreshedAt: now };
     });
     atomic(() => {
       for (const old of records<ConnectedProject>('projects')) if (!next.some(p => p.id === old.id)) putRecord('projects', { ...old, tombstoned: true });
