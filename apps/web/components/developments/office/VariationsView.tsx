@@ -3,32 +3,34 @@ import './variations.css';
 import { useEffect, useState, type ReactNode } from 'react';
 import { PhotoImage } from '@/components/PhotoImage';
 import type { Variation, VariationEventKind } from '@/lib/types';
-import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, variationValue } from '@/lib/variations';
+import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, isCharged, marginPct, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
 import { Btn, BtnQ } from './bits';
 import { Band, CardList, Mark, StubCard, type MarkKind } from './marks';
 import { byRaised, daysSince, fmtDay, fmtWhen, isExposed, isPending, isUnpriced, shortRef } from './model';
 
 type Stage = 'quote' | 'client' | 'instructed' | 'declined';
-type Flag = 'exposed' | 'chase' | 'waiting' | 'instructed' | 'declined';
+type Flag = 'exposed' | 'chase' | 'waiting' | 'instructed' | 'declined' | 'within';
 type Group = 'urgency' | 'project' | 'reason';
 type DialogKind = 'variation-price' | 'variation-instruct' | 'variation-decline' | 'variation-reopen' | 'variation-details';
 
-const STAGES: { k: Stage; label: string; test: (v: Variation) => boolean }[] = [
+const STAGES: { k: Stage; label: string; title?: string; test: (v: Variation) => boolean }[] = [
   { k: 'quote', label: 'Needs a quote', test: isUnpriced },
   { k: 'client', label: 'With client', test: v => isPending(v) && v.quotedValue !== undefined },
   { k: 'instructed', label: 'Instructed', test: v => v.instruction === 'instructed' },
-  { k: 'declined', label: 'Declined', test: v => v.instruction === 'declined' },
+  // Within contract shares the closed stage with declined: neither is charged. The stage block counts it on a line of its own.
+  { k: 'declined', label: 'Declined', title: 'Declined or within contract', test: v => !isCharged(v) },
 ];
 const stageOf = (v: Variation): Stage => STAGES.find(s => s.test(v))!.k;
-const BANDS: [Flag, MarkKind, string][] = [['exposed', 'urgent', 'Done, not instructed'], ['chase', 'action', 'Chase the client'], ['waiting', 'none', 'Waiting'], ['instructed', 'done', 'Instructed'], ['declined', 'none', 'Declined']];
-const EVENT: Record<VariationEventKind, [string, string]> = { raised: ['Raised', 'gold'], priced: ['Priced', 'gold'], instructed: ['Instructed', 'ok'], declined: ['Declined', 'bad'], reopened: ['Reopened', 'warn'], details: ['Details changed', ''], note: ['Note', ''] };
+const BANDS: [Flag, MarkKind, string][] = [['exposed', 'urgent', 'Done, not instructed'], ['chase', 'action', 'Chase the client'], ['waiting', 'none', 'Waiting'], ['instructed', 'done', 'Instructed'], ['declined', 'none', 'Declined'], ['within', 'none', 'Within contract']];
+const EVENT: Record<VariationEventKind, [string, string]> = { raised: ['Raised', 'gold'], priced: ['Priced', 'gold'], instructed: ['Instructed', 'ok'], declined: ['Declined', 'bad'], within_contract: ['Within contract', ''], reopened: ['Reopened', 'warn'], details: ['Details changed', ''], note: ['Note', ''] };
 const CHASE_DAYS = 14;
 
 /** Days since the latest quote was recorded, or undefined when no pricing event is on file. */
 const quotedDays = (v: Variation): number | undefined => { const e = v.events.filter(x => x.kind === 'priced').at(-1); return e ? daysSince(e.at) : undefined; };
 const isChase = (v: Variation): boolean => isPending(v) && !v.workDone && v.quotedValue !== undefined && (quotedDays(v) ?? 0) > CHASE_DAYS;
-const flagOf = (v: Variation): Flag => v.instruction === 'declined' ? 'declined' : v.instruction === 'instructed' ? 'instructed' : v.workDone ? 'exposed' : isChase(v) ? 'chase' : 'waiting';
+const isWithin = (v: Variation): boolean => v.instruction === 'within_contract';
+const flagOf = (v: Variation): Flag => isWithin(v) ? 'within' : v.instruction === 'declined' ? 'declined' : v.instruction === 'instructed' ? 'instructed' : v.workDone ? 'exposed' : isChase(v) ? 'chase' : 'waiting';
 const markOf = (v: Variation): MarkKind => { const f = flagOf(v); return f === 'exposed' ? 'urgent' : f === 'chase' || (f === 'waiting' && isUnpriced(v)) ? 'action' : f === 'instructed' ? 'done' : 'none'; };
 const sum = (vs: Variation[], pick: (v: Variation) => number | undefined) => vs.reduce((n, v) => n + (pick(v) ?? 0), 0);
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -64,19 +66,20 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
 
   const money = (v: Variation): ReactNode => {
     const f = flagOf(v);
+    if (f === 'within') return <span className="ro-vo-quiet">Within contract · not charged</span>;
     if (f === 'declined') return v.quotedValue === undefined ? <span className="ro-vo-quiet">Not priced</span> : <s className="ro-vo-quiet">{fmtMoney(v.quotedValue)}</s>;
     if (f === 'instructed') return <span className="ro-vo-in">{fmtMoney(variationValue(v))}</span>;
     if (v.quotedValue === undefined) return <span className={v.workDone ? 'ro-vo-neg' : ''}>Not priced</span>;
     return <span className={f === 'exposed' || f === 'chase' ? 'ro-vo-neg' : ''}>{fmtMoney(v.quotedValue)} quoted</span>;
   };
-  const card = (v: Variation) => <StubCard key={v.id} href={`#/variations/${v.id}`} on={selected?.id === v.id} quiet={v.instruction === 'declined'}
+  const card = (v: Variation) => <StubCard key={v.id} href={`#/variations/${v.id}`} on={selected?.id === v.id} quiet={!isCharged(v)}
     project={proj(v.projectId)?.projectNumber ?? ''} code={shortRef(v.reference)} title={v.description}
     sub={<>{[proj(v.projectId)?.projectName ?? v.projectId, v.reason ?? 'reason not set', v.trade ?? 'trade not set'].join(' · ')}{isExposed(v) && <> · <b className="ro-vo-neg">work done</b></>}</>}
     aside={money(v)} mark={markOf(v)} markLabel={flagOf(v) === 'chase' ? `Quoted ${quotedDays(v)} days ago` : BANDS.find(b => b[0] === flagOf(v))![2]} />;
 
   const exposed = items.filter(isExposed);
   let list: ReactNode;
-  if (!items.length) list = <div className="ro-empty"><Mark kind="done" /><b>Nothing here</b><span>No variations {STAGES.find(s => s.k === current)!.label.toLowerCase()}{project || trade || reason ? ' for this filter' : ''}.</span></div>;
+  if (!items.length) list = <div className="ro-empty"><Mark kind="done" /><b>Nothing here</b><span>No variations {(STAGES.find(s => s.k === current)!.title ?? STAGES.find(s => s.k === current)!.label).toLowerCase()}{project || trade || reason ? ' for this filter' : ''}.</span></div>;
   else if (group === 'urgency') list = BANDS.map(([k, m, l]) => {
     const g = items.filter(v => flagOf(v) === k).sort((a, b) => (quotedDays(b) ?? 0) - (quotedDays(a) ?? 0) || byRaised(a, b));
     return g.length ? <div key={k}><Band kind={m} label={l} count={g.length} /><CardList>{g.map(card)}</CardList></div> : null;
@@ -88,16 +91,18 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
       .sort((a, b) => b.total - a.total || a.k.localeCompare(b.k))
       .map(({ k, g, total, exp }) => <div key={k}><div className="ro-vo-grouphead"><b>{k}</b><span>· {g.length} · {fmtMoney(total)}</span>{exp > 0 && <span className="ro-vo-neg">· {exp} done, not instructed</span>}</div><CardList>{g.map(card)}</CardList></div>);
   }
-  const quoted = sum(items, v => v.quotedValue), instructed = sum(items.filter(v => v.instruction === 'instructed'), variationValue);
-  const margin = sum(items.filter(v => v.instruction !== 'declined'), estimatedMargin);
+  // Within-contract quotes were never chargeable, so they are left out of every total.
+  const quoted = sum(items.filter(v => !isWithin(v)), v => v.quotedValue), instructed = sum(items.filter(v => v.instruction === 'instructed'), variationValue);
+  const margin = sum(items.filter(isCharged), estimatedMargin);
 
   return <div className="view ro-vo">
     <div className="ro-vo-pipe" role="group" aria-label="Variation stage">{STAGES.map(s => {
-      const g = byStage[s.k], exp = g.filter(isExposed).length, chase = g.filter(isChase).length;
-      const line = s.k === 'quote' ? 'Not yet priced' : s.k === 'client' ? `${fmtMoney(sum(g, v => v.quotedValue))} quoted` : s.k === 'instructed' ? `${fmtMoney(sum(g, variationValue))} instructed` : `${fmtMoney(sum(g, v => v.quotedValue))} not charged`;
+      const g = byStage[s.k], exp = g.filter(isExposed).length, chase = g.filter(isChase).length, within = g.filter(isWithin).length;
+      const line = s.k === 'quote' ? 'Not yet priced' : s.k === 'client' ? `${fmtMoney(sum(g, v => v.quotedValue))} quoted` : s.k === 'instructed' ? `${fmtMoney(sum(g, variationValue))} instructed` : `${fmtMoney(sum(g.filter(v => !isWithin(v)), v => v.quotedValue))} not charged`;
       return <button type="button" key={s.k} className={`ro-vo-stage ${s.k === 'declined' ? 'closed' : ''}`} aria-pressed={current === s.k} onClick={() => pick(s.k)}>
         <span className="ro-vo-sl">{s.label}</span><span className="ro-vo-sn">{g.length}</span>
         <span className="ro-vo-sm">{line}</span>
+        {within > 0 && <span className="ro-vo-sw">{within} within contract</span>}
         {(exp > 0 || chase > 0) && <span className="ro-vo-sf">{exp > 0 && <span><Mark kind="urgent" size="sm" />{exp} done, not instructed</span>}{chase > 0 && <span><Mark kind="action" size="sm" />{chase} to chase</span>}</span>}
       </button>;
     })}</div>
@@ -111,8 +116,8 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
     </div>
 
     <div className="ro-vo-body">
-      <section className="col focus ro-vo-col" aria-label={STAGES.find(s => s.k === current)!.label}>
-        <div className="col-head"><h4>{STAGES.find(s => s.k === current)!.label}</h4><i>{plural(items.length, 'variation')}</i></div>
+      <section className="col focus ro-vo-col" aria-label={STAGES.find(s => s.k === current)!.title ?? STAGES.find(s => s.k === current)!.label}>
+        <div className="col-head"><h4>{STAGES.find(s => s.k === current)!.title ?? STAGES.find(s => s.k === current)!.label}</h4><i>{plural(items.length, 'variation')}</i></div>
         <div className="ro-vo-scroll">
           {exposed.length > 0 && <div className="ro-alert" role="alert"><Mark kind="urgent" /><span><b>{fmtMoney(sum(exposed, exposure))} of work done without an instruction</b>{plural(exposed.length, 'variation')}{exposed.some(isUnpriced) ? ', some not yet priced' : ''}. Get the client&rsquo;s sign-off before invoicing.</span><span /></div>}
           {list}
@@ -133,12 +138,16 @@ function Detail({ ctx, v }: { ctx: Ctx; v: Variation }) {
   const report = v.raisedByReport ? ctx.snap?.reports.find(r => r.id === v.raisedByReport) : undefined;
   const stage = STAGES.find(s => s.k === stageOf(v))!;
   const days = quotedDays(v), chase = isChase(v), exposed = isExposed(v);
-  const cost = expectedCost(v), value = variationValue(v), margin = v.instruction === 'declined' ? undefined : estimatedMargin(v), pct = v.instruction === 'declined' ? undefined : marginPct(v);
+  const cost = expectedCost(v), value = variationValue(v), margin = isCharged(v) ? estimatedMargin(v) : undefined, pct = isCharged(v) ? marginPct(v) : undefined;
   const evidence = v.events.find(e => e.kind === 'raised')?.photos ?? [];
   const quotedWhen = days === undefined ? '' : days === 0 ? ' today' : ` ${plural(days, 'day')} ago`;
 
   let mark: MarkKind, head: string, why: ReactNode, buttons: ReactNode;
-  if (v.instruction === 'declined') {
+  if (isWithin(v)) {
+    mark = 'none'; head = 'Within contract';
+    why = `${v.events.filter(e => e.kind === 'within_contract').at(-1)?.note || 'The work is already in our contract.'} Not charged.`;
+    buttons = <BtnQ onClick={() => d('variation-reopen')}>Reopen</BtnQ>;
+  } else if (v.instruction === 'declined') {
     mark = 'none'; head = 'Declined'; why = v.events.filter(e => e.kind === 'declined').at(-1)?.note || 'Not going ahead.';
     buttons = <BtnQ onClick={() => d('variation-reopen')}>Reopen</BtnQ>;
   } else if (v.instruction === 'instructed') {
@@ -165,7 +174,7 @@ function Detail({ ctx, v }: { ctx: Ctx; v: Variation }) {
   return <div className="ro-vo-detail">
     <div><div className="ro-vo-code">{v.reference}</div><h3>{v.description}</h3></div>
     <div className="ro-vo-pills">
-      <span className="ro-vo-pill stage">{stage.label}</span>
+      <span className="ro-vo-pill stage">{isWithin(v) ? 'Within contract' : stage.label}</span>
       {exposed && <span className="ro-vo-pill urgent">Done, not instructed</span>}
       {chase && <span className="ro-vo-pill action">Quoted {days}d ago</span>}
       {v.workDone && !isPending(v) && <span className="ro-vo-pill">Work done</span>}
@@ -188,10 +197,10 @@ function Detail({ ctx, v }: { ctx: Ctx; v: Variation }) {
       <dt>Reason</dt><dd>{v.reason ?? 'Not set'}</dd>
       <dt>Trade</dt><dd>{v.trade ?? 'Not set'}</dd>
       <dt>Asked for by</dt><dd>{v.askedBy || 'Not recorded'}</dd>
-      <dt>Raised in</dt><dd>{report ? <a href={`#/projects/${v.projectId}/report/${report.id}`}>{project?.projectNumber ? `${project.projectNumber} · ` : ''}{shortRef(report.reference)}</a> : v.source === 'office' ? 'The office' : 'Report not found'} · {v.raisedBy}, {fmtDay(v.raisedAt)}</dd>
+      <dt>Raised in</dt><dd>{report ? <a href={`#/projects/${v.projectId}/report/${report.id}`}>{project?.projectNumber ? `${project.projectNumber} · ` : ''}{shortRef(report.reference)}</a> : v.source === 'office' ? 'The office' : 'Report not found'} · {ctx.nameOf(v.raisedById, v.raisedBy)}, {fmtDay(v.raisedAt)}</dd>
       {v.instruction === 'instructed' && <><dt>Signed copy</dt><dd>{signed ? /^https?:\/\//i.test(signed) ? <a href={signed} target="_blank" rel="noreferrer">Open signed copy<span className="sr"> (opens in a new tab)</span></a> : signed : 'Not linked yet'}</dd></>}
     </dl>
     {evidence.length > 0 && <div><h5 className="ro-vo-h5">Evidence · {evidence.length}</h5><div className="ro-vo-photos">{evidence.map((ph, i) => <figure key={ph.id}><PhotoImage src={ph.dataUrl} alt={ph.caption || `Photograph ${i + 1}`} />{ph.caption && <figcaption>{ph.caption}</figcaption>}</figure>)}</div></div>}
-    <div><h5 className="ro-vo-h5">Timeline</h5><ol className="ro-vo-tl">{v.events.map((e, i) => { const [label, cls] = EVENT[e.kind] ?? [e.kind, '']; return <li key={i}><span className={`ro-vo-dot ${cls}`} aria-hidden="true" /><span className="ro-vo-tb"><b>{label}</b>{e.note && <q>{e.note}</q>}<small>{e.actor} · {fmtWhen(e.at)}</small></span></li>; })}</ol></div>
+    <div><h5 className="ro-vo-h5">Timeline</h5><ol className="ro-vo-tl">{v.events.map((e, i) => { const [label, cls] = EVENT[e.kind] ?? [e.kind, '']; return <li key={i}><span className={`ro-vo-dot ${cls}`} aria-hidden="true" /><span className="ro-vo-tb"><b>{label}</b>{e.note && <q>{e.note}</q>}<small>{ctx.nameOf(e.actorId, e.actor)} · {fmtWhen(e.at)}</small></span></li>; })}</ol></div>
   </div>;
 }

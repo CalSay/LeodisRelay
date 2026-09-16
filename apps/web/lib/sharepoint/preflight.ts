@@ -1,5 +1,6 @@
 import { graph } from './graph';
 import { OPERATIONS } from './config';
+import { INSTRUCTION_CHOICE } from '../variations';
 let validUntil = 0;
 /** Refuse writes if the Lists no longer match the agreed schema. No provisioning side effects. */
 export async function checkSchema(): Promise<void> {
@@ -11,7 +12,7 @@ export async function checkSchema(): Promise<void> {
       choices: { ReviewStatus: ['Not required','Pending','Approved','Returned'], FilingStatus: ['Pending','Filed','Failed'], EmailStatus: ['Not requested','Pending','Sent','Failed'] } },
     { list: OPERATIONS.variations, id: 'RelayVariationId', identityRequired: false,
       required: ['Title','Project','LinkedIssue','SourceReportId','RelayLink','EvidenceLink','RaisedBy','RaisedAt','Description','Trade','Reason','Location','Instruction','InstructionReference','InstructedBy','InstructedOn','SignedInstruction','ExpectedLabour','LabourRate','ExpectedPartsCost','PlantSubcontract','Uplift','QuotedValue','InstructedValue','WorkUndertakenBeforeInstruction'],
-      choices: { Instruction: ['Pending','Instructed','Declined'], Trade: ['Electrical','HVAC','P&H','Multi'], Reason: ['Client instruction','Design change','Site condition','Damage by others','Omission','Spec change'] } },
+      choices: { Instruction: Object.values(INSTRUCTION_CHOICE), Trade: ['Electrical','HVAC','P&H','Multi'], Reason: ['Client instruction','Design change','Site condition','Damage by others','Omission','Spec change'] } },
   ];
   for (const definition of definitions) {
     const columns = await graph.columns(definition.list);
@@ -20,7 +21,8 @@ export async function checkSchema(): Promise<void> {
     if ((definition.identityRequired !== false && !identity.required) || !identity.indexed) throw new Error('The RELAY identity column must be indexed and use the agreed required setting.');
     if (columns.find(c => c.name === 'Project')?.lookup?.listId.toLowerCase() !== OPERATIONS.projects.toLowerCase()) throw new Error('A Project lookup points at an unexpected list.');
     for (const [name, choices] of Object.entries(definition.choices)) {
-      if (!choices!.every(choice => columns.find(c => c.name === name)?.choice?.choices.includes(choice))) throw new Error(`Unsupported SharePoint choices for ${name}.`);
+      const missing = choices!.filter(choice => !columns.find(c => c.name === name)?.choice?.choices.includes(choice));
+      if (missing.length) throw new Error(`Unsupported SharePoint choices for ${name}: missing ${missing.map(choice => `'${choice}'`).join(', ')}.`);
     }
   }
   validUntil = Date.now() + 300000;

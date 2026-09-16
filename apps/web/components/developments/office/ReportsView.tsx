@@ -137,7 +137,7 @@ export function ReportsView({ ctx }: { ctx: Ctx }) {
                 {date ? <><span>{date.toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' })}</span><b>{date.getUTCDate()}</b><small>{relative(d.key, ctx.day)}</small></> : <><span>Undated</span><b>–</b></>}
               </div>
               <div className="rv-entries">
-                {d.list.map(r => <Entry key={r.id} r={r} full={full(r)} code={projectOf(r.projectId)?.projectNumber ?? r.reference.split('-')[0]} name={projectOf(r.projectId)?.projectName ?? r.projectId} on={r.id === selected?.id} onPick={() => setPicked(r.id)} />)}
+                {d.list.map(r => <Entry key={r.id} r={r} full={full(r)} code={projectOf(r.projectId)?.projectNumber ?? r.reference.split('-')[0]} name={projectOf(r.projectId)?.projectName ?? r.projectId} author={ctx.nameOf(r.authorId, r.author)} on={r.id === selected?.id} onPick={() => setPicked(r.id)} />)}
               </div>
             </section>;
           })}
@@ -158,7 +158,7 @@ function Tile({ photo, big }: { photo?: Photo; big?: boolean }) {
   return <span className={`rv-ph ${big ? 'big' : ''} ${photo ? '' : 'wait'}`}>{photo && <PhotoImage src={photo.dataUrl} alt={photo.caption || 'Site photo'} />}</span>;
 }
 
-function Entry({ r, full, code, name, on, onPick }: { r: ReportSummary; full: Report | null | undefined; code: string; name: string; on: boolean; onPick: () => void }) {
+function Entry({ r, full, code, name, author, on, onPick }: { r: ReportSummary; full: Report | null | undefined; code: string; name: string; author: string; on: boolean; onPick: () => void }) {
   const m = reportMark(r);
   const photos = photosOf(full);
   const tiles = Math.min(r.photoCount, 5);
@@ -170,7 +170,7 @@ function Entry({ r, full, code, name, on, onPick }: { r: ReportSummary; full: Re
   return <button type="button" className={`rv-entry ${on ? 'on' : ''}`} aria-pressed={on} onClick={onPick}>
     <span className="rv-e-head">
       <span className="rv-code">{code} · {shortRef(r.reference)}</span>
-      <span className="rv-e-title"><b>{name}</b><small>{r.author} · {timeOf(received(r))}</small></span>
+      <span className="rv-e-title"><b>{name}</b><small>{author} · {timeOf(received(r))}</small></span>
       <Mark kind={m.kind} label={m.label} />
     </span>
     {tiles > 0 && <span className="rv-e-photos">
@@ -228,7 +228,7 @@ function Preview({ ctx, r, full, name }: { ctx: Ctx; r: ReportSummary; full: Rep
         {variations.map(v => <StubCard key={v.id} slim href={`#/projects/${v.projectId}/variation/${v.id}`} project={code} code={shortRef(v.reference)} title={v.description} mark={variationMark(v)} />)}
       </div>}
       <dl className="rv-kv">
-        <dt>Engineer</dt><dd>{r.author}{r.authorTrade ? ` · ${r.authorTrade}` : ''}</dd>
+        <dt>Engineer</dt><dd>{ctx.nameOf(r.authorId, r.author)}{r.authorTrade ? ` · ${r.authorTrade}` : ''}</dd>
         <dt>Received</dt><dd>{fmtWhen(r.serverAcknowledgedAt)}</dd>
         {filing && <><dt>Filing</dt><dd>{filing.label}</dd></>}
         {read && <><dt>Read</dt><dd>{read.label}</dd></>}

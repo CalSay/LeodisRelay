@@ -4,10 +4,11 @@ import { atomic, enqueue, getRecord, putRecord, records } from '../storage';
 import { cachedProject, projectIdentity, refreshProjects, reportableProject } from '../projects';
 import { assertProjectWrite, OPERATIONS, sharePointMode, writableProjectItemIds } from './config';
 import { fieldsEqual } from './issues';
+import { INSTRUCTION_CHOICE, instructionFromChoice } from '../variations';
 import { graph, GraphError, type ListItem } from './graph';
 import { personLookup, principalForPerson, sitePeople } from './people';
 
-const INSTRUCTION = { pending: 'Pending', instructed: 'Instructed', declined: 'Declined' } as const;
+const INSTRUCTION = INSTRUCTION_CHOICE;
 export interface VariationSync { status: 'pending' | 'synced' | 'conflict' | 'failed'; itemId?: string; etag?: string; operationId?: string; error?: string; evidenceUrl?: string }
 export interface VariationOperation { variation: Variation; baseEtag?: string; itemId?: string }
 export class VariationSyncError extends Error {}
@@ -138,7 +139,7 @@ export async function refreshVariations(): Promise<void> {
       if (local?.sync && local.sync.status !== 'synced') continue;
       const by = people.find(person => person.id === String(f.RaisedByLookupId));
       const linked = records<Issue>('issues', projectId).find(issue => issue.sync?.itemId === String(f.LinkedIssueLookupId));
-      const instruction = Object.entries(INSTRUCTION).find(([, display]) => display === f.Instruction)?.[0] as Variation['instruction'] | undefined;
+      const instruction = instructionFromChoice(f.Instruction);
       if (!instruction) throw new Error('SharePoint contains an unsupported variation status.');
       const trade = ['Electrical','HVAC','P&H','Multi'].includes(text(f.Trade)) ? text(f.Trade) as Variation['trade'] : undefined;
       const reason = ['Client instruction','Design change','Site condition','Damage by others','Omission','Spec change'].includes(text(f.Reason)) ? text(f.Reason) as Variation['reason'] : undefined;

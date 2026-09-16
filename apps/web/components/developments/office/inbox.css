@@ -88,6 +88,26 @@
 .ws.dev .ro-inbox .ro-empty .ro-mark{width:34px;height:34px}
 .ws.dev .ro-inbox .ro-empty .ro-mark svg{width:20px;height:20px}
 
+/* ----------------------------------------------------- wide reader mode */
+/* Quick actions need room: hide the queues and reduce the list to stubs. */
+.ws.dev .ro-inbox.ro-qa-wide{grid-template-columns:300px minmax(0,1fr)}
+.ws.dev .ro-inbox.ro-qa-wide>.col:first-child{display:none}
+.ws.dev .ro-qa-wide .ro-irow{grid-template-columns:16px 90px minmax(0,1fr);min-height:48px}
+.ws.dev .ro-qa-wide .ro-irow .ro-iright,.ws.dev .ro-qa-wide .ro-irow .ro-isub,.ws.dev .ro-qa-wide .ro-irow .ro-found{display:none}
+.ws.dev .ro-qa-wide .ro-itools p{font-size:12px}
+.ws.dev .ro-qa-wide .ro-onsite{display:none}
+.ws.dev .ro-qa-wide .ro-reader-body>.sheet,.ws.dev .ro-qa-wide .ro-qa-corrlink{max-width:900px;margin-inline:auto}
+.ws.dev .ro-qa-headtools{margin-left:auto;display:inline-flex;align-items:center;gap:10px;min-width:0}
+.ws.dev .ro-qa-headtools i{margin-left:0}
+.ws.dev .ro-qa-widen{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid #4a525a;background:transparent;color:var(--band-text);padding:4px 8px;border-radius:3px;cursor:pointer;white-space:nowrap}
+.ws.dev .ro-qa-widen:hover{border-color:var(--band-label);color:var(--band-label)}
+.ws.dev .ro-qa-widen:focus-visible{outline:2px solid var(--band-label);outline-offset:2px}
+.ws.dev .ro-kchip.ro-qa-fixed{border-color:var(--ok);color:var(--ok)}
+.ws.dev .ro-qa-corrlink{margin-top:14px;border-top:1px solid var(--line);padding:10px 2px 4px;font-size:12px;color:var(--text-3)}
+.ws.dev .ro-qa-corrlink p{margin:6px 0 0;color:var(--text-2)}
+.ws.dev .ro-qa-inline{font:inherit;border:0;background:none;padding:0;color:var(--acc);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.ws.dev .ro-qa-inline:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
 @media (max-width:1280px){
   .ws.dev .ro-inbox{grid-template-columns:220px minmax(0,1fr) 400px}
 }
@@ -95,4 +115,6 @@
   .ws.dev .ro-inbox{display:flex;flex-direction:column;overflow-y:auto;padding:0;gap:0}
   .ws.dev .ro-inbox>.col{display:flex;overflow:visible;min-height:auto}
   .ws.dev .ro-scroll{overflow:visible}
+  .ws.dev .ro-inbox.ro-qa-wide>.col:first-child{display:flex}
+  .ws.dev .ro-qa-widen{display:none}
 }

@@ -160,7 +160,8 @@ export type IssueEventKind =
   | "verified"
   | "reopened"
   | "confirmation"
-  | "assigned";
+  | "assigned"
+  | "note";
 
 export interface IssueEvent {
   actorId?: string;
@@ -169,6 +170,10 @@ export interface IssueEvent {
   kind: IssueEventKind;
   note: string;
   photos: Photo[];
+  /** The report an office correction was made against, when this event came from one. */
+  sourceReportId?: string;
+  /** The office correction that produced this event. */
+  correctionId?: string;
 }
 
 export interface Issue {
@@ -201,6 +206,8 @@ export interface Issue {
    */
   raisedByObservation?: string;
   raisedAt: string;
+  /** Set when the office marks this issue as already raised: the id of the issue it duplicates. */
+  duplicateOf?: string;
   events: IssueEvent[];
 }
 
@@ -221,8 +228,9 @@ export interface Issue {
  */
 export type VariationTrade = 'Electrical' | 'HVAC' | 'P&H' | 'Multi';
 export type VariationReason = 'Client instruction' | 'Design change' | 'Site condition' | 'Damage by others' | 'Omission' | 'Spec change';
-export type Instruction = 'pending' | 'instructed' | 'declined';
-export type VariationEventKind = 'raised' | 'details' | 'priced' | 'instructed' | 'declined' | 'reopened' | 'note';
+/** `within_contract`: the work is already in Leodis's contract, so it is not chargeable. Distinct from declined. */
+export type Instruction = 'pending' | 'instructed' | 'declined' | 'within_contract';
+export type VariationEventKind = 'raised' | 'details' | 'priced' | 'instructed' | 'declined' | 'within_contract' | 'reopened' | 'note';
 export interface VariationEvent {
   at: string;
   actor: string;
@@ -230,6 +238,10 @@ export interface VariationEvent {
   kind: VariationEventKind;
   note: string;
   photos: Photo[];
+  /** The report an office correction was made against, when this event came from one. */
+  sourceReportId?: string;
+  /** The office correction that produced this event. */
+  correctionId?: string;
 }
 export interface Variation {
   sync?: import('./sharepoint/variations').VariationSync;
@@ -266,5 +278,38 @@ export interface Variation {
   linkedIssueId?: string;
   /** Who asked for the work on site, as the engineer recorded it. Not an instruction. */
   askedBy?: string;
+  /** Set when the office marks this variation as already raised: the id of the variation it duplicates. */
+  duplicateOf?: string;
   events: VariationEvent[];
+}
+
+/**
+ * What the office changed about an engineer's report after it was sent, kept
+ * against the report and its author so the engineer can be shown it later.
+ */
+export type CorrectionAction = 'within_contract' | 'already_raised' | 'note';
+export interface Correction {
+  id: string;
+  reportId: string;
+  observationId: string;
+  /** The report's project, so corrections can be scoped like every other record. */
+  projectId: string;
+  action: CorrectionAction;
+  targetType: 'issue' | 'variation' | 'observation';
+  /** The issue or variation corrected; absent for a note on a section that raised no record. */
+  targetId?: string;
+  /** For already_raised: the existing record it duplicates. */
+  relatedId?: string;
+  /** e.g. "Reclassified as within contract", "Responsibility changed", "Marked as already raised", "Note added". */
+  title: string;
+  /** e.g. "From Main contractor to Leodis M&E (our contract)." */
+  detail: string;
+  /** The office's reason. May be empty except for a note. */
+  note: string;
+  actor: string;
+  actorId: string;
+  at: string;
+  /** The report author, so the engineer app can show it later. */
+  engineerId?: string;
+  engineer?: string;
 }

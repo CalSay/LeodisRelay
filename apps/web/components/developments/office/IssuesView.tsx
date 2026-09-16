@@ -44,7 +44,7 @@ const fmtTarget = (d: string) => /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(`${d}T
 
 const EVENT: Record<IssueEvent['kind'], [string, string]> = {
   raised: ['Raised', 'gold'], assigned: ['Assigned', 'gold'], progress: ['Update', ''], closure_submitted: ['Submitted as complete', 'warn'],
-  verified: ['Verified closed', 'ok'], reopened: ['Reopened', 'bad'], confirmation: ['Review', ''],
+  verified: ['Verified closed', 'ok'], reopened: ['Reopened', 'bad'], confirmation: ['Review', ''], note: ['Note', ''],
 };
 
 /** The issue register across projects: a stage bar, a grouped list, and the selected issue beside it. */
@@ -74,7 +74,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const card = (i: Issue) => {
     const u = urgency(i, day); const band = BANDS[rankOf(u)];
     const aside = !isActive(i) ? `${i.confirmation === 'withdrawn' ? 'Withdrawn' : 'Closed'} ${fmtDay(i.events.at(-1)?.at ?? i.raisedAt)}`
-      : i.work === 'awaiting_verification' ? `Done by ${i.closureSubmittedBy ?? 'unknown'}`
+      : i.work === 'awaiting_verification' ? `Done by ${ctx.nameOf(i.closureSubmittedById, i.closureSubmittedBy ?? 'unknown')}`
       : isOverdue(i, day) ? <b className="ro-is-late">{daysLate(i.targetDate, day)}d late</b>
       : i.targetDate ? `Due ${fmtTarget(i.targetDate)}` : 'No target';
     const sub = <>{i.owner.trim() ? <b>{i.owner}</b> : <b className="ro-is-late">No owner</b>} · {proj(i.projectId)?.projectName ?? i.projectId}{i.location && ` · ${i.location}`}</>;
@@ -137,7 +137,7 @@ function Detail({ ctx, i, stage, mine }: { ctx: Ctx; i: Issue; stage: string; mi
   else if (isDisputed(i)) step = next('action', 'Decide whether it stands', 'The report that raised it was returned, so someone has to triage it.', <Btn onClick={() => ctx.setDialog(dialogFor('triage', i, ctx))}>Triage</Btn>);
   else if (isNotReviewed(i)) step = next('action', 'Review the issue', 'Confirm it is a real issue, or withdraw it with a reason.', <><Btn onClick={() => ctx.setDialog(dialogFor('confirm', i, ctx))}>Confirm</Btn><BtnQ onClick={() => ctx.setDialog({ kind: 'withdraw', issue: i })}>Withdraw</BtnQ></>);
   else if (!i.owner.trim()) step = next('action', 'Assign an owner', 'Nobody is responsible for putting this right yet.', <Btn onClick={assign}>Assign owner</Btn>);
-  else if (i.work === 'awaiting_verification') step = next('action', 'Verify the work', `${i.closureSubmittedBy ?? 'Someone'} submitted this as complete. Check it and close it, or send it back.`, <>
+  else if (i.work === 'awaiting_verification') step = next('action', 'Verify the work', `${ctx.nameOf(i.closureSubmittedById, i.closureSubmittedBy ?? 'Someone')} submitted this as complete. Check it and close it, or send it back.`, <>
     <Btn disabled={mine} onClick={() => ctx.setDialog(dialogFor('verify', i, ctx))}>Verify</Btn>
     <BtnQ onClick={() => ctx.setDialog({ kind: 'reopen', issue: i })}>Not finished</BtnQ>
     {mine && <span className="ro-is-locked">You submitted this as complete, so someone else has to verify it.</span>}</>);
@@ -162,14 +162,14 @@ function Detail({ ctx, i, stage, mine }: { ctx: Ctx; i: Issue; stage: string; mi
       <dt>Trade</dt><dd>{i.affectedTrade ?? (i.reporterTrade ? `Reported by ${i.reporterTrade}` : 'Not recorded')}</dd>
       <dt>Owner</dt><dd>{i.owner.trim() || <span className="ro-is-late">No owner</span>}</dd>
       <dt>Target</dt><dd>{i.targetDate ? fmtTarget(i.targetDate) : 'Not set'}</dd>
-      <dt>Raised in</dt><dd>{report ? <a href={`#/projects/${i.projectId}/report/${i.raisedByReport}`}>{shortRef(report.reference)}</a> : `Flagged on site by ${i.reportedBy ?? raised?.actor ?? 'unknown'}`} · {fmtDay(i.raisedAt)}</dd>
+      <dt>Raised in</dt><dd>{report ? <a href={`#/projects/${i.projectId}/report/${i.raisedByReport}`}>{shortRef(report.reference)}</a> : `Flagged on site by ${i.reportedBy ? ctx.nameOf(i.reportedById, i.reportedBy) : ctx.nameOf(raised?.actorId, raised?.actor ?? 'unknown')}`} · {fmtDay(i.raisedAt)}</dd>
       {i.actionNeeded && <><dt>Action needed</dt><dd>{i.actionNeeded}</dd></>}
     </dl>
     {!!raised?.photos.length && <div className="ro-is-photos">{raised.photos.map((ph, n) => <PhotoImage key={ph.id} src={ph.dataUrl} alt={ph.caption || `Photograph ${n + 1}`} />)}</div>}
     <div>
       <h5 className="ro-is-h">Timeline</h5>
       <ol className="ro-is-tl">{i.events.map((e, n) => <li key={n}><span className={`ro-is-dot ${EVENT[e.kind]?.[1] ?? ''}`} aria-hidden="true" /><span className="ro-is-tb">
-        <b>{EVENT[e.kind]?.[0] ?? e.kind}</b>{e.note && <q>{e.note}</q>}<small>{e.actor} · {fmtWhen(e.at)}</small>
+        <b>{EVENT[e.kind]?.[0] ?? e.kind}</b>{e.note && <q>{e.note}</q>}<small>{ctx.nameOf(e.actorId, e.actor)} · {fmtWhen(e.at)}</small>
         {e.kind !== 'raised' && e.photos.length > 0 && <span className="ro-is-photos">{e.photos.map((ph, k) => <PhotoImage key={ph.id} src={ph.dataUrl} alt={ph.caption || `Photograph ${k + 1}`} />)}</span>}
       </span></li>)}</ol>
     </div>

@@ -197,9 +197,23 @@ export async function issueCommand(issueId: string, body: { kind: string; note: 
   }));
 }
 
+export interface PersonLogEntry { at: string; actorId: string; actor: string; action: 'added' | 'renamed' | 'assignment' | 'removed' | 'restored'; from?: string; to?: string }
 export interface TeamMember {
-  email: string; assignment: string; name?: string; role?: string; trade?: string;
+  email: string; assignment: string;
+  /** Relay name, else Microsoft name. */
+  name?: string; relayName?: string; microsoftName?: string;
+  role?: string; trade?: string;
   lastSignedIn?: string; session: 'active' | 'expired' | 'never'; id?: string; onChecklist: boolean;
+  /** Changes made in Relay; sent to Admins only. */
+  log?: PersonLogEntry[];
+  addedByRelay?: boolean;
+}
+export interface RelayPerson { id: string; email: string; relayName?: string; assignment?: string; removed?: boolean; addedById?: string; addedAt?: string; log: PersonLogEntry[] }
+/** One Admin change to the people checklist. Never grants access. */
+export async function adminPeople(body: { action: 'add' | 'rename' | 'assignment' | 'remove' | 'restore'; email: string; name?: string; assignment?: string }): Promise<RelayPerson> {
+  return (await parse<{ person: RelayPerson }>(await request('/api/admin/people', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  }))).person;
 }
 export interface OfficeTeam {
   members: TeamMember[];
@@ -211,6 +225,12 @@ export interface OfficeTeam {
     outbox: { id: string; reference: string; projectId: string; delivery?: string; error?: string; since?: string }[];
   };
 }
+/** Names set in Relay, keyed by account id. Empty when none are set or the list cannot be read. */
+export async function relayNames(): Promise<Record<string, string>> {
+  try { return (await parse<{ names: Record<string, string> }>(await request('/api/people/names', { cache: 'no-store' }))).names; }
+  catch { return {}; }
+}
+
 export async function officeTeam(): Promise<OfficeTeam> {
   return parse<OfficeTeam>(await request('/api/office/team', { cache: 'no-store' }));
 }
@@ -281,3 +301,17 @@ export async function variationCommand(id: string, body: {
   return parse<Variation>(await request(`/api/variations/${id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }));
 }
 export type { Variation } from './types';
+
+/* -------------------------------------------------------------- corrections */
+/** Office corrections made against one report, oldest first. Manager and Admin only. */
+export async function listCorrections(reportId: string): Promise<import('./types').Correction[]> {
+  const data = await parse<{ corrections: import('./types').Correction[] }>(await request(`/api/corrections?reportId=${encodeURIComponent(reportId)}`, { cache: 'no-store' }));
+  return data.corrections;
+}
+/** Record one quick action against a section of a report. The server refuses with a reason (409 when the record has moved on). */
+export async function recordCorrection(body: {
+  reportId: string; observationId: string; action: import('./types').CorrectionAction;
+  targetType: 'issue' | 'variation' | 'observation'; targetId?: string; relatedId?: string; note: string;
+}): Promise<{ correction: import('./types').Correction; issue?: Issue; variation?: Variation; related?: Issue | Variation }> {
+  return parse(await request('/api/corrections', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }));
+}

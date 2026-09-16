@@ -1,11 +1,13 @@
 'use client';
 import './inbox.css';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { listCorrections } from '@/lib/api';
 import type { ReportSummary } from '@/lib/types';
 import type { Ctx } from './ctx';
 import { Btn, BtnQ } from './bits';
 import { Band, Mark, type MarkKind } from './marks';
 import { ReportReader } from './ProjectsView';
+import { canCorrect } from './corrections';
 import { awaitingReview, byReceived, fmtDay, fmtWhen, found, notAcknowledged, processingFailed, returned, shortRef } from './model';
 
 type Queue = 'problems' | 'review' | 'unread' | 'returned' | 'onsite' | 'read';
@@ -18,6 +20,8 @@ const QUEUES: Record<Queue, { label: string; hint: string }> = {
   read: { label: 'Read recently', hint: 'Read in the last 14 days' },
 };
 const TRADES = ['Electrical', 'HVAC', 'P&H'] as const;
+/** Rows whose correction count is fetched: one small request each, first rows of the open queue only. */
+const ROW_COUNT_LIMIT = 30;
 const FORTNIGHT = 14 * 86400000;
 const LONDON = 'Europe/London';
 
@@ -57,6 +61,13 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
   const [trade, setTrade] = useState('');
   const [retrying, setRetrying] = useState(false);
   const [retryNote, setRetryNote] = useState('');
+  /** Wide reader: queues hidden, list reduced to stubs. Kept for this visit only. */
+  const [wide, setWide] = useState(false);
+  const [reportFix, setReportFix] = useState(false);
+  /** Corrections per report, fetched lazily for the rows on show. */
+  const [fixCounts, setFixCounts] = useState<Record<string, number>>({});
+  const asked = useRef(new Set<string>());
+  const correcting = canCorrect(ctx.me.role);
   const snap = ctx.snap;
   const selected = ctx.route.a;
 
@@ -74,7 +85,21 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
   /** Move the selection without adding a history entry for it. */
   const replaceWith = (id: string) => { try { window.history.replaceState(null, '', `#/inbox/${id}`); } catch { /* state still moves */ } ctx.go(`#/inbox/${id}`); };
   useEffect(() => { if (snap && !selected && firstId) replaceWith(firstId); }, [snap, selected, firstId]);
-  useEffect(() => { setRetryNote(''); }, [selected]);
+  useEffect(() => { setRetryNote(''); setReportFix(false); }, [selected]);
+  const shownKey = queue === 'onsite' ? '' : shown.slice(0, ROW_COUNT_LIMIT).map(r => r.id).join(',');
+  useEffect(() => {
+    if (!correcting || !shownKey) return;
+    const todo = shownKey.split(',').filter(id => !asked.current.has(id));
+    todo.forEach(id => asked.current.add(id));
+    for (const id of todo) {
+      listCorrections(id).then(list => setFixCounts(c => c[id] === list.length ? c : { ...c, [id]: list.length })).catch(() => { /* no chip; the reader shows the error */ });
+    }
+  }, [correcting, shownKey]);
+  const onCorrections = useCallback((id: string, list: { id: string }[]) => {
+    asked.current.add(id);
+    setFixCounts(c => c[id] === list.length ? c : { ...c, [id]: list.length });
+  }, []);
+  const onWiden = useCallback((open: boolean) => { if (open) setWide(true); }, []);
 
   if (!snap) return <div className="ro-inbox-loading"><div className="loading">Loading office records</div></div>;
 
@@ -126,15 +151,16 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
 
   const row = (r: ReportSummary) => {
     const st = rowState(r), unread = !r.acknowledged, problem = processingFailed(r), f = found(r);
-    const flagged = f.filter(x => x.kind !== 'update');
+    const flagged = f.filter(x => x.kind !== 'update'), fixed = fixCounts[r.id] ?? 0;
     return <button key={r.id} type="button" className={`ro-irow ${unread ? '' : 'read'} ${problem ? 'problem' : ''} ${selected === r.id ? 'on' : ''}`} aria-current={selected === r.id ? 'true' : undefined} onClick={() => ctx.go(`#/inbox/${r.id}`)}>
       <span className="ro-gut">{unread && <span className="ro-udot" role="img" aria-label="Unread" />}</span>
       <span className="ro-stub"><small>{projectOf(r.projectId)?.projectNumber ?? ''}</small><b>{shortRef(r.reference)}</b></span>
       <span className="ro-ibody">
         <span className="ro-ititle">{projectOf(r.projectId)?.projectName ?? r.projectId}</span>
-        <span className="ro-isub">{r.author} · {r.authorTrade ?? 'Trade not recorded'}{r.revision > 1 ? ` · rev ${r.revision}` : ''}</span>
+        <span className="ro-isub">{ctx.nameOf(r.authorId, r.author)} · {r.authorTrade ?? 'Trade not recorded'}{r.revision > 1 ? ` · rev ${r.revision}` : ''}</span>
         <span className="ro-found">{flagged.map(x => <span key={x.kind} className={`ro-kchip ${x.kind}`}>{x.n} {x.kind === 'defect' ? (x.n === 1 ? 'defect' : 'defects') : x.kind === 'instruction' ? (x.n === 1 ? 'variation' : 'variations') : 'access'}</span>)}
-          {!flagged.length && <span className="ro-kchip">{f.length ? 'Progress only' : 'Nothing recorded'}</span>}</span>
+          {!flagged.length && <span className="ro-kchip">{f.length ? 'Progress only' : 'Nothing recorded'}</span>}
+          {fixed > 0 && <span className="ro-kchip ro-qa-fixed">{fixed} corrected</span>}</span>
       </span>
       <span className="ro-iright"><span className="ro-itime">{hhmm(r.serverAcknowledgedAt)}</span><span className="ro-istate">{st.label}{st.mark && <Mark kind={st.mark} label={st.label} size="sm" />}</span></span>
     </button>;
@@ -173,7 +199,13 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
     </div>;
   };
 
-  return <div className="ro-inbox">
+  const reportFixLink = (r: ReportSummary) => <div className="ro-qa-corrlink">
+    Something wrong with the report itself?{' '}
+    <button type="button" className="ro-qa-inline" onClick={() => awaitingReview(r) ? ctx.setDialog({ kind: 'review', report: r }) : setReportFix(x => !x)}>Request a correction</button>
+    {reportFix && !awaitingReview(r) && <p role="status">Report corrections are sent back through review; turn review on for this project to use it.</p>}
+  </div>;
+
+  return <div className={`ro-inbox ${wide ? 'ro-qa-wide' : ''}`}>
     <section className="col" aria-label="Inbox queues">
       <div className="col-head"><h4>Inbox</h4><i>{needYou} need you</i></div>
       <div className="ro-scroll">
@@ -207,7 +239,7 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
         {queue !== 'problems' && count('problems') > 0 && <div className="ro-alert"><Mark kind="urgent" label="Problems" /><span><b>{count('problems')} report{count('problems') === 1 ? '' : 's'} need{count('problems') === 1 ? 's' : ''} fixing</b>Filing or processing failed. The reports are safe in Relay.</span><BtnQ className="btn-sm" onClick={() => pickQueue('problems')}>View problems</BtnQ></div>}
         {queue === 'unread' && drafts.length > 0 && <div className="ro-onsite">
           <div className="ro-onsite-h"><span className="ro-live" aria-hidden="true" />On site now · {drafts.length} report{drafts.length === 1 ? '' : 's'} being written</div>
-          <div className="ro-onsite-row">{drafts.map(d => <span key={d.id} className="ro-dchip"><b>{d.author}</b>{projectOf(d.projectId)?.projectName ?? d.projectId}<small>saved {savedAt(d.lastSavedAt, ctx.day)}</small></span>)}</div>
+          <div className="ro-onsite-row">{drafts.map(d => <span key={d.id} className="ro-dchip"><b>{ctx.nameOf(d.authorId, d.author)}</b>{projectOf(d.projectId)?.projectName ?? d.projectId}<small>saved {savedAt(d.lastSavedAt, ctx.day)}</small></span>)}</div>
         </div>}
         {queue === 'onsite'
           ? drafts.length ? <div className="ro-irows">{drafts.map(draftRow)}</div> : <Empty label={QUEUES.onsite.label} filtered={!!(project || trade)} />
@@ -217,10 +249,10 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
     </section>
 
     <section className={`col ro-inbox-reader ${selected ? 'focus' : ''}`} aria-label="Reader">
-      <div className="col-head"><h4>Reader</h4><i>{summary?.reference ?? ''}</i></div>
+      <div className="col-head"><h4>Reader</h4><span className="ro-qa-headtools">{selected && <button type="button" className="ro-qa-widen" aria-pressed={wide} onClick={() => setWide(w => !w)}>{wide ? '⤡ Narrow reader' : '⤢ Widen reader'}</button>}<i>{summary?.reference ?? ''}</i></span></div>
       {summary && actionBar(summary)}
       <div className="ro-scroll ro-reader-body">
-        {selected ? <ReportReader ctx={ctx} id={selected} crumbsHome="#/inbox" />
+        {selected ? <><ReportReader ctx={ctx} id={selected} crumbsHome="#/inbox" corrections={correcting} onWiden={onWiden} onCorrections={onCorrections} />{summary && reportFixLink(summary)}</>
           : <div className="ro-empty"><b>Nothing selected</b><span>Choose a report from the list to read it here.</span></div>}
       </div>
     </section>

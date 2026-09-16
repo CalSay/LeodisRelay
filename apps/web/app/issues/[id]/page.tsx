@@ -47,6 +47,7 @@ const EVENT_LABEL: Record<string, string> = {
   reopened: "Reopened",
   confirmation: "Review",
   assigned: "Assigned",
+  note: "Note",
 };
 
 export default function IssuePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {

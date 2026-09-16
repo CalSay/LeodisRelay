@@ -1,0 +1,61 @@
+/*
+ * Developments office: quick actions and change log on a received report.
+ * Scoped to .ws.dev; gold is the pressed/selected state, green marks a change.
+ */
+.ws.dev .ro-qa-sec{border-radius:3px}
+.ws.dev .ro-qa-sec .d{display:grid;gap:6px;justify-items:start}
+.ws.dev .ro-qa-sec .b{display:grid;gap:6px;min-width:0}
+.ws.dev .ro-qa-sec.ro-qa-acting{box-shadow:inset 3px 0 0 var(--acc);background:var(--acc-wash);padding-left:8px;padding-right:8px}
+.ws.dev .ro-qa-sec .rowsub s,.ws.dev .ro-qa-sec .rowsub s .ref{color:var(--text-3)}
+
+.ws.dev .ro-qa-head{display:flex;align-items:flex-start;gap:10px;min-width:0}
+.ws.dev .ro-qa-head>p{flex:1;min-width:0}
+.ws.dev .ro-qa-btn{flex:none;margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line-2);background:var(--card);color:var(--text);padding:4px 9px;border-radius:3px;cursor:pointer;white-space:nowrap}
+.ws.dev .ro-qa-btn:hover{border-color:var(--acc);color:var(--acc)}
+.ws.dev .ro-qa-btn[aria-expanded="true"]{background:var(--band-2);border-color:var(--band-2);color:var(--band-label)}
+.ws.dev .ro-qa-btn:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+
+.ws.dev .ro-qa-chip{display:inline-flex;align-items:center;font-family:var(--mono);font-size:10px;letter-spacing:.04em;padding:1px 6px;border-radius:2px;border:1px solid var(--ok);color:var(--ok);background:transparent;white-space:nowrap}
+
+/* ---------------------------------------------------------------- panel */
+.ws.dev .ro-qa{margin-top:4px;padding:12px;border:1px solid var(--line-2);border-radius:3px;background:var(--panel-2);display:grid;grid-template-columns:minmax(0,1fr);gap:10px;min-width:0}
+.ws.dev .ro-qa-modes{display:flex;flex-wrap:wrap;gap:4px}
+.ws.dev .ro-qa-modes button{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line-2);background:var(--card);color:var(--text);padding:7px 12px;border-radius:3px;cursor:pointer}
+.ws.dev .ro-qa-modes button:hover:not(:disabled){border-color:var(--line-3)}
+.ws.dev .ro-qa-modes button[aria-pressed="true"]{border-color:var(--acc);background:var(--acc-wash);box-shadow:inset 0 -2px 0 var(--acc)}
+.ws.dev .ro-qa-modes button:disabled{opacity:.5;cursor:not-allowed}
+.ws.dev .ro-qa-modes button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.ws.dev .ro-qa-what,.ws.dev .ro-qa-why{margin:0;font-size:13px;color:var(--text-2);max-width:70ch}
+.ws.dev .ro-qa-what b{color:var(--text);font-weight:600}
+.ws.dev .ro-qa-why{font-size:12px;color:var(--text-3)}
+.ws.dev .ro-qa-error{margin:0;font-size:12.5px;color:var(--alert);border-left:3px solid var(--alert);padding:6px 10px;background:var(--alert-wash)}
+.ws.dev .ro-qa-label{display:grid;gap:4px;font-size:12px;color:var(--text-2);min-width:0}
+.ws.dev .ro-qa-label textarea,.ws.dev .ro-qa-label input{font:inherit;font-size:13px;padding:7px 9px;border:1px solid var(--line-2);border-radius:3px;background:var(--card);color:var(--text);resize:vertical;width:100%;box-sizing:border-box}
+.ws.dev .ro-qa-label textarea:focus-visible,.ws.dev .ro-qa-label input:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.ws.dev .ro-qa-btns{display:flex;flex-wrap:wrap;gap:6px}
+
+/* ---------------------------------------------------------------- picks */
+.ws.dev .ro-qa-picks{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;max-height:220px;overflow:auto;padding:2px}
+.ws.dev .ro-qa-pick{display:grid;grid-template-columns:70px minmax(0,1fr) auto;gap:10px;align-items:center;text-align:left;font:inherit;border:1px solid var(--line-2);background:var(--card);color:var(--text);padding:7px 9px;border-radius:3px;cursor:pointer;min-width:0}
+.ws.dev .ro-qa-pick:hover{border-color:var(--line-3)}
+.ws.dev .ro-qa-pick[aria-checked="true"]{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc);background:var(--acc-wash)}
+.ws.dev .ro-qa-pick:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.ws.dev .ro-qa-pk-code{font-family:var(--mono);font-size:12px;color:var(--acc);font-weight:600;white-space:nowrap}
+.ws.dev .ro-qa-pk-t{font-size:13px;font-weight:600;display:grid;min-width:0;overflow-wrap:anywhere}
+.ws.dev .ro-qa-pk-t small{font-weight:400;font-size:11.5px;color:var(--text-2)}
+.ws.dev .ro-qa-none{padding:8px 2px;font-size:12.5px;color:var(--text-3)}
+
+/* ----------------------------------------------------------- change log */
+.ws.dev .ro-qa-clog{border-top:1px dashed var(--line-3);padding-top:8px;margin-top:4px;display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.ws.dev .ro-qa-clog h6{margin:0;font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--ok)}
+.ws.dev .ro-qa-centry{display:grid;grid-template-columns:118px minmax(0,1fr);gap:10px;font-size:12.5px}
+.ws.dev .ro-qa-cwhen{font-family:var(--mono);font-size:11px;color:var(--text-3);padding-top:1px}
+.ws.dev .ro-qa-cbody{display:grid;gap:2px;border-left:2px solid var(--ok);padding-left:10px;min-width:0;overflow-wrap:anywhere}
+.ws.dev .ro-qa-cbody b{font-weight:600}
+.ws.dev .ro-qa-cbody span{color:var(--text-2)}
+.ws.dev .ro-qa-cbody q{color:var(--text);font-style:italic}
+.ws.dev .ro-qa-cbody small{font-size:11px;color:var(--text-3)}
+@media (max-width:520px){
+  .ws.dev .ro-qa-centry{grid-template-columns:minmax(0,1fr);gap:2px}
+  .ws.dev .ro-qa-head{flex-wrap:wrap}
+}

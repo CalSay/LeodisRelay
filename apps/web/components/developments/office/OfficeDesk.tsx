@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { Toasts, parseHash, useHashRoute } from '@/components/workspace/hooks';
-import { allIssues, allVariations, listProjects, officeAll, officeTeam, type OfficeTeam } from '@/lib/api';
+import { allIssues, allVariations, listProjects, officeAll, officeTeam, relayNames, type OfficeTeam } from '@/lib/api';
 import { canAccessProject, isAdmin } from '@/lib/auth/access';
 import { useProjects } from '@/components/ProjectContext';
 import type { FixtureProject } from '@/lib/fixtures';
@@ -43,6 +43,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [error, setError] = useState('');
   const [team, setTeam] = useState<OfficeTeam | null>(null);
+  const [names, setNames] = useState<Record<string, string>>({});
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [q, setQ] = useState('');
   const [attnOpen, setAttnOpen] = useState(false);
@@ -52,14 +53,16 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const refresh = useCallback(async () => {
     const g = ++generation.current;
     try {
-      const [{ reports, drafts }, issues, variations, currentProjects] = await Promise.all([
+      const [{ reports, drafts }, issues, variations, currentProjects, currentNames] = await Promise.all([
         officeAll(),
         allIssues(),
         allVariations(),
         listProjects(),
+        relayNames(),
       ]);
       if (g !== generation.current) return;
       setProjectData(currentProjects);
+      setNames(currentNames);
       setSnap({ reports, drafts, issues, variations, loadedAt: new Date().toISOString() });
       setError('');
     } catch (e) {
@@ -86,7 +89,8 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const statOf = useCallback((code: string) => stats.find(s => s.code === code), [stats]);
   const attn = useMemo(() => attention(stats, day), [stats, day]);
   const me = { id: principal?.id ?? '', name: principal?.name ?? '', role: principal?.role ?? '', admin: principal ? isAdmin(principal) : false };
-  const ctx: Ctx = { snap, day, projects, stats, statOf, route, go, setDialog, refresh, me, team, loadTeam };
+  const nameOf = useCallback((id: string | undefined, fallback: string) => (id && names[id]) || fallback, [names]);
+  const ctx: Ctx = { snap, day, projects, stats, statOf, route, go, setDialog, refresh, me, team, loadTeam, nameOf };
 
   const onRootClick = (e: React.MouseEvent) => {
     const el = e.target as HTMLElement; const a = el.closest('a[href^="#/"]');

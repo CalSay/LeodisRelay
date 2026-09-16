@@ -18,6 +18,7 @@
 .ws.dev .ro-vo-sn{font-size:30px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
 .ws.dev .ro-vo-stage.closed .ro-vo-sn{color:var(--text-2)}
 .ws.dev .ro-vo-sm{font-family:var(--mono);font-size:12px;color:var(--text);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .ro-vo-sw{font-size:12px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ws.dev .ro-vo-sf{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:12px;color:var(--text-2)}
 .ws.dev .ro-vo-sf>span{display:inline-flex;gap:5px;align-items:center}
 .ws.dev .ro-vo-sf .ro-mark{width:16px;height:16px}

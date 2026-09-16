@@ -18,7 +18,7 @@ import { safeViewReturn } from '@/lib/viewNavigation';
  * That is deliberate: the question this page answers is "what came of it?",
  * in the office's own words, so the engineer does not have to ring and ask.
  */
-const EVENT: Record<string, string> = { raised: 'Raised', details: 'Details', priced: 'Priced', instructed: 'Instructed', declined: 'Declined', reopened: 'Reopened', note: 'Note' };
+const EVENT: Record<string, string> = { raised: 'Raised', details: 'Details', priced: 'Priced', instructed: 'Instructed', declined: 'Declined', within_contract: 'Within contract', reopened: 'Reopened', note: 'Note' };
 const LONDON = { timeZone: 'Europe/London' } as const;
 const fmtDay = (iso?: string) => iso ? new Date(iso).toLocaleDateString('en-GB', { ...LONDON, weekday: 'short', day: 'numeric', month: 'short' }) : '';
 
@@ -50,11 +50,13 @@ export default function VariationPage({ params, searchParams }: { params: Promis
   const declinedWhy = v.instruction === 'declined' ? v.events.slice().reverse().find(e => e.kind === 'declined')?.note : undefined;
   const headline = v.instruction === 'instructed' ? `Instructed · ${v.instructionReference}`
     : v.instruction === 'declined' ? 'Declined'
+    : v.instruction === 'within_contract' ? 'Within contract'
     : v.workDone ? 'Done without a written instruction'
     : v.quotedValue !== undefined ? `Quoted ${fmtMoney(v.quotedValue)}`
     : 'With the office';
   const detail = v.instruction === 'instructed' ? `${v.instructedBy ?? ''} · ${v.instructedOn ?? ''} · ${fmtMoney(value)}${v.signedInstruction ? ' · signed copy on file' : ''}`
     : v.instruction === 'declined' ? (declinedWhy ?? 'The client will not instruct it.')
+    : v.instruction === 'within_contract' ? 'The office found this is within our contract, so it is not charged.'
     : v.workDone ? 'The office is getting the client’s sign-off for it as a chargeable variation before it is invoiced.'
     : v.quotedValue !== undefined ? 'Put to the client; waiting on their instruction.'
     : 'Not yet priced. The office prices it from what you recorded, then puts it to the client.';
