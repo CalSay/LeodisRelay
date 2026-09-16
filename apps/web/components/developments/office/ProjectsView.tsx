@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { PhotoImage } from '@/components/PhotoImage';
 import { getReport, getVariation } from '@/lib/api';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
@@ -11,8 +11,10 @@ import type { Issue, Report, ReportSummary, Variation } from '@/lib/types';
 import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
-import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, Found, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
-import { CONFIRM_LABEL, WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, shortRef, toneTag, type ProjectStats } from './model';
+import { Bar, Btn, BtnQ, ConfirmTag, DeliveryTag, Found, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
+import { Band, CardList, GroupHead, Mark, StubCard, type MarkKind } from './marks';
+import { CONFIRM_LABEL, WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, instructionTag, isActive, isDisputed, isNotReviewed, isOverdue, isUnassigned, isVerify, shortRef, toneTag, type ProjectStats } from './model';
+import './projects.css';
 
 /* --------------------------------------------------------------- columns */
 export function ProjectsView({ ctx }: { ctx: Ctx }) {
@@ -22,7 +24,8 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
   const depth = !s ? 1 : !kind ? 2 : 3;
   return <div className="cols" data-depth={depth}>
     <ProjectsCol ctx={ctx} current={s} />
-    <RegisterCol ctx={ctx} s={s} kind={kind} id={id} />
+    {s ? <RegisterCol key={s.code} ctx={ctx} s={s} kind={kind} id={id} />
+      : <div className="col"><div className="col-head"><h4>Register</h4></div><div className="pr-empty">Select a project to see its reports, issues and variations.</div></div>}
     <div className="col">
       <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h4>Details</h4><i>{s ? s.project.projectNumber : 'Office'}</i></div>
       <div className="colpad">
@@ -41,91 +44,217 @@ function officeReturn(ctx: Ctx): string {
   return `/office#/${route.join('/')}`;
 }
 
+/* ------------------------------------------------------------ status marks */
+const unsynced = (x: { sync?: { status: string } | undefined }): boolean => !!x.sync && x.sync.status !== 'synced';
+
+/** One mark per issue, worst first, so every issue sits in exactly one band. */
+function issueMark(i: Issue, day: string): MarkKind {
+  if (isOverdue(i, day)) return 'urgent';
+  if (isDisputed(i) || isNotReviewed(i) || isVerify(i) || isUnassigned(i)) return 'action';
+  if (unsynced(i)) return 'sync';
+  return isActive(i) ? 'none' : 'done';
+}
+function issueWhy(i: Issue, day: string, m: MarkKind): string {
+  if (m === 'urgent') return `${daysLate(i.targetDate, day)} days overdue`;
+  if (m === 'action') return isDisputed(i) ? 'Disputed' : isVerify(i) ? 'Ready to verify' : isNotReviewed(i) ? 'Not reviewed' : 'Unassigned';
+  if (m === 'sync') return `SharePoint ${i.sync?.status ?? 'not synced'}`;
+  return m === 'done' ? (i.confirmation === 'withdrawn' ? 'Withdrawn' : 'Closed') : 'Open, nothing due';
+}
+function variationMark(v: Variation): MarkKind {
+  if (v.instruction === 'instructed') return 'done';
+  if (v.instruction === 'declined') return 'none';
+  return v.workDone ? 'urgent' : 'action';
+}
+const deliveryFailed = (r: ReportSummary): boolean => r.delivery === 'failed' || (r.issued?.records ?? []).some(x => x.failure);
+function reportMark(r: ReportSummary): MarkKind {
+  if (deliveryFailed(r)) return 'urgent';
+  if (r.sharepoint?.status === 'failed') return 'sync';
+  return r.review === 'pending' || r.review === 'returned' ? 'action' : 'done';
+}
+function reportWhy(r: ReportSummary, m: MarkKind): string {
+  return m === 'urgent' ? 'Could not be processed' : m === 'sync' ? 'SharePoint filing failed' : m === 'action' ? (r.review === 'returned' ? 'Returned' : 'Awaiting review') : 'Received';
+}
+
+/** Project card counts: the register's bands added up, each record counted once. */
+function projectCounts(s: ProjectStats, day: string): Record<'urgent' | 'action' | 'sync', number> {
+  const n = { urgent: 0, action: 0, sync: 0 };
+  const add = (m: MarkKind) => { if (m === 'urgent' || m === 'action' || m === 'sync') n[m]++; };
+  s.issues.forEach(i => add(issueMark(i, day)));
+  s.variations.forEach(v => add(variationMark(v)));
+  s.reports.forEach(r => add(reportMark(r)));
+  return n;
+}
+const COUNT_WORDS = { urgent: 'urgent', action: 'need action', sync: 'need SharePoint attention' } as const;
+
+/* ---------------------------------------------------------- project list */
 function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
-  return <div className="col">
+  return <div className="col pr-projects">
     <div className="col-head"><h4>Projects</h4><i>{ctx.projects.length} reportable</i></div>
-    {projectStatusGroups(ctx.projects).map(group => <div key={group.status} className={`project-group project-group-${group.tone}`}>
-      <div className="grp project-group-title">{group.label}<i>{group.projects.length}</i></div>
-      {group.projects.map(p => {
-      const s = ctx.statOf(p.id);
-      return <a key={p.id} className={`item ${current?.code === p.id ? 'on' : ''}`} href={`#/projects/${p.id}`}>
-        <div className="item-top"><div className="rowtitle">{p.projectName}</div><span className="arrow">›</span></div>
-        <div className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager} · {p.division.replace('Leodis ', '')}</div>
-        {s ? <><Bar c={s.rollup} /><Meta c={s.rollup} />{s.pendingVariations.length > 0 && <div className="meta"><span className={s.exposedVariations.length ? 'late' : ''}>{s.pendingVariations.length} variation{s.pendingVariations.length === 1 ? '' : 's'} awaiting instruction</span></div>}</> : <div className="cbar" style={{ marginTop: 8 }} />}
-      </a>;
-      })}
+    {projectStatusGroups(ctx.projects).filter(g => g.projects.length).map(group => <div key={group.status}>
+      <div className={`pr-pband ${group.tone}`}><span><span className="dot" aria-hidden="true" />{group.label}</span><i>{group.projects.length}</i></div>
+      <div className="pr-plist">{group.projects.map(p => {
+        const s = ctx.statOf(p.id), on = current?.code === p.id;
+        const c = s ? projectCounts(s, ctx.day) : undefined;
+        const marks = c ? (['urgent', 'action', 'sync'] as const).filter(k => c[k] > 0) : [];
+        return <a key={p.id} className={`pr-pcard ${on ? 'on' : ''}`} href={`#/projects/${p.id}`} aria-current={on ? 'true' : undefined}>
+          <span className="pt"><span>{p.projectName}</span><span className="arrow" aria-hidden="true">›</span></span>
+          <span className="ps"><b>{p.projectNumber}</b> · {p.projectManager}</span>
+          {c && <span className="pm">{marks.length ? marks.map(k => <Fragment key={k}><Mark kind={k} size="sm" label={`${c[k]} ${COUNT_WORDS[k]}`} /><span className="n" aria-hidden="true">{c[k]}</span></Fragment>) : <span className="n quiet">No open items</span>}</span>}
+        </a>;
+      })}</div>
     </div>)}
-    <div className="colpad sticky-foot"><BarKey /><div className="rowsub">Tenders and completed jobs are not listed.</div></div>
+    <div className="pr-foot">Tenders and completed jobs are not listed.</div>
   </div>;
 }
 
-type Filter = 'action' | 'reports' | 'issues' | 'variations' | 'drafts';
-function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s?: ProjectStats; kind: string | null; id: string | null }) {
-  const [filter, setFilter] = useState<Filter>('action');
-  useEffect(() => { setFilter('action'); }, [s?.code]);
-  if (!s) return <div className="col"><div className="col-head"><h4>Register</h4></div><div className="empty">Select a project to see its reports, issues and variations.</div></div>;
-  const day = ctx.day;
-  const reportRow = (r: ReportSummary) => <a key={r.id} className={`arow ${kind === 'report' && id === r.id ? 'on' : ''}`} href={`#/projects/${s.code}/report/${r.id}`}>
-    <span className="ref">{shortRef(r.reference)}{r.revision > 1 ? ` r${r.revision}` : ''}</span>
-    <span className="nm">{r.author}{r.authorTrade ? ` · ${r.authorTrade}` : ''}<small>{fmtWhen(r.serverAcknowledgedAt)} · {foundWords(r)}</small></span>
-    {r.review === 'pending' ? <Tag label="To review" cls="tag-caution" /> : r.review === 'returned' ? <Tag label="Returned" cls="tag-alert" /> : <DeliveryTag r={r} />}
-  </a>;
-  const issueRow = (i: Issue) => <a key={i.id} className={`arow ${kind === 'issue' && id === i.id ? 'on' : ''}`} href={`#/projects/${s.code}/issue/${i.id}`}>
-    <span className="ref">{shortRef(i.reference)}</span>
-    <span className="nm">{i.description}<small>{i.location || 'no location'} · {i.owner || 'unassigned'}{i.targetDate ? ` · target ${i.targetDate}` : ''}</small></span>
-    <WorkTag i={i} day={day} />
-  </a>;
-  const variationRow = (v: Variation) => <a key={v.id} className={`arow ${kind === 'variation' && id === v.id ? 'on' : ''}`} href={`#/projects/${s.code}/variation/${v.id}`}>
-    <span className="ref">{shortRef(v.reference)}</span>
-    <span className="nm">{v.description}<small>{v.location || 'no location'} · {v.instruction === 'instructed' ? `${fmtMoney(variationValue(v))} · ${v.instructionReference}` : v.quotedValue !== undefined ? `quoted ${fmtMoney(v.quotedValue)}` : 'not priced'}{v.workDone && v.instruction === 'pending' ? ' · work done' : ''}</small></span>
-    <InstructionTag v={v} />
-  </a>;
-  const draftRow = (r: ReportSummary) => <div key={r.id} className="arow"><span className="ref fine">DRAFT</span><span className="nm">{r.author}{r.authorTrade ? ` · ${r.authorTrade}` : ''} · visit {r.visitDate}<small>Saved {fmtWhen(r.lastSavedAt)} · {r.observationCount} section{r.observationCount === 1 ? '' : 's'} · {r.corrects ? 'correction in progress' : 'contents private until sent'}</small></span><Tag label="Draft" cls="tag-caution" /></div>;
-  const attnReports = [...s.failed, ...s.pendingReview, ...s.returned];
-  const attnIssues = [...new Map([...s.overdue, ...s.disputed, ...s.verify, ...s.unassigned].map(i => [i.id, i])).values()];
-  const attnVariations = [...new Map([...s.exposedVariations, ...s.unpricedVariations].map(v => [v.id, v])).values()];
-  const closed = s.issues.filter(i => !isActive(i));
-  const settled = s.variations.filter(v => v.instruction !== 'pending');
-  return <div className="col">
-    <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h4>Register · {s.project.projectName}</h4><i>{s.reports.length} reports · {s.active.length} open</i></div>
-    <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
-      {([['action', `Needs action · ${s.needsAction}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
+/* -------------------------------------------------------------- register */
+type Filter = 'all' | 'issues' | 'variations' | 'reports';
+type Bands = [MarkKind, string][];
+const ISSUE_BANDS: Bands = [['urgent', 'Urgent'], ['action', 'Action needed'], ['sync', 'SharePoint'], ['none', 'Open'], ['done', 'Dealt with']];
+const VARIATION_BANDS: Bands = [['urgent', 'Urgent'], ['action', 'Action needed'], ['done', 'Dealt with'], ['none', 'Declined']];
+const REPORT_BANDS: Bands = [['urgent', 'Urgent'], ['action', 'Action needed'], ['sync', 'SharePoint']];
+
+function banded<T>(items: T[], markOf: (t: T) => MarkKind, bands: Bands, card: (t: T) => ReactNode): ReactNode {
+  return bands.map(([k, label]) => {
+    const g = items.filter(x => markOf(x) === k);
+    return g.length ? <Fragment key={k}><Band kind={k} label={label} count={g.length} /><CardList>{g.map(card)}</CardList></Fragment> : null;
+  });
+}
+
+/** Visit day as YYYY-MM-DD, falling back to the day it was received. */
+const dayOf = (r: ReportSummary): string => /^\d{4}-\d{2}-\d{2}/.test(r.visitDate) ? r.visitDate.slice(0, 10) : (r.serverAcknowledgedAt ?? r.lastSavedAt ?? '').slice(0, 10);
+const isDay = (d: string): boolean => /^\d{4}-\d{2}-\d{2}$/.test(d);
+const utc = (d: string) => new Date(`${d}T12:00:00Z`);
+const visitDay = (d: string): string => isDay(d) ? utc(d).toLocaleDateString('en-GB', { timeZone: 'UTC', weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '') : 'No visit date';
+const monthName = (m: string): string => /^\d{4}-\d{2}$/.test(m) ? utc(`${m}-01`).toLocaleDateString('en-GB', { timeZone: 'UTC', month: 'long', year: 'numeric' }) : 'No visit date';
+const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
+const byVisit = (a: ReportSummary, b: ReportSummary) => dayOf(b).localeCompare(dayOf(a));
+function groupBy<T>(items: T[], key: (t: T) => string): Map<string, T[]> {
+  const out = new Map<string, T[]>();
+  for (const x of items) { const k = key(x); out.set(k, [...(out.get(k) ?? []), x]); }
+  return out;
+}
+
+function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: string | null; id: string | null }) {
+  const [filter, setFilter] = useState<Filter>('all');
+  const [view, setView] = useState<'month' | 'calendar'>('month');
+  const day = ctx.day, pn = s.project.projectNumber;
+  const selectedReport = kind === 'report' ? id : null;
+  const issueCard = (i: Issue) => { const m = issueMark(i, day); return <StubCard key={i.id} href={`#/projects/${s.code}/issue/${i.id}`} on={kind === 'issue' && id === i.id} project={pn} code={shortRef(i.reference)} title={i.description} sub={`${i.location || 'No location'} · ${i.owner.trim() || 'No owner'}`} mark={m} markLabel={issueWhy(i, day, m)} quiet={m === 'done'} />; };
+  const variationCard = (v: Variation) => {
+    const m = variationMark(v);
+    const aside = v.instruction === 'instructed' ? fmtMoney(variationValue(v)) : v.quotedValue !== undefined ? `${fmtMoney(v.quotedValue)} quoted` : v.instruction === 'pending' ? 'Not priced' : undefined;
+    return <StubCard key={v.id} href={`#/projects/${s.code}/variation/${v.id}`} on={kind === 'variation' && id === v.id} project={pn} code={shortRef(v.reference)} title={v.description} aside={aside} mark={m} markLabel={instructionTag(v).label} quiet={m === 'none'} />;
+  };
+  const reportCard = (r: ReportSummary) => { const m = reportMark(r); return <StubCard key={r.id} slim href={`#/projects/${s.code}/report/${r.id}`} on={selectedReport === r.id} project={pn} code={`${shortRef(r.reference)}${r.revision > 1 ? ` r${r.revision}` : ''}`} title={`${r.author} · ${visitDay(dayOf(r))}`} mark={m} markLabel={reportWhy(r, m)} />; };
+  const draftRow = (r: ReportSummary) => <div key={r.id} className="ro-card slim pr-draft">
+    <span className="ro-stub"><small>{pn}</small><b>DRAFT</b></span>
+    <span className="ro-card-body"><span className="ro-card-title">{r.author} · {visitDay(dayOf(r))}</span><span className="ro-card-sub">Saved {fmtWhen(r.lastSavedAt)} · {plural(r.observationCount, 'section')} · {r.corrects ? 'correction in progress' : 'contents private until sent'}</span></span>
+    <span className="ro-card-mark"><Mark kind="none" size="sm" label="Draft, nothing due" /></span>
+  </div>;
+
+  const attn = s.reports.filter(r => reportMark(r) !== 'done');
+  const latest = s.reports.slice(0, 5);
+  const hot = s.overdue.length > 0 || s.exposedVariations.length > 0;
+  const chips: [Filter, string, number][] = [['all', 'All', s.issues.length + s.variations.length + s.reports.length], ['issues', 'Issues', s.issues.length], ['variations', 'Variations', s.variations.length], ['reports', 'Reports', s.reports.length]];
+  const noReports = <div className="pr-empty">No reports received on this project.</div>;
+  const issues = s.issues.length ? banded(s.issues, i => issueMark(i, day), ISSUE_BANDS, issueCard) : <div className="pr-empty">No issues on this project.</div>;
+  const variations = s.variations.length ? banded(s.variations, variationMark, VARIATION_BANDS, variationCard) : <div className="pr-empty">No variations on this project.</div>;
+
+  return <div className="col focus pr-register">
+    <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h4>Register · {s.project.projectName}</h4><i>{plural(s.reports.length, 'report')} · {s.active.length} open</i></div>
+    <div className="ro-toolbar" role="group" aria-label="Show in register">
+      {chips.map(([k, label, n]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(k)}
+        title={k === 'all' && hot ? 'Something is overdue or done without an instruction' : undefined}>{k === 'all' && hot && <span className="pr-hotdot" aria-hidden="true" />}{label} · {n}</button>)}
+      {filter === 'reports' && <span className="pr-seg" role="group" aria-label="Report layout">
+        <button type="button" aria-pressed={view === 'month'} onClick={() => setView('month')}>By month</button>
+        <button type="button" aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}>Calendar</button>
+      </span>}
     </div>
-    {filter === 'action' && <>
-      <div className="grp">Reports needing attention<i>{attnReports.length}</i></div>
-      {attnReports.length ? attnReports.map(reportRow) : <div className="empty" style={{ padding: 14 }}>Nothing waits for review or correction.</div>}
-      <div className="grp">Issues needing action<i>{attnIssues.length} of {s.active.length}</i></div>
-      {attnIssues.length ? attnIssues.map(issueRow) : <div className="empty" style={{ padding: 14 }}>Nothing overdue, unassigned, disputed or waiting to be verified.</div>}
-      {attnVariations.length > 0 && <><div className="grp">Variations needing a quote or an instruction<i>{attnVariations.length} of {s.pendingVariations.length}</i></div>{attnVariations.map(variationRow)}</>}
-      {s.drafts.length > 0 && <><div className="grp">Drafts on site<i>{s.drafts.length}</i></div>{s.drafts.map(draftRow)}</>}
-    </>}
-    {filter === 'reports' && (s.reports.length ? s.reports.map(reportRow) : <div className="empty">No reports received on this project.</div>)}
-    {filter === 'issues' && <>
-      <div className="grp">Open<i>{s.active.length}</i></div>
-      {s.active.length ? s.active.slice().sort((a, b) => Number(isOverdue(b, day)) - Number(isOverdue(a, day))).map(issueRow) : <div className="empty" style={{ padding: 14 }}>Nothing outstanding.</div>}
-      <div className="grp">Closed or withdrawn<i>{closed.length}</i></div>
-      {closed.map(issueRow)}
-    </>}
-    {filter === 'variations' && <>
-      <div className="grp">Awaiting instruction<i>{s.pendingVariations.length}</i></div>
-      {s.pendingVariations.length ? s.pendingVariations.map(variationRow) : <div className="empty" style={{ padding: 14 }}>Nothing awaiting instruction.</div>}
-      <div className="grp">Instructed or declined<i>{settled.length}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</i></div>
-      {settled.length ? settled.map(variationRow) : <div className="empty" style={{ padding: 14 }}>No variations instructed or declined yet.</div>}
-    </>}
-    {filter === 'drafts' && (s.drafts.length ? s.drafts.map(draftRow) : <div className="empty">No drafts saved to the server on this project.</div>)}
-    <div className="colpad sticky-foot"><div className="rowsub">{filter === 'action' ? `Needs action hides ${s.reports.length - attnReports.length} reports, ${s.issues.length - attnIssues.length} issues and ${s.variations.length - attnVariations.length} variations that need nobody.` : ''} Reports, issues and variations share one column because the office reads them as one stream. Work held only on an engineer’s device is not visible here.</div></div>
+    <div className="pr-body">
+      {filter === 'all' && <>
+        <GroupHead label="Issues" right={`${s.active.length} open`} />{issues}
+        <GroupHead label="Variations" right={`${s.pendingVariations.length} pending`} />{variations}
+        <GroupHead label="Reports" right={s.reports.length > 5 ? `latest 5 of ${s.reports.length}` : plural(s.reports.length, 'report')} />
+        {s.reports.length ? <>
+          {banded(attn.filter(r => !latest.includes(r)), reportMark, REPORT_BANDS, reportCard)}
+          <Band kind="none" label="Most recent" count={latest.length} />
+          <CardList>{latest.map(reportCard)}{s.reports.length > 5 && <button type="button" className="pr-more" onClick={() => setFilter('reports')}>See all {s.reports.length} reports ›</button>}</CardList>
+        </> : noReports}
+      </>}
+      {filter === 'issues' && issues}
+      {filter === 'variations' && variations}
+      {filter === 'reports' && view === 'month' && <>
+        {attn.length > 0 && <><GroupHead label="Needs attention" right={attn.length} />{banded(attn, reportMark, REPORT_BANDS, reportCard)}</>}
+        {s.drafts.length > 0 && <><GroupHead label="Drafts on site" right={s.drafts.length} /><CardList>{s.drafts.map(draftRow)}</CardList></>}
+        <GroupHead label="Filed reports" right={s.reports.length} />
+        {s.reports.length ? <ReportMonths reports={s.reports} selected={selectedReport} card={reportCard} /> : noReports}
+      </>}
+      {filter === 'reports' && view === 'calendar' && (s.reports.length ? <ReportCalendar reports={s.reports} selected={selectedReport} card={reportCard} /> : noReports)}
+    </div>
   </div>;
 }
 
-function foundWords(r: ReportSummary): string {
-  const k = r.kindCounts;
-  if (!k) return r.defectCount ? `${r.defectCount} raising an issue` : `${r.observationCount} section${r.observationCount === 1 ? '' : 's'}`;
-  const parts: string[] = [];
-  if (k.defect) parts.push(`${k.defect} defect${k.defect === 1 ? '' : 's'}`);
-  if (k.instruction) parts.push(`${k.instruction} variation${k.instruction === 1 ? '' : 's'}`);
-  if (k.access) parts.push(`${k.access} access`);
-  if (!parts.length) parts.push('progress only');
-  return parts.join(', ');
+function ReportMonths({ reports, selected, card }: { reports: ReportSummary[]; selected: string | null; card: (r: ReportSummary) => ReactNode }) {
+  const months = [...groupBy(reports.slice().sort(byVisit), r => dayOf(r).slice(0, 7))];
+  const [open, setOpen] = useState<Set<string>>(() => {
+    const picked = reports.find(r => r.id === selected);
+    return new Set([months[0]?.[0] ?? '', picked ? dayOf(picked).slice(0, 7) : ''].filter(Boolean));
+  });
+  const toggle = (m: string) => setOpen(prev => { const next = new Set(prev); if (!next.delete(m)) next.add(m); return next; });
+  return <>{months.map(([m, list]) => {
+    const flagged = list.filter(r => reportMark(r) !== 'done').length, done = list.length - flagged, isOpen = open.has(m);
+    return <Fragment key={m}>
+      <button type="button" className="pr-month" aria-expanded={isOpen} onClick={() => toggle(m)}>
+        <span className="chev" aria-hidden="true">›</span>
+        <span className="mname">{monthName(m)}</span>
+        <span className="msum">{flagged > 0 && <><Mark kind="action" size="sm" label={`${flagged} need attention`} /><span aria-hidden="true">{flagged}</span></>}<Mark kind="done" size="sm" label={`${done} complete`} /><span aria-hidden="true">{done}</span></span>
+        <span className="mcount">{plural(list.length, 'report')}</span>
+      </button>
+      {isOpen && <div className="pr-month-list"><CardList>{list.map(card)}</CardList></div>}
+    </Fragment>;
+  })}</>;
+}
+
+const WORST: MarkKind[] = ['urgent', 'action', 'sync'];
+function ReportCalendar({ reports, selected, card }: { reports: ReportSummary[]; selected: string | null; card: (r: ReportSummary) => ReactNode }) {
+  const byDay = groupBy(reports.filter(r => isDay(dayOf(r))).sort(byVisit), dayOf);
+  const days = [...byDay.keys()];
+  const months = [...new Set(days.map(d => d.slice(0, 7)))].sort();
+  const [day, setDay] = useState(() => { const picked = reports.find(r => r.id === selected); return picked && byDay.has(dayOf(picked)) ? dayOf(picked) : days[0] ?? ''; });
+  const [month, setMonth] = useState(() => day.slice(0, 7) || months.at(-1) || '');
+  if (!months.length) return <div className="pr-empty">No reports have a visit date to place on the calendar.</div>;
+  const idx = months.indexOf(month);
+  const go = (m: string) => { setMonth(m); setDay(days.find(d => d.startsWith(m)) ?? ''); };
+  const [y, mo] = month.split('-').map(Number) as [number, number];
+  const offset = (new Date(Date.UTC(y, mo - 1, 1)).getUTCDay() + 6) % 7, length = new Date(Date.UTC(y, mo, 0)).getUTCDate();
+  const inMonth = days.filter(d => d.startsWith(month)).reduce((n, d) => n + (byDay.get(d)?.length ?? 0), 0);
+  const chosen = byDay.get(day);
+  return <>
+    <div className="pr-cal">
+      <div className="pr-cal-head">
+        <button type="button" className="pr-cal-nav" disabled={idx <= 0} onClick={() => go(months[idx - 1]!)} aria-label="Previous month with reports">‹</button>
+        <span><b>{monthName(month)}</b><i>{plural(inMonth, 'report')}</i></span>
+        <button type="button" className="pr-cal-nav" disabled={idx >= months.length - 1} onClick={() => go(months[idx + 1]!)} aria-label="Next month with reports">›</button>
+      </div>
+      <div className="pr-cal-grid">
+        {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => <span key={d} className="pr-cal-dow" aria-hidden="true">{d}</span>)}
+        {Array.from({ length: offset }, (_, i) => <span key={`pad${i}`} />)}
+        {Array.from({ length }, (_, i) => {
+          const key = `${month}-${String(i + 1).padStart(2, '0')}`, list = byDay.get(key), weekend = (offset + i) % 7 >= 5;
+          if (!list) return <span key={key} className={`pr-cal-day ${weekend ? 'wk' : ''}`}><span className="dn">{i + 1}</span></span>;
+          const worst = WORST.find(k => list.some(r => reportMark(r) === k));
+          return <button type="button" key={key} className={`pr-cal-day has ${weekend ? 'wk' : ''} ${day === key ? 'sel' : ''}`} aria-pressed={day === key} onClick={() => setDay(key)}
+            aria-label={`${visitDay(key)}: ${plural(list.length, 'report')}${worst ? ', needs attention' : ''}`}>
+            <span className="dn" aria-hidden="true">{i + 1}</span>
+            <span className="dc" aria-hidden="true">{worst ? <Mark kind={worst} size="sm" /> : list.length}</span>
+          </button>;
+        })}
+      </div>
+    </div>
+    {chosen ? <><Band kind="none" label={`Visits on ${visitDay(day)}`} count={chosen.length} /><CardList>{chosen.map(card)}</CardList></>
+      : <div className="pr-empty">Choose a highlighted day to see its reports.</div>}
+  </>;
 }
 
 /* ---------------------------------------------------------------- sheets */

@@ -1,0 +1,105 @@
+/*
+ * Developments office: Admin tab. Section rail | section panel.
+ * Scoped to .ws.dev; builds on redesign.css (marks, column panels).
+ */
+.ws.dev .ro-ad{flex:1;min-height:0;display:grid;grid-template-columns:240px minmax(0,1fr);gap:10px;padding:10px;background:var(--ground)}
+.ws.dev .ro-ad>.col{min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.ws.dev .ro-ad .col-head{position:static;flex:none}
+.ws.dev .ro-ad-scroll{flex:1;min-height:0;overflow-y:auto}
+.ws.dev .ro-ad-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ------------------------------------------------------------------ rail */
+.ws.dev .ro-ad-nav{display:grid;gap:3px;padding:10px 8px 0}
+.ws.dev .ro-ad-navbtn{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px;border:1px solid transparent;border-radius:3px;font-size:13.5px;color:var(--text);text-decoration:none}
+.ws.dev .ro-ad-navbtn:hover{background:var(--card-hover)}
+.ws.dev .ro-ad-navbtn[aria-current="page"]{border-color:var(--acc);background:var(--acc-wash);font-weight:600}
+.ws.dev .ro-ad-navbtn:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.ws.dev .ro-ad-navbtn small{display:block;font-size:11.5px;font-weight:400;color:var(--caution)}
+.ws.dev .ro-ad-count{font-family:var(--mono);font-size:12px;min-width:26px;text-align:center;padding:1px 6px;border-radius:2px;color:var(--text-2)}
+.ws.dev .ro-ad-count.amber{background:var(--caution-wash);color:var(--caution);font-weight:600}
+.ws.dev .ro-ad-access{margin-top:10px;border-top:1px solid var(--line);padding:0 12px 14px;display:grid;gap:8px;font-size:12.5px;color:var(--text-2)}
+.ws.dev .ro-ad-access p{margin:0}
+.ws.dev .ro-ad-access a{font-size:13px;color:var(--acc);text-decoration:underline;text-underline-offset:3px}
+.ws.dev .ro-ad-sec{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);padding-top:10px}
+
+/* ---------------------------------------------------------------- panel */
+.ws.dev .ro-ad-headbtn{font-family:var(--mono);font-size:11px;color:var(--band-label);background:transparent;border:1px solid var(--line-3);border-radius:3px;padding:3px 8px;margin-left:8px;cursor:pointer}
+.ws.dev .ro-ad-headbtn:hover{border-color:var(--band-label)}
+.ws.dev .ro-ad-headbtn:disabled{opacity:.6;cursor:default}
+.ws.dev .ro-ad-page{display:grid;gap:18px;padding:16px 20px 24px;max-width:900px}
+.ws.dev .ro-ad-page .note{margin:0}
+.ws.dev .ro-ad-h{margin:0 0 8px;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2)}
+.ws.dev .ro-ad-hint{margin:0 0 8px;font-size:12.5px;color:var(--text-2)}
+.ws.dev .ro-ad-box{display:grid;gap:10px;padding:12px 14px;border:1px solid var(--line-2);border-radius:3px;background:var(--card)}
+.ws.dev .ro-ad-box .ro-ad-hint{margin:0}
+.ws.dev .ro-ad-prose p{margin:0;font-size:13px}
+.ws.dev .ro-ad-mono{font-family:var(--mono)}
+
+.ws.dev .ro-ad-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--line-2);border-radius:3px;background:var(--card)}
+.ws.dev .ro-ad-cards>div{padding:12px 14px;display:grid;gap:2px;align-content:start}
+.ws.dev .ro-ad-cards>div+div{border-left:1px solid var(--line)}
+.ws.dev .ro-ad-cards span{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+.ws.dev .ro-ad-cards b{font-size:15px;font-weight:600}
+.ws.dev .ro-ad-cards b.ok{color:var(--ok)}
+.ws.dev .ro-ad-cards b.bad{color:var(--alert)}
+.ws.dev .ro-ad-cards small{font-size:12px;color:var(--text-2)}
+.ws.dev .ro-ad-connbtn{margin-top:8px;justify-self:start}
+
+.ws.dev .ro-ad-checks{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px}
+.ws.dev .ro-ad-checks li{display:grid;grid-template-columns:20px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:13px;padding:3px 0;border-bottom:1px dashed var(--line)}
+.ws.dev .ro-ad-checks small{font-family:var(--mono);font-size:11px;color:var(--text-3)}
+.ws.dev .ro-ad-ci{width:18px;height:18px;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;border:1px solid var(--line-3);color:var(--card)}
+.ws.dev .ro-ad-checks .pass .ro-ad-ci{background:var(--ok);border-color:var(--ok)}
+.ws.dev .ro-ad-checks .pass small{color:var(--ok)}
+.ws.dev .ro-ad-checks .fail .ro-ad-ci{background:var(--alert);border-color:var(--alert)}
+.ws.dev .ro-ad-checks .fail span,.ws.dev .ro-ad-checks .fail small{color:var(--alert)}
+.ws.dev .ro-ad-checks .fail .ro-ad-ci{color:var(--card)}
+
+.ws.dev .ro-ad-rows{display:grid;gap:6px}
+.ws.dev .ro-ad-job{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;background:var(--card);border:1px solid var(--line-2);border-radius:3px;color:inherit;text-decoration:none}
+.ws.dev a.ro-ad-job:hover{background:var(--card-hover);border-color:var(--line-3)}
+.ws.dev .ro-ad-job.failed{border-color:var(--alert)}
+.ws.dev .ro-ad-jb{display:grid;gap:2px;min-width:0}
+.ws.dev .ro-ad-jb b{font-size:13.5px;font-weight:600;overflow-wrap:anywhere}
+.ws.dev .ro-ad-jb small{font-size:12px;color:var(--text-2)}
+.ws.dev .ro-ad-err{font-size:12px;color:var(--alert);overflow-wrap:anywhere}
+.ws.dev .ro-ad-link{font-size:13px;color:var(--acc);white-space:nowrap}
+.ws.dev .ro-ad-assign{display:flex;flex-wrap:wrap;gap:6px;align-items:center;justify-content:flex-end}
+.ws.dev .ro-ad-assign select{font-size:13px;padding:5px 8px;max-width:260px;background-color:var(--card)}
+
+/* ---------------------------------------------------------------- people */
+.ws.dev .ro-ad-search{flex:1;display:block}
+.ws.dev .ro-ad-search input{width:100%;max-width:420px;font:inherit;font-size:13px;padding:6px 9px;border:1px solid var(--line-2);border-radius:3px;background:var(--card);color:var(--text)}
+.ws.dev .ro-ad-search input:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.ws.dev .ro-ad-band{display:flex;align-items:center;gap:8px;padding:14px 12px 6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-2)}
+.ws.dev .ro-ad-band::after{content:"";flex:1;height:1px;background:currentColor;opacity:.35}
+.ws.dev .ro-ad-people{list-style:none;margin:0;padding:0 10px;display:grid;gap:6px}
+.ws.dev .ro-ad-person{display:grid;grid-template-columns:36px minmax(0,1.2fr) minmax(0,1fr) 120px;gap:12px;align-items:center;min-height:58px;padding:8px 12px;background:var(--card);border:1px solid var(--line-2);border-radius:3px}
+.ws.dev .ro-ad-av{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600;background:var(--band);color:var(--band-label)}
+.ws.dev .ro-ad-av.blank{background:transparent;border:1px dashed var(--line-3);color:var(--text-3)}
+.ws.dev .ro-ad-pbody,.ws.dev .ro-ad-role{display:grid;min-width:0}
+.ws.dev .ro-ad-pbody b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .ro-ad-pbody b.noname{color:var(--text-3);font-weight:500;font-style:italic}
+.ws.dev .ro-ad-pbody small{font-family:var(--mono);font-size:11px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .ro-ad-role span{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .ro-ad-role small{font-size:11.5px;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .ro-ad-sess{font-family:var(--mono);font-size:10.5px;color:var(--text-3);white-space:nowrap;text-align:right}
+.ws.dev .ro-ad-sess.active{color:var(--ok)}
+.ws.dev .ro-ad-sess.active::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:5px}
+.ws.dev .ro-ad-foot{margin:14px 12px 16px;font-size:12px;color:var(--text-3);max-width:760px}
+
+@media (max-width:1100px){
+  .ws.dev .ro-ad-cards{grid-template-columns:1fr}
+  .ws.dev .ro-ad-cards>div+div{border-left:0;border-top:1px solid var(--line)}
+  .ws.dev .ro-ad-checks{grid-template-columns:1fr}
+  .ws.dev .ro-ad-person{grid-template-columns:36px minmax(0,1fr) auto}
+  .ws.dev .ro-ad-role{display:none}
+}
+@media (max-width:700px){
+  .ws.dev .ro-ad{grid-template-columns:1fr;grid-auto-rows:auto;gap:0;padding:0;overflow-y:auto}
+  .ws.dev .ro-ad>.col{overflow:visible;border-radius:0;border-width:0 0 1px}
+  .ws.dev .ro-ad-scroll{overflow:visible}
+  .ws.dev .ro-ad-job{grid-template-columns:auto minmax(0,1fr)}
+  .ws.dev .ro-ad-job>:last-child{grid-column:2}
+  .ws.dev .ro-ad-assign{justify-content:flex-start}
+}

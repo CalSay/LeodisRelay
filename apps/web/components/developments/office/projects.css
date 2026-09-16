@@ -1,0 +1,82 @@
+/*
+ * Projects tab: the project list and the register column. Scoped to .ws.dev
+ * so the Compliance office is unchanged. Shared cards, marks and bands live in
+ * redesign.css.
+ */
+
+/* ---------------------------------------------------------- project list */
+.ws.dev .pr-pband{display:flex;justify-content:space-between;align-items:center;margin:10px 10px 6px;padding:7px 10px;background:var(--band);border-radius:2px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--band-label)}
+.ws.dev .pr-pband i{font-style:normal;color:var(--band-text)}
+.ws.dev .pr-pband .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:8px;vertical-align:1px;background:var(--ok)}
+.ws.dev .pr-pband.dlp .dot{background:var(--band-label)}
+.ws.dev .pr-plist{display:grid;gap:6px;padding:0 10px 6px}
+.ws.dev .pr-pcard{position:relative;display:grid;gap:4px;padding:10px 12px;background:var(--card);border:1px solid var(--line-2);border-radius:3px;color:var(--text);text-decoration:none}
+.ws.dev .pr-pcard:hover{background:var(--card-hover);border-color:var(--line-3)}
+.ws.dev .pr-pcard:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.ws.dev .pr-pcard .pt{display:flex;justify-content:space-between;gap:8px;font-size:14px;font-weight:600;line-height:1.3}
+.ws.dev .pr-pcard .arrow{font-family:var(--mono);color:var(--text-3)}
+.ws.dev .pr-pcard .ps{font-size:12px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .pr-pcard .ps b{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--acc)}
+.ws.dev .pr-pcard .pm{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px;min-height:20px}
+.ws.dev .pr-pcard .pm .n{font-family:var(--mono);font-size:11px;color:var(--text-2);margin-right:6px}
+.ws.dev .pr-pcard .pm .n.quiet{color:var(--text-3)}
+.ws.dev .pr-pcard.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.ws.dev .pr-pcard.on .arrow{color:var(--acc)}
+/* A gold diamond on the selected card's right edge, pointing into the register. */
+.ws.dev .pr-pcard.on::after{content:"";position:absolute;right:-6px;top:50%;width:9px;height:9px;background:var(--acc);transform:translateY(-50%) rotate(45deg);border-radius:1px}
+.ws.dev .pr-projects{overflow-x:hidden}
+.ws.dev .pr-foot{margin-top:auto;padding:12px 16px 14px;font-size:12px;color:var(--text-3)}
+
+/* -------------------------------------------------------------- register */
+.ws.dev .pr-body{padding-bottom:14px}
+.ws.dev .pr-empty{padding:12px 20px;font-size:13px;color:var(--text-2)}
+.ws.dev .ro-toolbar .chip{display:inline-flex;align-items:center;gap:6px;padding:4px 9px}
+.ws.dev .ro-toolbar .chip:focus-visible,.ws.dev .pr-seg button:focus-visible,.ws.dev .pr-more:focus-visible,.ws.dev .pr-month:focus-visible,.ws.dev .pr-cal-nav:focus-visible,.ws.dev .pr-cal-day:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.ws.dev .pr-hotdot{width:6px;height:6px;border-radius:50%;background:var(--alert)}
+.ws.dev .pr-seg{margin-left:auto;display:inline-flex;border:1px solid var(--line-2);border-radius:3px;overflow:hidden}
+.ws.dev .pr-seg button{font-family:var(--mono);font-size:11px;border:0;background:var(--card);color:var(--text-2);padding:5px 9px;cursor:pointer}
+.ws.dev .pr-seg button+button{border-left:1px solid var(--line-2)}
+.ws.dev .pr-seg button[aria-pressed="true"]{background:var(--band-2);color:var(--band-label)}
+.ws.dev .pr-more{width:100%;margin-top:2px;padding:9px;border:1px dashed var(--line-3);background:transparent;color:var(--acc);font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;border-radius:3px;cursor:pointer}
+.ws.dev .pr-more:hover{background:var(--acc-wash)}
+.ws.dev .pr-draft{cursor:default}
+.ws.dev .pr-draft:hover{background:var(--card);border-color:var(--line-2)}
+.ws.dev .pr-draft .ro-stub b{color:var(--text-2)}
+
+/* month groups */
+.ws.dev .pr-month{display:grid;grid-template-columns:14px minmax(0,1fr) auto auto;gap:10px;align-items:center;width:calc(100% - 20px);margin:8px 10px 0;padding:8px 10px;background:var(--card);border:1px solid var(--line-2);border-radius:3px;color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.ws.dev .pr-month:hover{border-color:var(--line-3)}
+.ws.dev .pr-month .chev{color:var(--text-3);transition:transform .15s}
+.ws.dev .pr-month[aria-expanded="true"] .chev{transform:rotate(90deg)}
+.ws.dev .pr-month .mname{font-weight:600}
+.ws.dev .pr-month .msum{display:inline-flex;gap:5px;align-items:center;font-family:var(--mono);font-size:11px;color:var(--text-2)}
+.ws.dev .pr-month .mcount{font-family:var(--mono);font-size:11px;color:var(--text-3);min-width:64px;text-align:right}
+.ws.dev .pr-month-list{padding-top:6px}
+
+/* calendar */
+.ws.dev .pr-cal{margin:12px 10px 0;padding:10px;background:var(--card);border:1px solid var(--line-2);border-radius:3px}
+.ws.dev .pr-cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.ws.dev .pr-cal-head span{display:grid;justify-items:center}
+.ws.dev .pr-cal-head i{font-style:normal;font-family:var(--mono);font-size:11px;color:var(--text-3)}
+.ws.dev .pr-cal-nav{width:30px;height:30px;border:1px solid var(--line-2);border-radius:3px;background:var(--panel);color:var(--text);font-size:16px;cursor:pointer}
+.ws.dev .pr-cal-nav:disabled{opacity:.35;cursor:default}
+.ws.dev .pr-cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.ws.dev .pr-cal-dow{padding-bottom:2px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-3);text-align:center}
+.ws.dev .pr-cal-day{aspect-ratio:1;min-width:0;display:grid;grid-template-rows:auto 1fr;padding:3px 5px;border:1px solid var(--line);border-radius:3px;background:transparent;color:var(--text-3);font:inherit;text-align:left}
+.ws.dev .pr-cal-day.wk{background:var(--panel-2)}
+.ws.dev .pr-cal-day .dn{font-family:var(--mono);font-size:10px}
+.ws.dev .pr-cal-day.has{border-color:var(--acc);background:var(--acc-wash);color:var(--text);cursor:pointer}
+.ws.dev .pr-cal-day.has:hover{background:var(--card-hover)}
+.ws.dev .pr-cal-day .dc{align-self:center;justify-self:center;font-family:var(--mono);font-size:13px;font-weight:600;color:var(--acc)}
+.ws.dev .pr-cal-day .dc .ro-mark{width:18px;height:18px}
+.ws.dev .pr-cal-day .dc .ro-mark svg{width:11px;height:11px}
+.ws.dev .pr-cal-day.sel{background:var(--band-2);box-shadow:inset 0 0 0 1px var(--acc)}
+.ws.dev .pr-cal-day.sel .dn{color:var(--band-text)}
+
+@media (prefers-reduced-motion:reduce){.ws.dev .pr-month .chev{transition:none}}
+@media (max-width:700px){
+  .ws.dev .pr-pcard.on::after{display:none}
+  .ws.dev .pr-pcard,.ws.dev .pr-month{min-height:var(--touch)}
+  .ws.dev .pr-seg{margin-left:0}
+  .ws.dev .pr-month .mcount{min-width:0}
+}

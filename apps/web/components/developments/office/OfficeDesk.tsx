@@ -17,6 +17,8 @@ import { InboxView } from './InboxView';
 import { IssuesView } from './IssuesView';
 import { VariationsView } from './VariationsView';
 import { AdminView, TeamView } from './TeamAdmin';
+import { ReportsView } from './ReportsView';
+import './redesign.css';
 import { Btn, BtnQ } from './bits';
 
 const REPORTABLE = ['4. Active', '5. Defects Liability'];
@@ -100,6 +102,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
     ['inbox', 'Inbox', snap ? snap.reports.length : null, stats.some(s => s.failed.length > 0 || s.pendingReview.length > 0)],
     ['issues', 'Issues', snap ? openIssues.length : null, overdue > 0],
     ['variations', 'Variations', pendingVariations, stats.some(s => s.exposedVariations.length > 0)],
+    ['reports', 'Reports', snap ? snap.reports.length : null, false],
     ['team', 'Team', team ? team.members.length : null, false],
   ];
   const results = q.trim().length >= 2 ? search(q, ctx) : [];
@@ -113,7 +116,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
     return null;
   };
 
-  return <div className="ws" onClick={onRootClick}>
+  return <div className="ws dev" onClick={onRootClick}>
     <header className="topbar">
       <a className="logo" href="#/projects" aria-label="Projects"><b>RELAY</b><span>LEODIS DEVELOPMENTS</span></a>
       <div className="search">
@@ -142,7 +145,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
       {me.admin && <a href="#/admin" className={`adm ${route.tab === 'admin' ? 'on' : ''}`}>Admin</a>}
     </nav>
     {error && <div className="note bad" style={{ margin: '12px 24px 0' }} role="alert"><span>{error} {snap ? 'Showing previously loaded records.' : ''}</span><BtnQ className="btn-sm" onClick={() => void refresh()}>Retry</BtnQ></div>}
-    {route.tab === 'inbox' ? <InboxView ctx={ctx} /> : route.tab === 'issues' ? <IssuesView ctx={ctx} /> : route.tab === 'variations' ? <VariationsView ctx={ctx} /> : route.tab === 'team' ? <TeamView ctx={ctx} /> : route.tab === 'admin' ? <AdminView ctx={ctx} /> : <ProjectsView ctx={ctx} />}
+    {route.tab === 'inbox' ? <InboxView ctx={ctx} /> : route.tab === 'issues' ? <IssuesView ctx={ctx} /> : route.tab === 'variations' ? <VariationsView ctx={ctx} /> : route.tab === 'reports' ? <ReportsView ctx={ctx} /> : route.tab === 'team' ? <TeamView ctx={ctx} /> : route.tab === 'admin' ? <AdminView ctx={ctx} /> : <ProjectsView ctx={ctx} />}
     {dialog && <Dialogs d={dialog} close={() => setDialog(null)} done={() => { void refresh(); if (route.tab === 'team' || route.tab === 'admin') loadTeam(); }} />}
     <Toasts />
   </div>;

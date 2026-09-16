@@ -1,0 +1,98 @@
+/*
+ * Developments office: Inbox as a to-do list. Queues | list | reader.
+ * Scoped to .ws.dev; builds on redesign.css (marks, bands, column panels).
+ */
+.ws.dev .ro-inbox{flex:1;min-height:0;display:grid;grid-template-columns:240px minmax(0,1fr) 460px;gap:10px;padding:10px;background:var(--ground)}
+.ws.dev .ro-inbox-loading{flex:1;min-height:0;display:grid;place-items:center}
+.ws.dev .ro-inbox>.col{min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.ws.dev .ro-inbox .col-head{position:static;flex:none}
+.ws.dev .ro-scroll{flex:1;min-height:0;overflow-y:auto}
+
+/* ---------------------------------------------------------------- queues */
+.ws.dev .ro-qsec{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);padding:14px 12px 6px}
+.ws.dev .ro-queues{display:grid;gap:3px;padding:0 8px}
+.ws.dev .ro-qbtn{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:center;width:100%;text-align:left;font-size:13.5px;border:1px solid transparent;padding:8px;border-radius:3px;color:var(--text)}
+.ws.dev .ro-qbtn:hover{background:var(--card-hover)}
+.ws.dev .ro-qbtn[aria-pressed="true"]{border-color:var(--acc);background:var(--acc-wash);font-weight:600}
+.ws.dev .ro-qi{display:grid;place-items:center}
+.ws.dev .ro-ql small{display:block;font-size:11.5px;font-weight:400;color:var(--text-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .ro-qn{font-family:var(--mono);font-size:12px;min-width:26px;text-align:center;padding:1px 6px;border-radius:2px;color:var(--text-2)}
+.ws.dev .ro-qn.hot{background:var(--alert);color:var(--card);font-weight:600}
+.ws.dev .ro-qn.amber{background:var(--caution-wash);color:var(--caution);font-weight:600}
+.ws.dev .ro-qn.gold{background:var(--acc);color:var(--acc-ink);font-weight:600}
+.ws.dev .ro-udot{display:block;width:9px;height:9px;border-radius:50%;background:var(--acc)}
+.ws.dev .ro-live{display:inline-block;flex:none;width:9px;height:9px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px var(--ok-wash)}
+.ws.dev .ro-scope{margin-top:10px;border-top:1px solid var(--line);padding:0 12px 14px;display:grid;gap:8px}
+.ws.dev .ro-scope .ro-qsec{padding:10px 0 0}
+.ws.dev .ro-scope label,.ws.dev .ro-trades{display:grid;gap:4px;font-size:12px;color:var(--text-2)}
+.ws.dev .ro-scope select{font-size:13px;padding:6px 28px 6px 8px;background-color:var(--card);width:100%}
+.ws.dev .ro-tchips{display:flex;flex-wrap:wrap;gap:4px}
+.ws.dev .ro-tchips button{font-family:var(--mono);font-size:11px;border:1px solid var(--line-2);background:var(--card);color:var(--text-2);padding:4px 8px;border-radius:3px}
+.ws.dev .ro-tchips button:hover{border-color:var(--acc)}
+.ws.dev .ro-tchips button[aria-pressed="true"]{border-color:var(--acc);background:var(--acc-wash);color:var(--text)}
+
+/* ------------------------------------------------------------------ list */
+.ws.dev .ro-ilist{padding-bottom:16px}
+.ws.dev .ro-itools{padding:10px 12px;border-bottom:1px solid var(--line-2);background:var(--panel-2)}
+.ws.dev .ro-itools p{margin:0;font-size:13px;color:var(--text-2)}
+.ws.dev .ro-itools a{color:var(--acc);text-decoration:underline;text-underline-offset:3px}
+.ws.dev .ro-ilist .ro-alert .btn{border-color:var(--alert);color:var(--alert)}
+.ws.dev .ro-onsite{margin:10px 10px 0;padding:10px;border:1px dashed var(--line-3);border-radius:3px;display:grid;gap:8px}
+.ws.dev .ro-onsite-h{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ok)}
+.ws.dev .ro-onsite-row{display:flex;flex-wrap:wrap;gap:6px}
+.ws.dev .ro-dchip{display:inline-flex;gap:8px;align-items:baseline;font-size:12.5px;border:1px solid var(--line-2);background:var(--card);border-radius:3px;padding:5px 9px}
+.ws.dev .ro-dchip b{font-weight:600}
+.ws.dev .ro-dchip small{font-family:var(--mono);font-size:10.5px;color:var(--text-3)}
+.ws.dev .ro-irows{display:grid;gap:6px;padding:0 10px 4px}
+.ws.dev .ro-onsite+.ro-irows,.ws.dev .ro-itools+.ro-irows{padding-top:10px}
+
+.ws.dev .ro-irow{display:grid;grid-template-columns:16px 90px minmax(0,1fr) auto;min-height:70px;width:100%;padding:0;text-align:left;background:var(--card);border:1px solid var(--line-2);border-radius:3px;overflow:hidden;color:inherit;cursor:pointer}
+.ws.dev .ro-irow:hover{border-color:var(--line-3);background:var(--card-hover)}
+.ws.dev .ro-irow.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.ws.dev .ro-gut{display:grid;place-items:center}
+.ws.dev .ro-irow .ro-stub{border-left:1px solid var(--line)}
+.ws.dev .ro-irow.on .ro-stub{background:var(--acc-wash)}
+.ws.dev .ro-ibody{display:grid;gap:3px;align-content:center;padding:8px 12px;min-width:0}
+.ws.dev .ro-ititle{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .ro-isub{font-size:12px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .ro-found{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.ws.dev .ro-kchip{font-family:var(--mono);font-size:10.5px;padding:1px 6px;border-radius:2px;border:1px solid var(--line-2);color:var(--text-2)}
+.ws.dev .ro-kchip.defect{border-color:var(--caution);color:var(--caution)}
+.ws.dev .ro-kchip.instruction{border-color:var(--acc);color:var(--acc)}
+.ws.dev .ro-iright{display:grid;justify-items:end;align-content:space-between;gap:6px;padding:8px 10px;border-left:1px solid var(--line);min-width:96px}
+.ws.dev .ro-itime{font-family:var(--mono);font-size:11px;color:var(--text-2);white-space:nowrap}
+.ws.dev .ro-istate{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--text-2);white-space:nowrap}
+/* Read reports recede; problem reports carry a red edge. */
+.ws.dev .ro-irow.read{background:var(--panel)}
+.ws.dev .ro-irow.read:hover{background:var(--card-hover)}
+.ws.dev .ro-irow.read .ro-stub{background:transparent}
+.ws.dev .ro-irow.read .ro-ititle{font-weight:500;color:var(--text-2)}
+.ws.dev .ro-irow.read .ro-stub b{color:var(--text-2)}
+.ws.dev .ro-irow.problem .ro-gut{background:var(--alert)}
+.ws.dev .ro-irow.problem .ro-udot{background:var(--card)}
+.ws.dev .ro-irow.draft{cursor:default}
+.ws.dev .ro-irow.draft:hover{border-color:var(--line-2);background:var(--panel)}
+.ws.dev .ro-irow.draft .ro-ititle{color:var(--text)}
+
+/* ---------------------------------------------------------------- reader */
+.ws.dev .ro-actionbar{flex:none;display:grid;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line-2);background:var(--panel-2)}
+.ws.dev .ro-why{display:flex;gap:10px;align-items:flex-start;font-size:13px;color:var(--text-2)}
+.ws.dev .ro-why>.ro-qi{width:24px;height:24px}
+.ws.dev .ro-why b{display:block;color:var(--text);font-weight:600}
+.ws.dev .ro-btns{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.ws.dev .ro-hint{font-size:12px;color:var(--text-3)}
+.ws.dev .ro-reader-body{padding:10px}
+/* The action bar owns the next step; keep only Full report and PDF in the sheet title. */
+.ws.dev .ro-inbox-reader .sheet-title .actions .btn:not(.btn-q){display:none}
+.ws.dev .ro-inbox-reader .sheet-title .actions{display:flex;flex-wrap:wrap;gap:6px}
+.ws.dev .ro-inbox .ro-empty .ro-mark{width:34px;height:34px}
+.ws.dev .ro-inbox .ro-empty .ro-mark svg{width:20px;height:20px}
+
+@media (max-width:1280px){
+  .ws.dev .ro-inbox{grid-template-columns:220px minmax(0,1fr) 400px}
+}
+@media (max-width:700px){
+  .ws.dev .ro-inbox{display:flex;flex-direction:column;overflow-y:auto;padding:0;gap:0}
+  .ws.dev .ro-inbox>.col{display:flex;overflow:visible;min-height:auto}
+  .ws.dev .ro-scroll{overflow:visible}
+}

@@ -1,0 +1,86 @@
+/*
+ * Developments office redesign (release 1). Scoped to .ws.dev so the
+ * Compliance office, which shares workspace.css, is unchanged.
+ *
+ * Columns are separate panels on the ground with a gutter between them; every
+ * column head is a charcoal band with a gold label; the column you are reading
+ * carries a gold rule. Registers use one card shape (the reference stub) and
+ * one status vocabulary (the boxed marks in marks.tsx).
+ */
+.ws.dev{--band:#282b2d;--band-2:#1f2123;--band-label:#d9ae4a;--band-text:#c9ced2;--card:#ffffff;--card-hover:#f4f3ef;--stub:#ecebe6;--line-3:#a9a8a1;--sync:#4f5a63;--sync-wash:rgba(79,90,99,.1)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ws.dev{--band:#1b1d1f;--band-2:#161819;--card:#2e3134;--card-hover:#34383b;--stub:#383c3f;--line-3:#5a5f63;--sync:#9aa6b0;--sync-wash:rgba(154,166,176,.1)}}
+:root[data-theme="dark"] .ws.dev{--band:#1b1d1f;--band-2:#161819;--card:#2e3134;--card-hover:#34383b;--stub:#383c3f;--line-3:#5a5f63;--sync:#9aa6b0;--sync-wash:rgba(154,166,176,.1)}
+
+/* ---------------------------------------------------------------- marks */
+.ws.dev .ro-mark{width:24px;height:24px;flex:none;display:inline-grid;place-items:center;border:1px solid;border-radius:3px}
+.ws.dev .ro-mark svg{width:14px;height:14px;display:block}
+.ws.dev .ro-mark.sm{width:20px;height:20px}
+.ws.dev .ro-mark.sm svg{width:12px;height:12px}
+.ws.dev .ro-mark-urgent{color:var(--alert);border-color:var(--alert);background:var(--alert-wash)}
+.ws.dev .ro-mark-action{color:var(--caution);border-color:var(--caution);background:var(--caution-wash)}
+.ws.dev .ro-mark-sync{color:var(--sync);border-color:var(--line-3);background:var(--sync-wash)}
+.ws.dev .ro-mark-done{color:var(--ok);border-color:var(--ok);background:var(--ok-wash)}
+.ws.dev .ro-mark-none{border:1px dashed var(--line-2);background:transparent}
+
+/* ------------------------------------------------------ bands and groups */
+.ws.dev .ro-band{display:flex;align-items:center;gap:8px;padding:12px 12px 6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase}
+.ws.dev .ro-band::after{content:"";flex:1;height:1px;background:currentColor;opacity:.35;order:1}
+.ws.dev .ro-band>*:not(span:first-child){order:2}
+.ws.dev .ro-band-urgent{color:var(--alert)}
+.ws.dev .ro-band-action{color:var(--caution)}
+.ws.dev .ro-band-sync{color:var(--sync)}
+.ws.dev .ro-band-done{color:var(--ok)}
+.ws.dev .ro-band-none{color:var(--text-2)}
+.ws.dev .ro-grouphead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 10px 0;padding:7px 10px;background:var(--panel-2);border:1px solid var(--line);border-radius:2px;font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text)}
+.ws.dev .ro-grouphead i{font-style:normal;font-weight:400;color:var(--text-3);letter-spacing:.04em}
+.ws.dev .ro-list{display:grid;gap:6px;padding:0 10px 4px}
+
+/* ------------------------------------------------------ reference stub card */
+.ws.dev .ro-card{display:grid;grid-template-columns:90px minmax(0,1fr) 44px;min-height:62px;width:100%;padding:0;text-align:left;background:var(--card);border:1px solid var(--line-2);border-radius:3px;overflow:hidden;color:inherit;cursor:pointer}
+.ws.dev .ro-card.with-aside{grid-template-columns:90px minmax(0,1fr) auto 44px}
+.ws.dev .ro-card:hover{background:var(--card-hover);border-color:var(--line-3)}
+.ws.dev .ro-card.on{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.ws.dev .ro-stub{display:grid;align-content:center;gap:1px;padding:8px 10px;background:var(--stub);border-right:1px dashed var(--line-3);font-family:var(--mono);min-width:0}
+.ws.dev .ro-stub small{font-size:10px;color:var(--text-3);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .ro-stub b{font-size:13px;font-weight:600;color:var(--acc);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .ro-card.on .ro-stub{background:var(--acc-wash)}
+.ws.dev .ro-card-body{display:grid;align-content:center;gap:2px;padding:8px 12px;min-width:0}
+.ws.dev .ro-card-title{font-size:14px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ws.dev .ro-card-sub{font-size:12px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws.dev .ro-card-aside{align-self:center;padding:0 10px;font-family:var(--mono);font-size:11px;color:var(--text-2);white-space:nowrap;text-align:right}
+.ws.dev .ro-card-mark{display:grid;place-items:center;border-left:1px solid var(--line)}
+.ws.dev .ro-card.quiet .ro-card-title{font-weight:500;color:var(--text-2)}
+.ws.dev .ro-card.slim{min-height:44px;grid-template-columns:90px minmax(0,1fr) 40px}
+.ws.dev .ro-card.slim.with-aside{grid-template-columns:90px minmax(0,1fr) auto 40px}
+.ws.dev .ro-card.slim .ro-stub{padding:4px 10px}
+.ws.dev .ro-card.slim .ro-stub small{display:none}
+.ws.dev .ro-card.slim .ro-card-title{font-size:13px;font-weight:500;-webkit-line-clamp:1}
+
+/* ------------------------------------------------ columns as separate panels */
+.ws.dev .cols{gap:10px;padding:10px;background:var(--ground)}
+.ws.dev .col{border:1px solid var(--line-2);border-radius:4px;background:var(--panel)}
+.ws.dev .col:last-child{border-right:1px solid var(--line-2);background:var(--panel)}
+.ws.dev .col-head{align-items:center;min-height:44px;background:var(--band-2);border-bottom:2px solid var(--band);box-shadow:none}
+.ws.dev .col:last-child .col-head{background:var(--band-2)}
+.ws.dev .col-head h4{color:var(--band-label);font-size:11px}
+.ws.dev .col-head i{color:var(--band-text);font-size:11px}
+.ws.dev .col.focus .col-head{border-bottom-color:var(--band-label)}
+.ws.dev .col-head .col-back{color:var(--band-label)}
+
+/* Shared helpers used by more than one tab */
+.ws.dev .ro-alert{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;margin:10px 10px 0;padding:9px 10px;border:1px solid var(--alert);background:var(--alert-wash);border-radius:3px;font-size:13px}
+.ws.dev .ro-alert.caution{border-color:var(--caution);background:var(--caution-wash)}
+.ws.dev .ro-alert b{display:block;font-weight:600}
+.ws.dev .ro-alert span{color:var(--text-2)}
+.ws.dev .ro-empty{display:grid;justify-items:center;gap:6px;padding:40px 20px;text-align:center;color:var(--text-2);font-size:13px}
+.ws.dev .ro-empty b{color:var(--text);font-size:15px;font-weight:600}
+.ws.dev .ro-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:10px 12px;background:var(--panel-2);border-bottom:1px solid var(--line-2);flex:none}
+.ws.dev .ro-toolbar .chip{font-size:11px}
+
+@media (max-width:700px){
+  .ws.dev .cols{gap:0;padding:0}
+  .ws.dev .col{border-radius:0;border-width:0}
+  .ws.dev .ro-card{grid-template-columns:78px minmax(0,1fr) 40px}
+  .ws.dev .ro-card.with-aside{grid-template-columns:78px minmax(0,1fr) 40px}
+  .ws.dev .ro-card.with-aside .ro-card-aside{display:none}
+}
