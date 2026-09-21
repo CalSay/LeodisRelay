@@ -113,6 +113,7 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
       <label>Project <select value={project} onChange={e => setProject(e.target.value)}><option value="">All projects</option>{ctx.projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}</select></label>
       <label>Trade <select value={trade} onChange={e => setTrade(e.target.value)}><option value="">All trades</option>{VARIATION_TRADES.map(t => <option key={t} value={t}>{t}</option>)}</select></label>
       <label>Reason <select value={reason} onChange={e => setReason(e.target.value)}><option value="">Any reason</option>{VARIATION_REASONS.map(r => <option key={r} value={r}>{r}</option>)}</select></label>
+      <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'variation-new', projects: ctx.projects, ...(project ? { projectId: project } : {}), opened: v => ctx.go(`#/variations/${v.id}`) })}>Add variation</Btn>
     </div>
 
     <div className="ro-vo-body">

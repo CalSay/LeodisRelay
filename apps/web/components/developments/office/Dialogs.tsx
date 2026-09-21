@@ -1,7 +1,8 @@
 'use client';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
-import { acknowledgeReport, issueCommand, reviewReportDecision, variationCommand } from '@/lib/api';
+import type { FixtureProject } from '@/lib/fixtures';
+import { acknowledgeReport, issueCommand, raiseVariation, reviewReportDecision, variationCommand } from '@/lib/api';
 import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, expectedCost, fmtMoney, fmtPct, marginPct, readCosting, suggestedQuote, type Costing } from '@/lib/variations';
 import { Modal, formValues, toast } from '@/components/workspace/hooks';
 import { InstallRelay } from '@/components/InstallRelay';
@@ -22,6 +23,7 @@ export type Dialog =
   | { kind: 'variation-decline'; variation: Variation }
   | { kind: 'variation-reopen'; variation: Variation }
   | { kind: 'variation-details'; variation: Variation }
+  | { kind: 'variation-new'; projects: FixtureProject[]; projectId?: string; opened: (v: Variation) => void }
   | { kind: 'help' };
 
 /**
@@ -33,6 +35,8 @@ export type Dialog =
 export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // One identity per opened dialog: pressing the button twice, or retrying after a dropped connection, never raises a second variation.
+  const [requestId] = useState(() => crypto.randomUUID());
   const shell = (title: string, sub: string, body: ReactNode, foot: ReactNode) => <>
     <div className="dlg-head"><div>{sub && <div className="crumbs">{sub}</div>}<h3>{title}</h3></div><button type="button" className="x" onClick={close} aria-label="Close">×</button></div>
     <div className="dlg-body">{body}{error && <div className="note bad" style={{ margin: 0 }}><span>{error}</span></div>}</div>
@@ -171,6 +175,32 @@ export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done
         <div className="f"><label>Note · optional</label><textarea name="note" placeholder="What changed and why" /></div>
         <p className="rowsub" style={{ margin: 0 }}>The engineer’s original wording stays in the history. Ticking “already carried out” puts it at the top of Attention until it is instructed: that is work Leodis cannot yet invoice.</p>
       </>, <Foot label="Save details" />)}
+    </form></Modal>;
+  }
+  if (d.kind === 'variation-new') {
+    const fixed = d.projects.find(p => p.id === d.projectId);
+    return <Modal className="ws-dialog" onClose={close}><form onSubmit={submit(async f => {
+      const project = d.projects.find(p => p.id === f.projectId);
+      if (!project) throw new Error('Choose the project.');
+      if (!f.description?.trim()) throw new Error('Describe the variation.');
+      const v = await raiseVariation({ requestId, projectId: project.id, description: f.description, location: f.location ?? '', trade: f.trade ?? '', reason: f.reason ?? '',
+        workDone: f.workDone === 'on', askedBy: f.askedBy ?? '', note: f.note ?? '' });
+      d.opened(v);
+      return `${v.reference} added to ${project.projectName}. It needs a quote.`;
+    })}>
+      {shell('Add a variation', fixed ? `${fixed.projectNumber} · ${fixed.projectName}` : 'Raised by the office', <>
+        <div className="f"><label>Project</label><select name="projectId" defaultValue={d.projectId ?? ''} autoFocus={!fixed}><option value="" disabled>Choose a project</option>{d.projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} · {p.projectName}</option>)}</select></div>
+        <div className="f"><label>Variation</label><textarea name="description" placeholder="What is being asked for, beyond the contract" autoFocus={!!fixed} /></div>
+        <div className="f-row three">
+          <div className="f"><label>Location</label><input name="location" placeholder="L1 plantroom" /></div>
+          <div className="f"><label>Trade</label><select name="trade" defaultValue=""><option value="">Not set</option>{VARIATION_TRADES.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+          <div className="f"><label>Reason</label><select name="reason" defaultValue=""><option value="">Not set</option>{VARIATION_REASONS.map(r => <option key={r} value={r}>{r}</option>)}</select></div>
+        </div>
+        <div className="f"><label>Asked for by · optional</label><input name="askedBy" placeholder="Name and company" /></div>
+        <div className="f check"><input id="vn-done" name="workDone" type="checkbox" /><label htmlFor="vn-done">Work already carried out without a written instruction</label></div>
+        <div className="f"><label>Note · optional</label><textarea name="note" placeholder="How the office heard about it: client email of 18 Sep, site meeting" /></div>
+        <p className="rowsub" style={{ margin: 0 }}>It joins the register awaiting instruction and unpriced, raised by you, and takes the project’s next VO number. Price it and record the client’s instruction from the variation, as for one raised on site. Who asked is not an instruction.</p>
+      </>, <Foot label="Add variation" />)}
     </form></Modal>;
   }
   return <Modal className="ws-dialog" onClose={close}>{shell('Help & install', 'Leodis Relay', <>

@@ -174,6 +174,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
         <button type="button" aria-pressed={view === 'month'} onClick={() => setView('month')}>By month</button>
         <button type="button" aria-pressed={view === 'calendar'} onClick={() => setView('calendar')}>Calendar</button>
       </span>}
+      {(filter === 'all' || filter === 'variations') && <BtnQ className="btn-sm pr-add" onClick={() => ctx.setDialog({ kind: 'variation-new', projects: ctx.projects, projectId: s.project.id, opened: v => ctx.go(`#/projects/${s.code}/variation/${v.id}`) })}>Add variation</BtnQ>}
     </div>
     <div className="pr-body">
       {filter === 'all' && <>

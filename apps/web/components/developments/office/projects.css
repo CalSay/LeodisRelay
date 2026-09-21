@@ -34,6 +34,7 @@
 .ws.dev .ro-toolbar .chip:focus-visible,.ws.dev .pr-seg button:focus-visible,.ws.dev .pr-more:focus-visible,.ws.dev .pr-month:focus-visible,.ws.dev .pr-cal-nav:focus-visible,.ws.dev .pr-cal-day:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .ws.dev .pr-hotdot{width:6px;height:6px;border-radius:50%;background:var(--alert)}
 .ws.dev .pr-seg{margin-left:auto;display:inline-flex;border:1px solid var(--line-2);border-radius:3px;overflow:hidden}
+.ws.dev .pr-add{margin-left:auto}
 .ws.dev .pr-seg button{font-family:var(--mono);font-size:11px;border:0;background:var(--card);color:var(--text-2);padding:5px 9px;cursor:pointer}
 .ws.dev .pr-seg button+button{border-left:1px solid var(--line-2)}
 .ws.dev .pr-seg button[aria-pressed="true"]{background:var(--band-2);color:var(--band-label)}

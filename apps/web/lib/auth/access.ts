@@ -35,6 +35,8 @@ export function canIssueCommand(p: Principal, kind: string): boolean {
 /** Anyone on the project can add a note to a variation; pricing, instructing, declining, calling it within contract and reopening are office acts. */
 /** Office corrections to a sent report (within contract, already raised, notes) are Manager/Admin acts. */
 export function canCorrectReport(p: Principal): boolean { return canManage(p); }
+/** Engineers raise variations through a report; raising one directly on the register is a Manager/Admin act. */
+export function canRaiseVariation(p: Principal): boolean { return canManage(p); }
 export function canVariationCommand(p: Principal, kind: string): boolean {
   if (!hasRole(p)) return false;
   if (kind === 'note') return true;
