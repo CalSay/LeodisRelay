@@ -89,8 +89,8 @@ export function BeforeHandoverPage({ initialProject, returnTo }: { initialProjec
     </div>
 
     {!project ? <div className="eng-panel ho-noprint"><h1>Before handover</h1><p className="eng-help">Choose a project to see everything RELAY still has open on it, in one place: snags on our work, fixes waiting to be checked, handover inspections, other trades&rsquo; issues, variations not yet settled and safety actions.</p></div>
-      : error ? <div className="note note-bad" role="alert">{error} <button type="button" onClick={() => setRetry(n => n + 1)}>Retry</button></div>
-      : !d ? <p role="status">Loading what is still open…</p>
+      : error ? <><h1>Before handover</h1><div className="note note-bad" role="alert">{error} <button type="button" onClick={() => setRetry(n => n + 1)}>Retry</button></div></>
+      : !d ? <><h1>Before handover</h1><p role="status">Loading what is still open…</p></>
       : <article className="ho-sheet" aria-labelledby="ho-title">
         <header className="ho-head">
           <p className="lbl">Before handover · {project.projectNumber}</p>
@@ -117,6 +117,7 @@ export function BeforeHandoverPage({ initialProject, returnTo }: { initialProjec
             <h3>{g.trade}<span>{g.issues.length}</span><Link className="ho-noprint" href={snagHref(g.trade)}>Snag list to print</Link></h3>
             <IssueRows rows={g.issues} here={here} />
           </div>) : <p className="ho-none">No open snags on Electrical, HVAC or P&amp;H work.</p>}
+          {d.ours.length > 0 && <p className="ho-note ho-noprint">A trade&rsquo;s snag list also lists its fixes waiting to be checked, below.</p>}
         </Section>
 
         <Section id="ho-check" title="Fixed, waiting to be checked" count={d.toCheck.length ? String(d.toCheck.length) : 'none'}>

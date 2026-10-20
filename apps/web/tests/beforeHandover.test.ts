@@ -39,19 +39,20 @@ test('open issues are split into our snags by trade, fixes waiting to be checked
   const h = beforeHandover(project, { reports:[], issues, variations:[] }, engineer, TODAY);
   assert.deepEqual(h.ours.map(g => [g.trade, g.issues.map(i => i.reference)]), [
     ['Electrical', ['011LME-ISS-002', '011LME-ISS-001']],
-    ['HVAC', ['011LME-ISS-003', '011LME-ISS-010']],
-  ], 'by trade in a fixed order, then by place as written, no place last; a missing affected trade falls back to the reporter\'s');
+    ['HVAC', ['011LME-ISS-010']],
+  ], 'by trade in a fixed order, then by place as written, no place last');
   const [level1, level2] = h.ours[0]!.issues;
   assert.equal(level1!.location, 'level 1');
   assert.equal(level1!.description, 'Loose cover');
   assert.equal(level2!.overdue, true, 'past its target');
   assert.equal(level2!.owner, 'Sparks Ltd');
-  const disputed = h.ours[1]!.issues[1]!;
+  const disputed = h.ours[1]!.issues[0]!;
   assert.equal(disputed.disputed, true);
   assert.equal(disputed.targetDate, '', 'a target that is not a date is left out');
   assert.deepEqual(h.toCheck.map(i => [i.reference, i.fixedBy, i.overdue, i.trade]), [['011LME-ISS-004', 'Pat Pipe', false, 'P&H']], 'a fix waiting to be checked is not past target');
-  assert.deepEqual(h.others.map(i => [i.reference, i.trade]), [['011LME-ISS-006', undefined], ['011LME-ISS-005', 'Other / non-Leodis']]);
-  assert.deepEqual(h.totals, { ours:4, toCheck:1, others:2, variations:0, workDone:0, safety:0, overdue:1, outstanding:7 });
+  assert.deepEqual(h.others.map(i => [i.reference, i.trade]), [['011LME-ISS-006', undefined], ['011LME-ISS-003', undefined], ['011LME-ISS-005', 'Other / non-Leodis']],
+    'no affected trade recorded is not assumed to be ours, even when an engineer of ours reported it');
+  assert.deepEqual(h.totals, { ours:3, toCheck:1, others:3, variations:0, workDone:0, safety:0, overdue:1, outstanding:7 });
 });
 
 test('variations not yet instructed or declined are listed, work already done first', () => {
@@ -92,6 +93,16 @@ test('handover inspections say how many of their actions are still open, a corre
   assert.deepEqual(h.inspections[0]!.checks, { ok:1, action:2, na:1, open:0 });
   assert.equal(h.ours[0]!.issues[0]!.inspection?.id, correction.id, 'an issue names the inspection that raised it, at its latest revision');
   assert.equal(h.toCheck[0]!.inspection?.reference, second.reference);
+  assert.equal(h.ours[0]!.issues[0]!.trade, 'Electrical', 'an inspection action with no trade is the inspector\'s');
+});
+
+test('an inspection action that found an existing issue again counts it but does not claim to have raised it', () => {
+  n = 0;
+  const defect = issue({ id:'iss-old', raisedByReport:'spr-1', raisedByObservation:'d1', affectedTrade:'P&H' });
+  const r = report({ observations:[check('o1', 'labels', 'action', { linkedIssueId:'iss-old' })] });
+  const h = beforeHandover(project, { reports:[r], issues:[defect], variations:[] }, engineer, TODAY);
+  assert.deepEqual([h.inspections[0]!.raised, h.inspections[0]!.stillOpen], [1, 1]);
+  assert.equal(h.ours[0]!.issues[0]!.inspection, undefined);
 });
 
 test('open safety actions on the project come from its safety inspections', () => {

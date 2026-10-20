@@ -39,6 +39,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the help, engineer layout and nav, navigation, role access, safety
   actions, office landing, office phone and weekly summary checks.
   Screenshots in the project's `ui-review/before-handover/`.
+- A fresh-context review found four gaps, all fixed: an issue with no
+  affected trade was counted as our snag because the snag list falls back to
+  the reporter's trade (now only a handover inspection's own action does);
+  a trade's printed snag list also carries its fixes waiting to be checked
+  (now said under the list); an inspection that re-found an existing issue
+  claimed to have raised it (now only counted); and the page had no heading
+  while loading or on an error.
 - Not verified: a physical phone, Safari and Firefox, SharePoint mode.
 - Not in `docs/tasks.json` (no task covers it). Proposed: "FE-7 Before
   handover: everything open on one project on one page, read-only, printable".

@@ -3,7 +3,6 @@ import { canReadReport } from './auth/access';
 import { isActiveIssue } from './officeActions';
 import { checkCounts } from './reportTypes';
 import { safetyActions, type SafetyAction } from './safetyActions';
-import { issueTrade } from './snagList';
 import type { CheckAnswer, Issue, Report, Variation } from './types';
 
 /**
@@ -128,17 +127,21 @@ export function beforeHandover(project: HandoverProject, sources: HandoverSource
       if (!issue) continue;
       raised += 1;
       if (isActiveIssue(issue)) { stillOpen += 1; if (issue.work === 'awaiting_verification') waiting += 1; }
-      raisedBy.set(issue.id, { id: r.id, reference: r.reference });
+      // Named only by the inspection that raised it; an action that found an existing issue again is counted, not credited.
+      if (ids.has(issue.raisedByReport)) raisedBy.set(issue.id, { id: r.id, reference: r.reference });
     }
     return { id: r.id, reference: r.reference, revision: r.revision, visitDate: r.visitDate, author: r.author,
       checks: checkCounts(r.observations), locations: [...places.values()], stillOpen, raised, waiting };
   }).sort((a, b) => b.visitDate.localeCompare(a.visitDate) || byRef(b, a));
 
   const row = (i: Issue): HandoverIssue => {
-    const trade = issueTrade(i);
+    // Whose work it is, as recorded on site. A handover inspection's action is
+    // our own work by definition, so it falls back to the inspector's trade;
+    // any other issue with no trade recorded is not assumed to be ours.
+    const inspection = raisedBy.get(i.id);
+    const trade = i.affectedTrade ?? (inspection ? i.reporterTrade : undefined);
     const target = /^\d{4}-\d{2}-\d{2}$/.test(i.targetDate) ? i.targetDate : '';
     const fixedBy = i.work === 'awaiting_verification' ? i.closureSubmittedBy?.trim() : undefined;
-    const inspection = raisedBy.get(i.id);
     return { id: i.id, reference: i.reference, description: tidy(i.description), location: tidy(i.location), owner: tidy(i.owner),
       targetDate: target, overdue: !!target && target < today && i.work !== 'awaiting_verification', disputed: i.confirmation === 'disputed',
       ...(trade ? { trade } : {}), ...(fixedBy ? { fixedBy } : {}), ...(inspection ? { inspection } : {}) };
