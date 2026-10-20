@@ -7,6 +7,7 @@ export type ThemeChoice = "auto" | "light" | "dark";
 export const THEME_KEY = "relay-theme";
 
 const ORDER: ThemeChoice[] = ["auto", "light", "dark"];
+const LABEL: Record<ThemeChoice, string> = { auto: "Auto", light: "Light", dark: "Dark" };
 
 /**
  * Theme control.
@@ -58,7 +59,8 @@ export function ThemeToggle() {
       className="themebtn"
       aria-label={`Appearance: ${choice}. Change appearance.`}
     >
-      {choice}
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="6.25" fill="none" stroke="currentColor" strokeWidth="1.5" /><path d="M8 1.75a6.25 6.25 0 0 1 0 12.5z" fill="currentColor" /></svg>
+      {LABEL[choice]}
     </button>
   );
 }

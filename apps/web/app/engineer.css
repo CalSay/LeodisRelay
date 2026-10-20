@@ -145,8 +145,14 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 /* ---- Individual defect, issues (unchanged idiom) ------------------------ */
 .eng-defect-grid{border:0;padding:0;margin:0;display:grid;gap:20px;min-width:0;grid-template-columns:1fr;}
 .eng-defect .field input,.eng-defect .field select,.eng-defect .field textarea{font-size:16px;}.eng-defect .field textarea{min-height:130px;}
-.eng-photo-picker{display:block;background:var(--brass-wash);border:1px dashed var(--brass);border-radius:8px;padding:20px;font-size:15px;}
-.eng-photo-picker input{display:block;width:100%;margin-top:14px;font-size:13px;}
+.eng-photo-picker{position:relative;display:flex;align-items:center;gap:14px;min-height:72px;background:var(--brass-wash);border:1.5px solid var(--brass);border-radius:8px;padding:14px 18px;color:var(--brass);cursor:pointer;}
+.eng-photo-picker:hover{background:var(--panel);}
+.eng-photo-picker:has(input:focus-visible){outline:2px solid var(--brass);outline-offset:2px;}
+.eng-photo-picker .camera-icon{width:28px;height:28px;flex:none;}
+.eng-photo-picker b{display:block;font-size:17px;font-weight:500;}
+.eng-photo-picker small{display:block;font-size:13px;color:var(--text-2);margin-top:2px;}
+/* The input stays in the accessibility tree and reachable by keyboard; only the browser's own "Choose files" control is hidden. */
+.eng-photo-picker input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;}
 .eng-defect-photos{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin:16px 0;}
 .eng-defect-photos figure{margin:0;min-width:0;}.eng-defect-photos img{width:100%;height:160px;object-fit:cover;border-radius:7px;}.eng-defect-photos button{width:100%;font-size:12px;}
 .eng-defect-summary dt{font-size:12px;color:var(--text-2);margin-top:16px;}.eng-defect-summary dd{margin:6px 0;overflow-wrap:anywhere;}.eng-defect-receipt{text-align:center;}

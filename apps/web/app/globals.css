@@ -718,30 +718,47 @@ button:disabled {
 
 /* ── Camera and photos ────────────────────────────────────────────────── */
 
-.camera {
+/* Also matched as a field label, which would otherwise make it a small caption. */
+.camera,
+.field > label.camera {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--s2);
+  gap: var(--s3);
   width: 100%;
-  min-height: 56px;
-  border: 1px dashed var(--line-2);
+  min-height: 60px;
+  border: 1.5px solid var(--brass);
   border-radius: var(--r);
-  background: var(--ground);
-  color: var(--brass);
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: border-color 0.12s ease;
-}
-.camera:hover {
-  border-color: var(--brass-2);
   background: var(--brass-wash);
+  color: var(--brass);
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  margin: 0;
+  cursor: pointer;
+  transition: background 0.12s ease, border-color 0.12s ease;
 }
+.camera:hover,
+.field > label.camera:hover {
+  border-color: var(--brass-2);
+  background: var(--panel);
+}
+.camera:has(input:focus-visible) {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+.camera {
+  position: relative;
+}
+/* Hidden visually but still focusable, so the camera can be opened from a keyboard. */
 .camera input {
-  display: none;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  overflow: hidden;
 }
 
 .shots {
@@ -1091,18 +1108,26 @@ button:disabled {
 /* Theme control. Shares the nav's idiom so it reads as part of the chrome
    rather than a widget bolted on. */
 .themebtn {
-  font-family: var(--mono);
-  font-size: 11px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-3);
+  font-family: var(--sans);
+  font-size: 13px;
+  color: var(--text-2);
   background: none;
   border: 1px solid var(--line);
   padding: 0 var(--s3);
-  min-height: 30px;
+  min-height: 32px;
   border-radius: var(--r);
   margin-left: var(--s2);
-  min-width: 66px;
+  min-width: 0;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+/* Narrow phones: the words name the setting; the icon gives way. */
+@media (max-width: 360px) {
+  .themebtn svg {
+    display: none;
+  }
 }
 
 .themebtn:hover:not(:disabled) {
