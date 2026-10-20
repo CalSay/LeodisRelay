@@ -394,7 +394,7 @@
       ],
       "status": "in_progress",
       "passes": false,
-      "pr": null,
+      "pr": 39,
       "notes": "First type built: a weekly site safety inspection (lib/reportTypes.ts). Cal did not name one; under his 2026-10-20 instruction to decide without him, Claude chose it and its 12 checks, answers (satisfactory, action needed, not applicable), drawn-signature rule and no-issues rule. Step 2 is met and browser-checked (scripts/verify-report-types.mjs); step 1 waits for Cal to confirm or change the type, so passes stays false. Next types are proposed in docs/progress.md."
     },
     {
