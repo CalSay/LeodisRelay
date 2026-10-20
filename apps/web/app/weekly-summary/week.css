@@ -1,0 +1,56 @@
+/* Weekly summary: one project's week, on screen and on paper.
+   On screen it follows the theme; printed it is always black on white, A4,
+   with the controls and app chrome left off. The prototype banner prints, so a
+   paper copy from a test server is never mistaken for the real thing. */
+.week-page{max-width:900px;}
+.week-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:8px 0 20px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+.week-controls label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text-2);flex:1 1 200px;min-width:0;}
+.week-controls select{width:100%;}
+.week-step{display:flex;flex-wrap:wrap;gap:8px;flex:0 1 auto;}
+.week-controls .btn-primary{flex:0 0 auto;}
+.week-sheet{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:24px;}
+.week-head{border-bottom:2px solid var(--text);padding-bottom:14px;}
+.week-head h1{margin:6px 0 2px;}
+.week-range{font-size:16px;font-weight:600;margin:0 0 12px;}
+.week-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0;}
+.week-facts dt,.week-stats dt{font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
+.week-facts dd{margin:2px 0 0;font-size:13.5px;overflow-wrap:anywhere;}
+.week-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0 6px;}
+.week-stats div{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--panel-2);min-width:0;}
+.week-stats dd{margin:4px 0 0;font-size:28px;font-weight:600;line-height:1.1;}
+.week-stats dd.late{color:var(--alert);}
+.week-stats small{display:block;font-size:12.5px;font-weight:400;color:var(--text-2);margin-top:4px;line-height:1.35;overflow-wrap:anywhere;}
+.week-section h2{display:flex;justify-content:space-between;gap:10px;margin:26px 0 4px;padding-bottom:6px;border-bottom:1px solid var(--line-2);font-size:17px;break-after:avoid;}
+.week-section h2 span{font:500 11px var(--mono);color:var(--text-3);align-self:flex-end;}
+.week-section h3{margin:14px 0 2px;font-size:14px;font-weight:600;color:var(--text-2);break-after:avoid;}
+.week-rows{list-style:none;margin:0;padding:0;}
+.week-rows li{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--line);break-inside:avoid;}
+.week-rows p{margin:0;}
+.week-rows p:first-child{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;margin-bottom:3px;}
+.week-when{font:500 12px var(--mono);color:var(--text-2);padding-top:2px;}
+.week-desc{font-size:15px;font-weight:500;line-height:1.4;}
+.week-meta{font-size:12.5px;color:var(--text-3);margin-top:3px !important;overflow-wrap:anywhere;}
+.week-none{font-size:13px;color:var(--text-3);margin:4px 0 0;padding:6px 0;}
+.week-total{font-size:14px;color:var(--text-2);margin:12px 0 0;}.week-total b{color:var(--text);}.week-total .late{color:var(--alert);}
+.week-foot{margin-top:24px;font-size:12.5px;color:var(--text-2);}
+@media (max-width:640px){
+  .week-sheet{padding:16px;}
+  .week-facts,.week-stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .week-rows li{grid-template-columns:1fr;gap:2px;}
+  .week-step{width:100%;}.week-step button{flex:1 1 auto;}
+  .week-controls .btn-primary{width:100%;}
+}
+@media print{
+  @page{size:A4;margin:14mm 12mm;}
+  /* On body, not :root, so these win over the theme rules on :root whatever their specificity. */
+  body{--panel:#fff;--panel-2:#fff;--ground:#fff;--text:#111;--text-2:#333;--text-3:#555;--line:#ccc;--line-2:#999;--brass:#5a4612;--alert:#8f2f19;--ok:#22573a;--ok-wash:transparent;--alert-wash:transparent;--caution-wash:transparent;}
+  html,body{background:#fff !important;color:#111;color-scheme:light;}
+  .appbar,.week-noprint,.install-help{display:none !important;}
+  .banner{position:static !important;background:none !important;color:#111 !important;border-bottom:1px solid #999;font-size:9px;}
+  .eng-page.week-page{padding:0;max-width:none;}
+  .week-sheet{border:0;padding:0;border-radius:0;}
+  .week-rows a{color:#111;text-decoration:none;}
+  .week-facts,.week-stats{grid-template-columns:repeat(4,minmax(0,1fr)) !important;}
+  .week-rows li{grid-template-columns:96px minmax(0,1fr) !important;}
+}
+.week-total a{color:var(--brass);text-decoration:underline;text-underline-offset:3px;}
