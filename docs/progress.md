@@ -4,6 +4,86 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — FE-3c: conflicting versions of a draft
+
+- When a draft was saved from another tab or device while this screen held
+  different work, the editor now shows both versions card by card in place of
+  the cards: "Changed in both", "Only on this screen", "Only on the server",
+  or, where the screen knows the server copy it built on, "Changed on the
+  server", "Removed on this screen" and so on, with the fields that differ
+  in bold. Each card can keep this screen's
+  wording, the server's, or both as two cards; a card only in one version can
+  be kept or left out; a differing signature is chosen the same way. "Keep
+  everything on this screen" and "Keep everything on the server" set every
+  choice at once. A line above "Save this version" says what saving keeps and
+  what it leaves out. Before, the save was refused with a message, every
+  later save was refused too (a reload replayed the same refused request),
+  and nothing showed what differed.
+- The server now answers a refused draft save with its own copy (409 with
+  `current`, to the author only, as the route already checks). The chosen
+  version is saved on that version, so a third change in the meantime is
+  caught again rather than overwritten.
+- Fixed a silent two-tab overwrite: both tabs shared one save journal, so the
+  second tab replayed the first tab's request and then saved its own edits on
+  top of the version that produced. The journal is now per tab (an id in
+  sessionStorage, renewed if a duplicated tab copied it), and a save from one
+  tab no longer moves the base version of a copy another tab holds on the
+  device. A refused request is dropped instead of being replayed for ever.
+- While the choice is open, this tab's version is also set aside on the
+  device under its own key (`localDraft.ts` `setAside`), with the server copy
+  it was built on. The ordinary held copy is one per person and draft, so the
+  other tab's next edit would replace it and its next save would release it;
+  the set-aside copy is touched by neither and is dropped once the chosen
+  version is held in its place. On opening a draft the device restores this
+  tab's own set-aside work first, then the ordinary held copy, then another
+  tab's set-aside work, so set-aside work never displaces unsaved edits and
+  comes back once they are saved (`pickHeld`). If the device
+  will not keep it, the comparison says not to close the page.
+- Tabs tell each other when they save (BroadcastChannel), and a tab checks
+  the server when it comes back into view. With nothing unsaved it takes the
+  newer copy quietly; with unsaved work it shows the comparison at once.
+- Decisions: nothing is merged without being shown. Where the server copy
+  this screen built on is known, the suggested choice follows what each side
+  changed (only the server changed a card: its wording; one side removed a
+  card the other left alone: leave it out). Where it is not known (a draft
+  opened with no connection, or a held copy restored after another device
+  saved), a card in one version only may have been added here or removed
+  there, so the suggestion keeps every card from both and this screen's
+  wording. A card removed on one side and edited on the other is always kept.
+  The line above the save button says how many cards are left out and how
+  many lose a wording. When the two versions say the same thing (a save that landed
+  but whose answer was lost) the server's copy is taken without asking. The
+  comparison takes over the editor until a choice is saved.
+- Verified on Node 24: `npm run typecheck`, `npm test` (14 new tests in
+  `tests/draftConflict.test.ts`: comparing and merging with and without a
+  base, which held copy a reopened draft restores, a stale save refused
+  with the server copy, a retried save after another device saved, two tabs
+  through the save journal against the real store, a leftover request from
+  before a reload). `npm run build`, then new
+  `scripts/verify-draft-conflict.mjs` passed (23 checks): two tabs on a
+  phone at 390px light (one takes the other's save by itself; with a held
+  edit the comparison appears; the other tab carries on editing and saving,
+  and after a reload the first tab's work and choice are still there; both
+  wordings are kept as two cards, the other tab's untouched change wins by
+  default, the set-aside copy is dropped, and the other tab follows); a laptop at 1440px dark offline while another device removed a
+  card and added one (both shown, the choice survives a reload, keeping the
+  server's version says a card is left out). `verify-report-editor`,
+  `verify-signature-reload`, `verify-photo-uploads`,
+  `verify-unfinished-reports`, `verify-engineer-layout` and
+  `verify-role-access` passed. Screenshots in the project's
+  `ui-review/draft-conflict/`.
+- Not verified: Safari and Firefox (BroadcastChannel is supported in both, not
+  tried), a physical phone, two devices on a real network (a direct store
+  write stands in for the other device). Known gap: before a conflict is
+  found, the device's held copy is one per person and draft, so with two tabs
+  editing at once, a tab that crashes before its save is answered (or while
+  there is no connection) can lose its latest edits; the other tab's are
+  kept. Once a conflict is found each tab's work is set aside on its own.
+- Next: a report sent from another tab while this one has unsaved edits still
+  shows "already submitted"; offering a correction with those edits would be
+  the follow-up. CLAUDE.md's list of browser checks should gain
+  `verify-draft-conflict.mjs`.
+
 ## 2026-10-20 — Issue confirmation wording follows the review setting
 
 - A provisional issue said "Not reviewed" in the office register, the office

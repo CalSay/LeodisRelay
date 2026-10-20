@@ -63,9 +63,11 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     body.expectedVersion,
     body.requestId,
   );
+  // A lost race returns the draft as it now stands, to its author only, so
+  // the two versions can be compared rather than one quietly replacing the other.
   return outcome.ok
     ? NextResponse.json(outcome.value)
-    : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });
+    : NextResponse.json({ reason: outcome.reason, ...(outcome.current ? { current: outcome.current } : {}) }, { status: outcome.status });
 }
 
 /**
