@@ -193,10 +193,10 @@
         "Neither version is lost silently",
         "Tests for stale-save conflict and two-tab editing"
       ],
-      "status": "todo",
-      "passes": false,
+      "status": "done",
+      "passes": true,
       "pr": null,
-      "notes": "Not started: stale saves are rejected with a message only (serverStore.ts saveDraft); no compare UI or two-tab coordination."
+      "notes": "A refused draft save returns the server copy (409 + current); the editor shows both versions card by card, suggests choices from the base when known, and saves the chosen or merged version on the server version. Per-tab save journal; work set aside per tab during a conflict; tabs announce saves. Tests: tests/draftConflict.test.ts. Browser: scripts/verify-draft-conflict.mjs."
     },
     {
       "id": "FE-1a",

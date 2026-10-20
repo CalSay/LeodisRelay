@@ -9,7 +9,8 @@ import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } fro
 import { raiseVariationsFromReport } from './variationStore';
 import { atomic, getRecord, putRecord, records, pageRecords, enqueue, database } from './storage';
 
-export type StoreOutcome<T> = { ok: true; value: T } | { ok: false; status: number; reason: string };
+/** `current`: on a draft save that lost a race, the draft as the server now holds it, so the author can compare. */
+export type StoreOutcome<T> = { ok: true; value: T } | { ok: false; status: number; reason: string; current?: Report };
 const reject = (reason: string, status = 409): StoreOutcome<never> => ({ ok: false, status, reason });
 export function listReports(projectId?: string): Report[] { return records('reports', projectId); }
 export function getReport(id: string): Report | undefined { return getRecord('reports', id); }
@@ -62,6 +63,7 @@ export function createReport(projectId: string, author: string, principal?: Prin
   });
 }
 
+const CHANGED_ELSEWHERE = 'This draft was saved from another tab or device. Your copy is kept: choose what to keep.';
 export function saveDraft(id: string, incoming: Report, expectedVersion?: number, requestId?: string): StoreOutcome<Report> {
   return atomic(() => {
     // The signature joins the digest only when there is one, so receipts taken
@@ -74,14 +76,15 @@ export function saveDraft(id: string, incoming: Report, expectedVersion?: number
       if (previous) {
         if (previous.reportId !== id || previous.digest !== digest) return reject('A save request ID was reused with different content.');
         const current = getReport(id);
-        if (!current || current.version !== (previous.version ?? previous.receipt?.version) || current.state !== 'draft') return reject('That save was received, but the report has since changed. Your local work is retained; reopen the report to compare.');
+        if (!current || current.state !== 'draft') return reject('That save was received, but the report has since been sent.');
+        if (current.version !== (previous.version ?? previous.receipt?.version)) return { ...reject(CHANGED_ELSEWHERE), current };
         return {ok:true,value:current};
       }
     }
     const existing = getReport(id);
     if (!existing) return reject('No such report.',404);
     if (existing.state !== 'draft') return reject('This report has already been submitted.');
-    if (expectedVersion !== existing.version) return reject('This report changed elsewhere. Your local copy has been retained.');
+    if (expectedVersion !== existing.version) return { ...reject(CHANGED_ELSEWHERE), current: existing };
     const { draftSignature: _previous, ...rest } = existing;
     const saved: Report = { ...rest, observations: incoming.observations, ...(signature ? { draftSignature: signature } : {}), version: existing.version + 1, lastSavedAt: new Date().toISOString() };
     putRecord('reports',saved);

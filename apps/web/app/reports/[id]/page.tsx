@@ -14,9 +14,9 @@ import {
   type Observation,
   type Report,
 } from "@/lib/api";
-import { ApiError } from "@/lib/api";
+import { ApiError, SaveConflict } from "@/lib/api";
 import { clientId } from '@/lib/clientId';
-import { hasUnsent, keep, recover, releaseIfCurrent } from "@/lib/localDraft";
+import { dropAside, hasUnsent, keep, recover, releaseIfCurrent, setAside } from "@/lib/localDraft";
 import { KindPicker, ObservationEditor } from "@/components/ObservationEditor";
 import { SignaturePad } from "@/components/SignaturePad";
 import type { Issue as IssueSummary } from "@/lib/types";
@@ -30,8 +30,11 @@ import { OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
 import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 import { onPhotoUploads, uploadingPhotos } from '@/lib/localMedia';
 import { cardWhere, reportWhere, savedCopy, WHERE, type Where } from '@/lib/uploadStatus';
+import { compareDrafts, type DraftBase } from '@/lib/draftConflict';
+import { DraftConflict } from '@/components/DraftConflict';
+import { renewTabId, tabId } from '@/lib/tabId';
 
-type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error";
+type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error" | "conflict";
 
 /**
  * Where the work is, said plainly.
@@ -50,10 +53,13 @@ const SAVE: Record<SaveState, { dot: string; text: string }> = {
   // neither on the server nor held on the device, so closing the page loses it.
   unheld: { dot: "dot dot-bad", text: "NOT SAVED ANYWHERE — keep this page open" },
   error: { dot: "dot dot-bad", text: "Not saved — check connection" },
+  conflict: { dot: "dot dot-bad", text: "Saved elsewhere too — choose what to keep" },
 };
 
 /** The dot beside a card or photograph: green only when the server has it. */
 const WHERE_DOT: Record<Where, string> = { server: 'dot dot-ok', uploading: 'dot dot-busy', pending: 'dot dot-busy', phone: 'dot dot-busy' };
+/** Tabs on one device tell each other when they save a draft, so the other can catch up or say so at once. */
+const CHANNEL = 'relay-drafts';
 /** While the server cannot be reached, try again this often; coming back into signal also retries. */
 const RETRY_MS = 15_000;
 
@@ -84,6 +90,11 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
   /** The draft as the server last accepted it, so every card can say whether it is on the server. */
   const [onServer, setOnServer] = useState<OnServer>({ cards: {} });
+  /** The same, for code running outside a render: the base a conflict is judged against. */
+  const onServerRef = useRef<OnServer>({ cards: {} });
+  useEffect(() => { onServerRef.current = onServer; }, [onServer]);
+  /** The base stored with work set aside before a reload, which the fresh server copy cannot stand in for. */
+  const restoredBase = useRef<DraftBase | undefined>(undefined);
   const [uploading, setUploading] = useState<ReadonlySet<string>>(() => new Set());
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -111,6 +122,21 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const latest = useRef<Report | null>(null);
   const serverVersion = useRef<number | undefined>(undefined);
   const sending = useRef(false);
+  /**
+   * The draft as another tab or device saved it, while this screen holds
+   * different work. Saving pauses until the engineer chooses what to keep.
+   */
+  const [conflict,setConflict] = useState<Report | null>(null);
+  const [conflictBase,setConflictBase] = useState<DraftBase | undefined>(undefined);
+  const conflictBaseRef = useRef<DraftBase | undefined>(undefined);
+  /** The device would not keep this screen's version while it waits: say so, since closing the page would lose it. */
+  const [unheld,setUnheld] = useState(false);
+  const conflictRef = useRef<Report | null>(null);
+  /** A save is on its way to the server; counts every save started, so a check that overlapped one is ignored. */
+  const inFlight = useRef(false);
+  const saveCount = useRef(0);
+  /** Copies set aside on the device while two versions wait for a choice (localDraft.ts setAside). */
+  const asides = useRef(new Set<string>());
   const [recovered,setRecovered] = useState(false);
   /** `?add=instruction` from the home tile opens the draft with a new card of that kind. Honoured once. */
   const addedFromLink = useRef(false);
@@ -162,7 +188,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       try {
         found = await getReport(id);
       } catch {
-        const held = await recover(id,principalId);
+        const held = await recover(id,principalId,tabId());
+        if (held?.key.includes('::aside::')) { asides.current.add(held.key); restoredBase.current = held.base; }
         if (!cancelled && held?.report) {
           seq.current=held.seq;serverVersion.current=held.baseVersion ?? 0;
           adoptSignature(held.report);
@@ -182,8 +209,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       setOnServer(onServerOf(found));
       // Retain the original base version. Local work is not necessarily newer
       // than changes made on another device while this phone was disconnected.
-      const held = await recover(id, principalId);
+      const held = await recover(id, principalId, tabId());
       if (cancelled) return;
+      if (held?.key.includes('::aside::')) { asides.current.add(held.key); restoredBase.current = held.base; }
       if (held && found.state === "draft") {
         seq.current = held.seq;
         serverVersion.current = held.baseVersion ?? 0;
@@ -210,8 +238,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
    * produces a queue of requests that all land at once and finish out of order.
    */
   const scheduleSave = useCallback(
-    (next: Report, retry = false) => {
-      if (!principalId) return;
+    (next: Report, retry = false): Promise<boolean> => {
+      if (!principalId) return Promise.resolve(false);
+      // Two versions are on screen: nothing is sent until one is chosen.
+      if (conflictRef.current) return Promise.resolve(false);
 
       pending.current = next;
       setSaveState("saving");
@@ -231,6 +261,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         observations: next.observations,
         baseVersion:serverVersion.current ?? next.version,
         report:next,
+        tab:tabId(),
       }).then(
         () => true,
         () => false,
@@ -241,31 +272,145 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         // than one save in flight for this report.
         chain.current = chain.current.then(async () => {
           const toSave = next;
-          if (!toSave) return;
+          if (!toSave || conflictRef.current) return;
+          inFlight.current = true; saveCount.current += 1;
           try {
             const saved = await saveReport(toSave, serverVersion.current ?? toSave.version,principalId);
             serverVersion.current = saved.version;
+            announce(saved);
             // Release only the edit that was acknowledged. Anything typed
             // since keeps its copy on the device.
             await releaseIfCurrent(toSave.id, principalId, mySeq);
             setReport((current) => (current ? { ...current, version: saved.version } : saved));
-            setOnServer(onServerOf(toSave));
+            setOnServer(onServerOf(toSave, saved.version));
             if (seq.current === mySeq) {
               pending.current = null;
               setSaveState('saved');
             }
           } catch (error) {
+            if (error instanceof SaveConflict) { await showConflict(error.current, latest.current ?? toSave); return; }
             if (!(error instanceof ApiError && error.offline)) setSubmitError(error instanceof Error ? error.message : 'Unable to save.');
             const offline = error instanceof ApiError && error.offline;
             // Not on the server. Whether that is merely inconvenient or
             // actually dangerous depends on whether the device took a copy.
             if (seq.current === mySeq) setSaveState((await held) ? (offline ? "phone" : "error") : "unheld");
+          } finally {
+            inFlight.current = false;
           }
         });
       }, 700);
+      return held;
     },
-    [principalId],
+    [principalId], // eslint-disable-line react-hooks/exhaustive-deps
   );
+
+  /**
+   * The server holds a version this screen did not build on. When the two say
+   * the same thing the server's simply replaces this one; otherwise both are
+   * shown and saving waits for the engineer. The work on screen stays held on
+   * the device throughout, so a reload comes back to the same choice.
+   */
+  async function showConflict(theirs: Report, mine: Report) {
+    if (!principalId) return;
+    // The server copy this screen last built on, if it is known: it lets the
+    // comparison suggest what each side actually changed.
+    const known = onServerRef.current;
+    // A second answer during the same conflict keeps the base the first one found.
+    const base: DraftBase | undefined = restoredBase.current ?? (conflictRef.current ? conflictBaseRef.current : undefined)
+      ?? (!conflictRef.current && known.version !== undefined && known.version === serverVersion.current ? { cards: known.cards, ...(known.signature !== undefined ? { signature: known.signature } : {}) } : undefined);
+    setOnServer(onServerOf(theirs));
+    setSubmitError(null);
+    if (theirs.state !== 'draft') return;
+    if (!compareDrafts(mine, theirs).differs) {
+      serverVersion.current = theirs.version;
+      await releaseIfCurrent(theirs.id, principalId, seq.current);
+      await dropAsides();
+      conflictRef.current = null; conflictBaseRef.current = undefined; restoredBase.current = undefined;
+      setConflict(null);
+      pending.current = null;
+      setReport(theirs);
+      setSaveState('saved');
+      return;
+    }
+    if (!conflictRef.current || conflictRef.current.version < theirs.version) {
+      conflictRef.current = theirs;
+      conflictBaseRef.current = base;
+      setConflictBase(base);
+      setConflict(theirs);
+      setSaveState('conflict');
+    }
+    // Another tab's next edit or save would replace or release the shared held
+    // copy, so this tab's work is also kept under its own key until the choice.
+    try {
+      asides.current.add(await setAside({ reportId: mine.id, principalId, tab: tabId(), seq: seq.current, observations: mine.observations, baseVersion: serverVersion.current ?? mine.version, report: mine, ...(base ? { base } : {}) }));
+      setUnheld(false);
+    } catch { setUnheld(true); }
+  }
+
+  /** The engineer chose: save that, on top of the server's version, like any edit. */
+  function resolveConflict(merged: Report) {
+    conflictRef.current = null;
+    restoredBase.current = undefined;
+    setConflict(null);
+    serverVersion.current = merged.version;
+    setSignerName(merged.draftSignature?.name ?? merged.author);
+    setSignatureImage(merged.draftSignature?.dataUrl ?? null);
+    setReport(merged);
+    // The set-aside copies go once the chosen version is held on the device in their place.
+    void scheduleSave(merged).then(held => { if (held) void dropAsides(); });
+  }
+
+  async function dropAsides() {
+    for (const key of [...asides.current]) {
+      try { await dropAside(key); asides.current.delete(key); } catch {}
+    }
+  }
+
+  /** Tell other tabs on this device that the draft moved on. */
+  function announce(saved: Report) {
+    try { const channel = new BroadcastChannel(CHANNEL); channel.postMessage({ type: 'saved', reportId: saved.id, version: saved.version, tab: tabId() }); channel.close(); } catch {}
+  }
+
+  /**
+   * Has the draft been saved from somewhere else? Asked when another tab says
+   * it saved, and when this tab comes back into view (a phone and a laptop on
+   * the same draft). With nothing unsaved here the newer copy is taken
+   * quietly; with unsaved work here both are shown.
+   */
+  const checkServer = useCallback(async () => {
+    const current = latest.current;
+    if (!current || current.state !== 'draft' || !principalId || sending.current || conflictRef.current || inFlight.current) return;
+    const started = saveCount.current, typed = seq.current;
+    let found: Report | undefined;
+    try { found = await getReport(current.id); } catch { return; }
+    // A save from this tab overlapped the check, so its answer may be this tab's own save.
+    if (!found || inFlight.current || saveCount.current !== started || found.version <= (serverVersion.current ?? 0)) return;
+    if (found.state === 'draft' && pending.current === null && seq.current === typed) {
+      serverVersion.current = found.version;
+      adoptSignature(found);
+      if (!found.draftSignature) { setSignerName(found.author); setSignatureImage(null); }
+      setOnServer(onServerOf(found));
+      setReport(found);
+      return;
+    }
+    await showConflict(found, latest.current ?? current);
+  }, [principalId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    let channel: BroadcastChannel | undefined;
+    try { channel = new BroadcastChannel(CHANNEL); } catch { return; }
+    channel.onmessage = (event: MessageEvent<{ type?: string; reportId?: string; version?: number; tab?: string }>) => {
+      const message = event.data ?? {};
+      // A duplicated tab copies sessionStorage, and with it this tab's id: tell it to take its own.
+      if (message.type === 'hello' && message.tab === tabId()) channel?.postMessage({ type: 'taken', tab: message.tab });
+      if (message.type === 'taken' && message.tab === tabId()) renewTabId();
+      if (message.type === 'saved' && message.reportId === id && (message.version ?? 0) > (serverVersion.current ?? 0)) void checkServer();
+    };
+    channel.postMessage({ type: 'hello', tab: tabId() });
+    const onVisible = () => { if (document.visibilityState === 'visible') void checkServer(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { channel?.close(); document.removeEventListener('visibilitychange', onVisible); };
+  }, [id, checkServer]);
 
   useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
   useEffect(() => {
@@ -373,8 +518,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       await chain.current;
       const saved = await saveReport(report, serverVersion.current ?? report.version,principalId ?? undefined);
       serverVersion.current = saved.version;
+      announce(saved);
       setReport(saved);
-      setOnServer(onServerOf(report));
+      setOnServer(onServerOf(report, saved.version));
       const sent = await submitReport(saved, {
         ...(signatureImage ? { dataUrl: signatureImage } : {}),
         name: signerName.trim() || report.author,
@@ -384,7 +530,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       pending.current = null;
       setSaveState("clean");
     } catch (error) {
-      if (error instanceof ApiError && error.offline) {
+      if (error instanceof SaveConflict) {
+        // Saved elsewhere since this screen last saved: nothing is sent until the engineer chooses.
+        await showConflict(error.current, report);
+      } else if (error instanceof ApiError && error.offline) {
         // Sending failed, so make certain the device is holding the work before
         // telling anyone it is safe.
         const held = principalId
@@ -395,6 +544,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               observations: report.observations,
               baseVersion:serverVersion.current ?? report.version,
               report,
+              tab:tabId(),
             }).then(
               () => true,
               () => false,
@@ -613,7 +763,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           {extras(o) && <small>{extras(o)}</small>}
           {o.photos.length > 0 && <small>{o.photos.length} photograph{o.photos.length === 1 ? '' : 's'}</small>}
         </section>; })}
-      </> : <>
+      </> : conflict ? <DraftConflict key={conflict.version} here={report} there={conflict} base={conflictBase} unheld={unheld} saving={submitting} onSave={resolveConflict} /> : <>
         {/* Two steps, so the cards and the final check never compete for the
             same scroll: build the report, then check, sign and send it. */}
         <nav className="eng-steps" aria-label="Report steps">
@@ -721,10 +871,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 }
 
 /** The draft as the server holds it: each card (savedCopy) and the signature. Unknown when the server could not be asked. */
-interface OnServer { cards: Record<string, string>; signature?: string }
+interface OnServer { cards: Record<string, string>; signature?: string; version?: number }
 const signatureCopy = (r: Report) => JSON.stringify(r.draftSignature ?? null);
-function onServerOf(r: Report): OnServer {
-  return { cards: Object.fromEntries(r.observations.map(o => [o.id, savedCopy(o)])), signature: signatureCopy(r) };
+function onServerOf(r: Report, version = r.version): OnServer {
+  return { cards: Object.fromEntries(r.observations.map(o => [o.id, savedCopy(o)])), signature: signatureCopy(r), version };
 }
 
 /** One line under a folded card: on the server, or what is still to go up. */

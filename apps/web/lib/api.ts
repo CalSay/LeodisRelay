@@ -11,7 +11,7 @@ import type { FixtureProject } from "./fixtures";
 import type { Issue, Observation, Photo, Report, ReportSummary, Variation } from "./types";
 import { capturePhoto, uploadPhotos } from './localMedia';
 import { localSaveJournal } from './localSaveJournal';
-import { saveWithJournal, type SaveRequest } from './saveRequest';
+import { SaveConflict, saveWithJournal, type SaveRequest } from './saveRequest';
 
 const REPORTABLE_STATUSES = ["4. Active", "5. Defects Liability"];
 
@@ -44,7 +44,9 @@ async function request(input: string, init?: RequestInit): Promise<Response> {
 
 async function parse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const body = (await response.json().catch(() => ({}))) as { reason?: string };
+    const body = (await response.json().catch(() => ({}))) as { reason?: string; current?: Report };
+    // A draft saved elsewhere first: the server sends its copy so both can be shown.
+    if (response.status === 409 && body.current) throw new SaveConflict(body.reason ?? 'This draft was saved somewhere else.', body.current);
     throw new ApiError(body.reason ?? `That did not go through (${response.status}).`);
   }
   return (await response.json()) as T;
@@ -250,6 +252,7 @@ export function readPhoto(file: File): Promise<Photo> {
 
 // Re-exported so screens have one import for the data layer, and so swapping
 // this module for the real client does not ripple through every component.
+export { SaveConflict } from './saveRequest';
 export type { Issue, IssueEvent, Observation, Photo, Report, ReportState, ReviewState, ReviewFinding } from "./types";
 export { reviewReport } from "./review";
 
