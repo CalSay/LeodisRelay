@@ -2,6 +2,7 @@ import type { FixtureProject, ObservationType } from '@/lib/fixtures';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import type { Tone } from '@/lib/status';
 import { INSTRUCTION_LABEL } from '@/lib/variations';
+import { reviewInUse } from '@/lib/reviewQueue';
 
 /**
  * What the office desk derives from the records it loads. Pure functions over
@@ -50,6 +51,8 @@ export interface ProjectStats {
   project: FixtureProject;
   code: string;
   issues: Issue[];
+  /** Review applies here: the project requires it, or a report still waits for a decision. See reviewInUse. */
+  reviewOn: boolean;
   active: Issue[];
   overdue: Issue[];
   verify: Issue[];
@@ -79,13 +82,15 @@ export function projectStats(project: FixtureProject, snap: Snapshot, day: strin
   const reports = snap.reports.filter(r => r.projectId === project.id).sort(byReceived);
   const drafts = snap.drafts.filter(r => r.projectId === project.id);
   const variations = snap.variations.filter(v => v.projectId === project.id).sort(byRaised);
+  const reviewOn = reviewInUse(project, reports);
   const s: ProjectStats = {
-    project, code: project.id, issues,
+    project, code: project.id, issues, reviewOn,
     active: issues.filter(isActive),
     overdue: issues.filter(i => isOverdue(i, day)),
     verify: issues.filter(isVerify),
     unassigned: issues.filter(isUnassigned),
-    notReviewed: issues.filter(isNotReviewed),
+    // Issues stay provisional when nobody reviews reports, so "not reviewed" only means something where review is on.
+    notReviewed: reviewOn ? issues.filter(isNotReviewed) : [],
     disputed: issues.filter(isDisputed),
     reports, drafts,
     notNotified: reports.filter(notNotified),

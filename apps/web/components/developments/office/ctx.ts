@@ -11,6 +11,8 @@ export interface Ctx {
   day: string;
   projects: FixtureProject[];
   stats: ProjectStats[];
+  /** Any project in view uses review. Off by default, and then no review queue or count is shown. */
+  reviewOn: boolean;
   statOf: (code: string) => ProjectStats | undefined;
   route: Route;
   go: (hash: string) => void;
