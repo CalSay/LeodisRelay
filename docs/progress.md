@@ -19,6 +19,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   report that is itself pending or returned still shows its tag, and the
   report reader keeps its "Review" row; both are facts about one report, not
   a queue. The project sheet still states whether review is required.
+- The filters follow the project picked in the Inbox and Issues project
+  select, and a filter that disappears (the last waiting report was decided)
+  falls back to "All" or "Open" instead of leaving an empty list.
 - Verified: `npm run typecheck` and `npm test` pass (web suite 60 tests, three
   new in `tests/reviewQueue.test.ts`). New `scripts/verify-review-queue.mjs`
   passed (12 checks): with a report waiting the filters and count show; after

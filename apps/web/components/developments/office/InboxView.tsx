@@ -11,7 +11,7 @@ const FILTERS: [Filter, string, boolean][] = [['all', 'All', false], ['notAck', 
 
 /** Every report received, newest first, with the reader beside it. */
 export function InboxView({ ctx }: { ctx: Ctx }) {
-  const [filter, setFilter] = useState<Filter>('all');
+  const [chosen, setFilter] = useState<Filter>('all');
   const [project, setProject] = useState('');
   const [trade, setTrade] = useState('');
   const snap = ctx.snap;
@@ -21,12 +21,15 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
   const reports = snap.reports.filter(scoped).sort(byReceived);
   const drafts = snap.drafts.filter(scoped);
   const counts: Record<Filter, number> = { all: reports.length, notAck: reports.filter(notAcknowledged).length, review: reports.filter(awaitingReview).length, returned: reports.filter(returned).length, notNotified: reports.filter(notNotified).length, failed: reports.filter(processingFailed).length, drafts: drafts.length };
+  // The review filters only exist where review is used, for the project in view; it is off by default.
+  const reviewOn = project ? !!ctx.statOf(project)?.reviewOn : ctx.reviewOn;
+  const filters = reviewOn ? FILTERS : FILTERS.filter(([k]) => k !== 'review' && k !== 'returned');
+  // A chosen filter that is no longer offered falls back to all, rather than an empty list with nothing selected.
+  const filter = filters.some(([k]) => k === chosen) ? chosen : 'all';
   const shown = filter === 'notNotified' ? reports.filter(notNotified) : filter === 'failed' ? reports.filter(processingFailed) : filter === 'notAck' ? reports.filter(notAcknowledged) : filter === 'review' ? reports.filter(awaitingReview) : filter === 'returned' ? reports.filter(returned) : reports;
   const week = Date.now() - 7 * 86400000;
   const name = (id: string) => ctx.projects.find(p => p.id === id)?.projectName ?? id;
   const code = (id: string) => ctx.projects.find(p => p.id === id)?.id ?? '';
-  // The review filters only exist where review is used; it is off by default.
-  const filters = ctx.reviewOn ? FILTERS : FILTERS.filter(([k]) => k !== 'review' && k !== 'returned');
   return <div className="view">
     <div className="pagehead"><div><h3>Inbox</h3><p>{snap.reports.length} reports received · {snap.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week).length} this week · {counts.notAck} not yet read · {snap.drafts.length} draft{snap.drafts.length === 1 ? '' : 's'} in progress on site</p></div></div>
     <div className="filters">

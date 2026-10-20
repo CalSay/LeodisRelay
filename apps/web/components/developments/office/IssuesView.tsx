@@ -19,7 +19,7 @@ function SortHead({ label, column, sort, change }: { label: string; column: Sort
 
 /** The issue register across projects. Actions live on each row; the sheet opens in its project. */
 export function IssuesView({ ctx }: { ctx: Ctx }) {
-  const [filter, setFilter] = useState<Filter>('open');
+  const [chosen, setFilter] = useState<Filter>('open');
   const [project, setProject] = useState('');
   const [trade, setTrade] = useState('');
   const [owner, setOwner] = useState('');
@@ -28,6 +28,11 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   if (!snap) return <div className="view"><div className="loading">Loading office records</div></div>;
   const scoped = snap.issues.filter(i => (!project || i.projectId === project) && (!trade || i.affectedTrade === trade || (!i.affectedTrade && i.reporterTrade === trade)) && (!owner || i.owner === owner));
   const pick: Record<Filter, (i: Issue) => boolean> = { open: isActive, overdue: i => isOverdue(i, day), verify: isVerify, unassigned: isUnassigned, notReviewed: i => isNotReviewed(i) && !!ctx.statOf(i.projectId)?.reviewOn, disputed: isDisputed, closed: i => !isActive(i) };
+  // "Not reviewed" counts issues waiting on report review, so it only shows where review is used, for the project in view.
+  const reviewOn = project ? !!ctx.statOf(project)?.reviewOn : ctx.reviewOn;
+  const filters = reviewOn ? FILTERS : FILTERS.filter(([k]) => k !== 'notReviewed');
+  // A chosen filter that is no longer offered falls back to open, rather than an empty list with nothing selected.
+  const filter = filters.some(([k]) => k === chosen) ? chosen : 'open';
   const counts = Object.fromEntries(FILTERS.map(([k]) => [k, scoped.filter(pick[k]).length])) as Record<Filter, number>;
   const rank = (i: Issue) => isOverdue(i, day) ? 0 : isDisputed(i) ? 1 : isVerify(i) ? 2 : isUnassigned(i) ? 3 : 4;
   const owners = [...new Set(snap.issues.map(i => i.owner.trim()).filter(Boolean))].sort();
@@ -41,10 +46,8 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const changeSort = (key: SortKey) => setSort(current => current?.key === key ? { key, direction: current.direction === 'ascending' ? 'descending' : 'ascending' } : { key, direction: 'ascending' });
   const source = (i: Issue) => { const r = i.raisedByReport ? snap.reports.find(x => x.id === i.raisedByReport) : undefined; return r ? shortRef(r.reference) : i.source === 'individual' ? 'Flagged on site' : '—'; };
   const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
-  // "Not reviewed" counts issues waiting on report review, so it only shows where review is used.
-  const filters = ctx.reviewOn ? FILTERS : FILTERS.filter(([k]) => k !== 'notReviewed');
   return <div className="view">
-    <div className="pagehead"><div><h3>Issues</h3><p>{counts.open} open across {ctx.projects.length} projects · {counts.overdue ? <span className="late">{counts.overdue} overdue</span> : 'none overdue'} · {counts.verify} awaiting verification · {counts.unassigned} unassigned · {ctx.reviewOn && <>{counts.notReviewed} not reviewed · </>}{counts.disputed} disputed</p></div>
+    <div className="pagehead"><div><h3>Issues</h3><p>{counts.open} open across {ctx.projects.length} projects · {counts.overdue ? <span className="late">{counts.overdue} overdue</span> : 'none overdue'} · {counts.verify} awaiting verification · {counts.unassigned} unassigned · {reviewOn && <>{counts.notReviewed} not reviewed · </>}{counts.disputed} disputed</p></div>
       <div className="actions">{counts.verify > 0 && <Btn onClick={() => { const i = scoped.filter(isVerify).find(x => !closureMine(x)); if (i) ctx.setDialog({ kind: 'verify', issue: i }); }}>Verify the oldest</Btn>}</div></div>
     <div className="filters">
       {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
