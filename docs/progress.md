@@ -4,6 +4,45 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Office actions on a phone (proposed UI-3, follows FE-4b)
+
+- On a phone the office desk now opens on the office position, with the
+  project list after it. Before, a phone showed only the project list, so a
+  manager away from a desk never saw New reports, Not yet read, Unassigned
+  issues or Ready to verify (FE-4b, #15) without a laptop.
+- Under the office position's title, a phone shows the four counts as a 2×2
+  set of tiles; a tap scrolls to that group (the route does not change). The
+  groups stack one to a row; rows are touch height, long issue descriptions
+  wrap instead of being cut off, and Acknowledge, Assign and Verify keep their
+  full-size buttons. "Open the list" is a 44px target.
+- Decisions: the wide Latest reports table is hidden on a phone (it scrolled
+  sideways in a 640px box, New reports already lists the latest and the Inbox
+  is in the bottom bar). The project list stays on the same page below the
+  office position rather than behind a new route, so nothing moves for the
+  desk and a project is still one tap away. With no project chosen the
+  office position comes first in the page itself (not only on screen), so
+  keyboard and screen-reader order match; the desk still places it on the
+  right of the project list. Opening a project on a phone starts at the top
+  of its register. A tile moves focus to its group. The desk at 700px and
+  wider looks the same as before (the tiles are hidden there). The closing line now says "Choose a
+  project to drill in" instead of "on the left", which was wrong on a phone.
+- Verified on Node 24: `npm run typecheck`, `npm test`, `npm run build`, new
+  `scripts/verify-office-phone.mjs` (95 checks: 320px and 390px phones and
+  1440px desk, light and dark; both columns and their order on screen and in
+  the page, counts, tiles on the first screen, scrolling to and focusing their
+  group, button and link heights, no
+  sideways scroll, a project opens its register, acknowledging on a phone
+  updates the tile). `verify-office-landing` now expects the office position
+  alongside the project list on a phone; it, `verify-office-actions`,
+  `verify-role-access`, `verify-site-coverage` and `verify-search` passed.
+  Before/after screenshots in the project's `ui-review/office-phone/`.
+- Not verified: a physical phone, Safari and Firefox, a screen reader, and
+  the scroll reset with a register longer than the page (the seeded one is
+  short, so the browser would land at the top anyway). Proposed task (not
+  added to `docs/tasks.json`): "UI-3 Office actions on a phone — the office
+  position and its four action groups are the first thing a manager sees on a
+  phone; browser check at 320, 390 and 1440px, light and dark."
+
 ## 2026-10-20 — Site coverage (new feature, proposed as NEW-6)
 
 - New office page `/coverage`, opened from "Site coverage" on the office
