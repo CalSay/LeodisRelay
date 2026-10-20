@@ -632,9 +632,13 @@ button {
     border-color 0.12s ease;
 }
 
-button:hover:not(:disabled) {
-  background: var(--panel-3);
-  border-color: var(--panel-3);
+/* Hover only where there is a real pointer: on a phone a tap leaves "hover"
+   stuck on whatever button next appears under the finger. */
+@media (hover: hover) {
+  button:hover:not(:disabled) {
+    background: var(--panel-3);
+    border-color: var(--panel-3);
+  }
 }
 
 button:disabled {
@@ -648,9 +652,11 @@ button:disabled {
   color: var(--brass-ink);
   font-weight: 600;
 }
-.btn-primary:hover:not(:disabled) {
-  background: #e6ba55;
-  border-color: #e6ba55;
+@media (hover: hover) {
+  .btn-primary:hover:not(:disabled) {
+    background: #e6ba55;
+    border-color: #e6ba55;
+  }
 }
 
 .btn-quiet {

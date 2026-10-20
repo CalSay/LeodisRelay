@@ -57,7 +57,7 @@ const SAVE: Record<SaveState, { dot: string; text: string }> = {
   clean: { dot: "dot", text: "" },
   saving: { dot: "dot dot-busy", text: "Saving to server" },
   saved: { dot: "dot dot-ok", text: "Saved on server" },
-  phone: { dot: "dot dot-busy", text: "On this device only — will retry saving when connected" },
+  phone: { dot: "dot dot-busy", text: "On this phone only · goes up with signal" },
   // The dangerous state, and the only one that warrants alarm: the work is
   // neither on the server nor held on the device, so closing the page loses it.
   unheld: { dot: "dot dot-bad", text: "NOT SAVED ANYWHERE — keep this page open" },
@@ -754,7 +754,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     const name = item.kind === 'card' ? `Remove card ${card}` : `Remove photo ${(observations[card - 1]?.photos.findIndex(p => p.id === item.photo.id) ?? 0) + 1}`;
     // Photo numbers repeat across cards, so look only inside the restored card.
     const within = wide ? '#card-editor > div:not([hidden])' : `#slot-${CSS.escape(cardId)}`;
-    setTimeout(() => document.querySelector<HTMLElement>(`${within} [aria-label="${name}"]`)?.focus({ preventScroll: true }), 50);
+    // On the phone a card's Remove is at its foot, out of view, so focus goes to the card's row, which names it.
+    const target = !wide && item.kind === 'card' ? `${within} .eng-cardrow` : `${within} [aria-label="${name}"]`;
+    setTimeout(() => document.querySelector<HTMLElement>(target)?.focus({ preventScroll: true }), 50);
   }
 
   // The home screen's "Request a variation" lands here with the card already started.
@@ -848,6 +850,12 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const project = report.projectSnapshot ?? getProject(report.projectId);
   const findings = reviewReport(report);
   const stop = findings.filter((f) => f.blocking);
+  // An inspection just started has every check unanswered: one line for them
+  // all, opening the first, rather than a dozen identical stops.
+  const unansweredStops = stop.filter(f => f.field === 'answer');
+  const stopRows = unansweredStops.length > 1
+    ? stop.flatMap(f => f.field !== 'answer' ? [f] : f === unansweredStops[0] ? [{ ...f, message: `${unansweredStops.length} checks not answered yet` }] : [])
+    : stop;
   const note = findings.filter((f) => !f.blocking);
   const sent = report.state === "submitted";
   const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
@@ -874,6 +882,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const whereAll = reportWhere([...whereOf.values()], offline, {
     removed: Object.keys(onServer.cards).filter(cardId => !whereOf.has(cardId)).length,
     signature: report.state === 'draft' && signatureCopy(report) !== onServer.signature && !(onServer.signature === undefined && !report.draftSignature),
+    noun: type.checklist ? 'check' : 'card',
   });
   const kindOf = (o: Observation) => OBSERVATION_TYPES.find(t => t.value === o.type);
   const extras = (o: Observation) => [o.affectedTrade && `Trade: ${o.affectedTrade}`, o.variationReason, o.workDone && 'already carried out', o.askedBy && `asked for by ${o.askedBy}`, o.roughSize && ({ 'half-day': 'about half a day', day: 'about a day', 'two-days': 'about two days', more: 'more than two days' })[o.roughSize], o.partsEstimate !== undefined && `parts about £${o.partsEstimate}`].filter(Boolean).join(' · ');
@@ -915,8 +924,14 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       <span className="no">{String(i + 1).padStart(2, '0')}</span>
       <div className="main">
         <span className="top"><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{choosing ? 'New' : k?.short ?? o.type}</span><b>{o.location.trim() || (choosing ? 'Choose a kind' : 'No location yet')}</b></span>
-        <span className="desc">{choosing ? 'What kind of update is this?' : text || 'Nothing written yet'}</span>
-        {!choosing && <span className="meta">{o.photos.length} photo{o.photos.length === 1 ? '' : 's'}{stopped ? <em> · {unlabelled(stopped.message, o)}</em> : null}</span>}
+        {/* On the phone the open card shows its words and photos just below, so its row
+            keeps only its heading and whether it is on the server yet. */}
+        {!(isOpen && !wide) && <>
+          <span className="desc">{choosing ? 'What kind of update is this?' : text || 'Nothing written yet'}</span>
+          {!choosing && <span className="meta">{o.photos.length} photo{o.photos.length === 1 ? '' : 's'}{stopped ? <em> · {unlabelled(stopped.message, o)}</em> : null}</span>}
+        </>}
+        {/* Opened from a Stop, the card still says what stops it. */}
+        {isOpen && !wide && !choosing && stopped && <span className="meta"><em>{unlabelled(stopped.message, o)}</em></span>}
         {!choosing && <CardWhereLine where={whereOf.get(o.id)} />}
       </div>
       {!wide && <span className="chev" aria-hidden="true">{isOpen ? '−' : '+'}</span>}
@@ -933,7 +948,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       <span className="no">{String(i + 1).padStart(2, '0')}</span>
       <div className="main">
         <span className="top"><span className={`kind answer-${answer?.tone ?? 'open'}`}>{answer?.short ?? 'To do'}</span><b>{o.check?.question}</b></span>
-        {(text || o.photos.length > 0 || (stopped && answer)) && <span className="meta">{text ? text : ''}{text && o.photos.length ? ' · ' : ''}{o.photos.length ? `${o.photos.length} photo${o.photos.length === 1 ? '' : 's'}` : ''}{stopped && answer ? <em>{text || o.photos.length ? ' · ' : ''}{stopped.message.slice((o.check?.question ?? '').length + 2)}</em> : null}</span>}
+        {isOpen && !wide && stopped && answer && <span className="meta"><em>{stopped.message.slice((o.check?.question ?? '').length + 2)}</em></span>}
+        {!(isOpen && !wide) && (text || o.photos.length > 0 || (stopped && answer)) && <span className="meta">{text ? text : ''}{text && o.photos.length ? ' · ' : ''}{o.photos.length ? `${o.photos.length} photo${o.photos.length === 1 ? '' : 's'}` : ''}{stopped && answer ? <em>{text || o.photos.length ? ' · ' : ''}{stopped.message.slice((o.check?.question ?? '').length + 2)}</em> : null}</span>}
         {(answer || o.photos.length > 0) && <CardWhereLine where={whereOf.get(o.id)} />}
       </div>
       {!wide && <span className="chev" aria-hidden="true">{isOpen ? '−' : '+'}</span>}
@@ -972,6 +988,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         <ObservationEditor
           observation={observation}
           index={index}
+          folded={!wide}
           openIssues={projectIssues}
           locations={suggestions.locations}
           companies={suggestions.companies}
@@ -987,7 +1004,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           {wide
             ? <button type="button" onClick={() => addCard()} disabled={submitting}>+ Add another card</button>
             : <button type="button" className="eng-done" onClick={() => { setSelectedSection(''); requestAnimationFrame(() => document.getElementById(`slot-${observation.id}`)?.scrollIntoView({ block: 'nearest' })); }}>Done with this card</button>}
-          <button type="button" className="eng-review-link" onClick={() => showCheck()}>Check &amp; send &rarr;</button>
+          {/* "Check & send" is always in the action bar below, so the card does not offer it a second time. */}
         </div>
       </>;
 
@@ -1005,12 +1022,12 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   }
 
   const findingRows = (items: typeof findings, kind: 'stop' | 'note') => items.map((f, i) => <button key={`${kind}${i}`} type="button" className={`find ${kind === 'stop' ? 'find-stop' : 'find-note'}`} style={{ width: '100%', textAlign: 'left', minHeight: 0, background: 'none', font: 'inherit', cursor: f.observationId ? 'pointer' : 'default' }} onClick={() => { if (f.observationId) openCard(f.observationId); }}>
-    <span className="find-kind">{kind === 'stop' ? 'Stop' : 'Check'}</span>
+    <span className="find-kind">{kind === 'stop' ? 'Stop' : 'Optional'}</span>
     <span>{f.message}</span>
   </button>);
 
   return (
-    <main className={sent ? "wrap eng-page" : "wrap wrap-pad eng-report-editor"}>
+    <main className={sent ? "wrap eng-page eng-report-sent" : "wrap wrap-pad eng-report-editor"}>
       <PageTitle title={sent ? report.reference : 'Site update'} />
       <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`)} className="back">
         &larr; {returnTo && viewName(safeViewReturn(returnTo, '')) ? backLabel(safeViewReturn(returnTo, '')) : project?.projectName ?? "Project"}
@@ -1019,9 +1036,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       <div className="pagehead">
         <div>
           <h1>{sent ? report.reference : type.name}</h1>
-          <p className="sub">{project?.projectName} · <span className="ref">{report.reference}</span>{sent ? '' : ' · draft'}{report.corrects && !sent ? ` · correction, rev ${report.revision}` : ''}</p>
+          {/* The tag says draft or sent, and a correction's note says which revision, so the line under the title does not repeat them. */}
+          <p className="sub">{sent ? type.name : <span className="ref">{report.reference}</span>} · {project?.projectName}</p>
         </div>
-        <span className={sent ? "tag tag-sent" : "tag tag-draft"}>{sent ? "Sent" : "Draft"}</span>
+        <span className={sent ? "tag tag-sent" : "tag tag-draft"}>{sent ? "Sent" : report.corrects ? `Correction draft` : "Draft"}</span>
       </div>
 
       {/* A correction draft says what it corrects and why, so the sent report is
@@ -1097,7 +1115,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             same scroll: build the report, then check, sign and send it. */}
         <nav className="eng-steps" aria-label="Report steps">
           <button type="button" aria-current={step === 'cards' ? 'step' : undefined} onClick={() => showCards()}><span className="n">1</span>{checklist ? 'Checks' : 'Cards'}<small>{checklist ? `${report.observations.length - unanswered.length}/${report.observations.length}` : report.observations.length}</small></button>
-          <button type="button" aria-current={step === 'check' ? 'step' : undefined} onClick={() => showCheck()}><span className="n">2</span>Check &amp; send{stop.length > 0 && <small className="late">{stop.length}</small>}</button>
+          <button type="button" aria-current={step === 'check' ? 'step' : undefined} onClick={() => showCheck()}><span className="n">2</span>Check &amp; send{stopRows.length > 0 && <small className="late">{stopRows.length}</small>}</button>
         </nav>
 
         {step === 'cards' && (wide ? <div className="eng-editor-grid">
@@ -1108,7 +1126,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               {report.observations.map((o, i) => cardRow(o, i))}
             </div>
             {!checklist && <button type="button" className="eng-add" disabled={submitting} onClick={() => addCard()}>+ Add a card</button>}
-            {findings.length > 0 && <div className="eng-finds"><span className="lbl">Before you send</span>{findingRows(stop, 'stop')}{findingRows(note.slice(0, 3), 'note')}</div>}
+            {findings.length > 0 && <div className="eng-finds"><span className="lbl">Before you send</span>{findingRows(stopRows, 'stop')}{findingRows(note.slice(0, 3), 'note')}</div>}
           </aside>
           <div id="card-editor" style={{ scrollMarginTop: 24 }}>
             {report.observations.length === 0 ? <KindPicker onPick={k => addCard(k)} /> : report.observations.map((o, i) => <div key={o.id} hidden={open !== o.id}>{cardBody(o, i)}</div>)}
@@ -1133,7 +1151,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               {/* Blocking omissions and things worth a look are separated: an
                   engineer should be stopped by a defect with no photograph, and
                   not stopped by a missing caption. */}
-              {findingRows(stop, 'stop')}
+              {findingRows(stopRows, 'stop')}
               {findingRows(note, 'note')}
             </div>
           )}
@@ -1208,7 +1226,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             <span className="savestate" aria-live="polite">
               <span className={SAVE[saveState].dot} />
               {step === 'check' && stop.length > 0
-                ? <span className="actionbar-warning"><b>{stop.length} {stop.length === 1 ? 'item needs' : 'items need'} attention</b><span>Tap one above to fix it</span></span>
+                ? <span className="actionbar-warning"><b>{stopRows.length} {stopRows.length === 1 ? 'item needs' : 'items need'} attention</b><span>Tap one above to fix it</span></span>
                 : <b>{SAVE[saveState].text || (step === 'check' ? 'Ready to send' : checklist ? `${report.observations.length - unanswered.length} of ${report.observations.length} answered` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`)}</b>}
             </span>
             {step === 'cards'

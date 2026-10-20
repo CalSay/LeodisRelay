@@ -4,6 +4,78 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Report editor usability pass (proposed as UI-3)
+
+- Why: nine PRs today each added a piece to the report editor (two-step
+  editor, conflicts, "Another card here", undo, suggestions, unsaved changes
+  as a correction, two inspection types, offline capture). Walking the
+  everyday flows at 390px as an engineer (a site update with cards and
+  photos, both inspections, a correction, the same with no signal) showed
+  friction the pieces made together. Fixed by layout and wording only; no
+  feature removed, nothing about saving, syncing or revisions changed.
+- What changed, and why each:
+  - An open card on a phone no longer says the same thing three times. Its
+    row is now its heading (number, kind, place) and whether it is on the
+    server yet, plus what stops it if anything does (so a card opened from a
+    Stop still says why); the description and photo count, which the open
+    card shows just below, come back when it folds. The
+    card dropped its kind tag (the Kind buttons show it with a tick), and
+    Remove moved to the foot of the card instead of a
+    line of its own (labelled "Remove card 1", its accessible name). Undo
+    on the phone puts focus on the restored card's row. Side by side (900px+) keeps the card heading and Remove.
+    An open check likewise hides its repeated answer tag and question (the
+    question stays for screen readers: it names the answer buttons).
+  - "Check & send" is offered once, in the action bar. The card's own copy
+    competed with it and with "Done with this card".
+  - A new inspection said "Check & send 13" and listed twelve identical
+    "not answered yet" stops. Unanswered checks are now one stop ("11 checks
+    not answered yet") that opens the first; the step badge and the action
+    bar count the same rows. The review rules are unchanged (display only).
+  - Non-blocking findings are labelled "Optional" instead of "Check", which
+    clashed with "Check & send" and with an inspection's checks.
+  - The title area: the Draft tag sits beside the title instead of on its own
+    line, the line under it no longer repeats "draft" or "correction, rev 2"
+    (the tag says "Correction draft" and the correction note says the
+    revision), and a sent report names its type rather than its reference twice.
+  - The where-it-is line said "Both cards and its photo"; it now says
+    "1 photo", and an inspection says "checks", not "cards".
+  - The save state with no signal said "On this device only — will retry
+    saving when connected" while every card said "Only on this phone"; it is
+    now "On this phone only · goes up with signal", and fits on one line.
+  - The recent-places hint shows only when there are recent places, and the
+    photo caption box says "Add a caption" (its old placeholder was cut off).
+  - Hover colours apply only where there is a real pointer (`@media (hover:
+    hover)` in globals.css). On a phone a tap left "hover" stuck, so tapping
+    "Check & send" lit up "Send to office", which appears under the finger.
+- Help: a "What's new" entry (`editor-tidy`). No guide text described the
+  changed wording.
+- Verified on Node 24: `npm run typecheck`, `npm test` (two new cases in
+  `tests/uploadStatus.test.ts`), `npm run build`. New
+  `scripts/verify-editor-usability.mjs` passed (55 checks, 390px light and
+  1440px dark). All other browser checks re-run and passed (40 scripts,
+  listed in the PR), with `verify-undo-remove`, `verify-same-location`,
+  `verify-photo-uploads`, `verify-draft-conflict` and `verify-sent-elsewhere`
+  updated for the new wording and the open row.
+- Scope: no task in `docs/tasks.json` covers this. It rests on Cal's standing
+  instructions for this project (take agency; UI that is clear, easy to use
+  and inviting; freedom beyond the task list), not on `CLAUDE.md`, whose
+  "build only approved scope" rule predates them. The fresh-context review
+  flagged this; it is recorded here rather than changed.
+- A fresh-context review also found four correctness gaps, all fixed: a card opened from a
+  Stop no longer said why (the open row now keeps the stop message), the
+  phone's Remove read "Remove this card" while its accessible name was
+  "Remove card 1", Undo focused a Remove button out of view at the card's
+  foot, and What's new overstated "Check & send" being in one place. Screenshots in the
+  project's `ui-review/editor-usability/`.
+- Not verified: a physical phone, Safari and Firefox.
+- Not picked up: the accessibility pass's editor follow-ups; its PR was not up
+  when this started.
+- Proposed (not added to `docs/tasks.json`): "UI-3 Report editor usability
+  pass: no repeated content in an open card, one Check & send, grouped
+  unanswered checks; browser check at 390 and 1440px". Follow-ups: start an
+  inspection with last week's open safety actions shown; show the signature
+  box nearer the top of the check step for inspections, where it is required.
+
 ## 2026-10-20 — Second release check on main
 
 - Ran everything on main at dbb44ad (#2 to #27, #29 to #40, #42) under

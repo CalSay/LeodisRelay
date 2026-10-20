@@ -72,6 +72,16 @@ test('counts every card and photo when all are on the server', () => {
   assert.equal(reportWhere([cardWhere(a, savedCopy(a), none, false), cardWhere(b, savedCopy(b), none, false)], false).text,
     'Both cards and 2 photos are on the server.');
   assert.equal(reportWhere([], false).text, '');
+  assert.equal(reportWhere([cardWhere(a, savedCopy(a), none, false), cardWhere(b, savedCopy(b), none, false), cardWhere(b, savedCopy(b), none, false)], false, { removed:0, signature:false, noun:'check' }).text,
+    'All 3 checks and 2 photos are on the server.');
+});
+
+test('two cards with one photo between them do not say "its photo"', () => {
+  const a = card({ photos:[photo('p1')] }), b = card({ id:'c2', type:'update' });
+  assert.equal(reportWhere([cardWhere(a, savedCopy(a), none, false), cardWhere(b, savedCopy(b), none, false)], false).text,
+    'Both cards and 1 photo are on the server.');
+  assert.equal(reportWhere([cardWhere(a, savedCopy(a), none, false)], false, { removed:0, signature:false, noun:'check' }).text,
+    'The check and its photo are on the server.');
 });
 
 test('a removed card or a changed signature keeps the summary from going green', () => {
