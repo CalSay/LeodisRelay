@@ -1,4 +1,4 @@
-const RETURNABLE_VIEWS = new Set(['/office', '/engineer', '/projects', '/search', '/issues/snag-list', '/weekly-summary', '/photos', '/coverage', '/companies', '/diary', '/my-week', '/safety-actions']);
+const RETURNABLE_VIEWS = new Set(['/office', '/engineer', '/projects', '/search', '/issues/snag-list', '/weekly-summary', '/photos', '/coverage', '/companies', '/diary', '/my-week', '/safety-actions', '/help']);
 
 /** Keep detail-page return links inside RELAY and within a known workspace. */
 export function safeViewReturn(raw: string | undefined, fallback: string): string {
@@ -18,7 +18,7 @@ export function withViewReturn(href: string, returnTo: string): string {
 const VIEW_NAMES: Record<string, string> = {
   '/office': 'Office', '/projects': 'Projects', '/issues/snag-list': 'Snag list', '/weekly-summary': 'Weekly summary',
   '/photos': 'Photographs', '/coverage': 'Site coverage', '/companies': 'Issues by company', '/diary': 'Site diary', '/my-week': 'My week',
-  '/safety-actions': 'Safety actions',
+  '/safety-actions': 'Safety actions', '/help': 'Help',
 };
 const ENGINEER_VIEWS: Record<string, string> = { issues: 'Issues', reports: 'Reports', projects: 'Projects', defect: 'Flag a defect' };
 

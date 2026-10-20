@@ -110,6 +110,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {principal && canManage(principal) && <Link href="/engineer">Engineer view</Link>}
               {principal && canManage(principal) && <Link href="/office">Office</Link>}
               {principal && isAdmin(principal) && <Link href="/admin">Admin</Link>}
+              {principal && <Link href="/help">Help</Link>}
               {principal && (
                 <form action="/api/auth/signout" method="POST" style={{ display: "inline" }}>
                   <button type="submit" className="whoami" title="Sign out">
