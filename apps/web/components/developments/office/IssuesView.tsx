@@ -22,7 +22,9 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   // #/issues/show/<filter> opens on that filter, from the office position's groups.
   const linked = ctx.route.a === 'show' ? FILTERS.find(([k]) => k === ctx.route.b)?.[0] : undefined;
   const [chosen, setFilter] = useState<Filter>(linked ?? 'open');
-  useEffect(() => { if (linked) setFilter(linked); }, [linked]);
+  // The tab itself (no record or filter in the route) starts again from open.
+  const bare = !ctx.route.a;
+  useEffect(() => { if (linked) setFilter(linked); else if (bare) setFilter('open'); }, [linked, bare]);
   const [project, setProject] = useState('');
   const [trade, setTrade] = useState('');
   const [owner, setOwner] = useState('');
