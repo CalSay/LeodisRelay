@@ -12,7 +12,7 @@ import type { CheckAnswer, Observation, Report } from './types';
  * A report with no `reportType` is a site progress report: every report
  * written before types existed is one.
  */
-export type ReportTypeId = 'progress' | 'safety-inspection';
+export type ReportTypeId = 'progress' | 'safety-inspection' | 'handover-inspection';
 
 export interface ChecklistItem {
   /** Stable key, kept on the card so a later change of wording never moves an answer. */
@@ -36,7 +36,11 @@ export interface ReportTypeDef {
   checklist?: readonly ChecklistItem[];
   /** The person who inspected signs for it: a typed name alone is not enough. */
   drawnSignature: boolean;
-  /** Sending raises issues from defects and access cards, and variations from variation cards. */
+  /**
+   * Sending raises issues from defects and access cards, and variations from
+   * variation cards. On a checklist, each check answered "Action needed"
+   * raises an issue, so it says where and joins the snag list.
+   */
   raisesRecords: boolean;
 }
 
@@ -61,10 +65,39 @@ export const SAFETY_CHECKLIST: readonly ChecklistItem[] = [
   { item: 'welfare', question: 'Welfare facilities clean and available', hint: 'Toilets, washing, drinking water, somewhere to eat.' },
 ];
 
+/**
+ * A walk round one area before it is handed over: is Leodis's M&E work there
+ * finished, tested and ready to close up? Unlike the safety inspection, what
+ * needs action here is unfinished or faulty work of our own, so each action
+ * raises an issue on the snag list and is tracked to closure there.
+ */
+export const HANDOVER_CHECKLIST: readonly ChecklistItem[] = [
+  { item: 'containment', question: 'Containment, tray and trunking complete, supported and lidded', hint: 'Lids on, supports at the right spacing, no sharp edges or open ends.' },
+  { item: 'pipework', question: 'Pipework and ductwork complete, supported and insulated', hint: 'Brackets, insulation joints taped, no drips or weeps at joints.' },
+  { item: 'fittings', question: 'Fittings and terminals fitted, level and undamaged', hint: 'Sockets, switches, lights, grilles, radiators, sanitaryware.' },
+  { item: 'fire-stopping', question: 'Holes through fire walls and floors sealed', hint: 'Every service penetration we made, sealed and labelled where required.' },
+  { item: 'access-panels', question: 'Access panels where valves, dampers and junction boxes need reaching', hint: 'Can each one be reached once the ceiling or boxing is closed?' },
+  { item: 'ceiling-void', question: 'Ceiling voids and risers ready to close', hint: 'Nothing loose, nothing left to finish, no debris left behind.' },
+  { item: 'labelling', question: 'Circuits, valves and equipment labelled', hint: 'Board schedules filled in, valve tags, pipe and duct markers.' },
+  { item: 'testing', question: 'Electrical tested and pipework pressure tested, with results recorded', hint: 'Test sheets signed for this area; any failures put right and retested.' },
+  { item: 'commissioning', question: 'Systems working: lighting, power, heating, ventilation, water and controls', hint: 'Switched on and seen working, not just connected.' },
+  { item: 'making-good', question: 'Damage to other trades’ work made good', hint: 'Walls, ceilings, floors and finishes we marked or opened up.' },
+  { item: 'clean', question: 'Equipment clean, protective film and packaging removed', hint: 'Fittings wiped, labels and film off, offcuts and boxes cleared.' },
+  { item: 'paperwork', question: 'Certificates and as-fitted details ready for the O&M manual', hint: 'Test certificates, commissioning sheets, marked-up drawings.' },
+];
+
 export const REPORT_TYPES: readonly ReportTypeDef[] = [
   { id: 'progress', name: 'Site update', document: 'Site Progress Report', code: 'SPR', blurb: 'Progress, defects, variations and access, one card at a time', drawnSignature: false, raisesRecords: true },
   { id: 'safety-inspection', name: 'Safety inspection', document: 'Site Safety Inspection', code: 'SSI', blurb: `${SAFETY_CHECKLIST.length} checks, each satisfactory, action needed or not applicable`, checklist: SAFETY_CHECKLIST, drawnSignature: true, raisesRecords: false },
+  { id: 'handover-inspection', name: 'Handover inspection', document: 'Pre-Handover Inspection', code: 'PHI', blurb: `${HANDOVER_CHECKLIST.length} checks on an area before handover; actions go on the snag list`, checklist: HANDOVER_CHECKLIST, drawnSignature: true, raisesRecords: true },
 ];
+
+/** The report types started from a checklist, one home screen tile each. */
+export const CHECKLIST_TYPES: readonly ReportTypeDef[] = REPORT_TYPES.filter(t => t.checklist);
+
+/** Whether this check raises an issue when its report is sent: an action on a checklist that raises records. */
+export const raisesIssue = (type: ReportTypeDef, o: Pick<Observation, 'check'>): boolean =>
+  Boolean(type.checklist && type.raisesRecords && o.check?.answer === 'action');
 
 export const isReportType = (value: unknown): value is ReportTypeId => REPORT_TYPES.some(t => t.id === value);
 export const reportTypeOf = (report: { reportType?: ReportTypeId | undefined }): ReportTypeDef =>
@@ -103,7 +136,8 @@ export function invalidShape(existing: Pick<Report, 'reportType' | 'observations
     const was = before.get(o.id);
     if (!was || o.type !== 'check' || !o.check || o.check.item !== was.check?.item || o.check.question !== was.check?.question) return 'An inspection keeps every check as it was asked.';
     if (o.check.answer !== undefined && !CHECK_ANSWERS.some(a => a.value === o.check!.answer)) return 'Unknown check answer.';
-    if (o.linkedIssueId !== undefined) return 'A check is not linked to an issue.';
+    // Only a correction links a check to the issue it raised, and the server sets that link.
+    if (o.linkedIssueId !== was.linkedIssueId || (o.linkedIssueId !== undefined && !type.raisesRecords)) return 'A check is not linked to an issue.';
   }
   return null;
 }

@@ -19,7 +19,7 @@ import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '
 import { fmtMoney, variationValue } from '@/lib/variations';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { withViewReturn } from '@/lib/viewNavigation';
-import { REPORT_TYPES, reportTypeOf, type ReportTypeId } from '@/lib/reportTypes';
+import { CHECKLIST_TYPES, reportTypeOf, type ReportTypeId } from '@/lib/reportTypes';
 import { useWhatsNewCount } from './useWhatsNew';
 
 /**
@@ -104,8 +104,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   // The site update in progress, and any inspection in progress, kept apart so
   // "Request a variation" never lands on an inspection's checklist.
   const currentDraft = ownDrafts.find(r => reportTypeOf(r).id === 'progress');
-  const inspectionDraft = ownDrafts.find(r => reportTypeOf(r).id === 'safety-inspection');
-  const inspectionType = REPORT_TYPES.find(t => t.id === 'safety-inspection')!;
+  // One tile per checklist type: carry on with its draft, or start one.
+  const inspections = CHECKLIST_TYPES.map(type => ({ type, draft: ownDrafts.find(r => reportTypeOf(r).id === type.id) }));
   const preference = `relay-project:${principal?.id}`;
   const engineerReturn = (target: View = 'home') => `/engineer?project=${encodeURIComponent(projectId)}${target === 'home' ? '' : `&view=${target}`}`;
 
@@ -204,9 +204,9 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
               : <button type="button" className="eng-tile big" onClick={()=>void startReport()} disabled={creating}><span className="kind tone-neutral">Site update</span><div><b>{creating?'Starting…':'Start a site update'}</b><small>Progress, defects, variations and access, one card at a time</small></div><span className="arrow">→</span></button>}
             <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo + a short note · sent on its own</small></div></button>
             <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work needing instruction · goes in your site update</small></div></button>
-            {inspectionDraft
-              ? <Link className="eng-tile eng-tile-wide" href={withViewReturn(`/reports/${inspectionDraft.id}`,engineerReturn())}><span className="kind answer-ok">Inspection</span><div><b>{inspectionDraft.corrects ? 'Continue the inspection correction' : 'Continue the safety inspection'}</b><small>{inspectionDraft.checks ? `${inspectionDraft.checks.ok + inspectionDraft.checks.action + inspectionDraft.checks.na} of ${inspectionDraft.observationCount} checks answered` : `${inspectionDraft.observationCount} checks`} · saved {fmtWhen(inspectionDraft.lastSavedAt) || 'on server'}</small></div><span className="arrow">→</span></Link>
-              : <button type="button" className="eng-tile eng-tile-wide" onClick={()=>void startReport(undefined,'safety-inspection')} disabled={creating}><span className="kind answer-ok">Inspection</span><div><b>Do a safety inspection</b><small>{inspectionType.blurb} · signed and sent as its own report</small></div><span className="arrow">→</span></button>}
+            {inspections.map(({ type, draft }) => draft
+              ? <Link key={type.id} className="eng-tile eng-tile-wide" href={withViewReturn(`/reports/${draft.id}`,engineerReturn())}><span className="kind answer-ok">{type.name.split(' ')[0]}</span><div><b>{draft.corrects ? `Continue the ${type.name.toLowerCase()} correction` : `Continue the ${type.name.toLowerCase()}`}</b><small>{draft.checks ? `${draft.checks.ok + draft.checks.action + draft.checks.na} of ${draft.observationCount} checks answered` : `${draft.observationCount} checks`} · saved {fmtWhen(draft.lastSavedAt) || 'on server'}</small></div><span className="arrow">→</span></Link>
+              : <button key={type.id} type="button" className="eng-tile eng-tile-wide" onClick={()=>void startReport(undefined,type.id)} disabled={creating}><span className="kind answer-ok">{type.name.split(' ')[0]}</span><div><b>Do a {type.name.toLowerCase()}</b><small>{type.blurb} · signed and sent as its own report</small></div><span className="arrow">→</span></button>)}
           </div>
           <p className="eng-help">Defects flagged here are sent on their own. Everything else stays a draft until you sign and send.</p>
           <section aria-labelledby="eng-unfinished-title">

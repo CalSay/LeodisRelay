@@ -29,6 +29,9 @@ export interface WhatsNew {
 export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'help', added: '2026-10-20', audience: 'all', title: 'This Help page',
     text: 'How RELAY works in plain words, what each status means, and this list of what is new. New things are marked until you have looked.' },
+  { id: 'handover-inspection', added: '2026-10-20', audience: 'site', title: 'Handover inspection',
+    text: 'Walk an area before it is handed over and answer 12 checks on our own M&E work. Each "Action needed" goes on the snag list as an issue when you send it. Start it from "Do a handover inspection" on your home screen.',
+    link: { label: 'Go to your home screen', href: '/engineer' } },
   { id: 'offline-start', added: '2026-10-20', audience: 'site', title: 'Start a site update with no signal',
     text: 'With no signal, RELAY opens a page where you can start a site update, add cards and take photos. They stay on the phone, marked "Only on this phone", and go up by themselves once you open RELAY with signal again. Nothing is sent to the office until you sign and send.' },
   { id: 'safety-actions', added: '2026-10-20', audience: 'all', title: 'Safety actions',
@@ -131,10 +134,10 @@ export const GLOSSARY: readonly GuideGroup[] = [
     { term: 'Declined', meaning: 'Not going ahead. It stays on the register.' },
     { term: 'Done, not instructed', meaning: 'Work already carried out on a say-so. The office needs the client\'s written sign-off before it can be charged.' },
   ] },
-  { heading: 'A safety inspection check', terms: [
+  { heading: 'An inspection check', terms: [
     { term: 'Satisfactory', meaning: 'Checked and fine.' },
-    { term: 'Action needed', meaning: 'Say what is wrong and what needs doing. It stays on Safety actions until a later inspection finds it Satisfactory or Not applicable.' },
-    { term: 'Not applicable', meaning: 'Nothing of this kind on site this week.' },
+    { term: 'Action needed', meaning: 'Say what is wrong and what needs doing. On a safety inspection it stays on Safety actions until a later inspection finds it Satisfactory or Not applicable. On a handover inspection it becomes an issue on the snag list.' },
+    { term: 'Not applicable', meaning: 'Nothing of this kind to check.' },
   ] },
 ];
 
@@ -215,7 +218,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'When you are done, sign and tap "Send to office". It is then on file and cannot be changed, only corrected.',
     ] },
     { id: 'after-send', heading: 'After you send', ordered: false, steps: [
-      'Defect and Access cards become issues on the project\'s register. Variation cards become variations for the office to price.',
+      'Defect and Access cards become issues on the project\'s register. Variation cards become variations for the office to price. Each "Action needed" on a handover inspection becomes an issue too.',
       'Your home screen lists what came back from the office on the things you raised, in the office\'s words.',
       'The report itself shows each step it has reached: received, PDF, delivery and read. See "What the words mean" below.',
     ] },

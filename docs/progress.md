@@ -37,7 +37,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   example: nothing is emailed because the Graph transport is not
   wired; the closer cannot verify their own issue; Undo lasts 12 seconds. The review also found the office tab offered
   engineers links to office-only pages; those are now left out for them. The
-  handover inspection (#43) is not listed because it has not merged.
+  handover inspection (#43) merged while this was built and is listed.
 - Not FE-2, EXP-2 or EXP-4: no photo workflow, no routing, no locations.
   Outside the report editor and report types.
 - Verified on Node 24: `npm run typecheck`, `npm test` (10 new tests in
@@ -60,6 +60,85 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   check at 390 and 1440px". Follow-ups: add `verify-help.mjs` to the browser
   checks in `CLAUDE.md`, and a line in `CLAUDE.md` asking each feature PR to
   add its `WHATS_NEW` entry; let Cal or the office edit the guide's wording.
+## 2026-10-20 — EXP-5: second report type, a pre-handover inspection
+
+- New report type on the #39 engine: a **handover inspection**
+  (`Pre-Handover Inspection`, numbered `011LME-PHI-001`). An engineer walks
+  one area before it is handed over and answers 12 fixed checks on Leodis's
+  own M&E work: containment, pipework and ductwork, fittings, fire-stopping,
+  access panels, ceiling voids ready to close, labelling, testing,
+  commissioning, making good, clean and film off, and paperwork for the O&M
+  manual. Answers are the same three (Satisfactory, Action needed, Not
+  applicable); a drawn signature is required, as for a safety inspection.
+- The one rule that differs: **each "Action needed" raises an issue** on the
+  snag list when the inspection is sent, like a defect card on a site update.
+  So an action also asks **Where** (required, with recent places offered),
+  and the issue carries where, what is wrong, what needs doing, who, and the
+  photographs. A safety inspection still raises nothing.
+- Why this type and this rule: a pre-handover walk is the inspection an M&E
+  site engineer does most after weekly safety, and the one the office and the
+  client ask about ("is level 2 ready to close up?"). Unlike safety actions,
+  what it finds is unfinished or faulty work of our own, which is exactly what
+  the snag list tracks to closure; keeping those actions only on a PDF would
+  make the type worse than a site update with defect cards. Raised issues go
+  through the existing provisional/confirmed review and SharePoint issue sync
+  unchanged. Not FE-2, EXP-2 or EXP-4: no new photo workflow, no routing,
+  locations stay free text. The 12 checks are Claude's first set, kept in
+  `HANDOVER_CHECKLIST` for Cal or a contracts lead to change.
+- Built as framework, not a one-off: `raisesRecords` now also means "a
+  checklist's actions raise issues" (`raisesIssue` in `lib/reportTypes.ts`),
+  used by the issue store, corrections, the check step, the office sheet and
+  the site diary. The engineer home shows one tile per checklist type
+  (`CHECKLIST_TYPES`), so a third type needs no new home code.
+- Corrections: a correction points each action at the issue it raised, so
+  sending it adds a "Corrected in … rev 2" sighting rather than a second issue
+  (as `correctReport` already does for defects). A save cannot set or drop that
+  link itself (`invalidShape`). Sent revisions are untouched.
+- Where it reads back: the check step ("1 issue raised · not yet reviewed",
+  "raise issues"), the sent view, PDF and preview (actions and notes titled
+  "question · where"), the office report sheet (each action links its issue
+  instead of "On this inspection"), the site diary (card with where and its
+  issue), the photo library, the notification email text (still held in the
+  outbox). Weekly summary, My week, since your last visit, search and
+  unfinished reports read the type's name already and needed no change.
+- Verified on Node 24: `npm run typecheck`, `npm test` (9 new tests in
+  `tests/handoverInspection.test.ts`), `npm run build`. New
+  `scripts/verify-handover-inspection.mjs` passed (99 checks, 390px light and
+  1440px dark): start from home beside the other two tiles, Where hidden until
+  Action needed, all 12 answered, a missing Where stops sending and says why,
+  the draft PDF's words, drawn signature, send, one issue raised with where,
+  what, action, owner and photograph, no variation, sent view, site diary card
+  naming its issue, the office sheet linking the issue, the issue page.
+  Browser checks re-run: see the PR.
+- Offline capture (#41, merged in): a held handover inspection is named as one
+  on the offline page, and an action there asks Where too (cleared when the
+  answer moves off Action needed, as in the editor). New
+  `scripts/verify-handover-offline.mjs` passed (14 checks, 390px light and
+  1440px dark): held copy named, Where only for an action, sent up by itself
+  when signal returns with Where on the server. Starting an inspection offline
+  is not built: the offline page starts site updates only.
+- A fresh-context review found three gaps, all fixed: the report summary's
+  `defectCount` left out a handover inspection's actions, so the office review
+  dialog did not say approving confirms its issues (now counted, with a test);
+  the office sheet of a sent correction showed "no issue" beside each action
+  (it now falls back to the issue the action is linked to, checked in the
+  browser script); the offline page could not show or enter Where.
+  After the fixes, also passed: `verify-offline-capture`, `verify-offline-drafts`,
+  `verify-review-queue`, `verify-office-actions`, `verify-safety-actions`,
+  `verify-report-types`, `verify-site-diary`, `verify-engineer-layout`,
+  `verify-unfinished-reports`; `verify-handover-inspection` now 104 checks.
+- A second review found that a correction moving an action to Satisfactory
+  still showed "further sighting of ISS-…" in the office and the diary; a
+  check now speaks for its linked issue only while it needs action. The issue
+  itself stays open for the office to withdraw, as it does when a defect card
+  is changed in a correction (an automatic withdrawal is proposed below).
+- Not verified: a physical phone, the PDF rendered by the worker after sending
+  (the draft PDF uses the same renderer), SharePoint mode (no live tenant).
+- Proposed next (not built): when a correction withdraws an action (or a
+  defect), note it on the issue so the office can withdraw it; an area field on the inspection itself (one
+  place for the whole walk, prefilled into each action); a third type such as
+  a commissioning record with readings; let the office edit checklists; add
+  `verify-handover-inspection.mjs` to the browser checks in `CLAUDE.md`.
 
 ## 2026-10-20 — FE-3e: offline capture, first slice
 
@@ -1280,7 +1359,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   compact delivery tag; the steps belong on the report itself.
 - Rules in `lib/status.ts` (`submissionStages`), shown by
   `components/SubmissionStages.tsx` with `app/stages.css`.
-- Verified on Node 24: `npm run typecheck`, `npm test` (7 new tests in
+- Verified on Node 24: `npm run typecheck`, `npm test` (9 new tests in
   `tests/submissionStages.test.ts`, including the worker recording a PDF
   failure and a blocked delivery), `npm run build`. New
   `scripts/verify-submission-stages.mjs` passed (65 checks: six report
