@@ -1,7 +1,11 @@
-import type { Observation, Report } from './types';
+import type { DraftSignature, Observation, Report } from './types';
 import { clientId } from './clientId';
 
-export interface SaveRequest { requestId:string; expectedVersion:number; observations:Observation[] }
+export interface SaveRequest {
+  requestId:string; expectedVersion:number; observations:Observation[];
+  /** Null clears it. Requests journalled before signatures were saved have none, and leave it alone. */
+  signature?:DraftSignature | null;
+}
 export interface SaveJournal {
   /** Atomically retain an existing request, or persist the supplied request. */
   claim(request:SaveRequest):Promise<SaveRequest>;
@@ -13,12 +17,14 @@ export async function saveWithJournal(
   send:(request:SaveRequest)=>Promise<Report>,
 ):Promise<Report> {
   const desired = report.observations;
+  const signature = report.draftSignature ?? null;
   let version = expectedVersion;
   for (;;) {
-    const request = await journal.claim({requestId:clientId(),expectedVersion:version,observations:desired});
+    const request = await journal.claim({requestId:clientId(),expectedVersion:version,observations:desired,signature});
     const saved = await send(request);
     await journal.acknowledge(request.requestId,saved.version);
-    if (JSON.stringify(request.observations) === JSON.stringify(desired)) return saved;
+    if (JSON.stringify(request.observations) === JSON.stringify(desired)
+      && JSON.stringify(request.signature ?? null) === JSON.stringify(signature)) return saved;
     version = saved.version;
   }
 }

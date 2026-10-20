@@ -64,7 +64,10 @@ export function createReport(projectId: string, author: string, principal?: Prin
 
 export function saveDraft(id: string, incoming: Report, expectedVersion?: number, requestId?: string): StoreOutcome<Report> {
   return atomic(() => {
-    const digest = createHash('sha256').update(JSON.stringify({observations:incoming.observations,expectedVersion})).digest('hex');
+    // The signature joins the digest only when there is one, so receipts taken
+    // before signatures were saved still match their retries.
+    const signature = incoming.draftSignature;
+    const digest = createHash('sha256').update(JSON.stringify({observations:incoming.observations,expectedVersion,...(signature ? {signature} : {})})).digest('hex');
     const key = requestId ? `save:${requestId}` : undefined;
     if (key) {
       const previous = getRecord<{id:string;reportId:string;digest:string;version?:number;receipt?:Report}>('save-receipts',key);
@@ -79,7 +82,8 @@ export function saveDraft(id: string, incoming: Report, expectedVersion?: number
     if (!existing) return reject('No such report.',404);
     if (existing.state !== 'draft') return reject('This report has already been submitted.');
     if (expectedVersion !== existing.version) return reject('This report changed elsewhere. Your local copy has been retained.');
-    const saved = { ...existing, observations: incoming.observations, version: existing.version + 1, lastSavedAt: new Date().toISOString() };
+    const { draftSignature: _previous, ...rest } = existing;
+    const saved: Report = { ...rest, observations: incoming.observations, ...(signature ? { draftSignature: signature } : {}), version: existing.version + 1, lastSavedAt: new Date().toISOString() };
     putRecord('reports',saved);
     if (key) putRecord('save-receipts',{id:key,reportId:id,digest,version:saved.version});
     return { ok: true, value: saved };
@@ -115,8 +119,10 @@ export async function submitReport(id: string, signature?: { dataUrl?: string; n
     if (!project || !reportableProject(project)) return reject('This project is no longer open for reporting.',422);
     const blocking = reviewReport(existing).filter(f => f.blocking);
     if (blocking.length) return reject(`${blocking.length} item(s) need completing before sending.`,422);
+    // The draft copy has done its job: what was sent is `signature`.
+    const { draftSignature: _draft, ...sent } = existing;
     const submitted: Report = {
-      ...existing, state: 'submitted', serverAcknowledgedAt: new Date().toISOString(),
+      ...sent, state: 'submitted', serverAcknowledgedAt: new Date().toISOString(),
       review: cachedProject(existing.projectId)?.reviewRequired ? 'pending' : 'not_required',
       delivery: 'pending',
       ...(signature ? { signature: { ...signature, signedAt: new Date().toISOString() } } : {}),

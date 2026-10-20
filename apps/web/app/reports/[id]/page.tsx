@@ -126,6 +126,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         const held = await recover(id,principalId);
         if (!cancelled && held?.report) {
           seq.current=held.seq;serverVersion.current=held.baseVersion ?? 0;
+          adoptSignature(held.report);
           setReport({...held.report,observations:held.observations,version:held.baseVersion ?? 0});
           setSaveState('phone');
         } else if (!cancelled) setMissing(true);
@@ -144,10 +145,16 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       if (held && found.state === "draft") {
         seq.current = held.seq;
         serverVersion.current = held.baseVersion ?? 0;
-        setReport({ ...found, version:held.baseVersion ?? 0, observations: held.observations });
+        // The device's copy of the signature is as new as its observations.
+        const draftSignature = held.report ? held.report.draftSignature : found.draftSignature;
+        const restored: Report = { ...found, version:held.baseVersion ?? 0, observations: held.observations };
+        if (draftSignature) restored.draftSignature = draftSignature; else delete restored.draftSignature;
+        adoptSignature(restored);
+        setReport(restored);
         setSaveState("phone");
         setRecovered(true);
       } else {
+        adoptSignature(found);
         setReport(found);
       }
     })();
@@ -231,6 +238,23 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     window.addEventListener("online", onOnline);
     return () => window.removeEventListener("online", onOnline);
   }, [scheduleSave, principalId]);
+
+  /** Show the name and drawing saved with the draft, before the pad first appears. */
+  function adoptSignature(from: Report) {
+    if (from.state !== 'draft' || !from.draftSignature) return;
+    setSignerName(from.draftSignature.name);
+    setSignatureImage(from.draftSignature.dataUrl ?? null);
+  }
+
+  /** The signature is part of the draft, so it saves and survives a reload like any edit. */
+  function updateSignature(name: string, image: string | null) {
+    setSignerName(name);
+    setSignatureImage(image);
+    const current = latest.current;
+    if (!current || current.state !== 'draft') return;
+    const { draftSignature: _old, ...rest } = current;
+    update({ ...rest, draftSignature: { name, ...(image ? { dataUrl: image } : {}) } });
+  }
 
   useEffect(() => {
     latest.current = report;
@@ -526,8 +550,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           <div className="panel-body">
             <SignaturePad
               name={signerName}
-              onNameChange={setSignerName}
-              onChange={setSignatureImage}
+              initialImage={signatureImage}
+              onNameChange={(next) => updateSignature(next, signatureImage)}
+              onChange={(image) => updateSignature(signerName, image)}
             />
           </div>
         </section>

@@ -82,10 +82,10 @@
         "Sign, reload, signature still shown and saved to the server",
         "Test covering signature persistence"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Not started: signature lives only in React state; HeldDraft has no signature field (lib/localDraft.ts)."
+      "status": "done",
+      "passes": true,
+      "pr": 6,
+      "notes": "Done 2026-10-20 in PR #6: the name and drawing save with the draft as draftSignature (server and device copy) and become signature on sending. Tests: apps/web/tests/signatures.test.ts. Browser check: scripts/verify-signature-reload.mjs (light and dark). Not checked on a physical phone."
     },
     {
       "id": "FE-4a",
