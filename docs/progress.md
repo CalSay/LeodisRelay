@@ -49,6 +49,60 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Next: the same filters for the engineer Issues view if engineers ask;
   CLAUDE.md's list of browser checks should gain
   `verify-issue-register.mjs`.
+## 2026-10-20 — Since your last visit (new feature, proposed as NEW-5)
+
+- The engineer home now opens its right-hand column with "Since your last
+  visit": what other people recorded on the current project since the
+  engineer's own last report there. Three groups, newest first: reports from
+  others (who, trade, visit day, cards and defects, corrections marked),
+  issues (new, put forward as fixed, checked and closed, reopened, assigned,
+  with "Your trade" on issues for the engineer's trade) and variations (new,
+  instructed, declined, no prices). Each row opens the record and Back
+  returns to the home. Four rows per group, then "Show n more".
+- Why this feature: the first minute back on a site is "what has happened
+  since I was last here?". Today that means opening the reports list, the
+  issue register and asking the office. Engineers move between sites, so
+  this is the screen they see every time they arrive. It reads only what is
+  already recorded: no new store, no "mark as read", no setup, no SharePoint
+  write and no email.
+- Decisions: the last visit is the engineer's latest original report on the
+  project from an earlier day (today's report does not count, so the list
+  still makes sense after sending today's update; a correction sent later is
+  not a visit). Everything received by the server after that report was
+  received counts as new. With no earlier report it shows the last 7 days and
+  says so. The engineer's own reports and acts, and issues and variations
+  they raised, are left out, because "Came back from the office" already
+  shows the office's answers to those; nothing appears twice. Each issue and
+  variation shows once, by its latest change, and only if that change still
+  stands (a closed issue that was reopened shows as reopened); one whose
+  latest change was the engineer's own is left out. Withdrawn
+  issues and drafts are left out; a sent correction stands in for the report
+  it corrects. Rules in `lib/sinceLastVisit.ts`, served by
+  `/api/since-last-visit` with the weekly summary's project rule.
+- Not EXP-1: the site diary is a chronological project timeline. This is a
+  short, personal catch-up on the home screen and leaves the diary to its
+  own task. Not EXP-2 or EXP-4: no requests or routing, locations are free
+  text as written.
+- Verified: `npm run typecheck`, `npm test` (6 new tests in
+  `tests/sinceLastVisit.test.ts`), `npm run build`. New
+  `scripts/verify-since-last-visit.mjs` passed (33 checks: 390px light and
+  1440px dark, starting report named, others' report listed, earlier
+  reports, drafts, other projects and own work left out, your-trade marking,
+  show more, back navigation, a second engineer's view, a first-time engineer
+  sees 7 days, an empty project says so, signed-out and unknown-project
+  refusals, no sideways scroll). A fresh-context review found no access
+  gaps; its fix (an issue the engineer moved last is not shown with an
+  older change, such as "Reopened" after they put it forward as fixed) is in. `verify-engineer-layout`,
+  `verify-role-access` (61), `verify-unfinished-reports` (18) and
+  `verify-engineer-nav` (60) still pass. Screenshots (not in the repo) are in
+  the RELAY project's shared files under `ui-review/since-last-visit/`.
+- Not verified: a physical phone, SharePoint mode (no live tenant), a
+  project with thousands of records (it reads the project's records per
+  request, like the weekly summary).
+- Next: CLAUDE.md's list of browser checks should gain
+  `verify-since-last-visit.mjs`. If engineers use it, the same catch-up for a
+  project manager on the office project page.
+
 ## 2026-10-20 — Photo library per project (new feature, proposed as NEW-4)
 
 - New page `/photos`: every photograph on one project, newest first, grouped
