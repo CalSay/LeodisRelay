@@ -190,6 +190,9 @@ body:has(.ws){overflow:hidden auto}
 .ws .cols{flex:1;min-height:0;display:grid;grid-template-columns:250px 400px 1fr}
 /* No project chosen: the office position takes the register's place, so the desk never opens on an empty column. */
 .ws .cols[data-depth="1"]{grid-template-columns:250px 1fr}
+/* At that depth the office position comes first in the page; the desk keeps it on the right. */
+.ws .cols[data-depth="1"] .col-projects{grid-column:1;grid-row:1;border-right:1px solid var(--line-2);background:var(--panel)}
+.ws .cols[data-depth="1"] .col-main{grid-column:2;grid-row:1;border-right:0;background:var(--sunken)}
 .ws .col{min-height:0;overflow-y:auto;border-right:1px solid var(--line-2);background:var(--panel);display:flex;flex-direction:column;min-width:0}
 .ws .col:last-child{border-right:0;background:var(--sunken)}
 .ws .col-head{position:sticky;top:0;z-index:1;display:flex;align-items:baseline;gap:var(--s2);padding:var(--s3) var(--s4);border-bottom:2px solid var(--line-2);box-shadow:inset 0 -1px 0 var(--acc);background:var(--panel-3);font:inherit;letter-spacing:0;text-transform:none}
@@ -324,5 +327,33 @@ body:has(.ws){overflow:hidden auto}
 .ws .act .rmenu .rt b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .ws .act a.rt:hover b{color:var(--acc)}
 .ws .act .empty{padding:var(--s3) 0;font-size:12px;text-align:left}
+.ws .act:focus{outline:none}
+.ws .act:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .ws .act-all{padding:var(--s2) var(--s4);border-top:1px solid var(--line);font-size:12px;color:var(--acc)}
-@media (max-width:700px){.ws .acts{grid-template-columns:1fr}}
+/* Phone only: the four counts in a 2×2 strip, each scrolling to its group. */
+.ws .act-strip{display:none}
+@media (max-width:700px){
+  .ws .acts{grid-template-columns:1fr}
+  .ws .act-strip{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2);margin-top:var(--s3)}
+  .ws .act-strip button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:64px;padding:var(--s2) var(--s3);border:1px solid var(--line);border-left:3px solid var(--line-2);background:var(--panel-2);color:var(--text);text-align:left;font:inherit}
+  .ws .act-strip button:active{background:var(--acc-wash)}
+  .ws .act-strip b{font-size:24px;font-weight:500;line-height:1.1;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+  .ws .act-strip b.soon{color:var(--caution)}
+  .ws .act-strip button:has(b.soon){border-left-color:var(--caution)}
+  .ws .act-strip span{font-size:12px;color:var(--text-2)}
+  .ws .act{scroll-margin-top:var(--s3)}
+  .ws .act-h{padding:var(--s3) var(--s3) 0}
+  .ws .act-sub{padding:0 var(--s3) var(--s2)}
+  .ws .act .rmenu>div{min-height:var(--touch);padding:var(--s2) var(--s3)}
+  .ws .act .rmenu a.rt{align-self:stretch;display:flex;flex-direction:column;justify-content:center}
+  .ws .act .rmenu .rt b{white-space:normal;overflow-wrap:anywhere}
+  .ws .act .rmenu>div>.btn,.ws .act .rmenu>div>.btn-q,.ws .act .rmenu>div>.tag{flex:none}
+  .ws .act-all{display:flex;align-items:center;min-height:44px;padding:0 var(--s3)}
+  .ws .act .empty{padding:var(--s2) 0}
+  .ws .office-latest{display:none}
+  /* A phone opens on the office position, with the project list after it. */
+  .ws .cols[data-depth="1"]{display:flex;flex-direction:column}
+  .ws .cols[data-depth="1"] .col{display:flex}
+  .ws .cols[data-depth="1"] .col-main{border-bottom:1px solid var(--line-2)}
+  .ws .cols[data-depth="1"] .col-projects{border-right:0}
+}
