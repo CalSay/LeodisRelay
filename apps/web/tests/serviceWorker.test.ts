@@ -4,7 +4,8 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const publicFile = (name: string) => readFileSync(resolve(__dirname, '../../public', name), 'utf8');
+// Line endings are normalised, so a Windows checkout hashes the same as Linux.
+const publicFile = (name: string) => readFileSync(resolve(__dirname, '../../public', name), 'utf8').replace(/\r\n/g, '\n');
 
 /*
  * The service worker serves offline.js from its cache before the network, so a
