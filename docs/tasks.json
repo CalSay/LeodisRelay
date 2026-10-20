@@ -101,7 +101,7 @@
       ],
       "status": "done",
       "passes": true,
-      "pr": null,
+      "pr": 8,
       "notes": "2026-10-20: lib/reviewQueue.ts reviewInUse decides per project (review required, or a submitted report still pending). With it off the office hides the Inbox To review and Returned filters, the Issues Not reviewed filter and count, and the register's review wording. Checked by tests/reviewQueue.test.ts and scripts/verify-review-queue.mjs (in use, then off). Report rows still tag a report that is itself pending or returned, and the report reader keeps its Review row."
     },
     {
