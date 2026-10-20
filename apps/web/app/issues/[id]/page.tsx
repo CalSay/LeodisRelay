@@ -12,6 +12,7 @@ import { usePrincipal } from '@/components/PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { safeViewReturn } from '@/lib/viewNavigation';
 import { confirmationLabel } from '@/lib/issueConfirmation';
+import { eventProvenance } from '@/lib/issueProvenance';
 
 /**
  * One issue, across every visit that touched it.
@@ -176,12 +177,15 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
       <div className="sec"><span className="lbl">History</span></div>
 
       <div className="reg">
-        {issue.events.map((event, i) => (
+        {issue.events.map((event, i) => {
+          const from = eventProvenance(issue, event, i);
+          return (
           <div key={i} className="row row-static" style={{ alignItems: "flex-start" }}>
             <span className="row-code">{EVENT_LABEL[event.kind] ?? event.kind}</span>
             <span className="row-main">
               <p className="row-title" style={{ fontSize: 14.5, fontWeight: 400 }}>{event.note}</p>
               <p className="row-meta">{event.actor}</p>
+              {from && <p className="row-meta issue-event-source"><Link href={`/reports/${from.reportId}`}>{from.label}</Link></p>}
               {event.photos.length > 0 && (
                 <div className="shots" style={{ marginTop: 10 }}>
                   {event.photos.map((photo, pi) => (
@@ -204,7 +208,8 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
               </span>
             </span>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {!isWithdrawn && (

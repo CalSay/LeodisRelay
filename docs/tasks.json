@@ -304,7 +304,7 @@
       ],
       "status": "done",
       "passes": true,
-      "pr": null,
+      "pr": 32,
       "notes": "Done 2026-10-20: 'Who needs to respond' on defect and access cards offers Recent companies from sent reports' defect/access cards and issue owners on the same project, newest first; Where keeps Recent places. Both now come from one pure rule (lib/suggestions.ts, tests/suggestions.test.ts); drafts never feed suggestions; blank and 'unknown'/'TBC' answers are left out; free text is always accepted. scripts/verify-suggestions.mjs at 390px light and 1440px dark."
     },
     {
@@ -338,10 +338,10 @@
         "Issue changes from a correction record which revision made them",
         "Tests for revision and provenance"
       ],
-      "status": "todo",
-      "passes": false,
+      "status": "done",
+      "passes": true,
       "pr": null,
-      "notes": "Mostly built: correctReport creates a new revision; snapshot unchanged. Issue provenance is note text only (IssueEvent has no reportId/revision); no test that the sent snapshot is unchanged."
+      "notes": "Issue events now carry source {reportId, reference, revision, observationId, corrects} for raised, sighting and review-decision events; the issue history links each to its report revision. Tests in apps/web/tests/issueProvenance.test.ts; browser check scripts/verify-issue-provenance.mjs."
     },
     {
       "id": "EXP-1",

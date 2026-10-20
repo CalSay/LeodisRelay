@@ -5,7 +5,7 @@ import { atomic, database, getRecord, putRecord, records } from './storage';
 import { transition, type IssuePolicy } from "@relay/platform";
 import type { Issue as ContractIssue } from "@relay/contracts";
 
-import type { Issue, IssueEvent, Photo, Report } from "./types";
+import type { Issue, IssueEvent, IssueEventSource, Observation, Photo, Report } from "./types";
 import { cachedProject, cachedProjects, reportableProject } from './projects';
 import type { Principal } from '@relay/platform';
 import { canAccessProject } from './auth/access';
@@ -22,6 +22,15 @@ import { queryIssues, type IssuePage, type IssueQuery } from './issueQuery';
  * SQLite is the current prototype store. Deployment will use SharePoint Lists
  * as the authority, with SQLite holding a cache and pending operations.
  */
+
+/** Which report revision, and which update in it, made a change. */
+export function sourceOf(report: Pick<Report,'id'|'reference'|'revision'|'corrects'>, observation?: Pick<Observation,'id'>): IssueEventSource {
+  return {
+    reportId: report.id, reference: report.reference, revision: report.revision,
+    ...(observation ? { observationId: observation.id } : {}),
+    ...(report.corrects ? { corrects: report.corrects } : {}),
+  };
+}
 
 function fromReport(reportId:string): Issue[] {
   return database().prepare("SELECT data FROM records WHERE kind='issues' AND json_extract(data,'$.raisedByReport')=?").all(reportId).map(row => JSON.parse(row.data as string));
@@ -129,6 +138,7 @@ function raiseIssues(report: Report): Issue[] {
           // A correction says so, so the history does not read as a second visit.
           note: report.corrects ? `Corrected in ${report.reference} rev ${report.revision}: ${observation.whatHappened}` : observation.whatHappened,
           photos: observation.photos,
+          source: sourceOf(report, observation),
         });
         saveIssue(existing);
         continue;
@@ -170,6 +180,7 @@ function raiseIssues(report: Report): Issue[] {
           kind: "raised",
           note: observation.whatHappened,
           photos: observation.photos,
+          source: sourceOf(report, observation),
         },
       ],
     };
@@ -187,10 +198,17 @@ function raiseIssues(report: Report): Issue[] {
  * defect may already be repaired. Confirmation and work are separate axes for
  * exactly this reason.
  */
+/** The reviewed report, as the source of a confirmation decision. */
+function reviewedSource(reportId: string): IssueEventSource | undefined {
+  const report = getRecord<Report>('reports', reportId);
+  return report ? sourceOf(report) : undefined;
+}
+
 export function disputeIssuesFromReport(reportId: string, actor: string, actorId?:string): void {
   atomic(() => disputeIssues(reportId,actor,actorId));
 }
 function disputeIssues(reportId: string, actor: string, actorId?:string): void {
+  const source = reviewedSource(reportId);
   for (const issue of fromReport(reportId)) {
     if (issue.raisedByReport === reportId && issue.confirmation === "provisional") {
       issue.confirmation = "disputed";
@@ -201,6 +219,7 @@ function disputeIssues(reportId: string, actor: string, actorId?:string): void {
         note: "Source report returned for correction — needs triage.",
         ...(actorId ? {actorId}:{}),
         photos: [],
+        ...(source ? { source } : {}),
       });
       saveIssue(issue);
     }
@@ -218,6 +237,7 @@ export function confirmIssuesFromReport(reportId: string, actor: string, actorId
   atomic(() => confirmIssues(reportId,actor,actorId));
 }
 function confirmIssues(reportId: string, actor: string, actorId?:string): void {
+  const source = reviewedSource(reportId);
   for (const issue of fromReport(reportId)) {
     if (issue.raisedByReport === reportId && issue.confirmation === "provisional") {
       issue.confirmation = "confirmed";
@@ -228,6 +248,7 @@ function confirmIssues(reportId: string, actor: string, actorId?:string): void {
         note: "Confirmed at report review.",
         ...(actorId ? {actorId}:{}),
         photos: [],
+        ...(source ? { source } : {}),
       });
       saveIssue(issue);
     }
