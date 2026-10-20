@@ -1,7 +1,7 @@
 import { ApiError, sendHeldSave, startHeldReport } from './api';
 import { clientId } from './clientId';
 import { adoptStarted, listHeld, update, type HeldDraft } from './localDraft';
-import { planHeldSend } from './offlineStart';
+import { planHeldSend, startedTitle } from './offlineStart';
 import { SaveConflict } from './saveRequest';
 
 export interface HeldSendResult {
@@ -74,10 +74,10 @@ async function sendAll(principalId: string): Promise<HeldSendResult> {
   for (const held of firstPlan.start) {
     const started = held.started!;
     let report;
-    try { report = await startHeldReport(started.projectId, started.clientKey, started.visitDate); }
+    try { report = await startHeldReport(started.projectId, started.clientKey, started.visitDate, started.reportType); }
     catch (error) {
       if (error instanceof ApiError && error.offline) return result;
-      await noteProblem(held, error, result, `New site update · ${started.projectName}`, true);
+      await noteProblem(held, error, result, startedTitle(started), true);
       continue;
     }
     const key = await adoptStarted(held.key, report);
