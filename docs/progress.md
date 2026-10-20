@@ -56,6 +56,63 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   "Download spreadsheet" on the Inbox; save each register's filters per
   person so they survive a reload.
 
+## 2026-10-20 — Issues over time (new feature, proposed as FE-8)
+
+- Why this feature: every progress meeting asks "is the issue list getting
+  shorter?", and RELAY only answered for today (the register, snag lists,
+  Before handover). Seeing the trend tells the site team their closing work
+  is paying off and tells the office early when a project is slipping.
+  Chosen by Claude under Cal's standing autonomy and freedom to add
+  features; it is outside the report editor and the offline page, where
+  another thread works, and does not touch the office registers.
+- What it is: `/issue-trend?project=…`, every role on the project (it counts
+  issues every trade can already read). A headline ("Getting shorter: 3
+  issues open, down from 6 four weeks ago"), four figures (open now and past
+  target, raised and closed in the last four weeks, typical days to close,
+  oldest open issue with a link), a 12-week bar chart of what was open at
+  the end of each week with the past-target part in the alert colour (tap
+  or hover a week to read it out; legend, readout and a table so colour is
+  never the only cue), then the same figures week by week as a table.
+  Linked from "This project" on the engineer home and the office project
+  sheet; Back returns to wherever it was opened from.
+- Rules (`lib/issueTrend.ts`, pure): weeks run Monday to Sunday in the office
+  calendar; the current week counts up to today. History is rebuilt from what
+  each issue holds now: raised day, and for a closed issue the day of its
+  last office check. So an issue closed, reopened and still open counts as
+  open throughout; put forward as fixed is still open; withdrawn issues are
+  left out; a closed issue with no recorded check day counts as raised but
+  never as open or closed (the page says how many). "Past target" is judged
+  on each week's last day against the issue's target date as it is now, so a
+  target moved later shows fewer late in earlier weeks; like the register,
+  put forward as fixed still counts as late (Before handover does not). The
+  page says all of this in its footer. Hovering a week changes the readout
+  only; tapping, clicking or focusing picks it (`aria-pressed`).
+  It stores and changes nothing and makes no SharePoint write.
+- Not near rejected scope: no locations are grouped or matched (EXP-4), no
+  photographs (FE-2), no routing or requests (EXP-2).
+- Help: "What's new" entry `issue-trend` and a guide link.
+- A fresh-context review found no counting or access bugs; it asked for the
+  footer to say how target dates and undated closures count, for hover not
+  to change `aria-pressed`, and for the readout not to repeat each bar's
+  label to screen readers. All fixed.
+- Verified (Node 22 in this session; CI runs Node 24): `npm run typecheck`,
+  `npm test` (four new cases in `tests/issueTrend.test.ts`), `npm run build`,
+  new `scripts/verify-issue-trend.mjs` (28 checks: 390px light engineer from
+  home, 1440px dark manager from the office sheet, headline, figures, chart
+  readout by tap and hover, table, no sideways scroll, tap targets, Back
+  links, a project with no issues), `verify-accessibility` with
+  `/issue-trend` added (340 checks), and `verify-help`,
+  `verify-engineer-layout`, `verify-role-access`, `verify-before-handover`,
+  `verify-navigation`. Chart colours checked with a palette validator:
+  open and past-target bars are far enough apart in both themes for normal
+  and colour-blind vision. Screenshots in the project's `ui-review/issue-trend/`.
+- Not verified: a physical phone, Safari and Firefox, SharePoint mode, real
+  project history (the figures are only as good as the check dates held).
+- Not in `docs/tasks.json` (no task covers it). Proposed: "FE-8 Issues over
+  time: a project's issues raised, closed and open week by week, read-only".
+  Follow-ups: the same across every project on the office desk; a trend by
+  company on Issues by company.
+
 ## 2026-10-20 — FE-3e: offline capture, third slice (sign an inspection with no signal)
 
 - Why: #46 let an inspection be started and answered with no signal but it
