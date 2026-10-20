@@ -1,0 +1,23 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const publicFile = (name: string) => readFileSync(resolve(__dirname, '../../public', name), 'utf8');
+
+/*
+ * The service worker serves offline.js from its cache before the network, so a
+ * phone keeps the old offline page until the cache name changes. PR #39 changed
+ * offline.js under the same name and no test noticed. This pins the offline
+ * files to the cache name: change either file, bump CACHE in public/sw.js and
+ * record the new name and digest here.
+ */
+const RECORDED = { cache: 'relay-public-v5', digest: 'dd86a07c80e858f5d13a649240bb82c4054a0ab2257ac42133db5110293eb628' };
+
+test('the offline files have not changed under the same service worker cache name', () => {
+  const cache = /const CACHE = '([^']+)'/.exec(publicFile('sw.js'))?.[1];
+  const digest = createHash('sha256').update(publicFile('offline.js') + publicFile('offline.html')).digest('hex');
+  assert.equal(cache, RECORDED.cache, 'public/sw.js has a new cache name: record it and the digest below in this test.');
+  assert.equal(digest, RECORDED.digest, `offline.js or offline.html changed: bump CACHE in public/sw.js, then record it with digest ${digest} in this test.`);
+});
