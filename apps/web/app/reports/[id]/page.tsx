@@ -467,7 +467,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     setHandoffLink(null);
     const back = safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`);
     try {
-      let work = sentAway.work;
+      let work = sentAway.work, target: Report = report;
       let draft = await requestCorrection(report.id, reason);
       // A correction was already sent: carry the changes onto that revision
       // instead, judged against the same base, so nothing it changed is undone.
@@ -478,6 +478,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         const asSent: Report = { ...draft, observations: draft.observations.map(o => { if (!links.has(o.id) || !o.linkedIssueId) return o; const { linkedIssueId: _link, ...rest } = o; return rest; }) };
         work = unsentWork(sentAway.mine, asSent, sentAway.base);
         if (!work.changes.length) break;
+        target = draft;
         draft = await requestCorrection(draft.id, reason);
       }
       if (draft.state === 'draft') {
@@ -497,7 +498,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         if (!done) {
           const held = { reportId: draft.id, principalId, seq: clientId(), observations, report: carried, tab: tabId() };
           // Version 0 is never current, so the correction's editor shows both before saving.
-          if (compare) await setAside({ ...held, baseVersion: 0 });
+          // Its base is the cards a correction starts with, so edits already made to it are suggested, not undone.
+          const base: DraftBase = { cards: Object.fromEntries(carryIntoCorrection(target.observations, draft).map(o => [o.id, savedCopy(o)])) };
+          if (compare) await setAside({ ...held, baseVersion: 0, base });
           else await keep({ ...held, baseVersion: draft.version });
         }
       }

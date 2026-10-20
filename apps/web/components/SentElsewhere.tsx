@@ -13,6 +13,7 @@ const CHECK: Record<UnsentCheck, string> = {
   'removed-there': 'The other screen removed this card before sending. Your edited card is put back in the correction; leave it out there if it should go.',
   'maybe-removed': 'This card may have been removed on the other screen. It is in the correction; leave it out there if it should go.',
   'edited-there': 'The other screen changed this card before sending, so it stays in the correction. Remove it there if it should go.',
+  'maybe-removed-here': 'This card is in the sent report but not on this screen, so it may have been removed here. It stays in the correction; remove it there if it should go.',
 };
 
 /**
@@ -50,7 +51,7 @@ export function SentElsewhere({ sent, work, unheld, busy, error, errorLink, reas
         <header>
           <span className="no">{number(c)}</span>
           <b>{c.card.location.trim() || 'No location yet'}</b>
-          <span className="eng-conflict-status">{c.check === 'edited-there' ? 'Removed here, kept' : KIND[c.kind]}</span>
+          <span className="eng-conflict-status">{c.check === 'edited-there' ? 'Removed here, kept' : c.check === 'maybe-removed-here' ? 'Not on this screen' : KIND[c.kind]}</span>
         </header>
         <p className="eng-sent-away-what"><span className="kind">{kind}</span> {c.card.whatHappened.trim() || 'Nothing written yet'}</p>
         {c.check && <p className="hint eng-sent-away-check">{CHECK[c.check]}</p>}

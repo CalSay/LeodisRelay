@@ -24,8 +24,9 @@ export type UnsentKind = 'changed' | 'added' | 'removed';
  * `removed-there`: the other screen removed the card this screen edited; it is put back.
  * `maybe-removed`: with no base it cannot be told whether the other screen removed it.
  * `edited-there`: this screen removed it, but the other screen edited it, so it is kept.
+ * `maybe-removed-here`: with no base, a card only in the sent report may have been removed here; it is kept.
  */
-export type UnsentCheck = 'both' | 'removed-there' | 'maybe-removed' | 'edited-there';
+export type UnsentCheck = 'both' | 'removed-there' | 'maybe-removed' | 'edited-there' | 'maybe-removed-here';
 export interface UnsentChange {
   id: string; kind: UnsentKind;
   /** The card as it goes into the correction, or as it was sent for a removal. */
@@ -65,6 +66,8 @@ export function unsentWork(here: Report, sent: Report, base?: DraftBase): Unsent
       observations.push(card.there!);
       // Removed here but edited on the other screen: kept, and said so rather than dropped quietly.
       if (inBase(card.id)) changes.push({ id: card.id, kind: 'removed', card: card.there!, check: 'edited-there' });
+      // With no base it cannot be told whether the other screen added it or this one removed it.
+      else if (!base) changes.push({ id: card.id, kind: 'removed', card: card.there!, check: 'maybe-removed-here' });
     }
   }
   return { changes, observations };

@@ -46,7 +46,7 @@ test('changes left on a screen when the report was sent elsewhere',async t => {
 
   await t.test('without a base nothing in the sent report is dropped, and this screen\'s differences are marked to check',() => {
     const work = unsentWork(report([card('a','Mine'),card('f','Only here')]),report([card('a','Theirs'),card('g','Only sent')],{state:'submitted'}));
-    assert.deepEqual(work.changes.map(c => [c.id,c.kind,c.check]),[['a','changed','both'],['f','added','maybe-removed']]);
+    assert.deepEqual(work.changes.map(c => [c.id,c.kind,c.check]),[['a','changed','both'],['g','removed','maybe-removed-here'],['f','added','maybe-removed']]);
     assert.deepEqual(ids(work.observations),['a:Mine','g:Only sent','f:Only here']);
   });
 

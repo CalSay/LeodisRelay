@@ -52,8 +52,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - A card one screen removed while the other edited it is kept in the
   correction and listed with a note ("Removed here, kept", or "The other
   screen removed this card before sending"), so neither side is dropped
-  without being shown. The set-aside copy keeps the version the work was
-  built on, so a reload gives the same offer.
+  without being shown. With no base, a card only in the sent report may have
+  been removed here, so it is kept and listed ("Not on this screen") rather
+  than counted as nothing. The set-aside copy keeps the version the work was
+  built on, so a reload gives the same offer. When the changes are set aside
+  against an existing correction, its base is the cards a correction starts
+  with, so the comparison suggests keeping edits already made to it.
 - Verified on Node 24: `npm run typecheck`, `npm test` (9 new tests in
   `tests/sentElsewhere.test.ts`: what is carried with and without a base,
   both-changed cards, a card removed on one side and edited on the other, issue links, a save refused with the sent report on
