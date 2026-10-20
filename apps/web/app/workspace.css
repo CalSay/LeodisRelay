@@ -372,6 +372,12 @@ body:has(.ws){overflow:hidden auto}
    carry data-label, which the phone layout shows beside each value because
    the column headings are hidden there. */
 .ws table.reg td.c-actions .actions{flex-wrap:nowrap}
+/* On a desktop the line under a date (who raised it, from which report) wraps
+   in plain type, so a long name never pushes the row's buttons off the panel. */
+.ws table.reg td.due .rowsub{white-space:normal;font-family:var(--sans);min-width:9em}
+/* Report stages in the narrow Inbox reader: a long status wraps inside its
+   own step rather than running over the next one. */
+.ws .stages .tag{white-space:normal;max-width:100%;overflow-wrap:anywhere}
 .ws .filters .phone-sort{display:none}
 @media (max-width:700px){
   .ws table.reg.cards{display:block;min-width:0}

@@ -117,7 +117,9 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
     return null;
   };
 
-  const tabName = route.tab === 'admin' ? 'Admin' : tabs.find(t => t[0] === route.tab)?.[1] ?? 'Projects';
+  // A project's sheet names the project in the browser tab, so several open tabs can be told apart.
+  const sheetOf = route.tab === 'projects' && route.a ? statOf(route.a)?.project.projectName : undefined;
+  const tabName = route.tab === 'admin' ? 'Admin' : sheetOf ?? tabs.find(t => t[0] === route.tab)?.[1] ?? 'Projects';
   return <div className="ws" onClick={onRootClick}>
     <PageTitle title={`${tabName} · Office`} />
     <header className="topbar">
