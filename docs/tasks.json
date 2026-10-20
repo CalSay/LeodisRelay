@@ -195,7 +195,7 @@
       ],
       "status": "done",
       "passes": true,
-      "pr": null,
+      "pr": 23,
       "notes": "A refused draft save returns the server copy (409 + current); the editor shows both versions card by card, suggests choices from the base when known, and saves the chosen or merged version on the server version. Per-tab save journal; work set aside per tab during a conflict; tabs announce saves. Tests: tests/draftConflict.test.ts. Browser: scripts/verify-draft-conflict.mjs."
     },
     {
