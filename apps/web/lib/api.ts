@@ -90,6 +90,27 @@ export async function createReport(projectId: string, author: string, reportType
   );
 }
 
+/** Start, on the server, a report begun on a phone with no connection. Retrying with the same key returns the same report. */
+export async function startHeldReport(projectId: string, clientKey: string, visitDate: string): Promise<Report> {
+  return parse<Report>(await request('/api/reports', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ projectId, clientKey, visitDate }),
+  }));
+}
+
+/**
+ * Send work typed on the offline page (offlineStart.ts). Its photographs go
+ * first, as the editor's do. The signature is left out, so the server keeps
+ * whatever the draft already has.
+ */
+export async function sendHeldSave(reportId: string, body: { requestId: string; expectedVersion: number; observations: Observation[] }): Promise<Report> {
+  try { await uploadPhotos(body.observations.flatMap(o => o.photos), { reportId }); }
+  catch (error) { if (error instanceof TypeError) throw new ApiError('No connection. Photographs remain on this phone.', true); throw error; }
+  return parse<Report>(await request(`/api/reports/${reportId}`, {
+    method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  }));
+}
+
 /**
  * Save a draft against the version it was built on.
  *

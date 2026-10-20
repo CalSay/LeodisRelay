@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiError, createReport, getReport, listReports, projectIssues, projectVariations } from '@/lib/api';
 import { listHeld, type HeldDraft } from '@/lib/localDraft';
+import { offlineProjectsKey } from '@/lib/offlineStart';
 import { unfinishedReports, type UnfinishedReport } from '@/lib/unfinishedReports';
 import type { FixtureProject } from '@/lib/fixtures';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
@@ -59,6 +60,7 @@ interface Back { at: string; key: string; href: string; title: string; sub: stri
 
 /** Where an unfinished report stands, in words an engineer can act on. */
 function UnfinishedTags({r}:{r:UnfinishedReport}) {
+  if (r.started) return <><span className="tag tag-alert">Only on this phone</span><span>{r.problem ? `not accepted yet: ${r.problem}` : `started without signal ${fmtWhen(r.changedAt)} · goes up when RELAY can reach the server`}</span></>;
   if (r.device === 'only') return <><span className="tag tag-alert">Only on this phone</span><span>changed {fmtWhen(r.changedAt)} · open it with signal to save</span></>;
   if (r.device === 'unsent') return <><span className="tag tag-alert">Not yet on the server</span><span>changed {fmtWhen(r.changedAt)}{r.savedAt ? ` · last saved ${fmtWhen(r.savedAt)}` : ''}</span></>;
   return <><span className="tag tag-draft">Draft</span><span>{r.savedAt ? `saved ${fmtWhen(r.savedAt)}` : 'saved on server'}</span></>;
@@ -108,6 +110,11 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
     }
     setReady(true);
   },[initialProject,preference,projects]);
+  // The offline page offers these when a report is started with no signal (offlineStart.ts).
+  useEffect(() => {
+    if (!principal) return;
+    try { localStorage.setItem(offlineProjectsKey(principal.id),JSON.stringify(projects.map(p => ({ id:p.id, projectNumber:p.projectNumber, projectName:p.projectName })))); } catch {}
+  },[principal,projects]);
 
   // Copies on this device that the server has not acknowledged. One the server
   // did not list is shown only if the server cannot be asked about it: if it
@@ -116,7 +123,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
     if (!principal) return;
     let cancelled = false;
     void listHeld(principal.id).then(async copies => {
-      const unlisted = copies.filter(c => !drafts.some(d => d.id === c.reportId));
+      const unlisted = copies.filter(c => !c.started && !drafts.some(d => d.id === c.reportId));
       const answers = await Promise.all(unlisted.map(c => getReport(c.reportId).then(() => null, e => e instanceof ApiError && e.offline ? c.reportId : null)));
       if (!cancelled) setHeld({ copies, deviceOnly: new Set(answers.filter((id): id is string => !!id)) });
     });
@@ -198,7 +205,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
           <section aria-labelledby="eng-unfinished-title">
             <div className="eng-section-title"><h2 id="eng-unfinished-title">Unfinished reports</h2><span className="r">{unfinished.length}</span></div>
             <div className="eng-list">
-              {unfinished.length ? unfinished.map(r => <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : r.typeName} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></Link>)
+              {unfinished.length ? unfinished.map(r => r.started ? <a key={r.id} href="/offline.html" className="eng-row late"><div className="main"><b>New site update · {r.projectName}</b><span>No reference yet · visit {fmtDay(r.visitDate)} · {r.cards} card{r.cards===1?'':'s'}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></a> : <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : r.typeName} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></Link>)
                 : <div className="eng-empty">Nothing unfinished. A report you start stays here, on every project, until you sign and send it.</div>}
             </div>
           </section>

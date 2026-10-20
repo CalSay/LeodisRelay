@@ -14,6 +14,7 @@ import { WorkspaceChrome } from '@/components/WorkspaceChrome';
 import { canManage, isAdmin } from '@/lib/auth/access';
 import { PrincipalContext } from '@/components/PrincipalContext';
 import { InstallRelay } from '@/components/InstallRelay';
+import { HeldWork } from '@/components/HeldWork';
 import { ProjectContext } from '@/components/ProjectContext';
 import { refreshProjects, reportableProject, type ConnectedProject } from '@/lib/projects';
 import { sharePointMode } from '@/lib/sharepoint/config';
@@ -121,7 +122,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </header>
 
         <InstallRelay /></WorkspaceChrome>
-        <PrincipalContext principal={principal}><ProjectContext projects={projects} error={projectError}>{children}</ProjectContext></PrincipalContext>
+        <PrincipalContext principal={principal}><HeldWork /><ProjectContext projects={projects} error={projectError}>{children}</ProjectContext></PrincipalContext>
       </body>
     </html>
   );
