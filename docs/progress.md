@@ -4,6 +4,59 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Photo library per project (new feature, proposed as NEW-4)
+
+- New page `/photos`: every photograph on one project, newest first, grouped
+  by day. Photographs come from cards on sent reports (never drafts) and from
+  evidence added to issues and variations afterwards (put forward as fixed,
+  checked, notes). Each tile shows the kind (Progress, Defect, Access problem,
+  Variation required, Put forward as fixed, …) and where it was taken. A find
+  box matches every typed word against the location, what was found, caption,
+  who, trade and reference; buttons narrow it to Progress, Defects and
+  access, Variations, or Fixes and checks. Tapping a tile opens a viewer with
+  the larger copy, its details, Newer and Older (arrow keys on a desk), and
+  "Open report/issue/variation" to the record it came from.
+- Opened from a "Photographs" button in the engineer Reports view and in the
+  office project's actions. The project, words and filter are kept in the
+  address, so a record opened from the viewer comes back to the same list.
+- Why this feature: "what did it look like before it was boarded?" is a
+  daily question on site and in the office (disputes, client questions,
+  handover), and today the answer means opening reports one at a time. It
+  reads only what is already recorded: no new store, upload, data entry,
+  SharePoint write or email.
+- Not FE-2: the backlog leaves out "the photo-workflow expansion (separate
+  camera/library controls, zoom, reordering, annotations and per-photo
+  progress)". Those are capture-time controls in the report editor. This page
+  changes nothing about taking or attaching photographs; it has no zoom,
+  reordering or annotation, only a larger view of a sent photograph.
+- Decisions: a photograph copied from a defect card onto its issue shows once,
+  from the report. A sent correction takes over the photographs it still
+  carries; any it dropped stay with the original. Issues withdrawn as raised
+  in error are left out (their report cards still show). Report photographs
+  sit on the visit day, issue and variation evidence on the day it was
+  added, in UK time. Locations are free text as written (no catalogue,
+  EXP-4). The viewer uses the existing PDF-sized copy, not the original, so
+  a phone on site does not pull 20 MB images. 60 tiles at a time, then "Show
+  more".
+- Verified: `npm run typecheck` and `npm test` pass (8 new tests in
+  `tests/photoLibrary.test.ts`, 1 in `viewNavigation.test.ts`). `npm run
+  build`, then new `scripts/verify-photo-library.mjs` passed (34 checks:
+  engineer at 390px light, office at 1440px dark, drafts and other projects
+  left out, thumbnails load, find, filters, viewer stepping and links, back
+  navigation, empty project, signed-out and unknown-project refusals). A
+  fresh-context review found no access gaps; its fixes (trade shown only for
+  report photographs, latest revision in a correction chain, sign-in keeps
+  the address) are in.
+  `verify-engineer-layout`, `verify-role-access` (61), `verify-weekly-summary`
+  (29) and `verify-office-actions` (41) still pass. Screenshots (not in the
+  repo) are in the RELAY project's shared files under `ui-review/photo-library/`.
+- Not verified: a physical phone, SharePoint mode (no live tenant),
+  performance on a project with thousands of photographs (it loads the
+  project's records per request, like search and the weekly summary; tiles
+  are lazy-loaded thumbnails).
+- Next: a "Photographs" link from an issue or the snag list filtered to that
+  location, if site teams use the page.
+
 ## 2026-10-20 — Weekly project summary (new feature, proposed as NEW-3)
 
 - New page `/weekly-summary`: one project's week (Monday to Sunday, UK time)
