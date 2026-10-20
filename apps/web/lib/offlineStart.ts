@@ -100,7 +100,29 @@ export interface HeldWork {
   sending?: { requestId: string; seq: number | string; expectedVersion: number };
   /** Why it could not go up last time, so the same failure is not reported on every page. */
   problem?: string;
+  /** Signed on the offline page: it goes to the office by itself, if nothing changed since. */
+  signed?: SignedOffline;
 }
+
+/**
+ * An inspection signed on the offline page. `content` is what was signed
+ * (signedContent), so a copy that changed afterwards is never sent with it.
+ * `savedVersion` is set once the signed copy is saved on the server, so a
+ * send interrupted between saving and sending finishes without saving again.
+ */
+export interface SignedOffline { name: string; dataUrl: string; signedAt: string; content: string; savedVersion?: number }
+
+/**
+ * What a signature covers: each check's question and answer, the words on it
+ * and which photographs, in order. Ids are left out, because the server gives
+ * a report started offline its own. Must match `signedContent` in
+ * public/offline.js, where the signature is taken (tests/offlineSign.test.ts).
+ */
+export const signedContent = (observations: readonly Observation[]): string => JSON.stringify(observations.map(o => [o.type, o.check?.item ?? '', o.check?.question ?? '', o.check?.answer ?? '', o.location ?? '', o.whatHappened ?? '', o.actionNeeded ?? '', o.owner ?? '', (o.photos ?? []).map(p => [p.id, p.caption ?? ''])]));
+
+/** Whether a held copy may go to the office with its signature: signed, and unchanged since. */
+export const signedAsIs = (held: Pick<HeldWork, 'signed' | 'observations'>): boolean =>
+  Boolean(held.signed?.dataUrl) && held.signed!.content === signedContent(held.observations);
 
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 export const isClientKey = (value: unknown): value is string => typeof value === 'string' && UUID.test(value);
@@ -149,12 +171,24 @@ export function heldCounts(observations: readonly Observation[]): { cards: numbe
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-/** One line for the note shown once held work has gone up, in the engineer's words. */
-export function sentLine(sent: readonly { reference: string; projectName?: string | undefined; started: boolean }[]): string {
+/**
+ * One line for the note shown once held work has gone up, in the engineer's
+ * words. `submitted` is an inspection signed on the phone, now sent to the
+ * office; everything else is on the server as a draft.
+ */
+export function sentLine(sent: readonly { reference: string; projectName?: string | undefined; started: boolean; submitted?: boolean }[]): string {
   if (!sent.length) return '';
-  const started = sent.filter(s => s.started).length;
-  const what = sent.length === 1
-    ? `${started ? 'The report you started' : 'Your changes'} on this phone ${started ? 'is' : 'are'} now on the server`
-    : `${plural(sent.length, 'report')} from this phone are now on the server`;
-  return `${what}. ${sent.length === 1 ? 'It stays a draft' : 'They stay drafts'} until you sign and send.`;
+  const submitted = sent.filter(s => s.submitted).length;
+  const drafts = sent.length - submitted;
+  if (sent.length === 1 && submitted) return 'The inspection you signed on this phone has gone to the office.';
+  if (!submitted) {
+    const started = sent.filter(s => s.started).length;
+    const what = sent.length === 1
+      ? `${started ? 'The report you started' : 'Your changes'} on this phone ${started ? 'is' : 'are'} now on the server`
+      : `${plural(sent.length, 'report')} from this phone are now on the server`;
+    return `${what}. ${sent.length === 1 ? 'It stays a draft' : 'They stay drafts'} until you sign and send.`;
+  }
+  const parts = [`${plural(submitted, 'signed inspection')} sent to the office`];
+  if (drafts) parts.push(`${plural(drafts, 'report')} on the server as ${drafts === 1 ? 'a draft' : 'drafts'} until you sign and send`);
+  return `From this phone: ${parts.join('; ')}.`;
 }

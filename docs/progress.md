@@ -76,6 +76,75 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   inspection with last week's open safety actions shown; show the signature
   box nearer the top of the check step for inspections, where it is required.
 
+## 2026-10-20 — FE-3e: offline capture, third slice (sign an inspection with no signal)
+
+- Why: #46 let an inspection be started and answered with no signal but it
+  still had to be signed in RELAY later, so a weekly safety inspection done in
+  a basement sat unsent until the engineer remembered to open it. Suggested by
+  #46's thread; decided by Claude under Cal's standing autonomy.
+- Now, on the offline page, an inspection (started there, or a draft held on
+  the phone) has a "Sign it" panel at its foot. Until every check is answered
+  it lists what is left, using the same blocking rules as the check step
+  (`lib/review.ts`): checks not answered, and for an action what is wrong,
+  what needs doing and, on a handover inspection, where. Then the engineer's
+  name and a drawn signature. Signing locks the inspection on the phone and
+  marks it "Signed · not sent yet" in the list, on the report and on the home
+  screen's unfinished list. "Take back signature to change it" unlocks it,
+  until RELAY has started sending it.
+- Decision: it goes to the office by itself, with no second tap, the next time
+  RELAY opens with signal (the existing held-work send, `lib/heldSend.ts`).
+  Signing is already the engineer's deliberate act of sending, and the page
+  says so on the button ("Sign it. Send when there is signal"); a second tap
+  would leave a signed weekly inspection sitting on a phone because nobody
+  reopened it. RELAY then says "The inspection you signed on this phone has
+  gone to the office", or why not.
+- A signature never goes with content that changed after signing: the phone
+  records what was signed (`signedContent`, the same function in
+  `offline.js` and `lib/offlineStart.ts`, pinned by a test). Before sending,
+  the app checks the copy is still exactly that, after it is fitted onto the
+  server's checks, so a checklist reworded in a deploy meanwhile also breaks
+  it. If it changed, it goes up as an unsigned draft and the engineer is told
+  to check it and sign again. Any offline-held inspection saved unsigned
+  clears the draft's signature on the server (`signature: null`), so no
+  signature, from the phone or from RELAY before the change, is left over
+  changed content. The phone signature is kept apart from the report's draft
+  signature, so an editor that takes the copy over shows it unsigned.
+- Sending: save with the signature, then send at exactly that saved version
+  (the server sends what it holds at that version). The copy stays on the
+  phone, marked saved, until the send is answered, so a connection lost in
+  between finishes next time without saving again. A refusal (4xx) leaves it
+  a draft on the server with its signature cleared and names it once; a
+  server fault (5xx) keeps it signed and tries again. Sent revisions are not
+  touched. Nothing new is sent to SharePoint or by email: the send is the
+  existing submit.
+- Verified on Node 22 (the session's Node): `npm run typecheck`, `npm test`
+  (302 web tests; 16 new in `tests/offlineSign.test.ts`, including the whole
+  send against the real store with an in-memory IndexedDB: sent as signed,
+  changed after signing, lost answer, no signal between save and send, server
+  fault, refusal, conflict handed to the editor, unsigned change clears an old
+  signature), `npm run build`. New `scripts/verify-offline-sign.mjs` passed
+  (62 checks, server stopped for no signal): 390px light handover inspection
+  signed, taken back, changed and signed again, its action on the snag list
+  once sent; 1440px dark safety inspection signed and sent with the drawn
+  signature, exactly as signed; 390px dark one changed behind the page after
+  signing, which went up unsigned and said so. Also passed:
+  `verify-offline-inspection`, `verify-offline-capture`,
+  `verify-offline-drafts`, `verify-handover-offline`,
+  `verify-unfinished-reports`, `verify-help`, `verify-engineer-layout`,
+  `verify-signature-reload`, `verify-report-types`, `verify-role-access`,
+  `verify-editor-usability`. A fresh-context review found edge cases where a
+  phone signature could stay on a draft whose content later changed; fixed as
+  above. Service worker cache `relay-public-v8`.
+- Not verified: physical iOS and Android phones (so `passes` stays false),
+  Safari's service worker, Chromium's own offline mode, SharePoint mode.
+  Known narrow cases left: if the same inspection is sent from elsewhere
+  after the phone saved it, the phone copy is dropped and the engineer is told
+  to check what went; two tabs sending at once can show the draft wording for
+  one that was in fact sent.
+- Next (proposed, not built): group "On this phone" by project; sign a site
+  update on the offline page; add `verify-offline-sign.mjs` and the other
+  offline checks to the browser checks in `CLAUDE.md`.
+
 ## 2026-10-20 — Second release check on main
 
 - Ran everything on main at dbb44ad (#2 to #27, #29 to #40, #42) under

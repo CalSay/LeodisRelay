@@ -1,9 +1,9 @@
 import type { Observation, Report, ReportSummary } from './types';
-import type { StartedOffline } from './offlineStart';
+import type { SignedOffline, StartedOffline } from './offlineStart';
 import { reportTypeOf } from './reportTypes';
 
 /** What the home screen needs from a copy held on this device (see localDraft.ts). */
-export interface HeldCopy { reportId: string; heldAt: string; observations: Observation[]; report?: Report; started?: StartedOffline; problem?: string }
+export interface HeldCopy { reportId: string; heldAt: string; observations: Observation[]; report?: Report; started?: StartedOffline; problem?: string; signed?: SignedOffline }
 
 export interface UnfinishedReport {
   id: string;
@@ -27,6 +27,8 @@ export interface UnfinishedReport {
   started?: boolean;
   /** Why the server refused it, if it did. */
   problem?: string | undefined;
+  /** Signed on the offline page and waiting to go to the office by itself. */
+  signed?: boolean;
 }
 
 /**
@@ -55,13 +57,13 @@ export function unfinishedReports(
     const copy = copies.get(d.id);
     rows.push({ id:d.id, projectId:d.projectId, projectName:name.get(d.projectId)!, reference:d.reference, visitDate:d.visitDate,
       cards:copy ? copy.observations.length : d.observationCount, correction:!!d.corrects, savedAt:d.lastSavedAt, ...kind(d),
-      ...(copy ? { changedAt:copy.heldAt, device:'unsent' as const } : {}) });
+      ...(copy ? { changedAt:copy.heldAt, device:'unsent' as const, ...(copy.signed ? { signed:true } : {}) } : {}) });
   }
   for (const h of held) {
     const r = h.report;
     if (!r || !deviceOnly.has(h.reportId) || rows.some(row => row.id === h.reportId) || r.state !== 'draft' || !name.has(r.projectId)) continue;
     rows.push({ id:r.id, projectId:r.projectId, projectName:name.get(r.projectId)!, reference:r.reference, visitDate:r.visitDate,
-      cards:h.observations.length, correction:!!r.corrects, savedAt:r.lastSavedAt, changedAt:h.heldAt, device:'only', ...kind(r) });
+      cards:h.observations.length, correction:!!r.corrects, savedAt:r.lastSavedAt, changedAt:h.heldAt, device:'only', ...kind(r), ...(h.signed ? { signed:true } : {}) });
   }
   // Started offline and not yet started on the server (it goes up by itself
   // when RELAY opens with signal, so this shows only while that is pending or refused).
@@ -69,7 +71,7 @@ export function unfinishedReports(
     const s = h.started;
     if (!s || !name.has(s.projectId)) continue;
     rows.push({ id:h.reportId, projectId:s.projectId, projectName:name.get(s.projectId)!, reference:'', visitDate:s.visitDate,
-      cards:h.observations.length, correction:false, ...kind(s), changedAt:h.heldAt, device:'only', started:true, problem:h.problem });
+      cards:h.observations.length, correction:false, ...kind(s), changedAt:h.heldAt, device:'only', started:true, problem:h.problem, ...(h.signed ? { signed:true } : {}) });
   }
   const latest = (r: UnfinishedReport) => [r.changedAt ?? '', r.savedAt ?? ''].sort().at(-1)!;
   return rows.sort((a, b) => latest(b).localeCompare(latest(a)) || a.id.localeCompare(b.id));
