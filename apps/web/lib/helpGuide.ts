@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'offline-sign', added: '2026-10-20', audience: 'site', title: 'Sign an inspection with no signal',
+    text: 'With no signal, once every check is answered you can sign a safety or handover inspection on the phone. It is marked "Signed · not sent yet" and goes to the office by itself the next time RELAY opens with signal, and RELAY tells you when it has gone. If anything changed after you signed, it is not sent: you check it and sign again.' },
   { id: 'before-handover', added: '2026-10-20', audience: 'all', title: 'Before handover',
     text: 'One page per project with everything RELAY still has open: snags on our work by trade, fixes waiting to be checked, handover inspections and their open actions, other trades\' issues, variations not yet instructed and open safety actions. Ready to print for the handover meeting.',
     link: { label: 'Open Before handover', href: '/handover' } },
@@ -237,8 +239,8 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     ] },
     { id: 'no-signal', heading: 'No signal', ordered: false, steps: [
       'RELAY still opens. You can start a site update or an inspection, add cards or answer checks, and take photographs; they are marked "Only on this phone".',
-      'An inspection is signed in RELAY once you have signal again: the drawn signature is taken there.',
-      'When you have signal again, open RELAY and the work goes up by itself. It stays a draft: nothing reaches the office until you sign and send.',
+      'An inspection can be signed on the phone once every check is answered. Signing locks it and marks it "Signed · not sent yet". To change anything before RELAY starts sending it, take your signature back and sign again.',
+      'When you have signal again, open RELAY and the work goes up by itself. A signed inspection goes to the office, and RELAY says when it has gone; if it changed after you signed, it stays a draft for you to sign again. Everything else stays a draft until you sign and send.',
       'If you share a phone, sign out at the end of the day. Work held on the phone belongs to whoever was last signed in.',
     ] },
     { id: 'wrong', heading: 'Got something wrong', ordered: false, steps: [

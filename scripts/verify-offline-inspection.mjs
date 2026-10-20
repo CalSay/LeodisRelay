@@ -61,7 +61,7 @@ try {
     check((await page.locator('.card').count())===12,`${scheme}: it starts with every check`);
     check(await page.getByRole('button',{name:/^Defect/}).count()===0&&await page.getByRole('button',{name:'Remove card 1'}).count()===0,`${scheme}: checks cannot be added or removed`);
     check((await page.locator('.card').nth(0).locator('.qhint').innerText()).length>10,`${scheme}: each check shows what to look at`);
-    check(/You sign it in RELAY when there is signal/.test(await page.locator('#editor .panel').first().innerText()),`${scheme}: says the signature is taken in RELAY`);
+    check(/Answer every check, then sign at the foot of the page/.test(await page.locator('#editor .panel').first().innerText()),`${scheme}: says where it is signed`);
     const first=page.locator('.card').nth(0);
     await first.getByLabel('Answer').selectOption('action');
     if(type==='handover-inspection')await page.locator('.card').nth(0).getByLabel(/^Where/).fill('Level 2 east corridor');

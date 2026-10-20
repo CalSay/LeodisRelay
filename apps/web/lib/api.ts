@@ -30,9 +30,12 @@ const REPORTABLE_STATUSES = ["4. Active", "5. Defects Liability"];
  */
 export class ApiError extends Error {
   readonly offline: boolean;
-  constructor(message: string, offline = false) {
+  /** The server's answer, when it gave one. */
+  readonly status: number | undefined;
+  constructor(message: string, offline = false, status?: number) {
     super(message);
     this.offline = offline;
+    this.status = status;
   }
 }
 
@@ -51,7 +54,7 @@ async function parse<T>(response: Response): Promise<T> {
     const body = (await response.json().catch(() => ({}))) as { reason?: string; current?: Report };
     // A draft saved elsewhere first: the server sends its copy so both can be shown.
     if (response.status === 409 && body.current) throw new SaveConflict(body.reason ?? 'This draft was saved somewhere else.', body.current);
-    throw new ApiError(body.reason ?? `That did not go through (${response.status}).`);
+    throw new ApiError(body.reason ?? `That did not go through (${response.status}).`, false, response.status);
   }
   return (await response.json()) as T;
 }
@@ -100,14 +103,22 @@ export async function startHeldReport(projectId: string, clientKey: string, visi
 
 /**
  * Send work typed on the offline page (offlineStart.ts). Its photographs go
- * first, as the editor's do. The signature is left out, so the server keeps
- * whatever the draft already has.
+ * first, as the editor's do. With no signature the server keeps whatever the
+ * draft already has; an inspection signed on the phone carries its signature,
+ * and null clears it.
  */
-export async function sendHeldSave(reportId: string, body: { requestId: string; expectedVersion: number; observations: Observation[] }): Promise<Report> {
+export async function sendHeldSave(reportId: string, body: { requestId: string; expectedVersion: number; observations: Observation[]; signature?: { name: string; dataUrl: string } | null }): Promise<Report> {
   try { await uploadPhotos(body.observations.flatMap(o => o.photos), { reportId }); }
   catch (error) { if (error instanceof TypeError) throw new ApiError('No connection. Photographs remain on this phone.', true); throw error; }
   return parse<Report>(await request(`/api/reports/${reportId}`, {
     method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  }));
+}
+
+/** Send to the office an inspection signed on the offline page, as saved at `expectedVersion`. */
+export async function sendHeldSigned(reportId: string, signature: { name: string; dataUrl: string }, expectedVersion: number): Promise<Report> {
+  return parse<Report>(await request(`/api/reports/${reportId}`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ signature, expectedVersion }),
   }));
 }
 

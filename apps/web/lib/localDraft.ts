@@ -1,6 +1,6 @@
 import type { Observation, Report } from "./types";
 import type { DraftBase } from "./draftConflict";
-import { fitStartedChecks, type StartedOffline } from "./offlineStart";
+import { fitStartedChecks, type SignedOffline, type StartedOffline } from "./offlineStart";
 
 /**
  * Unsent work held on the device.
@@ -52,6 +52,8 @@ export interface HeldDraft {
   sending?:{ requestId:string; seq:number | string; expectedVersion:number };
   /** Why it could not go up last time. */
   problem?:string;
+  /** An inspection signed on the offline page, to go to the office by itself if unchanged (offlineStart.ts). */
+  signed?:SignedOffline;
 }
 
 function keyFor(reportId: string, principalId: string): string {
@@ -325,8 +327,11 @@ export async function adoptStarted(startedKey:string,report:Report):Promise<stri
       const key = keyFor(report.id, held.principalId);
       const existing = store.get(key);
       existing.onsuccess = () => {
+        const observations = fitStartedChecks(held.observations,report.observations);
+        // A signature goes with it, and is checked again before sending (heldSend.ts).
+        const signed = held.signed;
         if (!existing.result) store.put({ key, reportId:report.id, principalId:held.principalId, seq:held.seq,
-          observations:fitStartedChecks(held.observations,report.observations), heldAt:held.heldAt, baseVersion:report.version, report, heldOffline:true } satisfies HeldDraft);
+          observations, heldAt:held.heldAt, baseVersion:report.version, report, heldOffline:true, ...(signed ? { signed } : {}) } satisfies HeldDraft);
         store.delete(startedKey);
         adopted = key;
       };
