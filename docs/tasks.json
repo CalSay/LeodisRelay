@@ -268,7 +268,7 @@
       ],
       "status": "done",
       "passes": true,
-      "pr": null,
+      "pr": 27,
       "notes": "Done 2026-10-20: an open card with a location offers '+ Another card here', which adds a card next to it with only Where filled in and the kind picker open; words, photos, linked issue, trade and variation answers are not copied (lib/sameLocation.ts, tests/sameLocation.test.ts, scripts/verify-same-location.mjs at 390px light and 1440px dark)."
     },
     {
