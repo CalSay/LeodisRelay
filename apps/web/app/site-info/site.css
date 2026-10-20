@@ -1,0 +1,56 @@
+/* Site information: one project's address, hours, access, safety notes and
+   contacts. Read on a phone at the gate, so the address and the call buttons
+   come first and are large; edited by the office on a laptop. */
+.site-page{max-width:820px;}
+.site-controls{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0 18px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+.site-controls label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text-2);flex:1 1 220px;min-width:0;}
+.site-head{margin:8px 0 18px;}
+.site-head h1{margin:6px 0 4px;overflow-wrap:anywhere;}
+.site-sub{margin:0;color:var(--text-2);font-size:14px;}
+.site-stamp{margin:10px 0 0;font-size:13px;color:var(--text-3);}
+.site-stamp.site-offline{color:var(--alert);font-weight:500;}
+.site-stamp button{min-height:40px;margin-left:6px;}
+.site-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;}
+.site-actions .btn,.site-actions button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;}
+.site-actions a.btn{padding:0 20px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--panel-2);color:var(--text);font-size:14px;font-weight:500;text-decoration:none;}
+.site-actions a.btn-primary{background:var(--brass);border-color:var(--brass);color:var(--brass-ink);font-weight:600;}
+.site-empty{margin:0 0 16px;}
+.site-sections{display:grid;gap:14px;}
+.site-section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;min-width:0;}
+.site-section h2,.site-history h2{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin:0 0 8px;}
+.site-text{margin:0;font-size:16px;line-height:1.55;white-space:pre-line;overflow-wrap:anywhere;}
+.site-missing{margin:0;font-size:14px;color:var(--text-3);}
+.site-contacts{list-style:none;margin:0;padding:0;}
+.site-contacts li{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);}
+.site-contacts li:first-child{padding-top:0;}.site-contacts li:last-child{border-bottom:0;padding-bottom:0;}
+.site-contacts li>div{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 160px;}
+.site-contacts b{font-size:16px;font-weight:600;overflow-wrap:anywhere;}
+.site-contacts span{font-size:13px;color:var(--text-2);overflow-wrap:anywhere;}
+.site-call{display:inline-flex;align-items:center;gap:8px;min-height:48px;padding:0 18px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--panel-2);color:var(--text);font-size:15px;font-weight:500;font-variant-numeric:tabular-nums;text-decoration:none;white-space:nowrap;}
+.site-call svg{color:var(--brass);flex:none;}
+.site-history{margin-top:22px;}
+.site-history ul{list-style:none;margin:0;padding:0;font-size:13px;color:var(--text-2);}
+.site-history li{padding:6px 0;border-bottom:1px solid var(--line);}
+.site-history li span{font:500 11.5px var(--mono);color:var(--text-3);margin-right:10px;}
+.site-form{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;}
+.site-form h2{font-size:18px;margin:0 0 10px;}
+.site-warning{margin:0 0 18px;}
+.site-form textarea{font-size:16px;min-height:0;}
+.site-newer{border:1px solid var(--line-2);border-left:3px solid var(--alert);border-radius:8px;padding:14px;margin:0 0 18px;background:var(--panel-2);}
+.site-newer h3{font-size:14px;margin:0 0 12px;}
+.site-newer .site-section{background:var(--panel);}
+.site-contact-fields{border:0;margin:6px 0 16px;padding:0;min-width:0;}
+.site-contact-fields legend{font-weight:500;padding:0;margin-bottom:4px;}
+.site-contact-fields>.hint{margin:0 0 10px;}
+.site-contact-row{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr) minmax(0,1fr) auto;gap:10px;align-items:end;padding:10px 0;border-bottom:1px solid var(--line);}
+.site-contact-row label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text-2);min-width:0;}
+.site-contact-row input{font-size:16px;}
+.site-contact-fields>button{margin-top:12px;}
+@media (max-width:640px){
+  .site-contact-row{grid-template-columns:minmax(0,1fr);}
+  .site-contact-row .site-remove{justify-self:start;}
+  .site-section,.site-form{padding:14px;}
+  .site-actions .btn-primary{flex:1 1 auto;}
+}
+.site-form .site-section h2{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);margin:0 0 8px;}
+.site-newer .site-sections{gap:10px;}

@@ -1,4 +1,44 @@
 /* No server data or credentials are cached here. All text is rendered as text. */
+/* Site information the app kept on this device (cleared on sign out): the
+   address, hours, access, safety notes and who to ring, for an engineer at the
+   gate without signal. The site the person was opening comes first. */
+(() => {
+  const root = document.getElementById('sites');
+  if (!root) return;
+  const kept = [];
+  try {
+    for (const key of Object.keys(localStorage)) {
+      if (!key.startsWith('relay-site-info:')) continue;
+      const copy = JSON.parse(localStorage.getItem(key) || 'null');
+      // Older than 30 days (KEEP_DAYS in siteInfoClient.ts): dropped, not shown.
+      if (copy && typeof copy.keptAt === 'string' && !(Date.now() - Date.parse(copy.keptAt) < 30 * 86400000)) { localStorage.removeItem(key); continue; }
+      if (copy && copy.info && typeof copy.keptAt === 'string') kept.push({ projectId: key.slice('relay-site-info:'.length), ...copy });
+    }
+  } catch { return; }
+  if (!kept.length) return;
+  const wanted = location.pathname === '/site-info' ? new URLSearchParams(location.search).get('project') : null;
+  kept.sort((a, b) => (b.projectId === wanted) - (a.projectId === wanted) || String(a.projectName).localeCompare(String(b.projectName)));
+  const add = (tag, text, parent, className) => { const node = document.createElement(tag); if (text) node.textContent = text; if (className) node.className = className; parent.append(node); return node; };
+  const section = add('section', '', root);
+  add('h2', 'Site information kept on this phone', section);
+  for (const copy of kept) {
+    const info = copy.info, site = add('div', '', section, 'site');
+    add('h2', copy.projectName || 'Project', site);
+    add('p', `As it was on ${new Date(copy.keptAt).toLocaleString('en-GB', { timeZone: 'Europe/London', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}. Check with the office if anything has changed.`, site, 'hint');
+    for (const [key, title] of [['address', 'Address'], ['hours', 'Site hours'], ['access', 'Getting in and parking'], ['safety', 'Safety and induction']]) {
+      if (typeof info[key] === 'string' && info[key]) { add('h3', title, site); add('p', info[key], site); }
+    }
+    if (Array.isArray(info.contacts) && info.contacts.length) {
+      add('h3', 'Contacts', site);
+      for (const c of info.contacts) {
+        const row = add('p', `${c.name}${c.role ? `, ${c.role}` : ''} `, site);
+        const call = add('a', `Call ${c.phone}`, row, 'call');
+        call.href = `tel:${String(c.phone).trim().startsWith('+') ? '+' : ''}${String(c.phone).replace(/\D/g, '')}`;
+      }
+    }
+  }
+  if (wanted && kept[0].projectId === wanted) root.parentNode.insertBefore(root, root.parentNode.firstElementChild.nextElementSibling);
+})();
 (() => {
   const status = document.getElementById('status');
   const error = document.getElementById('error');
