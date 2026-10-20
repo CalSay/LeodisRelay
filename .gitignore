@@ -4,6 +4,7 @@ dist/
 build/
 .next/
 coverage/
+!apps/web/app/coverage/
 *.tsbuildinfo
 .env
 .env.*
