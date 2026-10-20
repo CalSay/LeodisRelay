@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { RECENT_DAYS, matchCompanies, type CompanyIssues, type CompanyLine } from '@/lib/companyIssues';
 
 /**
@@ -82,7 +82,7 @@ export function CompanyIssuesPage({ initialQuery, returnTo }: { initialQuery: st
   </li>;
 
   return <main className="eng-page co-page">
-    <Link href={back} className="back">&larr; Back</Link>
+    <Link href={back} className="back">&larr; {backLabel(back)}</Link>
     <header className="co-head">
       <p className="lbl">Leodis Developments · Office</p>
       <h1>Open issues by company</h1>

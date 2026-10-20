@@ -1,6 +1,9 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { currentPrincipal } from '@/lib/auth/session';
 import { canManage } from '@/lib/auth/access';
+
+export const metadata: Metadata = { title: 'Leodis Compliance' };
 export const dynamic = 'force-dynamic';
 /**
  * Selecting Compliance Management on the hub lands here. Managers and Admins go

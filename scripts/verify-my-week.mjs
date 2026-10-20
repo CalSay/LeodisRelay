@@ -102,7 +102,7 @@ try {
     await page.getByRole('link',{name:lastWeek.reference}).click();await page.waitForURL(`**/reports/${lastWeek.id}**`);
     await page.goBack();await page.waitForURL(new RegExp(`week=${lastMonday}`));await page.locator('.mw-days').waitFor();
     check(true,'engineer: back from a report returns to the same week');
-    await page.getByRole('link',{name:'← Back'}).click();await page.waitForURL(/\/engineer\?project=proj-011lme$/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/engineer\?project=proj-011lme$/);
     check(true,'engineer: back returns to the home screen');
     assert.deepEqual(errors,[],'engineer: page errors');
     await context.close();
@@ -120,7 +120,7 @@ try {
     const bg=await page.evaluate(()=>getComputedStyle(document.querySelector('.mw-day')).backgroundColor);
     check(bg==='rgb(255, 255, 255)',`print: white days in dark mode (${bg})`);
     await page.emulateMedia({media:'screen'});
-    await page.getByRole('link',{name:'← Back'}).click();await page.waitForURL(/view=reports/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/view=reports/);
     check(true,'desktop: back returns to the Reports view');
     assert.deepEqual(errors,[],'desktop: page errors');
     await context.close();
@@ -136,7 +136,7 @@ try {
     const verified=await page.locator('main').innerText();
     check(!verified.includes(worked.reference),'manager: an office verification is not counted as a record from site');
     assert.deepEqual(errors,[],'manager: page errors');
-    check(await page.getByRole('link',{name:'← Back'}).getAttribute('href')==='/office','manager: back goes to the office');
+    check(await page.getByRole('link',{name:/^← Back to /}).getAttribute('href')==='/office','manager: back goes to the office');
     await context.close();
   }
   console.log(`My week check passed (${checks} checks): home and Reports routes, own records only, corrections, drafts, issue updates, copy, week stepping, print, light and dark.`);

@@ -3,6 +3,7 @@ import { IssueSyncStatus } from '@/components/SharePointStatus';
 import { useProjectLookup } from "@/components/ProjectContext";
 
 import { use, useEffect, useState } from "react";
+import { PageTitle } from '@/components/PageTitle';
 import Link from "next/link";
 import { readPhoto } from "@/lib/api";
 import type { Issue, Photo } from "@/lib/types";
@@ -10,7 +11,7 @@ import { PhotoImage } from '@/components/PhotoImage';
 import { uploadPhotos } from '@/lib/localMedia';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { canManage } from '@/lib/auth/access';
-import { safeViewReturn } from '@/lib/viewNavigation';
+import { backLabel, safeViewReturn, viewName } from '@/lib/viewNavigation';
 import { confirmationLabel } from '@/lib/issueConfirmation';
 import { eventProvenance } from '@/lib/issueProvenance';
 
@@ -128,8 +129,9 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
 
   return (
     <main className="wrap">
+      <PageTitle title={`${issue.reference} · Issue`} />
       <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(issue.projectId)}&view=issues`)} className="back">
-        &larr; {project?.projectName ?? "Project"}
+        &larr; {returnTo && viewName(safeViewReturn(returnTo, '')) ? backLabel(safeViewReturn(returnTo, '')) : project?.projectName ?? "Project"}
       </Link>
 
       <IssueSyncStatus issue={issue} />

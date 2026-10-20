@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { currentPrincipal } from '@/lib/auth/session';
 import { PhotoLibraryPage } from '@/components/PhotoLibraryPage';
 import './photos.css';
+
+export const metadata: Metadata = { title: 'Photographs' };
 
 export const dynamic = 'force-dynamic';
 export default async function Photos({ searchParams }: { searchParams: Promise<{ project?: string; q?: string; show?: string; returnTo?: string }> }) {

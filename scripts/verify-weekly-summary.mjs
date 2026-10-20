@@ -95,7 +95,7 @@ try {
     await page.getByRole('link',{name:lastWeek.reference}).click();await page.waitForURL(`**/reports/${lastWeek.id}**`);
     await page.goBack();await page.waitForURL(new RegExp(`week=${lastMonday}`));await page.locator('.week-sheet').waitFor();
     check(true,'engineer: back from a report returns to the same week');
-    await page.getByRole('link',{name:'← Back'}).click();await page.waitForURL(/\/engineer\?project=proj-011lme&view=reports/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/engineer\?project=proj-011lme&view=reports/);
     check(true,'engineer: back returns to the Reports view');
     assert.deepEqual(errors,[],'engineer: page errors');
     await context.close();
@@ -118,7 +118,7 @@ try {
     const pdf=await page.pdf({format:'A4'});
     check(pdf.length>1000,`print: produces an A4 PDF (${pdf.length} bytes)`);
     await page.emulateMedia({media:'screen'});
-    await page.getByRole('link',{name:'← Back'}).click();await page.waitForURL(/\/office/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/office/);
     check(true,'office: back returns to the office');
     // Another project: nothing this week, said plainly.
     await page.goto(`${base}/weekly-summary?project=proj-014lme&week=${lastMonday}`);await page.locator('.week-sheet').waitFor();

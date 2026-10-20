@@ -108,7 +108,7 @@ try {
     const params=new URL(page.url()).searchParams;
     check(params.get('project')==='proj-011lme'&&params.get('owner')==='Acme Mechanical Ltd','office: the snag list opens on that project and company');
     check(/2 to put right/.test(await page.locator('.snag-summary').innerText()),'office: the snag list shows the same two items');
-    await page.getByRole('link',{name:/Back to issues/}).click();await page.waitForURL(/\/companies\?q=acme/);await page.locator('.co-list').waitFor();
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/companies\?q=acme/);await page.locator('.co-list').waitFor();
     // The other project's snag list agrees on what is late and what is waiting to be checked.
     await page.getByRole('link',{name:'Snag list for Acme Mechanical Ltd on Kirkstall Gate - Phase 2'}).click();
     await page.waitForURL(/\/issues\/snag-list\?/);await page.locator('.snag-sheet').waitFor();
@@ -120,7 +120,7 @@ try {
     await acme.locator('.co-oldest a').click();await page.waitForURL(`**/issues/${acmeOldest.id}**`);
     check(true,'office: the oldest item opens its issue');
     await page.goBack();await page.locator('.co-list').waitFor();
-    await page.getByRole('link',{name:'← Back'}).click();await page.waitForURL(/\/office/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/office/);
     check(true,'office: Back returns to the office');
     // The issue register also links here.
     await page.goto(`${base}/office#/issues`);

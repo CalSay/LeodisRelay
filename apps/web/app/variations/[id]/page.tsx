@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { PageTitle } from '@/components/PageTitle';
 import Link from "next/link";
 import { getVariation, variationCommand } from "@/lib/api";
 import { useProjectLookup } from '@/components/ProjectContext';
@@ -8,7 +9,7 @@ import type { Variation } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
 import { VariationTags } from '@/components/EngineerWorkspace';
 import { fmtMoney, variationValue } from '@/lib/variations';
-import { safeViewReturn } from '@/lib/viewNavigation';
+import { backLabel, safeViewReturn, viewName } from '@/lib/viewNavigation';
 
 /**
  * A variation the engineer raised, after sending: the office's answer at the
@@ -61,7 +62,8 @@ export default function VariationPage({ params, searchParams }: { params: Promis
   const meta = [v.reason, v.workDone && 'already carried out when raised', v.askedBy && `asked for by ${v.askedBy}`, v.labourHours !== undefined && `about ${v.labourHours} hours`, v.partsCost !== undefined && `parts about ${fmtMoney(v.partsCost)}`].filter(Boolean).join(' · ');
 
   return <main className="wrap eng-page">
-    <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(v.projectId)}`)} className="back">&larr; {project?.projectName ?? 'Project'}</Link>
+    <PageTitle title={`${v.reference} · Variation`} />
+    <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(v.projectId)}`)} className="back">&larr; {returnTo && viewName(safeViewReturn(returnTo, '')) ? backLabel(safeViewReturn(returnTo, '')) : project?.projectName ?? 'Project'}</Link>
     <div className="pagehead">
       <div><h1 className="ref" style={{ fontSize: 22 }}>{v.reference}</h1><p className="sub">{v.location || 'Location not recorded'} · raised {fmtDay(v.raisedAt)} by {v.raisedBy}</p></div>
       <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', fontSize: 12, color: 'var(--text-3)' }}><VariationTags v={v} /></span>

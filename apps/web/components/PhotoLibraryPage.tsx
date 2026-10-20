@@ -7,7 +7,7 @@ import { usePrincipal } from './PrincipalContext';
 import { PhotoImage } from './PhotoImage';
 import { canManage } from '@/lib/auth/access';
 import { mediaId } from '@/lib/media';
-import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { matchesPhoto, PHOTO_GROUPS, type LibraryPhoto, type PhotoGroup, type PhotoLibrary } from '@/lib/photoLibrary';
 
 /**
@@ -86,7 +86,7 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ret
   const step = (by: number) => setOpen(n => n === null ? n : Math.min(shown.length - 1, Math.max(0, n + by)));
 
   return <main className="eng-page photos-page">
-    <Link href={back} className="back">&larr; Back</Link>
+    <Link href={back} className="back">&larr; {backLabel(back)}</Link>
     <div className="eng-heading"><h1>Photographs{project ? ` · ${project.projectName}` : ''}</h1>
       <p>Every photograph sent from site on this project, newest first. Find a room, a riser or a reference to see how it looked on each visit.</p></div>
     <div className="photos-controls">
