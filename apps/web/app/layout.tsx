@@ -9,6 +9,7 @@ import "./globals.css";
 import './engineer.css';
 import './entry.css';
 import './search.css';
+import './stages.css';
 import { WorkspaceChrome } from '@/components/WorkspaceChrome';
 import { canManage, isAdmin } from '@/lib/auth/access';
 import { PrincipalContext } from '@/components/PrincipalContext';

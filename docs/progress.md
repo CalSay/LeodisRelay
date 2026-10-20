@@ -4,6 +4,50 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — FE-6a: distinct submission stages
+
+- A sent report now shows its steps one by one, each with its own state:
+  Received, Review (only where the project asks for review), PDF, Delivery
+  and Read. The office report reader shows them in one row in place of the
+  four-cell block that put "PDF and notification" in one cell; the
+  engineer's sent report page shows the same steps, one per row on the
+  phone. Each step can carry a time and one plain sentence (why a PDF failed,
+  that nothing was emailed).
+- Delivery is stated from what happened, not from the job's status word. A
+  notification written to the pilot's local outbox is "Not emailed · Nothing
+  has been sent"; "Emailed to <name>" needs the mail transport to have sent
+  it; projects from SharePoint show "Waiting to file in SharePoint" or
+  "Filed in SharePoint", with a note that Relay does not email the project
+  manager for them yet. Failed emails, a missing address and SharePoint
+  failures are alerts on the Delivery step.
+- The worker now records which step a failure belongs to
+  (`deliveryErrorStage`: `pdf` or `delivery`), so a failed notification no
+  longer reads as a failed PDF. An older failure without it shows as
+  "Processing needs attention" on the PDF step, since its step is unknown.
+  A retried email is judged by its latest attempt, so a retry that worked is
+  not left showing "Email failed". The office note on a failed report names
+  the step.
+- Decisions: review is left out of the steps when the project does not use
+  it, matching PR #8, so the usual row is four steps. Lists keep their single
+  compact delivery tag; the steps belong on the report itself.
+- Rules in `lib/status.ts` (`submissionStages`), shown by
+  `components/SubmissionStages.tsx` with `app/stages.css`.
+- Verified on Node 24: `npm run typecheck`, `npm test` (7 new tests in
+  `tests/submissionStages.test.ts`, including the worker recording a PDF
+  failure and a blocked delivery), `npm run build`. New
+  `scripts/verify-submission-stages.mjs` passed (65 checks: six report
+  states in the office reader at 1440px and on the engineer page at 390px,
+  light and dark; outbox never shown as email; no sideways scroll).
+  `verify-office-actions` (41), `verify-role-access` (61),
+  `verify-engineer-layout`, `verify-review-queue` (12),
+  `verify-signature-reload` and `verify-office-landing` (19) passed.
+  Screenshots in the project's `ui-review/submission-stages/`.
+- Not verified: live Graph mail (blocked by design, so "Emailed to" is only
+  seen with seeded data), live SharePoint filing (no tenant), a physical
+  phone.
+- Next: FE-3c (conflicting versions) once FE-3b has merged. CLAUDE.md's list
+  of browser checks should gain `verify-submission-stages.mjs`.
+
 ## 2026-10-20 — Weekly project summary (new feature, proposed as NEW-3)
 
 - New page `/weekly-summary`: one project's week (Monday to Sunday, UK time)

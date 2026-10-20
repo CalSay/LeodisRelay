@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { PhotoImage } from '@/components/PhotoImage';
 import { getReport, getVariation } from '@/lib/api';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
-import { acknowledgementStatus, deliveryStatus, reviewStatus } from '@/lib/status';
+import { SubmissionStages } from '@/components/SubmissionStages';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { officeActions, sinceWords } from '@/lib/officeActions';
 import { withViewReturn } from '@/lib/viewNavigation';
@@ -235,7 +235,6 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
   const project = ctx.projects.find(p => p.id === report.projectId);
   const code = project?.id ?? '';
   const summary = ctx.snap?.reports.find(r => r.id === report.id);
-  const review = reviewStatus(report), delivery = deliveryStatus(report), ack = acknowledgementStatus(report);
   const superseded = ctx.snap?.reports.find(r => r.corrects === report.id);
   const raised = ctx.snap?.issues.filter(i => i.raisedByReport === report.id) ?? [];
   const variationOf = (observationId: string) => ctx.snap?.variations.find(v => v.raisedByObservation === observationId);
@@ -259,13 +258,13 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
         {canReview ? <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'review', report: summary })}>Review</Btn>
           : !report.acknowledged ? <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'acknowledge', report: summary })}>Acknowledge</Btn> : null}
         {ctx.me.admin && report.sharepoint?.status === 'failed' && <Btn className="btn-sm" disabled={retryingSharePoint} onClick={() => void retrySharePoint()}>{retryingSharePoint ? 'Queuing…' : 'Retry SharePoint'}</Btn>}</div></div>
-    <dl className="tb"><div><dt>Received</dt><dd>{fmtWhen(report.serverAcknowledgedAt)}</dd></div><div><dt>Review</dt><dd>{review ? <Tag label={review.label} cls={toneTag(review.tone)} /> : '—'}</dd></div><div><dt>PDF and notification</dt><dd>{delivery ? <Tag label={delivery.label} cls={toneTag(delivery.tone)} /> : '—'}</dd></div><div><dt>Read</dt><dd>{ack ? <Tag label={ack.label} cls={toneTag(ack.tone)} /> : '—'}{report.acknowledged && <small>{fmtWhen(report.acknowledged.at)}{report.acknowledged.note ? ` · ${report.acknowledged.note}` : ''}</small>}</dd></div></dl>
+    <SubmissionStages report={report} tagClass={t => `tag ${toneTag(t)}`} when={fmtWhen} />
     {sharePointRetry && <div className="note"><span>{sharePointRetry}</span></div>}
     {report.review === 'returned' && <div className="note bad"><span><b>Sent back by {report.reviewedBy ?? 'the office'}</b>{report.reviewedAt ? ` on ${fmtDay(report.reviewedAt)}` : ''}: {report.reviewNote} {superseded ? '' : 'The engineer can send a corrected revision.'}</span></div>}
     {superseded && <div className="note info"><span><b>Superseded by rev {superseded.revision}</b>{superseded.state === 'draft' ? ', a correction in progress on site.' : '.'} </span>{superseded.state === 'submitted' && <a className="btn btn-q btn-sm" href={`#/projects/${code}/report/${superseded.id}`}>Open rev {superseded.revision}</a>}</div>}
     {report.corrects && <div className="note info"><span><b>Rev {report.revision} supersedes rev {report.revision - 1}.</b> {report.correctionReason}</span><a className="btn btn-q btn-sm" href={`#/projects/${code}/report/${report.corrects}`}>Open rev {report.revision - 1}</a></div>}
     {report.review === 'pending' && !canReview && <div className="note warn"><span><b>Awaiting review.</b> You wrote this report, so someone else has to review it.</span></div>}
-    {report.delivery === 'failed' && <div className="note bad"><span><b>Could not be processed.</b> {report.deliveryError ?? 'The worker gave up on this report.'} The report is on file; the PDF and the notification are what failed.</span></div>}
+    {report.delivery === 'failed' && <div className="note bad"><span><b>{report.deliveryErrorStage === 'delivery' ? 'Could not be delivered.' : 'Could not be processed.'}</b> {report.deliveryError ?? 'The worker gave up on this report.'} The report is on file; {report.deliveryErrorStage === 'delivery' ? 'the notification is what failed.' : report.deliveryErrorStage === 'pdf' ? 'making the PDF is what failed.' : 'the PDF and the notification are what failed.'}</span></div>}
     {(report.delivery === 'outbox' || report.issued?.transport === 'outbox') && <div className="note"><span>{project?.projectManager ?? 'The project manager'} has not been notified by email yet: the pilot holds notification emails in a local outbox. The report is on file and readable here.</span></div>}
     {decisions.length > 0 && <><SecH>Actions and decisions</SecH>
       <div className="rmenu">{decisions.map(o => { const vo = o.type === 'instruction' ? variationOf(o.id) : undefined; return <div key={o.id}><div className="rt"><b>{o.type === 'instruction' ? 'Variation to instruct' : `Action for ${o.owner.trim() || 'nobody yet'}`} · {o.location || 'no location'}</b><span>{o.type === 'instruction' ? o.whatHappened : o.actionNeeded}{o.type !== 'instruction' && !o.owner.trim() && ' · no owner named'}</span></div>{o.type === 'instruction' ? (vo ? <><a className="ref" href={`#/projects/${code}/variation/${vo.id}`}>{shortRef(vo.reference)}</a><InstructionTag v={vo} /></> : <span className="kind tone-variation">Variation</span>) : raisedRef(o.id, raised, code)}</div>; })}</div></>}
