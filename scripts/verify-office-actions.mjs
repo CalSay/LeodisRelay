@@ -50,7 +50,7 @@ try {
       const page=await desk.newPage();page.on('pageerror',e=>errors.push(e.message));
       await page.goto(`${base}/office#/projects`);await group(page,'verify').waitFor();
       const label=`${colorScheme} ${width}px`;
-      assert.deepEqual(await page.locator('.act h5').allTextContents(),['New reports','Not yet read','Unassigned issues','Ready to verify'],`${label}: four groups in order`);checks++;
+      assert.deepEqual(await page.locator('.act h4').allTextContents(),['New reports','Not yet read','Unassigned issues','Ready to verify'],`${label}: four groups in order`);checks++;
       assert.deepEqual([await count(page,'new'),await count(page,'notAck'),await count(page,'unassigned'),await count(page,'verify')],[2,2,1,1],`${label}: each group's count`);checks++;
       assert.equal(await group(page,'notAck').locator('.rmenu > div').first().locator('b').textContent().then(t=>t.includes('Site Engineer')),true,`${label}: unread rows name the engineer`);checks++;
       assert.equal(await group(page,'unassigned').getByText('Missing fire stopping').count(),1,`${label}: the unassigned issue is listed`);checks++;

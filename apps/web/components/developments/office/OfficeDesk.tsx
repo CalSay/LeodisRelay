@@ -117,8 +117,9 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
     return null;
   };
 
+  const tabName = route.tab === 'admin' ? 'Admin' : tabs.find(t => t[0] === route.tab)?.[1] ?? 'Projects';
   return <div className="ws" onClick={onRootClick}>
-    <PageTitle title={`${route.tab === 'admin' ? 'Admin' : tabs.find(t => t[0] === route.tab)?.[1] ?? 'Projects'} · Office`} />
+    <PageTitle title={`${tabName} · Office`} />
     <header className="topbar">
       <a className="logo" href="#/projects" aria-label="Projects"><b>RELAY</b><span>LEODIS DEVELOPMENTS</span></a>
       <div className="search">
@@ -137,19 +138,22 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
         <Link className="tbtn" href="/">Companies</Link>
       </div>
       {attnOpen && <div className="attn-pop">
-        <div className="panel-head"><h4 style={{ color: attn.length ? 'var(--alert)' : 'var(--ok)' }}>Needs attention</h4><a className="more" href="#/issues">Issues →</a></div>
+        <div className="panel-head"><h2 style={{ color: attn.length ? 'var(--alert)' : 'var(--ok)' }}>Needs attention</h2><a className="more" href="#/issues">Issues →</a></div>
         {attn.length ? attn.map(i => <div key={i.key} className="mini">
           <div className="mini-b"><a href={i.go}><b>{i.title}</b></a><div className="rowsub">{i.sub}</div><div style={{ marginTop: 6 }}><span className={`tag ${i.tag.cls}`}>{i.tag.label}</span></div></div>
           {actionFor(i)}
         </div>) : <div className="empty">Nothing needs attention.</div>}
       </div>}
     </header>
-    <nav className="hnav">
-      {tabs.map(([k, l, n, warn]) => <a key={k} href={`#/${k}`} className={route.tab === k ? 'on' : ''}>{l}{n !== null && <i className={warn ? 'warn' : ''}>{n}</i>}</a>)}
-      {me.admin && <a href="#/admin" className={`adm ${route.tab === 'admin' ? 'on' : ''}`}>Admin</a>}
+    <nav className="hnav" aria-label="Office">
+      {tabs.map(([k, l, n, warn]) => <a key={k} href={`#/${k}`} className={route.tab === k ? 'on' : ''} aria-current={route.tab === k ? 'page' : undefined}>{l}{n !== null && <i className={warn ? 'warn' : ''}>{n}{warn && <span className="sr">, some need attention</span>}</i>}</a>)}
+      {me.admin && <a href="#/admin" className={`adm ${route.tab === 'admin' ? 'on' : ''}`} aria-current={route.tab === 'admin' ? 'page' : undefined}>Admin</a>}
     </nav>
+    <main className="ws-main">
+    <h1 className="sr">Leodis Developments office</h1>
     {error && <div className="note bad" style={{ margin: '12px 24px 0' }} role="alert"><span>{error} {snap ? 'Showing previously loaded records.' : ''}</span><BtnQ className="btn-sm" onClick={() => void refresh()}>Retry</BtnQ></div>}
     {route.tab === 'inbox' ? <InboxView ctx={ctx} /> : route.tab === 'issues' ? <IssuesView ctx={ctx} /> : route.tab === 'variations' ? <VariationsView ctx={ctx} /> : route.tab === 'team' ? <TeamView ctx={ctx} /> : route.tab === 'admin' ? <AdminView ctx={ctx} /> : <ProjectsView ctx={ctx} />}
+    </main>
     {dialog && <Dialogs d={dialog} close={() => setDialog(null)} done={() => { void refresh(); if (route.tab === 'team' || route.tab === 'admin') loadTeam(); }} />}
     <Toasts />
   </div>;

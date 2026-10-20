@@ -4,6 +4,66 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Accessibility pass over the engineer and office pages
+
+- Audited every engineer and office page built so far (28 pages, as engineer,
+  manager, admin and signed out) at 390px and 1440px in light and dark with
+  axe-core (WCAG 2.2 A/AA plus best practice), a keyboard walk, and a probe
+  for tap-target size, headings, labels and names. Before: about 1,240
+  contrast failures (270 distinct elements), 416 elements outside any
+  landmark, an office desk with no `main` and no `h1`, chips and small
+  buttons 28 to 40px tall on a phone. Already good: every control had a name
+  or label, every focus stop showed a ring, and nothing relied on hover.
+- Priorities, decided here: (1) text people could not read, because grey
+  secondary text is on almost every screen and site engineers read it
+  outdoors; (2) the office desk's structure for screen readers; (3) tap
+  targets on a phone; (4) the one cue given only by colour.
+- Contrast: only colour tokens changed, so both themes stay in step. Main
+  pages: `--text-3` #6b6c65 to #5f605a (light), #666e75 to #8a9299 (dark).
+  Office desk (`.ws`) and the compliance pages (`.cm`), same palette:
+  `--text-2`/`--text-3` #5b5f60/#767a7b to #4f5354/#5e6263 (light) and
+  #b5b7b6/#868a8b to #c2c4c3/#a5a9aa (dark); gold #816321 to #765a1d (light,
+  white text on gold buttons improves to 6.5:1); dark alert #e2705a to
+  #ec8a76 (#f09783 on compliance); compliance light aqua #267c76 to #1f6d68.
+  Every pair now passes 4.5:1 on its own backgrounds. The dated concept
+  files in `docs/` keep the old values.
+- Office desk: views sit in a `main` with a hidden `h1` ("Issues · Leodis
+  Developments office"); headings now run h2 page or column, h3 sheet or
+  panel, h4 group, instead of starting at h3/h4/h5. CSS matches either level,
+  so nothing moves. The tab bar is named "Office" and marks the current tab
+  (`aria-current`). The prototype banner is a named region and the app bar
+  nav is named "Main". Empty table header cells say "Action" to screen
+  readers.
+- Phone tap targets (44px or more under 700px): office chips, buttons,
+  search, filters, top bar (logo, Attention, name, Help), "All →"; Back
+  links, the app bar brand, segment buttons, Help's "On this page" links,
+  the sign-in brand, and the engineer home's "Change ›" (bigger hit area,
+  same line, now underlined so it is not told apart by colour alone).
+- Colour only: a red count on an office tab ("something is overdue or
+  failed") now also has a ring and says ", some need attention" to screen
+  readers.
+- Kept: wording, features and how data is saved; #40's Back links and page
+  titles. Help's "What's new" has one line, "Easier to read and to tap".
+- New `scripts/verify-accessibility.mjs` (axe-core 4.10.3 added as a dev
+  dependency): 308 checks; zero axe violations on each page in light and dark
+  at 390px and 1440px, one h1 per page, controls at least 44px tall on a
+  phone (listed exceptions: references inside rows, the coverage grid, hidden
+  file inputs, checkboxes inside a label), a ring at every Tab stop.
+  Screenshots in the project's `ui-review/accessibility/`.
+- Not changed, because another thread is working there: the report editor
+  (`/reports/[id]`: "View the document" link in a paragraph is told apart by
+  colour only) and the offline page (not scanned). The compliance pages
+  (prototype, other company) got the token fixes but still have no `main` or
+  `h1`.
+- Not verified: a real screen reader (VoiceOver, TalkBack, NVDA), a physical
+  phone, Safari and Firefox, Windows high contrast, 200% zoom.
+- Proposed (not added to `docs/tasks.json`): "NEW-12 Accessibility pass —
+  WCAG 2.2 AA on engineer and office pages; verify-accessibility at 390 and
+  1440px". Follow-ups: the two editor items above; a skip link to the main
+  content; landmarks and h1 on the compliance pages; add
+  `verify-accessibility.mjs` to the browser checks in `CLAUDE.md`; a screen
+  reader walk-through by a person.
+
 ## 2026-10-20 — Help and what's new (new feature, proposed as NEW-11)
 
 - New `/help` page: how RELAY works in plain words, with two tabs, "On site"

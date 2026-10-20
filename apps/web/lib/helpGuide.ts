@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'easier-to-read', added: '2026-10-20', audience: 'all', title: 'Easier to read and to tap',
+    text: 'Grey text is darker in the light theme and lighter in the dark theme, so it is easier to read outdoors or on a dim screen. On a phone, buttons, filters, tabs and Back links are at least a fingertip tall, and screen readers can now find the heading and main part of every office page.' },
   { id: 'help', added: '2026-10-20', audience: 'all', title: 'This Help page',
     text: 'How RELAY works in plain words, what each status means, and this list of what is new. New things are marked until you have looked.' },
   { id: 'handover-inspection', added: '2026-10-20', audience: 'site', title: 'Handover inspection',

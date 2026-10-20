@@ -38,14 +38,14 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
   const name = (id: string) => ctx.projects.find(p => p.id === id)?.projectName ?? id;
   const code = (id: string) => ctx.projects.find(p => p.id === id)?.id ?? '';
   return <div className="view">
-    <div className="pagehead"><div><h3>Inbox</h3><p>{snap.reports.length} reports received · {snap.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week).length} this week · {counts.notAck} not yet read · {snap.drafts.length} draft{snap.drafts.length === 1 ? '' : 's'} in progress on site</p></div></div>
+    <div className="pagehead"><div><h2>Inbox</h2><p>{snap.reports.length} reports received · {snap.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week).length} this week · {counts.notAck} not yet read · {snap.drafts.length} draft{snap.drafts.length === 1 ? '' : 's'} in progress on site</p></div></div>
     <div className="filters">
       {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)} title={k === 'new' ? `Received ${sinceWords(since, ctx.day)}` : undefined}>{l} · {counts[k]}</button>)}
       <span className="spacer" />
       <label>Project <select value={project} onChange={e => setProject(e.target.value)}><option value="">All projects</option>{ctx.projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}</select></label>
       <label>Trade <select value={trade} onChange={e => setTrade(e.target.value)}><option value="">All trades</option>{['Electrical', 'HVAC', 'P&H'].map(t => <option key={t} value={t}>{t}</option>)}</select></label>
     </div>
-    {filter === 'drafts' ? <div className="panel"><table className="reg cards"><thead><tr><th>Reference</th><th>Project</th><th>Engineer</th><th>Visit</th><th>Saved</th><th>Sections</th><th></th></tr></thead><tbody>
+    {filter === 'drafts' ? <div className="panel"><table className="reg cards"><thead><tr><th>Reference</th><th>Project</th><th>Engineer</th><th>Visit</th><th>Saved</th><th>Sections</th><th><span className="sr">Action</span></th></tr></thead><tbody>
       {drafts.length ? drafts.map(r => <tr key={r.id}><td className="c-ref"><span className="ref">{r.reference}</span>{r.revision > 1 && <div className="rowsub">rev {r.revision}</div>}</td><td data-label="Project">{name(r.projectId)}</td><td data-label="Engineer">{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due" data-label="Visit">{r.visitDate}</td><td className="due" data-label="Saved">{fmtWhen(r.lastSavedAt)}</td><td className="num" data-label="Sections">{r.observationCount}</td><td data-label="State"><Tag label={r.corrects ? 'Correction' : 'Draft'} cls="tag-caution" /></td></tr>) : <tr><td colSpan={7} className="empty">No drafts saved to the server.</td></tr>}
     </tbody></table><div className="panel-foot">Draft contents are private until submitted. Work held only on an engineer’s device is not visible here.</div></div>
     : <div className="two-wide">
@@ -54,7 +54,7 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
           <td className="c-ref"><span className="ref">{r.reference}</span>{r.revision > 1 && <div className="rowsub">rev {r.revision}</div>}</td><td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{name(r.projectId)}</div></td><td data-label="Engineer">{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due" data-label="Received">{fmtWhen(r.serverAcknowledgedAt)}</td><td data-label="Found"><Found r={r} /></td>
           <td data-label="Status"><div className="found">{r.review === 'pending' || r.review === 'returned' ? <ReviewTag r={r} /> : <DeliveryTag r={r} />}{r.acknowledged && <Tag label="Read" cls="tag-ok" />}</div></td></tr>) : <tr><td colSpan={6} className="empty">Nothing here.</td></tr>}
       </tbody></table><div className="panel-foot">Newest first. “Found” says what the visit raised, not how many sections were typed. A report is on file once received; the email to the project manager is only a notification that it came in.</div></div>
-      <div className="panel"><div className="panel-head"><h4>Reader</h4>{selected && <a className="more" href={`#/projects/${code(shown.find(r => r.id === selected)?.projectId ?? snap.reports.find(r => r.id === selected)?.projectId ?? '')}/report/${selected}`}>In its project →</a>}</div>
+      <div className="panel"><div className="panel-head"><h3>Reader</h3>{selected && <a className="more" href={`#/projects/${code(shown.find(r => r.id === selected)?.projectId ?? snap.reports.find(r => r.id === selected)?.projectId ?? '')}/report/${selected}`}>In its project →</a>}</div>
         <div style={{ padding: 12 }}>{selected ? <ReportReader ctx={ctx} id={selected} crumbsHome="#/inbox" /> : <div className="empty">Select a report to read it here.<br /><BtnQ className="btn-sm" style={{ marginTop: 12 }} onClick={() => shown[0] && ctx.go(`#/inbox/${shown[0].id}`)}>Open the newest</BtnQ></div>}</div></div>
     </div>}
   </div>;

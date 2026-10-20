@@ -34,7 +34,7 @@ export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const shell = (title: string, sub: string, body: ReactNode, foot: ReactNode) => <>
-    <div className="dlg-head"><div>{sub && <div className="crumbs">{sub}</div>}<h3>{title}</h3></div><button type="button" className="x" onClick={close} aria-label="Close">×</button></div>
+    <div className="dlg-head"><div>{sub && <div className="crumbs">{sub}</div>}<h2>{title}</h2></div><button type="button" className="x" onClick={close} aria-label="Close">×</button></div>
     <div className="dlg-body">{body}{error && <div className="note bad" style={{ margin: 0 }}><span>{error}</span></div>}</div>
     {foot && <div className="dlg-foot">{foot}</div>}</>;
   const run = async (work: () => Promise<string>) => {
