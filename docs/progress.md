@@ -21,11 +21,34 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Verified on Node 24: `npm run typecheck`, `npm test` (145 package, 57 web
   tests), `npm run build`. `verify-pdf-navigation` fails on main with
   "getOrInsertComputed is not a function" and passes with this change;
-  `verify-role-access` passed. Playwright 1.56.1 was run from a scratch
-  install because TOOL-1 (PR #5) had not merged yet.
+  `verify-role-access` and `verify-engineer-layout` passed, using the
+  Playwright that TOOL-1 (PR #5) added.
 - Not verified: WebKit or a physical iPhone; no WebKit browser is installed
   in the cloud session.
 - Next: FE-4a (hide the review queue when review is off) is with another thread.
+## 2026-10-20 — TOOL-1: make browser checks runnable
+
+- Added `playwright` 1.56.1 as a root dev dependency, pinned exactly because
+  its Chromium (revision 1194) is the one preinstalled in cloud sessions.
+  Playwright has no install script, so `npm ci` downloads no browsers.
+- Updated `scripts/verify-engineer-layout.mjs` for UI changes since September:
+  the home heading is now the engineer's name, report sections are now cards
+  with a kind picker, links carry a return path, and the removed "Team &
+  contacts" and "Trade affected · Coming soon" checks are replaced by the
+  disabled "Assigned to me" button and the defect card's default trade.
+- CLAUDE.md now gives the exact commands.
+- Verified in a cloud thread on Node 24 after `npm ci`, `npm run typecheck`,
+  `npm test` (48 web tests) and `npm run build`: `verify-role-access` passed
+  (61 checks) and `verify-engineer-layout` passed. `npm ci` without
+  `PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD` left no `~/.cache/ms-playwright`.
+- Not passing: `verify-pdf-navigation`. The in-app PDF viewer shows
+  "this[#ne].getOrInsertComputed is not a function": pdfjs-dist 6.3 uses
+  `Map.prototype.getOrInsertComputed`, which Chromium 141 lacks. This is a
+  real fault for anyone on an older browser (likely older iPhones too), not a
+  check problem. Not verified on a real phone.
+- Not done: browser checks are not in CI (CI changes were left alone).
+- Next: fix the PDF viewer on older browsers (pin pdfjs-dist to a version
+  without the new Map method, or polyfill it in page and worker), then FE-4a.
 
 ## 2026-10-20 — FE-3a: signatures survive a reload
 
