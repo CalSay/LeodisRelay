@@ -109,3 +109,8 @@ test('says when the week is still going', () => {
   assert.equal(weeklySummary(none, manager, 'p1', '2026-10-19', TODAY).current, true);
   assert.equal(weeklySummary(none, manager, 'p1', '2026-10-19', TODAY).end, '2026-10-25');
 });
+
+test('carries each report\'s review state, so one awaiting review or returned is not shown as settled', () => {
+  const s = weeklySummary({ ...none, reports:[report({ id:'a', review:'pending' }), report({ id:'b', reference:'011LME-SPR-002', review:'returned' }), report({ id:'c', reference:'011LME-SPR-003' })] }, manager, 'p1', MONDAY, TODAY);
+  assert.deepEqual(s.reports.map(r => [r.id, r.review]), [['a', 'pending'], ['b', 'returned'], ['c', 'not_required']]);
+});

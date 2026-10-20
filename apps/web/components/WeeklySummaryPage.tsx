@@ -132,7 +132,8 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
           <h2>On site<span>{plural(s.reports.length, 'report')}</span></h2>
           {s.reports.length ? <ul className="week-rows">{s.reports.map(r => <li key={r.id}>
             <span className="week-when">{fmtDay(r.visitDate)}</span>
-            <div><p><Link className="ref" href={withViewReturn(`/reports/${r.id}`, here)}>{r.reference}</Link>{r.revision > 1 && <span className="tag tag-draft">Rev {r.revision}</span>}</p>
+            <div><p><Link className="ref" href={withViewReturn(`/reports/${r.id}`, here)}>{r.reference}</Link>{r.revision > 1 && <span className="tag tag-draft">Rev {r.revision}</span>}
+              {r.review === 'pending' && <span className="tag tag-draft">Awaiting review</span>}{r.review === 'returned' && <span className="tag tag-alert">Returned for changes</span>}</p>
               <p className="week-desc">{r.author}{r.trade ? ` · ${r.trade}` : ''}</p>
               <p className="week-meta">{kindLine(r.kinds)}{r.photos ? ` · ${plural(r.photos, 'photograph')}` : ''}</p>
               {r.locations.length > 0 && <p className="week-meta">{r.locations.join(' · ')}</p>}</div>
@@ -156,7 +157,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
         </section>
 
         <footer className="week-foot">
-          <p>Made from site reports sent to the office and the issue and variation registers in RELAY. Reports are placed by their visit day; issues and variations by the day each change was recorded. A corrected report replaces the one it corrects. &ldquo;Open now&rdquo; is as of {fmtDay(today, true)}. Prices are not shown.</p>
+          <p>Made from site reports sent to the office and the issue and variation registers in RELAY. Reports are placed by their visit day; issues and variations by the day each change was recorded. A corrected report replaces the one it corrects. Reports still awaiting review or returned for changes are marked. &ldquo;Open now&rdquo; is as of {fmtDay(today, true)}. Prices are not shown.</p>
         </footer>
       </article>}
   </main>;

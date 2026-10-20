@@ -28,7 +28,7 @@ const now=new Date().toISOString();
 const card=(type,location)=>({id:randomUUID(),type,location,whatHappened:'Work noted',actionNeeded:'',owner:'',photos:[]});
 const report=(extra)=>{const r={id:randomUUID(),projectId:'proj-011lme',reference:`011LME-SPR-${randomUUID().slice(0,4)}`,visitDate:monday,author:engineer.name,authorId:engineer.id,authorTrade:'Electrical',state:'submitted',version:1,revision:1,review:'not_required',serverAcknowledgedAt:now,observations:[],...extra};putRecord('reports',r);return r;};
 const sent=report({reference:'011LME-SPR-101',observations:[card('update','Level 2 corridor'),card('defect','level 2  corridor'),card('instruction','Plant room')]});
-const theirs=report({reference:'011LME-SPR-102',author:other.name,authorId:other.id,authorTrade:'P&H',observations:[card('update','Riser')]});
+const theirs=report({reference:'011LME-SPR-102',review:'pending',author:other.name,authorId:other.id,authorTrade:'P&H',observations:[card('update','Riser')]});
 const lastWeek=report({reference:'011LME-SPR-090',visitDate:lastMonday,observations:[card('update','Roof')]});
 const draft=report({reference:'011LME-SPR-103',author:other.name,authorId:other.id,state:'draft',serverAcknowledgedAt:undefined,lastSavedAt:now});
 const elsewhere=report({reference:'014LME-SPR-001',projectId:'proj-014lme'});
@@ -72,6 +72,7 @@ try {
     const onSite=await rows(page,'On site').allInnerTexts();
     check(onSite.length===2&&onSite.some(t=>t.includes(sent.reference))&&onSite.some(t=>t.includes(theirs.reference)),`engineer: both sent reports this week, from both engineers: ${JSON.stringify(onSite)}`);
     check(!text.includes(lastWeek.reference)&&!text.includes(draft.reference)&&!text.includes(elsewhere.reference),'engineer: last week, a draft and another project are left out');
+    check(/awaiting review/i.test(onSite.find(t=>t.includes(theirs.reference)))&&!/awaiting review/i.test(onSite.find(t=>t.includes(sent.reference))),'engineer: a report still awaiting review is marked, a settled one is not');
     const mine=onSite.find(t=>t.includes(sent.reference));
     check(/1 progress update, 1 defect, 1 variation required/.test(mine)&&mine.includes('Level 2 corridor · Plant room'),`engineer: report row says what it found and where: ${mine}`);
     const stats=await page.locator('.week-stats').innerText();

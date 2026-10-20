@@ -41,6 +41,8 @@ export interface WeekReport {
   author: string;
   trade?: string;
   revision: number;
+  /** Kept apart from receipt: a report still awaiting review, or returned, is tagged so on the page. */
+  review: Report['review'];
   /** Cards on the report by kind, so the page can say "3 progress, 1 defect". */
   kinds: Record<ObservationType, number>;
   photos: number;
@@ -109,7 +111,7 @@ export function weeklySummary(sources: WeekSources, principal: Principal, projec
       const place = tidy(o.location);
       if (place && !places.has(place.toLowerCase())) places.set(place.toLowerCase(), place);
     }
-    return { id: r.id, reference: r.reference, visitDate: r.visitDate, author: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}), revision: r.revision, kinds,
+    return { id: r.id, reference: r.reference, visitDate: r.visitDate, author: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}), revision: r.revision, review: r.review, kinds,
       photos: r.observations.reduce((n, o) => n + o.photos.length, 0), locations: [...places.values()] };
   }).sort((a, b) => a.visitDate.localeCompare(b.visitDate) || byRef(a, b));
   const kinds = emptyKinds();
