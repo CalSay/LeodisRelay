@@ -31,10 +31,14 @@
   --text-3: #5f605a;
 
   /* Brass, darkened to carry small text on paper. */
-  --brass: #7d621b;
+  --brass: #765a1d;
   --brass-2: #a8842f;
   --brass-ink: #ffffff;
   --brass-wash: rgba(125, 98, 27, 0.09);
+  /* A primary button under the pointer: darker on paper, lighter at night. */
+  --brass-hover: #644c18;
+  /* Access cards and tags: blue-grey, dark enough for small text on paper. */
+  --access-tone: #56708f;
 
   --alert: #a83c22;
   --alert-wash: rgba(168, 60, 34, 0.08);
@@ -90,6 +94,8 @@
     --brass-2: #a8842f;
     --brass-ink: #14171a;
     --brass-wash: rgba(217, 174, 74, 0.08);
+    --brass-hover: #e6ba55;
+    --access-tone: #7f97b5;
 
     --alert: #e2705a;
     --alert-wash: rgba(226, 112, 90, 0.1);
@@ -121,6 +127,8 @@
   --brass-2: #a8842f;
   --brass-ink: #14171a;
   --brass-wash: rgba(217, 174, 74, 0.08);
+  --brass-hover: #e6ba55;
+  --access-tone: #7f97b5;
 
   --alert: #e2705a;
   --alert-wash: rgba(226, 112, 90, 0.1);
@@ -657,8 +665,8 @@ button:disabled {
 }
 @media (hover: hover) {
   .btn-primary:hover:not(:disabled) {
-    background: #e6ba55;
-    border-color: #e6ba55;
+    background: var(--brass-hover);
+    border-color: var(--brass-hover);
   }
 }
 
@@ -1221,7 +1229,7 @@ button:disabled {
 .tone-neutral { --tone: var(--text-3); }
 .tone-defect { --tone: var(--alert); }
 .tone-variation { --tone: var(--brass); }
-.tone-access { --tone: #7f97b5; }
+.tone-access { --tone: var(--access-tone); }
 
 .panel-toned {
   border-left: 2px solid var(--tone);
