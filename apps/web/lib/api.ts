@@ -13,6 +13,7 @@ import type { Issue, Observation, Photo, Report, ReportSummary, Variation } from
 import { capturePhoto, uploadPhotos } from './localMedia';
 import { localSaveJournal } from './localSaveJournal';
 import { saveWithJournal, type SaveRequest } from './saveRequest';
+import type { SinceLastVisit } from './sinceLastVisit';
 
 const REPORTABLE_STATUSES = ["4. Active", "5. Defects Liability"];
 
@@ -275,6 +276,10 @@ export async function allVariations(): Promise<Variation[]> {
 export async function projectVariations(projectId: string): Promise<Variation[]> {
   const data = await parse<{ variations: Variation[] }>(await request(`/api/variations?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
   return data.variations;
+}
+/** What others recorded on the project since the signed-in person's last visit. */
+export async function sinceLastVisit(projectId: string): Promise<SinceLastVisit> {
+  return parse(await request(`/api/since-last-visit?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
 }
 export async function getVariation(id: string): Promise<Variation> {
   return parse<Variation>(await request(`/api/variations/${id}`, { cache: 'no-store' }));
