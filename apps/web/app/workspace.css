@@ -357,3 +357,43 @@ body:has(.ws){overflow:hidden auto}
   .ws .cols[data-depth="1"] .col-main{border-bottom:1px solid var(--line-2)}
   .ws .cols[data-depth="1"] .col-projects{border-right:0}
 }
+/* Office registers: a table on the desk, one card per row on a phone. Cells
+   carry data-label, which the phone layout shows beside each value because
+   the column headings are hidden there. */
+.ws table.reg td.c-actions .actions{flex-wrap:nowrap}
+.ws .filters .phone-sort{display:none}
+@media (max-width:700px){
+  .ws table.reg.cards{display:block;min-width:0}
+  .ws table.reg.cards thead{display:none}
+  .ws table.reg.cards tbody,.ws table.reg.cards tfoot{display:block}
+  .ws table.reg.cards tr{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px var(--s3);padding:var(--s3);border-bottom:1px solid var(--line)}
+  .ws table.reg.cards tbody tr:last-child{border-bottom:0}
+  .ws table.reg.cards tr.clickable{position:relative;padding-right:36px}
+  .ws table.reg.cards tr.clickable::after{content:'›';position:absolute;right:var(--s3);top:var(--s3);font-size:20px;line-height:1;color:var(--text-3)}
+  .ws table.reg.cards tr.clickable:active{background:var(--acc-wash)}
+  .ws table.reg.cards td{display:block;flex:1 1 100%;min-width:0;padding:0;border:0;font-size:13px;overflow-wrap:anywhere}
+  .ws table.reg.cards td:empty{display:none}
+  .ws table.reg.cards td.c-ref{flex:0 1 auto}
+  .ws table.reg.cards td.c-title .rowtitle{font-size:15px!important;line-height:1.35}
+  .ws table.reg.cards td[data-label]{position:relative;padding-left:calc(6.25rem + var(--s3))}
+  .ws table.reg.cards td[data-label]::before{content:attr(data-label);position:absolute;left:0;top:.2em;width:6.25rem;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3)}
+  .ws table.reg.cards td.money{text-align:left}
+  .ws table.reg.cards td.due{white-space:normal}
+  .ws table.reg.cards .tag{white-space:normal;max-width:100%}
+  .ws table.reg.cards td.empty{padding:var(--s4) 0;text-align:center}
+  .ws table.reg.cards td.c-actions{padding-top:var(--s2)}
+  .ws table.reg.cards td.c-actions:not(:has(.btn,.btn-q)){display:none}
+  .ws table.reg.cards td.c-actions .actions{flex-wrap:wrap;gap:var(--s2)}
+  .ws table.reg.cards td.c-actions .btn,.ws table.reg.cards td.c-actions .btn-q{min-height:44px;justify-content:center}
+  .ws table.reg.cards td select{width:100%;min-height:44px}
+  .ws table.reg.cards tr.c-group{padding:0}
+  .ws table.reg.cards tfoot tr{background:var(--panel-2);border-top:1px solid var(--line-2)}
+  .ws table.reg.cards tfoot td{background:none;border:0;padding:0}
+  .ws .panel:has(> table.reg.cards){overflow-x:visible}
+  /* Filters stack as aligned rows, each control wide enough to tap. */
+  .ws .filters label{display:grid;grid-template-columns:6.5rem minmax(0,1fr);flex:1 1 100%}
+  .ws .filters label>input,.ws .filters label>select{width:100%;min-width:0;min-height:40px}
+  .ws .filters .spacer{display:none}
+  .ws .filters .sort-chip{display:none}
+  .ws .filters .phone-sort{display:grid}
+}
