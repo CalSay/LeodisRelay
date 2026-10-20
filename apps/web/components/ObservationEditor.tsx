@@ -8,6 +8,7 @@ import { readPhoto, type Observation, type Photo } from "@/lib/api";
 import type { Issue, RoughSize } from "@/lib/types";
 import { OBSERVATION_TYPES, type ObservationType } from "@/lib/fixtures";
 import { VARIATION_REASONS } from "@/lib/variations";
+import { issueThumbnail, linkCandidates, shortReference } from '@/lib/issueLink';
 import { usePrincipal } from './PrincipalContext';
 
 /**
@@ -87,11 +88,6 @@ export function ObservationEditor({
     onChange(copy);
   }
 
-  /** Issues already open here, nearest location first, as pictures and words rather than refs. */
-  const candidates = openIssues.slice().sort((a, b) => Number(match(b, observation.location)) - Number(match(a, observation.location))).slice(0, 6);
-  const linked = observation.linkedIssueId ? openIssues.find(i => i.id === observation.linkedIssueId) : undefined;
-  const thumb = (i: Issue) => i.events.find(e => e.photos.length)?.photos[0];
-
   const where = <div className="field">
     <label htmlFor={`loc-${id}`}>Where</label>
     <input id={`loc-${id}`} type="text" value={observation.location} onChange={(e) => set("location", e.target.value)} placeholder="Level 2 — Riser" autoComplete="off" />
@@ -104,14 +100,9 @@ export function ObservationEditor({
   </div>;
 
   const alreadyRaised = raisesIssue && openIssues.length > 0 && <div className="field">
-    <label>Is this something already raised?</label>
-    <div className="eng-linklist">
-      <button type="button" className="eng-linkrow" aria-pressed={!observation.linkedIssueId} onClick={() => unset('linkedIssueId')}><div><b>No — this is new</b><small>Sending raises a new issue for the office to assign.</small></div></button>
-      {(linked && !candidates.some(i => i.id === linked.id) ? [linked, ...candidates] : candidates).map(i => { const p = thumb(i); return <button key={i.id} type="button" className="eng-linkrow" aria-pressed={observation.linkedIssueId === i.id} onClick={() => set('linkedIssueId', i.id)}>
-        <div className="thumb">{p && <PhotoImage src={p.dataUrl} alt="" />}</div>
-        <div><b>{i.description}</b><small>{i.reference.split('-').slice(1).join('-')} · {i.location || 'no location'} · {i.owner || 'unassigned'}</small></div>
-      </button>; })}
-    </div>
+    <label id={`link-${id}`}>Is this something already raised?</label>
+    <IssueLinkPicker labelledBy={`link-${id}`} issues={openIssues} location={observation.location} linkedId={observation.linkedIssueId} onPick={(issueId) => issueId ? set('linkedIssueId', issueId) : unset('linkedIssueId')}
+      none={['No — this is new', 'Sending raises a new issue for the office to assign.']} />
     <p className="hint">{observation.linkedIssueId ? "This will be added to that issue's history rather than raising a new one." : "Linking avoids raising a second issue for the same defect."}</p>
   </div>;
 
@@ -222,11 +213,9 @@ export function ObservationEditor({
           </div>
         </div>
         {openIssues.length > 0 && <div className="field">
-          <label htmlFor={`link-${id}`}>Is this on an issue already? · optional</label>
-          <select id={`link-${id}`} value={observation.linkedIssueId ?? ''} onChange={(e) => e.target.value ? set('linkedIssueId', e.target.value) : unset('linkedIssueId')}>
-            <option value="">No</option>
-            {candidates.map(i => <option key={i.id} value={i.id}>{i.reference.split('-').slice(1).join('-')} · {i.description}</option>)}
-          </select>
+          <label id={`link-${id}`}>Is this on an issue already? · optional</label>
+          <IssueLinkPicker labelledBy={`link-${id}`} issues={openIssues} location={observation.location} linkedId={observation.linkedIssueId} onPick={(issueId) => issueId ? set('linkedIssueId', issueId) : unset('linkedIssueId')}
+            none={['No', 'Not tied to an issue already raised here.']} />
           <p className="hint">A defect that turns out to be someone else’s damage becomes a chargeable variation on that issue.</p>
         </div>}
       </>}
@@ -236,7 +225,28 @@ export function ObservationEditor({
   );
 }
 
-function match(issue: Issue, location: string): boolean {
-  const a = issue.location.trim().toLowerCase(), b = location.trim().toLowerCase();
-  return !!a && !!b && (a.includes(b) || b.includes(a));
+/**
+ * Open issues on the project as pictures and words rather than refs, nearest
+ * location first, so the engineer can tell which one they are looking at.
+ */
+function IssueLinkPicker({ labelledBy, issues, location, linkedId, onPick, none }: {
+  labelledBy: string;
+  issues: Issue[];
+  location: string;
+  linkedId: string | undefined;
+  onPick: (issueId: string | undefined) => void;
+  none: [title: string, detail: string];
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const { shown, hidden } = linkCandidates(issues, location, linkedId, showAll);
+  return <>
+    <div className="eng-linklist" role="group" aria-labelledby={labelledBy}>
+      <button type="button" className="eng-linkrow" aria-pressed={!linkedId} onClick={() => onPick(undefined)}><div><b>{none[0]}</b><small>{none[1]}</small></div></button>
+      {shown.map(i => { const p = issueThumbnail(i); return <button key={i.id} type="button" className="eng-linkrow" aria-pressed={linkedId === i.id} onClick={() => onPick(i.id)}>
+        <div className={p ? 'thumb' : 'thumb empty'}>{p ? <PhotoImage src={p.dataUrl} alt="" /> : <span aria-hidden="true">No photo</span>}</div>
+        <div><b>{i.description || 'No description'}</b><small>{shortReference(i.reference)} · {i.location || 'no location'} · {i.owner || 'unassigned'}</small></div>
+      </button>; })}
+    </div>
+    {(hidden > 0 || showAll) && <button type="button" className="eng-suggestions-toggle" onClick={() => setShowAll(v => !v)}>{showAll ? 'Show fewer issues' : `Show all ${shown.length + hidden} open issues`}</button>}
+  </>;
 }

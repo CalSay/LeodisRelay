@@ -106,9 +106,11 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-pick .eng-tile.defect{border-color:var(--alert);} .eng-pick .eng-tile.instruction{border-color:var(--brass);}
 .eng-linkrow{display:flex;gap:10px;align-items:center;width:100%;text-align:left;padding:10px 12px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--panel);color:var(--text);font:inherit;min-height:48px;}
 .eng-linkrow[aria-pressed=true]{border-color:var(--brass);background:var(--brass-wash);}
-.eng-linkrow .thumb{width:40px;height:40px;flex:none;border-radius:4px;background:var(--panel-3);overflow:hidden;}
+.eng-linkrow .thumb{width:56px;height:56px;flex:none;border-radius:4px;background:var(--panel-3);overflow:hidden;}
 .eng-linkrow .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
-.eng-linkrow b{display:block;font-size:14px;font-weight:500;}
+.eng-linkrow .thumb.empty{display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;line-height:1.2;color:var(--text-3);border:1px dashed var(--line-2);background:transparent;}
+.eng-linkrow>div:last-child{min-width:0;}
+.eng-linkrow b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;font-size:14px;font-weight:500;}
 .eng-linkrow small{display:block;font-size:12px;color:var(--text-3);}
 .eng-linklist{display:grid;gap:6px;}
 
