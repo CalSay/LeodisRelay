@@ -22,10 +22,10 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
   const kind = s && (ctx.route.b === 'report' || ctx.route.b === 'issue' || ctx.route.b === 'variation') ? ctx.route.b : null;
   const id = kind ? ctx.route.c : null;
   const depth = !s ? 1 : !kind ? 2 : 3;
-  return <div className="cols" data-depth={depth}>
-    <ProjectsCol ctx={ctx} current={s} />
-    {s && <RegisterCol ctx={ctx} s={s} kind={kind} id={id} />}
-    <div className="col">
+  // A phone shows one stacked page, so a new record starts at its top, not where the last one was scrolled to.
+  useEffect(() => { if (window.matchMedia('(max-width:700px)').matches) window.scrollTo(0, 0); }, [depth, s?.code, id]);
+  const projects = <ProjectsCol key="projects" ctx={ctx} current={s} />;
+  const main = <div key="main" className="col col-main">
       <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h4>{s ? 'Details' : 'Overview'}</h4><i>{s ? s.project.projectNumber : 'Office'}</i></div>
       <div className="colpad">
         {!ctx.snap ? <div className="loading">Loading office records</div>
@@ -34,7 +34,10 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
           : kind === 'variation' && id ? <VariationSheet ctx={ctx} id={id} />
           : s ? <ProjectSheet ctx={ctx} s={s} /> : <OfficeSheet ctx={ctx} />}
       </div>
-    </div>
+    </div>;
+  // With no project chosen the office position comes first in reading order, as it does on a phone; the desk still places it on the right.
+  return <div className="cols" data-depth={depth}>
+    {!s ? [main, projects] : [projects, <RegisterCol key="register" ctx={ctx} s={s} kind={kind} id={id} />, main]}
   </div>;
 }
 
@@ -44,7 +47,7 @@ function officeReturn(ctx: Ctx): string {
 }
 
 function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
-  return <div className="col">
+  return <div className="col col-projects">
     <div className="col-head"><h4>Projects</h4><i>{ctx.projects.length} reportable</i></div>
     {projectStatusGroups(ctx.projects).map(group => <div key={group.status} className={`project-group project-group-${group.tone}`}>
       <div className="grp project-group-title">{group.label}<i>{group.projects.length}</i></div>
@@ -145,9 +148,10 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
     <dl className="tb three"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{notNotified.length ? `${notNotified.length} PM notification${notNotified.length === 1 ? '' : 's'} pending` : 'project managers notified'}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Variations pending</dt><dd className={`big ${exposed.length ? 'late' : pendingVariations.length ? 'soon' : ''}`}>{pendingVariations.length}<small>{exposed.length ? `${exposed.length} done without an instruction` : pendingVariations.some(v => v.quotedValue === undefined) ? `${pendingVariations.filter(v => v.quotedValue === undefined).length} still to price` : 'all priced, awaiting the client'}</small></dd></div></dl>
     <SecH right={<a href="#/issues">All →</a>}>Also needs attention</SecH>
     <AttentionList ctx={ctx} limit={6} skipActions />
-    <SecH right={<a href="#/inbox">All {snap.reports.length} →</a>}>Latest reports</SecH>
-    <LatestReports ctx={ctx} reports={latest} showProject />
-    <p className="rowsub" style={{ marginTop: 16 }}>A report is <b>received</b> when the server has it and on file from then on. The email to the project manager is a notification that it came in, and <b>read</b> means someone in the office acknowledged it. Select a project on the left to drill in.</p>
+    {/* A phone leaves the wide table to the Inbox; New reports above already lists the latest. */}
+    <div className="office-latest"><SecH right={<a href="#/inbox">All {snap.reports.length} →</a>}>Latest reports</SecH>
+    <LatestReports ctx={ctx} reports={latest} showProject /></div>
+    <p className="rowsub" style={{ marginTop: 16 }}>A report is <b>received</b> when the server has it and on file from then on. The email to the project manager is a notification that it came in, and <b>read</b> means someone in the office acknowledged it. Choose a project to drill in.</p>
   </div>;
 }
 
@@ -184,12 +188,21 @@ function OfficeActionGroups({ ctx }: { ctx: Ctx }) {
     { key: 'verify', title: 'Ready to verify', sub: 'Closure submitted, needs a second pair of eyes', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be verified.',
       rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · waiting ${daysSince(i.events.at(-1)?.at)} days`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i })}>Verify</Btn>)) },
   ];
-  return <div className="acts">{groups.map(g => <section key={g.key} className="act" data-group={g.key} aria-label={`${g.title}: ${g.n}`}>
+  // On a phone the groups stack, so their counts are gathered at the top, each a tap from its group.
+  const jump = (key: string) => {
+    const el = document.querySelector<HTMLElement>(`.act[data-group="${key}"]`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    el?.focus({ preventScroll: true });
+  };
+  return <>
+  <div className="act-strip" role="group" aria-label="What needs you">{groups.map(g => <button type="button" key={g.key} data-group={g.key} onClick={() => jump(g.key)}><b className={g.n ? g.tone : ''}>{g.n}</b><span>{g.title}</span></button>)}</div>
+  <div className="acts">{groups.map(g => <section key={g.key} className="act" data-group={g.key} tabIndex={-1} aria-label={`${g.title}: ${g.n}`}>
     <div className="act-h"><h5>{g.title}</h5><b className={`act-n ${g.n ? g.tone : ''}`}>{g.n}</b></div>
     <div className="act-sub">{g.sub}</div>
     <div className="rmenu">{g.rows.length ? g.rows : <div className="empty">{g.empty}</div>}</div>
     {g.n > 0 && <a className="act-all" href={g.all}>{g.n > g.rows.length ? `Show all ${g.n}` : 'Open the list'} →</a>}
-  </section>)}</div>;
+  </section>)}</div>
+  </>;
 }
 
 function LatestReports({ ctx, reports, showProject }: { ctx: Ctx; reports: ReportSummary[]; showProject?: boolean }) {

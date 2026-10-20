@@ -30,7 +30,7 @@ const server=spawn(process.execPath,[resolve('node_modules/next/dist/bin/next'),
 server.stdout.on('data',d=>output+=d);server.stderr.on('data',d=>output+=d);
 let browser,checks=0;
 const shot=process.env.RELAY_SCREENSHOT_DIR;if(shot)mkdirSync(shot,{recursive:true});
-const visibleCols=page=>page.locator('.cols > .col').evaluateAll(cols=>cols.filter(c=>getComputedStyle(c).display!=='none').map(c=>({head:c.querySelector('.col-head h4')?.textContent??'',width:c.getBoundingClientRect().width})));
+const visibleCols=page=>page.locator('.cols > .col').evaluateAll(cols=>cols.filter(c=>getComputedStyle(c).display!=='none').map(c=>{const r=c.getBoundingClientRect();return {head:c.querySelector('.col-head h4')?.textContent??'',width:r.width,top:r.top,left:r.left};}).sort((a,b)=>a.top-b.top||a.left-b.left));
 const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
 try {
   let ready=false;for(let n=0;n<60;n++){if(server.exitCode!==null)throw Error(output);try{if((await fetch(base+'/signin')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready,output);
@@ -59,7 +59,7 @@ try {
     const p=await phone.newPage();p.on('pageerror',e=>errors.push(e.message));
     await p.goto(`${base}/office#/projects`);await p.locator('.cols .item').first().waitFor();
     const cols=await visibleCols(p);
-    assert.deepEqual(cols.map(c=>c.head),['Projects'],`${colorScheme}: phone opens on the project list`);checks++;
+    assert.deepEqual(cols.map(c=>c.head),['Overview','Projects'],`${colorScheme}: phone opens on the office position, the project list after it`);checks++;
     assert.ok(await overflow(p)<=0,`${colorScheme}: no horizontal scroll on the phone`);checks++;
     if(shot)await p.screenshot({path:join(shot,`office-landing-390-${colorScheme}.png`)});
     await phone.close();
