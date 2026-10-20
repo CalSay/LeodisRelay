@@ -37,6 +37,59 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   from SharePoint use the same `PhotoImage` as before). Proposed: add
   `verify-issue-link.mjs` to the browser checks list in `CLAUDE.md`.
 
+## 2026-10-20 — Site coverage (new feature, proposed as NEW-6)
+
+- New office page `/coverage`, opened from "Site coverage" on the office
+  overview: every active and defects liability project down the side, a
+  fortnight across the top (last week and this week by default), and a mark
+  in each day a report was sent from site, by trade (Elec, HVAC, P&H, Other).
+  Each mark opens the report and Back returns to the grid; a project name
+  opens its weekly summary. A "Last report" column gives the latest visit
+  from any time, who sent it and how many working days have passed. Active
+  sites with no report for 3 or more full working days, or none ever, are
+  marked "Quiet" and listed at the top under "Gone quiet" with their PM.
+  Previous and next fortnight; the address keeps the fortnight.
+- Why this feature: a project manager running several sites has no single
+  place to see whether each one is being reported on. Today that means
+  opening each project in turn, and a site nobody has visited for a week is
+  noticed late. It reads only sent reports: no new store, no rota, no data
+  entry, no SharePoint write and no email. Office only (Managers and Admins),
+  like the office desk; engineers get a 403 from the API and are sent to the
+  hub from the page.
+- Decisions: reports sit on the engineer's visit day; a sent correction
+  stands in for the report it corrects; drafts never count. "Working days"
+  are Monday to Friday, both ends left out, so a report yesterday is 0 and
+  today still going does not count; bank holidays are not known, so they
+  count (said on the page). Defects liability sites are never marked quiet,
+  as visits there are occasional. 3 days is a prompt to look, not a rule,
+  and there is no expectation that a site reports daily. A visit dated
+  after today shows on its day but is not the last report. On a phone the
+  grid scrolls inside its own box with the project column held, and opens
+  scrolled to today. Rules in `lib/siteCoverage.ts`; `/api/site-coverage`
+  uses the office project list's rule (reportable projects the person may
+  open). `.gitignore` ignored every `coverage/` folder (meant for test
+  coverage output), so it now lets `apps/web/app/coverage/` through.
+- Not EXP-1 (site diary, a per-project timeline), not EXP-2 (no requests or
+  routing; nobody is chased), not EXP-4 (no locations at all).
+- Verified: `npm run typecheck`, `npm test` (6 new tests in
+  `tests/siteCoverage.test.ts`, 1 in `viewNavigation.test.ts`), `npm run
+  build`. New `scripts/verify-site-coverage.mjs` passed (30 checks:
+  signed-out and engineer refusals, the three reportable projects grouped,
+  tender and drafts left out, today's and yesterday's reports by trade, a
+  quiet site with its working days, a defects liability site not flagged,
+  headline counts, back from a report, weekly summary link, fortnight
+  stepping, 1440px dark and 390px light with no page sideways scroll and the
+  grid opened on today). `verify-office-landing` (19), `verify-role-access`
+  (61), `verify-office-actions` (41) and `verify-weekly-summary` (29) still
+  pass. Screenshots (not in the repo) are in the RELAY project's shared
+  files under `ui-review/site-coverage/`.
+- Not verified: a physical phone, SharePoint mode (no live tenant), many
+  projects with thousands of reports (it reads every reportable project's
+  reports per request, as the weekly summary does for one).
+- Next: CLAUDE.md's list of browser checks should gain
+  `verify-site-coverage.mjs`. If PMs use it, a per-trade view (which trades a
+  project expects) would need that data from the project list first.
+
 ## 2026-10-20 — FE-3c: conflicting versions of a draft
 
 - When a draft was saved from another tab or device while this screen held

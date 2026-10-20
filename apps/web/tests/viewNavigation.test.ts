@@ -35,3 +35,8 @@ test('a record opened from the photo library returns to the same photographs', (
   const photos = '/photos?project=p1&q=riser&show=defect&returnTo=%2Foffice';
   assert.equal(safeViewReturn(photos, '/engineer'), photos);
 });
+
+test('a report opened from site coverage returns to the same fortnight', () => {
+  const coverage = '/coverage?start=2026-09-28&returnTo=%2Foffice%23%2Fprojects';
+  assert.equal(safeViewReturn(coverage, '/office'), coverage);
+});
