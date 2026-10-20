@@ -37,11 +37,18 @@ async function look(page,name){
   const inbox={review:await page.getByRole('button',{name:/^To review ·/}).count(),returned:await page.getByRole('button',{name:/^Returned ·/}).count()};
   if(shot)await page.screenshot({path:join(shot,`${name}-inbox.png`)});
   await page.goto(`${base}/office#/issues`);await page.getByRole('heading',{name:'Issues'}).waitFor();
-  const issues={chip:await page.getByRole('button',{name:/^Not reviewed ·/}).count(),count:/not reviewed/.test(await page.locator('.pagehead p').innerText())};
+  const row=page.locator('table.reg tbody tr').filter({hasText:'DEMO-011LME-ISS-001'});await row.waitFor();
+  const issues={chip:await page.getByRole('button',{name:/^Not reviewed ·/}).count(),count:/not reviewed/.test(await page.locator('.pagehead p').innerText()),confirmation:(await row.locator('td').nth(7).textContent()).trim()};
   if(shot)await page.screenshot({path:join(shot,`${name}-issues.png`)});
   await page.goto(`${base}/office#/projects/proj-011lme`);await page.getByText('Reports needing attention').waitFor();
   const register=await page.locator('.col').filter({hasText:'Reports needing attention'}).innerText();
-  return {inbox,issues,register};
+  await page.goto(`${base}/office#/projects/proj-011lme/issue/issue-review-queue`);
+  const cell=page.locator('dl.tb > div').filter({hasText:'Confirmation'});await cell.waitFor();
+  const sheet=(await cell.textContent()).replace(/\s+/g,' ');
+  if(shot)await page.screenshot({path:join(shot,`${name}-issue.png`)});
+  await page.goto(`${base}/issues/issue-review-queue`);
+  const page2=(await page.locator('.titleblock').textContent()).replace(/\s+/g,' ');
+  return {inbox,issues,register,sheet,page:page2};
 }
 try {
   let ready=false;for(let n=0;n<60;n++){if(server.exitCode!==null)throw Error(output);try{if((await fetch(base+'/signin')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready,output);
@@ -56,6 +63,9 @@ try {
   assert.equal(on.issues.chip,1,'Not reviewed filter shown while review is in use');checks++;
   assert.ok(on.issues.count,'Not reviewed count shown while review is in use');checks++;
   assert.match(on.register,/to review/i);checks++;
+  assert.equal(on.issues.confirmation,'Not reviewed','Register row says Not reviewed while review is in use');checks++;
+  assert.match(on.sheet,/Not reviewed/,'Issue sheet says Not reviewed while review is in use');checks++;
+  assert.match(on.page,/ConfirmationNot reviewed/,'Issue page says Not reviewed while review is in use');checks++;
 
   // Decide it, and review is off everywhere, as it is by default.
   const decided=await page.evaluate(async id=>(await fetch(`/api/reports/${id}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({action:'review',decision:'approve',note:''})})).status,waiting.id);
@@ -66,6 +76,10 @@ try {
   assert.equal(off.issues.chip,0,'No Not reviewed filter with review off');checks++;
   assert.ok(!off.issues.count,'No not reviewed count with review off');checks++;
   assert.doesNotMatch(off.register,/review/i,'Project register says nothing about review');checks++;
+  assert.equal(off.issues.confirmation,'As reported','Register row says As reported with review off');checks++;
+  assert.match(off.sheet,/As reported.*does not use review/,'Issue sheet explains As reported');checks++;
+  assert.doesNotMatch(off.sheet,/Not reviewed/,'Issue sheet does not say Not reviewed');checks++;
+  assert.match(off.page,/ConfirmationAs reported/,'Issue page says As reported with review off');checks++;
   assert.deepEqual(errors,[]);checks++;
   console.log(`Passed ${checks} review queue checks (review in use, then off).`);
 } finally {

@@ -4,6 +4,38 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Issue confirmation wording follows the review setting
+
+- A provisional issue said "Not reviewed" in the office register, the office
+  issue sheet and the report reader, and "Not yet reviewed" on the issue page,
+  on every project. Review is off by default, so on most projects nobody will
+  ever review it and the words read as a missed step. Where the project uses
+  review it still says "Not reviewed"; where it does not, it says "As
+  reported", with "stands as the engineer reported it; this project does not
+  use review" on the issue sheet. Confirmed, Disputed and Withdrawn read the
+  same either way. The issue page's "Review" heading and the "Review" history
+  label for a confirmation event are now "Confirmation", since an office
+  confirm on a project without review is not a review.
+- Decisions: only the wording changes. The stored state stays `provisional`,
+  SharePoint still gets "Provisional", and the Confirm and Withdraw buttons
+  are unchanged. The office uses the same per-project rule as the "Not
+  reviewed" chip and count (required, or a report still waiting from when it
+  was), so a row and the count agree; `GET /api/issues/[id]` now returns that
+  `reviewOn` so the issue page words it the same way. The issue page's empty
+  owner now says "Not yet assigned" rather than "Awaiting confirmation",
+  which read as a confirmation step. Rules in `lib/issueConfirmation.ts`
+  (pure).
+- Verified on Node 24: `npm run typecheck`, `npm test` (2 new tests in
+  `tests/issueConfirmation.test.ts`), `npm run build`. `verify-review-queue`
+  now also checks the register row, the issue sheet and the issue page with
+  review in use and off (19 checks, was 12). "In use" there is a report still
+  waiting for review; the check does not switch a project's review setting
+  on, so that path is covered by the unit tests only; screenshots in the project's
+  `ui-review/issue-confirmation/`. `verify-issue-register` (70),
+  `verify-office-actions` (41), `verify-office-landing` (19),
+  `verify-role-access` (61) and `verify-search` (31) passed.
+- Not verified: a live SharePoint tenant, a physical device. Not in
+  `docs/tasks.json`; proposed in the PR.
 ## 2026-10-20 — FE-5a: search and filter the issue register
 
 - The office issue register now filters by location text ("riser 2" finds
