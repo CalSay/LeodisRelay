@@ -91,6 +91,7 @@ test('a handover inspection end to end through the store, and every reader of se
       const row = reportsFor(manager, 'proj-011lme').items.find(r => r.id === sent.id)!;
       assert.equal(row.reportType, 'handover-inspection');
       assert.deepEqual(row.checks, { ok: HANDOVER_CHECKLIST.length - 2, action: 2, na: 0, open: 0 });
+      assert.equal(row.defectCount, 2, 'the review dialog counts the issues approving will confirm');
     });
 
     await t.test('a correction points each action at the issue it raised, so resending adds a sighting, not a second issue', async () => {

@@ -19,6 +19,7 @@ const root=mkdtempSync(join(tmpdir(),'relay-handover-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,getRecord,records,database}=require('../apps/web/.test-build/lib/storage.js');
 const {HANDOVER_CHECKLIST}=require('../apps/web/.test-build/lib/reportTypes.js');
+const {correctReport,saveDraft,submitReport}=require('../apps/web/.test-build/lib/serverStore.js');
 const engineer={id:'entra:handover-engineer',oid:'handover-engineer',name:'Hal Handover',email:'hal@example.test',role:'Engineer',trade:'Electrical'};
 const manager={id:'entra:handover-manager',oid:'handover-manager',name:'Morgan Office',email:'morgan@example.test',role:'Manager'};
 const sessions={};
@@ -187,6 +188,23 @@ try {
     await page.goto(`${base}/office#/projects/proj-011lme/issue/${issue.id}`);
     await page.getByText('Tray lid missing over the desks').first().waitFor();checks++;
     assert.deepEqual(errors,[],`office ${scheme}: page errors`);
+    await context.close();
+  }
+  // 11. A sent correction raises nothing new: the office sheet still links each action's issue.
+  const correction=correctReport(sent.id,'Wrong owner').value;
+  const resaved=saveDraft(correction.id,{...correction,draftSignature:{name:engineer.name,dataUrl:'data:image/png;base64,iVBORw0KGgo='}},correction.version).value;
+  const rev2=await submitReport(correction.id,{name:engineer.name,dataUrl:'data:image/png;base64,iVBORw0KGgo='},resaved.version);
+  ok(rev2.ok,`rev 2 sent: ${rev2.reason??''}`);
+  eq(records('issues','proj-011lme').filter(i=>i.raisedByReport===correction.id).length,0,'the correction raises no new issue');
+  {
+    const context=await contextFor(manager,'light',1440,900);
+    const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+    await page.goto(`${base}/office#/projects/proj-011lme/report/${correction.id}`);
+    await page.getByText('Pre-Handover Inspection').first().waitFor();checks++;
+    const short=issue.reference.split('-').slice(-2).join('-');
+    ok(await page.locator('.rmenu a.ref').filter({hasText:short}).first().isVisible(),`office rev 2: the action still links its issue ${short}`);
+    eq(await page.locator('.rmenu').getByText('no issue').count(),0,'office rev 2: no action reads "no issue"');
+    assert.deepEqual(errors,[],'office rev 2: page errors');
     await context.close();
   }
   console.log(`Handover inspection check passed (${checks} checks): started from home, answered, Where required, signed, sent, an issue raised, and read back at 390px light and 1440px dark.`);

@@ -45,7 +45,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   issue), the photo library, the notification email text (still held in the
   outbox). Weekly summary, My week, since your last visit, search and
   unfinished reports read the type's name already and needed no change.
-- Verified on Node 24: `npm run typecheck`, `npm test` (6 new tests in
+- Verified on Node 24: `npm run typecheck`, `npm test` (7 new tests in
   `tests/handoverInspection.test.ts`), `npm run build`. New
   `scripts/verify-handover-inspection.mjs` passed (99 checks, 390px light and
   1440px dark): start from home beside the other two tiles, Where hidden until
@@ -54,10 +54,25 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   what, action, owner and photograph, no variation, sent view, site diary card
   naming its issue, the office sheet linking the issue, the issue page.
   Browser checks re-run: see the PR.
+- Offline capture (#41, merged in): a held handover inspection is named as one
+  on the offline page, and an action there asks Where too (cleared when the
+  answer moves off Action needed, as in the editor). New
+  `scripts/verify-handover-offline.mjs` passed (14 checks, 390px light and
+  1440px dark): held copy named, Where only for an action, sent up by itself
+  when signal returns with Where on the server. Starting an inspection offline
+  is not built: the offline page starts site updates only.
+- A fresh-context review found three gaps, all fixed: the report summary's
+  `defectCount` left out a handover inspection's actions, so the office review
+  dialog did not say approving confirms its issues (now counted, with a test);
+  the office sheet of a sent correction showed "no issue" beside each action
+  (it now falls back to the issue the action is linked to, checked in the
+  browser script); the offline page could not show or enter Where.
+  After the fixes, also passed: `verify-offline-capture`, `verify-offline-drafts`,
+  `verify-review-queue`, `verify-office-actions`, `verify-safety-actions`,
+  `verify-report-types`, `verify-site-diary`, `verify-engineer-layout`,
+  `verify-unfinished-reports`; `verify-handover-inspection` now 104 checks.
 - Not verified: a physical phone, the PDF rendered by the worker after sending
-  (the draft PDF uses the same renderer), SharePoint mode (no live tenant), and
-  starting a handover inspection offline (the offline page starts site updates
-  only; see the PR for how it reads a held one).
+  (the draft PDF uses the same renderer), SharePoint mode (no live tenant).
 - Proposed next (not built): an area field on the inspection itself (one
   place for the whole walk, prefilled into each action); a third type such as
   a commissioning record with readings; let the office edit checklists; add
