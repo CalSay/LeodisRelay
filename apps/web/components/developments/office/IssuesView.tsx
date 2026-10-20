@@ -4,7 +4,7 @@ import type { Issue } from '@/lib/types';
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Btn, BtnQ, ConfirmTag, WorkTag } from './bits';
-import { daysLate, fmtDay, isActive, isOverdue, isVerify, shortRef } from './model';
+import { daysLate, fmtDay, isActive, isOverdue, shortRef } from './model';
 import type { SortDirection } from '@/lib/tableSorting';
 import { issueRegister } from '@/lib/api';
 import { VERIFICATION, VERIFICATION_LABEL, type IssuePage, type IssueSort, type IssueView, type Verification } from '@/lib/issueQuery';
@@ -77,12 +77,14 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const name = (id: string) => ctx.projects.find(p => p.id === id)?.projectName ?? id;
   const code = (id: string) => ctx.projects.find(p => p.id === id)?.id ?? '';
   const source = (i: Issue) => { const r = i.raisedByReport ? snap?.reports.find(x => x.id === i.raisedByReport) : undefined; return r ? shortRef(r.reference) : i.source === 'individual' ? 'Flagged on site' : '—'; };
-  // The snag list takes one exact company, so it is passed on only when the text names one.
-  const owner = result.owners.find(o => o.toLowerCase() === company.toLowerCase());
+  // The snag list takes one company, so it is passed on only when the text names one (ignoring case and spacing).
+  const same = (a: string) => a.trim().replace(/\s+/g, ' ').toLowerCase();
+  const owner = company ? result.owners.find(o => same(o) === same(company)) : undefined;
   // The snag list opens on the project, company and trade chosen here, and comes back to this register.
   const snagHref = `/issues/snag-list?${new URLSearchParams({ ...(project ? { project } : {}), ...(owner ? { owner } : {}), ...(trade ? { trade } : {}), returnTo: '/office#/issues' })}`;
   const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
-  const oldestToVerify = snap?.issues.filter(i => isVerify(i) && (!project || i.projectId === project) && !closureMine(i)).sort((a, b) => a.raisedAt.localeCompare(b.raisedAt))[0];
+  // Within this search, so the button never opens an issue the register is not showing.
+  const oldestToVerify = result.oldestToVerify;
   const narrowed = !!(project || trade || location || company || verification);
   const first = (result.page - 1) * result.pageSize + 1, last = first + shown.length - 1;
   const clear = () => { setProject(''); setTrade(''); setLocationText(''); setCompanyText(''); setVerification(''); };

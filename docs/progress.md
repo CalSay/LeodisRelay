@@ -19,8 +19,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the office records reload, so a verify or assign shows at once.
 - Decisions: company and location match words as typed rather than against
   a list (FE-1c and EXP-4 keep catalogues out). Company replaces the old
-  exact Owner drop-down; the snag list link still carries the company when
-  the text names one exactly. A withdrawn issue has no verification status,
+  exact Owner drop-down; the snag list link carries the company when the
+  text names one, and the snag list now treats owners that differ only in
+  case or spacing as one company. "Not reviewed" counts only projects that
+  use review, as the office position does, and "Verify the oldest" picks
+  from the current search. A withdrawn issue has no verification status,
   so it only shows with no verification filter. The rest of the office desk
   (position, counts in the tabs) still uses its loaded snapshot; only the
   register pages. The engineer Issues view is unchanged.
@@ -29,8 +32,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   returns one page. Other callers of `/api/issues` are unchanged. The
   office model now reuses the register's overdue, disputed and not-reviewed
   rules.
-- Verified on Node 24: `npm run typecheck`, `npm test` (8 new tests in
-  `tests/issueQuery.test.ts`, one in SharePoint read mode with the issue
+- Verified on Node 24: `npm run typecheck`, `npm test` (10 new tests in
+  `tests/issueQuery.test.ts` and one in `snagList.test.ts`, one in SharePoint read mode with the issue
   list split over two Graph pages, checking every item on both is reachable
   through the register's pages and out-of-scope projects are left out),
   `npm run build`. New `scripts/verify-issue-register.mjs` passed (70 checks:

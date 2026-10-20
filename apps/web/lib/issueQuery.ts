@@ -57,6 +57,8 @@ export interface IssuePage {
   counts: Record<IssueView, number>;
   /** Every company or person named as an owner in the register, for suggestions. */
   owners: string[];
+  /** The longest-waiting closure in this search that this person may verify. */
+  oldestToVerify?: Issue | undefined;
 }
 
 const pick = <T extends string>(values: readonly T[], value: string | null): T | undefined =>
@@ -119,11 +121,22 @@ export function matchesWords(field: string, search: string | undefined): boolean
 /** The trade the issue is for: the affected trade, or the reporter's where none was named. */
 const tradeOf = (i: Issue): string | undefined => i.affectedTrade ?? i.reporterTrade;
 
-export function queryIssues(all: readonly Issue[], q: IssueQuery, context: { day: string; projectName?: (projectId: string) => string }): IssuePage {
+export interface QueryContext {
+  day: string;
+  projectName?: (projectId: string) => string;
+  /** Whether the project uses report review; "not reviewed" means nothing where it does not. All do when not given. */
+  reviewOn?: (projectId: string) => boolean;
+  /** Closures this person put forward, which they cannot verify. */
+  mine?: (issue: Issue) => boolean;
+}
+
+export function queryIssues(all: readonly Issue[], q: IssueQuery, context: QueryContext): IssuePage {
   const { day } = context;
+  const reviewOn = context.reviewOn ?? (() => true);
   const views: Record<IssueView, (i: Issue) => boolean> = {
     open: isActiveIssue, overdue: i => isOverdueIssue(i, day), verify: isVerify, unassigned: isUnassigned,
-    notReviewed: isNotReviewedIssue, disputed: isDisputedIssue, closed: i => !isActiveIssue(i), all: () => true,
+    // Issues stay provisional where nobody reviews reports, so only projects using review count.
+    notReviewed: i => isNotReviewedIssue(i) && reviewOn(i.projectId), disputed: isDisputedIssue, closed: i => !isActiveIssue(i), all: () => true,
   };
   const scoped = all.filter(i => (!q.projectId || i.projectId === q.projectId)
     && (!q.trade || tradeOf(i) === q.trade)
@@ -146,5 +159,7 @@ export function queryIssues(all: readonly Issue[], q: IssueQuery, context: { day
   const page = Math.min(q.page, pages);
   // One suggestion per company, however its case was typed; the first spelling seen is kept.
   const owners = [...new Map(all.map(i => i.owner.trim().replace(/\s+/g, ' ')).filter(Boolean).reverse().map(o => [o.toLowerCase(), o] as const)).values()].sort((a, b) => a.localeCompare(b));
-  return { issues: ordered.slice((page - 1) * q.pageSize, page * q.pageSize), total: ordered.length, page, pageSize: q.pageSize, pages, counts, owners };
+  const mine = context.mine ?? (() => false);
+  const oldestToVerify = scoped.filter(i => isVerify(i) && !mine(i)).sort((a, b) => a.raisedAt.localeCompare(b.raisedAt) || a.reference.localeCompare(b.reference))[0];
+  return { oldestToVerify, issues: ordered.slice((page - 1) * q.pageSize, page * q.pageSize), total: ordered.length, page, pageSize: q.pageSize, pages, counts, owners };
 }

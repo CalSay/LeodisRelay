@@ -20,7 +20,7 @@ export interface Snapshot { reports: ReportSummary[]; drafts: ReportSummary[]; i
 export const today = (): string => new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
 
 export const isActive = isActiveIssue;
-// The register's rules, shared with the server query so the desk and the register count alike.
+// The register's rules, shared with the server query. Where review is off, projectStats leaves "not reviewed" empty, as the register does.
 export const isOverdue = isOverdueIssue;
 export const isNotReviewed = isNotReviewedIssue;
 export const isDisputed = isDisputedIssue;

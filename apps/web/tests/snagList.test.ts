@@ -23,6 +23,12 @@ test('narrows to one company and one trade, reading the reporter trade when the 
   assert.deepEqual(ids(' Sparks Ltd ', 'HVAC'), ['1', '3']);
 });
 
+test('a company typed with different case or spacing is the same company', () => {
+  const all = [issue('1'), issue('2', { owner: 'sparks  ltd' }), issue('3', { owner: 'Sparks Ltd (North)' })];
+  const ids = snagList(all, { projectId: 'p1', owner: 'SPARKS LTD' }, DAY).groups.flatMap(g => g.rows.map(r => r.issue.id)).sort();
+  assert.deepEqual(ids, ['1', '2']);
+});
+
 test('groups free-text locations as written, ignoring only case and spacing, with no location last', () => {
   const list = snagList([issue('1', { location: 'Plant room' }), issue('2', { location: ' plant  room' }), issue('3', { location: '' }), issue('4', { location: 'Corridor' })], { projectId: 'p1' }, DAY);
   assert.deepEqual(list.groups.map(g => [g.location, g.rows.length]), [['Corridor', 1], ['Plant room', 2], [NO_LOCATION, 1]]);

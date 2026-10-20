@@ -64,6 +64,24 @@ test('counts for each chip follow the other filters; trade falls back to the rep
   assert.deepEqual(r.owners, ['Acme Electrical Ltd', 'Pipeworks (North) Ltd']);
 });
 
+test('"not reviewed" counts only projects that use review', () => {
+  const both = [issue({ id: 'a', confirmation: 'provisional' }), issue({ id: 'b', projectId: 'p2', confirmation: 'provisional' })];
+  const r = queryIssues(both, query({ view: 'notReviewed' }), { day, reviewOn: id => id === 'p1' });
+  assert.deepEqual([r.counts.notReviewed, ...ids(r)], [1, 'a']);
+});
+
+test('the oldest closure to verify follows the search and skips my own', () => {
+  const waiting = [
+    issue({ id: 'old', work: 'awaiting_verification', raisedAt: '2026-09-01T10:00:00Z', owner: 'Pipeworks Ltd', closureSubmittedById: 'me' }),
+    issue({ id: 'mid', work: 'awaiting_verification', raisedAt: '2026-09-05T10:00:00Z', owner: 'Pipeworks Ltd' }),
+    issue({ id: 'acme', work: 'awaiting_verification', raisedAt: '2026-09-02T10:00:00Z', owner: 'Acme Electrical Ltd' }),
+  ];
+  const mine = (i: Issue) => i.closureSubmittedById === 'me';
+  assert.equal(queryIssues(waiting, query({ company: 'pipeworks' }), { day, mine }).oldestToVerify?.id, 'mid');
+  assert.equal(queryIssues(waiting, query(), { day, mine }).oldestToVerify?.id, 'acme');
+  assert.equal(queryIssues(waiting, query({ location: 'roof' }), { day, mine }).oldestToVerify, undefined);
+});
+
 test('pages cover the whole register once, in a stable order, and a page past the end shows the last', () => {
   const many = Array.from({ length: 123 }, (_, n) => issue({ id: `i${n}`, reference: `011LME-ISS-${String(n + 1).padStart(3, '0')}`, location: n % 2 ? 'Riser' : 'Corridor',
     targetDate: n % 3 ? '' : '2026-11-01', raisedAt: `2026-09-${String(1 + (n % 28)).padStart(2, '0')}T10:00:00Z` }));
