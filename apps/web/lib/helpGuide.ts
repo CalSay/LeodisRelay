@@ -29,6 +29,8 @@ export interface WhatsNew {
 export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'home-sheet-tidy', added: '2026-10-20', audience: 'all', title: 'A tidier home screen and project sheet',
     text: 'The pages about a project are now in two groups, Issues and safety, and Reports and records, with the ones used most first. On your home screen My week and Help sit together at the foot. In the office the project sheet keeps them in one box under its figures, and on a phone they now show above the project\'s register, where before they could not be reached.' },
+  { id: 'editor-easier-to-read', added: '2026-10-20', audience: 'site', title: 'Report screen easier to read and to tap',
+    text: 'On the report screen and the no-signal page, buttons and suggestions are at least a fingertip tall, the gold "Send to office" button stays readable under a mouse, and Access tags are darker. With a keyboard or screen reader, "Next check" and "Check & send" now take you to what opens, each group of choices says what it is for, and the signature box says whether it is signed.' },
   { id: 'issue-trend', added: '2026-10-20', audience: 'all', title: 'Issues over time',
     text: 'See whether a project\'s issue list is getting shorter: for the last 12 weeks, how many issues were raised and closed each week and how many were still open, and past target, at the end of it. Opens from "This project" on your home screen and from the office project sheet.',
     link: { label: 'Open Issues over time', href: '/issue-trend' } },

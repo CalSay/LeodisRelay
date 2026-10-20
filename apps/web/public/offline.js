@@ -231,11 +231,11 @@
   };
   function card(observation, index, fixed, raises, hint) {
     const section = element('section', '', editor, 'card');
-    section.setAttribute('aria-label', `Card ${index + 1}`);
+    section.setAttribute('aria-labelledby', `card-title-${index}`);
     const head = element('div', '', section, 'cardhead');
     element('span', kindName(observation.type), head, `kind ${observation.type}`);
     const check = observation.check;
-    element('h3', check ? `${check.question}${observation.location ? ` · ${observation.location}` : ''}` : observation.location || `Card ${index + 1}`, head);
+    element('h3', check ? `${check.question}${observation.location ? ` · ${observation.location}` : ''}` : observation.location || `Card ${index + 1}`, head).id = `card-title-${index}`;
     element('span', tagFor(selected), head, 'where');
     if (check && hint) element('p', hint, section, 'qhint');
     if (check) {
@@ -335,7 +335,7 @@
     const prompt = element('span', 'Sign here', wrap, 'sighint');
     const acts = element('div', '', form, 'cardacts');
     const go = element('button', 'Sign it. Send when there is signal', acts, 'primary'); go.type = 'button';
-    const clear = element('button', 'Clear', acts, 'quiet'); clear.type = 'button';
+    const clear = element('button', 'Clear', acts, 'quiet'); clear.type = 'button'; clear.setAttribute('aria-label', 'Clear signature');
     element('p', 'Signing locks it on this phone. It goes to the office by itself the next time RELAY opens with signal, only if nothing has changed since you signed. To change anything, take your signature back first.', form, 'hint');
     const paint = () => {
       const ratio = Math.min(2, window.devicePixelRatio || 1), box = canvas.getBoundingClientRect();
@@ -461,7 +461,8 @@
     if (dirty || blocked) { fail(new Error('Export your unsaved changes before switching reports.')); return; }
     error.textContent = ''; selected = structuredClone(draft); strokes = []; signer = draft.signed?.name || person?.name || ''; render(); void list();
     status.textContent = `Saved on this phone${draft.heldAt ? ` ${when(draft.heldAt)}` : ''}. Not on the server yet.`;
-    $('editor-title')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    // Focus follows the report just opened, so a keyboard or screen reader starts there too.
+    const title = $('editor-title'); if (title) { title.tabIndex = -1; title.focus({ preventScroll: true }); title.scrollIntoView({ block: 'start', behavior: 'smooth' }); }
   }
   async function list() {
     const drafts = await allDrafts();
