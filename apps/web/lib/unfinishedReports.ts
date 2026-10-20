@@ -1,8 +1,9 @@
 import type { Observation, Report, ReportSummary } from './types';
+import type { StartedOffline } from './offlineStart';
 import { reportTypeOf } from './reportTypes';
 
 /** What the home screen needs from a copy held on this device (see localDraft.ts). */
-export interface HeldCopy { reportId: string; heldAt: string; observations: Observation[]; report?: Report }
+export interface HeldCopy { reportId: string; heldAt: string; observations: Observation[]; report?: Report; started?: StartedOffline; problem?: string }
 
 export interface UnfinishedReport {
   id: string;
@@ -22,6 +23,10 @@ export interface UnfinishedReport {
   changedAt?: string;
   /** `unsent`: edits on this device are newer than the server copy. `only`: the server could not be asked. */
   device?: 'unsent' | 'only';
+  /** Started on this phone with no connection and not yet on the server: it has no reference, and opens on the offline page. */
+  started?: boolean;
+  /** Why the server refused it, if it did. */
+  problem?: string | undefined;
 }
 
 /**
@@ -57,6 +62,14 @@ export function unfinishedReports(
     if (!r || !deviceOnly.has(h.reportId) || rows.some(row => row.id === h.reportId) || r.state !== 'draft' || !name.has(r.projectId)) continue;
     rows.push({ id:r.id, projectId:r.projectId, projectName:name.get(r.projectId)!, reference:r.reference, visitDate:r.visitDate,
       cards:h.observations.length, correction:!!r.corrects, savedAt:r.lastSavedAt, changedAt:h.heldAt, device:'only', ...kind(r) });
+  }
+  // Started offline and not yet started on the server (it goes up by itself
+  // when RELAY opens with signal, so this shows only while that is pending or refused).
+  for (const h of held) {
+    const s = h.started;
+    if (!s || !name.has(s.projectId)) continue;
+    rows.push({ id:h.reportId, projectId:s.projectId, projectName:name.get(s.projectId)!, reference:'', visitDate:s.visitDate,
+      cards:h.observations.length, correction:false, typeName:'Site update', checklist:false, changedAt:h.heldAt, device:'only', started:true, problem:h.problem });
   }
   const latest = (r: UnfinishedReport) => [r.changedAt ?? '', r.savedAt ?? ''].sort().at(-1)!;
   return rows.sort((a, b) => latest(b).localeCompare(latest(a)) || a.id.localeCompare(b.id));

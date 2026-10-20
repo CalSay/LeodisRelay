@@ -63,6 +63,84 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   a commissioning record with readings; let the office edit checklists; add
   `verify-handover-inspection.mjs` to the browser checks in `CLAUDE.md`.
 
+## 2026-10-20 — FE-3e: offline capture, first slice
+
+- Before: with no signal, RELAY opened a recovery page that could only edit
+  the words of reports already held on the phone, and only in a tab that had
+  been signed in during the same session. A cold start (opening the app from
+  the home screen with no signal) showed nothing, and no report could be
+  started and no photo taken.
+- Now the offline page (`public/offline.html`, kept by the service worker,
+  cache now `relay-public-v5`) opens on a cold start for the person last
+  signed in on the phone. It can start a site update on any project they
+  could report on when last online, with a visit date (today by default, up
+  to 30 days back); add, change and remove cards of every kind; take and
+  remove photos (kept on the phone with thumbnails, as the editor does); and
+  change reports already held, including photos on an inspection's checks.
+  Every card and report says "Only on this phone". The page checks for the
+  server every 20 seconds and says "Signal back" with an "Open RELAY" button.
+- Once RELAY opens with signal (any page except a report's own editor), held
+  work goes up by itself (`lib/heldSend.ts`, `components/HeldWork.tsx`):
+  each report started offline is started on the server, then its cards and
+  photos are saved, as are changes made on the offline page. A note says what
+  went up ("2 reports from this phone are now on the server. They stay drafts
+  until you sign and send."). Nothing is ever sent to the office from here.
+  A report started offline and not yet on the server is listed under
+  Unfinished reports as "New site update · project", "Only on this phone".
+- Server: `POST /api/reports` takes an optional client key and visit date
+  (both or neither). The key makes the start idempotent per person: a retry
+  after a lost answer returns the same report, never a second one, even if the
+  project has closed since. The visit date must be a real day, not after
+  tomorrow (time zones) and not more than 30 days back.
+- Decisions (Cal asked Claude to decide scope): this slice covers site
+  updates, the report engineers write most and the one that needs free cards
+  and photos on site. Starting a safety inspection offline is left for the
+  next slice. The phone keeps the signed-in person's name and id and their
+  projects' numbers and names in local storage so a cold start works; no
+  credentials, report data or pages are cached, and signing out removes them.
+  A shared phone that is not signed out shows the last person's held work,
+  which was already on the device. Work typed on the offline page goes up by
+  itself because no editor holds it; work an editor holds is still saved by
+  that editor. An editor opened on a report still queued to go up takes it
+  over; one opened while that report's own save is in flight waits for it
+  only, saying "Putting the work from this phone onto the
+  server first…", before reading the server or the phone (found in review: it
+  could otherwise open on a copy half-way up and then be told the draft
+  changed elsewhere). A save refused because the draft
+  changed elsewhere is never forced: the copy stays on the phone and the note
+  links to the report, whose editor already shows both versions to choose
+  from (FE-3c). A start the server refuses is kept and tried again later, and
+  each refusal is named once. Fields asked only by the full editor (trade,
+  variation reason and the like) are filled there; they were never required.
+- Deleting a report started offline also deletes its photos from the phone
+  (found in review: the page said it was deleted from the phone).
+- Verified on Node 24: `npm run typecheck`, `npm test` (5 new tests in
+  `tests/offlineStart.test.ts`: visit date rules, what goes up by itself, the
+  wording, the home screen row, and an idempotent start against the real
+  store, per person), `npm run build`. New `scripts/verify-offline-capture.mjs`
+  passed (53 checks, server stopped to stand in for no signal): at 390px light
+  and 1440px dark, the person and projects left on the phone, a cold start in a
+  fresh page showing the offline page, starting a report, a defect card with a
+  photo, a card added and removed, a held draft changed with a new photo, all
+  surviving a reload, nothing reaching the server while it was down, "Signal
+  back", then on opening RELAY one new report with today's visit date, the
+  card and photo, the held draft's change and photo on the server, the new
+  reference under Unfinished reports, nothing left on the phone, nothing sent
+  or announced twice; a draft changed on another device left on the phone with
+  its editor offering the choice and the server copy untouched; signing out
+  removing the person and projects. `verify-offline-drafts` (updated for the
+  new list and the app's store version), `verify-engineer-layout`,
+  `verify-unfinished-reports`, `verify-photo-uploads`, `verify-draft-conflict`,
+  `verify-role-access`, `verify-sent-elsewhere` and `verify-report-types`
+  passed. Screenshots in the project's `ui-review/offline-capture/`.
+- Not verified: physical iOS and Android phones (FE-3e's second acceptance
+  step, so `passes` stays false), Safari's handling of the service worker and
+  camera input, Chromium's own offline mode (stopping the server stands in),
+  storage pressure on a full phone, SharePoint mode (no live tenant).
+- Next (proposed, not built): start a safety inspection offline; show
+  "Only on this phone" reports on the offline page grouped by project;
+  add `verify-offline-capture.mjs` to the browser checks list in `CLAUDE.md`.
+
 ## 2026-10-20 — Navigation and consistency pass
 
 - Why: a dozen pages landed today, each from its own thread, and each named
