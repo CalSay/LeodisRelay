@@ -4,6 +4,39 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — FE-4b: action-focused office position
+
+- The office position now opens with the four groups a project manager acts
+  on, each with its count and its oldest or newest rows: New reports, Not yet
+  read, Unassigned issues and Ready to verify. Rows carry the action
+  (Acknowledge, Assign, Verify) and open the record; "Open the list" or "Show
+  all" opens the Inbox or Issues on the matching filter. The Inbox has a new
+  "New" filter.
+- Decision, "new": received on the previous working day or since, in London
+  time, so Monday morning still shows Friday's and the weekend's reports. A
+  read report stays new; "Not yet read" is the separate group for
+  acknowledgement, so the two facts are not merged. Bank holidays are not
+  known (no calendar in RELAY).
+- Decision, layout: a two-by-two grid above the existing tiles, because four
+  columns at 1440px cut off titles. The "Ready to verify" tile is gone (it is
+  a group now) and the "Needs attention" list below, renamed "Also needs
+  attention", leaves out verification and unassigned issues so nothing shows
+  twice. Project sheets are unchanged: the group links open portfolio-wide
+  lists, so a per-project copy would show counts the links do not match.
+- Rules in `lib/officeActions.ts`; the office model reuses its predicates.
+  Filter links use `#/inbox/show/<filter>` and `#/issues/show/<filter>`;
+  opening a report from a filtered Inbox keeps the filter.
+- Verified on Node 24: `npm run typecheck`, `npm test` (web suite 76 tests,
+  four new in `tests/officeActions.test.ts`), `npm run build`. New
+  `scripts/verify-office-actions.mjs` passed (41 checks: four groups in order
+  with counts 2, 2, 1, 1 at 1440px and 1200px, light and dark, no sideways
+  scroll; each group opens its filter; acknowledging takes a report out of
+  Not yet read and leaves it new). `verify-office-landing` (19),
+  `verify-role-access` (61) and `verify-review-queue` (12) passed.
+- Not verified: a physical device; the phone layout opens on the project
+  list as before, so the groups are a desk feature.
+- Next: FE-3b (pending uploads) once the report editor PR has merged.
+
 ## 2026-10-20 — UI-1: office desk opens on the office position
 
 - The office desk no longer opens on an empty "Select a project…" register

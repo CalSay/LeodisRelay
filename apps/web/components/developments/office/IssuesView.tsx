@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { Issue } from '@/lib/types';
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
@@ -19,7 +19,10 @@ function SortHead({ label, column, sort, change }: { label: string; column: Sort
 
 /** The issue register across projects. Actions live on each row; the sheet opens in its project. */
 export function IssuesView({ ctx }: { ctx: Ctx }) {
-  const [chosen, setFilter] = useState<Filter>('open');
+  // #/issues/show/<filter> opens on that filter, from the office position's groups.
+  const linked = ctx.route.a === 'show' ? FILTERS.find(([k]) => k === ctx.route.b)?.[0] : undefined;
+  const [chosen, setFilter] = useState<Filter>(linked ?? 'open');
+  useEffect(() => { if (linked) setFilter(linked); }, [linked]);
   const [project, setProject] = useState('');
   const [trade, setTrade] = useState('');
   const [owner, setOwner] = useState('');

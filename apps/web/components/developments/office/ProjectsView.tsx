@@ -1,11 +1,12 @@
 'use client';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { PhotoImage } from '@/components/PhotoImage';
 import { getReport, getVariation } from '@/lib/api';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { acknowledgementStatus, deliveryStatus, reviewStatus } from '@/lib/status';
 import { projectStatusGroups } from '@/lib/projectGroups';
+import { officeActions, sinceWords } from '@/lib/officeActions';
 import { withViewReturn } from '@/lib/viewNavigation';
 import type { Issue, Report, ReportSummary, Variation } from '@/lib/types';
 import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, variationValue } from '@/lib/variations';
@@ -132,35 +133,62 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const snap = ctx.snap!;
   const week = Date.now() - 7 * 86400000;
   const thisWeek = snap.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week);
-  const overdue = ctx.stats.flatMap(s => s.overdue), verify = ctx.stats.flatMap(s => s.verify), notNotified = ctx.stats.flatMap(s => s.notNotified);
+  const overdue = ctx.stats.flatMap(s => s.overdue), notNotified = ctx.stats.flatMap(s => s.notNotified);
   const pendingVariations = ctx.stats.flatMap(s => s.pendingVariations), exposed = ctx.stats.flatMap(s => s.exposedVariations);
   const latest = snap.reports.slice(0, 6);
   const openIssues = snap.issues.filter(isActive).length;
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h4>Office position</h4><div className="rowsub">{ctx.projects.length} reportable project{ctx.projects.length === 1 ? '' : 's'} · {snap.reports.length} report{snap.reports.length === 1 ? '' : 's'} received · {openIssues} open issue{openIssues === 1 ? '' : 's'} · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
       <div className="actions"><a className="btn btn-q btn-sm" href="#/inbox">Inbox</a><a className="btn btn-q btn-sm" href="#/variations">Variations</a><a className="btn btn-sm" href="#/issues">Issues</a></div></div>
-    <dl className="tb"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{notNotified.length ? `${notNotified.length} PM notification${notNotified.length === 1 ? '' : 's'} pending` : 'project managers notified'}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Ready to verify</dt><dd className={`big ${verify.length ? 'soon' : ''}`}>{verify.length}<small>{verify.length ? 'closure submitted, needs a second pair of eyes' : 'nothing awaiting verification'}</small></dd></div><div><dt>Variations pending</dt><dd className={`big ${exposed.length ? 'late' : pendingVariations.length ? 'soon' : ''}`}>{pendingVariations.length}<small>{exposed.length ? `${exposed.length} done without an instruction` : pendingVariations.some(v => v.quotedValue === undefined) ? `${pendingVariations.filter(v => v.quotedValue === undefined).length} still to price` : 'all priced, awaiting the client'}</small></dd></div></dl>
-    <SecH right={<a href="#/issues">All →</a>}>Needs attention</SecH>
-    <AttentionList ctx={ctx} limit={6} />
+    <OfficeActionGroups ctx={ctx} />
+    <dl className="tb three"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{notNotified.length ? `${notNotified.length} PM notification${notNotified.length === 1 ? '' : 's'} pending` : 'project managers notified'}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Variations pending</dt><dd className={`big ${exposed.length ? 'late' : pendingVariations.length ? 'soon' : ''}`}>{pendingVariations.length}<small>{exposed.length ? `${exposed.length} done without an instruction` : pendingVariations.some(v => v.quotedValue === undefined) ? `${pendingVariations.filter(v => v.quotedValue === undefined).length} still to price` : 'all priced, awaiting the client'}</small></dd></div></dl>
+    <SecH right={<a href="#/issues">All →</a>}>Also needs attention</SecH>
+    <AttentionList ctx={ctx} limit={6} skipActions />
     <SecH right={<a href="#/inbox">All {snap.reports.length} →</a>}>Latest reports</SecH>
     <LatestReports ctx={ctx} reports={latest} showProject />
     <p className="rowsub" style={{ marginTop: 16 }}>A report is <b>received</b> when the server has it and on file from then on. The email to the project manager is a notification that it came in, and <b>read</b> means someone in the office acknowledged it. Select a project on the left to drill in.</p>
   </div>;
 }
 
-function AttentionList({ ctx, s, limit }: { ctx: Ctx; s?: ProjectStats; limit: number }) {
+function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectStats; limit: number; skipActions?: boolean }) {
   const items = (s ? [s] : ctx.stats).flatMap(st => [
     ...st.failed.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Report could not be processed', sub: `${st.project.projectName} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${st.code}/report/${r.id}` })),
     ...st.pendingReview.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Awaiting review', sub: `${st.project.projectName} · ${r.author}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${st.code}/report/${r.id}` })),
     ...st.overdue.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · ${i.owner || 'unassigned'} · target ${i.targetDate}`, tag: { label: `${daysLate(i.targetDate, ctx.day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
     ...st.exposedVariations.map(v => ({ key: v.id, ref: shortRef(v.reference), b: v.description, sub: `${st.project.projectName} · work done, no written instruction`, tag: { label: 'Not instructed', cls: 'tag-alert' }, go: `#/projects/${st.code}/variation/${v.id}` })),
     ...st.disputed.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · disputed at review`, tag: { label: 'Triage', cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
-    ...st.verify.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · closure by ${i.closureSubmittedBy ?? 'unknown'}`, tag: { label: 'Verify', cls: 'tag-caution' }, go: `#/projects/${st.code}/issue/${i.id}` })),
-    ...st.unassigned.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · nobody owns it · raised ${fmtDay(i.raisedAt)}`, tag: { label: 'Unassigned', cls: 'tag-caution' }, go: `#/projects/${st.code}/issue/${i.id}` })),
+    // The office position lists verification and unassigned issues in their own groups above.
+    ...(skipActions ? [] : st.verify).map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · closure by ${i.closureSubmittedBy ?? 'unknown'}`, tag: { label: 'Verify', cls: 'tag-caution' }, go: `#/projects/${st.code}/issue/${i.id}` })),
+    ...(skipActions ? [] : st.unassigned).map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · nobody owns it · raised ${fmtDay(i.raisedAt)}`, tag: { label: 'Unassigned', cls: 'tag-caution' }, go: `#/projects/${st.code}/issue/${i.id}` })),
     ...st.unpricedVariations.filter(v => !v.workDone).map(v => ({ key: v.id, ref: shortRef(v.reference), b: v.description, sub: `${st.project.projectName} · variation, no quote yet · raised ${fmtDay(v.raisedAt)}`, tag: { label: 'Needs a quote', cls: 'tag-caution' }, go: `#/projects/${st.code}/variation/${v.id}` })),
   ]);
   const shown = [...new Map(items.map(i => [i.key, i])).values()].slice(0, limit);
   return <div className="rmenu">{shown.length ? shown.map(i => <a key={i.key} href={i.go}><span className="ref">{i.ref}</span><div className="rt"><b>{i.b}</b><span>{i.sub}</span></div><Tag {...i.tag} /></a>) : <div className="empty" style={{ padding: 14 }}>Nothing needs attention.</div>}</div>;
+}
+
+/** New, not yet read, unassigned and to verify: what a project manager acts on, each with its count. */
+function OfficeActionGroups({ ctx }: { ctx: Ctx }) {
+  const a = officeActions(ctx.stats.flatMap(s => s.reports), ctx.stats.flatMap(s => s.issues), ctx.day);
+  const project = (id: string) => ctx.statOf(id)?.project.projectName ?? id;
+  const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
+  const reportRow = (r: ReportSummary, action?: ReactNode) => <div key={r.id}><a className="rt" href={`#/projects/${r.projectId}/report/${r.id}`}><b>{project(r.projectId)} · {r.author}</b><span>{shortRef(r.reference)} · received {fmtWhen(r.serverAcknowledgedAt)}</span></a>{action}</div>;
+  const issueRow = (i: Issue, sub: string, action?: ReactNode) => <div key={i.id}><a className="rt" href={`#/projects/${i.projectId}/issue/${i.id}`}><b>{i.description}</b><span>{project(i.projectId)} · {sub}</span></a>{action}</div>;
+  const groups: { key: string; title: string; sub: string; n: number; tone: string; all: string; empty: string; rows: ReactNode[] }[] = [
+    { key: 'new', title: 'New reports', sub: `Received ${sinceWords(a.since, ctx.day)}`, n: a.newReports.length, tone: '', all: '#/inbox/show/new', empty: `No reports received ${sinceWords(a.since, ctx.day)}.`,
+      rows: a.newReports.slice(0, 4).map(r => reportRow(r, r.acknowledged ? <Tag label="Read" cls="tag-ok" /> : <DeliveryTag r={r} />)) },
+    { key: 'notAck', title: 'Not yet read', sub: 'Received, nobody has acknowledged it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: 'Every report has been read.',
+      rows: a.notRead.slice(0, 4).map(r => reportRow(r, <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'acknowledge', report: r })}>Acknowledge</BtnQ>)) },
+    { key: 'unassigned', title: 'Unassigned issues', sub: 'Open, nobody owns the action', n: a.unassigned.length, tone: 'soon', all: '#/issues/show/unassigned', empty: 'Every open issue has an owner.',
+      rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · raised ${fmtDay(i.raisedAt)}`, <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)) },
+    { key: 'verify', title: 'Ready to verify', sub: 'Closure submitted, needs a second pair of eyes', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be verified.',
+      rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · waiting ${daysSince(i.events.at(-1)?.at)} days`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i })}>Verify</Btn>)) },
+  ];
+  return <div className="acts">{groups.map(g => <section key={g.key} className="act" data-group={g.key} aria-label={`${g.title}: ${g.n}`}>
+    <div className="act-h"><h5>{g.title}</h5><b className={`act-n ${g.n ? g.tone : ''}`}>{g.n}</b></div>
+    <div className="act-sub">{g.sub}</div>
+    <div className="rmenu">{g.rows.length ? g.rows : <div className="empty">{g.empty}</div>}</div>
+    {g.n > 0 && <a className="act-all" href={g.all}>{g.n > g.rows.length ? `Show all ${g.n}` : 'Open the list'} →</a>}
+  </section>)}</div>;
 }
 
 function LatestReports({ ctx, reports, showProject }: { ctx: Ctx; reports: ReportSummary[]; showProject?: boolean }) {

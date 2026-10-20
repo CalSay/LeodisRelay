@@ -3,6 +3,9 @@ import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import type { Tone } from '@/lib/status';
 import { INSTRUCTION_LABEL } from '@/lib/variations';
 import { reviewInUse } from '@/lib/reviewQueue';
+import { isActiveIssue, isUnassigned, isVerify, notAcknowledged } from '@/lib/officeActions';
+
+export { isUnassigned, isVerify, notAcknowledged };
 
 /**
  * What the office desk derives from the records it loads. Pure functions over
@@ -15,10 +18,8 @@ export interface Snapshot { reports: ReportSummary[]; drafts: ReportSummary[]; i
 /** Today in the office's calendar, as YYYY-MM-DD, so target dates compare as strings. */
 export const today = (): string => new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
 
-export const isActive = (i: Issue): boolean => i.work !== 'closed' && i.confirmation !== 'withdrawn';
+export const isActive = isActiveIssue;
 export const isOverdue = (i: Issue, day: string): boolean => isActive(i) && /^\d{4}-\d{2}-\d{2}$/.test(i.targetDate) && i.targetDate < day;
-export const isVerify = (i: Issue): boolean => isActive(i) && i.work === 'awaiting_verification';
-export const isUnassigned = (i: Issue): boolean => isActive(i) && i.owner.trim() === '';
 export const isNotReviewed = (i: Issue): boolean => isActive(i) && i.confirmation === 'provisional';
 export const isDisputed = (i: Issue): boolean => isActive(i) && i.confirmation === 'disputed';
 export const isClosed = (i: Issue): boolean => i.work === 'closed';
@@ -33,7 +34,6 @@ export const isExposed = (v: Variation): boolean => v.instruction === 'pending' 
 export const notNotified = (r: ReportSummary): boolean => r.state === 'submitted' && (r.delivery === 'filed' || r.delivery === 'outbox' || r.issued?.transport === 'outbox' || (!!r.issued && r.issued.records.length === 0));
 /** The worker could not process it. This one does need a person. */
 export const processingFailed = (r: ReportSummary): boolean => r.state === 'submitted' && (r.sharepoint?.status === 'failed' || r.delivery === 'failed' || (r.issued?.records ?? []).some(x => x.failure));
-export const notAcknowledged = (r: ReportSummary): boolean => r.state === 'submitted' && !r.acknowledged;
 export const awaitingReview = (r: ReportSummary): boolean => r.state === 'submitted' && r.review === 'pending';
 export const returned = (r: ReportSummary): boolean => r.state === 'submitted' && r.review === 'returned';
 
