@@ -62,6 +62,16 @@ function UnfinishedTags({r}:{r:UnfinishedReport}) {
   return <><span className="tag tag-draft">Draft</span><span>{r.savedAt ? `saved ${fmtWhen(r.savedAt)}` : 'saved on server'}</span></>;
 }
 
+/** Line icons for the navigation; the label beside each one carries the meaning. */
+const navIcon = (paths: ReactNode) => <svg aria-hidden="true" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">{paths}</svg>;
+const navIcons = {
+  home: navIcon(<><path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><path d="M10 21v-6h4v6"/></>),
+  issues: navIcon(<><path d="M10.3 3.9 2.6 17.5A2 2 0 0 0 4.3 20.5h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4"/><path d="M12 17h.01"/></>),
+  reports: navIcon(<><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/></>),
+  projects: navIcon(<><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></>),
+  search: navIcon(<><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></>),
+};
+
 export function EngineerWorkspace({projects,drafts,initialProject,initialView}: {
   projects:FixtureProject[]; drafts:ReportSummary[]; initialProject?:string; initialView?:string;
 }) {
@@ -158,8 +168,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   return <main className="eng-workspace">
     {principal?.role !== 'Engineer' && <p className="eng-preview">Engineer layout preview · Signed in as {principal?.role}. Your permissions and report authorship are unchanged.</p>}
     <nav className="eng-navigation" aria-label="Site companion navigation">
-      {([['home','Site'],['issues','Issues'],['reports','Reports'],['projects','Projects']] as const).map(([key,label]) => <button key={key} type="button" aria-current={view===key?'page':undefined} onClick={()=>navigate(key)}>{label}</button>)}
-      <Link className="eng-nav-search" href={withViewReturn(`/search${projectId ? `?project=${encodeURIComponent(projectId)}` : ''}`,engineerReturn(view))}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>Search</Link>
+      {([['home','Site'],['issues','Issues'],['reports','Reports'],['projects','Projects']] as const).map(([key,label]) => <button key={key} type="button" aria-current={view===key?'page':undefined} onClick={()=>navigate(key)}>{navIcons[key]}<span className="eng-nav-label">{label}</span></button>)}
+      <Link className="eng-nav-search" href={withViewReturn(`/search${projectId ? `?project=${encodeURIComponent(projectId)}` : ''}`,engineerReturn(view))}>{navIcons.search}<span className="eng-nav-label">Search</span></Link>
     </nav>
     {!ready ? <p role="status">Loading your workspace…</p> : !project ? <div className="empty">No projects are currently open to you for reporting.</div> : <>
       {view!=='home' && view!=='projects' && <div className="eng-project-context"><div><small>CURRENT PROJECT</small><strong>{project.projectName}</strong></div></div>}
