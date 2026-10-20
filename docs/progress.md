@@ -4,6 +4,41 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — UI-2 and FE-1a: shorter report editor on the phone
+
+- The draft report is now two steps, shown as tabs under the heading:
+  "Cards" and "Check & send". The cards step holds only the cards; the
+  findings, counts, "What sending does", the signature and "Send to office"
+  are on the check step. The sticky action is "Check & send →" on the cards
+  step and "Send to office" on the check step. The check step has its own
+  history entry (`#check`), so the phone's Back returns to the cards.
+- Below 900px every card folds to one summary row: kind, location, a
+  one-line description, photo count, and why it would stop sending ("a
+  defect needs at least one photograph"). Tapping a row opens that card
+  directly under it; tapping it again or "Done with this card" folds it.
+  Wide screens keep the cards rail beside the open card. This is FE-1a.
+- On the phone the action bar steps aside while a text field or box has
+  the keyboard, so it never covers what is being typed. Drop-down lists do
+  not hide it. Tapping a finding on the check step opens the card it is
+  about.
+- Dropped the repeated "Selected: VARIATION" line under the kind buttons.
+- Decision: fold every card when a draft opens on the phone rather than
+  opening the last one, so an engineer coming back to a draft sees the whole
+  report first. A three-card draft is 960px tall at 390px, was 3,860px.
+- Not in `docs/tasks.json` as a UI task; the PR proposes UI-2 for Cal to add.
+  New `scripts/verify-report-editor.mjs` (58 checks at 390px and 1440px,
+  light and dark). `verify-engineer-layout` now opens the check step before
+  sending and uses the folded rows below 900px; `verify-signature-reload`
+  opens the draft on `#check`.
+- Verified on Node 24: `npm run typecheck`, `npm test`, `npm run build`,
+  `verify-report-editor`, `verify-engineer-layout`, `verify-signature-reload`,
+  `verify-role-access`, `verify-unfinished-reports` and `verify-search`
+  passed. Before/after screenshots at 390px in light and dark.
+- Not verified: a physical phone and its on-screen keyboard (the action bar
+  hides on focus, checked in Chromium only); iOS Safari.
+- Next: item 4 in `docs/ui-direction-2026-10-20.md` (empty states).
+  CLAUDE.md's list of browser checks should gain `verify-report-editor.mjs`.
+
 ## 2026-10-20 — UI-3: icons on the engineer navigation
 
 - Each engineer navigation entry (Site, Issues, Reports, Projects, Search) now

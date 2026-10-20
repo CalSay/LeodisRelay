@@ -211,10 +211,10 @@
         "The update can be expanded and edited again",
         "Browser check of the engineer report screen on a phone-width viewport"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Mostly built: report page 'Cards' rail shows location, kind, text and photo count (app/reports/[id]/page.tsx:462-491). Missing an explicit collapsed/completed state and a phone-width browser check."
+      "status": "done",
+      "passes": true,
+      "pr": 13,
+      "notes": "Done 2026-10-20 with UI direction item 2: below 900px every card folds to a summary row (kind, location, one-line description, photo count, and why it would stop sending); tapping a row opens that card under it, tapping again or Done with this card folds it. Wide screens keep the rail. scripts/verify-report-editor.mjs checks it at 390px and 1440px in light and dark."
     },
     {
       "id": "FE-5b",
