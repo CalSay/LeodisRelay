@@ -4,6 +4,67 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — UI-1: office desk opens on the office position
+
+- The office desk no longer opens on an empty "Select a project…" register
+  column. With no project chosen it shows two columns: the project list and
+  the office position, which now takes the rest of the width (about 1,190px
+  at 1440px, was 790px). Choosing a project brings the register back as
+  before. The details column heading reads "Overview" until a project is
+  chosen.
+- Decision: show the office position full width rather than opening on the
+  first project with work waiting. The office position is the summary a
+  manager reads first, and jumping into one project would hide the others'
+  counts and change what the Projects tab means.
+- Fixed "1 reports received" and "1 open issues" on the office position.
+- Phone layout unchanged: it opens on the project list, as before.
+- Not in `docs/tasks.json` (CLAUDE.md lets threads change only existing
+  tasks); the PR proposes UI-1 for Cal to add. New
+  `scripts/verify-office-landing.mjs` (19 checks at 1440px and 390px, light
+  and dark). It fails on main (three
+  columns at landing) and passes with this change.
+- Verified on Node 24: `npm run typecheck`, `npm test`, `npm run build`,
+  `verify-office-landing`, `verify-role-access` (61 checks),
+  `verify-review-queue` (12 checks) and `verify-engineer-layout` passed.
+  Before/after screenshots at 1440px in light and dark.
+- Not verified: a physical device; Compliance's office is unchanged.
+- Next: item 2 in `docs/ui-direction-2026-10-20.md` (report editor flow).
+## 2026-10-20 — NEW-1: search reports, issues and variations (new feature)
+
+- Why this feature: Cal gave Claude freedom to add features that make RELAY
+  more useful on site and in the office. Engineers had no way to find past
+  work: "has anyone already flagged the fire stopping in the level 3 riser?"
+  meant opening each list on each project. The office desk search only looks
+  at records already loaded, by reference and title. Search answers the
+  question people actually ask, by the words they remember.
+- What it does: a Search link in the engineer navigation opens `/search` on
+  the current project (any role can use the page). Every typed word must
+  appear somewhere in the record (reference, project, location, notes,
+  action, responsible company, who raised it, issue and variation history), in
+  any order and case; dashes read as spaces, accents are ignored. Results are
+  grouped as issues, reports and variations, with status in RELAY's words and
+  the matched words marked. A typed reference ranks first, then newest first;
+  25 per group. Back from a result returns to the same search.
+- Decisions: access is applied before matching (`canReadReport`), so another
+  person's draft is never searched; the project rule is the same as the lists
+  (reportable projects when SharePoint is connected). Free-text locations are
+  matched as typed, with no location list (EXP-4). The office desk is
+  unchanged to stay out of the office lane. A SharePoint refresh failure
+  returns "please retry" rather than possibly stale results, like the lists.
+  Search loads every record per request, which suits the pilot's volume;
+  SQLite full-text search is the next step if it grows.
+- Verified: `npm run typecheck` and `npm test` pass (web suite 67 tests, six
+  new in `tests/search.test.ts`, one in `viewNavigation.test.ts`).
+  `npm run build`, then new `scripts/verify-search.mjs` passed (31 checks:
+  engineer at 390px and 1440px in light and dark, no sideways scroll, focus,
+  no other engineer's draft, Back keeps the search, nothing-found message,
+  reference search; office manager sees the same results and no draft text
+  through the API). `verify-role-access.mjs` and `verify-engineer-layout.mjs`
+  passed.
+- Not verified: a physical phone; SharePoint mode (no live tenant here);
+  performance with thousands of records.
+- Next: a Search entry on the office desk once the office lane is free.
+
 ## 2026-10-20 — FE-3d: unfinished reports on the engineer home
 
 - The engineer home now has an "Unfinished reports" list under the start

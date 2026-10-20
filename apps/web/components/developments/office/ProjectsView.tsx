@@ -22,9 +22,9 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
   const depth = !s ? 1 : !kind ? 2 : 3;
   return <div className="cols" data-depth={depth}>
     <ProjectsCol ctx={ctx} current={s} />
-    <RegisterCol ctx={ctx} s={s} kind={kind} id={id} />
+    {s && <RegisterCol ctx={ctx} s={s} kind={kind} id={id} />}
     <div className="col">
-      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h4>Details</h4><i>{s ? s.project.projectNumber : 'Office'}</i></div>
+      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h4>{s ? 'Details' : 'Overview'}</h4><i>{s ? s.project.projectNumber : 'Office'}</i></div>
       <div className="colpad">
         {!ctx.snap ? <div className="loading">Loading office records</div>
           : kind === 'report' && id ? <ReportReader ctx={ctx} id={id} />
@@ -60,10 +60,9 @@ function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
 }
 
 type Filter = 'action' | 'reports' | 'issues' | 'variations' | 'drafts';
-function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s?: ProjectStats; kind: string | null; id: string | null }) {
+function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: string | null; id: string | null }) {
   const [filter, setFilter] = useState<Filter>('action');
-  useEffect(() => { setFilter('action'); }, [s?.code]);
-  if (!s) return <div className="col"><div className="col-head"><h4>Register</h4></div><div className="empty">Select a project to see its reports, issues and variations.</div></div>;
+  useEffect(() => { setFilter('action'); }, [s.code]);
   const day = ctx.day;
   const reportRow = (r: ReportSummary) => <a key={r.id} className={`arow ${kind === 'report' && id === r.id ? 'on' : ''}`} href={`#/projects/${s.code}/report/${r.id}`}>
     <span className="ref">{shortRef(r.reference)}{r.revision > 1 ? ` r${r.revision}` : ''}</span>
@@ -136,8 +135,9 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const overdue = ctx.stats.flatMap(s => s.overdue), verify = ctx.stats.flatMap(s => s.verify), notNotified = ctx.stats.flatMap(s => s.notNotified);
   const pendingVariations = ctx.stats.flatMap(s => s.pendingVariations), exposed = ctx.stats.flatMap(s => s.exposedVariations);
   const latest = snap.reports.slice(0, 6);
+  const openIssues = snap.issues.filter(isActive).length;
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h4>Office position</h4><div className="rowsub">{ctx.projects.length} reportable projects · {snap.reports.length} reports received · {snap.issues.filter(isActive).length} open issues · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
+    <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h4>Office position</h4><div className="rowsub">{ctx.projects.length} reportable project{ctx.projects.length === 1 ? '' : 's'} · {snap.reports.length} report{snap.reports.length === 1 ? '' : 's'} received · {openIssues} open issue{openIssues === 1 ? '' : 's'} · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
       <div className="actions"><a className="btn btn-q btn-sm" href="#/inbox">Inbox</a><a className="btn btn-q btn-sm" href="#/variations">Variations</a><a className="btn btn-sm" href="#/issues">Issues</a></div></div>
     <dl className="tb"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{notNotified.length ? `${notNotified.length} PM notification${notNotified.length === 1 ? '' : 's'} pending` : 'project managers notified'}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Ready to verify</dt><dd className={`big ${verify.length ? 'soon' : ''}`}>{verify.length}<small>{verify.length ? 'closure submitted, needs a second pair of eyes' : 'nothing awaiting verification'}</small></dd></div><div><dt>Variations pending</dt><dd className={`big ${exposed.length ? 'late' : pendingVariations.length ? 'soon' : ''}`}>{pendingVariations.length}<small>{exposed.length ? `${exposed.length} done without an instruction` : pendingVariations.some(v => v.quotedValue === undefined) ? `${pendingVariations.filter(v => v.quotedValue === undefined).length} still to price` : 'all priced, awaiting the client'}</small></dd></div></dl>
     <SecH right={<a href="#/issues">All →</a>}>Needs attention</SecH>

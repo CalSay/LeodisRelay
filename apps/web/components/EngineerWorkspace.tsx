@@ -159,6 +159,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
     {principal?.role !== 'Engineer' && <p className="eng-preview">Engineer layout preview · Signed in as {principal?.role}. Your permissions and report authorship are unchanged.</p>}
     <nav className="eng-navigation" aria-label="Site companion navigation">
       {([['home','Site'],['issues','Issues'],['reports','Reports'],['projects','Projects']] as const).map(([key,label]) => <button key={key} type="button" aria-current={view===key?'page':undefined} onClick={()=>navigate(key)}>{label}</button>)}
+      <Link className="eng-nav-search" href={withViewReturn(`/search${projectId ? `?project=${encodeURIComponent(projectId)}` : ''}`,engineerReturn(view))}><svg aria-hidden="true" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="7" cy="7" r="5"/><path d="M11 11l3.5 3.5"/></svg>Search</Link>
     </nav>
     {!ready ? <p role="status">Loading your workspace…</p> : !project ? <div className="empty">No projects are currently open to you for reporting.</div> : <>
       {view!=='home' && view!=='projects' && <div className="eng-project-context"><div><small>CURRENT PROJECT</small><strong>{project.projectName}</strong></div></div>}
