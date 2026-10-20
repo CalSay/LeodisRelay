@@ -258,7 +258,7 @@ body:has(.ws){overflow:hidden auto}
   .ws .whoami{max-width:150px;overflow:hidden;text-overflow:ellipsis}
   .ws .attn-pop{position:fixed;left:8px;right:8px;top:auto;bottom:72px;width:auto;border-top:1px solid var(--alert);max-height:60vh}
   .ws .hnav{position:fixed;left:0;right:0;bottom:0;z-index:20;border-bottom:0;border-top:1px solid var(--line-2);padding:0 4px calc(4px + env(safe-area-inset-bottom,0px));justify-content:space-around}
-  .ws .hnav a{flex:1;flex-direction:column;gap:2px;padding:8px 2px 6px;font-size:9px;letter-spacing:.06em;border-bottom:0;border-top:2px solid transparent;justify-content:center;min-height:52px}
+  .ws .hnav a{flex:1;flex-direction:column;gap:2px;padding:8px 2px 6px;font-size:12px;letter-spacing:0;border-bottom:0;border-top:2px solid transparent;justify-content:center;min-height:52px}
   .ws .hnav a.on{border-top-color:var(--acc)}
   .ws .hnav .adm{margin-left:0}
   .ws .view{padding:12px 12px 96px;gap:var(--s4)}

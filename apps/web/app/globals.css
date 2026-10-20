@@ -740,11 +740,12 @@ button:disabled {
   cursor: pointer;
   transition: background 0.12s ease, border-color 0.12s ease;
 }
-.camera:hover {
+.camera:hover,
+.field > label.camera:hover {
   border-color: var(--brass-2);
   background: var(--panel);
 }
-.camera:focus-within {
+.camera:has(input:focus-visible) {
   outline: 2px solid var(--brass);
   outline-offset: 2px;
 }
@@ -1121,6 +1122,12 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+}
+/* Narrow phones: the words name the setting; the icon gives way. */
+@media (max-width: 360px) {
+  .themebtn svg {
+    display: none;
+  }
 }
 
 .themebtn:hover:not(:disabled) {

@@ -147,7 +147,7 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-defect .field input,.eng-defect .field select,.eng-defect .field textarea{font-size:16px;}.eng-defect .field textarea{min-height:130px;}
 .eng-photo-picker{position:relative;display:flex;align-items:center;gap:14px;min-height:72px;background:var(--brass-wash);border:1.5px solid var(--brass);border-radius:8px;padding:14px 18px;color:var(--brass);cursor:pointer;}
 .eng-photo-picker:hover{background:var(--panel);}
-.eng-photo-picker:focus-within{outline:2px solid var(--brass);outline-offset:2px;}
+.eng-photo-picker:has(input:focus-visible){outline:2px solid var(--brass);outline-offset:2px;}
 .eng-photo-picker .camera-icon{width:28px;height:28px;flex:none;}
 .eng-photo-picker b{display:block;font-size:17px;font-weight:500;}
 .eng-photo-picker small{display:block;font-size:13px;color:var(--text-2);margin-top:2px;}

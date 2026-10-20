@@ -10,7 +10,7 @@ order. It does not replace the approved designs in `designs/` and
 ## Direction
 
 1. **The next action is obvious.** Every screen has one primary action, in
-   gold, worded as a verb the user would say ("Take a photo", "Send defect").
+   gold, worded as a verb the user would say ("Send defect", "Check defect").
    Secondary actions are quieter. Nothing important needs a hunt.
 2. **Words people read, labels they scan.** Buttons, tabs and anything tapped
    use the sans face in sentence case at a readable size. The small mono
@@ -40,7 +40,7 @@ with local sign-in and seeded example data.
   stand out.
 - The defect form showed the browser's own "Choose Files / No file chosen"
   control for the most important step. The report editor's camera control
-  was a small mono caption in a dashed box, and the photo inputs could not be
+  was a small mono caption in a dashed box whose photo input could not be
   reached from a keyboard.
 - The theme control read "AUTO" with nothing saying what it controlled.
 - Copy slips: "1 item need attention", "1 issues".
@@ -53,14 +53,15 @@ with local sign-in and seeded example data.
 ## Done in this change
 
 - Office desk: tabs, top-bar links, buttons and filter chips in the sans face,
-  sentence case, 13–14px; the active tab is weighted. Section labels, table
+  sentence case, 13–14px (12px on the phone tab bar, was 9px); the active tab
+  is weighted. Section labels, table
   headers, tags and references are unchanged. Stat numbers are 28px.
 - Photo buttons on the defect form and report cards are large, gold-outlined
   buttons with a camera icon and plain words ("Take a photo", then "Add
   another photo"). The browser's file control is hidden but the input stays
   focusable, so a keyboard can open it.
 - Theme control shows an icon and the current setting ("Auto", "Light",
-  "Dark") in sentence case.
+  "Dark") in sentence case; the icon drops below 360px wide.
 - Fixed "1 item needs attention" and "1 issue" plurals.
 
 Verified: `npm run typecheck`, `npm test` (145 package + 48 web tests),
