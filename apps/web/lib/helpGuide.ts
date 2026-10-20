@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'editor-tidy', added: '2026-10-20', audience: 'site', title: 'A quicker, calmer report screen',
+    text: 'On a phone the card you have open no longer repeats itself above and below, "Check & send" is in one place at the foot of the screen, and an inspection just started lists its unanswered checks as one line rather than twelve. Optional suggestions are marked "Optional", so only a "Stop" stops you sending.' },
   { id: 'offline-inspection', added: '2026-10-20', audience: 'site', title: 'Start an inspection with no signal',
     text: 'With no signal, you can now start a safety or handover inspection as well as a site update, answer its checks and take photographs. It goes up by itself once RELAY opens with signal; you sign it and send it then.' },
   { id: 'help', added: '2026-10-20', audience: 'all', title: 'This Help page',

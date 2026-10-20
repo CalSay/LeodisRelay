@@ -64,7 +64,7 @@ try {
     for(const p of [a,b]){p.on('pageerror',e=>errors.push(e.message));await p.goto(`${base}/reports/${draft.id}`);await p.locator('.eng-cardrow').first().waitFor();}
     await b.route('**/api/reports/*',route=>route.request().method()==='PUT'?route.abort():route.continue());
     await (await what(b,'obs-riser')).fill('Containment complete, fire stopping to do');
-    await state(b,'On this device only');
+    await state(b,'On this phone only');
     await a.bringToFront();
     await a.getByRole('button',{name:/Check & send/}).first().click();
     await a.getByRole('button',{name:'Send to office'}).click();
@@ -117,13 +117,13 @@ try {
     await page.bringToFront();
     await context.setOffline(true);
     await (await what(page,'obs-riser')).fill('Containment complete to L4');
-    await state(page,'On this device only');
+    await state(page,'On this phone only');
     await page.evaluate(()=>document.activeElement?.blur());
     await page.locator('.eng-rail .eng-add').click();
     await page.locator('#card-editor .eng-tile.update').first().click();
     const added=await page.locator('#card-editor > div:not([hidden]) textarea[id^="what-"]').first();
     await added.fill('Riser door left open');
-    await state(page,'On this device only');
+    await state(page,'On this phone only');
     // The other device changes the plant card and sends.
     const current=getReport(draft.id);
     const other=saveDraft(draft.id,{...current,observations:[current.observations[0],card('obs-plant','Pumps set and aligned','Plant room')]},current.version);

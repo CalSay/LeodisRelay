@@ -50,6 +50,7 @@ export function Suggestions({ title, fewer, values, current, onPick }: { title: 
 export function ObservationEditor({
   observation,
   index,
+  folded = false,
   openIssues,
   locations,
   companies,
@@ -60,6 +61,11 @@ export function ObservationEditor({
 }: {
   observation: Observation;
   index: number;
+  /**
+   * Opened under its own row on the phone: the row is the card's heading, so
+   * Remove goes to the foot of the card rather than on a line of its own.
+   */
+  folded?: boolean;
   openIssues: Issue[];
   locations: string[];
   /** Who has been asked to respond on this project before, newest first. */
@@ -93,7 +99,7 @@ export function ObservationEditor({
     <label htmlFor={`loc-${id}`}>Where</label>
     <input id={`loc-${id}`} type="text" value={observation.location} onChange={(e) => set("location", e.target.value)} placeholder="Level 2 — Riser" autoComplete="off" />
     <Suggestions title="Recent places" fewer="Show fewer places" values={locations} current={observation.location} onPick={l => set("location", l)} />
-    <p className="hint">Choose a recent place or type anything; it does not have to match.</p>
+    {locations.length > 0 && <p className="hint">Choose a recent place or type anything; it does not have to match.</p>}
   </div>;
 
   const alreadyRaised = raisesIssue && openIssues.length > 0 && <div className="field">
@@ -107,13 +113,13 @@ export function ObservationEditor({
 
   return (
     <section className={`eng-card ${tone}`}>
-      <div className="head">
+      {/* The kind is picked, with a tick, just below: no tag repeating it here. */}
+      {!folded && <div className="head">
         <span className="lbl">Card {String(index + 1).padStart(2, "0")}</span>
         <div>
-          {type && <span className={`kind ${tone}`}>{type.short}</span>}
           <button type="button" className="btn-quiet btn-sm" onClick={onRemove} aria-label={`Remove card ${index + 1}`}>Remove</button>
         </div>
-      </div>
+      </div>}
 
       <div className="field">
         <label>Kind</label>
@@ -201,6 +207,7 @@ export function ObservationEditor({
       </>}
 
       {photos}
+      {folded && <button type="button" className="btn-quiet btn-sm eng-remove-card" onClick={onRemove} aria-label={`Remove card ${index + 1}`}>Remove this card</button>}
     </section>
   );
 }
@@ -274,7 +281,7 @@ export function PhotoField({ observation, note, photoWhere, onChange, onRemovePh
         <div className="shot-body">
           <span className="shot-no">Photo {String(i + 1).padStart(2, "0")}</span>
           {(() => { const w = photoWhere?.(photo.id); return w ? <span className={`eng-where eng-where-${w}`}><span className={w === 'server' ? 'dot dot-ok' : 'dot dot-busy'} />{WHERE[w]}</span> : null; })()}
-          <input type="text" value={photo.caption} onChange={(e) => onChange({ ...observation, photos: observation.photos.map((p) => p.id === photo.id ? { ...p, caption: e.target.value } : p) })} placeholder="What does this show?" aria-label={`Caption for photograph ${i + 1}`} />
+          <input type="text" value={photo.caption} onChange={(e) => onChange({ ...observation, photos: observation.photos.map((p) => p.id === photo.id ? { ...p, caption: e.target.value } : p) })} placeholder="Add a caption" aria-label={`Caption for photograph ${i + 1}`} />
           <button type="button" className="btn-quiet btn-sm" onClick={() => onRemovePhoto(photo.id)} aria-label={`Remove photo ${i + 1}`}>Remove</button>
         </div>
       </figure>)}

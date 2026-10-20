@@ -65,16 +65,18 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
  * One line for the check step: is everything with the office, and if not, what is still to go up.
  * `others`: changes outside the cards on screen that also wait for a save.
  */
-export function reportWhere(cards: readonly CardWhere[], offline: boolean, others: { removed: number; signature: boolean } = { removed: 0, signature: false }): { where: Where; text: string } {
+export function reportWhere(cards: readonly CardWhere[], offline: boolean, others: { removed: number; signature: boolean; noun?: 'card' | 'check' } = { removed: 0, signature: false }): { where: Where; text: string } {
+  // An inspection's cards are its checks, and the engineer knows them by that name.
+  const noun = others.noun ?? 'card';
   const photos = cards.reduce((n, c) => n + c.photos, 0);
   const left = cards.filter(c => !c.text).length;
   const leftPhotos = photos - cards.reduce((n, c) => n + c.photosOnServer, 0);
   if (!cards.length && !others.removed && !others.signature) return { where: 'server', text: '' };
   if (!left && !leftPhotos && !others.removed && !others.signature) {
-    return { where: 'server', text: `${cards.length === 1 ? 'The card' : cards.length === 2 ? 'Both cards' : `All ${cards.length} cards`}${photos ? ` and ${photos === 1 ? 'its photo' : `${photos} photos`}` : ''} ${cards.length === 1 && !photos ? 'is' : 'are'} on the server.` };
+    return { where: 'server', text: `${cards.length === 1 ? `The ${noun}` : cards.length === 2 ? `Both ${noun}s` : `All ${cards.length} ${noun}s`}${photos ? ` and ${photos === 1 ? (cards.length === 1 ? 'its photo' : '1 photo') : `${photos} photos`}` : ''} ${cards.length === 1 && !photos ? 'is' : 'are'} on the server.` };
   }
-  const items = [left && plural(left, 'card'), leftPhotos && plural(leftPhotos, 'photo'),
-    others.removed && plural(others.removed, 'removed card'), others.signature && 'the signature'].filter((x): x is string => !!x);
+  const items = [left && plural(left, noun), leftPhotos && plural(leftPhotos, 'photo'),
+    others.removed && plural(others.removed, `removed ${noun}`), others.signature && 'the signature'].filter((x): x is string => !!x);
   const parts = items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : items[0]!;
   const sentence = parts.charAt(0).toUpperCase() + parts.slice(1);
   const many = left + leftPhotos + others.removed + (others.signature ? 1 : 0) > 1;
