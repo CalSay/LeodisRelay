@@ -97,7 +97,7 @@ try {
     await page.locator('a[href*="owner=Acme+Electrical+Ltd"]',{hasText:'Snag list'}).waitFor({timeout:10000});checks++;
     // Verified and closed issues are reached from All.
     await page.getByLabel('Verification').selectOption('verified');
-    await page.locator('table.reg td.empty',{hasText:'No open issues match these filters'}).waitFor();checks++;
+    await page.locator('table.reg td.empty',{hasText:'No open issues for these filters'}).waitFor();checks++;
     await page.locator('.filters .chip',{hasText:/^All ·/}).click();
     const acmeClosed=seeded.filter(i=>i.owner.startsWith('Acme')&&i.work==='closed').length;
     await showing(page,acmeClosed);checks++;

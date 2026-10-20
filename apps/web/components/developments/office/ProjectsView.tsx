@@ -365,7 +365,7 @@ export function VariationSheet({ ctx, id }: { ctx: Ctx; id: string }) {
   }, [id, ctx.snap?.loadedAt]);
   if (error) return <div className="sheet"><div className="empty">{error}</div></div>;
   if (!v) return <div className="sheet"><div className="loading" style={{ minHeight: 160 }}>Loading variation</div></div>;
-  const project = ctx.projects.find(p => p.id === v.projectId); const code = project?.projectNumber ?? '';
+  const project = ctx.projects.find(p => p.id === v.projectId); const code = project?.id ?? '';
   const source = v.raisedByReport ? ctx.snap?.reports.find(r => r.id === v.raisedByReport) : undefined;
   const linked = v.linkedIssueId ? ctx.snap?.issues.find(i => i.id === v.linkedIssueId) : undefined;
   const cost = expectedCost(v), value = variationValue(v), margin = estimatedMargin(v), pct = marginPct(v);

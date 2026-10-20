@@ -1293,6 +1293,11 @@ button:disabled {
   white-space: nowrap;
 }
 
+/* A desktop has room for the whole name and role ("Office Admin · Admin"). */
+@media (min-width: 900px) {
+  .whoami { max-width: 280px; }
+}
+
 .whoami:hover:not(:disabled) {
   color: var(--brass);
   border-color: var(--line-2);

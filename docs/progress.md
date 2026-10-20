@@ -4,6 +4,58 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Office desk usability pass on a laptop and desktop
+
+- Walked the office team's day at 1366px and 1920px, light and dark, as an
+  Admin: office landing, project sheet, Inbox and its reader, Issues,
+  Variations, Safety actions, Search, spreadsheet downloads and Before
+  handover. Screenshots before and after are in the project's
+  `ui-review/office-desk/`.
+- Fixed, because they were wrong rather than a matter of taste:
+  - Clicking a row in the Variations register opened the office overview, not
+    the variation: the register and the variation sheet's crumbs linked by
+    project number while the desk routes by project id. Both now use the id.
+  - At 1366px the Variations register scrolled sideways and cut off Decline,
+    because the "Raised in the office · name" line under the date could not
+    wrap. That line now wraps in plain type, so the row fits.
+  - In the Inbox reader the report stages ran into each other ("Waiting for
+    the PDF" over "Not yet read") at both widths: the desk's tag style
+    stopped them wrapping. Each stage's tag now wraps inside its own step.
+- Made consistent across Inbox, Issues and Variations (decided here, since
+  Issues already worked this way): a "Clear filters" button when a project,
+  trade or reason is chosen; the chosen chip marked pressed for screen
+  readers; Variations opens on `#/variations/show/<filter>` and the tab
+  itself starts again from "Awaiting instruction"; and an empty list says
+  what it means ("Every report has been read", "Nothing is waiting to be
+  verified", "No variations have been declined") instead of "Nothing here",
+  "No to verify issues" or "No variations all". The Inbox reader no longer
+  offers "Open the newest" for an empty list. The Issues register no longer
+  shows a lone dash under a date when the source report is unknown.
+- A project's sheet names the project in the browser tab ("Tetley Hall -
+  Block E · Office"), so several tabs can be told apart. Search opened on
+  its own goes "Back to Office" for Managers and Admins (it said "Back to
+  Site"). On a desktop the app bar shows the whole name and role instead of
+  "Office Admin · A…".
+- Help "What's new": "A tidier office desk".
+- Not changed: the report editor and offline pages (another thread is
+  there), wording of the long notes under each register, column order (each
+  register already leads with reference, title, project and date), and the
+  standalone pages' layout (Safety actions, Search, Before handover read
+  well at both widths).
+- Checks: `npm run typecheck`, `npm test`, `npm run build`, the new
+  `scripts/verify-office-desk.mjs` (73 checks at 1366 and 1920px, light and
+  dark) and the existing office, navigation, search, help, accessibility and
+  engineer browser checks (listed in the PR). `verify-issue-register.mjs`
+  now expects the new empty-list wording ("for these filters").
+- Not verified: Safari, Firefox and Edge; real office screens and zoom
+  levels other than 100%; a real screen reader.
+- Proposed (not added to `docs/tasks.json`): "UI-4 Office desk usability
+  pass at 1366 and 1920px". Follow-ups, too big for this PR: shorten the
+  long explanatory notes under each register into a Help link; let the
+  Variations register page on the server like Issues once it grows; a
+  "Download spreadsheet" on the Inbox; save each register's filters per
+  person so they survive a reload.
+
 ## 2026-10-20 — FE-3e: offline capture, third slice (sign an inspection with no signal)
 
 - Why: #46 let an inspection be started and answered with no signal but it
@@ -300,6 +352,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   real phones, and rolling back after an inspection exists (the old version
   would show its checks as plain cards; not tried).
 
+
 ## 2026-10-20 — FE-3e: offline capture, second slice (start an inspection)
 
 - Why this slice: #41 proposed it first, and it is the gap engineers would hit
@@ -500,6 +553,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   place for the whole walk, prefilled into each action); a third type such as
   a commissioning record with readings; let the office edit checklists; add
   `verify-handover-inspection.mjs` to the browser checks in `CLAUDE.md`.
+
 
 ## 2026-10-20 — FE-3e: offline capture, first slice
 
