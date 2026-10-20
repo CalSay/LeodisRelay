@@ -53,6 +53,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   quick search handing over to the full search and Back to the same tab).
   Existing browser checks updated from "← Back" to "← Back to …" and re-run
   (results in the PR). Screenshots in the project's `ui-review/navigation/`.
+- A fresh-context review found that a tab could keep the last screen's name
+  after moving to a page with no title of its own (the report preview, for
+  one), and that report dates had lost their year; both fixed (the year shows
+  when it is not this year). `verify-snag-list.mjs` was failing on main since
+  the phone "Order" select (#37) also matched the label "Project"; its locator
+  is now anchored, and it passes.
 - Not verified: a physical phone, Safari and Firefox, SharePoint mode.
 - Proposed (not added to `docs/tasks.json`): add `verify-navigation.mjs` to
   the browser checks in `CLAUDE.md`; a "My week" link on the office desk for

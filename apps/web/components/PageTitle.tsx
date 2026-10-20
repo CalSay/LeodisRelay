@@ -16,7 +16,8 @@ export function PageTitle({ title }: { title: string }) {
     const apply = () => { if (document.title === 'RELAY') document.title = wanted; };
     const watch = new MutationObserver(apply);
     watch.observe(document.documentElement, { subtree: true, childList: true, characterData: true });
-    return () => watch.disconnect();
+    // A next route with no title of its own must not keep this screen's name.
+    return () => { watch.disconnect(); if (document.title === wanted) document.title = 'RELAY'; };
   }, [title]);
   return null;
 }
