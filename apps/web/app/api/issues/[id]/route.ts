@@ -1,6 +1,6 @@
 import { refreshIssues, IssueSyncError } from '@/lib/sharepoint/issues';
 import { NextResponse } from "next/server";
-import { applyCommand, getIssue, type IssueCommand } from "@/lib/issueStore";
+import { applyCommand, getIssue, reviewOnFor, type IssueCommand } from "@/lib/issueStore";
 import { requireSession } from "@/lib/auth/guard";
 import { validatePhotos } from '@/lib/validatePhotos';
 import { canIssueCommand,canAccessProject } from '@/lib/auth/access';
@@ -15,8 +15,9 @@ export async function GET(_r: Request, context: { params: Promise<{ id: string }
   try { await refreshIssues(); } catch { return NextResponse.json({reason:'SharePoint issues could not be refreshed. Please retry.'},{status:503}); }
   const issue = getIssue(id);
   if(issue && !canAccessProject(guard.principal,issue.projectId))return NextResponse.json({reason:'Project access required.'},{status:403});
+  // reviewOn tells the issue page how to word a provisional confirmation, by the same rule as the office register.
   return issue
-    ? NextResponse.json(issue)
+    ? NextResponse.json({ ...issue, reviewOn: reviewOnFor(issue.projectId) })
     : NextResponse.json({ reason: "No such issue." }, { status: 404 });
 }
 

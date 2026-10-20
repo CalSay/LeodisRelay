@@ -114,7 +114,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
         <td className="due">{fmtDay(i.raisedAt)}<div className="rowsub">{source(i)}</div></td>
         <td>{i.owner.trim() || <span className="late">Unassigned</span>}</td>
         <td className="due">{i.targetDate ? <><b className={late ? 'late' : ''}>{i.targetDate}</b>{late && ` · ${daysLate(i.targetDate, day)}d late`}</> : <span className="fine">—</span>}</td>
-        <td><WorkTag i={i} day={day} /></td><td><ConfirmTag i={i} /></td>
+        <td><WorkTag i={i} day={day} /></td><td><ConfirmTag i={i} reviewOn={!!ctx.statOf(i.projectId)?.reviewOn} /></td>
         <td onClick={e => e.stopPropagation()}><div className="actions" style={{ flexWrap: 'nowrap' }}>
           {active && i.work === 'awaiting_verification' && !closureMine(i) && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i })}>Verify</Btn>}
           {active && i.work === 'awaiting_verification' && <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'reopen', issue: i })}>Not finished</BtnQ>}

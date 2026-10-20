@@ -68,14 +68,21 @@ export function listIssues(projectId?: string): Issue[] {
  */
 export function issueRegister(principal: Principal, query: IssueQuery, day: string): IssuePage {
   const issues = listIssues().filter(i => canAccessProject(principal, i.projectId));
-  // Review is in use where the project asks for it or a sent report still waits on it (lib/reviewQueue.ts).
-  const waiting = new Set(database().prepare("SELECT DISTINCT project FROM records WHERE kind='reports' AND json_extract(data,'$.state')='submitted' AND json_extract(data,'$.review')='pending'").all().map(row => String(row.project)));
+  const waiting = projectsWaitingOnReview();
   return queryIssues(issues, query, {
     day,
     projectName: id => cachedProject(id)?.projectName ?? id,
     reviewOn: id => !!cachedProject(id)?.reviewRequired || waiting.has(id),
     mine: i => i.closureSubmittedById ? i.closureSubmittedById === principal.id : i.closureSubmittedBy === principal.name,
   });
+}
+
+/** Review is in use where the project asks for it or a sent report still waits on it (lib/reviewQueue.ts). */
+export function reviewOnFor(projectId: string): boolean {
+  return !!cachedProject(projectId)?.reviewRequired || projectsWaitingOnReview().has(projectId);
+}
+function projectsWaitingOnReview(): Set<string> {
+  return new Set(database().prepare("SELECT DISTINCT project FROM records WHERE kind='reports' AND json_extract(data,'$.state')='submitted' AND json_extract(data,'$.review')='pending'").all().map(row => String(row.project)));
 }
 
 export function getIssue(issueId: string): Issue | undefined {
