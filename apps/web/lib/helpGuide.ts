@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'company-chases', added: '2026-10-20', audience: 'office', title: 'Chase notes on Issues by company',
+    text: 'Each company on Issues by company now has "Log a chase": a line on what was said and, if they gave one, the day they promised to be done by. The card shows who chased last, when and what was promised, and marks "Promise missed" once that day has gone with work still to put right. The notes stay in RELAY for the office and do not change an issue.',
+    link: { label: 'Log a chase', href: '/companies' } },
   { id: 'home-sheet-tidy', added: '2026-10-20', audience: 'all', title: 'A tidier home screen and project sheet',
     text: 'The pages about a project are now in two groups, Issues and safety, and Reports and records, with the ones used most first. On your home screen My week and Help sit together at the foot. In the office the project sheet keeps them in one box under its figures, and on a phone they now show above the project\'s register, where before they could not be reached.' },
   { id: 'editor-easier-to-read', added: '2026-10-20', audience: 'site', title: 'Report screen easier to read and to tap',
@@ -120,7 +123,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Issues over time', href: '/issue-trend', audience: 'all', text: 'Whether a project\'s issue list is getting shorter, week by week.' },
   { label: 'My week', href: '/my-week', audience: 'all', text: 'Your own week across every project.' },
   { label: 'Site coverage', href: '/coverage', audience: 'office', text: 'Which live projects have gone quiet.' },
-  { label: 'Issues by company', href: '/companies', audience: 'office', text: 'Who to chase, and for what.' },
+  { label: 'Issues by company', href: '/companies', audience: 'office', text: 'Who to chase, for what, and what they promised last time.' },
 ];
 
 export interface GuideTerm { term: string; meaning: string }
@@ -264,6 +267,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'Office opens on the office position: new reports, reports not yet read, unassigned issues and issues ready to verify, across every project.',
       'Open a report and "Acknowledge" it once you have read it. That is the only thing that marks it read; receipt and delivery do not.',
       'Give each new issue an owner and a target date. Overdue issues and work done without an instruction are listed under "Also needs attention".',
+      'Chase companies with late work from Issues by company, and log each chase there with what they promised, so the next person to ring them knows.',
       'Price variations, then record the client\'s instruction with their reference, or decline. Nothing is deleted.',
     ] },
     { id: 'verify', heading: 'Closing an issue', ordered: false, steps: [

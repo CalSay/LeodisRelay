@@ -44,7 +44,9 @@ export interface CompanyIssues {
 }
 export interface ProjectNames { id: string; projectNumber: string; projectName: string }
 
-const key = (owner: string) => owner.trim().replace(/\s+/g, ' ').toLowerCase();
+/** A company as matched everywhere on this page and its chases: ignoring case and spacing. */
+export const companyKey = (owner: string) => owner.trim().replace(/\s+/g, ' ').toLowerCase();
+const key = companyKey;
 const isLive = (i: Issue) => i.work !== 'closed' && i.confirmation !== 'withdrawn';
 const isDay = (s: string) => /^\d{4}-\d{2}-\d{2}$/.test(s);
 const addDays = (ymd: string, n: number) => { const d = new Date(`${ymd}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
