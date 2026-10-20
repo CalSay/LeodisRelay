@@ -25,7 +25,7 @@ try {
   await page.evaluate(async()=>{
     sessionStorage.setItem('relay-offline-principal','user-1');
     await new Promise((done,fail)=>{
-      const open=indexedDB.open('relay-drafts',1);
+      const open=indexedDB.open('relay-drafts',2);
       open.onupgradeneeded=()=>open.result.createObjectStore('unsent',{keyPath:'key'});
       open.onsuccess=()=>{
         const tx=open.result.transaction('unsent','readwrite');const store=tx.objectStore('unsent');
@@ -38,7 +38,7 @@ try {
   });
   await page.goto('http://127.0.0.1:4341/reports/report-1');
   await page.waitForSelector('#editor h2');
-  assert.deepEqual(await page.$$eval('#drafts button',b=>b.map(x=>x.textContent)),['011LME-R-007','011LME-R-007 (copy kept while choosing between two versions)'],'both copies listed, the set-aside one named apart');checks++;
+  assert.deepEqual(await page.$$eval('#drafts button .t',b=>b.map(x=>x.textContent)),['011LME-R-007','011LME-R-007 (copy kept while choosing between two versions)'],'both copies listed, the set-aside one named apart');checks++;
   assert.equal(await page.textContent('#editor h2'),'011LME-R-007','the ordinary copy opens first');checks++;
   assert.equal(await page.inputValue('#editor textarea'),'Tray fixed','the ordinary copy’s words');checks++;
   await page.click('#drafts button:nth-child(2)');

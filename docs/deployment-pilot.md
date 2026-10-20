@@ -28,7 +28,7 @@ suggestions in historical reviews.
 | PDF | Separate single-worker process; stored bytes reused for download and local delivery | Representative large-photo benchmarks and visual pagination QA |
 | Delivery | Local .eml outbox; retries and accurate local-only status | SharePoint filing, app-only mailbox credentials, delivery reconciliation |
 | Lists | Indexed report summaries, 50-row pages, visibility-aware office polling | Issue-history pagination and incremental refresh |
-| PWA | Sized icons, cached retained-draft text recovery/editor, static asset caching | Full cold-start offline capture and physical-device testing |
+| PWA | Sized icons, static asset caching, a cached offline page that opens with no signal and can start a site update, add cards and photos and change held reports, sent by itself when RELAY opens with signal | Starting a safety inspection offline, and physical-device testing |
 | Corrections | Snapshot preservation and initial store helper | User-facing correction flow and issue reconciliation |
 | PM acknowledgement | Product decision recorded | Implementation |
 
@@ -102,10 +102,14 @@ Before real use:
 - Finish project permissions/stable author IDs, corrections, PM acknowledgement,
   operational failure/retry controls and monitoring.
 
-The offline recovery screen edits existing retained text, not new projects or
-photographs. It requires the tab's remembered identity and cannot replace full
-cold-start offline capture. Do not promise background submission after an iPhone
-app has closed; resume synchronization when the app can run and authenticate again.
+The offline page (`public/offline.html`) opens when RELAY starts with no
+signal, for the person last signed in on the device (name and id are left on
+the device while signed in, and removed on sign-out). It can start a site
+update on a project they could report on when last online, add and remove
+cards and photographs, and change reports already held on the phone. Nothing
+is sent from that page: the held work goes up by itself the next time RELAY
+opens with signal and a valid sign-in. Do not promise background submission
+after an iPhone app has closed. Not yet tested on physical phones.
 
 Tomorrow's tenant-dependent inputs are listed in
 [sharepoint-handover.md](./sharepoint-handover.md).

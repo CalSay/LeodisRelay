@@ -46,8 +46,22 @@ export function reportsFor(principal: Principal, projectId?: string, offset = 0)
   }), next: rows.length > 50 ? offset + 50 : null };
 }
 
-export function createReport(projectId: string, author: string, principal?: Principal, reportType: ReportTypeId = 'progress'): Report {
+/**
+ * `started`: a report begun on a phone with no connection (offlineStart.ts).
+ * Its visit date is the day it was started, and its client key makes the start
+ * idempotent per person: the same key returns the report it already made.
+ */
+/** The report a person already started with this client key, if the first try reached the server. */
+export function startedReport(principalId: string, clientKey: string): Report | undefined {
+  const previous = getRecord<{ id: string; reportId: string }>('report-starts', `${principalId}:${clientKey}`);
+  return previous ? getReport(previous.reportId) : undefined;
+}
+
+export function createReport(projectId: string, author: string, principal?: Principal, reportType: ReportTypeId = 'progress', started?: { clientKey: string; visitDate: string }): Report {
   return atomic(() => {
+    const startKey = started && principal ? `${principal.id}:${started.clientKey}` : undefined;
+    const previous = started && principal ? startedReport(principal.id, started.clientKey) : undefined;
+    if (previous) return previous;
     if (sharePointMode() === 'read') throw new Error('Report capture is disabled while SharePoint is read-only.');
     const project = cachedProject(projectId);
     if (!project) throw new Error('Project not found.');
@@ -61,10 +75,11 @@ export function createReport(projectId: string, author: string, principal?: Prin
       ...(type.id === 'progress' ? {} : { reportType: type.id }),
       ...(principal ? { authorId:principal.id, ...(principal.trade ? {authorTrade:principal.trade}: {}) } : {}),
       reference: `${project.source ? 'DEMO-' : ''}${project.projectNumber}-${type.code}-${String(Number(count.n) + 1).padStart(3,'0')}`,
-      visitDate: new Date().toISOString().slice(0,10), state: 'draft', version: 1,
+      visitDate: started?.visitDate ?? new Date().toISOString().slice(0,10), state: 'draft', version: 1,
       revision: 1, review: 'not_required', observations: startingCards(type), lastSavedAt: new Date().toISOString(),
     };
     putRecord('reports',report);
+    if (startKey) putRecord('report-starts',{ id:startKey, reportId:report.id });
     return report;
   });
 }

@@ -1,5 +1,6 @@
 import type { Observation, Report } from "./types";
 import type { DraftBase } from "./draftConflict";
+import type { StartedOffline } from "./offlineStart";
 
 /**
  * Unsent work held on the device.
@@ -43,6 +44,14 @@ export interface HeldDraft {
   tab?:string;
   /** Set aside during a conflict: the server copy this work was built on, for the comparison after a reload. */
   base?:DraftBase;
+  /** A report started on the offline page, not yet on the server (offlineStart.ts). */
+  started?:StartedOffline;
+  /** Last changed on the offline page: no editor holds it, so it goes up by itself. */
+  heldOffline?:boolean;
+  /** The save being sent for it, so a retry after a lost answer reuses the request id. */
+  sending?:{ requestId:string; seq:number | string; expectedVersion:number };
+  /** Why it could not go up last time. */
+  problem?:string;
 }
 
 function keyFor(reportId: string, principalId: string): string {
@@ -269,4 +278,60 @@ export async function listHeld(principalId: string): Promise<HeldDraft[]> {
   } catch {
     return [];
   }
+}
+
+/**
+ * Change one held copy in a single transaction. `change` returns the new copy,
+ * null to remove it, or undefined to leave it as it is; what it returns is
+ * what `update` resolves to (the copy as it now stands, or null).
+ */
+export async function update(key:string,change:(held:HeldDraft)=>HeldDraft | null | undefined):Promise<HeldDraft | null> {
+  const db = await openDb();
+  return new Promise<HeldDraft | null>((resolve,reject) => {
+    let result:HeldDraft | null = null;
+    const tx = db.transaction(STORE,'readwrite');
+    const store = tx.objectStore(STORE);
+    const request = store.get(key);
+    request.onsuccess = () => {
+      const held = request.result as HeldDraft | undefined;
+      if (!held) return;
+      const next = change(held);
+      if (next === null) store.delete(key);
+      else if (next) store.put(next);
+      result = next === undefined ? held : next;
+    };
+    tx.oncomplete = () => {db.close();resolve(result);};
+    tx.onabort = () => {db.close();reject(tx.error ?? new Error('Device storage failed.'));};
+  });
+}
+
+/**
+ * A report started offline now exists on the server: hold its cards as an
+ * ordinary copy of that report, built on the version just made, and drop the
+ * started copy, in one transaction so neither is lost or doubled. If this
+ * device already holds a copy of that report (an earlier try got this far),
+ * that copy is newer and is kept.
+ */
+export async function adoptStarted(startedKey:string,report:Report):Promise<string | null> {
+  const db = await openDb();
+  return new Promise<string | null>((resolve,reject) => {
+    let adopted:string | null = null;
+    const tx = db.transaction(STORE,'readwrite');
+    const store = tx.objectStore(STORE);
+    const request = store.get(startedKey);
+    request.onsuccess = () => {
+      const held = request.result as HeldDraft | undefined;
+      if (!held?.started) return;
+      const key = keyFor(report.id, held.principalId);
+      const existing = store.get(key);
+      existing.onsuccess = () => {
+        if (!existing.result) store.put({ key, reportId:report.id, principalId:held.principalId, seq:held.seq,
+          observations:held.observations, heldAt:held.heldAt, baseVersion:report.version, report, heldOffline:true } satisfies HeldDraft);
+        store.delete(startedKey);
+        adopted = key;
+      };
+    };
+    tx.oncomplete = () => {db.close();resolve(adopted);};
+    tx.onabort = () => {db.close();reject(tx.error ?? new Error('Device storage failed.'));};
+  });
 }
