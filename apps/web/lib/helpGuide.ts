@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'editor-easier-to-read', added: '2026-10-20', audience: 'site', title: 'Report screen easier to read and to tap',
+    text: 'On the report screen and the no-signal page, buttons and suggestions are at least a fingertip tall, the gold "Send to office" button stays readable under a mouse, and Access tags are darker. With a keyboard or screen reader, "Next check" and "Check & send" now take you to what opens, each group of choices says what it is for, and the signature box says whether it is signed.' },
   { id: 'offline-sign', added: '2026-10-20', audience: 'site', title: 'Sign an inspection with no signal',
     text: 'With no signal, once every check is answered you can sign a safety or handover inspection on the phone. It is marked "Signed · not sent yet" and goes to the office by itself the next time RELAY opens with signal, and RELAY tells you when it has gone. If anything changed after you signed, it is not sent: you check it and sign again.' },
   { id: 'before-handover', added: '2026-10-20', audience: 'all', title: 'Before handover',

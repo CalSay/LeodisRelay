@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { PhotoImage } from './PhotoImage';
 import { WHERE, type Where } from '@/lib/uploadStatus';
 import { CameraIcon } from './CameraIcon';
@@ -25,9 +25,10 @@ const TRADES = ['Electrical', 'HVAC', 'P&H', 'Other / non-Leodis'] as const;
 const SIZES: [RoughSize, string][] = [['half-day', '½ day'], ['day', '1 day'], ['two-days', '2 days'], ['more', 'More']];
 
 export function KindPicker({ onPick }: { onPick: (type: ObservationType) => void }) {
+  const id = useId();
   return <div className="eng-pick">
-    <div className="field"><label>What kind of update is this?</label></div>
-    <div className="eng-tiles">
+    <div className="field"><label id={`pick-${id}`}>What kind of update is this?</label></div>
+    <div className="eng-tiles" role="group" aria-labelledby={`pick-${id}`}>
       {CARD_TYPES.map(t => <button key={t.value} type="button" className={`eng-tile ${t.value}`} onClick={() => onPick(t.value)}><span className={`kind tone-${t.tone}`}>{t.short}</span><div><b>{t.pick}</b><small>{t.asks}</small></div></button>)}
     </div>
   </div>;
@@ -122,8 +123,8 @@ export function ObservationEditor({
       </div>}
 
       <div className="field">
-        <label>Kind</label>
-        <div className="kindrow">{CARD_TYPES.map(t => <button key={t.value} type="button" className={`tone-${t.tone}`} aria-pressed={kind === t.value} onClick={() => changeKind(t.value)}>{kind === t.value && <span aria-hidden="true">✓</span>}{t.short}</button>)}</div>
+        <label id={`kind-${id}`}>Kind</label>
+        <div className="kindrow" role="group" aria-labelledby={`kind-${id}`}>{CARD_TYPES.map(t => <button key={t.value} type="button" className={`tone-${t.tone}`} aria-pressed={kind === t.value} onClick={() => changeKind(t.value)}>{kind === t.value && <span aria-hidden="true">✓</span>}{t.short}</button>)}</div>
       </div>
 
       {where}
@@ -140,8 +141,8 @@ export function ObservationEditor({
           <textarea id={`what-${id}`} value={observation.whatHappened} onChange={(e) => set("whatHappened", e.target.value)} placeholder="Say what you saw" />
         </div>
         <div className="field">
-          <label>Trade affected</label>
-          <div className="eng-seg">{TRADES.map(t => <button key={t} type="button" aria-pressed={observation.affectedTrade === t} onClick={() => set('affectedTrade', t)}>{t === 'Other / non-Leodis' ? 'Other' : t}</button>)}</div>
+          <label id={`trade-${id}`}>Trade affected</label>
+          <div className="eng-seg" role="group" aria-labelledby={`trade-${id}`}>{TRADES.map(t => <button key={t} type="button" aria-pressed={observation.affectedTrade === t} onClick={() => set('affectedTrade', t)}>{t === 'Other / non-Leodis' ? 'Other' : t}</button>)}</div>
           <p className="hint">Whose work it is, not who you are. “Other” covers the main contractor and other trades.</p>
         </div>
       </>}
@@ -173,13 +174,13 @@ export function ObservationEditor({
           <textarea id={`what-${id}`} value={observation.whatHappened} onChange={(e) => set("whatHappened", e.target.value)} placeholder="What is needed beyond the drawings, and what made it necessary" />
         </div>
         <div className="field">
-          <label>Reason</label>
-          <div className="eng-chips" style={{ marginTop: 0 }}>{VARIATION_REASONS.map(r => <button key={r} type="button" className="eng-chip" aria-pressed={observation.variationReason === r} onClick={() => observation.variationReason === r ? unset('variationReason') : set('variationReason', r)}>{r}</button>)}</div>
+          <label id={`reason-${id}`}>Reason</label>
+          <div className="eng-chips" style={{ marginTop: 0 }} role="group" aria-labelledby={`reason-${id}`}>{VARIATION_REASONS.map(r => <button key={r} type="button" className="eng-chip" aria-pressed={observation.variationReason === r} onClick={() => observation.variationReason === r ? unset('variationReason') : set('variationReason', r)}>{r}</button>)}</div>
         </div>
         <div className="two">
           <div className="field">
-            <label>Has the work already been done?</label>
-            <div className="eng-seg ynq"><button type="button" className="yes" aria-pressed={observation.workDone === true} onClick={() => set('workDone', true)}>Yes, on a say-so</button><button type="button" className="no" aria-pressed={observation.workDone === false} onClick={() => set('workDone', false)}>Not yet</button></div>
+            <label id={`done-${id}`}>Has the work already been done?</label>
+            <div className="eng-seg ynq" role="group" aria-labelledby={`done-${id}`}><button type="button" className="yes" aria-pressed={observation.workDone === true} onClick={() => set('workDone', true)}>Yes, on a say-so</button><button type="button" className="no" aria-pressed={observation.workDone === false} onClick={() => set('workDone', false)}>Not yet</button></div>
             {observation.workDone && <p className="hint eng-hint-late">The office gets the client to sign for it as chargeable before it is invoiced. Name who asked.</p>}
           </div>
           <div className="field">
@@ -189,8 +190,8 @@ export function ObservationEditor({
         </div>
         <div className="two">
           <div className="field">
-            <label>Rough size · optional</label>
-            <div className="eng-chips" style={{ marginTop: 0 }}>{SIZES.map(([value, label]) => <button key={value} type="button" className="eng-chip" aria-pressed={observation.roughSize === value} onClick={() => observation.roughSize === value ? unset('roughSize') : set('roughSize', value)}>{label}</button>)}</div>
+            <label id={`size-${id}`}>Rough size · optional</label>
+            <div className="eng-chips" style={{ marginTop: 0 }} role="group" aria-labelledby={`size-${id}`}>{SIZES.map(([value, label]) => <button key={value} type="button" className="eng-chip" aria-pressed={observation.roughSize === value} onClick={() => observation.roughSize === value ? unset('roughSize') : set('roughSize', value)}>{label}</button>)}</div>
           </div>
           <div className="field">
             <label htmlFor={`parts-${id}`}>Cost of parts, if you know them · optional</label>
@@ -269,9 +270,9 @@ export function PhotoField({ observation, note, photoWhere, onChange, onRemovePh
   }
 
   return <div className="field">
-    <label>Photographs{observation.photos.length > 0 ? ` · ${observation.photos.length}` : ""}{note ?? ''}</label>
+    <label id={`photos-${observation.id}`}>Photographs{observation.photos.length > 0 ? ` · ${observation.photos.length}` : ""}{note ?? ''}</label>
     <label className="camera">
-      <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple onChange={(e) => addPhotos(e.target.files)} />
+      <input ref={fileInput} aria-describedby={`photos-${observation.id}`} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple onChange={(e) => addPhotos(e.target.files)} />
       <CameraIcon />{observation.photos.length ? "Add another photo" : "Take a photo"}
     </label>
     {photoError && <div className="note note-bad" style={{ marginTop: 12 }}>{photoError}</div>}

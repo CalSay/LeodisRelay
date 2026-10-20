@@ -4,6 +4,77 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Accessibility follow-ups: the report editor and the no-signal page
+
+- Why: #48 fixed the engineer and office pages but left the report editor
+  and the no-signal page (`offline.html`) unscanned while other threads were
+  changing them. Engineers spend most of their RELAY time in these two
+  screens, often outdoors on a phone. Decided by Claude under Cal's standing
+  autonomy.
+- How it was found: `scripts/verify-accessibility.mjs` now also walks the
+  editor and the no-signal page as an engineer uses them, at 390px and
+  1440px in light and dark, after the page scans (so the reports it makes do
+  not change those pages): a new site update, an open card with a photo,
+  Check & send, sent; a safety inspection just started, a check answered
+  "Action needed", its check step; the no-signal page's start form, a card
+  with a photo, an inspection, and its "Sign it" panel. Each state gets the
+  same checks as the pages (axe-core, one h1, 44px controls on a phone, a
+  ring at every Tab stop). Before the fixes it found 9 kinds of problem.
+- Contrast: the light theme's gold "Send to office" button turned light gold
+  under a mouse, with white text at 1.8:1 (new `--brass-hover` token, darker
+  in light, unchanged in dark). Light `--brass` #7d621b to #765a1d, the
+  office desk's value since #48, so gold text stays 4.5:1 on hovered and
+  pressed backgrounds ("Next check", a chosen suggestion). Access tags and
+  card edges use a new `--access-tone`: #56708f in light (was #7f97b5,
+  3:1), unchanged in dark. The no-signal page takes the app's grey and gold
+  tokens.
+- Headings and names: the sent report's sections and cards and the check
+  step's "In this report" and "Sign" are headings now (same look); on a
+  phone a hidden "Cards"/"Checks" heading sits above the list so a check's
+  question is not a skipped level. Kind, Trade affected, Reason, "Has the
+  work already been done?", Rough size and "What kind of update is this?"
+  name their button groups; the photo button is described by its
+  "Photographs · at least one" line. The signature box is named
+  "Signature" and says in words whether it is signed; Clear is "Clear
+  signature" (also on the no-signal page, whose cards are now named by
+  their heading).
+- Tap targets on a phone: suggestion chips and "Show more" 44px (were 40
+  and 36), photo captions 44px, the no-signal page's "Remove" under a photo
+  48px.
+- Focus: "Next check", a Stop on the check step, and a row on a wide screen now
+  move focus to the card they open, and "Check & send" moves it to the top
+  of the check step, rather than leaving it on a button that has just gone.
+  On the no-signal page, opening or starting a report moves focus to its
+  title. Its date field's year now shows the ring (it used `:focus-visible`,
+  which Chromium does not match there).
+- Colour alone: the red count on the "Check & send" step now has a ring and
+  says "things stop it being sent" to a screen reader; "View the document"
+  in a sent report is underlined. Everything else checked (answer tags,
+  where-it-is lines, the action bar) already had words.
+- Help: "What's new" entry `editor-easier-to-read`. Service worker cache
+  `relay-public-v9`.
+- Verified (Node 22 here; CI runs Node 24): `npm run typecheck`, `npm test`,
+  `npm run build`, `verify-accessibility` (458 checks, passed; new focus checks: Check & send
+  and a Stop land on what they open). Also passed: `verify-editor-usability`
+  (its step-count check now reads the number, not the new screen-reader
+  words), `verify-report-editor`, `verify-report-types`,
+  `verify-signature-reload`, `verify-engineer-layout`, `verify-undo-remove`,
+  `verify-suggestions`, `verify-help`, `verify-offline-sign`,
+  `verify-offline-capture`, `verify-offline-inspection`,
+  `verify-offline-drafts`, `verify-handover-offline`. A fresh-context review
+  found a focus target that could linger when the card was already open and
+  pull focus on a later render; fixed (it waits for that card, or focuses at
+  once). Screenshots in the project's `ui-review/editor-accessibility/`.
+- Not verified: a real screen reader (VoiceOver, TalkBack, NVDA), a
+  physical phone, Safari and Firefox, 200% zoom. A drawn signature still
+  needs a pointer, so someone using only a keyboard cannot sign an
+  inspection, which requires the drawing; a typed-name alternative would
+  change what an inspection's signature means, so it is proposed, not built.
+- Proposed (not added to `docs/tasks.json`): follow-ups: a skip link to the
+  main content; landmarks and an h1 on the compliance pages; a keyboard way
+  to sign; add `verify-accessibility.mjs` to the browser checks in
+  `CLAUDE.md`.
+
 ## 2026-10-20 — FE-3e: offline capture, third slice (sign an inspection with no signal)
 
 - Why: #46 let an inspection be started and answered with no signal but it
