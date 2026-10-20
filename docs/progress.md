@@ -77,6 +77,99 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   screen reader. Proposed: add `verify-sent-elsewhere.mjs` to the browser
   checks list in `CLAUDE.md`.
 
+## 2026-10-20 — Register spreadsheets (new feature, proposed as NEW-8)
+
+- The office issue register and variation register each have a "Download
+  spreadsheet" button that saves a CSV file which opens in Excel. The issue
+  file holds the register's current search on every page, not just the 50
+  shown, in the register's order and with its filters (view chip, project,
+  trade, location, company, verification, sort), from a new office-only route
+  `GET /api/issues/export`. The variation file holds the rows on screen in
+  their order; it is built in the browser because the office desk already
+  holds every variation it may see. Files are named
+  `relay-issues-2026-10-20.csv`, with the project number when the search is
+  one project's.
+- Why this feature: progress meetings, client updates and subcontractor
+  chasing all happen in spreadsheets, and the office had no way to take the
+  registers out of RELAY except by copying rows from the screen. A download
+  is for the person who asked for it: nothing is sent, emailed or written to
+  SharePoint. Not EXP-2 (no requests or routing) and not EXP-4 (locations
+  stay free text).
+- Decisions: office only (Managers and Admins); engineers get a 403, as for
+  open issues by company. Columns keep the registers' facts and mostly their
+  words (work and confirmation as two facts; the register's "Verify" tag is
+  spelt out as "Fixed, waiting for verification" because a sheet has no
+  colour or hint to explain it; "As reported" where review is off, the
+  verification words of the filter, "Done, not instructed"), and money,
+  margin and days past target are numbers so the sheet can add them up;
+  margin is blank for a declined variation, as on screen. The register's
+  margin % now uses `marginPct` too, so a variation quoted at £0 shows a
+  blank % on screen and in the file instead of a huge figure. Text that Excel
+  would run as a formula (starting =, +, -, @) is led with an apostrophe, and
+  the file starts with a byte-order mark so £ and accents read correctly.
+  A report that raised an issue but is not to hand is written "Report", not
+  guessed. Rules in `lib/registerExport.ts` (pure).
+- Verified on Node 24: `npm run typecheck`, `npm test` (6 new tests in
+  `tests/registerExport.test.ts`), `npm run build`. New
+  `scripts/verify-register-export.mjs` passed (23 checks: signed-out and
+  engineer refusals, the whole open register over two pages in the
+  register's order, a narrowed search and its project file name, the closed
+  filter, formula-safe and quoted cells, days past target, the variation file
+  matching the rows on screen with its figures, no button when nothing is
+  shown, 1440px dark and 390px light). `verify-issue-register` (70),
+  `verify-role-access` (61), `verify-office-actions` (41),
+  `verify-office-phone` (95) and `verify-company-issues` (28) passed.
+  Screenshots in the project's `ui-review/register-export/`.
+- Not verified: opening the files in Excel itself (checked by parsing the
+  CSV), a physical phone, SharePoint mode (no live tenant).
+- Seen, not changed: at 390px the office issue register's table is wider
+  than the screen and the page scrolls sideways (before this change too).
+  Proposed follow-up: give the register a card layout on phones.
+- Proposed task (not added to `docs/tasks.json`): "NEW-8 Register
+  spreadsheets — the office downloads the issue register's current search
+  (all pages) and the variation register as CSV files; office only; browser
+  check at 390 and 1440px." Proposed: add `verify-register-export.mjs` to the
+  browser checks list in `CLAUDE.md`.
+
+## 2026-10-20 — EXP-1: living site diary
+
+- New `/diary` page: a project's visits, newest day first, made only from
+  reports already sent. No diary entry is ever typed. Each day names who was
+  on site; each entry is one report at its latest sent revision, with every
+  card (kind, location, words, action needed, who, up to four photograph
+  thumbnails and a "+n" link to the rest) and the issue or variation the card
+  raised or was a further sighting of, with that record's state now.
+- Provenance: the reference links the exact revision shown; a corrected report
+  shows "Corrects rev N" with the reason and links every earlier sent revision.
+  A correction still in draft changes nothing. Cards are matched to issues and
+  variations by `raisedByObservation` across the whole revision chain, so a
+  record raised by rev 1 still shows on rev 2; a record read back from
+  SharePoint without that ID is matched by location and words, as
+  `correctReport` does.
+- Find box (words, names, references, photo captions) and kind filter
+  (Progress, Defects, Access, Variations); a filtered entry says "Showing 1 of
+  3 cards". Ten site days a page with "Show earlier days". The address keeps
+  project, words and filter, so a report opened from the diary comes back.
+  Opened from the engineer home ("This project"), the engineer Reports view
+  and the office project actions.
+- Decisions: entries come from reports only (acceptance: "built only from
+  existing report data"); office-side issue changes (assign, close) stay on the
+  issue page and in the weekly summary rather than mixing a second source into
+  the diary. Every role on the project reads it, with the same report rule as
+  elsewhere (sent reports only). Paged on the server by site day, so a long
+  project does not send every report at once. Rules in `lib/siteDiary.ts`
+  (pure), API `GET /api/site-diary`.
+- Verified on Node 24: `npm run typecheck`, `npm test` (8 new tests in
+  `tests/siteDiary.test.ts`), `npm run build`, new
+  `scripts/verify-site-diary.mjs` (35 checks, 390px light and 1440px dark).
+  `verify-role-access`, `verify-engineer-layout`, `verify-weekly-summary`,
+  `verify-photo-library`, `verify-engineer-nav` and `verify-office-landing`
+  passed. Screenshots are in the project's shared files
+  (`ui-review/site-diary/`), not the repo.
+- Not verified: a physical phone, a live SharePoint tenant. Proposed next:
+  print or save a date range of the diary as a PDF; jump to a date; add
+  `verify-site-diary.mjs` to the browser checks list in `CLAUDE.md`.
+
 ## 2026-10-20 — Open issues by company (new feature, proposed as NEW-7)
 
 - New office page `/companies`, opened from "By company" on the office
