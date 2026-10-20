@@ -90,6 +90,11 @@ export interface Report {
   /** Captured at the point of sending. The drawn image is optional. */
   signature?: { dataUrl?: string; name: string; signedAt: string };
   /**
+   * The name and drawing on a draft, saved like any other edit so a reload or
+   * a flat battery does not lose them. Becomes `signature` only on sending.
+   */
+  draftSignature?: DraftSignature;
+  /**
    * Somebody in the office says they have read it. A fourth fact, kept apart
    * from receipt, review and delivery: none of those means a person looked.
    */
@@ -121,7 +126,7 @@ export interface ReviewFinding {
   blocking: boolean;
 }
 
-export type ReportSummary = Omit<Report, 'observations' | 'signature'> & {
+export type ReportSummary = Omit<Report, 'observations' | 'signature' | 'draftSignature'> & {
   observationCount: number; photoCount: number;
   /** Updates that raise an issue: defects and access restrictions. */
   defectCount: number;
@@ -268,3 +273,5 @@ export interface Variation {
   askedBy?: string;
   events: VariationEvent[];
 }
+
+export interface DraftSignature { name: string; dataUrl?: string }

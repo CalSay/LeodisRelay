@@ -13,22 +13,39 @@ import { useEffect, useRef, useState } from "react";
  * ratio, or the stroke lands away from the fingertip on a phone. The strokes
  * are kept and replayed on resize, because a signature that vanishes when the
  * keyboard closes is worse than no signature field.
+ *
+ * A signature saved with the draft comes back as an image, not strokes. It is
+ * drawn under any new strokes, recoloured to the theme's ink on screen, and
+ * kept in the exported image, so reopening a draft shows what was signed.
  */
 type Stroke = { x: number; y: number }[];
 
 export function SignaturePad({
   name,
+  initialImage,
   onNameChange,
   onChange,
 }: {
   name: string;
+  /** A signature saved earlier. Read once, when the pad first appears. */
+  initialImage?: string | null;
   onNameChange: (next: string) => void;
   onChange: (dataUrl: string | null) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const strokes = useRef<Stroke[]>([]);
   const drawing = useRef(false);
-  const [hasInk, setHasInk] = useState(false);
+  const saved = useRef<HTMLImageElement | null>(null);
+  /** Cleared before the saved image finished loading: it must not come back. */
+  const cleared = useRef(false);
+  const [hasInk, setHasInk] = useState(Boolean(initialImage));
+
+  /** Fit the saved image inside the box without stretching it. */
+  function placeSaved(image: HTMLImageElement, width: number, height: number) {
+    const scale = Math.min(width / image.naturalWidth, height / image.naturalHeight) || 1;
+    const w = image.naturalWidth * scale, h = image.naturalHeight * scale;
+    return { x: (width - w) / 2, y: (height - h) / 2, w, h };
+  }
 
   function paint() {
     const canvas = canvasRef.current;
@@ -44,12 +61,30 @@ export function SignaturePad({
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     context.clearRect(0, 0, box.width, box.height);
 
+    // Read from the theme so the ink is visible in both light and dark.
+    const ink = getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#000";
+    const image = saved.current;
+    if (image && box.width && box.height) {
+      // The saved image has dark ink for the PDF. Tint it on a scratch canvas
+      // so it reads in dark mode too.
+      const tint = document.createElement("canvas");
+      tint.width = canvas.width; tint.height = canvas.height;
+      const tc = tint.getContext("2d");
+      if (tc) {
+        const at = placeSaved(image, box.width, box.height);
+        tc.setTransform(ratio, 0, 0, ratio, 0, 0);
+        tc.drawImage(image, at.x, at.y, at.w, at.h);
+        tc.globalCompositeOperation = "source-in";
+        tc.fillStyle = ink;
+        tc.fillRect(0, 0, box.width, box.height);
+        context.drawImage(tint, 0, 0, box.width, box.height);
+      }
+    }
+
     context.lineWidth = 2;
     context.lineCap = "round";
     context.lineJoin = "round";
-    // Read from the theme so the ink is visible in both light and dark.
-    context.strokeStyle =
-      getComputedStyle(document.documentElement).getPropertyValue("--text").trim() || "#000";
+    context.strokeStyle = ink;
 
     for (const stroke of strokes.current) {
       if (stroke.length === 0) continue;
@@ -61,6 +96,15 @@ export function SignaturePad({
   }
 
   useEffect(() => {
+    if (initialImage) {
+      const image = new Image();
+      image.onload = () => {
+        if (cleared.current) return;
+        saved.current = image;
+        paint();
+      };
+      image.src = initialImage;
+    }
     paint();
     const observer = new ResizeObserver(paint);
     if (canvasRef.current) observer.observe(canvasRef.current);
@@ -75,7 +119,7 @@ export function SignaturePad({
   function emit() {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    if (!strokes.current.length) { onChange(null); return; }
+    if (!strokes.current.length && !saved.current) { onChange(null); return; }
     // Display follows the theme; the PDF always needs dark ink on white paper.
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = canvas.width; exportCanvas.height = canvas.height;
@@ -83,6 +127,10 @@ export function SignaturePad({
     if (!context) return;
     const box = canvas.getBoundingClientRect();
     context.scale(canvas.width/box.width,canvas.height/box.height);
+    if (saved.current) {
+      const at = placeSaved(saved.current, box.width, box.height);
+      context.drawImage(saved.current, at.x, at.y, at.w, at.h);
+    }
     context.strokeStyle='#111111'; context.lineWidth=2; context.lineCap='round'; context.lineJoin='round';
     for (const stroke of strokes.current) {
       if (!stroke.length) continue;
@@ -140,6 +188,8 @@ export function SignaturePad({
           className="btn-quiet btn-sm"
           onClick={() => {
             strokes.current = [];
+            saved.current = null;
+            cleared.current = true;
             setHasInk(false);
             paint();
             onChange(null);

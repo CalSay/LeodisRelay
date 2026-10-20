@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { acknowledgeReport, correctReport, getReport, reviewSubmission, saveDraft, submitReport } from "@/lib/serverStore";
 import { requireSession, visibleTo } from "@/lib/auth/guard";
-import type { Report } from "@/lib/types";
+import type { DraftSignature, Report } from "@/lib/types";
 import { validateObservations } from '@/lib/validatePhotos';
+import { invalidSignature } from '@/lib/validateSignature';
 import { canManage, ownsReport } from '@/lib/auth/access';
 import { IssueSyncError } from '@/lib/sharepoint/issues';
 
@@ -37,6 +38,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
     observations?: Report["observations"];
     expectedVersion?: number;
     requestId?: string;
+    signature?: DraftSignature | null;
   };
   // Casts do not validate. A malformed body must be refused rather than
   // reaching the store as undefined.
@@ -49,10 +51,15 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   }
   const validation = await validateObservations(body.observations, id, existing.observations, existing.corrects);
   if (validation) return NextResponse.json({ reason: validation }, { status: 422 });
+  const signatureProblem = invalidSignature(body.signature);
+  if (signatureProblem) return NextResponse.json({ reason: signatureProblem }, { status: 422 });
 
+  // Absent leaves the saved signature alone (older clients); null clears it.
+  const { draftSignature: saved, ...rest } = existing;
+  const draftSignature = body.signature === undefined ? saved : body.signature;
   const outcome = saveDraft(
     id,
-    { ...existing, observations: body.observations },
+    { ...rest, observations: body.observations, ...(draftSignature ? { draftSignature } : {}) },
     body.expectedVersion,
     body.requestId,
   );
@@ -144,3 +151,4 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     throw error;
   }
 }
+
