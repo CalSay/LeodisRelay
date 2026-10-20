@@ -14,6 +14,8 @@ type SortState = { key: IssueSort; direction: SortDirection } | null;
 const FILTERS: [Filter, string, boolean][] = [['open', 'Open', false], ['overdue', 'Overdue', true], ['verify', 'To verify', false], ['unassigned', 'Unassigned', false], ['notReviewed', 'Not reviewed', false], ['disputed', 'Disputed', true], ['closed', 'Closed', false], ['all', 'All', false]];
 const TRADES = ['Electrical', 'HVAC', 'P&H', 'Other / non-Leodis'];
 const SORT_NAME: Record<IssueSort, string> = { reference: 'reference', issue: 'issue', project: 'project', raised: 'date raised', owner: 'owner', target: 'target date', work: 'work', confirmation: 'confirmation' };
+// On a phone the column headings are hidden, so the orders people use most are offered as one list.
+const PHONE_ORDERS: [string, string][] = [['', 'Priority'], ['target:ascending', 'Target date, earliest first'], ['raised:descending', 'Raised, newest first'], ['raised:ascending', 'Raised, oldest first'], ['owner:ascending', 'Owner, A to Z'], ['project:ascending', 'Project, A to Z'], ['reference:ascending', 'Reference']];
 
 function SortHead({ label, column, sort, change }: { label: string; column: IssueSort; sort: SortState; change: (column: IssueSort) => void }) {
   const active = sort?.key === column;
@@ -73,6 +75,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   if (!result) return <div className="view">{failed ? <div className="note bad" role="alert"><span>{failed}</span></div> : <div className="loading">Loading the issue register</div>}</div>;
   const counts = result.counts;
   const shown = result.issues;
+  const orderValue = sort ? `${sort.key}:${sort.direction}` : '';
   const changeSort = (key: IssueSort) => setSort(current => current?.key === key ? { key, direction: current.direction === 'ascending' ? 'descending' : 'ascending' } : { key, direction: 'ascending' });
   const name = (id: string) => ctx.projects.find(p => p.id === id)?.projectName ?? id;
   const code = (id: string) => ctx.projects.find(p => p.id === id)?.id ?? '';
@@ -96,7 +99,11 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
     <div className="filters">
       {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
       <span className="spacer" />
-      <button type="button" className={`chip ${sort === null ? 'on' : ''}`} aria-pressed={sort === null} onClick={() => setSort(null)}>Sort: priority</button>
+      <button type="button" className={`chip sort-chip ${sort === null ? 'on' : ''}`} aria-pressed={sort === null} onClick={() => setSort(null)}>Sort: priority</button>
+      <label className="phone-sort">Order <select value={orderValue} onChange={e => { const [key, direction] = e.target.value.split(':'); setSort(key ? { key: key as IssueSort, direction: direction as SortDirection } : null); }}>
+        {PHONE_ORDERS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        {!PHONE_ORDERS.some(([v]) => v === orderValue) && sort && <option value={orderValue}>{`${SORT_NAME[sort.key][0].toUpperCase()}${SORT_NAME[sort.key].slice(1)}, ${sort.direction}`}</option>}
+      </select></label>
     </div>
     <div className="filters issue-search" role="search" aria-label="Filter the issue register">
       <label>Location <input type="search" value={locationText} onChange={e => setLocationText(e.target.value)} placeholder="e.g. riser 2" /></label>
@@ -108,16 +115,16 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
       {narrowed && <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button>}
     </div>
     {failed && <div className="note bad" role="alert"><span>{failed} Showing the last results.</span></div>}
-    <div className="panel"><table className="reg"><thead><tr><SortHead label="Ref" column="reference" sort={sort} change={changeSort} /><SortHead label="Issue" column="issue" sort={sort} change={changeSort} /><SortHead label="Project" column="project" sort={sort} change={changeSort} /><SortHead label="Raised" column="raised" sort={sort} change={changeSort} /><SortHead label="Owner" column="owner" sort={sort} change={changeSort} /><SortHead label="Target" column="target" sort={sort} change={changeSort} /><SortHead label="Work" column="work" sort={sort} change={changeSort} /><SortHead label="Confirmation" column="confirmation" sort={sort} change={changeSort} /><th><span className="sr">Actions</span></th></tr></thead><tbody>
+    <div className="panel"><table className="reg cards"><thead><tr><SortHead label="Ref" column="reference" sort={sort} change={changeSort} /><SortHead label="Issue" column="issue" sort={sort} change={changeSort} /><SortHead label="Project" column="project" sort={sort} change={changeSort} /><SortHead label="Raised" column="raised" sort={sort} change={changeSort} /><SortHead label="Owner" column="owner" sort={sort} change={changeSort} /><SortHead label="Target" column="target" sort={sort} change={changeSort} /><SortHead label="Work" column="work" sort={sort} change={changeSort} /><SortHead label="Confirmation" column="confirmation" sort={sort} change={changeSort} /><th><span className="sr">Actions</span></th></tr></thead><tbody>
       {shown.length ? shown.map(i => { const late = isOverdue(i, day); const active = isActive(i); return <tr key={i.id} className="clickable" onClick={() => ctx.go(`#/projects/${code(i.projectId)}/issue/${i.id}`)}>
-        <td><span className="ref">{i.reference}</span></td>
-        <td><div className="rowtitle" style={{ fontSize: 13 }}>{i.description}</div><div className="rowsub">{i.location || 'no location'} · {i.affectedTrade ?? (i.reporterTrade ? `reported by ${i.reporterTrade}` : 'trade not recorded')}</div></td>
-        <td>{name(i.projectId)}</td>
-        <td className="due">{fmtDay(i.raisedAt)}<div className="rowsub">{source(i)}</div></td>
-        <td>{i.owner.trim() || <span className="late">Unassigned</span>}</td>
-        <td className="due">{i.targetDate ? <><b className={late ? 'late' : ''}>{i.targetDate}</b>{late && ` · ${daysLate(i.targetDate, day)}d late`}</> : <span className="fine">—</span>}</td>
-        <td><WorkTag i={i} day={day} /></td><td><ConfirmTag i={i} reviewOn={!!ctx.statOf(i.projectId)?.reviewOn} /></td>
-        <td onClick={e => e.stopPropagation()}><div className="actions" style={{ flexWrap: 'nowrap' }}>
+        <td className="c-ref"><span className="ref">{i.reference}</span></td>
+        <td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{i.description}</div><div className="rowsub">{i.location || 'no location'} · {i.affectedTrade ?? (i.reporterTrade ? `reported by ${i.reporterTrade}` : 'trade not recorded')}</div></td>
+        <td data-label="Project">{name(i.projectId)}</td>
+        <td className="due" data-label="Raised">{fmtDay(i.raisedAt)}<div className="rowsub">{source(i)}</div></td>
+        <td data-label="Owner">{i.owner.trim() || <span className="late">Unassigned</span>}</td>
+        <td className="due" data-label="Target">{i.targetDate ? <><b className={late ? 'late' : ''}>{i.targetDate}</b>{late && ` · ${daysLate(i.targetDate, day)}d late`}</> : <span className="fine">—</span>}</td>
+        <td data-label="Work"><WorkTag i={i} day={day} /></td><td data-label="Confirmation"><ConfirmTag i={i} reviewOn={!!ctx.statOf(i.projectId)?.reviewOn} /></td>
+        <td className="c-actions" onClick={e => e.stopPropagation()}><div className="actions">
           {active && i.work === 'awaiting_verification' && !closureMine(i) && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i })}>Verify</Btn>}
           {active && i.work === 'awaiting_verification' && <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'reopen', issue: i })}>Not finished</BtnQ>}
           {active && i.work !== 'awaiting_verification' && (i.owner.trim() ? <BtnQ className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Reassign</BtnQ> : <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)}
