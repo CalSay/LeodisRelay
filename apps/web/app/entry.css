@@ -43,7 +43,7 @@
 .entry-local{max-width:480px;margin:auto}.entry-local input{background:var(--entry-panel);color:var(--entry-text);border-color:var(--entry-line)}.entry-local label{color:var(--entry-muted)}
 .entry-wrap .install-help{margin:20px 0 0;color:var(--entry-muted);background:transparent;border-color:var(--entry-line)}
 @media(max-width:600px){
-.entry-wrap{margin:16px auto;padding:0 12px}.entry-top{padding:20px}.entry-brand small{display:block;margin:8px 0 0;padding:0;border:0}
+.entry-wrap{margin:16px auto;padding:0 12px}.entry-top{padding:20px}.entry-brand{display:inline-block;min-height:44px}.entry-brand small{display:block;margin:8px 0 0;padding:0;border:0}
 .entry-signin{display:block}.entry-hero{display:none}.entry-login{padding:30px 24px 34px}.entry-desktop-title{display:none}.entry-mobile-title{display:block}.entry-wrap h1{font-size:28px}
 .entry-hub{padding:26px 20px 20px}.entry-hub-grid{grid-template-columns:1fr;gap:24px}.entry-wrap .entry-hub-title{margin-bottom:24px}.entry-mast{border:0;padding:0}.entry-mast strong{font-size:42px}.entry-mast br,.entry-mast small{display:none}
 .entry-company{padding:24px 18px;min-height:156px}.entry-company:before{left:18px}.entry-company-name{font-size:23px}.entry-footer{padding:18px 24px;display:block}.entry-footer span{display:block;line-height:1.8}

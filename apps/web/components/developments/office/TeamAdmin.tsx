@@ -14,7 +14,7 @@ const sees = (m: TeamMember) => ROLE_WORDS[m.assignment.split('.')[0] ?? ''] ?? 
 /** The roster reconciled with sessions. Read-only: roles are set in Microsoft. */
 function RosterTable({ members, note }: { members: TeamMember[] | null; note?: string }) {
   const groups: [string, (m: TeamMember) => boolean][] = [['Admin', m => m.assignment === 'Admin'], ['Managers', m => m.assignment === 'Manager'], ['Engineers', m => m.assignment.startsWith('Engineer')], ['Signed in, not on the checklist', m => !m.onChecklist]];
-  return <div className="panel"><div className="panel-head"><h4>Team assignment checklist</h4><span className="rowsub" style={{ marginLeft: 'auto' }}>{note ?? 'Set in Microsoft; the app only reads the role at sign-in'}</span></div>
+  return <div className="panel"><div className="panel-head"><h3>Team assignment checklist</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{note ?? 'Set in Microsoft; the app only reads the role at sign-in'}</span></div>
     <table className="reg cards"><thead><tr><th>Account</th><th>Microsoft app role</th><th>Sees</th><th>Signed in since</th><th>Session</th></tr></thead><tbody>
       {!members && <tr><td colSpan={5} className="loading" style={{ minHeight: 0, padding: 24 }}>Loading the roster</td></tr>}
       {(members ?? []).length === 0 && members && <tr><td colSpan={5} className="empty">Nobody on the checklist and nobody signed in.</td></tr>}
@@ -29,7 +29,7 @@ function RosterTable({ members, note }: { members: TeamMember[] | null; note?: s
 export function TeamView({ ctx }: { ctx: Ctx }) {
   const team = ctx.team;
   return <div className="view">
-    <div className="pagehead"><div><h3>Team</h3><p>{team ? `${team.members.length} accounts · ${team.members.filter(m => m.session === 'active').length} signed in now · ${team.members.filter(m => m.session !== 'active').length} without a current session` : 'Loading the roster'}</p></div></div>
+    <div className="pagehead"><div><h2>Team</h2><p>{team ? `${team.members.length} accounts · ${team.members.filter(m => m.session === 'active').length} signed in now · ${team.members.filter(m => m.session !== 'active').length} without a current session` : 'Loading the roster'}</p></div></div>
     <RosterTable members={team?.members ?? null} />
     <p className="rowsub">Issue owners are names or companies typed on site, not these accounts, so this list is who can sign in rather than who owns work.</p>
   </div>;
@@ -39,11 +39,11 @@ type Section = 'roles' | 'drafts' | 'delivery' | 'help';
 export function AdminView({ ctx }: { ctx: Ctx }) {
   const section: Section = (['roles', 'drafts', 'delivery', 'help'] as Section[]).includes(ctx.route.a as Section) ? ctx.route.a as Section : 'roles';
   const team = ctx.team;
-  if (!ctx.me.admin) return <div className="view"><div className="pagehead"><div><h3>Administration</h3><p>Admin role only</p></div></div><div className="empty">Administration is for the Admin role. Managers see the Team tab.</div></div>;
+  if (!ctx.me.admin) return <div className="view"><div className="pagehead"><div><h2>Administration</h2><p>Admin role only</p></div></div><div className="empty">Administration is for the Admin role. Managers see the Team tab.</div></div>;
   const legacy = team?.legacyDrafts ?? [];
   const processing = team?.processing;
   return <div className="view">
-    <div className="pagehead"><div><h3>Administration</h3><p>Access, older drafts and processing for Leodis Developments · signed in through Microsoft{team ? ` · ${team.members.length} accounts on the checklist` : ''}</p></div>
+    <div className="pagehead"><div><h2>Administration</h2><p>Access, older drafts and processing for Leodis Developments · signed in through Microsoft{team ? ` · ${team.members.length} accounts on the checklist` : ''}</p></div>
       <div className="actions"><a className="btn btn-q" href="https://entra.microsoft.com" target="_blank" rel="noreferrer">Open Microsoft Entra ↗</a></div></div>
     <div className="filters">
       <a className={`chip ${section === 'roles' ? 'on' : ''}`} href="#/admin/roles">Roles &amp; access{team ? ` · ${team.members.length}` : ''}</a>
@@ -55,13 +55,13 @@ export function AdminView({ ctx }: { ctx: Ctx }) {
     {section === 'roles' && <RosterTable members={team?.members ?? null} />}
     {section === 'drafts' && <LegacyDrafts ctx={ctx} />}
     {section === 'delivery' && <div className="adm-grid">
-      <div className="panel"><div className="panel-head"><h4>Notifications waiting</h4><span className="rowsub" style={{ marginLeft: 'auto' }}>Emails telling the project manager a report came in</span></div>
+      <div className="panel"><div className="panel-head"><h3>Notifications waiting</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>Emails telling the project manager a report came in</span></div>
         {processing ? <table className="reg cards"><thead><tr><th>Reference</th><th>Project</th><th>Received</th><th>State</th></tr></thead><tbody>
           {processing.outbox.length ? processing.outbox.map(o => { const code = ctx.projects.find(p => p.id === o.projectId)?.id ?? ''; return <tr key={o.id} className="clickable" onClick={() => ctx.go(`#/projects/${code}/report/${o.id}`)}><td className="c-ref"><span className="ref">{o.reference}</span></td><td className="c-title">{ctx.projects.find(p => p.id === o.projectId)?.projectName ?? o.projectId}</td><td className="due" data-label="Received">{fmtWhen(o.since)}</td><td data-label="State">{o.delivery === 'failed' ? <><Tag label="Processing failed" cls="tag-alert" /><div className="rowsub">{o.error}</div></> : <Tag label="PM not notified" cls="tag-quiet" />}</td></tr>; }) : <tr><td colSpan={4} className="empty">Nothing is waiting.</td></tr>}
         </tbody></table> : <div className="loading">Loading</div>}
         <div className="panel-foot">{processing?.mail === 'live' ? 'Live email is configured.' : 'No mail server is configured for the pilot, so notification emails are held here until the mailbox is connected. The reports themselves are on file and readable in the Inbox.'}</div></div>
       <div className="stack"><SharePointStatus />
-        <div className="panel"><div className="panel-head"><h4>Processing</h4></div>
+        <div className="panel"><div className="panel-head"><h3>Processing</h3></div>
           <dl className="tb" style={{ gridTemplateColumns: '1fr', margin: 0, border: 0 }}>
             <div style={{ borderRight: 0, borderBottom: '1px solid var(--line)' }}><dt>Notification email</dt><dd>{processing ? <Tag label={processing.mail === 'live' ? 'Live' : 'Held locally'} cls={processing.mail === 'live' ? 'tag-ok' : 'tag-quiet'} /> : '—'}<small>{processing?.mail === 'live' ? 'The project manager is emailed when a report comes in.' : 'The pilot does not send the notification email yet.'}</small></dd></div>
             <div style={{ borderRight: 0, borderBottom: '1px solid var(--line)' }}><dt>PDF and delivery jobs</dt><dd>{processing ? (processing.jobs.length ? processing.jobs.map(j => <div key={`${j.kind}-${j.status}`} className="num" style={{ fontSize: 12 }}>{j.kind} · {j.status} · {j.count}</div>) : <span className="fine">No jobs recorded</span>) : '—'}<small>Run by the separate worker process. A job that fails is retried with a delay.</small></dd></div>
@@ -69,8 +69,8 @@ export function AdminView({ ctx }: { ctx: Ctx }) {
           </dl></div>
       </div>
     </div>}
-    {section === 'help' && <div className="two"><div className="panel"><div className="panel-head"><h4>Install Relay</h4></div><InstallRelay alwaysShow /></div>
-      <div className="panel"><div className="panel-head"><h4>Where things are</h4></div><div style={{ padding: 16, fontSize: 13 }}><p style={{ margin: '0 0 8px' }}><b>Engineer view</b> is for site updates and individual defects. Managers and Admins can open it to test; authorship stays with the signed-in account.</p><p style={{ margin: '0 0 8px' }}><b>Inbox</b> holds every submitted report; drafts appear as summaries only. <b>Issues</b> is the register across projects; assignment, verification, confirmation and withdrawal are recorded against the signed-in person.</p><p style={{ margin: 0 }}>Roles are set in Microsoft Entra. Company selection on the hub is navigation, not access control.</p></div></div></div>}
+    {section === 'help' && <div className="two"><div className="panel"><div className="panel-head"><h3>Install Relay</h3></div><InstallRelay alwaysShow /></div>
+      <div className="panel"><div className="panel-head"><h3>Where things are</h3></div><div style={{ padding: 16, fontSize: 13 }}><p style={{ margin: '0 0 8px' }}><b>Engineer view</b> is for site updates and individual defects. Managers and Admins can open it to test; authorship stays with the signed-in account.</p><p style={{ margin: '0 0 8px' }}><b>Inbox</b> holds every submitted report; drafts appear as summaries only. <b>Issues</b> is the register across projects; assignment, verification, confirmation and withdrawal are recorded against the signed-in person.</p><p style={{ margin: 0 }}>Roles are set in Microsoft Entra. Company selection on the hub is navigation, not access control.</p></div></div></div>}
   </div>;
 }
 
@@ -92,8 +92,8 @@ function LegacyDrafts({ ctx }: { ctx: Ctx }) {
     } catch (e) { setError(e instanceof Error ? e.message : 'Assignment failed.'); }
     finally { setBusy(''); }
   }
-  return <div className="panel"><div className="panel-head"><h4 style={{ color: drafts.length ? 'var(--alert)' : undefined }}>Older drafts</h4><span className="rowsub" style={{ marginLeft: 'auto' }}>{drafts.length} predate account IDs</span></div>
-    {!team ? <div className="loading">Loading</div> : drafts.length ? <table className="reg cards"><thead><tr><th>Reference</th><th>Recorded author</th><th>Saved</th><th>Verified original author</th><th></th></tr></thead><tbody>
+  return <div className="panel"><div className="panel-head"><h3 style={{ color: drafts.length ? 'var(--alert)' : undefined }}>Older drafts</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{drafts.length} predate account IDs</span></div>
+    {!team ? <div className="loading">Loading</div> : drafts.length ? <table className="reg cards"><thead><tr><th>Reference</th><th>Recorded author</th><th>Saved</th><th>Verified original author</th><th><span className="sr">Action</span></th></tr></thead><tbody>
       {drafts.map(d => <tr key={d.id}><td className="c-ref"><span className="ref">{d.reference}</span></td><td data-label="Recorded author">“{d.author}”</td><td className="due" data-label="Saved">{fmtWhen(d.lastSavedAt)}</td><td data-label="Verified author"><select value={selected[d.id] ?? ''} onChange={e => setSelected({ ...selected, [d.id]: e.target.value })} aria-label={`Verified original author of ${d.reference}`}><option value="">Choose a signed-in account</option>{accounts.map(a => <option key={a.id} value={a.id}>{a.name ?? a.email} ({a.email})</option>)}</select></td><td className="c-actions"><BtnQ className="btn-sm" disabled={!selected[d.id] || busy === d.id} onClick={() => void assign(d.id)}>{busy === d.id ? 'Assigning…' : 'Assign draft ownership'}</BtnQ></td></tr>)}
     </tbody></table> : <div className="empty">Every draft has an author account.</div>}
     {error && <div className="note bad" style={{ margin: 12 }}><span>{error}</span></div>}

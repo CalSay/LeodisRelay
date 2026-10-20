@@ -30,7 +30,7 @@ const server=spawn(process.execPath,[resolve('node_modules/next/dist/bin/next'),
 server.stdout.on('data',d=>output+=d);server.stderr.on('data',d=>output+=d);
 let browser,checks=0;
 const shot=process.env.RELAY_SCREENSHOT_DIR;if(shot)mkdirSync(shot,{recursive:true});
-const visibleCols=page=>page.locator('.cols > .col').evaluateAll(cols=>cols.filter(c=>getComputedStyle(c).display!=='none').map(c=>{const r=c.getBoundingClientRect();return {head:c.querySelector('.col-head h4')?.textContent??'',width:r.width,top:r.top,left:r.left};}).sort((a,b)=>a.top-b.top||a.left-b.left));
+const visibleCols=page=>page.locator('.cols > .col').evaluateAll(cols=>cols.filter(c=>getComputedStyle(c).display!=='none').map(c=>{const r=c.getBoundingClientRect();return {head:c.querySelector('.col-head h2')?.textContent??'',width:r.width,top:r.top,left:r.left};}).sort((a,b)=>a.top-b.top||a.left-b.left));
 const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
 try {
   let ready=false;for(let n=0;n<60;n++){if(server.exitCode!==null)throw Error(output);try{if((await fetch(base+'/signin')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready,output);
