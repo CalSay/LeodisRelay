@@ -18,15 +18,16 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `lib/viewNavigation.ts`; the summaries built before report types (#39)
   (site diary, weekly summary, My week, since last visit, search, photo
   library, unfinished reports, office desk) all handle inspection checks.
-- One fault found and fixed: #39 changed `public/offline.js` but kept the
-  service worker cache at `relay-public-v4`. The worker serves `offline.js`
-  from its cache first, so a phone that already held v4 would keep the old
-  offline page, which shows an inspection's checks as plain untitled cards.
-  #41 (offline capture), merged during this check, changed `offline.js` and
-  `offline.html` again, still under v4.
-  The cache is now `relay-public-v5`, and a new test
-  (`tests/serviceWorker.test.ts`) pins the offline files' digest to the
-  cache name, so the next change to them fails until the name is bumped.
+- One fault found between features: #39 changed `public/offline.js` but
+  kept the service worker cache at `relay-public-v4`. The worker serves
+  `offline.js` from its cache first, so a phone that already held v4 would
+  keep the old offline page, which shows an inspection's checks as plain
+  untitled cards. #41 (offline capture), merged during this check, bumped
+  the cache to `relay-public-v5`, which covers #39's change too. So this PR
+  adds only the guard: `tests/serviceWorker.test.ts` pins the digest of
+  `offline.js` and `offline.html` (line endings normalised) to the cache
+  name, so the next change to either fails until the name is bumped. It
+  caught #41's change at once when main was merged in.
 - Deploy findings (nothing deployed): no new environment variables, no new
   SharePoint columns. `upgrade-pilot.sh` still makes one live SharePoint
   call (the two Variation Register columns, unchanged). A safety inspection
@@ -35,6 +36,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a Docker image build, the server, a live SharePoint tenant,
   real phones, and rolling back after an inspection exists (the old version
   would show its checks as plain cards; not tried).
+
 ## 2026-10-20 — FE-3e: offline capture, first slice
 
 - Before: with no signal, RELAY opened a recovery page that could only edit
