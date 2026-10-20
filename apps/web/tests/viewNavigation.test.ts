@@ -15,3 +15,8 @@ test('detail return paths cannot leave RELAY or jump into an unrelated route', (
   assert.equal(safeViewReturn('/api/auth/signout', '/engineer'), '/engineer');
   assert.equal(safeViewReturn('/office\\evil', '/engineer'), '/engineer');
 });
+
+test('a result opened from search returns to the same search', () => {
+  const search = '/search?q=riser&project=p1';
+  assert.equal(safeViewReturn(search, '/engineer'), search);
+});
