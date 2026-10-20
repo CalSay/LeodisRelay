@@ -39,6 +39,58 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a physical phone; SharePoint mode (no live tenant here);
   performance with thousands of records.
 - Next: a Search entry on the office desk once the office lane is free.
+## 2026-10-20 — FE-3d: unfinished reports on the engineer home
+
+- The engineer home now has an "Unfinished reports" list under the start
+  tiles: every draft the engineer started, on every project open to them, newest
+  change first. Each row names the project, the report, the visit day, the
+  card count and when the server last saved it, and opens the draft. It
+  replaces "Other drafts", which only showed the selected project.
+- Copies held on this device (`lib/localDraft.ts`) are checked too. Edits the
+  server has not acknowledged show "Not yet on the server" with when they were
+  made and the last server save. A device copy the server did not list is
+  asked about: if the server cannot be reached it shows "Only on this phone";
+  if the server answers, the report was sent or removed elsewhere, so the stale
+  copy is left out rather than offered as unfinished.
+- Decisions: the current project's draft stays on the big "Continue" tile and
+  is listed as well, so the list is the one complete place to see everything
+  unsent. Rows use the same row style and tags as "Came back from the office".
+  Rows with work only on the device get the alert edge, because that work is
+  not safe until the server has it.
+- Verified: `npm run typecheck` and `npm test` pass (web suite 65 tests, five
+  new in `tests/unfinishedReports.test.ts`). New
+  `scripts/verify-unfinished-reports.mjs` passed (18 checks, 390 px light and
+  1440 px dark): two drafts on two projects with project and save time, another
+  engineer's draft and a sent report left out, a device copy flagged as not on
+  the server, a phone-only copy shown while its server request fails, a stale
+  copy of a sent report left out, and a row opens its draft.
+  `verify-engineer-layout`, `verify-role-access` and `verify-signature-reload`
+  passed.
+- Not verified: a physical phone, or a real loss of signal (the check blocks one
+  request in the browser instead).
+- Next: FE-3b (show pending uploads and server acknowledgement).
+## 2026-10-20 — FIX-1: in-app PDF on older browsers
+
+- The PDF viewer now loads pdf.js's legacy build (page and worker) instead of
+  the modern one. The modern pdfjs-dist 6.3 build calls
+  `Map.prototype.getOrInsertComputed`, which Chromium 141 and likely older
+  iPhones lack, so the viewer showed that error instead of the report.
+- Decision: the legacy build rather than pinning an older pdfjs-dist. It is
+  pdf.js's own supported route for older browsers, keeps current fixes, and
+  is larger (worker +4%, page script +13%, loaded only on the PDF page).
+  No hand-written polyfill to maintain.
+- `scripts/verify-pdf-navigation.mjs` now fails if the viewer shows an error
+  and prints it (before, it failed with only "PDF must render visible ink"), and matches
+  the report page by pathname because links now carry a return path.
+- Added FIX-1 to `docs/tasks.json` (found by the TOOL-1 thread).
+- Verified on Node 24: `npm run typecheck`, `npm test` (145 package, 57 web
+  tests), `npm run build`. `verify-pdf-navigation` fails on main with
+  "getOrInsertComputed is not a function" and passes with this change;
+  `verify-role-access` and `verify-engineer-layout` passed, using the
+  Playwright that TOOL-1 (PR #5) added.
+- Not verified: WebKit or a physical iPhone; no WebKit browser is installed
+  in the cloud session.
+- Next: the next task in `docs/tasks.json` order.
 
 ## 2026-10-20 — FE-4a: hide the review queue when review is off
 

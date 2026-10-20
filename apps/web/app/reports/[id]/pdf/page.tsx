@@ -2,7 +2,7 @@
 
 import {use, useEffect, useRef, useState} from 'react';
 import Link from 'next/link';
-import type {PDFDocumentProxy, RenderTask} from 'pdfjs-dist';
+import type {PDFDocumentProxy, RenderTask} from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {safeViewReturn, withViewReturn} from '@/lib/viewNavigation';
 
 /** Render locally: never navigate the installed app into the device PDF viewer. */
@@ -32,7 +32,7 @@ export default function PdfPage({params,searchParams}: {params:Promise<{id:strin
   },[]);
   useEffect(() => {
     let active = true;
-    let task: ReturnType<typeof import('pdfjs-dist')['getDocument']> | undefined;
+    let task: ReturnType<typeof import('pdfjs-dist/legacy/build/pdf.mjs')['getDocument']> | undefined;
     const abort = new AbortController();
     setDoc(null);setPage(1);setLoading(true);setError('');setSignedOut(false);
     async function load() {
@@ -44,9 +44,12 @@ export default function PdfPage({params,searchParams}: {params:Promise<{id:strin
           throw new Error(body.reason ?? 'Unable to open this PDF.');
         }
         const bytes = new Uint8Array(await response.arrayBuffer());
-        const pdf = await import('pdfjs-dist');
+        // The legacy build carries polyfills for browser features pdf.js now
+        // relies on (such as Map.getOrInsertComputed), which older iPhones
+        // and older desktop browsers lack; the modern build fails there.
+        const pdf = await import('pdfjs-dist/legacy/build/pdf.mjs');
         if (!active) return;
-        pdf.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs',import.meta.url).toString();
+        pdf.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs',import.meta.url).toString();
         task = pdf.getDocument({data:bytes});
         const document = await task.promise;
         if (active) setDoc(document);
