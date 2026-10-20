@@ -1,4 +1,5 @@
 import type { Observation, Report } from "./types";
+import type { DraftBase } from "./draftConflict";
 
 /**
  * Unsent work held on the device.
@@ -38,6 +39,10 @@ export interface HeldDraft {
   heldAt: string;
   baseVersion?:number;
   report?:Report;
+  /** The tab that held it. Only that tab's saves move its base version. */
+  tab?:string;
+  /** Set aside during a conflict: the server copy this work was built on, for the comparison after a reload. */
+  base?:DraftBase;
 }
 
 function keyFor(reportId: string, principalId: string): string {
@@ -123,6 +128,7 @@ export async function keep(input: {
   observations: Observation[];
   baseVersion?:number;
   report?:Report;
+  tab?:string;
 }): Promise<void> {
   const held: HeldDraft = {
     key: keyFor(input.reportId, input.principalId),
@@ -131,8 +137,9 @@ export async function keep(input: {
     seq: input.seq,
     observations: input.observations,
     heldAt: new Date().toISOString(),
-    baseVersion:input.baseVersion,
-    report:input.report,
+    ...(input.baseVersion !== undefined ? { baseVersion: input.baseVersion } : {}),
+    ...(input.report ? { report: input.report } : {}),
+    ...(input.tab ? { tab: input.tab } : {}),
   };
   await run("readwrite", (store) => store.put(held));
 }
@@ -169,21 +176,72 @@ export async function releaseIfCurrent(
   }
 }
 
+/**
+ * The held copy to restore when a draft opens: this tab's own set-aside work
+ * first (it is mid-choice), then the ordinary copy (the latest unsaved edit,
+ * whichever tab made it), then another tab's set-aside work. Another tab's
+ * set-aside copy never displaces an ordinary copy, which would throw away
+ * unsaved edits; it stays on the device and comes back once that copy is saved.
+ */
 export async function recover(
   reportId: string,
   principalId: string,
+  tab?: string,
 ): Promise<HeldDraft | null> {
   try {
-    const held = await run<HeldDraft | undefined>("readonly", (store) =>
-      store.get(keyFor(reportId, principalId)),
-    );
-    return held ?? null;
+    const all = await run<HeldDraft[]>("readonly", (store) => store.getAll() as IDBRequest<HeldDraft[]>);
+    const prefix = `${keyFor(reportId, principalId)}::aside::`;
+    return pickHeld(all ?? [], keyFor(reportId, principalId), prefix, tab);
   } catch {
     return null;
   }
 }
 
-export async function advanceBase(reportId:string,principalId:string,version:number):Promise<void> {
+/** The choice `recover` makes, apart from IndexedDB so it can be tested. */
+export function pickHeld(all: readonly HeldDraft[], key: string, asidePrefix: string, tab?: string): HeldDraft | null {
+  const aside = all.filter((held) => held.key.startsWith(asidePrefix)).sort((a, b) => b.heldAt.localeCompare(a.heldAt));
+  return (tab ? aside.find((held) => held.tab === tab) : undefined)
+    ?? all.find((held) => held.key === key)
+    ?? aside[0]
+    ?? null;
+}
+
+/**
+ * Keep this tab's work while it waits for the engineer to choose between two
+ * versions. The ordinary held copy is one per person and draft, so the other
+ * tab's next edit would replace it and its next save would release it; a copy
+ * set aside under this tab's own key is touched by neither, and survives a
+ * reload or a crash until the choice is saved.
+ */
+export async function setAside(input: {
+  reportId: string; principalId: string; tab: string; seq: number | string;
+  observations: Observation[]; baseVersion?: number; report?: Report; base?: DraftBase;
+}): Promise<string> {
+  const key = `${keyFor(input.reportId, input.principalId)}::aside::${input.tab}`;
+  const held: HeldDraft = {
+    key, reportId: input.reportId, principalId: input.principalId, seq: input.seq,
+    observations: input.observations, heldAt: new Date().toISOString(),
+    ...(input.baseVersion !== undefined ? { baseVersion: input.baseVersion } : {}),
+    ...(input.report ? { report: input.report } : {}), tab: input.tab,
+    ...(input.base ? { base: input.base } : {}),
+  };
+  await run("readwrite", (store) => store.put(held));
+  return key;
+}
+
+/** The choice was made and is held as an ordinary copy: the set-aside one has done its job. */
+export async function dropAside(key: string): Promise<void> {
+  if (!key.includes('::aside::')) return;
+  await run("readwrite", (store) => store.delete(key));
+}
+
+/**
+ * A save from `tab` was acknowledged at `version`, so the copy that tab holds
+ * is now built on it. A copy held by another tab is left alone: its edits were
+ * made on the older version, and moving its base would let them overwrite the
+ * save they never saw.
+ */
+export async function advanceBase(reportId:string,principalId:string,version:number,tab?:string):Promise<void> {
   const db = await openDb();
   await new Promise<void>((resolve,reject) => {
     const tx = db.transaction(STORE,'readwrite');
@@ -192,7 +250,7 @@ export async function advanceBase(reportId:string,principalId:string,version:num
     const request = store.get(key);
     request.onsuccess = () => {
       const held = request.result as HeldDraft | undefined;
-      if (held && (held.baseVersion ?? 0) < version) store.put({...held,baseVersion:version,report:held.report ? {...held.report,version} : undefined});
+      if (held && (!tab || !held.tab || held.tab === tab) && (held.baseVersion ?? 0) < version) store.put({...held,baseVersion:version,report:held.report ? {...held.report,version} : undefined});
     };
     tx.oncomplete = () => {db.close();resolve();};
     tx.onabort = () => {db.close();reject(tx.error);};
