@@ -32,7 +32,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   its checks, and `fitStartedChecks` moves the phone's answers, words and
   photos onto the server's checks by item. If the checklist wording changed in
   a deploy meanwhile, the server's wording is kept and the answers move
-  across; if a check the phone holds is no longer on the inspection, the copy
+  across; a check gone from the inspection is dropped if left blank; if one
+  the phone answered is gone, the copy
   is left as it is, the server refuses it (`invalidShape`) and it stays on the
   phone, named once, rather than lose an answer. A retry with the same key
   for another kind of report is refused (422). Nothing is sent, signed or

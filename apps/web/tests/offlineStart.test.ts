@@ -88,6 +88,9 @@ test('an inspection started offline: its checks, its name, and how it fits the s
   const shorter = server.slice(1);
   assert.deepEqual(fitStartedChecks(phone,shorter),phone);
   assert.notEqual(invalidShape({reportType:'handover-inspection',observations:shorter},phone),null);
+  // A removed check the phone left untouched does not hold the rest back.
+  const untouched = server.map((o,i) => i === 0 ? o : {...o,check:{...o.check!,answer:'ok' as const}});
+  assert.equal(invalidShape({reportType:'handover-inspection',observations:shorter},fitStartedChecks(untouched,shorter)),null);
   // A check added on the server since: it waits unanswered beside the phone's answers.
   const longer = [...server,{...server[0]!,id:'obs-check-new',check:{item:'new',question:'A new check'}}];
   const grown = fitStartedChecks(phone,longer);

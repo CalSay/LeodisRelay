@@ -61,15 +61,18 @@ export const startedTitle = (started: Pick<StartedOffline, 'reportType' | 'proje
  * The checks a report started offline takes to the server, fitted onto the
  * cards the server started it with. Each answer, its words and photographs
  * move onto the server's check for the same item, so the server's ids and
- * wording are kept and the save keeps the inspection's shape. If a check on
- * the phone is not on the server's inspection (the checklist changed in
- * between), the phone's copy is returned unchanged: the server refuses it,
+ * wording are kept and the save keeps the inspection's shape. A check no
+ * longer on the server's inspection is dropped if nothing was put on it. If
+ * one the phone answered is gone (the checklist changed in between), the
+ * phone's copy is returned unchanged: the server refuses it,
  * and it stays on the phone, named once, rather than losing an answer.
  */
 export function fitStartedChecks(held: readonly Observation[], server: readonly Observation[]): Observation[] {
   if (!server.some(o => o.check)) return [...held];
   const byItem = new Map(held.filter(o => o.check).map(o => [o.check!.item, o]));
-  if (held.length !== byItem.size || [...byItem.keys()].some(item => !server.some(o => o.check?.item === item))) return [...held];
+  // A check gone from the server's inspection matters only if the phone put something on it.
+  const used = (o: Observation) => Boolean(o.check?.answer || o.location || o.whatHappened || o.actionNeeded || o.owner || o.photos.length);
+  if (held.length !== byItem.size || held.some(o => used(o) && !server.some(s => s.check?.item === o.check?.item))) return [...held];
   return server.map(card => {
     const mine = card.check ? byItem.get(card.check.item) : undefined;
     if (!mine) return card;
