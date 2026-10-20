@@ -80,13 +80,21 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   each issue holds now: raised day, and for a closed issue the day of its
   last office check. So an issue closed, reopened and still open counts as
   open throughout; put forward as fixed is still open; withdrawn issues are
-  left out; a closed issue with no recorded check day is not counted as open
-  nor in any week's closed count (the page says how many). "Past target" is
-  judged on each week's last day. The page says all of this in its footer.
+  left out; a closed issue with no recorded check day counts as raised but
+  never as open or closed (the page says how many). "Past target" is judged
+  on each week's last day against the issue's target date as it is now, so a
+  target moved later shows fewer late in earlier weeks; like the register,
+  put forward as fixed still counts as late (Before handover does not). The
+  page says all of this in its footer. Hovering a week changes the readout
+  only; tapping, clicking or focusing picks it (`aria-pressed`).
   It stores and changes nothing and makes no SharePoint write.
 - Not near rejected scope: no locations are grouped or matched (EXP-4), no
   photographs (FE-2), no routing or requests (EXP-2).
 - Help: "What's new" entry `issue-trend` and a guide link.
+- A fresh-context review found no counting or access bugs; it asked for the
+  footer to say how target dates and undated closures count, for hover not
+  to change `aria-pressed`, and for the readout not to repeat each bar's
+  label to screen readers. All fixed.
 - Verified (Node 22 in this session; CI runs Node 24): `npm run typecheck`,
   `npm test` (four new cases in `tests/issueTrend.test.ts`), `npm run build`,
   new `scripts/verify-issue-trend.mjs` (28 checks: 390px light engineer from

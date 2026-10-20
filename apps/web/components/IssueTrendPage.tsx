@@ -32,22 +32,25 @@ const weekWords = (w: TrendWeek, current: boolean) =>
 function Chart({ weeks }: { weeks: TrendWeek[] }) {
   const last = weeks.length - 1;
   const [picked, setPicked] = useState(last);
+  // Hovering only changes what is shown; the pressed week changes on a tap, a click or keyboard focus.
+  const [hovered, setHovered] = useState<number | null>(null);
+  const shown = hovered ?? picked;
   const top = Math.max(1, ...weeks.map(w => w.open));
-  const w = weeks[picked] ?? weeks[last]!;
+  const w = weeks[shown] ?? weeks[last]!;
   return <figure className="it-chart" aria-labelledby="it-chart-title">
     <figcaption>
       <h2 id="it-chart-title">Open at the end of each week</h2>
       <p className="it-legend"><span className="it-key it-key-open" aria-hidden="true" />On time or no target<span className="it-key it-key-late" aria-hidden="true" />Past target</p>
     </figcaption>
-    <p className="it-readout" aria-live="polite">{weekWords(w, picked === last)}</p>
+    <p className="it-readout">{weekWords(w, shown === last)}</p>
     <div className="it-plot">
       <span className="it-top" aria-hidden="true">{top}</span>
-      <div className="it-bars">
+      <div className="it-bars" onMouseLeave={() => setHovered(null)}>
         {weeks.map((week, k) => {
           const onTime = week.open - week.late;
-          return <button key={week.monday} type="button" className={`it-col ${k === picked ? 'it-col-on' : ''}`}
+          return <button key={week.monday} type="button" className={`it-col ${k === shown ? 'it-col-on' : ''}`}
             aria-pressed={k === picked} aria-label={weekWords(week, k === last)}
-            onClick={() => setPicked(k)} onMouseEnter={() => setPicked(k)} onFocus={() => setPicked(k)}>
+            onClick={() => setPicked(k)} onFocus={() => setPicked(k)} onMouseEnter={() => setHovered(k)} onMouseLeave={() => setHovered(null)}>
             <span className="it-stack" style={{ height: `${(week.open / top) * 100}%` }}>
               {week.late > 0 && <span className="it-late" style={{ flexGrow: week.late }} />}
               {onTime > 0 && <span className="it-open" style={{ flexGrow: onTime }} />}
@@ -76,7 +79,7 @@ export function IssueTrendPage({ initialProject, returnTo }: { initialProject: s
   const back = safeViewReturn(returnTo, manager ? '/office' : `/engineer${projectId ? `?project=${encodeURIComponent(projectId)}` : ''}`);
 
   useEffect(() => {
-    if (!projectId) { setData(null); return; }
+    if (!projectId) { setData(null); setError(''); return; }
     let cancelled = false;
     setData(null); setError('');
     fetch(`/api/issue-trend?${new URLSearchParams({ projectId })}`, { cache: 'no-store' })
@@ -145,7 +148,7 @@ export function IssueTrendPage({ initialProject, returnTo }: { initialProject: s
         <p className="it-links"><Link href={`/issues/snag-list?${new URLSearchParams({ project: projectId, returnTo: here })}`}>Open issues on the snag list</Link><Link href={`/handover?${new URLSearchParams({ project: projectId, returnTo: here })}`}>Before handover</Link></p>
 
         <footer className="it-foot">
-          <p>Counted from the issue register as it stands today. An issue counts as closed on the day the office checked it; one closed, reopened and still open counts as open throughout. Put forward as fixed is still open until it is checked. Withdrawn issues are left out{d.closedUndated ? `, and ${plural(d.closedUndated, 'closed issue')} with no record of when it was closed ${d.closedUndated === 1 ? 'is' : 'are'} left out of the weekly closed counts` : ''}. Weeks run Monday to Sunday.</p>
+          <p>Counted from the issue register as it stands today. An issue counts as closed on the day the office checked it; one closed, reopened and still open counts as open throughout. Put forward as fixed is still open until it is checked. Past target uses each issue&rsquo;s target date as it is now. Withdrawn issues are left out{d.closedUndated ? `, and ${plural(d.closedUndated, 'closed issue')} with no record of when it was closed ${d.closedUndated === 1 ? 'counts' : 'count'} as raised but never as open or closed` : ''}. Weeks run Monday to Sunday.</p>
         </footer>
       </article>}
   </main>;
