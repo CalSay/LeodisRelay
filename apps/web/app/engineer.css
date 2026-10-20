@@ -201,6 +201,15 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-conflict-save p{margin:0;font-size:14px;color:var(--text-2);flex:1 1 240px;}
 .eng-conflict-save .btn-primary{flex:0 0 auto;min-height:48px;}
 @media(max-width:600px){.eng-conflict-save .btn-primary{width:100%;}}
+/* A report sent from another screen while this one held changes: offered as a correction. */
+.eng-sent-away-what{margin:0;font-size:14px;color:var(--text);overflow-wrap:anywhere;}
+.eng-sent-away-what .kind{margin-right:6px;vertical-align:1px;}
+.eng-sent-away-check{margin:0;color:var(--caution);}
+.eng-sent-away-reason{margin:4px 0 0;}
+.eng-sent-away-actions{justify-content:flex-end;}
+.eng-sent-away-actions .btn-sm{min-height:44px;}
+.eng-sent-away-actions .btn-danger{border-color:var(--alert);color:var(--alert);}
+@media(max-width:600px){.eng-sent-away-actions .btn-sm{flex:1 1 140px;}}
 .eng-check{margin-top:16px;}
 .eng-check>.eng-finds,.eng-check>.note{margin-top:4px;}
 /* Undo after removing a card or photograph: one row above the action bar's own. */
