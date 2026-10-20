@@ -76,7 +76,7 @@ export function records<T>(kind: string, project?: string): T[] {
   return database().prepare(sql).all(...args).map(row => JSON.parse(row.data as string) as T);
 }
 export function putRecord(kind: string, row: { id: string; [key: string]: any }): void {
-  const { observations, events, signature, ...small } = row;
+  const { observations, events, signature, draftSignature, ...small } = row;
   const summary = kind === 'reports' ? {
     ...small, observationCount: observations?.length ?? 0,
     photoCount: observations?.reduce((n: number, o: any) => n + o.photos.length, 0) ?? 0,

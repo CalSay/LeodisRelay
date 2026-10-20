@@ -4,6 +4,27 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — FE-3a: signatures survive a reload
+
+- The name and drawn signature on a draft now save with it, like any other
+  edit: to the server as `draftSignature` and to the device copy used for
+  recovery. Reopening the draft shows them again. Sending turns them into the
+  report's `signature` as before and drops the draft copy.
+- Decisions: a separate `draftSignature` field rather than reusing `signature`,
+  so "signed at sending" keeps its meaning. The server accepts only a name and
+  a PNG under 400 KB. A save that omits the signature (an older client or a
+  journalled request) leaves the saved one alone; `null` clears it. Signature
+  images are kept out of list summaries. A restored signature is redrawn in
+  the theme's ink, so it shows in dark mode.
+- Verified: `npm run typecheck` and `npm test` pass (web suite 57 tests).
+  New `scripts/verify-signature-reload.mjs` passed: sign, wait for "Saved on
+  server", reload, signature and name still shown in light and dark, and the
+  server record holds both. `verify-role-access.mjs` passed.
+- Not verified: a physical phone. `verify-engineer-layout.mjs` times out
+  waiting for "On site today" here, on main as well as on this branch, so the
+  failure predates this change (the Browser checks thread is on it).
+- Next: FE-4a (hide the review queue when review is off).
+
 ## 2026-10-20 — FE-4c: PM acknowledgement test
 
 - Closed the test gap on PM acknowledgement in `apps/web/tests/corrections.test.ts`.
