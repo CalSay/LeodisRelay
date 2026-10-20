@@ -49,9 +49,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   how typed signatures show. Draft conflicts name a typed signature too.
 - Checks: `npm run typecheck`, `npm test` (336, new
   `tests/typedSignature.test.ts`), `npm run build`, the new
-  `scripts/verify-typed-signature.mjs` (38 checks: keyboard-only typed
+  `scripts/verify-typed-signature.mjs` (42 checks: keyboard-only typed
   signing in the editor at 390px light and 1440px dark, a name deleted key
-  by key stays empty, reload, switching back to drawing, sent; the office at 1440px light and 390px dark; the PDF
+  by key stays empty (also across a reload), reload, switching back to drawing, sent; the office at 1440px light and 390px dark; the PDF
   text; a first fix inspection typed-signed with no signal and sent by itself),
   `verify-accessibility` in full after merging main (518 checks, now also
   choosing, typing and ticking with the keyboard alone on both, and the
@@ -63,7 +63,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a real screen reader (VoiceOver, TalkBack, NVDA) or a physical
   phone; whether Leodis's clients or auditors accept a typed signature on an
   inspection (Cal may want to confirm). A fresh-context review found the
-  author's name refilling an emptied name box and two overstated lines here;
+  author's name refilling an emptied name box (live and after a reload) and
+  two overstated lines here;
   all fixed.
 - Proposed (not added to `docs/tasks.json`): a typed signature option for the
   compliance engineer screens; a skip link; main/h1 on compliance pages.

@@ -657,7 +657,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     latest.current = report;
     // Filled in once, when the report first loads: emptying the box later
     // (to type a different name to sign with) must not put the author's name back.
-    if (report && !nameFilled.current) { nameFilled.current = true; if (signerName === "") setSignerName(report.author); }
+    // A saved signature keeps its own name, even an empty one.
+    if (report && !nameFilled.current) { nameFilled.current = true; if (signerName === "" && !report.draftSignature) setSignerName(report.author); }
   }, [report]);
 
   // Context from previous visits. Fetched once the report is known so the
