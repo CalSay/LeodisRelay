@@ -202,3 +202,13 @@ export async function advanceBase(reportId:string,principalId:string,version:num
 export async function hasUnsent(reportId: string, principalId: string): Promise<boolean> {
   return (await recover(reportId, principalId)) !== null;
 }
+
+/** Every copy this device holds for one person, for the home screen's unfinished list. Empty if storage is unavailable. */
+export async function listHeld(principalId: string): Promise<HeldDraft[]> {
+  try {
+    const all = await run<HeldDraft[]>("readonly", (store) => store.getAll() as IDBRequest<HeldDraft[]>);
+    return (all ?? []).filter((held) => held.principalId === principalId);
+  } catch {
+    return [];
+  }
+}

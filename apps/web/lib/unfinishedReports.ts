@@ -1,0 +1,56 @@
+import type { Observation, Report, ReportSummary } from './types';
+
+/** What the home screen needs from a copy held on this device (see localDraft.ts). */
+export interface HeldCopy { reportId: string; heldAt: string; observations: Observation[]; report?: Report }
+
+export interface UnfinishedReport {
+  id: string;
+  projectId: string;
+  projectName: string;
+  reference: string;
+  visitDate: string;
+  cards: number;
+  correction: boolean;
+  /** When the server last accepted a save, if it has this report at all. */
+  savedAt?: string | undefined;
+  /** When this device last took a copy the server has not acknowledged. */
+  changedAt?: string;
+  /** `unsent`: edits on this device are newer than the server copy. `only`: the server could not be asked. */
+  device?: 'unsent' | 'only';
+}
+
+/**
+ * Every unsent report the engineer has started, across all their projects,
+ * newest change first.
+ *
+ * Server drafts come first-hand from the server. A device copy of one of them
+ * means edits are waiting to go up. A device copy the server did not list is
+ * included only when the caller passes it as `deviceOnly`: the home screen
+ * asks the server about each one and keeps it only when the server could not
+ * answer, because a copy of a report since sent from another device is stale.
+ */
+export function unfinishedReports(
+  drafts: ReportSummary[],
+  held: HeldCopy[],
+  projects: { id: string; projectName: string }[],
+  deviceOnly: ReadonlySet<string> = new Set(),
+): UnfinishedReport[] {
+  const name = new Map(projects.map(p => [p.id, p.projectName]));
+  const copies = new Map(held.map(h => [h.reportId, h]));
+  const rows: UnfinishedReport[] = [];
+  for (const d of drafts) {
+    if (d.state !== 'draft' || !name.has(d.projectId)) continue;
+    const copy = copies.get(d.id);
+    rows.push({ id:d.id, projectId:d.projectId, projectName:name.get(d.projectId)!, reference:d.reference, visitDate:d.visitDate,
+      cards:copy ? copy.observations.length : d.observationCount, correction:!!d.corrects, savedAt:d.lastSavedAt,
+      ...(copy ? { changedAt:copy.heldAt, device:'unsent' as const } : {}) });
+  }
+  for (const h of held) {
+    const r = h.report;
+    if (!r || !deviceOnly.has(h.reportId) || rows.some(row => row.id === h.reportId) || r.state !== 'draft' || !name.has(r.projectId)) continue;
+    rows.push({ id:r.id, projectId:r.projectId, projectName:name.get(r.projectId)!, reference:r.reference, visitDate:r.visitDate,
+      cards:h.observations.length, correction:!!r.corrects, savedAt:r.lastSavedAt, changedAt:h.heldAt, device:'only' });
+  }
+  const latest = (r: UnfinishedReport) => [r.changedAt ?? '', r.savedAt ?? ''].sort().at(-1)!;
+  return rows.sort((a, b) => latest(b).localeCompare(latest(a)) || a.id.localeCompare(b.id));
+}

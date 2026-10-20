@@ -3,7 +3,9 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { createReport, listReports, projectIssues, projectVariations } from '@/lib/api';
+import { ApiError, createReport, getReport, listReports, projectIssues, projectVariations } from '@/lib/api';
+import { listHeld, type HeldDraft } from '@/lib/localDraft';
+import { unfinishedReports, type UnfinishedReport } from '@/lib/unfinishedReports';
 import type { FixtureProject } from '@/lib/fixtures';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import { usePrincipal } from './PrincipalContext';
@@ -53,6 +55,13 @@ type View = 'home' | 'projects' | 'issues' | 'reports' | 'defect';
 const viewOf = (value?:string):View => ['projects','issues','reports','defect'].includes(value ?? '') ? value as View : 'home';
 interface Back { at: string; key: string; href: string; title: string; sub: string; tags: ReactNode; late?: boolean }
 
+/** Where an unfinished report stands, in words an engineer can act on. */
+function UnfinishedTags({r}:{r:UnfinishedReport}) {
+  if (r.device === 'only') return <><span className="tag tag-alert">Only on this phone</span><span>changed {fmtWhen(r.changedAt)} · open it with signal to save</span></>;
+  if (r.device === 'unsent') return <><span className="tag tag-alert">Not yet on the server</span><span>changed {fmtWhen(r.changedAt)}{r.savedAt ? ` · last saved ${fmtWhen(r.savedAt)}` : ''}</span></>;
+  return <><span className="tag tag-draft">Draft</span><span>{r.savedAt ? `saved ${fmtWhen(r.savedAt)}` : 'saved on server'}</span></>;
+}
+
 export function EngineerWorkspace({projects,drafts,initialProject,initialView}: {
   projects:FixtureProject[]; drafts:ReportSummary[]; initialProject?:string; initialView?:string;
 }) {
@@ -70,6 +79,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   const [offset,setOffset] = useState(0);
   const [next,setNext] = useState<number | null>(null);
   const [retry,setRetry] = useState(0);
+  const [held,setHeld] = useState<{ copies: HeldDraft[]; deviceOnly: Set<string> }>({ copies: [], deviceOnly: new Set() });
   const project = projects.find(p => p.id === projectId);
   const ownDrafts = drafts.filter(r => r.projectId === projectId);
   const currentDraft = ownDrafts[0];
@@ -82,6 +92,21 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
     }
     setReady(true);
   },[initialProject,preference,projects]);
+
+  // Copies on this device that the server has not acknowledged. One the server
+  // did not list is shown only if the server cannot be asked about it: if it
+  // answers, the report was sent or removed elsewhere and the copy is stale.
+  useEffect(() => {
+    if (!principal) return;
+    let cancelled = false;
+    void listHeld(principal.id).then(async copies => {
+      const unlisted = copies.filter(c => !drafts.some(d => d.id === c.reportId));
+      const answers = await Promise.all(unlisted.map(c => getReport(c.reportId).then(() => null, e => e instanceof ApiError && e.offline ? c.reportId : null)));
+      if (!cancelled) setHeld({ copies, deviceOnly: new Set(answers.filter((id): id is string => !!id)) });
+    });
+    return () => {cancelled=true;};
+  },[principal,drafts]);
+  const unfinished = unfinishedReports(drafts, held.copies, projects, held.deviceOnly);
 
   useEffect(() => {
     if (!ready || !projectId) return;
@@ -129,7 +154,6 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
     try {const report = await createReport(project.id,principal?.name ?? '');router.push(withViewReturn(`/reports/${report.id}${add ? `?add=${add}` : ''}`,engineerReturn(view)));}
     catch(e){setError(e instanceof Error?e.message:'Unable to start a report. Please try again.');setCreating(false);}
   }
-  const draftLink = (r:ReportSummary) => <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className="eng-report-link"><span><strong>{r.reference}</strong><small>Visit {r.visitDate} · {r.observationCount} card{r.observationCount===1?'':'s'} · {r.photoCount} photographs</small></span><span>Continue →</span></Link>;
 
   return <main className="eng-workspace">
     {principal?.role !== 'Engineer' && <p className="eng-preview">Engineer layout preview · Signed in as {principal?.role}. Your permissions and report authorship are unchanged.</p>}
@@ -151,7 +175,13 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
             <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work needing instruction · goes in your site update</small></div></button>
           </div>
           <p className="eng-help">Defects flagged here are sent on their own. Everything else stays a draft until you sign and send.</p>
-          {ownDrafts.length > 1 && <section className="eng-panel"><h2>Other drafts</h2>{ownDrafts.slice(1).map(draftLink)}</section>}
+          <section aria-labelledby="eng-unfinished-title">
+            <div className="eng-section-title"><h2 id="eng-unfinished-title">Unfinished reports</h2><span className="r">{unfinished.length}</span></div>
+            <div className="eng-list">
+              {unfinished.length ? unfinished.map(r => <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : 'Site update'} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.cards} card{r.cards===1?'':'s'}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></Link>)
+                : <div className="eng-empty">Nothing unfinished. A report you start stays here, on every project, until you sign and send it.</div>}
+            </div>
+          </section>
         </div><div>
           <div className="eng-section-title"><h2>Came back from the office</h2><span className="r">{back ? back.rows.length : '…'}</span></div>
           <div className="eng-list">
