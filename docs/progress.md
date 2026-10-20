@@ -45,7 +45,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   issue), the photo library, the notification email text (still held in the
   outbox). Weekly summary, My week, since your last visit, search and
   unfinished reports read the type's name already and needed no change.
-- Verified on Node 24: `npm run typecheck`, `npm test` (7 new tests in
+- Verified on Node 24: `npm run typecheck`, `npm test` (9 new tests in
   `tests/handoverInspection.test.ts`), `npm run build`. New
   `scripts/verify-handover-inspection.mjs` passed (99 checks, 390px light and
   1440px dark): start from home beside the other two tiles, Where hidden until
@@ -1297,7 +1297,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   compact delivery tag; the steps belong on the report itself.
 - Rules in `lib/status.ts` (`submissionStages`), shown by
   `components/SubmissionStages.tsx` with `app/stages.css`.
-- Verified on Node 24: `npm run typecheck`, `npm test` (7 new tests in
+- Verified on Node 24: `npm run typecheck`, `npm test` (9 new tests in
   `tests/submissionStages.test.ts`, including the worker recording a PDF
   failure and a blocked delivery), `npm run build`. New
   `scripts/verify-submission-stages.mjs` passed (65 checks: six report
