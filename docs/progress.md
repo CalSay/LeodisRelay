@@ -27,8 +27,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   variables, no database migration (two new optional fields on reports only),
   no new storage. `deploy/upgrade-pilot.sh` backs up the data volume, builds
   and swaps the image, and `deploy/rollback-roles.sh` returns the previous
-  image. Release notes and steps are in the project's
-  `releases/2026-10-20-release-notes.md`.
+  image. Release notes and steps are in the Claude
+  project's shared files (`releases/2026-10-20-release-notes.md`), not in
+  this repository.
 - Not verified: a Docker image build (no Docker daemon in the cloud
   session), the server itself, a live SharePoint tenant, real phones.
 
