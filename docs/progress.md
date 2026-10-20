@@ -4,6 +4,45 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — EXP-1: living site diary
+
+- New `/diary` page: a project's visits, newest day first, made only from
+  reports already sent. No diary entry is ever typed. Each day names who was
+  on site; each entry is one report at its latest sent revision, with every
+  card (kind, location, words, action needed, who, up to four photograph
+  thumbnails and a "+n" link to the rest) and the issue or variation the card
+  raised or was a further sighting of, with that record's state now.
+- Provenance: the reference links the exact revision shown; a corrected report
+  shows "Corrects rev N" with the reason and links every earlier sent revision.
+  A correction still in draft changes nothing. Cards are matched to issues and
+  variations by `raisedByObservation` across the whole revision chain, so a
+  record raised by rev 1 still shows on rev 2; a record read back from
+  SharePoint without that ID is matched by location and words, as
+  `correctReport` does.
+- Find box (words, names, references, photo captions) and kind filter
+  (Progress, Defects, Access, Variations); a filtered entry says "Showing 1 of
+  3 cards". Ten site days a page with "Show earlier days". The address keeps
+  project, words and filter, so a report opened from the diary comes back.
+  Opened from the engineer home ("This project"), the engineer Reports view
+  and the office project actions.
+- Decisions: entries come from reports only (acceptance: "built only from
+  existing report data"); office-side issue changes (assign, close) stay on the
+  issue page and in the weekly summary rather than mixing a second source into
+  the diary. Every role on the project reads it, with the same report rule as
+  elsewhere (sent reports only). Paged on the server by site day, so a long
+  project does not send every report at once. Rules in `lib/siteDiary.ts`
+  (pure), API `GET /api/site-diary`.
+- Verified on Node 24: `npm run typecheck`, `npm test` (8 new tests in
+  `tests/siteDiary.test.ts`), `npm run build`, new
+  `scripts/verify-site-diary.mjs` (35 checks, 390px light and 1440px dark).
+  `verify-role-access`, `verify-engineer-layout`, `verify-weekly-summary`,
+  `verify-photo-library`, `verify-engineer-nav` and `verify-office-landing`
+  passed. Screenshots are in the project's shared files
+  (`ui-review/site-diary/`), not the repo.
+- Not verified: a physical phone, a live SharePoint tenant. Proposed next:
+  print or save a date range of the diary as a PDF; jump to a date; add
+  `verify-site-diary.mjs` to the browser checks list in `CLAUDE.md`.
+
 ## 2026-10-20 — FE-6b: traceable corrections and revisions
 
 - Issue history events now record the report revision behind them: an
