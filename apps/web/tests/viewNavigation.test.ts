@@ -25,3 +25,8 @@ test('an issue opened from a snag list returns to the same list', () => {
   const list = '/issues/snag-list?project=p1&owner=Sparks+Ltd&returnTo=%2Foffice%23%2Fissues';
   assert.equal(safeViewReturn(list, '/engineer'), list);
 });
+
+test('a record opened from a weekly summary returns to the same week', () => {
+  const week = '/weekly-summary?project=p1&week=2026-10-12&returnTo=%2Foffice';
+  assert.equal(safeViewReturn(week, '/engineer'), week);
+});

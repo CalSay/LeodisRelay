@@ -30,6 +30,48 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   screenshots at 320, 390 and 1440px in light and dark.
 - Not verified: a physical phone, iOS Safari's safe-area inset.
 - Next: item 4 in `docs/ui-direction-2026-10-20.md` (empty states).
+## 2026-10-20 — Weekly project summary (new feature, proposed as NEW-3)
+
+- New page `/weekly-summary`: one project's week (Monday to Sunday, UK time)
+  on one page. Headline counts (site reports and days on site, engineers,
+  issues raised and closed, variations raised and instructed), then the sent
+  reports by visit day with who, trade, what they found by kind, photographs
+  and locations; issues raised, put forward as fixed, and checked and closed;
+  how many are open now and past target, with a link to the snag list; and
+  variations raised and instructed, with "Done before instruction" flagged.
+  Previous / This week / Next week, and "Print or save as PDF" (A4, black on
+  white, no app bar; the prototype banner still prints).
+- Opened from a "Weekly summary" button in the engineer Reports view and in
+  the office project's actions. The project and week are kept in the address,
+  and a report, issue or variation opened from it comes back to the same week.
+- Why this feature: every site has a weekly progress meeting, and today the
+  office counts rows across the report list and both registers to say how the
+  week went. It reads only what is already recorded, so there is no new store,
+  data entry, SharePoint write or email.
+- Decisions: sent reports only, never drafts (`canReadReport`), placed by
+  visit day; a sent correction replaces the report it corrects, so a visit
+  counts once. Issue and variation changes are placed by their own events and
+  kept apart (raised, put forward as fixed, verified; instructed); one that
+  was verified or instructed and then reopened is not shown as closed or
+  instructed. "Open now" is as of the day the page is opened, not
+  reconstructed for past weeks, and the page says so. No prices, so it can be
+  shown to a client. Locations are listed as written, repeats dropped ignoring
+  case and spacing (no catalogue, EXP-4). It counts and lists; the narrative
+  timeline stays with EXP-1 (living site diary), which can reuse
+  `lib/weeklySummary.ts`. Not added to `docs/tasks.json` (CLAUDE.md); the PR
+  proposes NEW-3.
+- Verified: `npm run typecheck` and `npm test` pass (9 new tests in
+  `tests/weeklySummary.test.ts`, 1 in `viewNavigation.test.ts`). `npm run
+  build`, then new `scripts/verify-weekly-summary.mjs` passed (28 checks:
+  engineer at 390 px light, office at 1440 px dark, week stepping, drafts and
+  other projects left out, back from a record, print media and an A4 PDF,
+  signed-out and unknown-project refusals). Screenshots in the project's
+  `ui-review/weekly-summary/`.
+- Not verified: a physical printer or phone, Safari's print dialog,
+  SharePoint mode (no live tenant), performance with years of records (it
+  loads the project's records per request, like search).
+- Next: a weekly summary across every project for the office, if asked for.
+
 ## 2026-10-20 — NEW-2: printable snag lists
 
 - New page `/issues/snag-list`: one project's open issues for a company or
