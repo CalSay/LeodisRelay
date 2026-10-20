@@ -32,10 +32,9 @@ try {
   const context=await browser.newContext({viewport:{width:1024,height:900}});await context.addCookies([{name:'relay_session',value:session,url:base}]);
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.goto(base+'/engineer?project=proj-011lme');
-  await page.getByRole('heading',{name:'On site today'}).waitFor();
-  assert.equal(await page.locator(`a[href="/reports/${other.id}"]`).count(),0,'Other author draft must not be linked');
+  await page.getByRole('heading',{name:principal.name,level:1}).waitFor();
+  assert.equal(await page.locator(`a[href^="/reports/${other.id}"]`).count(),0,'Other author draft must not be linked');
   assert.ok(await page.getByRole('button',{name:/Flag a defect/}).isEnabled());
-  assert.ok(await page.getByRole('button',{name:/Team & contacts/}).isDisabled());
   const screenshot=process.env.RELAY_SCREENSHOT_DIR;if(screenshot)mkdirSync(screenshot,{recursive:true});
   for(const [name,width,height] of [['phone',390,844],['portrait',820,1180],['landscape',1180,820]]){
     await page.setViewportSize({width,height});
@@ -73,27 +72,29 @@ try {
   assert.equal(individual.length,1);assert.equal(individual[0].events.length,1);assert.equal(individual[0].affectedTrade,'HVAC');assert.equal(individual[0].reporterTrade,'Electrical');
   assert.equal((await context.request.get(base+`/api/reports/${own.id}`).then(r=>r.json())).state,'draft');
   await page.getByRole('button',{name:'View project issues',exact:true}).click();
-  await page.locator(`a[href="/issues/${individual[0].id}"]`).waitFor();
+  await page.locator(`a[href^="/issues/${individual[0].id}"]`).waitFor();
   if(screenshot)await page.screenshot({path:join(screenshot,'issues-landscape.png'),fullPage:true});
   await page.getByRole('navigation',{name:'Site companion navigation'}).getByRole('button',{name:'Issues',exact:true}).click();
   await page.getByRole('link').filter({hasText:'Layout scope evidence'}).first().waitFor();
-  assert.equal(await page.locator('a[href="/issues/layout-issue-1"]').count(),0);
+  assert.equal(await page.locator('a[href^="/issues/layout-issue-1"]').count(),0);
+  assert.ok(await page.getByRole('button',{name:/Assigned to me/}).isDisabled());
   await page.getByLabel('Project scope').selectOption('all');
-  await page.locator('a[href="/issues/layout-issue-1"]').waitFor();
+  await page.locator('a[href^="/issues/layout-issue-1"]').waitFor();
   await page.goto(base+`/reports/${own.id}`);
-  await page.getByRole('button',{name:'+ Add section',exact:true}).click();
-  await page.locator('.eng-editor-grid div:not([hidden]) > .panel textarea').first().fill('Tablet section survives rotation');
-  // Browser locators deliberately target the one visible editor, while hidden sections stay mounted.
-  const visible=page.locator('.eng-editor-grid .panel:visible');
+  await page.getByRole('button',{name:'+ Add a card',exact:true}).click();
+  await page.getByRole('button',{name:/Work done or progressed/}).click();
+  // Browser locators deliberately target the one visible card editor, while hidden cards stay mounted.
+  const visible=page.locator('#card-editor > div:not([hidden])');
+  await visible.getByLabel('What happened',{exact:true}).fill('Tablet section survives rotation');
   await visible.getByLabel('Where',{exact:true}).fill('Roof');
   try { await page.getByText('Saved on server',{exact:true}).waitFor(); }
   catch(error) { console.error(await page.locator('main').innerText()); throw error; }
   await page.setViewportSize({width:820,height:1180});
   assert.equal(await visible.getByLabel('What happened',{exact:true}).inputValue(),'Tablet section survives rotation');
-  await page.locator('.eng-sections button').first().click();
-  await page.locator('.eng-sections button').nth(1).click();
+  await page.locator('.eng-rail .eng-list button').first().click();
+  await page.locator('.eng-rail .eng-list button').nth(1).click();
   assert.equal(await visible.getByLabel('What happened',{exact:true}).inputValue(),'Tablet section survives rotation');
-  await page.reload();await page.locator('.eng-sections button').nth(1).click();
+  await page.reload();await page.locator('.eng-rail .eng-list button').nth(1).click();
   assert.equal(await visible.getByLabel('What happened',{exact:true}).inputValue(),'Tablet section survives rotation');
   if(screenshot)await page.screenshot({path:join(screenshot,'editor-portrait.png'),fullPage:true});
   await page.setViewportSize({width:1180,height:820});
@@ -104,15 +105,15 @@ try {
   assert.equal(saved.state,'submitted');assert.equal(saved.observations.length,2);
   assert.equal(saved.observations[1].whatHappened,'Tablet section survives rotation');
   await page.goto(base+'/engineer?project=proj-014lme');
-  await page.getByRole('button',{name:'Start a site update',exact:true}).click();
+  await page.getByRole('button',{name:/Start a site update/}).click();
   await page.waitForURL('**/reports/*');
   const created=await context.request.get(base+'/api'+new URL(page.url()).pathname).then(r=>r.json());
   assert.equal(created.projectId,'proj-014lme');assert.equal(created.authorId,principal.id);
   assert.equal(created.authorTrade,'Electrical');
-  await page.getByRole('button',{name:'+ Add section',exact:true}).waitFor();
-  assert.ok(await page.getByLabel('Trade affected · Coming soon').isDisabled());
+  await page.getByRole('button',{name:/Something wrong/}).click();
+  assert.equal(await page.getByRole('button',{name:'Electrical',exact:true}).getAttribute('aria-pressed'),'true','Defect card defaults to the engineer trade');
   assert.deepEqual(errors,[]);
-  console.log('Engineer layouts passed: phone/portrait/landscape, disabled future controls, draft privacy, issue scope, section autosave/rotation/reload and full report submission.');
+  console.log('Engineer layouts passed: phone/portrait/landscape, disabled future controls, draft privacy, issue scope, card autosave/rotation/reload, defect trade default and full report submission.');
 } finally {
   await browser?.close();server.kill();if(server.exitCode===null)await once(server,'exit');database().close();rmSync(root,{recursive:true,force:true});
 }
