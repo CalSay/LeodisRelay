@@ -139,25 +139,6 @@
       "notes": "2026-10-20: the engineer home has an Unfinished reports list of every draft the engineer started, on every project open to them, newest change first, each with project, card count and last save (lib/unfinishedReports.ts). A copy on this device the server has not acknowledged shows Not yet on the server; a device copy the server cannot be asked about shows Only on this phone; a copy of a report the server says was sent is left out. Checked by tests/unfinishedReports.test.ts and scripts/verify-unfinished-reports.mjs."
     },
     {
-      "id": "UI-1",
-      "order": 4.5,
-      "lane": "office",
-      "depends_on": [],
-      "backlog": "ui",
-      "title": "Open the office desk on the office position, not an empty column",
-      "description": "Top item in docs/ui-direction-2026-10-20.md. Until a project is chosen the office desk showed an empty 'Select a project…' register column taking a third of the screen, squeezing the office position into the last third.",
-      "acceptance": [
-        "At 1440px with no project chosen, the desk shows the project list and the office position only, with the office position taking the remaining width",
-        "Choosing a project brings back the register column; going back to all projects removes it",
-        "The phone layout still opens on the project list with no horizontal scroll",
-        "scripts/verify-office-landing.mjs passes in light and dark, and fails on main"
-      ],
-      "status": "done",
-      "passes": true,
-      "pr": null,
-      "notes": "2026-10-20: ProjectsView renders the register only for a chosen project; workspace.css gives depth 1 a two-column grid (250px 1fr). Also fixed '1 reports received' and '1 open issues' plurals on the office position. Not verified on a physical device."
-    },
-    {
       "id": "FE-3b",
       "order": 6,
       "lane": "editor",

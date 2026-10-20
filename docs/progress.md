@@ -18,8 +18,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   counts and change what the Projects tab means.
 - Fixed "1 reports received" and "1 open issues" on the office position.
 - Phone layout unchanged: it opens on the project list, as before.
-- Added UI-1 to `docs/tasks.json` and new `scripts/verify-office-landing.mjs`
-  (19 checks at 1440px and 390px, light and dark). It fails on main (three
+- Not in `docs/tasks.json` (CLAUDE.md lets threads change only existing
+  tasks); the PR proposes UI-1 for Cal to add. New
+  `scripts/verify-office-landing.mjs` (19 checks at 1440px and 390px, light
+  and dark). It fails on main (three
   columns at landing) and passes with this change.
 - Verified on Node 24: `npm run typecheck`, `npm test`, `npm run build`,
   `verify-office-landing`, `verify-role-access` (61 checks),
