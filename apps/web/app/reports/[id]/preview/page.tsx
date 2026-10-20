@@ -108,7 +108,7 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
         </header>
 
         <section>
-          <h2 className="doc-h2">Action and decision summary</h2>
+          <h2 className="doc-h2">{inspection ? "Actions arising" : "Action and decision summary"}</h2>
           {actions.length === 0 ? (
             <p className="doc-body">{inspection ? "No actions arise from this inspection." : "No actions or decisions arise from this visit."}</p>
           ) : (
@@ -116,8 +116,8 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
               <table className="doc-table">
                 <thead>
                   <tr>
-                    <th>Item</th>
-                    <th>Action or decision required</th>
+                    <th>{inspection ? "Check" : "Item"}</th>
+                    <th>{inspection ? "Action required" : "Action or decision required"}</th>
                     <th>Owner</th>
                   </tr>
                 </thead>

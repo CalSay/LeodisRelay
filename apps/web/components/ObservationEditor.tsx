@@ -34,7 +34,7 @@ export function KindPicker({ onPick }: { onPick: (type: ObservationType) => void
 }
 
 /** Chips for words typed on this job before. Picking one fills the box; typing anything else is always fine. */
-function Suggestions({ title, fewer, values, current, onPick }: { title: string; fewer: string; values: string[]; current: string; onPick: (value: string) => void }) {
+export function Suggestions({ title, fewer, values, current, onPick }: { title: string; fewer: string; values: string[]; current: string; onPick: (value: string) => void }) {
   const [showAll, setShowAll] = useState(false);
   if (values.length === 0) return null;
   const visible = showAll ? values : values.slice(0, 3);
@@ -72,25 +72,9 @@ export function ObservationEditor({
   onRemovePhoto: (photoId: string) => void;
 }) {
   const principal = usePrincipal();
-  const [photoError, setPhotoError] = useState<string | null>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof Observation>(key: K, value: Observation[K]) => onChange({ ...observation, [key]: value });
   const unset = (key: keyof Observation) => { const copy = { ...observation }; delete copy[key]; onChange(copy); };
-
-  async function addPhotos(files: FileList | null) {
-    if (!files || files.length === 0) return;
-    setPhotoError(null);
-    try {
-      const added: Photo[] = [];
-      for (const file of Array.from(files)) added.push(await readPhoto(file));
-      onChange({ ...observation, photos: [...observation.photos, ...added] });
-    } catch (error) {
-      setPhotoError(error instanceof Error ? error.message : "That photograph could not be added.");
-    } finally {
-      if (fileInput.current) fileInput.current.value = "";
-    }
-  }
 
   const type = OBSERVATION_TYPES.find((t) => t.value === observation.type);
   const tone = `tone-${type?.tone ?? "neutral"}`;
@@ -119,25 +103,7 @@ export function ObservationEditor({
     <p className="hint">{observation.linkedIssueId ? "This will be added to that issue's history rather than raising a new one." : "Linking avoids raising a second issue for the same defect."}</p>
   </div>;
 
-  const photos = <div className="field">
-    <label>Photographs{observation.photos.length > 0 ? ` · ${observation.photos.length}` : ""}{kind === 'defect' ? ' · at least one' : ''}</label>
-    <label className="camera">
-      <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple onChange={(e) => addPhotos(e.target.files)} />
-      <CameraIcon />{observation.photos.length ? "Add another photo" : "Take a photo"}
-    </label>
-    {photoError && <div className="note note-bad" style={{ marginTop: 12 }}>{photoError}</div>}
-    {observation.photos.length > 0 && <div className="shots">
-      {observation.photos.map((photo, i) => <figure key={photo.id} className="shot" style={{ margin: 0 }}>
-        <PhotoImage src={photo.dataUrl} alt={photo.caption || `Photograph ${i + 1}`} />
-        <div className="shot-body">
-          <span className="shot-no">Photo {String(i + 1).padStart(2, "0")}</span>
-          {(() => { const w = photoWhere?.(photo.id); return w ? <span className={`eng-where eng-where-${w}`}><span className={w === 'server' ? 'dot dot-ok' : 'dot dot-busy'} />{WHERE[w]}</span> : null; })()}
-          <input type="text" value={photo.caption} onChange={(e) => onChange({ ...observation, photos: observation.photos.map((p) => p.id === photo.id ? { ...p, caption: e.target.value } : p) })} placeholder="What does this show?" aria-label={`Caption for photograph ${i + 1}`} />
-          <button type="button" className="btn-quiet btn-sm" onClick={() => onRemovePhoto(photo.id)} aria-label={`Remove photo ${i + 1}`}>Remove</button>
-        </div>
-      </figure>)}
-    </div>}
-  </div>;
+  const photos = <PhotoField observation={observation} note={kind === 'defect' ? ' · at least one' : ''} {...(photoWhere ? { photoWhere } : {})} onChange={onChange} onRemovePhoto={onRemovePhoto} />;
 
   return (
     <section className={`eng-card ${tone}`}>
@@ -263,4 +229,55 @@ function IssueLinkPicker({ labelledBy, issues, location, linkedId, onPick, none 
     </div>
     {(hidden > 0 || showAll) && <button type="button" className="eng-suggestions-toggle" onClick={() => setShowAll(v => !v)}>{showAll ? 'Show fewer issues' : `Show all ${shown.length + hidden} open issues`}</button>}
   </>;
+}
+
+/**
+ * A card's photographs: the camera button, then each photograph with where it
+ * is and its caption. Shared by every kind of card, including an inspection's
+ * checks, so a photograph behaves the same whatever it is evidence of.
+ */
+export function PhotoField({ observation, note, photoWhere, onChange, onRemovePhoto }: {
+  observation: Observation;
+  /** Added to the label, such as " · at least one". */
+  note?: string;
+  photoWhere?: (photoId: string) => Where | undefined;
+  onChange: (next: Observation) => void;
+  onRemovePhoto: (photoId: string) => void;
+}) {
+  const [photoError, setPhotoError] = useState<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  async function addPhotos(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    setPhotoError(null);
+    try {
+      const added: Photo[] = [];
+      for (const file of Array.from(files)) added.push(await readPhoto(file));
+      onChange({ ...observation, photos: [...observation.photos, ...added] });
+    } catch (error) {
+      setPhotoError(error instanceof Error ? error.message : "That photograph could not be added.");
+    } finally {
+      if (fileInput.current) fileInput.current.value = "";
+    }
+  }
+
+  return <div className="field">
+    <label>Photographs{observation.photos.length > 0 ? ` · ${observation.photos.length}` : ""}{note ?? ''}</label>
+    <label className="camera">
+      <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple onChange={(e) => addPhotos(e.target.files)} />
+      <CameraIcon />{observation.photos.length ? "Add another photo" : "Take a photo"}
+    </label>
+    {photoError && <div className="note note-bad" style={{ marginTop: 12 }}>{photoError}</div>}
+    {observation.photos.length > 0 && <div className="shots">
+      {observation.photos.map((photo, i) => <figure key={photo.id} className="shot" style={{ margin: 0 }}>
+        <PhotoImage src={photo.dataUrl} alt={photo.caption || `Photograph ${i + 1}`} />
+        <div className="shot-body">
+          <span className="shot-no">Photo {String(i + 1).padStart(2, "0")}</span>
+          {(() => { const w = photoWhere?.(photo.id); return w ? <span className={`eng-where eng-where-${w}`}><span className={w === 'server' ? 'dot dot-ok' : 'dot dot-busy'} />{WHERE[w]}</span> : null; })()}
+          <input type="text" value={photo.caption} onChange={(e) => onChange({ ...observation, photos: observation.photos.map((p) => p.id === photo.id ? { ...p, caption: e.target.value } : p) })} placeholder="What does this show?" aria-label={`Caption for photograph ${i + 1}`} />
+          <button type="button" className="btn-quiet btn-sm" onClick={() => onRemovePhoto(photo.id)} aria-label={`Remove photo ${i + 1}`}>Remove</button>
+        </div>
+      </figure>)}
+    </div>}
+  </div>;
 }

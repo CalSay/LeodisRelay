@@ -150,7 +150,7 @@ test('corrections, acknowledgement and the draft allowlist marry the engineer si
       assert.equal(JSON.stringify(summary).includes('PRIVATE'),false);
       assert.equal(summary.kindCounts,undefined,'per-kind counts are contents until the report is sent');
       const own = reportsFor(engineer,'proj-009lcp').items[0]!;
-      assert.deepEqual(own.kindCounts,{update:1,defect:1,instruction:0,access:0});
+      assert.deepEqual(own.kindCounts,{update:1,defect:1,instruction:0,access:0,check:0});
     });
   } finally { database().close(); rmSync(root,{recursive:true,force:true}); }
 });

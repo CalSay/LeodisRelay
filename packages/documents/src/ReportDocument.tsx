@@ -366,7 +366,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
         </View>
 
         <View style={s.h2Row}>
-          <Text style={s.h2}>ACTION AND DECISION SUMMARY</Text>
+          <Text style={s.h2}>{inspection ? "ACTIONS ARISING" : "ACTION AND DECISION SUMMARY"}</Text>
           <View style={s.h2Rule} />
         </View>
 
@@ -376,8 +376,8 @@ export function ReportDocument({ report }: { report: DocReport }) {
           <View>
             <View style={s.thead}>
               <Text style={[s.th, s.cNo]}>NO</Text>
-              <Text style={[s.th, s.cItem]}>ITEM</Text>
-              <Text style={[s.th, s.cAction]}>ACTION OR DECISION REQUIRED</Text>
+              <Text style={[s.th, s.cItem]}>{inspection ? "CHECK" : "ITEM"}</Text>
+              <Text style={[s.th, s.cAction]}>{inspection ? "ACTION REQUIRED" : "ACTION OR DECISION REQUIRED"}</Text>
               <Text style={[s.th, s.cOwner]}>OWNER</Text>
             </View>
             {actions.map((observation, index) => (

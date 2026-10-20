@@ -81,7 +81,8 @@ export function defaultChoice(card: CardDiff): CardChoice {
 export function choicesFor(card: CardDiff): CardChoice[] {
   switch (card.status) {
     case 'same': return ['here'];
-    case 'changed': return ['here', 'there', 'both'];
+    // An inspection's check is one question with one answer, so it cannot be kept twice.
+    case 'changed': return card.here?.check ? ['here', 'there'] : ['here', 'there', 'both'];
     case 'here': return ['here', 'none'];
     case 'there': return ['there', 'none'];
   }

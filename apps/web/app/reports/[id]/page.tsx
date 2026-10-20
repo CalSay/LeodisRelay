@@ -19,6 +19,8 @@ import type { ProjectSuggestions } from "@/lib/suggestions";
 import { clientId } from '@/lib/clientId';
 import { dropAside, hasUnsent, keep, recover, releaseIfCurrent, setAside } from "@/lib/localDraft";
 import { KindPicker, ObservationEditor } from "@/components/ObservationEditor";
+import { CheckEditor } from "@/components/CheckEditor";
+import { CHECK_ANSWERS, checkCounts, checkHint, reportTypeOf } from "@/lib/reportTypes";
 import { SignaturePad } from "@/components/SignaturePad";
 import type { Issue as IssueSummary } from "@/lib/types";
 import { usePrincipal } from '@/components/PrincipalContext';
@@ -638,7 +640,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   const addCard = useCallback((kind?: ObservationType) => {
     const current = latest.current;
-    if (!current || current.state !== 'draft' || sending.current) return;
+    // An inspection holds its checklist and nothing else.
+    if (!current || current.state !== 'draft' || sending.current || reportTypeOf(current).checklist) return;
     const o = newObservation();
     if (kind) {
       o.type = kind;
@@ -747,7 +750,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   // The home screen's "Request a variation" lands here with the card already started.
   useEffect(() => {
-    if (!report || report.state !== 'draft' || addedFromLink.current) return;
+    if (!report || report.state !== 'draft' || addedFromLink.current || reportTypeOf(report).checklist) return;
     let add = '';
     try { add = new URLSearchParams(window.location.search).get('add') ?? ''; } catch {}
     if (!KINDS.includes(add as ObservationType)) return;
@@ -841,9 +844,18 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
   const mine = principal ? ownsReport(principal, report) : false;
   const counts = Object.fromEntries(KINDS.map(k => [k, report.observations.filter(o => o.type === k).length])) as Record<ObservationType, number>;
+  const type = reportTypeOf(report);
+  /** An inspection: fixed checks, answered one by one, rather than cards the engineer adds. */
+  const checklist = Boolean(type.checklist);
+  const answers = checkCounts(report.observations);
+  const unanswered = report.observations.filter(o => o.type === 'check' && !o.check?.answer);
+  /** The next check after `index` still to answer, going round to the start. */
+  const nextUnanswered = (index: number) => [...report.observations.slice(index + 1), ...report.observations.slice(0, index)].find(o => o.type === 'check' && !o.check?.answer);
   // The open card. Side by side there is always one in the editor column; on
   // the phone every card starts folded, so the report reads as a short list.
-  const open = report.observations.some(o => o.id === selectedSection) ? selectedSection : wide ? report.observations.at(-1)?.id ?? null : null;
+  // An inspection opens at the first check still to answer.
+  const open = report.observations.some(o => o.id === selectedSection) ? selectedSection
+    : wide ? (checklist ? (unanswered[0] ?? report.observations[0])?.id ?? null : report.observations.at(-1)?.id ?? null) : null;
   const shortRef = report.reference.split('-').slice(1).join('-');
   // Where each card and photograph is. Offline means the server could not be
   // reached, so anything not yet on it is only on this phone.
@@ -884,6 +896,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
    * it opens the card; on the phone tapping the open card folds it again.
    */
   const cardRow = (o: Observation, i: number) => {
+    if (o.check) return checkRow(o, i);
     const k = kindOf(o);
     const stopped = stop.find(f => f.observationId === o.id);
     const choosing = picking.includes(o.id);
@@ -901,8 +914,48 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     </button>;
   };
 
+  /** One check folded to a line: its answer, the question, and what was written. */
+  const checkRow = (o: Observation, i: number) => {
+    const answer = CHECK_ANSWERS.find(a => a.value === o.check?.answer);
+    const stopped = stop.find(f => f.observationId === o.id);
+    const isOpen = open === o.id;
+    const text = o.whatHappened.trim();
+    return <button type="button" key={`row-${o.id}`} className={`eng-row eng-cardrow eng-checkrow ${isOpen ? 'on' : ''} ${stopped && answer ? 'late' : ''}`} aria-expanded={wide ? undefined : isOpen} aria-current={wide && isOpen ? 'true' : undefined} onClick={() => { if (!wide && isOpen) setSelectedSection(''); else openCard(o.id); }}>
+      <span className="no">{String(i + 1).padStart(2, '0')}</span>
+      <div className="main">
+        <span className="top"><span className={`kind answer-${answer?.tone ?? 'open'}`}>{answer?.short ?? 'To do'}</span><b>{o.check?.question}</b></span>
+        {(text || o.photos.length > 0 || (stopped && answer)) && <span className="meta">{text ? text : ''}{text && o.photos.length ? ' · ' : ''}{o.photos.length ? `${o.photos.length} photo${o.photos.length === 1 ? '' : 's'}` : ''}{stopped && answer ? <em>{text || o.photos.length ? ' · ' : ''}{stopped.message.slice((o.check?.question ?? '').length + 2)}</em> : null}</span>}
+        {(answer || o.photos.length > 0) && <CardWhereLine where={whereOf.get(o.id)} />}
+      </div>
+      {!wide && <span className="chev" aria-hidden="true">{isOpen ? '−' : '+'}</span>}
+    </button>;
+  };
+
+  /** An open check: the question and its answers, then a step on to the next one still to answer. */
+  const checkBody = (observation: Observation, index: number) => {
+    const next = nextUnanswered(index);
+    return <>
+      <CheckEditor
+        observation={observation}
+        index={index}
+        total={report.observations.length}
+        hint={checkHint(type, observation.check?.item ?? '')}
+        companies={suggestions.companies}
+        photoWhere={(photoId) => { const w = whereOf.get(observation.id); const at = observation.photos.findIndex(p => p.id === photoId); return w && at >= 0 ? w.each[at] : undefined; }}
+        // Held open by choice once touched: the default (first one unanswered) moves on as soon as it is answered.
+        onChange={(changed) => { setSelectedSection(changed.id); update({ ...report, observations: report.observations.map((o) => (o.id === changed.id ? changed : o)) }); }}
+        onRemovePhoto={(photoId) => removePhotoNow(observation.id, photoId)}
+      />
+      {observation.check?.answer && <div className="eng-card-actions">
+        {next
+          ? <button type="button" className="eng-next-check" onClick={() => openCard(next.id)}>Next check &rarr;<small>{unanswered.length} to answer</small></button>
+          : <button type="button" className="eng-review-link" onClick={() => showCheck()}>All answered · check &amp; sign &rarr;</button>}
+      </div>}
+    </>;
+  };
+
   /** The open card's questions, or the kind picker for a card that has none yet. */
-  const cardBody = (observation: Observation, index: number) => picking.includes(observation.id)
+  const cardBody = (observation: Observation, index: number) => observation.check ? checkBody(observation, index) : picking.includes(observation.id)
     ? <KindPicker onPick={k => { setPicking(p => p.filter(x => x !== observation.id)); const copy: Observation = { ...observation, type: k }; if (k === 'defect' && principal?.trade) copy.affectedTrade = principal.trade; update({ ...report, observations: report.observations.map(o => o.id === observation.id ? copy : o) }); }} />
     : <>
         <ObservationEditor
@@ -953,7 +1006,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
       <div className="pagehead">
         <div>
-          <h1>{sent ? report.reference : 'Site update'}</h1>
+          <h1>{sent ? report.reference : type.name}</h1>
           <p className="sub">{project?.projectName} · <span className="ref">{report.reference}</span>{sent ? '' : ' · draft'}{report.corrects && !sent ? ` · correction, rev ${report.revision}` : ''}</p>
         </div>
         <span className={sent ? "tag tag-sent" : "tag tag-draft"}>{sent ? "Sent" : "Draft"}</span>
@@ -1014,8 +1067,13 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       )}
 
       {sent ? <>
-        <div className="sec"><span className="lbl">{report.observations.length} card{report.observations.length === 1 ? '' : 's'} · {photos} photograph{photos === 1 ? '' : 's'}</span></div>
-        {report.observations.length === 0 ? <div className="empty">No updates were recorded on this visit.</div> : report.observations.map((o, i) => { const k = kindOf(o); return <section key={o.id} className={`eng-sent-card tone-${k?.tone ?? 'neutral'}`}>
+        <div className="sec"><span className="lbl">{checklist ? `${type.name} · ${answers.action} action${answers.action === 1 ? '' : 's'}` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`} · {photos} photograph{photos === 1 ? '' : 's'}</span></div>
+        {checklist ? report.observations.map((o, i) => { const action = o.check?.answer === 'action'; return <section key={o.id} className={`eng-sent-card ${action ? 'tone-defect' : 'tone-neutral'}`}>
+          <div className="head"><span className="lbl">Check {String(i + 1).padStart(2, '0')}</span><span className={`kind answer-${o.check?.answer ?? 'open'}`}>{CHECK_ANSWERS.find(a => a.value === o.check?.answer)?.label ?? 'Not answered'}</span></div>
+          <p><b>{o.check?.question}</b>{o.whatHappened.trim() ? <><br />{o.whatHappened}</> : null}</p>
+          {(o.actionNeeded.trim() || o.owner.trim()) && <small>{o.actionNeeded.trim() && `Action: ${o.actionNeeded}`}{o.actionNeeded.trim() && o.owner.trim() && ' · '}{o.owner.trim() && `For: ${o.owner}`}</small>}
+          {o.photos.length > 0 && <small>{o.photos.length} photograph{o.photos.length === 1 ? '' : 's'}</small>}
+        </section>; }) : report.observations.length === 0 ? <div className="empty">No updates were recorded on this visit.</div> : report.observations.map((o, i) => { const k = kindOf(o); return <section key={o.id} className={`eng-sent-card tone-${k?.tone ?? 'neutral'}`}>
           <div className="head"><span className="lbl">Card {String(i + 1).padStart(2, '0')} · {o.location || 'No location'}</span><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{k?.short ?? o.type}</span></div>
           <p>{o.whatHappened}</p>
           {(o.actionNeeded.trim() || o.owner.trim()) && <small>{o.actionNeeded.trim() && `Action: ${o.actionNeeded}`}{o.actionNeeded.trim() && o.owner.trim() && ' · '}{o.owner.trim() && `For: ${o.owner}`}</small>}
@@ -1026,18 +1084,18 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         {/* Two steps, so the cards and the final check never compete for the
             same scroll: build the report, then check, sign and send it. */}
         <nav className="eng-steps" aria-label="Report steps">
-          <button type="button" aria-current={step === 'cards' ? 'step' : undefined} onClick={() => showCards()}><span className="n">1</span>Cards<small>{report.observations.length}</small></button>
+          <button type="button" aria-current={step === 'cards' ? 'step' : undefined} onClick={() => showCards()}><span className="n">1</span>{checklist ? 'Checks' : 'Cards'}<small>{checklist ? `${report.observations.length - unanswered.length}/${report.observations.length}` : report.observations.length}</small></button>
           <button type="button" aria-current={step === 'check' ? 'step' : undefined} onClick={() => showCheck()}><span className="n">2</span>Check &amp; send{stop.length > 0 && <small className="late">{stop.length}</small>}</button>
         </nav>
 
         {step === 'cards' && (wide ? <div className="eng-editor-grid">
-          <aside className="eng-rail" aria-label="Cards in this update">
-            <div className="eng-section-title" style={{ margin: 0 }}><h2>Cards</h2><span className="r">{report.observations.length}</span></div>
+          <aside className="eng-rail" aria-label={checklist ? 'Checks in this inspection' : 'Cards in this update'}>
+            <div className="eng-section-title" style={{ margin: 0 }}><h2>{checklist ? 'Checks' : 'Cards'}</h2><span className="r">{checklist ? `${report.observations.length - unanswered.length} of ${report.observations.length} answered` : report.observations.length}</span></div>
             <div className="eng-list">
               {report.observations.length === 0 && <div className="eng-empty">No cards yet. Add one for each thing you did, found or need.</div>}
               {report.observations.map((o, i) => cardRow(o, i))}
             </div>
-            <button type="button" className="eng-add" disabled={submitting} onClick={() => addCard()}>+ Add a card</button>
+            {!checklist && <button type="button" className="eng-add" disabled={submitting} onClick={() => addCard()}>+ Add a card</button>}
             {findings.length > 0 && <div className="eng-finds"><span className="lbl">Before you send</span>{findingRows(stop, 'stop')}{findingRows(note.slice(0, 3), 'note')}</div>}
           </aside>
           <div id="card-editor" style={{ scrollMarginTop: 24 }}>
@@ -1052,7 +1110,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               <div hidden={open !== o.id}>{cardBody(o, i)}</div>
             </div>)}
           </div>}
-          {report.observations.length > 0 && <button type="button" className="eng-add" disabled={submitting} onClick={() => addCard()}>+ Add a card</button>}
+          {report.observations.length > 0 && !checklist && <button type="button" className="eng-add" disabled={submitting} onClick={() => addCard()}>+ Add a card</button>}
         </div>)}
 
         {step === 'check' && <div id="report-check" className="eng-check">
@@ -1070,15 +1128,28 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
           {whereAll.text && <p className={`eng-where eng-where-${whereAll.where}`} aria-live="polite"><span className={WHERE_DOT[whereAll.where]} />{whereAll.text}</p>}
 
-          <div className="sec"><span className="lbl">In this report</span></div>
-          <dl className="eng-sum">
+          <div className="sec"><span className="lbl">{checklist ? 'In this inspection' : 'In this report'}</span></div>
+          {checklist ? <dl className="eng-sum">
+            <div><dt>Satisfactory</dt><dd>{answers.ok}</dd></div>
+            <div><dt>Action needed</dt><dd className={answers.action ? 'late' : ''}>{answers.action}<small>{answers.action ? 'on the action list' : ''}</small></dd></div>
+            <div><dt>Not applicable</dt><dd>{answers.na}</dd></div>
+            <div><dt>To answer</dt><dd className={answers.open ? 'soon' : ''}>{answers.open}</dd></div>
+          </dl> : <dl className="eng-sum">
             <div><dt>Progress</dt><dd>{counts.update}</dd></div>
             <div><dt>Defects</dt><dd className={counts.defect ? 'late' : ''}>{counts.defect}<small>{counts.defect ? 'raise issues' : ''}</small></dd></div>
             <div><dt>Variations</dt><dd className={counts.instruction ? 'soon' : ''}>{counts.instruction}<small>{counts.instruction ? 'raise VOs' : ''}</small></dd></div>
             <div><dt>Access</dt><dd>{counts.access}<small>{counts.access ? 'raise issues' : ''}</small></dd></div>
-          </dl>
+          </dl>}
 
-          {report.observations.length > 0 && <div className="eng-does">
+          {checklist && <div className="eng-does">
+            <span className="lbl">What sending does</span>
+            <div className="eng-list" style={{ marginTop: 8 }}>
+              <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} action${answers.action === 1 ? '' : 's'} listed on the inspection` : 'No actions to list'}</b><span>Printed at the top of the PDF with who is to do each one. Nothing is added to the issue register.</span></div></div>
+              <div className="eng-row"><div className="main"><b>Received the moment it lands</b><span>{project?.projectManager ?? 'The project manager'} is emailed when the mailbox is live; the office can read it straight away.</span></div></div>
+            </div>
+          </div>}
+
+          {!checklist && report.observations.length > 0 && <div className="eng-does">
             <span className="lbl">What sending does</span>
             <div className="eng-list" style={{ marginTop: 8 }}>
               {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{counts.defect + counts.access} issue{counts.defect + counts.access === 1 ? '' : 's'} raised · not yet reviewed</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Linked ones add a sighting to the existing issue. ' : ''}The office assigns them; you’ll see who and when on your home screen.</span></div></div>}
@@ -1088,6 +1159,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           </div>}
 
           <div className="sec"><span className="lbl">Sign</span></div>
+          {type.drawnSignature && <p className="hint eng-sign-hint">Draw your signature: an inspection is signed by the person who carried it out.</p>}
 
           <section className="panel">
             <div className="panel-body">
@@ -1096,6 +1168,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
                 initialImage={signatureImage}
                 onNameChange={(next) => updateSignature(next, signatureImage)}
                 onChange={(image) => updateSignature(signerName, image)}
+                {...(type.drawnSignature ? { hint: 'The drawing is required: it shows who carried out the inspection.' } : {})}
               />
             </div>
           </section>
@@ -1122,7 +1195,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               <span className={SAVE[saveState].dot} />
               {step === 'check' && stop.length > 0
                 ? <span className="actionbar-warning"><b>{stop.length} {stop.length === 1 ? 'item needs' : 'items need'} attention</b><span>Tap one above to fix it</span></span>
-                : <b>{SAVE[saveState].text || (step === 'check' ? 'Ready to send' : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`)}</b>}
+                : <b>{SAVE[saveState].text || (step === 'check' ? 'Ready to send' : checklist ? `${report.observations.length - unanswered.length} of ${report.observations.length} answered` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`)}</b>}
             </span>
             {step === 'cards'
               ? <button className="btn-primary" onClick={() => showCheck()} disabled={submitting}>Check &amp; send &rarr;</button>
