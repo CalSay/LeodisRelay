@@ -4,6 +4,140 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — FE-3e: offline capture, third slice (sign an inspection with no signal)
+
+- Why: #46 let an inspection be started and answered with no signal but it
+  still had to be signed in RELAY later, so a weekly safety inspection done in
+  a basement sat unsent until the engineer remembered to open it. Suggested by
+  #46's thread; decided by Claude under Cal's standing autonomy.
+- Now, on the offline page, an inspection (started there, or a draft held on
+  the phone) has a "Sign it" panel at its foot. Until every check is answered
+  it lists what is left, using the same blocking rules as the check step
+  (`lib/review.ts`): checks not answered, and for an action what is wrong,
+  what needs doing and, on a handover inspection, where. Then the engineer's
+  name and a drawn signature. Signing locks the inspection on the phone and
+  marks it "Signed · not sent yet" in the list, on the report and on the home
+  screen's unfinished list. "Take back signature to change it" unlocks it,
+  until RELAY has started sending it.
+- Decision: it goes to the office by itself, with no second tap, the next time
+  RELAY opens with signal (the existing held-work send, `lib/heldSend.ts`).
+  Signing is already the engineer's deliberate act of sending, and the page
+  says so on the button ("Sign it. Send when there is signal"); a second tap
+  would leave a signed weekly inspection sitting on a phone because nobody
+  reopened it. RELAY then says "The inspection you signed on this phone has
+  gone to the office", or why not.
+- A signature never goes with content that changed after signing: the phone
+  records what was signed (`signedContent`, the same function in
+  `offline.js` and `lib/offlineStart.ts`, pinned by a test). Before sending,
+  the app checks the copy is still exactly that, after it is fitted onto the
+  server's checks, so a checklist reworded in a deploy meanwhile also breaks
+  it. If it changed, it goes up as an unsigned draft and the engineer is told
+  to check it and sign again. Any offline-held inspection saved unsigned
+  clears the draft's signature on the server (`signature: null`), so no
+  signature, from the phone or from RELAY before the change, is left over
+  changed content. The phone signature is kept apart from the report's draft
+  signature, so an editor that takes the copy over shows it unsigned.
+- Sending: save with the signature, then send at exactly that saved version
+  (the server sends what it holds at that version). The copy stays on the
+  phone, marked saved, until the send is answered, so a connection lost in
+  between finishes next time without saving again. A refusal (4xx) leaves it
+  a draft on the server with its signature cleared and names it once; a
+  server fault (5xx) keeps it signed and tries again. Sent revisions are not
+  touched. Nothing new is sent to SharePoint or by email: the send is the
+  existing submit.
+- Verified on Node 22 (the session's Node): `npm run typecheck`, `npm test`
+  (302 web tests; 16 new in `tests/offlineSign.test.ts`, including the whole
+  send against the real store with an in-memory IndexedDB: sent as signed,
+  changed after signing, lost answer, no signal between save and send, server
+  fault, refusal, conflict handed to the editor, unsigned change clears an old
+  signature), `npm run build`. New `scripts/verify-offline-sign.mjs` passed
+  (62 checks, server stopped for no signal): 390px light handover inspection
+  signed, taken back, changed and signed again, its action on the snag list
+  once sent; 1440px dark safety inspection signed and sent with the drawn
+  signature, exactly as signed; 390px dark one changed behind the page after
+  signing, which went up unsigned and said so. Also passed:
+  `verify-offline-inspection`, `verify-offline-capture`,
+  `verify-offline-drafts`, `verify-handover-offline`,
+  `verify-unfinished-reports`, `verify-help`, `verify-engineer-layout`,
+  `verify-signature-reload`, `verify-report-types`, `verify-role-access`,
+  `verify-editor-usability`. A fresh-context review found edge cases where a
+  phone signature could stay on a draft whose content later changed; fixed as
+  above. Service worker cache `relay-public-v8`.
+- Not verified: physical iOS and Android phones (so `passes` stays false),
+  Safari's service worker, Chromium's own offline mode, SharePoint mode.
+  Known narrow cases left: if the same inspection is sent from elsewhere
+  after the phone saved it, the phone copy is dropped and the engineer is told
+  to check what went; two tabs sending at once can show the draft wording for
+  one that was in fact sent.
+- Next (proposed, not built): group "On this phone" by project; sign a site
+  update on the offline page; add `verify-offline-sign.mjs` and the other
+  offline checks to the browser checks in `CLAUDE.md`.
+
+## 2026-10-20 — Accessibility pass over the engineer and office pages
+
+- Audited every engineer and office page built so far (28 pages, as engineer,
+  manager, admin and signed out) at 390px and 1440px in light and dark with
+  axe-core (WCAG 2.2 A/AA plus best practice), a keyboard walk, and a probe
+  for tap-target size, headings, labels and names. Before: about 1,240
+  contrast failures (270 distinct elements), 416 elements outside any
+  landmark, an office desk with no `main` and no `h1`, chips and small
+  buttons 28 to 40px tall on a phone. Already good: every control had a name
+  or label, every focus stop showed a ring, and nothing relied on hover.
+- Priorities, decided here: (1) text people could not read, because grey
+  secondary text is on almost every screen and site engineers read it
+  outdoors; (2) the office desk's structure for screen readers; (3) tap
+  targets on a phone; (4) the one cue given only by colour.
+- Compliance pages: their `.cm` palette is a copy of the office one, so
+  they take the same token fixes (decided here, to keep the two palettes
+  from drifting apart; the pages are otherwise untouched).
+- Contrast: only colour tokens changed, so both themes stay in step. Main
+  pages: `--text-3` #6b6c65 to #5f605a (light), #666e75 to #8a9299 (dark).
+  Office desk (`.ws`) and the compliance pages (`.cm`), same palette:
+  `--text-2`/`--text-3` #5b5f60/#767a7b to #4f5354/#5e6263 (light) and
+  #b5b7b6/#868a8b to #c2c4c3/#a5a9aa (dark); gold #816321 to #765a1d (light,
+  white text on gold buttons improves to 6.5:1); dark alert #e2705a to
+  #ec8a76 (#f09783 on compliance); compliance light aqua #267c76 to #1f6d68.
+  Every pair now passes 4.5:1 on its own backgrounds. The dated concept
+  files in `docs/` keep the old values.
+- Office desk: views sit in a `main` (a flex column, so on a desktop the
+  views still fill the desk and scroll inside it; the check now asserts the
+  desk fits the window) with a hidden `h1`, "Leodis Developments office";
+  headings now run h2 page or column, h3 sheet or panel, h4 group, instead
+  of starting at h3/h4/h5. CSS matches either level, so headings look the
+  same. The tab bar is named "Office" and marks the current tab
+  (`aria-current`). The prototype banner is a named region and the app bar
+  nav is named "Main". Empty table header cells say "Action" to screen
+  readers.
+- Phone tap targets (44px or more under 700px): office chips, buttons,
+  search, filters, top bar (logo, Attention, name, Help), "All →"; Back
+  links, the app bar brand, segment buttons, Help's "On this page" links,
+  the sign-in brand, and the engineer home's "Change ›" (bigger hit area,
+  same line, now underlined so it is not told apart by colour alone).
+- Colour only: a red count on an office tab ("something is overdue or
+  failed") now also has a ring and says ", some need attention" to screen
+  readers.
+- Kept: wording, features and how data is saved; #40's Back links and page
+  titles. Help's "What's new" has one line, "Easier to read and to tap".
+- New `scripts/verify-accessibility.mjs` (axe-core 4.10.3 added as a dev
+  dependency): 318 checks; zero axe violations on each page in light and dark
+  at 390px and 1440px, one h1 per page, controls at least 44px tall on a
+  phone (listed exceptions: references inside rows, the coverage grid, hidden
+  file inputs, checkboxes inside a label), a ring at every Tab stop.
+  Screenshots in the project's `ui-review/accessibility/`.
+- Not changed, because another thread is working there: the report editor
+  (`/reports/[id]`: "View the document" link in a paragraph is told apart by
+  colour only) and the offline page (not scanned). The compliance pages
+  (prototype, other company) got the token fixes but still have no `main` or
+  `h1`.
+- Not verified: a real screen reader (VoiceOver, TalkBack, NVDA), a physical
+  phone, Safari and Firefox, Windows high contrast, 200% zoom.
+- Proposed (not added to `docs/tasks.json`): "NEW-12 Accessibility pass —
+  WCAG 2.2 AA on engineer and office pages; verify-accessibility at 390 and
+  1440px". Follow-ups: the two editor items above; a skip link to the main
+  content; landmarks and h1 on the compliance pages; add
+  `verify-accessibility.mjs` to the browser checks in `CLAUDE.md`; a screen
+  reader walk-through by a person.
+
 ## 2026-10-20 — Report editor usability pass (proposed as UI-3)
 
 - Why: nine PRs today each added a piece to the report editor (two-step
@@ -75,75 +209,6 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   unanswered checks; browser check at 390 and 1440px". Follow-ups: start an
   inspection with last week's open safety actions shown; show the signature
   box nearer the top of the check step for inspections, where it is required.
-
-## 2026-10-20 — FE-3e: offline capture, third slice (sign an inspection with no signal)
-
-- Why: #46 let an inspection be started and answered with no signal but it
-  still had to be signed in RELAY later, so a weekly safety inspection done in
-  a basement sat unsent until the engineer remembered to open it. Suggested by
-  #46's thread; decided by Claude under Cal's standing autonomy.
-- Now, on the offline page, an inspection (started there, or a draft held on
-  the phone) has a "Sign it" panel at its foot. Until every check is answered
-  it lists what is left, using the same blocking rules as the check step
-  (`lib/review.ts`): checks not answered, and for an action what is wrong,
-  what needs doing and, on a handover inspection, where. Then the engineer's
-  name and a drawn signature. Signing locks the inspection on the phone and
-  marks it "Signed · not sent yet" in the list, on the report and on the home
-  screen's unfinished list. "Take back signature to change it" unlocks it,
-  until RELAY has started sending it.
-- Decision: it goes to the office by itself, with no second tap, the next time
-  RELAY opens with signal (the existing held-work send, `lib/heldSend.ts`).
-  Signing is already the engineer's deliberate act of sending, and the page
-  says so on the button ("Sign it. Send when there is signal"); a second tap
-  would leave a signed weekly inspection sitting on a phone because nobody
-  reopened it. RELAY then says "The inspection you signed on this phone has
-  gone to the office", or why not.
-- A signature never goes with content that changed after signing: the phone
-  records what was signed (`signedContent`, the same function in
-  `offline.js` and `lib/offlineStart.ts`, pinned by a test). Before sending,
-  the app checks the copy is still exactly that, after it is fitted onto the
-  server's checks, so a checklist reworded in a deploy meanwhile also breaks
-  it. If it changed, it goes up as an unsigned draft and the engineer is told
-  to check it and sign again. Any offline-held inspection saved unsigned
-  clears the draft's signature on the server (`signature: null`), so no
-  signature, from the phone or from RELAY before the change, is left over
-  changed content. The phone signature is kept apart from the report's draft
-  signature, so an editor that takes the copy over shows it unsigned.
-- Sending: save with the signature, then send at exactly that saved version
-  (the server sends what it holds at that version). The copy stays on the
-  phone, marked saved, until the send is answered, so a connection lost in
-  between finishes next time without saving again. A refusal (4xx) leaves it
-  a draft on the server with its signature cleared and names it once; a
-  server fault (5xx) keeps it signed and tries again. Sent revisions are not
-  touched. Nothing new is sent to SharePoint or by email: the send is the
-  existing submit.
-- Verified on Node 22 (the session's Node): `npm run typecheck`, `npm test`
-  (302 web tests; 16 new in `tests/offlineSign.test.ts`, including the whole
-  send against the real store with an in-memory IndexedDB: sent as signed,
-  changed after signing, lost answer, no signal between save and send, server
-  fault, refusal, conflict handed to the editor, unsigned change clears an old
-  signature), `npm run build`. New `scripts/verify-offline-sign.mjs` passed
-  (62 checks, server stopped for no signal): 390px light handover inspection
-  signed, taken back, changed and signed again, its action on the snag list
-  once sent; 1440px dark safety inspection signed and sent with the drawn
-  signature, exactly as signed; 390px dark one changed behind the page after
-  signing, which went up unsigned and said so. Also passed:
-  `verify-offline-inspection`, `verify-offline-capture`,
-  `verify-offline-drafts`, `verify-handover-offline`,
-  `verify-unfinished-reports`, `verify-help`, `verify-engineer-layout`,
-  `verify-signature-reload`, `verify-report-types`, `verify-role-access`,
-  `verify-editor-usability`. A fresh-context review found edge cases where a
-  phone signature could stay on a draft whose content later changed; fixed as
-  above. Service worker cache `relay-public-v8`.
-- Not verified: physical iOS and Android phones (so `passes` stays false),
-  Safari's service worker, Chromium's own offline mode, SharePoint mode.
-  Known narrow cases left: if the same inspection is sent from elsewhere
-  after the phone saved it, the phone copy is dropped and the engineer is told
-  to check what went; two tabs sending at once can show the draft wording for
-  one that was in fact sent.
-- Next (proposed, not built): group "On this phone" by project; sign a site
-  update on the offline page; add `verify-offline-sign.mjs` and the other
-  offline checks to the browser checks in `CLAUDE.md`.
 
 ## 2026-10-20 — Second release check on main
 

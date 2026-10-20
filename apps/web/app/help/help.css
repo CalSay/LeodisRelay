@@ -36,6 +36,7 @@
 .help-link span{font-size:13.5px;color:var(--text-2);line-height:1.4;}
 .help-foot{margin-top:24px;font-size:13px;color:var(--text-2);line-height:1.5;max-width:70ch;}
 @media (max-width:760px){
+  .help-jump a{min-height:44px;}
   .help-new,.help-guide,.help-glossary{grid-template-columns:1fr;}
   .help-links{grid-template-columns:1fr 1fr;}
 }

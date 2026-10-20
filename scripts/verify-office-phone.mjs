@@ -41,7 +41,7 @@ const shot=process.env.RELAY_SCREENSHOT_DIR;if(shot)mkdirSync(shot,{recursive:tr
 const group=(page,key)=>page.locator(`.act[data-group="${key}"]`);
 const count=async(page,key)=>Number(await group(page,key).locator('.act-n').textContent());
 const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
-const visibleCols=page=>page.locator('.cols > .col').evaluateAll(cols=>cols.filter(c=>getComputedStyle(c).display!=='none').map(c=>{const r=c.getBoundingClientRect();return {head:c.querySelector('.col-head h4')?.textContent??'',top:Math.round(r.top+scrollY),left:Math.round(r.left)};}).sort((a,b)=>a.top-b.top||a.left-b.left));
+const visibleCols=page=>page.locator('.cols > .col').evaluateAll(cols=>cols.filter(c=>getComputedStyle(c).display!=='none').map(c=>{const r=c.getBoundingClientRect();return {head:c.querySelector('.col-head h2')?.textContent??'',top:Math.round(r.top+scrollY),left:Math.round(r.left)};}).sort((a,b)=>a.top-b.top||a.left-b.left));
 try {
   let ready=false;for(let n=0;n<60;n++){if(server.exitCode!==null)throw Error(output);try{if((await fetch(base+'/signin')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready,output);
   browser=await chromium.launch({headless:true,...(process.env.RELAY_BROWSER_PATH?{executablePath:process.env.RELAY_BROWSER_PATH}:{})});

@@ -29,6 +29,8 @@ export interface WhatsNew {
 export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'offline-sign', added: '2026-10-20', audience: 'site', title: 'Sign an inspection with no signal',
     text: 'With no signal, once every check is answered you can sign a safety or handover inspection on the phone. It is marked "Signed · not sent yet" and goes to the office by itself the next time RELAY opens with signal, and RELAY tells you when it has gone. If anything changed after you signed, it is not sent: you check it and sign again.' },
+  { id: 'easier-to-read', added: '2026-10-20', audience: 'all', title: 'Easier to read and to tap',
+    text: 'Grey text is darker in the light theme and lighter in the dark theme, so it is easier to read outdoors or on a dim screen. On a phone, buttons, filters, tabs and Back links are at least a fingertip tall, and screen readers can now find the heading and main part of every office page.' },
   { id: 'editor-tidy', added: '2026-10-20', audience: 'site', title: 'A quicker, calmer report screen',
     text: 'On a phone the card you have open no longer repeats itself above and below, "Check & send" is no longer repeated inside each card (it stays at the foot of the screen), and an inspection just started lists its unanswered checks as one line rather than twelve. Optional suggestions are marked "Optional", so only a "Stop" stops you sending.' },
   { id: 'offline-inspection', added: '2026-10-20', audience: 'site', title: 'Start an inspection with no signal',
