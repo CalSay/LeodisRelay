@@ -90,7 +90,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const clear = () => { setProject(''); setTrade(''); setLocationText(''); setCompanyText(''); setVerification(''); };
   return <div className="view">
     <div className="pagehead"><div><h3>Issues</h3><p>{counts.open} open{narrowed ? ' in this search' : ` across ${ctx.projects.length} projects`} · {counts.overdue ? <span className="late">{counts.overdue} overdue</span> : 'none overdue'} · {counts.verify} awaiting verification · {counts.unassigned} unassigned · {reviewOn && <>{counts.notReviewed} not reviewed · </>}{counts.disputed} disputed</p></div>
-      <div className="actions"><a className="btn btn-q" href={snagHref}>Snag list</a>{oldestToVerify && <Btn onClick={() => ctx.setDialog({ kind: 'verify', issue: oldestToVerify })}>Verify the oldest</Btn>}</div></div>
+      <div className="actions"><a className="btn btn-q" href={`/companies?${new URLSearchParams({ returnTo: '/office#/issues' })}`}>By company</a><a className="btn btn-q" href={snagHref}>Snag list</a>{oldestToVerify && <Btn onClick={() => ctx.setDialog({ kind: 'verify', issue: oldestToVerify })}>Verify the oldest</Btn>}</div></div>
     <div className="filters">
       {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
       <span className="spacer" />
