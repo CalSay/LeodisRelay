@@ -49,6 +49,144 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Next: the same filters for the engineer Issues view if engineers ask;
   CLAUDE.md's list of browser checks should gain
   `verify-issue-register.mjs`.
+## 2026-10-20 — Photo library per project (new feature, proposed as NEW-4)
+
+- New page `/photos`: every photograph on one project, newest first, grouped
+  by day. Photographs come from cards on sent reports (never drafts) and from
+  evidence added to issues and variations afterwards (put forward as fixed,
+  checked, notes). Each tile shows the kind (Progress, Defect, Access problem,
+  Variation required, Put forward as fixed, …) and where it was taken. A find
+  box matches every typed word against the location, what was found, caption,
+  who, trade and reference; buttons narrow it to Progress, Defects and
+  access, Variations, or Fixes and checks. Tapping a tile opens a viewer with
+  the larger copy, its details, Newer and Older (arrow keys on a desk), and
+  "Open report/issue/variation" to the record it came from.
+- Opened from a "Photographs" button in the engineer Reports view and in the
+  office project's actions. The project, words and filter are kept in the
+  address, so a record opened from the viewer comes back to the same list.
+- Why this feature: "what did it look like before it was boarded?" is a
+  daily question on site and in the office (disputes, client questions,
+  handover), and today the answer means opening reports one at a time. It
+  reads only what is already recorded: no new store, upload, data entry,
+  SharePoint write or email.
+- Not FE-2: the backlog leaves out "the photo-workflow expansion (separate
+  camera/library controls, zoom, reordering, annotations and per-photo
+  progress)". Those are capture-time controls in the report editor. This page
+  changes nothing about taking or attaching photographs; it has no zoom,
+  reordering or annotation, only a larger view of a sent photograph.
+- Decisions: a photograph copied from a defect card onto its issue shows once,
+  from the report. A sent correction takes over the photographs it still
+  carries; any it dropped stay with the original. Issues withdrawn as raised
+  in error are left out (their report cards still show). Report photographs
+  sit on the visit day, issue and variation evidence on the day it was
+  added, in UK time. Locations are free text as written (no catalogue,
+  EXP-4). The viewer uses the existing PDF-sized copy, not the original, so
+  a phone on site does not pull 20 MB images. 60 tiles at a time, then "Show
+  more".
+- Verified: `npm run typecheck` and `npm test` pass (8 new tests in
+  `tests/photoLibrary.test.ts`, 1 in `viewNavigation.test.ts`). `npm run
+  build`, then new `scripts/verify-photo-library.mjs` passed (34 checks:
+  engineer at 390px light, office at 1440px dark, drafts and other projects
+  left out, thumbnails load, find, filters, viewer stepping and links, back
+  navigation, empty project, signed-out and unknown-project refusals). A
+  fresh-context review found no access gaps; its fixes (trade shown only for
+  report photographs, latest revision in a correction chain, sign-in keeps
+  the address) are in.
+  `verify-engineer-layout`, `verify-role-access` (61), `verify-weekly-summary`
+  (29) and `verify-office-actions` (41) still pass. Screenshots (not in the
+  repo) are in the RELAY project's shared files under `ui-review/photo-library/`.
+- Not verified: a physical phone, SharePoint mode (no live tenant),
+  performance on a project with thousands of photographs (it loads the
+  project's records per request, like search and the weekly summary; tiles
+  are lazy-loaded thumbnails).
+- Next: a "Photographs" link from an issue or the snag list filtered to that
+  location, if site teams use the page.
+## 2026-10-20 — FE-3b: which cards and photos are on the server
+
+- In the report editor every card row now ends with where the card is: "On
+  the server", "Uploading", "Not yet on the server" or "Only on this phone",
+  with what is still to go up ("changes and 1 photo"). Each photograph says
+  the same under its number. The Check & send step opens with one line: "The
+  card and 2 photos are on the server." or "1 card and 1 photo are only on
+  this phone. They go up by themselves when the server can be reached."
+  A removed card or a changed signature waiting for a save is named there
+  too, so the line never goes green before the save lands. The wording
+  matches the unfinished reports list (PR #9). Green dot only when the
+  server has it.
+- Decision: a photograph counts as on the server only once the server's copy
+  of the card lists it, not when its bytes arrive, because until then the
+  office cannot see it. The server only accepts a card whose photos it holds
+  (`validatePhotos.ts`), so a listed photo is known to be there. A new photo
+  is counted on its own, so adding one does not mark the card's words as
+  unsaved. Rules in `lib/uploadStatus.ts`; `lib/localMedia.ts` now reports
+  which photos are being sent.
+- Decision: while the server cannot be reached the editor retries every 15
+  seconds (only while the page is visible). Before, a server outage with the
+  phone still online never retried, because no "online" event comes; the
+  work sat on the phone until the engineer typed. Retries reuse the held copy
+  and do not move its "changed" time.
+- Verified on Node 24: `npm run typecheck`, `npm test` (web suite 92 tests,
+  ten new in `tests/uploadStatus.test.ts`), `npm run build`. New
+  `scripts/verify-photo-uploads.mjs` passed (22 checks at 390px light and
+  1440px dark): a photo goes up with the card; the server is stopped, a
+  second photo and a caption change show "Only on this phone"; the server is
+  restarted and, with nobody touching the page, everything shows "On the
+  server" and the server's copy has both photos and the caption.
+  `verify-report-editor` (58), `verify-engineer-layout`,
+  `verify-signature-reload`, `verify-unfinished-reports` (18) and
+  `verify-role-access` (61) passed. Screenshots in the project's
+  `ui-review/photo-upload-status/`.
+- Not verified: a physical phone or a real dropped signal (Chromium only, the
+  server process was stopped instead). Issue pages and the separate defect
+  form upload photos too and do not show this yet.
+- Next: proposed follow-ups in the PR: show the same status on issue photo
+  uploads; a caption typed while a photo is still being added can be lost
+  (the editor adds the photo to the card as it was when the camera opened).
+  CLAUDE.md's list of browser checks should gain `verify-photo-uploads.mjs`.
+
+## 2026-10-20 — FE-6a: distinct submission stages
+
+- A sent report now shows its steps one by one, each with its own state:
+  Received, Review (only where the project asks for review), PDF, Delivery
+  and Read. The office report reader shows them in one row in place of the
+  four-cell block that put "PDF and notification" in one cell; the
+  engineer's sent report page shows the same steps, one per row on the
+  phone. Each step can carry a time and one plain sentence (why a PDF failed,
+  that nothing was emailed).
+- Delivery is stated from what happened, not from the job's status word. A
+  notification written to the pilot's local outbox is "Not emailed · Nothing
+  has been sent"; "Emailed to <name>" needs the mail transport to have sent
+  it; projects from SharePoint show "Waiting to file in SharePoint" or
+  "Filed in SharePoint", with a note that Relay does not email the project
+  manager for them yet. Failed emails, a missing address and SharePoint
+  failures are alerts on the Delivery step.
+- The worker now records which step a failure belongs to
+  (`deliveryErrorStage`: `pdf` or `delivery`), so a failed notification no
+  longer reads as a failed PDF. An older failure without it shows as
+  "Processing needs attention" on the PDF step, since its step is unknown.
+  A retried email is judged by its latest attempt, so a retry that worked is
+  not left showing "Email failed". The office note on a failed report names
+  the step.
+- Decisions: review is left out of the steps when the project does not use
+  it, matching PR #8, so the usual row is four steps. Lists keep their single
+  compact delivery tag; the steps belong on the report itself.
+- Rules in `lib/status.ts` (`submissionStages`), shown by
+  `components/SubmissionStages.tsx` with `app/stages.css`.
+- Verified on Node 24: `npm run typecheck`, `npm test` (7 new tests in
+  `tests/submissionStages.test.ts`, including the worker recording a PDF
+  failure and a blocked delivery), `npm run build`. New
+  `scripts/verify-submission-stages.mjs` passed (65 checks: six report
+  states in the office reader at 1440px and on the engineer page at 390px,
+  light and dark; outbox never shown as email; no sideways scroll).
+  `verify-office-actions` (41), `verify-role-access` (61),
+  `verify-engineer-layout`, `verify-review-queue` (12),
+  `verify-signature-reload` and `verify-office-landing` (19) passed.
+  Screenshots in the project's `ui-review/submission-stages/`.
+- Not verified: live Graph mail (blocked by design, so "Emailed to" is only
+  seen with seeded data), live SharePoint filing (no tenant), a physical
+  phone.
+- Next: FE-3c (conflicting versions) once FE-3b has merged. CLAUDE.md's list
+  of browser checks should gain `verify-submission-stages.mjs`.
 
 ## 2026-10-20 — Weekly project summary (new feature, proposed as NEW-3)
 

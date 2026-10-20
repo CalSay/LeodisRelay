@@ -151,6 +151,12 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-cardrow .desc{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px!important;color:var(--text-2)!important;}
 .eng-cardrow .meta{font-size:12px;color:var(--text-3);}
 .eng-cardrow .meta em{font-style:normal;color:var(--alert);}
+/* Whether a card or photograph has reached the server. Green only when it has. */
+.eng-where{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);}
+.eng-where-pending,.eng-where-phone{color:var(--caution);font-weight:600;}
+.eng-check .eng-where{margin:12px 0 4px;padding:10px 12px;font-size:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);}
+.eng-check .eng-where-server{background:var(--ok-wash);}
+.eng-check .eng-where-pending,.eng-check .eng-where-phone{background:var(--caution-wash);}
 .eng-cardrow .chev{font-size:20px;color:var(--brass);width:20px;text-align:center;}
 .eng-acc{margin-top:16px;display:grid;gap:12px;}
 .eng-acc .eng-list{margin:0;}
