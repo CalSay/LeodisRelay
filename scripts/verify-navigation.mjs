@@ -46,7 +46,7 @@ try {
     await page.goto(`${base}/engineer?project=proj-011lme`);
     await title(page,'Site · RELAY',`${at} home`);
     const project=page.locator('.eng-list').filter({has:page.getByText('Site issues')});
-    for(const name of ['Site issues','Reports','Site diary','Photographs','Weekly summary'])check(await project.getByText(name,{exact:true}).count()===1,`${at}: This project offers ${name}`);
+    for(const name of ['Site issues','Reports','Site diary','Photographs','Weekly summary','Safety actions'])check(await project.getByText(name,{exact:true}).count()===1,`${at}: This project offers ${name}`);
     check(await page.getByRole('link',{name:/^My week/}).count()===1,`${at}: home still offers My week`);
     await shot(page,`nav-engineer-home-${scheme}-${width}`);
     await project.getByText('Photographs',{exact:true}).click();await page.waitForURL(/\/photos\?/);
@@ -60,7 +60,7 @@ try {
     await page.getByRole('heading',{name:'Reports',exact:true}).waitFor();
     await title(page,'Reports · RELAY',`${at} reports`);
     const more=page.getByRole('navigation',{name:'More from these reports'});
-    check((await more.getByRole('link').allInnerTexts()).join('|')==='Site diary|Photographs|Weekly summary|My week',`${at}: the Reports view groups its links`);
+    check((await more.getByRole('link').allInnerTexts()).join('|')==='Site diary|Photographs|Weekly summary|Safety actions|My week',`${at}: the Reports view groups its links`);
     check(/visit \w{3},? \d+ \w{3}/.test(await page.locator('.eng-report-link').first().innerText()),`${at}: report dates read as days, not ISO dates`);
     await noSideways(page,`${at} reports`);
     await shot(page,`nav-engineer-reports-${scheme}-${width}`);
@@ -108,7 +108,7 @@ try {
     await page.goto(`${base}/office`);await page.locator('.sheet-title').first().waitFor();
     await title(page,'Projects · Office · RELAY',`${at} desk`);
     const actions=await page.locator('.sheet-title .actions').first().locator('a').allInnerTexts();
-    check(actions.join('|')==='Site coverage|Issues by company',`${at}: the overview offers pages the tabs do not (${actions.join('|')})`);
+    check(actions.join('|')==='Site coverage|Issues by company|Safety actions',`${at}: the overview offers pages the tabs do not (${actions.join('|')})`);
     await shot(page,`nav-office-desk-${scheme}-${width}`);
     await page.goto(`${base}/office#/issues`);await page.getByRole('heading',{name:'Issues'}).waitFor();
     await title(page,'Issues · Office · RELAY',`${at} issues tab`);

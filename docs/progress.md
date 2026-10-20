@@ -65,6 +65,63 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   managers who visit site; one heading pattern for the standalone pages (some
   put the project in the heading, some above it).
 
+## 2026-10-20 — Safety actions (new feature, proposed as NEW-10)
+
+- New `/safety-actions` page: what the weekly safety inspections found
+  needing action, on every live project or one. Each action shows the check,
+  what was wrong, what to do and who, as last written, how long it has been
+  open and how many inspections in a row found it. It stays open until a
+  later inspection on the same project answers that check Satisfactory or
+  Not applicable; then it moves to "Put right in the last 4 weeks" with the
+  inspection that cleared it, who did it and any note. Each project also
+  says when its last inspection was and that another is due after 7 days;
+  live projects with no inspection yet are named. Reached from "Safety
+  actions" under "This project" on the engineer home, the Reports view's
+  "Also on this project", and the office overview and each project's sheet.
+  New `GET /api/safety-actions`; rules in `lib/safetyActions.ts` (pure).
+- Why this feature: the safety inspection (#39) raises no issues on
+  purpose, so an action lived only on the PDF it was written on and nobody
+  could see which were still outstanding. This was the first follow-up
+  proposed in #39 ("track inspection actions to closure"). It is outside the
+  report editor, so it does not touch the offline capture work.
+- Decisions: nothing is typed in or stored. The next inspection is the
+  record that an action was put right, as on a paper inspection, so there is
+  no "mark done" button that could clear an action nobody re-checked
+  (proposed as a follow-up if the office wants one). An action is followed by
+  its check's stable `item` key, so rewording a question keeps the thread. A
+  sent correction stands in for the inspection it corrects; drafts are left
+  out. Every role may open it, because sent inspections are read by every
+  trade. Only active and defects liability projects are covered (the site
+  coverage rule), so tender and complete projects are not listed as "no
+  inspection yet". Not FE-2 (photographs are only counted), EXP-2 (no
+  requests or routing) or EXP-4 (locations stay free text). Nothing is sent
+  or written to SharePoint.
+- Verified on Node 24: `npm run typecheck`, `npm test` (6 new tests in
+  `tests/safetyActions.test.ts`, one in `tests/viewNavigation.test.ts`),
+  `npm run build`. New `scripts/verify-safety-actions.mjs` passed (30 checks:
+  signed-out refusals; from the engineer home at 390px light, the open action
+  found twice and its words, the cleared one folded then opened, the counts,
+  a draft left out, no sideways scroll, every project with the corrected
+  Kirkstall inspection clearing its action, tender and complete projects
+  left out, a report opened and Back; from the Reports view at 1440px dark
+  and printed on white with the put-right list opened; from the office as a
+  manager). A fresh-context review found printing left the put-right list
+  folded and "put right after the same day"; both fixed. `verify-navigation`
+  now expects the new links and passed (76). Also passed:
+  `verify-role-access` (61), `verify-engineer-layout`, `verify-engineer-nav`,
+  `verify-office-landing`, `verify-report-types`, `verify-my-week`,
+  `verify-weekly-summary`. Screenshots in the project's
+  `ui-review/safety-actions/`.
+- Not verified: a physical phone, Safari and Firefox, SharePoint mode (no
+  live tenant).
+- Proposed task (not added to `docs/tasks.json`): "NEW-10 Safety actions —
+  follow each safety inspection action until a later inspection clears it,
+  on every live project or one; browser check at 390 and 1440px." Possible
+  follow-ups: show last week's open actions on the inspection itself when an
+  engineer starts the next one (editor work, after offline capture lands);
+  an office "put right" note for actions cleared between inspections; add
+  `verify-safety-actions.mjs` to the browser checks list in `CLAUDE.md`.
+
 ## 2026-10-20 — EXP-5: report types, first type a safety inspection
 
 - RELAY now has report types (`lib/reportTypes.ts`). The site update is
