@@ -1,6 +1,7 @@
 import { refreshIssues, IssueSyncError } from '@/lib/sharepoint/issues';
 import { NextResponse } from "next/server";
-import { listIssues, openIssues } from "@/lib/issueStore";
+import { issueRegister, listIssues, openIssues } from "@/lib/issueStore";
+import { parseIssueQuery } from '@/lib/issueQuery';
 import { requireSession } from "@/lib/auth/guard";
 import { canAccessProject } from '@/lib/auth/access';
 import {DEFECT_BODY_LIMIT,type DefectInput} from '@/lib/defects';
@@ -16,6 +17,11 @@ export async function GET(request: Request) {
   const url = new URL(request.url);
   const projectId = url.searchParams.get("projectId") ?? undefined;
   const only = url.searchParams.get("only");
+  // The register asks for one page at a time; older callers still get every issue.
+  if (url.searchParams.get("register") === "1") {
+    const day = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
+    return NextResponse.json(issueRegister(guard.principal, parseIssueQuery(url.searchParams), day));
+  }
   if (projectId && only === "open") {
     return NextResponse.json({ issues: openIssues(projectId).filter(i=>canAccessProject(guard.principal,i.projectId)) });
   }

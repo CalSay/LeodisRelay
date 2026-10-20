@@ -320,10 +320,10 @@
         "Results cover the whole authorised register with pagination",
         "Tests for the query, including SharePoint-backed paging with the fixture adapter"
       ],
-      "status": "todo",
-      "passes": false,
+      "status": "done",
+      "passes": true,
       "pr": null,
-      "notes": "Not started: GET /api/issues returns everything and filters client-side; no location text search or server paging. Also touches office/IssuesView.tsx."
+      "notes": "Done 2026-10-20: the office issue register filters by location text, responsible company (free text) and verification status (not put forward, waiting, verified and closed), with an All chip, and pages 50 at a time from the server over the whole authorised register (lib/issueQuery.ts, issueRegister in lib/issueStore.ts, GET /api/issues?register=1). Counts and order are worked before the page is cut. Tests: tests/issueQuery.test.ts, including SharePoint read mode with the issue list split over two Graph pages. Browser check: scripts/verify-issue-register.mjs. Not checked against a live tenant."
     },
     {
       "id": "FE-6b",

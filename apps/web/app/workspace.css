@@ -126,6 +126,10 @@ body:has(.ws){overflow:hidden auto}
 .ws .filters .spacer{margin-left:auto}
 .ws .filters select,.ws .f select,.ws .f input,.ws .f textarea{font:inherit;font-size:13px;background:var(--panel);color:var(--text);border:1px solid var(--line-2);border-radius:var(--r);padding:4px 8px}
 .ws .filters label{font-size:12px;color:var(--text-3);display:flex;align-items:center;gap:6px}
+.ws .filters input{font:inherit;font-size:13px;background:var(--panel);color:var(--text);border:1px solid var(--line-2);border-radius:var(--r);padding:4px 8px;width:11em}
+.ws .filters + .filters{border-top:0}
+.ws .pager{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;padding:var(--s3) var(--s4);border-top:1px solid var(--line);font-size:13px;color:var(--text-2);font-variant-numeric:tabular-nums}
+.ws .pager > span:first-child{margin-right:auto}
 .ws .cbar{display:flex;height:6px;width:100%;background:var(--panel-3);border-radius:1px;overflow:hidden}
 .ws .cbar i{display:block;height:100%}
 .ws .cbar .ok{background:var(--ok)}

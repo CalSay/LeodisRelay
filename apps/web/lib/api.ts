@@ -8,6 +8,7 @@
  */
 
 import type { FixtureProject } from "./fixtures";
+import { issueQueryParams, type IssuePage, type IssueQuery } from './issueQuery';
 import type { Issue, Observation, Photo, Report, ReportSummary, Variation } from "./types";
 import { capturePhoto, uploadPhotos } from './localMedia';
 import { localSaveJournal } from './localSaveJournal';
@@ -188,6 +189,13 @@ export async function officeAll(): Promise<{ reports: ReportSummary[]; drafts: R
 export async function allIssues(): Promise<Issue[]> {
   const data = await parse<{ issues: Issue[] }>(await request('/api/issues', { cache: 'no-store' }));
   return data.issues;
+}
+
+/** One page of the issue register, filtered, counted and ordered on the server. */
+export async function issueRegister(query: Partial<IssueQuery>): Promise<IssuePage> {
+  const params = issueQueryParams(query);
+  params.set('register', '1');
+  return parse<IssuePage>(await request(`/api/issues?${params}`, { cache: 'no-store' }));
 }
 
 /** One issue command, attributed by the server to whoever is signed in. */

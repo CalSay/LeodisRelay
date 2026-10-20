@@ -4,6 +4,7 @@ import type { Tone } from '@/lib/status';
 import { INSTRUCTION_LABEL } from '@/lib/variations';
 import { reviewInUse } from '@/lib/reviewQueue';
 import { isActiveIssue, isUnassigned, isVerify, notAcknowledged } from '@/lib/officeActions';
+import { isDisputedIssue, isNotReviewedIssue, isOverdueIssue } from '@/lib/issueQuery';
 
 export { isUnassigned, isVerify, notAcknowledged };
 
@@ -19,9 +20,10 @@ export interface Snapshot { reports: ReportSummary[]; drafts: ReportSummary[]; i
 export const today = (): string => new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
 
 export const isActive = isActiveIssue;
-export const isOverdue = (i: Issue, day: string): boolean => isActive(i) && /^\d{4}-\d{2}-\d{2}$/.test(i.targetDate) && i.targetDate < day;
-export const isNotReviewed = (i: Issue): boolean => isActive(i) && i.confirmation === 'provisional';
-export const isDisputed = (i: Issue): boolean => isActive(i) && i.confirmation === 'disputed';
+// The register's rules, shared with the server query so the desk and the register count alike.
+export const isOverdue = isOverdueIssue;
+export const isNotReviewed = isNotReviewedIssue;
+export const isDisputed = isDisputedIssue;
 export const isClosed = (i: Issue): boolean => i.work === 'closed';
 
 /** Awaiting instruction with no quote yet: the office has not priced it, so nobody can be asked to instruct it. */
