@@ -266,10 +266,10 @@
         "Findings, photos and other evidence are not copied",
         "Test covering the new update's fields"
       ],
-      "status": "todo",
-      "passes": false,
+      "status": "done",
+      "passes": true,
       "pr": null,
-      "notes": "Not started: addCard() always starts a blank observation (app/reports/[id]/page.tsx:257)."
+      "notes": "Done 2026-10-20: an open card with a location offers '+ Another card here', which adds a card next to it with only Where filled in and the kind picker open; words, photos, linked issue, trade and variation answers are not copied (lib/sameLocation.ts, tests/sameLocation.test.ts, scripts/verify-same-location.mjs at 390px light and 1440px dark)."
     },
     {
       "id": "FE-1d",

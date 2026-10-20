@@ -4,6 +4,37 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — FE-1b: another card at the same location
+
+- An open card with a location now offers "+ Another card here", with the
+  place named under it, above "Done with this card" / "Add another card". It
+  starts a new card with only Where filled in, opens it on the kind picker,
+  and places it straight after the source card (after any cards already
+  added there, so a run for one room stays together in the order added).
+  Cards with no location do not offer it.
+- Nothing else carries over: what happened, action, who needs to respond,
+  photographs, a linked issue, trade and the variation answers all stay with
+  the earlier card, and the new card has its own id. Rules in
+  `lib/sameLocation.ts` (pure).
+- Decisions: the engineer still picks the kind (one tap) rather than copying
+  it, because the next thing in the same room is as often a defect as more
+  progress. The new card goes next to its source rather than at the end, so
+  the report reads room by room. Locations stay free text; matching is exact
+  wording ignoring case and outer spaces, used only for placing the card.
+- Verified on Node 24: `npm run typecheck`, `npm test` (3 new tests in
+  `tests/sameLocation.test.ts`), `npm run build`. New
+  `scripts/verify-same-location.mjs` passed (54 checks, 390px light and
+  1440px dark: no action without a location, the action names the place,
+  the new card opens next to its source with Where filled in and no words or
+  photos, a second one goes after the first, and the server's copy has only
+  the location while the source keeps its photo and answers). Screenshots in
+  the project's `ui-review/same-location/`. `verify-report-editor` (58),
+  `verify-engineer-layout`, `verify-draft-conflict` (23), `verify-issue-link`
+  (39) and `verify-photo-uploads` (22) passed.
+- Not verified: a physical phone. Proposed: add `verify-same-location.mjs`
+  to the browser checks list in `CLAUDE.md`. Next in the editor lane: FE-1d
+  (undo removing a card or photo), then FE-1c.
+
 ## 2026-10-20 — FE-5b: descriptions and thumbnails when linking an issue
 
 - Variation cards asked "Is this on an issue already?" with a plain drop-down

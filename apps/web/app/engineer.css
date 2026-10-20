@@ -171,6 +171,8 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-slot .eng-card-actions{margin:0;border:0;border-top:1px solid var(--line);border-radius:0;}
 .eng-slot .eng-pick{padding:14px 12px;border-top:1px solid var(--line);}
 .eng-acc .eng-add{width:100%;border:1px dashed var(--brass);background:var(--brass-wash);color:var(--brass);border-radius:9px;font-weight:500;}
+.eng-same-place{grid-column:1/-1;flex-direction:column;gap:2px;border:1px dashed var(--brass);background:var(--panel);color:var(--brass);font-weight:600;}
+.eng-same-place small{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text-2);font-weight:400;font-size:12px;}
 .eng-done{border:1px solid var(--line-2);background:var(--panel);color:var(--text);font-weight:500;}
 /* Two versions of one draft, side by side from 700px, stacked on the phone. */
 .eng-conflict{margin-top:16px;display:grid;gap:12px;}

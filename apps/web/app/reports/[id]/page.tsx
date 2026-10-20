@@ -28,6 +28,7 @@ import { toneClass } from '@/lib/status';
 import { SubmissionStages } from '@/components/SubmissionStages';
 import { OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
 import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { cardAtSameLocation, insertAfterSameLocation } from '@/lib/sameLocation';
 import { onPhotoUploads, uploadingPhotos } from '@/lib/localMedia';
 import { cardWhere, reportWhere, savedCopy, WHERE, type Where } from '@/lib/uploadStatus';
 import { compareDrafts, type DraftBase } from '@/lib/draftConflict';
@@ -495,6 +496,22 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     setSelectedSection(o.id);
   }, [principal?.trade]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  /**
+   * A new card at the same place as `sourceId`, placed next to it. Only the
+   * location is filled in; the engineer still picks the kind, and nothing they
+   * found or photographed on the earlier card comes with it.
+   */
+  function addAtSameLocation(sourceId: string) {
+    const current = latest.current;
+    if (!current || current.state !== 'draft' || sending.current) return;
+    const source = current.observations.find(o => o.id === sourceId);
+    if (!source?.location.trim()) return;
+    const o = cardAtSameLocation(source, newObservation());
+    setPicking(p => [...p, o.id]);
+    update({ ...current, observations: insertAfterSameLocation(current.observations, sourceId, o) });
+    openCard(o.id);
+  }
+
   // The home screen's "Request a variation" lands here with the card already started.
   useEffect(() => {
     if (!report || report.state !== 'draft' || addedFromLink.current) return;
@@ -664,6 +681,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           onRemove={() => { setPicking(p => p.filter(x => x !== observation.id)); update({ ...report, observations: report.observations.filter((o) => o.id !== observation.id) }); }}
         />
         <div className="eng-card-actions">
+          {observation.location.trim() && <button type="button" className="eng-same-place" onClick={() => addAtSameLocation(observation.id)} disabled={submitting}>
+            <span>+ Another card here</span><small>{observation.location.trim()}</small>
+          </button>}
           {wide
             ? <button type="button" onClick={() => addCard()} disabled={submitting}>+ Add another card</button>
             : <button type="button" className="eng-done" onClick={() => { setSelectedSection(''); requestAnimationFrame(() => document.getElementById(`slot-${observation.id}`)?.scrollIntoView({ block: 'nearest' })); }}>Done with this card</button>}
