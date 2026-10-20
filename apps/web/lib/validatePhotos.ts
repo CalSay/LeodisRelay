@@ -29,7 +29,8 @@ export async function validateObservations(value: unknown, reportId: string, exi
   const ids = new Set<string>();
   for (const o of value) {
     if (!o || ['id','type','location','whatHappened','actionNeeded','owner'].some(k => typeof o[k] !== 'string')) return 'Malformed update.';
-    if (!['update','defect','instruction','access'].includes(o.type)) return 'Unknown update type.';
+    if (!['update','defect','instruction','access','check'].includes(o.type)) return 'Unknown update type.';
+    if (o.check !== undefined && (!o.check || typeof o.check.item !== 'string' || typeof o.check.question !== 'string' || (o.check.answer !== undefined && !['ok','action','na'].includes(o.check.answer)))) return 'Malformed check.';
     if (!o.id || ids.has(o.id)) return 'Update IDs must be unique.';
     ids.add(o.id);
     if (o.affectedTrade !== undefined && !['Electrical','HVAC','P&H','Other / non-Leodis'].includes(o.affectedTrade)) return 'Unknown trade.';

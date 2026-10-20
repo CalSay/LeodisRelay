@@ -6,7 +6,7 @@ import { WHERE, type Where } from '@/lib/uploadStatus';
 import { CameraIcon } from './CameraIcon';
 import { readPhoto, type Observation, type Photo } from "@/lib/api";
 import type { Issue, RoughSize } from "@/lib/types";
-import { OBSERVATION_TYPES, type ObservationType } from "@/lib/fixtures";
+import { CARD_TYPES, OBSERVATION_TYPES, type ObservationType } from "@/lib/fixtures";
 import { VARIATION_REASONS } from "@/lib/variations";
 import { issueThumbnail, linkCandidates, shortReference } from '@/lib/issueLink';
 import { usePrincipal } from './PrincipalContext';
@@ -28,7 +28,7 @@ export function KindPicker({ onPick }: { onPick: (type: ObservationType) => void
   return <div className="eng-pick">
     <div className="field"><label>What kind of update is this?</label></div>
     <div className="eng-tiles">
-      {OBSERVATION_TYPES.map(t => <button key={t.value} type="button" className={`eng-tile ${t.value}`} onClick={() => onPick(t.value)}><span className={`kind tone-${t.tone}`}>{t.short}</span><div><b>{t.pick}</b><small>{t.asks}</small></div></button>)}
+      {CARD_TYPES.map(t => <button key={t.value} type="button" className={`eng-tile ${t.value}`} onClick={() => onPick(t.value)}><span className={`kind tone-${t.tone}`}>{t.short}</span><div><b>{t.pick}</b><small>{t.asks}</small></div></button>)}
     </div>
   </div>;
 }
@@ -151,7 +151,7 @@ export function ObservationEditor({
 
       <div className="field">
         <label>Kind</label>
-        <div className="kindrow">{OBSERVATION_TYPES.map(t => <button key={t.value} type="button" className={`tone-${t.tone}`} aria-pressed={kind === t.value} onClick={() => changeKind(t.value)}>{kind === t.value && <span aria-hidden="true">✓</span>}{t.short}</button>)}</div>
+        <div className="kindrow">{CARD_TYPES.map(t => <button key={t.value} type="button" className={`tone-${t.tone}`} aria-pressed={kind === t.value} onClick={() => changeKind(t.value)}>{kind === t.value && <span aria-hidden="true">✓</span>}{t.short}</button>)}</div>
       </div>
 
       {where}

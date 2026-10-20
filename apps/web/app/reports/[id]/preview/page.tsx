@@ -5,6 +5,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { getReport } from "@/lib/api";
 import { OBSERVATION_TYPES } from "@/lib/fixtures";
+import { answerLabel, reportTypeOf } from "@/lib/reportTypes";
 import type { Report } from "@/lib/types";
 import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 
@@ -50,9 +51,14 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
   }
 
   const project = report.projectSnapshot ?? getProject(report.projectId);
+  const type = reportTypeOf(report);
+  const inspection = Boolean(type.checklist);
   const actions = report.observations.filter(
-    (o) => o.actionNeeded.trim().length > 0 || o.type === "defect",
+    (o) => o.check ? o.check.answer === "action" : o.actionNeeded.trim().length > 0 || o.type === "defect",
   );
+  // An inspection shows every answer in the results table, then only the checks with something to show.
+  const detailed = report.observations.map((observation, index) => ({ observation, number: index + 1 }))
+    .filter(({ observation: o }) => !inspection || o.check?.answer === "action" || o.whatHappened.trim() || o.photos.length > 0);
   let photoNumber = 0;
 
   return (
@@ -69,7 +75,7 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
       <div className="doc">
         <header className="doc-head">
           <div className="doc-brand">LEODIS</div>
-          <h1 className="doc-title">Site Progress Report</h1>
+          <h1 className="doc-title">{type.document}</h1>
           <dl className="doc-tb">
             <div>
               <dt>Report</dt>
@@ -84,11 +90,11 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
               <dd>{project?.clientName ?? "Not recorded"}</dd>
             </div>
             <div>
-              <dt>Visit date</dt>
+              <dt>{inspection ? "Inspection date" : "Visit date"}</dt>
               <dd>{report.visitDate}</dd>
             </div>
             <div>
-              <dt>Prepared by</dt>
+              <dt>{inspection ? "Inspected by" : "Prepared by"}</dt>
               <dd>{report.author}</dd>
             </div>
             <div>
@@ -104,7 +110,7 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
         <section>
           <h2 className="doc-h2">Action and decision summary</h2>
           {actions.length === 0 ? (
-            <p className="doc-body">No actions or decisions arise from this visit.</p>
+            <p className="doc-body">{inspection ? "No actions arise from this inspection." : "No actions or decisions arise from this visit."}</p>
           ) : (
             <div className="doc-tw">
               <table className="doc-table">
@@ -119,7 +125,7 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
                   {actions.map((observation, index) => (
                     <tr key={observation.id}>
                       <td>
-                        {index + 1}. {observation.location || "Location not recorded"}
+                        {index + 1}. {observation.check?.question ?? (observation.location || "Location not recorded")}
                       </td>
                       <td>{observation.actionNeeded.trim() || "To be determined"}</td>
                       {/*
@@ -137,17 +143,32 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
           )}
         </section>
 
-        <section>
-          <h2 className="doc-h2">Observations</h2>
-          {report.observations.map((observation, index) => {
-            const type = OBSERVATION_TYPES.find((t) => t.value === observation.type);
+        {inspection && <section>
+          <h2 className="doc-h2">Inspection results</h2>
+          <div className="doc-tw">
+            <table className="doc-table">
+              <thead><tr><th>Check</th><th>Result</th></tr></thead>
+              <tbody>
+                {report.observations.map((o, index) => <tr key={o.id}>
+                  <td>{index + 1}. {o.check?.question ?? o.location}</td>
+                  <td className={o.check?.answer ? "" : "doc-unknown"}>{answerLabel(o.check?.answer)}</td>
+                </tr>)}
+              </tbody>
+            </table>
+          </div>
+        </section>}
+
+        {detailed.length > 0 && <section>
+          <h2 className="doc-h2">{inspection ? "Notes and photographs" : "Observations"}</h2>
+          {detailed.map(({ observation, number }) => {
+            const kind = OBSERVATION_TYPES.find((t) => t.value === observation.type);
             return (
               <article key={observation.id} className="doc-obs">
                 <h3 className="doc-h3">
-                  {index + 1}. {observation.location || "Location not recorded"}
-                  <span className="doc-type">{type?.label ?? observation.type}</span>
+                  {number}. {observation.check?.question ?? (observation.location || "Location not recorded")}
+                  <span className="doc-type">{observation.check ? answerLabel(observation.check.answer) : kind?.label ?? observation.type}</span>
                 </h3>
-                <p className="doc-body">{observation.whatHappened || "No description recorded."}</p>
+                <p className="doc-body">{observation.whatHappened || (observation.check ? "No notes recorded." : "No description recorded.")}</p>
                 {observation.actionNeeded.trim() && (
                   <p className="doc-body">
                     <strong>Action required:</strong> {observation.actionNeeded}
@@ -177,7 +198,7 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
               </article>
             );
           })}
-        </section>
+        </section>}
 
         <footer className="doc-foot">
           {report.reference} · Revision {report.revision} ·{" "}

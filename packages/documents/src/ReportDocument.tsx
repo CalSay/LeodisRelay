@@ -178,6 +178,10 @@ const s = StyleSheet.create({
   cAction: { width: "42%" },
   cOwner: { width: "24%" },
   unknown: { color: "#96562a" },
+  cCheck: { width: "70%" },
+  cResult: { width: "22%", fontWeight: 600 },
+  resultAction: { color: FLAG },
+  resultQuiet: { color: FAINT, fontWeight: 500 },
 
   obs: { flexDirection: "row", marginBottom: 16 },
   gutter: { width: 30 },
@@ -296,9 +300,16 @@ function formatVisitDate(iso: string): string {
 }
 
 export function ReportDocument({ report }: { report: DocReport }) {
-  const actions = report.observations.filter(
-    (o) => o.actionNeeded.trim().length > 0 || o.typeLabel.toLowerCase() === "defect",
+  const inspection = report.inspection === true;
+  const actions = report.observations.filter((o) =>
+    o.check ? o.check.tone === "action" : o.actionNeeded.trim().length > 0 || o.typeLabel.toLowerCase() === "defect",
   );
+  // Numbered by place in the whole report, so an inspection's check keeps the
+  // number it has in the results table when only some are shown in detail.
+  const numbered = report.observations.map((observation, index) => ({ observation, number: index + 1 }));
+  const detailed = inspection
+    ? numbered.filter(({ observation: o }) => o.check?.tone === "action" || o.whatHappened.trim() || o.photos.length > 0)
+    : numbered;
   let figureNumber = 0;
 
   return (
@@ -328,7 +339,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
 
         <View style={s.titleRow}>
           <View>
-            <Text style={s.docKind}>SITE PROGRESS REPORT</Text>
+            <Text style={s.docKind}>{(report.documentTitle ?? "Site progress report").toUpperCase()}</Text>
             <Text style={s.docTitle}>{report.projectName}</Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
@@ -348,8 +359,8 @@ export function ReportDocument({ report }: { report: DocReport }) {
             <Field label="Client account" value={report.clientAccountNumber || "—"} code />
           </View>
           <View style={s.tbGroup}>
-            <Field label="Visit date" value={formatVisitDate(report.visitDate)} />
-            <Field label="Prepared by" value={report.author} />
+            <Field label={inspection ? "Inspection date" : "Visit date"} value={formatVisitDate(report.visitDate)} />
+            <Field label={inspection ? "Inspected by" : "Prepared by"} value={report.author} />
             <Field label="Revision" value={String(report.revision)} code />
           </View>
         </View>
@@ -360,7 +371,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
         </View>
 
         {actions.length === 0 ? (
-          <Text style={s.narrative}>No actions or decisions arise from this visit.</Text>
+          <Text style={s.narrative}>{inspection ? "No actions arise from this inspection." : "No actions or decisions arise from this visit."}</Text>
         ) : (
           <View>
             <View style={s.thead}>
@@ -372,7 +383,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
             {actions.map((observation, index) => (
               <View key={observation.id} style={s.tr} wrap={false}>
                 <Text style={[s.td, s.cNo]}>{String(index + 1).padStart(2, "0")}</Text>
-                <Text style={[s.td, s.cItem]}>{observation.location || "Location not recorded"}</Text>
+                <Text style={[s.td, s.cItem]}>{observation.check?.question ?? (observation.location || "Location not recorded")}</Text>
                 <Text style={[s.td, s.cAction]}>
                   {observation.actionNeeded.trim() || "To be determined"}
                 </Text>
@@ -384,39 +395,67 @@ export function ReportDocument({ report }: { report: DocReport }) {
           </View>
         )}
 
-        <View style={s.h2Row}>
-          <Text style={s.h2}>UPDATES</Text>
-          <View style={s.h2Rule} />
-        </View>
+        {inspection ? (
+          <>
+            <View style={s.h2Row}>
+              <Text style={s.h2}>INSPECTION RESULTS</Text>
+              <View style={s.h2Rule} />
+            </View>
+            <View>
+              <View style={s.thead}>
+                <Text style={[s.th, s.cNo]}>NO</Text>
+                <Text style={[s.th, s.cCheck]}>CHECK</Text>
+                <Text style={[s.th, s.cResult]}>RESULT</Text>
+              </View>
+              {numbered.map(({ observation, number }) => (
+                <View key={observation.id} style={s.tr} wrap={false}>
+                  <Text style={[s.td, s.cNo]}>{String(number).padStart(2, "0")}</Text>
+                  <Text style={[s.td, s.cCheck]}>{observation.check?.question ?? observation.location}</Text>
+                  <Text style={[s.td, s.cResult, observation.check?.tone === "action" ? s.resultAction : observation.check?.tone === "ok" ? {} : s.resultQuiet]}>
+                    {observation.check?.answer ?? observation.typeLabel}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : null}
 
-        {report.observations.map((observation, index) => {
+        {!inspection || detailed.length > 0 ? (
+          <View style={s.h2Row}>
+            <Text style={s.h2}>{inspection ? "NOTES AND PHOTOGRAPHS" : "UPDATES"}</Text>
+            <View style={s.h2Rule} />
+          </View>
+        ) : null}
+
+        {detailed.map(({ observation, number }) => {
           const single = observation.photos.length === 1;
-          const tone = TONES[observation.tone] ?? TONES.neutral;
+          const tone = observation.check ? (observation.check.tone === "action" ? TONES.defect : TONES.neutral) : TONES[observation.tone] ?? TONES.neutral;
+          const chip = observation.check ? observation.check.answer : observation.typeLabel;
           return (
             <View key={observation.id} style={s.obs}>
               <View style={s.gutter}>
                 <Text style={[s.gutterNo, { color: tone.ink }]}>
-                  {String(index + 1).padStart(2, "0")}
+                  {String(number).padStart(2, "0")}
                 </Text>
               </View>
 
               <View style={[s.obsBody, { borderLeftColor: tone.rule }]}>
                 <View style={s.obsHead} wrap={false}>
-                  <Text style={s.obsTitle}>{observation.location || "Location not recorded"}</Text>
+                  <Text style={s.obsTitle}>{observation.check?.question ?? (observation.location || "Location not recorded")}</Text>
                   <View
                     style={[
                       s.chip,
-                      { borderColor: tone.rule, width: labelWidth(observation.typeLabel, 6, 1.1) },
+                      { borderColor: tone.rule, width: labelWidth(chip, 6, 1.1) },
                     ]}
                   >
                     <Text style={[s.chipText, { color: tone.ink }]}>
-                      {observation.typeLabel.toUpperCase()}
+                      {chip.toUpperCase()}
                     </Text>
                   </View>
                 </View>
 
                 <Text style={s.narrative}>
-                  {observation.whatHappened || "No description recorded."}
+                  {observation.whatHappened || (observation.check ? "No notes recorded." : "No description recorded.")}
                 </Text>
 
                 {observation.actionNeeded.trim() ? (
@@ -458,8 +497,8 @@ export function ReportDocument({ report }: { report: DocReport }) {
 
         <View style={s.signRow} wrap={false}>
           <View style={s.signCell}>
-            <View style={[s.signLabelBox, { width: labelWidth("PREPARED BY", 6, 1.2) }]}>
-              <Text style={s.signLabel}>PREPARED BY</Text>
+            <View style={[s.signLabelBox, { width: labelWidth(inspection ? "INSPECTED BY" : "PREPARED BY", 6, 1.2) }]}>
+              <Text style={s.signLabel}>{inspection ? "INSPECTED BY" : "PREPARED BY"}</Text>
             </View>
             <View style={s.signSpace}>
               {report.signature?.dataUrl ? (

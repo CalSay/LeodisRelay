@@ -1,7 +1,8 @@
 import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import type { ObservationType } from './fixtures';
-import type { Issue, Report, Variation } from './types';
+import type { CheckAnswer, Issue, Report, Variation } from './types';
+import { answerLabel, checkCounts, reportTypeOf } from './reportTypes';
 
 /**
  * The living site diary (EXP-1): a project's story, day by day, made only from
@@ -21,6 +22,7 @@ export const DIARY_KINDS: { value: ObservationType; label: string }[] = [
   { value: 'defect', label: 'Defects' },
   { value: 'access', label: 'Access' },
   { value: 'instruction', label: 'Variations' },
+  { value: 'check', label: 'Inspections' },
 ];
 /** How many site days one page of the diary holds. */
 export const DIARY_DAYS = 10;
@@ -38,6 +40,8 @@ export interface DiaryCard {
   /** The issue this card raised, or the earlier issue it was a further sighting of. */
   issue?: DiaryLink & { sighting: boolean };
   variation?: DiaryLink;
+  /** On an inspection: the question and its answer. */
+  check?: { question: string; answer: string; tone: CheckAnswer | 'open' };
 }
 export interface DiaryRevision {
   id: string;
@@ -60,6 +64,12 @@ export interface DiaryEntry {
   cards: DiaryCard[];
   /** Cards on the report before any filter, so a filtered entry can say "2 of 5 cards". */
   cardCount: number;
+  /**
+   * An inspection names itself and counts its answers. Only checks that need
+   * action, or carry a note or photograph, are its cards: twelve
+   * "Satisfactory" lines would bury the one that matters.
+   */
+  inspection?: { name: string; ok: number; action: number; na: number };
 }
 export interface DiaryDay { day: string; engineers: string[]; entries: DiaryEntry[] }
 export interface SiteDiary {
@@ -86,7 +96,7 @@ export const isDiaryKind = (v: string): v is ObservationType => DIARY_KINDS.some
 function matches(card: DiaryCard, entry: Pick<DiaryEntry, 'reference' | 'author' | 'trade'>, terms: string[]): boolean {
   if (!terms.length) return true;
   const hay = [card.location, card.whatHappened, card.actionNeeded, card.owner, ...card.photos.map(p => p.caption),
-    card.issue?.reference ?? '', card.variation?.reference ?? '', entry.reference, entry.author, entry.trade ?? ''].join(' ').toLowerCase().replace(/\s+/g, ' ');
+    card.issue?.reference ?? '', card.variation?.reference ?? '', card.check?.question ?? '', card.check?.answer ?? '', entry.reference, entry.author, entry.trade ?? ''].join(' ').toLowerCase().replace(/\s+/g, ' ');
   return terms.every(t => hay.includes(t));
 }
 
@@ -116,7 +126,10 @@ export function siteDiary(sources: DiarySources, principal: Principal, projectId
     const raisedHere = (rec: { raisedByReport?: string; raisedByObservation?: string; location: string; description: string }, o: Report['observations'][number]) =>
       fromChain(rec) && (rec.raisedByObservation ? rec.raisedByObservation === o.id : rec.location === o.location && rec.description === o.whatHappened);
     const base = { reference: r.reference, author: tidy(r.author), ...(r.authorTrade ? { trade: r.authorTrade } : {}) };
-    const all: DiaryCard[] = r.observations.map(o => {
+    const type = reportTypeOf(r);
+    const counts = type.checklist ? checkCounts(r.observations) : undefined;
+    const shown = type.checklist ? r.observations.filter(o => o.check?.answer === 'action' || tidy(o.whatHappened) || tidy(o.actionNeeded) || o.photos.length) : r.observations;
+    const all: DiaryCard[] = shown.map(o => {
       const linked = o.linkedIssueId ? issueById.get(o.linkedIssueId) : undefined;
       // A correction points its copied defect at the issue the original raised: still "raised" here, not seen again.
       const raised = (o.type === 'defect' || o.type === 'access' ? issues.find(i => raisedHere(i, o)) : undefined) ?? (linked && fromChain(linked) ? linked : undefined);
@@ -128,13 +141,16 @@ export function siteDiary(sources: DiarySources, principal: Principal, projectId
         photos: o.photos.filter(p => p.dataUrl).map(p => ({ src: p.dataUrl, caption: tidy(p.caption) })),
         ...(issue ? { issue: { id: issue.id, reference: issue.reference, status: issueStatus(issue), sighting: Boolean(seen) } } : {}),
         ...(variation ? { variation: { id: variation.id, reference: variation.reference, status: INSTRUCTION[variation.instruction] } } : {}),
+        ...(o.check ? { check: { question: tidy(o.check.question), answer: answerLabel(o.check.answer), tone: o.check.answer ?? 'open' } } : {}),
       };
     });
     const filtering = Boolean(kind || terms.length);
     const cards = all.filter(c => (!kind || c.type === kind) && matches(c, base, terms));
-    if (filtering && !cards.length) continue;
+    // Filtered to inspections, an inspection with nothing to act on is still one.
+    if (filtering && !cards.length && !(counts && kind === 'check' && !terms.length)) continue;
     entries.push({ day: r.visitDate, entry: {
       reportId: r.id, ...base, revision: r.revision, review: r.review, cardCount: all.length, cards,
+      ...(counts ? { inspection: { name: type.name, ok: counts.ok, action: counts.action, na: counts.na } } : {}),
       ...(r.serverAcknowledgedAt ? { sentAt: r.serverAcknowledgedAt } : {}),
       revisions: chain.map(c => ({ id: c.id, revision: c.revision, ...(c.serverAcknowledgedAt ? { sentAt: c.serverAcknowledgedAt } : {}), ...(c.corrects && c.correctionReason ? { correctionReason: tidy(c.correctionReason) } : {}) })),
     } });

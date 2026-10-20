@@ -4,6 +4,7 @@ import { requireSession } from "@/lib/auth/guard";
 import { canManage } from '@/lib/auth/access';
 import { cachedProject, refreshProjects, reportableProject } from '@/lib/projects';
 import { sharePointMode } from '@/lib/sharepoint/config';
+import { isReportType } from '@/lib/reportTypes';
 
 export const dynamic = "force-dynamic";
 
@@ -34,10 +35,11 @@ export async function POST(request: Request) {
   if (!guard.ok) return guard.response;
   const principal = guard.principal;
 
-  const body = (await request.json()) as { projectId?: string };
+  const body = (await request.json()) as { projectId?: string; reportType?: unknown };
   if (!body.projectId) {
     return NextResponse.json({ reason: "projectId is required." }, { status: 400 });
   }
+  if (body.reportType !== undefined && !isReportType(body.reportType)) return NextResponse.json({ reason: 'Unknown report type.' }, { status: 422 });
 
   // Authorship comes from the session. A client-supplied author is not an
   // author, and the review rules depend on knowing who actually wrote this.
@@ -47,5 +49,5 @@ export async function POST(request: Request) {
   if (!project || !reportableProject(project)) {
     return NextResponse.json({reason:'This project is not open for reporting.'},{status:422});
   }
-  return NextResponse.json(createReport(body.projectId, principal.name, principal), { status: 201 });
+  return NextResponse.json(createReport(body.projectId, principal.name, principal, body.reportType ?? 'progress'), { status: 201 });
 }

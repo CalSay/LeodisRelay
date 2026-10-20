@@ -131,6 +131,7 @@ export const KIND: Record<ObservationType, { one: string; many: string; tone: st
   instruction: { one: 'variation', many: 'variations', tone: 'tone-variation' },
   access: { one: 'access', many: 'access', tone: 'tone-access' },
   update: { one: 'progress', many: 'progress', tone: 'tone-neutral' },
+  check: { one: 'check', many: 'checks', tone: 'tone-neutral' },
 };
 
 export const WORK_LABEL: Record<Issue['work'], string> = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Verify', closed: 'Closed' };

@@ -65,7 +65,7 @@ export function SinceLastVisit({ projectId, returnTo }: { projectId: string; ret
           <Group label="Reports from others" count={data.reports.length}>
             {data.reports.map(r => <Link key={r.id} href={withViewReturn(`/reports/${r.id}`, returnTo)} className="eng-row"><div className="main">
               <b>{r.author}{r.trade ? ` · ${r.trade}` : ''}</b>
-              <span>{short(r.reference)} · visit {fmtDay(r.visitDate)} · {plural(r.cards, 'card')}{r.defects ? `, ${plural(r.defects, 'defect')}` : ''}</span>
+              <span>{short(r.reference)} · visit {fmtDay(r.visitDate)} · {r.inspection ? `${r.inspection.name.toLowerCase()}, ${r.inspection.actions ? plural(r.inspection.actions, 'action') : 'no actions'}` : <>{plural(r.cards, 'card')}{r.defects ? `, ${plural(r.defects, 'defect')}` : ''}</>}</span>
               {r.correction && <div className="stat"><span className="tag tag-draft">Correction</span></div>}
             </div><span className="chev">›</span></Link>)}
           </Group>

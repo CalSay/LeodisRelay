@@ -1,3 +1,4 @@
+import { checkCounts } from './reportTypes';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -82,9 +83,11 @@ export function putRecord(kind: string, row: { id: string; [key: string]: any })
     photoCount: observations?.reduce((n: number, o: any) => n + o.photos.length, 0) ?? 0,
     defectCount: observations?.filter((o: any) => o.type === 'defect' || o.type === 'access').length ?? 0,
     // Per kind, so the office can say what a visit found rather than how many sections were typed.
-    kindCounts: ['update','defect','instruction','access'].reduce((acc: Record<string, number>, kind) => {
+    kindCounts: ['update','defect','instruction','access','check'].reduce((acc: Record<string, number>, kind) => {
       acc[kind] = observations?.filter((o: any) => o.type === kind).length ?? 0; return acc;
     }, {}),
+    // An inspection's answers, so a register can say "2 actions" without loading it.
+    ...(observations?.some((o: any) => o.type === 'check') ? { checks: checkCounts(observations) } : {}),
   } : small;
   database().prepare(`INSERT INTO records VALUES (?,?,?,?,?,?,?)
     ON CONFLICT(kind,id) DO UPDATE SET project=excluded.project,state=excluded.state,
