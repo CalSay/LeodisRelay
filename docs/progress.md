@@ -4,6 +4,33 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — UI-3: icons on the engineer navigation
+
+- Each engineer navigation entry (Site, Issues, Reports, Projects, Search) now
+  has a line icon beside its label. On the phone bar (600px and below) the
+  icon sits over the label in five equal columns, 56px tall, sans 12px. The
+  current view is gold, bold, on a tinted tile with a gold mark at the top.
+  On a wide screen the icons sit inline and the tab underline is unchanged.
+- Fixed: at 320px Search wrapped onto a second row of the bar (it was added
+  in NEW-1 after the bar was designed). All five now fit on one row.
+- The workspace keeps 96px plus the safe area clear at the bottom so the bar
+  never covers the last item. Hover colour only applies on devices with a
+  pointer, so a tapped entry does not stay gold on a phone.
+- Decision: icons are drawn inline (no icon library) to keep the bundle the
+  same and match the camera and search icons already in the app. Snag list
+  stays a link in the Issues view rather than a sixth bar entry: six would
+  not fit legibly at 320px and it belongs with the issues it lists.
+- Not in `docs/tasks.json`; the PR proposes UI-3. New
+  `scripts/verify-engineer-nav.mjs` (60 checks at 320, 390 and 1440px, light
+  and dark). It fails on main (no icons; Search on a second row at 320px)
+  and passes with this change.
+- Verified on Node 24: `npm run typecheck`, `npm test`, `npm run build`,
+  `verify-engineer-nav`, `verify-engineer-layout`, `verify-search` (31),
+  `verify-role-access` (61), `verify-unfinished-reports` (18). Before/after
+  screenshots at 320, 390 and 1440px in light and dark.
+- Not verified: a physical phone, iOS Safari's safe-area inset.
+- Next: item 4 in `docs/ui-direction-2026-10-20.md` (empty states).
+
 ## 2026-10-20 — UI-1: office desk opens on the office position
 
 - The office desk no longer opens on an empty "Select a project…" register
