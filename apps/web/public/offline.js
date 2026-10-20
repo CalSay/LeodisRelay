@@ -9,6 +9,10 @@
   let blocked = false;
   const urls = [];
   const principal = sessionStorage.getItem('relay-offline-principal');
+  // A copy set aside while the engineer chose between two versions shares its
+  // report with the ordinary copy, so it is named apart and never opened first.
+  const aside = d => d.key.includes('::aside::');
+  const label = d => `${d.report?.reference || d.reportId}${aside(d) ? ' (copy kept while choosing between two versions)' : ''}`;
   const fail = e => {error.textContent = e.message || 'Device storage is unavailable. Keep this page open.';};
   function open(name,store) {
     return new Promise((resolve,reject) => {
@@ -78,7 +82,7 @@
     if (dirty || blocked) {fail(new Error('Export your unsaved edits before switching drafts.'));return;}
     urls.splice(0).forEach(URL.revokeObjectURL);editor.replaceChildren();selected=structuredClone(draft);
     error.textContent='';
-    element('h2',draft.report?.reference || draft.reportId,editor);
+    element('h2',label(draft),editor);
     const link=element('a','Open this report when connected',editor);link.href=`/reports/${encodeURIComponent(draft.reportId)}`;
     const download=element('button','Export retained copy',editor);
     download.onclick=()=>{
@@ -100,8 +104,8 @@
   if(!principal) {status.textContent='Reconnect and sign in to recover your drafts. No offline identity is retained for this tab.';return;}
   allDrafts().then(drafts=>{
     status.textContent=drafts.length ? 'Select a retained draft.' : 'No unsent drafts are retained for this person in this browser.';
-    for(const draft of drafts) {const button=element('button',draft.report?.reference || draft.reportId,document.getElementById('drafts'));button.onclick=async()=>{const fresh=(await allDrafts()).find(d=>d.key===draft.key);if(fresh) await show(fresh);};}
+    for(const draft of drafts) {const button=element('button',label(draft),document.getElementById('drafts'));button.onclick=async()=>{const fresh=(await allDrafts()).find(d=>d.key===draft.key);if(fresh) await show(fresh);};}
     const id=/^\/reports\/([^/]+)$/.exec(location.pathname)?.[1];
-    const match=drafts.find(d=>d.reportId===id);if(match) void show(match);
+    const match=drafts.find(d=>d.reportId===id&&!aside(d))||drafts.find(d=>d.reportId===id);if(match) void show(match);
   }).catch(fail);
 })();
