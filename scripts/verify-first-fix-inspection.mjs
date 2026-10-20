@@ -76,6 +76,7 @@ try {
     await card().getByRole('heading',{name:FIRST_FIX_CHECKLIST[0].question}).waitFor();checks++;
     eq(await card().getByLabel('Where',{exact:true}).count(),0,`${label}: no Where before the answer needs one`);
     await card().getByRole('button',{name:'Action needed'}).click();
+    eq(await card().getByLabel('What needs doing',{exact:true}).getAttribute('placeholder'),'What has to happen before it is closed in',`${label}: the prompt is in this inspection's words`);
     await card().getByLabel('What’s wrong',{exact:true}).fill('No cable drop to desk point 4');
     await card().getByLabel('What needs doing',{exact:true}).fill('Run the drop before boarding');
     await card().getByLabel('Who is to do it',{exact:true}).fill('Leodis Electrical');

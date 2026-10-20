@@ -36,6 +36,8 @@ export interface ReportTypeDef {
   blurb: string;
   /** Fixed questions, answered one by one. Absent: free cards. */
   checklist?: readonly ChecklistItem[];
+  /** On a checklist, the prompt in an action's "What needs doing". */
+  actionPrompt?: string;
   /** The person who inspected signs for it: a typed name alone is not enough. */
   drawnSignature: boolean;
   /**
@@ -114,9 +116,9 @@ export const FIRST_FIX_CHECKLIST: readonly ChecklistItem[] = [
 
 export const REPORT_TYPES: readonly ReportTypeDef[] = [
   { id: 'progress', name: 'Site update', tag: 'Site update', document: 'Site Progress Report', code: 'SPR', blurb: 'Progress, defects, variations and access, one card at a time', drawnSignature: false, raisesRecords: true },
-  { id: 'safety-inspection', name: 'Safety inspection', tag: 'Safety', document: 'Site Safety Inspection', code: 'SSI', blurb: `${SAFETY_CHECKLIST.length} checks, each satisfactory, action needed or not applicable`, checklist: SAFETY_CHECKLIST, drawnSignature: true, raisesRecords: false },
-  { id: 'handover-inspection', name: 'Handover inspection', tag: 'Handover', document: 'Pre-Handover Inspection', code: 'PHI', blurb: `${HANDOVER_CHECKLIST.length} checks on an area before handover; actions go on the snag list`, checklist: HANDOVER_CHECKLIST, drawnSignature: true, raisesRecords: true },
-  { id: 'first-fix-inspection', name: 'First fix inspection', tag: 'First fix', document: 'First Fix Inspection', code: 'FFI', blurb: `${FIRST_FIX_CHECKLIST.length} checks on an area before ceilings and walls are closed; actions go on the snag list`, checklist: FIRST_FIX_CHECKLIST, drawnSignature: true, raisesRecords: true },
+  { id: 'safety-inspection', name: 'Safety inspection', tag: 'Safety', document: 'Site Safety Inspection', code: 'SSI', blurb: `${SAFETY_CHECKLIST.length} checks, each satisfactory, action needed or not applicable`, checklist: SAFETY_CHECKLIST, actionPrompt: 'What has to happen to make it safe', drawnSignature: true, raisesRecords: false },
+  { id: 'handover-inspection', name: 'Handover inspection', tag: 'Handover', document: 'Pre-Handover Inspection', code: 'PHI', blurb: `${HANDOVER_CHECKLIST.length} checks on an area before handover; actions go on the snag list`, checklist: HANDOVER_CHECKLIST, actionPrompt: 'What has to happen before handover', drawnSignature: true, raisesRecords: true },
+  { id: 'first-fix-inspection', name: 'First fix inspection', tag: 'First fix', document: 'First Fix Inspection', code: 'FFI', blurb: `${FIRST_FIX_CHECKLIST.length} checks on an area before ceilings and walls are closed; actions go on the snag list`, checklist: FIRST_FIX_CHECKLIST, actionPrompt: 'What has to happen before it is closed in', drawnSignature: true, raisesRecords: true },
 ];
 
 /** The report types started from a checklist, one home screen tile each. */

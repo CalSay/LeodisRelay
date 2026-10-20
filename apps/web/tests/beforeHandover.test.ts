@@ -118,3 +118,15 @@ test('open safety actions on the project come from its safety inspections', () =
   const other = report({ reportType:'safety-inspection', projectId:'p2', observations:[check('x', 'ppe', 'action')] });
   assert.equal(beforeHandover(project, { reports:[other], issues:[], variations:[] }, engineer, TODAY).safetyInspected, false, 'another project\'s inspection is left out');
 });
+
+test('a first fix inspection\'s action is a snag on our work, though only handover inspections are listed', () => {
+  n = 0;
+  const firstFix = report({ id:'rep-ffi', reference:'011LME-FFI-001', reportType:'first-fix-inspection', observations:[check('c1', 'pressure-test', 'action', { location:'L4 corridor ceiling' })] });
+  const raised = issue({ raisedByReport:'rep-ffi', raisedByObservation:'c1', reporterTrade:'P&H', location:'L4 corridor ceiling' });
+  const unrelated = issue({ reporterTrade:'HVAC', location:'Plant room' });
+  const h = beforeHandover(project, { reports:[firstFix], issues:[raised, unrelated], variations:[] }, engineer, TODAY);
+  assert.deepEqual(h.ours.map(g => [g.trade, g.issues.map(i => i.reference)]), [['P&H', [raised.reference]]]);
+  assert.equal(h.ours[0]!.issues[0]!.inspection, undefined, 'not credited to a handover inspection');
+  assert.deepEqual(h.others.map(i => i.reference), [unrelated.reference]);
+  assert.equal(h.inspections.length, 0);
+});

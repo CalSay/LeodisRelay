@@ -12,14 +12,16 @@ import { PhotoField, Suggestions } from './ObservationEditor';
  * need nothing more; a note or photograph is there if it helps. Action needed
  * asks what is wrong, what has to happen and who is to do it, which is what
  * goes in the inspection's action list. On a safety inspection nothing is
- * raised from it: the inspection itself is the record. On a handover
- * inspection (`raises`) the action is a snag in our own work, so it also asks
- * where, and sending raises it as an issue.
+ * raised from it: the inspection itself is the record. On a handover or
+ * first fix inspection (`raises`) the action is a snag in our own work, so
+ * it also asks where, and sending raises it as an issue.
  */
-export function CheckEditor({ observation, index, total, hint, raises, locations, companies, photoWhere, onChange, onRemovePhoto }: {
+export function CheckEditor({ observation, index, total, hint, raises, actionPrompt, locations, companies, photoWhere, onChange, onRemovePhoto }: {
   observation: Observation;
   /** Actions raise issues on the snag list, so each one says where. */
   raises?: boolean;
+  /** The prompt in "What needs doing", in the type's words. */
+  actionPrompt: string;
   locations?: string[];
   index: number;
   total: number;
@@ -77,7 +79,7 @@ export function CheckEditor({ observation, index, total, hint, raises, locations
       <div className="two">
         <div className="field">
           <label htmlFor={`action-${id}`}>What needs doing</label>
-          <textarea id={`action-${id}`} value={observation.actionNeeded} onChange={(e) => set('actionNeeded', e.target.value)} placeholder={raises ? 'What has to happen before handover' : 'What has to happen to make it safe'} />
+          <textarea id={`action-${id}`} value={observation.actionNeeded} onChange={(e) => set('actionNeeded', e.target.value)} placeholder={actionPrompt} />
         </div>
         <div className="field">
           <label htmlFor={`owner-${id}`}>Who is to do it</label>

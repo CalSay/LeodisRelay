@@ -45,17 +45,17 @@
   // report with the ordinary copy, so it is named apart and never opened first.
   const aside = d => d.key.includes('::aside::');
   // The checklist types (lib/reportTypes.ts), as the app last left them on this
-  // phone. A handover inspection's actions raise issues, so each says where.
+  // phone. Handover and first fix inspection actions raise issues, so each says where.
   let types = [];
   try { types = JSON.parse(localStorage.getItem('relay-offline-types') || '[]'); } catch {}
   types = Array.isArray(types) ? types.filter(t => t && typeof t.id === 'string' && typeof t.name === 'string' && Array.isArray(t.checklist) && t.checklist.length
     && t.checklist.every(c => c && typeof c.item === 'string' && typeof c.question === 'string')) : [];
-  const TYPE_NAMES = { 'safety-inspection': 'Safety inspection', 'handover-inspection': 'Handover inspection' };
+  const TYPE_NAMES = { 'safety-inspection': 'Safety inspection', 'handover-inspection': 'Handover inspection', 'first-fix-inspection': 'First fix inspection' };
   for (const t of types) TYPE_NAMES[t.id] = t.name;
   const typeOf = d => d.report?.reportType || d.started?.reportType;
   const inspection = d => Boolean(TYPE_NAMES[typeOf(d)]) || d.observations.some(o => o.check);
   const typeName = d => TYPE_NAMES[typeOf(d)] || (inspection(d) ? 'Inspection' : 'Site update');
-  const raisesIssues = d => { const t = types.find(x => x.id === typeOf(d)); return t ? t.raisesIssues === true : typeOf(d) === 'handover-inspection'; };
+  const raisesIssues = d => { const t = types.find(x => x.id === typeOf(d)); return t ? t.raisesIssues === true : ['handover-inspection', 'first-fix-inspection'].includes(typeOf(d)); };
   const hintFor = (d, item) => types.find(x => x.id === typeOf(d))?.checklist.find(c => c.item === item)?.hint || '';
   const label = d => d.started ? `New ${typeName(d).toLowerCase()} · ${d.started.projectName}`
     : `${d.report?.reference || d.reportId}${aside(d) ? ' (copy kept while choosing between two versions)' : ''}`;

@@ -990,6 +990,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         total={report.observations.length}
         hint={checkHint(type, observation.check?.item ?? '')}
         raises={type.raisesRecords}
+        actionPrompt={type.actionPrompt ?? 'What has to happen'}
         locations={suggestions.locations}
         companies={suggestions.companies}
         photoWhere={(photoId) => { const w = whereOf.get(observation.id); const at = observation.photos.findIndex(p => p.id === photoId); return w && at >= 0 ? w.each[at] : undefined; }}
