@@ -80,8 +80,9 @@ try {
     await page.goto(`${base}/office#/issues`);
     await page.getByRole('heading',{name:'Issues'}).waitFor();
     await page.locator('.filters').getByLabel('Project').selectOption('proj-011lme');
-    await page.locator('.filters').getByLabel('Owner').selectOption('Sparks Ltd');
-    await page.getByRole('link',{name:'Snag list'}).click();await page.waitForURL(/\/issues\/snag-list\?/);await page.locator('.snag-sheet').waitFor();
+    // The register's company filter is free text; the snag list takes it when it names one company exactly.
+    await page.locator('.filters').getByLabel('Company').fill('sparks ltd');
+    await page.locator('a[href*="owner=Sparks+Ltd"]',{hasText:'Snag list'}).click();await page.waitForURL(/\/issues\/snag-list\?/);await page.locator('.snag-sheet').waitFor();
     const url=new URL(page.url());
     check(url.searchParams.get('project')==='proj-011lme'&&url.searchParams.get('owner')==='Sparks Ltd'&&!url.searchParams.get('trade'),`office: list opens on the project and company chosen in the register (${url.search})`);
     check(await items(page).count()===3&&(await page.locator('.snag-for').innerText())==='Sparks Ltd','office: Sparks Ltd has three open items');

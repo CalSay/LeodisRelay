@@ -29,7 +29,8 @@ export function snagOwners(issues: Issue[], projectId: string): string[] {
 export function snagList(issues: Issue[], scope: SnagScope, day: string): SnagList {
   const owner = scope.owner?.trim();
   const picked = issues.filter(i => i.projectId === scope.projectId && isLive(i)
-    && (!owner || i.owner.trim() === owner)
+    // Owners are typed by hand, so "Acme  Ltd" and "acme ltd" are the same company.
+    && (!owner || key(i.owner) === key(owner))
     && (!scope.trade || issueTrade(i) === scope.trade));
   const groups = new Map<string, SnagGroup>();
   // A location is labelled as the earliest issue there wrote it, so the heading does not change with load order.

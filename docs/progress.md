@@ -4,6 +4,51 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — FE-5a: search and filter the issue register
+
+- The office issue register now filters by location text ("riser 2" finds
+  "Level 3, Riser 2"; any order, any case), responsible company (free text,
+  with the companies already named offered as suggestions, nothing to
+  maintain) and verification status: not put forward as fixed, waiting for
+  verification, or verified and closed. A new "All" chip lets the filters
+  reach closed issues too. "Clear filters" puts everything back.
+- Filtering, the chip counts, the order and the paging now run on the
+  server over the whole register the person may see, 50 to a page with
+  Previous and Next and "Showing 51–100 of 113". Before, the register
+  fetched every issue and filtered in the browser. The list refetches when
+  the office records reload, so a verify or assign shows at once.
+- Decisions: company and location match words as typed rather than against
+  a list (FE-1c and EXP-4 keep catalogues out). Company replaces the old
+  exact Owner drop-down; the snag list link carries the company when the
+  text names one, and the snag list now treats owners that differ only in
+  case or spacing as one company. "Not reviewed" counts only projects that
+  use review, as the office position does, and "Verify the oldest" picks
+  from the current search. A withdrawn issue has no verification status,
+  so it only shows with no verification filter. The rest of the office desk
+  (position, counts in the tabs) still uses its loaded snapshot; only the
+  register pages. The engineer Issues view is unchanged.
+- Rules in `lib/issueQuery.ts` (pure); `issueRegister` in
+  `lib/issueStore.ts` applies access first; `GET /api/issues?register=1`
+  returns one page. Other callers of `/api/issues` are unchanged. The
+  office model now reuses the register's overdue, disputed and not-reviewed
+  rules.
+- Verified on Node 24: `npm run typecheck`, `npm test` (10 new tests in
+  `tests/issueQuery.test.ts` and one in `snagList.test.ts`, one in SharePoint read mode with the issue
+  list split over two Graph pages, checking every item on both is reachable
+  through the register's pages and out-of-scope projects are left out),
+  `npm run build`. New `scripts/verify-issue-register.mjs` passed (70 checks:
+  130 seeded issues, paging through all 113 open, each filter, the snag
+  list link, a verify taken from a row, 1440px and 1200px, light and dark).
+  `verify-snag-list` (24, updated for the Company field),
+  `verify-office-actions` (41), `verify-office-landing` (19),
+  `verify-role-access` (61), `verify-review-queue` (12) and `verify-search`
+  (31) passed.
+- Not verified: a live SharePoint tenant (Graph paging is checked with a
+  stubbed client), a register of thousands of issues (the server still
+  reads the whole cache per request, as search does), a physical device.
+- Next: the same filters for the engineer Issues view if engineers ask;
+  CLAUDE.md's list of browser checks should gain
+  `verify-issue-register.mjs`.
 ## 2026-10-20 — Photo library per project (new feature, proposed as NEW-4)
 
 - New page `/photos`: every photograph on one project, newest first, grouped

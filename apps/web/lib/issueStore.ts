@@ -7,6 +7,9 @@ import type { Issue as ContractIssue } from "@relay/contracts";
 
 import type { Issue, IssueEvent, Photo, Report } from "./types";
 import { cachedProject, cachedProjects, reportableProject } from './projects';
+import type { Principal } from '@relay/platform';
+import { canAccessProject } from './auth/access';
+import { queryIssues, type IssuePage, type IssueQuery } from './issueQuery';
 
 /**
  * Issue records for the prototype.
@@ -55,6 +58,24 @@ export function listIssues(projectId?: string): Issue[] {
   if (sharePointMode() === 'off') return issues;
   const allowed = cachedProjects().filter(reportableProject).map(project => project.id);
   return issues.filter(i => allowed.includes(i.projectId));
+}
+
+/**
+ * One page of the issue register this person may see. Filters, counts and
+ * order run over the whole authorised register before the page is cut, so a
+ * page is never mistaken for the register. In SharePoint mode the register is
+ * the list cache that `refreshIssues` has just brought up to date.
+ */
+export function issueRegister(principal: Principal, query: IssueQuery, day: string): IssuePage {
+  const issues = listIssues().filter(i => canAccessProject(principal, i.projectId));
+  // Review is in use where the project asks for it or a sent report still waits on it (lib/reviewQueue.ts).
+  const waiting = new Set(database().prepare("SELECT DISTINCT project FROM records WHERE kind='reports' AND json_extract(data,'$.state')='submitted' AND json_extract(data,'$.review')='pending'").all().map(row => String(row.project)));
+  return queryIssues(issues, query, {
+    day,
+    projectName: id => cachedProject(id)?.projectName ?? id,
+    reviewOn: id => !!cachedProject(id)?.reviewRequired || waiting.has(id),
+    mine: i => i.closureSubmittedById ? i.closureSubmittedById === principal.id : i.closureSubmittedBy === principal.name,
+  });
 }
 
 export function getIssue(issueId: string): Issue | undefined {
