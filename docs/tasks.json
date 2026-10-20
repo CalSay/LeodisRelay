@@ -284,10 +284,10 @@
         "Undo restores it, including its photos, without a duplicate save",
         "Test for remove then undo"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Not started: removing a card or photo is immediate (ObservationEditor.tsx:126,138)."
+      "status": "done",
+      "passes": true,
+      "pr": 30,
+      "notes": "Done 2026-10-20: removing a card or photograph shows an undo bar above the action bar (what was removed, Undo, Dismiss) for 12 seconds, held while it has focus (it takes focus on removal) or a pointer over it; a second removal replaces it. Undo puts back the same card or photograph with its ids, words and photos, in its old place (lib/undoRemove.ts), as one save with no photograph uploaded again. Tests in tests/undoRemove.test.ts; scripts/verify-undo-remove.mjs checks it at 390px light and 1440px dark against the server's copy."
     },
     {
       "id": "FE-1c",
