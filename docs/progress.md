@@ -4,6 +4,57 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — First fix inspection (EXP-5, third report type)
+
+- Added a third checklist type, "First fix inspection" (First Fix Inspection,
+  references `-FFI-`): a walk round one area before its ceilings, walls,
+  risers or boxing are closed, asking 12 checks on Leodis's first fix (run to
+  every point, supported, pressure, drainage and electrical tests recorded,
+  set out for the finishes, access panels, fire stopping, safe zones,
+  labelled, void clear). Drawn signature required. Each "Action needed" must
+  say where and raises an issue on the snag list, as on the handover
+  inspection. The checks are Claude's first draft (Cal named no type, and
+  under his 2026-10-20 instruction Claude decided), so the Help entry says
+  they may change.
+- Why this type: opening a ceiling again after it is boarded costs far more
+  than a walk round, and a signed record shows the area was ready when it was
+  closed. It fits the existing framework exactly (`lib/reportTypes.ts`), so
+  the editor, drafts, photographs, sending, corrections, PDF, site diary,
+  weekly summary, office sheet and no-signal page all work without new code.
+  Considered and not chosen: a tower and podium inspection (the Work at Height
+  Regulations record needs the tower named on the report, and inspections have
+  no report-level field yet) and a commissioning record (needs readings, a new
+  kind of answer).
+- Home screen tiles now take a short label from the type (`tag`: "Safety",
+  "Handover", "First fix") rather than the first word of its name, which
+  would have read "First".
+- No-signal page: knows the new type's name and that its actions say where
+  even before the app has left the checklists on the phone. Service worker
+  cache moves to `relay-public-v10`.
+- Help "What's new": "First fix inspection". Help wording on actions that
+  become issues and on starting and signing with no signal now covers every
+  inspection.
+- Checks: `npm run typecheck`, `npm test` (new `tests/firstFixInspection.test.ts`),
+  `npm run build`, the new `scripts/verify-first-fix-inspection.mjs` (110
+  checks, 390px light and 1440px dark), `verify-offline-inspection` (now also
+  starts a first fix inspection with no signal), `verify-handover-inspection`,
+  `verify-report-types`, `verify-offline-sign`, `verify-handover-offline`,
+  `verify-help`, `verify-engineer-layout`, `verify-role-access`,
+  `verify-editor-usability`, `verify-accessibility`, `verify-before-handover`
+  and `verify-unfinished-reports`. A fresh-context review found the Before
+  handover gap and the handover wording in the action prompt; both fixed.
+- Not verified: a physical phone; Cal or a site manager reading the checks.
+  Before handover now counts a first fix inspection's actions as snags on our
+  work, under the inspector's trade, as it already did for handover
+  inspections (otherwise they fell under "Other trades"); it still lists only
+  handover inspections in its inspections section. Safety actions follows
+  safety inspections only. Each inspection type now has its own prompt in an
+  action's "What needs doing" (first fix: "before it is closed in").
+- Proposed (not added to `docs/tasks.json`): a report-level "What was
+  inspected" field, which would allow a tower and podium inspection; the
+  office editing a checklist's wording; listing first fix inspections on
+  Before handover.
+
 ## 2026-10-20 — Engineer home screen and office project sheet tidied
 
 - Why: each feature added today put its own link on the engineer home screen

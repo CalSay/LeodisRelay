@@ -1,7 +1,7 @@
 import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import { isActiveIssue } from './officeActions';
-import { checkCounts } from './reportTypes';
+import { checkCounts, reportTypeOf } from './reportTypes';
 import { safetyActions, type SafetyAction } from './safetyActions';
 import type { CheckAnswer, Issue, Report, Variation } from './types';
 
@@ -134,12 +134,15 @@ export function beforeHandover(project: HandoverProject, sources: HandoverSource
       checks: checkCounts(r.observations), locations: [...places.values()], stillOpen, raised, waiting };
   }).sort((a, b) => b.visitDate.localeCompare(a.visitDate) || byRef(b, a));
 
+  // Every inspection whose actions are snags in our own work (handover, first
+  // fix), any revision: what such an action raised is ours by definition.
+  const ownWork = new Set(sent.filter(r => { const t = reportTypeOf(r); return Boolean(t.checklist && t.raisesRecords); }).map(r => r.id));
   const row = (i: Issue): HandoverIssue => {
-    // Whose work it is, as recorded on site. A handover inspection's action is
-    // our own work by definition, so it falls back to the inspector's trade;
-    // any other issue with no trade recorded is not assumed to be ours.
+    // Whose work it is, as recorded on site. An inspection's action is our own
+    // work by definition, so it falls back to the inspector's trade; any other
+    // issue with no trade recorded is not assumed to be ours.
     const inspection = raisedBy.get(i.id);
-    const trade = i.affectedTrade ?? (inspection ? i.reporterTrade : undefined);
+    const trade = i.affectedTrade ?? (inspection || ownWork.has(i.raisedByReport) ? i.reporterTrade : undefined);
     const target = /^\d{4}-\d{2}-\d{2}$/.test(i.targetDate) ? i.targetDate : '';
     const fixedBy = i.work === 'awaiting_verification' ? i.closureSubmittedBy?.trim() : undefined;
     return { id: i.id, reference: i.reference, description: tidy(i.description), location: tidy(i.location), owner: tidy(i.owner),

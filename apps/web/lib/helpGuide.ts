@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'first-fix-inspection', added: '2026-10-20', audience: 'site', title: 'First fix inspection',
+    text: 'Walk an area before its ceilings and walls are closed and answer 12 checks on our first fix: run, supported, tested, labelled and clear of the boards. Each "Action needed" goes on the snag list as an issue when you send it, so nothing gets closed in unfinished. It works with no signal like the other inspections. The checks are a first draft and may change. Start it from "Do a first fix inspection" on your home screen.',
+    link: { label: 'Go to your home screen', href: '/engineer' } },
   { id: 'home-sheet-tidy', added: '2026-10-20', audience: 'all', title: 'A tidier home screen and project sheet',
     text: 'The pages about a project are now in two groups, Issues and safety, and Reports and records, with the ones used most first. On your home screen My week and Help sit together at the foot. In the office the project sheet keeps them in one box under its figures, and on a phone they now show above the project\'s register, where before they could not be reached.' },
   { id: 'editor-easier-to-read', added: '2026-10-20', audience: 'site', title: 'Report screen easier to read and to tap',
@@ -37,7 +40,7 @@ export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'office-desk-tidy', added: '2026-10-20', audience: 'office', title: 'A tidier office desk',
     text: 'Clicking a variation in the Variations register now opens it, the register fits a laptop screen without scrolling sideways, and the report stages in the Inbox reader no longer run into each other. Inbox, Issues and Variations each have Clear filters, and an empty list says what it means, such as "Every report has been read".' },
   { id: 'offline-sign', added: '2026-10-20', audience: 'site', title: 'Sign an inspection with no signal',
-    text: 'With no signal, once every check is answered you can sign a safety or handover inspection on the phone. It is marked "Signed · not sent yet" and goes to the office by itself the next time RELAY opens with signal, and RELAY tells you when it has gone. If anything changed after you signed, it is not sent: you check it and sign again.' },
+    text: 'With no signal, once every check is answered you can sign an inspection on the phone. It is marked "Signed · not sent yet" and goes to the office by itself the next time RELAY opens with signal, and RELAY tells you when it has gone. If anything changed after you signed, it is not sent: you check it and sign again.' },
   { id: 'before-handover', added: '2026-10-20', audience: 'all', title: 'Before handover',
     text: 'One page per project with everything RELAY still has open: snags on our work by trade, fixes waiting to be checked, handover inspections and their open actions, other trades\' issues, variations not yet instructed and open safety actions. Ready to print for the handover meeting.',
     link: { label: 'Open Before handover', href: '/handover' } },
@@ -46,7 +49,7 @@ export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'editor-tidy', added: '2026-10-20', audience: 'site', title: 'A quicker, calmer report screen',
     text: 'On a phone the card you have open no longer repeats itself above and below, "Check & send" is no longer repeated inside each card (it stays at the foot of the screen), and an inspection just started lists its unanswered checks as one line rather than twelve. Optional suggestions are marked "Optional", so only a "Stop" stops you sending.' },
   { id: 'offline-inspection', added: '2026-10-20', audience: 'site', title: 'Start an inspection with no signal',
-    text: 'With no signal, you can now start a safety or handover inspection as well as a site update, answer its checks and take photographs. It goes up by itself once RELAY opens with signal; you sign it and send it then.' },
+    text: 'With no signal, you can now start any inspection as well as a site update, answer its checks and take photographs. It goes up by itself once RELAY opens with signal; you sign it and send it then.' },
   { id: 'help', added: '2026-10-20', audience: 'all', title: 'This Help page',
     text: 'How RELAY works in plain words, what each status means, and this list of what is new. New things are marked until you have looked.' },
   { id: 'handover-inspection', added: '2026-10-20', audience: 'site', title: 'Handover inspection',
@@ -158,7 +161,7 @@ export const GLOSSARY: readonly GuideGroup[] = [
   ] },
   { heading: 'An inspection check', terms: [
     { term: 'Satisfactory', meaning: 'Checked and fine.' },
-    { term: 'Action needed', meaning: 'Say what is wrong and what needs doing. On a safety inspection it stays on Safety actions until a later inspection finds it Satisfactory or Not applicable. On a handover inspection it becomes an issue on the snag list.' },
+    { term: 'Action needed', meaning: 'Say what is wrong and what needs doing. On a safety inspection it stays on Safety actions until a later inspection finds it Satisfactory or Not applicable. On a handover or first fix inspection it becomes an issue on the snag list.' },
     { term: 'Not applicable', meaning: 'Nothing of this kind to check.' },
   ] },
 ];
@@ -240,7 +243,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'When you are done, sign and tap "Send to office". It is then on file and cannot be changed, only corrected.',
     ] },
     { id: 'after-send', heading: 'After you send', ordered: false, steps: [
-      'Defect and Access cards become issues on the project\'s register. Variation cards become variations for the office to price. Each "Action needed" on a handover inspection becomes an issue too.',
+      'Defect and Access cards become issues on the project\'s register. Variation cards become variations for the office to price. Each "Action needed" on a handover or first fix inspection becomes an issue too.',
       'Your home screen lists what came back from the office on the things you raised, in the office\'s words.',
       'The report itself shows each step it has reached: received, PDF, delivery and read. See "What the words mean" below.',
     ] },

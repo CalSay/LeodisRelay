@@ -62,9 +62,9 @@ test('a report started offline shows on the home screen until the server has it'
 
 test('an inspection started offline: its checks, its name, and how it fits the server\'s checks',() => {
   const types = offlineTypes();
-  assert.deepEqual(types.map(t => t.id),['safety-inspection','handover-inspection']);
+  assert.deepEqual(types.map(t => t.id),['safety-inspection','handover-inspection','first-fix-inspection']);
   assert.equal(types[0]!.checklist.length,SAFETY_CHECKLIST.length);
-  assert.deepEqual([types[0]!.raisesIssues,types[1]!.raisesIssues],[false,true],'only a handover inspection\'s actions say where');
+  assert.deepEqual(types.map(t => t.raisesIssues),[false,true,true],'only handover and first fix actions say where');
   assert.equal(types[1]!.checklist[0]!.hint,HANDOVER_CHECKLIST[0]!.hint);
   assert.equal(startedTitle(started),'New site update · Tetley Hall - Block E');
   assert.equal(startedTitle({...started,reportType:'safety-inspection'}),'New safety inspection · Tetley Hall - Block E');
