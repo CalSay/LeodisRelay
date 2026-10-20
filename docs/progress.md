@@ -26,7 +26,22 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   check problem. Not verified on a real phone.
 - Not done: browser checks are not in CI (CI changes were left alone).
 - Next: fix the PDF viewer on older browsers (pin pdfjs-dist to a version
-  without the new Map method, or polyfill it in page and worker), then FE-4c.
+  without the new Map method, or polyfill it in page and worker), then FE-3a.
+
+## 2026-10-20 — FE-4c: PM acknowledgement test
+
+- Closed the test gap on PM acknowledgement in `apps/web/tests/corrections.test.ts`.
+  The tests now check that acknowledgement stores who, when and an optional
+  trimmed note (a blank note is not stored), that it leaves receipt time,
+  review, PDF delivery and the report's issue untouched, that approval and
+  issue closure do not count as acknowledgement, that the first one stands,
+  and that the status words for each fact stay separate.
+- No application code changed: the behaviour was already built. A mutation
+  check (making acknowledgement also approve) made the new test fail.
+- Verified: `npm run typecheck` and `npm test` pass (web suite 49 tests).
+- Not verified: no browser check (the task has none, and Playwright is TOOL-1);
+  the office "Read" row was read in code, not seen in a browser.
+- Next: FE-3a (signatures across reloads) once the editor lane is free.
 
 ## 2026-10-20 — Set up the autonomous development loop
 

@@ -65,10 +65,10 @@
         "It is stored and shown separately from receipt, delivery, approval and closure",
         "Tests for the acknowledgement record"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Built: serverStore.ts acknowledgeReport, route, office dialog, tests/corrections.test.ts:76-87. Only gap: test does not assert the note or separation from review/approval/closure. Close the test gap, then mark done."
+      "status": "done",
+      "passes": true,
+      "pr": 4,
+      "notes": "Built: serverStore.ts acknowledgeReport, route, office dialog (ProjectsView 'Read' row beside Received, Review, PDF and notification). 2026-10-20: tests/corrections.test.ts now asserts actor, id, timestamp and trimmed optional note are stored; receipt time, review, delivery and the raised issue are untouched; approval and issue closure do not set it; status.ts keeps each fact's own words. No application code changed."
     },
     {
       "id": "FE-3a",

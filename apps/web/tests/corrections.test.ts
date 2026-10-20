@@ -4,10 +4,10 @@ import {mkdtempSync,rmSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import type {Principal} from '@relay/platform';
-import {acknowledgeReport,correctReport,createReport,getReport,reportsFor,saveDraft,submitReport} from '../lib/serverStore';
-import {applyCommand,listIssues} from '../lib/issueStore';
-import {database} from '../lib/storage';
-import {deliveryStatus} from '../lib/status';
+import {acknowledgeReport,correctReport,createReport,getReport,reportsFor,reviewSubmission,saveDraft,submitReport} from '../lib/serverStore';
+import {applyCommand,getIssue,listIssues} from '../lib/issueStore';
+import {database,putRecord} from '../lib/storage';
+import {acknowledgementStatus,deliveryStatus,receiptStatus,reviewStatus} from '../lib/status';
 import type {Issue,Observation,Report} from '../lib/types';
 
 const engineer:Principal = {id:'entra:engineer' as never,oid:'engineer',name:'G. Stephenson',email:'g@example.test',role:'Engineer',trade:'Electrical'};
@@ -77,13 +77,67 @@ test('corrections, acknowledgement and the draft allowlist marry the engineer si
       const draft = createReport('proj-014lme',engineer.name,engineer);
       assert.equal(acknowledgeReport(draft.id,manager,'').ok,false,'a draft cannot be acknowledged');
       const report = await sent(draft);
-      const first = acknowledgeReport(report.id,manager,'Seen, chasing Marshall');
+      assert.equal(report.acknowledged,undefined,'sending does not wait for, or imply, acknowledgement');
+      assert.equal(acknowledgementStatus(report)?.label,'Not yet read by the office');
+      const issueBefore = listIssues('proj-014lme').find(i => i.raisedByReport === report.id)!;
+
+      const before = Date.now();
+      const first = acknowledgeReport(report.id,manager,'  Seen, chasing Marshall  ');
       assert.equal(first.ok,true);
-      const at = (first as {ok:true;value:Report}).value.acknowledged?.at;
-      assert.equal((first as {ok:true;value:Report}).value.acknowledged?.byId,manager.id);
-      const second = acknowledgeReport(report.id,{...manager,name:'Someone else'},'');
-      assert.equal((second as {ok:true;value:Report}).value.acknowledged?.at,at,'the first acknowledgement stands');
-      assert.equal(getReport(report.id)?.delivery,'pending','acknowledging sends nothing');
+      const value = (first as {ok:true;value:Report}).value;
+      assert.deepEqual(Object.keys(value.acknowledged!).sort(),['at','by','byId','note']);
+      assert.equal(value.acknowledged?.by,manager.name);
+      assert.equal(value.acknowledged?.byId,manager.id);
+      assert.equal(value.acknowledged?.note,'Seen, chasing Marshall','the note is kept, trimmed');
+      const at = Date.parse(value.acknowledged!.at);
+      assert.ok(at >= before && at <= Date.now(),'stamped when it was acknowledged');
+      assert.deepEqual(getReport(report.id)?.acknowledged,value.acknowledged,'stored, not just returned');
+
+      // Receipt, review, delivery and issue closure are each untouched.
+      const stored = getReport(report.id)!;
+      assert.equal(stored.state,'submitted');
+      assert.equal(stored.serverAcknowledgedAt,report.serverAcknowledgedAt,'receipt is a separate time');
+      assert.notEqual(stored.serverAcknowledgedAt,undefined);
+      assert.equal(stored.review,'not_required','acknowledging is not approving');
+      assert.equal(stored.reviewedAt,undefined);
+      assert.equal(stored.reviewedBy,undefined);
+      assert.equal(stored.delivery,'pending','acknowledging sends nothing');
+      const issueAfter = getIssue(issueBefore.id)!;
+      assert.equal(issueAfter.work,issueBefore.work,'acknowledging closes no issue');
+      assert.equal(issueAfter.events.length,issueBefore.events.length);
+
+      // Each fact keeps its own words.
+      assert.equal(acknowledgementStatus(stored)?.label,'Read by Tom');
+      assert.equal(receiptStatus(stored).label,'Received');
+      assert.equal(reviewStatus(stored)?.label,'No review required');
+      assert.equal(deliveryStatus(stored)?.label,'PDF queued');
+
+      const second = acknowledgeReport(report.id,{...manager,id:'entra:other' as never,name:'Someone else'},'Another note');
+      assert.deepEqual((second as {ok:true;value:Report}).value.acknowledged,value.acknowledged,'the first acknowledgement stands');
+
+      const plain = acknowledgeReport((await sent(createReport('proj-014lme',engineer.name,engineer))).id,manager,'   ');
+      assert.equal('note' in (plain as {ok:true;value:Report}).value.acknowledged!,false,'the note is optional; a blank one is not stored');
+    });
+
+    await t.test('approval and issue closure do not count as acknowledgement',async () => {
+      const report = await sent(createReport('proj-014lme',engineer.name,engineer));
+      // Every fixture project has review off, so put this one into review directly.
+      putRecord('reports',{...getReport(report.id)!,review:'pending'});
+      const approved = reviewSubmission(report.id,'approve','Ada',' ','entra:reviewer');
+      assert.equal(approved.ok,true,approved.ok ? '' : approved.reason);
+      assert.equal(getReport(report.id)?.review,'approved');
+      assert.equal(getReport(report.id)?.acknowledged,undefined,'approved is not read');
+      assert.equal(acknowledgementStatus(getReport(report.id)!)?.label,'Not yet read by the office');
+
+      const issue = listIssues('proj-014lme').find(i => i.raisedByReport === report.id)!;
+      assert.equal(applyCommand(issue.id,{kind:'submit_closure',actor:engineer.name,actorId:engineer.id,note:'Cover replaced'}).ok,true);
+      assert.equal(applyCommand(issue.id,{kind:'verify',actor:manager.name,actorId:manager.id,note:'Checked'}).ok,true);
+      assert.equal(getIssue(issue.id)?.work,'closed');
+      assert.equal(getReport(report.id)?.acknowledged,undefined,'a closed issue is not a read report');
+
+      const ack = acknowledgeReport(report.id,manager,'');
+      assert.equal(ack.ok,true,'an approved report can still be acknowledged');
+      assert.equal(getReport(report.id)?.review,'approved','and stays approved');
     });
 
     await t.test('the office sees section counts and the trade on another engineer\'s draft, never its contents',() => {
