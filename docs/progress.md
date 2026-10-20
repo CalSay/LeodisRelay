@@ -192,6 +192,43 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   check at 390 and 1440px." Proposed: add `verify-register-export.mjs` to the
   browser checks list in `CLAUDE.md`.
 
+## 2026-10-20 — Office registers on a phone (UI fix, follow-up from #35)
+
+- On a phone (700px and narrower) the office issue register, variation
+  register, inbox (received and drafts), team roster and the admin roster,
+  older drafts and notifications tables now show one card per row. Each card
+  leads with the reference and the title, then labelled lines (Project,
+  Raised, Owner, Target, Work, Confirmation; Quoted, Instructed, Margin on a
+  variation), then the row's buttons at full touch size. A tappable card shows
+  a "›". The desk keeps its tables unchanged.
+- The problem: at 390px the issue register pushed the whole page 666px
+  sideways (the hidden "Actions" heading sat outside the scrolled panel), and
+  the other registers were 640–1365px tables scrolling inside their panel, so
+  the buttons were off screen.
+- Decisions: cards rather than a narrower table, because nine columns cannot
+  be read side by side on a phone and the actions need to be reachable. One
+  shared rule (`table.reg.cards` plus `data-label` on cells in
+  `workspace.css`) so every office table behaves the same. Work and
+  Confirmation stay as two labelled lines, as on the desk. The column headings
+  carry the sort on the desk; on a phone they are hidden, so the issue
+  register gets an "Order" list (priority, target date, raised newest or
+  oldest, owner, project, reference) in place of the "Sort: priority" chip.
+  Filter boxes stack as aligned rows at least 40px tall. FE-5a filters, the
+  #26 office position and the #35 downloads are unchanged.
+- Verified on Node 24: `npm run typecheck`, `npm test` (145 package + 213 web),
+  `npm run build`, new `scripts/verify-office-registers.mjs` (247 checks: no
+  sideways scroll and every card inside its panel for all eight views, each
+  with rows (issues, variations, inbox, drafts, team, admin roster,
+  notifications with a long failure message, older drafts) at 320px and 390px
+  light and dark; labels, wrapping, 44px buttons, card and button
+  taps, filters and the order list on a phone; headings, one-line actions and
+  column sorting at 1440px). Also passed: `verify-issue-register`,
+  `verify-office-phone`, `verify-office-actions`, `verify-register-export`,
+  `verify-role-access`, `verify-office-landing`, `verify-review-queue`.
+  Screenshots in the project's shared files (`ui-review/office-registers/`).
+- Not verified: a physical phone. Proposed next: add
+  `verify-office-registers.mjs` to the browser checks in `CLAUDE.md`.
+
 ## 2026-10-20 — EXP-1: living site diary
 
 - New `/diary` page: a project's visits, newest day first, made only from
