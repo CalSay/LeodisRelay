@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { redirect } from "next/navigation";
 
 import { resolveProvider } from "@/lib/auth/provider";
@@ -5,6 +6,8 @@ import { currentPrincipal } from "@/lib/auth/session";
 import { safeReturnTo } from '@relay/platform';
 import { EntryFrame } from '@/components/EntryFrame';
 import { InstallRelay } from '@/components/InstallRelay';
+
+export const metadata: Metadata = { title: 'Sign in' };
 
 export const dynamic = "force-dynamic";
 

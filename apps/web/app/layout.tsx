@@ -44,7 +44,8 @@ const plexMono = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Relay",
+  // Each page names itself first, so a row of tabs or the phone's app switcher says which is which.
+  title: { default: "RELAY", template: "%s · RELAY" },
   description: "Leodis site reporting",
   appleWebApp: { capable:true, title:'RELAY', statusBarStyle:'default' },
 };

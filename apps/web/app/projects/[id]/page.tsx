@@ -2,6 +2,7 @@
 import { useProjectLookup } from "@/components/ProjectContext";
 
 import { use, useCallback, useEffect, useState } from "react";
+import { PageTitle } from '@/components/PageTitle';
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createReport, listReports, projectIssues, type Report } from "@/lib/api";
@@ -9,7 +10,7 @@ import { IssueRegister } from "@/components/IssueRegister";
 import type { Issue, ReportSummary } from "@/lib/types";
 import { usePrincipal } from '@/components/PrincipalContext';
 import { ownsReport } from '@/lib/auth/access';
-import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 
 export default function ProjectPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
   const getProject = useProjectLookup();
@@ -47,7 +48,7 @@ export default function ProjectPage({ params, searchParams }: { params: Promise<
     return (
       <main className="wrap">
         <Link href={returnTo} className="back">
-          &larr; Projects
+          &larr; {backLabel(returnTo, 'Projects')}
         </Link>
         <div className="empty">That project could not be found.</div>
       </main>
@@ -56,8 +57,9 @@ export default function ProjectPage({ params, searchParams }: { params: Promise<
 
   return (
     <main className="wrap">
+      <PageTitle title={project.projectName} />
       <Link href={returnTo} className="back">
-        &larr; Projects
+        &larr; {backLabel(returnTo, 'Projects')}
       </Link>
 
       <div className="pagehead">

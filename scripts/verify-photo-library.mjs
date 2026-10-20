@@ -131,7 +131,7 @@ try {
     await page.goBack();await page.waitForURL(/\/photos\?/);await tiles(page).first().waitFor();
     check(true,'back from a report returns to the photographs');
     await page.keyboard.press('Escape');
-    await page.getByRole('link',{name:'← Back'}).click();await page.waitForURL(/\/engineer\?project=proj-011lme&view=reports/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/engineer\?project=proj-011lme&view=reports/);
     check(true,'engineer: back returns to the Reports view');
     assert.deepEqual(errors,[],'engineer: page errors');
     await context.close();
@@ -154,7 +154,7 @@ try {
     if(screenshot)await page.screenshot({path:join(screenshot,'photos-viewer-dark-1440.png')});
     await viewer.getByRole('button',{name:'Close'}).click();
     check(!(await page.locator('dialog.photos-viewer[open]').count()),'office: Close shuts the viewer');
-    await page.getByRole('link',{name:'← Back'}).click();await page.waitForURL(/\/office/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/office/);
     check(true,'office: back returns to the office');
     // A project with no photographs says so.
     await page.goto(`${base}/photos?project=proj-009lcp`);await page.getByText('No photographs yet').waitFor();

@@ -66,9 +66,9 @@ try {
     check(await page.locator('.snag-photo').count()===0&&new URL(page.url()).searchParams.get('photos')==='off','engineer: photographs can be left off, and the choice is in the address');
     if(screenshot)await page.screenshot({path:join(screenshot,'snag-light-390.png'),fullPage:true});
     await page.getByRole('link',{name:late.reference}).click();await page.waitForURL(`**/issues/${late.id}**`);
-    await page.getByRole('link',{name:/Tetley Hall/}).first().click();await page.waitForURL(/\/issues\/snag-list\?.*photos=off/);await page.locator('.snag-sheet').waitFor();
+    await page.getByRole('link',{name:'← Back to Snag list'}).click();await page.waitForURL(/\/issues\/snag-list\?.*photos=off/);await page.locator('.snag-sheet').waitFor();
     check(await items(page).count()===3&&await page.locator('.snag-photo').count()===0,'engineer: back from an issue returns to the same list and choices');
-    await page.getByRole('link',{name:/Back to issues/}).click();await page.waitForURL(/\/engineer\?project=proj-011lme&view=issues/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/engineer\?project=proj-011lme&view=issues/);
     check(true,'engineer: back returns to the Issues view');
     assert.deepEqual(errors,[],'engineer: page errors');
     await context.close();
@@ -79,7 +79,7 @@ try {
     const {context,page,errors}=await open('Manager','dark',1440);
     await page.goto(`${base}/office#/issues`);
     await page.getByRole('heading',{name:'Issues'}).waitFor();
-    await page.locator('.filters').getByLabel('Project').selectOption('proj-011lme');
+    await page.locator('.filters').getByLabel(/^Project/).selectOption('proj-011lme');
     // The register's company filter is free text; the snag list takes it when it names one company exactly.
     await page.locator('.filters').getByLabel('Company').fill('sparks ltd');
     await page.locator('a[href*="owner=Sparks+Ltd"]',{hasText:'Snag list'}).click();await page.waitForURL(/\/issues\/snag-list\?/);await page.locator('.snag-sheet').waitFor();
@@ -100,7 +100,7 @@ try {
     const pdf=await page.pdf({format:'A4'});
     check(pdf.length>1000,`print: produces an A4 PDF (${pdf.length} bytes)`);
     await page.emulateMedia({media:'screen'});
-    await page.getByRole('link',{name:/Back to issues/}).click();await page.waitForURL(/\/office#\/issues/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/office#\/issues/);
     check(true,'office: back returns to the register');
     assert.deepEqual(errors,[],'office: page errors');
     await context.close();

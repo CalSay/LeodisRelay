@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { safeViewReturn, withViewReturn } from '../lib/viewNavigation';
+import { backLabel, safeViewReturn, viewName, withViewReturn } from '../lib/viewNavigation';
 
 test('detail links preserve an Office hash route across full pages', () => {
   const office = '/office#/projects/project-1/issue/issue-1';
@@ -49,4 +49,23 @@ test('a report opened from site coverage returns to the same fortnight', () => {
 test('a snag list or issue opened from open issues by company returns to the same search', () => {
   const companies = '/companies?q=acme&returnTo=%2Foffice%23%2Fissues';
   assert.equal(safeViewReturn(companies, '/office'), companies);
+});
+
+test('Back links name the page they return to, in its own navigation words', () => {
+  assert.equal(backLabel('/engineer?project=p1'), 'Back to Site');
+  assert.equal(backLabel('/engineer?project=p1&view=reports'), 'Back to Reports');
+  assert.equal(backLabel('/engineer?project=p1&view=issues'), 'Back to Issues');
+  assert.equal(backLabel('/office#/issues'), 'Back to Office');
+  assert.equal(backLabel('/search?q=riser&returnTo=%2Fengineer'), 'Back to Search results');
+  assert.equal(backLabel('/search'), 'Back to Search');
+  assert.equal(backLabel('/companies?returnTo=%2Foffice'), 'Back to Issues by company');
+  assert.equal(backLabel('/issues/snag-list?project=p1'), 'Back to Snag list');
+  assert.equal(backLabel('/my-week?week=2026-10-12'), 'Back to My week');
+});
+
+test('an unknown return path falls back to a plain name, never a guess', () => {
+  assert.equal(viewName('/api/auth/signout'), undefined);
+  assert.equal(viewName(''), undefined);
+  assert.equal(backLabel('/reports/r1', 'Projects'), 'Back to Projects');
+  assert.equal(backLabel('/nowhere'), 'Back to previous page');
 });

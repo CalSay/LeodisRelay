@@ -7,7 +7,7 @@ import { useProjects } from './ProjectContext';
 import { usePrincipal } from './PrincipalContext';
 import { PhotoImage } from './PhotoImage';
 import { canManage } from '@/lib/auth/access';
-import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { DIARY_KINDS, isDiaryKind, type DiaryCard, type DiaryEntry, type SiteDiary } from '@/lib/siteDiary';
 import type { ObservationType } from '@/lib/fixtures';
 
@@ -138,7 +138,7 @@ export function SiteDiaryPage({ initialProject, initialFind, initialShow, return
   const nextBefore = pages?.at(-1)?.nextBefore;
 
   return <main className="eng-page diary-page">
-    <Link href={back} className="back">&larr; Back</Link>
+    <Link href={back} className="back">&larr; {backLabel(back)}</Link>
     <div className="eng-heading"><h1>Site diary{project ? ` · ${project.projectName}` : ''}</h1>
       <p>Every visit to site, day by day, made from the reports engineers sent. Nothing extra to fill in: each entry links to the report it came from.</p></div>
     <div className="diary-controls">

@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { currentPrincipal } from '@/lib/auth/session';
 import { SiteDiaryPage } from '@/components/SiteDiaryPage';
 import './diary.css';
+
+export const metadata: Metadata = { title: 'Site diary' };
 
 export const dynamic = 'force-dynamic';
 export default async function SiteDiary({ searchParams }: { searchParams: Promise<{ project?: string; q?: string; show?: string; returnTo?: string }> }) {

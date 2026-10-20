@@ -1,8 +1,11 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { currentPrincipal } from '@/lib/auth/session';
 import { canManage } from '@/lib/auth/access';
 import { CompanyIssuesPage } from '@/components/CompanyIssuesPage';
 import './companies.css';
+
+export const metadata: Metadata = { title: 'Issues by company' };
 
 export const dynamic = 'force-dynamic';
 /** Open issues by company is an office view: Managers and Admins. Engineers are sent to the hub, as /office does. */
