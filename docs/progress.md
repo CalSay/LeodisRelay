@@ -71,9 +71,15 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `verify-review-queue`, `verify-office-actions`, `verify-safety-actions`,
   `verify-report-types`, `verify-site-diary`, `verify-engineer-layout`,
   `verify-unfinished-reports`; `verify-handover-inspection` now 104 checks.
+- A second review found that a correction moving an action to Satisfactory
+  still showed "further sighting of ISS-…" in the office and the diary; a
+  check now speaks for its linked issue only while it needs action. The issue
+  itself stays open for the office to withdraw, as it does when a defect card
+  is changed in a correction (an automatic withdrawal is proposed below).
 - Not verified: a physical phone, the PDF rendered by the worker after sending
   (the draft PDF uses the same renderer), SharePoint mode (no live tenant).
-- Proposed next (not built): an area field on the inspection itself (one
+- Proposed next (not built): when a correction withdraws an action (or a
+  defect), note it on the issue so the office can withdraw it; an area field on the inspection itself (one
   place for the whole walk, prefilled into each action); a third type such as
   a commissioning record with readings; let the office edit checklists; add
   `verify-handover-inspection.mjs` to the browser checks in `CLAUDE.md`.

@@ -126,6 +126,12 @@ test('a handover inspection end to end through the store, and every reader of se
       assert.equal(entry.cards[0]!.location, 'L2 office 2.04');
       assert.match(entry.cards[0]!.issue?.reference ?? '', /-ISS-/);
       assert.equal(entry.cards[0]!.issue?.sighting, false);
+      // A correction that withdraws the action (now satisfactory, with a note) keeps the link but shows no issue.
+      const withdrawn = { ...sent, id: 'rep-withdrawn', corrects: sent.id, revision: 2, observations: sent.observations.map((o, i) => i === 0
+        ? { ...o, check: { ...o.check!, answer: 'ok' as const }, location: '', actionNeeded: '', owner: '', whatHappened: 'Lid was fitted after all', linkedIssueId: issues.find(x => x.raisedByObservation === o.id)!.id }
+        : o) };
+      const after = siteDiary({ reports: [sent, withdrawn], issues, variations: [] }, manager, 'proj-011lme').days[0]!.entries[0]!;
+      assert.equal(after.cards.find(c => c.id === sent.observations[0]!.id)?.issue, undefined);
     });
 
     await t.test('the weekly summary names it rather than counting twelve cards', () => {

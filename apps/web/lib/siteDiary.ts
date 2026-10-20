@@ -130,7 +130,8 @@ export function siteDiary(sources: DiarySources, principal: Principal, projectId
     const counts = type.checklist ? checkCounts(r.observations) : undefined;
     const shown = type.checklist ? r.observations.filter(o => o.check?.answer === 'action' || tidy(o.whatHappened) || tidy(o.actionNeeded) || o.photos.length) : r.observations;
     const all: DiaryCard[] = shown.map(o => {
-      const linked = o.linkedIssueId ? issueById.get(o.linkedIssueId) : undefined;
+      // A check keeps its link after a correction moves it off Action needed; it no longer speaks for the issue.
+      const linked = o.linkedIssueId && (!o.check || o.check.answer === 'action') ? issueById.get(o.linkedIssueId) : undefined;
       // A correction points its copied defect at the issue the original raised: still "raised" here, not seen again.
       const raised = (o.type === 'defect' || o.type === 'access' || raisesIssue(type, o) ? issues.find(i => raisedHere(i, o)) : undefined) ?? (linked && fromChain(linked) ? linked : undefined);
       const seen = !raised ? linked : undefined;

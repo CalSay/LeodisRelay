@@ -290,7 +290,8 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
       : <SecH right={<span className="r">{report.observations.length} update{report.observations.length === 1 ? '' : 's'}</span>}>Found on this visit</SecH>}
     {report.observations.length ? report.observations.map(o => {
       const type = OBSERVATION_TYPES.find(t => t.value === o.type);
-      const linked = o.linkedIssueId ? ctx.snap?.issues.find(i => i.id === o.linkedIssueId) : undefined;
+      // A check moved off Action needed in a correction keeps its link, but no longer speaks for the issue.
+      const linked = o.linkedIssueId && (!o.check || o.check.answer === 'action') ? ctx.snap?.issues.find(i => i.id === o.linkedIssueId) : undefined;
       const mine = raised.find(i => i.raisedByObservation === o.id);
       const vo = o.type === 'instruction' ? variationOf(o.id) : undefined;
       return <div key={o.id} className="hist"><span className="d">{o.check ? <span className={`kind ${o.check.answer === 'action' ? 'tone-defect' : 'tone-neutral'}`}>{answerLabel(o.check.answer)}</span> : <span className={`kind tone-${type?.tone ?? 'neutral'}`}>{type?.label.split(' ')[0] ?? o.type}</span>}</span>
