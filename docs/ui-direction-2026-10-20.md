@@ -76,9 +76,8 @@ iOS Safari, a live tenant.
 
 ## Next, in priority order
 
-1. **Office landing.** Until a project is chosen, show the office position
-   across the full width rather than an empty register column (or open on the
-   first project with work waiting).
+1. **Office landing.** Done in UI-1: until a project is chosen, the office
+   position takes the full width beside the project list.
 2. **Report editor flow.** Collapse cards that are not being edited, drop the
    repeated "Selected" line, and make "Check & send" a clear final step with a
    sticky action that never covers the field being typed in.
