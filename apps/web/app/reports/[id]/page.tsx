@@ -36,6 +36,8 @@ import { cardWhere, reportWhere, savedCopy, WHERE, type Where } from '@/lib/uplo
 import { compareDrafts, type DraftBase } from '@/lib/draftConflict';
 import { DraftConflict } from '@/components/DraftConflict';
 import { renewTabId, tabId } from '@/lib/tabId';
+import { carryIntoCorrection, SENT_ELSEWHERE_REASON, unsentWork, type UnsentWork } from '@/lib/sentElsewhere';
+import { SentElsewhere } from '@/components/SentElsewhere';
 
 type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error" | "conflict";
 
@@ -162,6 +164,17 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
    * second removal worded the same ("Photo 01 removed") is still announced.
    */
   const [undoSaid,setUndoSaid] = useState('');
+  /**
+   * Sent from another tab or device while this screen held changes the server
+   * never had. The sent report is shown, with those changes offered as a correction.
+   */
+  const [sentAway,setSentAway] = useState<{ work: UnsentWork; mine: Report; base?: DraftBase } | null>(null);
+  const sentAwayRef = useRef(false);
+  const [handoffReason,setHandoffReason] = useState(SENT_ELSEWHERE_REASON);
+  const [handoffError,setHandoffError] = useState('');
+  /** Where to go when the correction cannot take the changes yet. */
+  const [handoffLink,setHandoffLink] = useState<{ href: string; label: string } | null>(null);
+  const [handingOff,setHandingOff] = useState(false);
 
   useEffect(() => {
     const sync = () => {
@@ -197,6 +210,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   useEffect(() => {
     if (principalId === null) return;
     let cancelled = false;
+    sentAwayRef.current = false;
+    setSentAway(null);
     (async () => {
       let found;
       try {
@@ -226,7 +241,13 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       const held = await recover(id, principalId, tabId());
       if (cancelled) return;
       if (held?.key.includes('::aside::')) { asides.current.add(held.key); restoredBase.current = held.base; }
-      if (held && found.state === "draft") {
+      if (held && found.state === 'submitted') {
+        // Work held for a draft that has since been sent. When the sent version
+        // is the one it was built on, that is its base: sending changes no version.
+        seq.current = held.seq;
+        const base = held.base ?? (held.baseVersion === found.version ? { cards: onServerOf(found).cards } : undefined);
+        await showSent(found, { ...(held.report ?? found), state: 'draft', observations: held.observations }, base, held.baseVersion);
+      } else if (held && found.state === "draft") {
         seq.current = held.seq;
         serverVersion.current = held.baseVersion ?? 0;
         // The device's copy of the signature is as new as its observations.
@@ -255,7 +276,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     (next: Report, retry = false): Promise<boolean> => {
       if (!principalId) return Promise.resolve(false);
       // Two versions are on screen: nothing is sent until one is chosen.
-      if (conflictRef.current) return Promise.resolve(false);
+      if (conflictRef.current || sentAwayRef.current) return Promise.resolve(false);
 
       pending.current = next;
       setSaveState("saving");
@@ -286,7 +307,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         // than one save in flight for this report.
         chain.current = chain.current.then(async () => {
           const toSave = next;
-          if (!toSave || conflictRef.current) return;
+          if (!toSave || conflictRef.current || sentAwayRef.current) return;
           inFlight.current = true; saveCount.current += 1;
           try {
             const saved = await saveReport(toSave, serverVersion.current ?? toSave.version,principalId);
@@ -332,9 +353,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     // A second answer during the same conflict keeps the base the first one found.
     const base: DraftBase | undefined = restoredBase.current ?? (conflictRef.current ? conflictBaseRef.current : undefined)
       ?? (!conflictRef.current && known.version !== undefined && known.version === serverVersion.current ? { cards: known.cards, ...(known.signature !== undefined ? { signature: known.signature } : {}) } : undefined);
+    if (theirs.state !== 'draft') { await showSent(theirs, mine, base); return; }
     setOnServer(onServerOf(theirs));
     setSubmitError(null);
-    if (theirs.state !== 'draft') return;
     if (!compareDrafts(mine, theirs).differs) {
       serverVersion.current = theirs.version;
       await releaseIfCurrent(theirs.id, principalId, seq.current);
@@ -382,9 +403,123 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     }
   }
 
-  /** Tell other tabs on this device that the draft moved on. */
-  function announce(saved: Report) {
-    try { const channel = new BroadcastChannel(CHANNEL); channel.postMessage({ type: 'saved', reportId: saved.id, version: saved.version, tab: tabId() }); channel.close(); } catch {}
+  /**
+   * The draft was sent from somewhere else. Whatever this screen holds that the
+   * sent report does not is kept on the device and offered as a correction; the
+   * sent revision itself is never changed. With nothing missing, the sent report
+   * simply replaces the draft.
+   */
+  async function showSent(sent: Report, mine: Report, base?: DraftBase, builtOn = serverVersion.current) {
+    // Already shown: a save or check that overlapped the first answer brings nothing new,
+    // and handling it again would judge the sent report against itself and let the work go.
+    if (!principalId || sentAwayRef.current) return;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    sentAwayRef.current = true;
+    conflictRef.current = null; conflictBaseRef.current = undefined; restoredBase.current = undefined;
+    setConflict(null);
+    pending.current = null;
+    dismissUndo();
+    serverVersion.current = sent.version;
+    setOnServer(onServerOf(sent));
+    setSubmitError(null);
+    setSaveState('clean');
+    setReport(sent);
+    const work = mine.state === 'draft' ? unsentWork(mine, sent, base) : { changes: [], observations: [] };
+    if (!work.changes.length) {
+      await releaseIfCurrent(sent.id, principalId, seq.current);
+      await dropAsides();
+      setSentAway(null);
+      return;
+    }
+    setSentAway({ work, mine, ...(base ? { base } : {}) });
+    // The editor has gone from under the engineer: bring the offer into view.
+    window.scrollTo({ top: 0 });
+    // Kept under this tab's own key, so a reload comes back to the same offer.
+    try {
+      asides.current.add(await setAside({ reportId: mine.id, principalId, tab: tabId(), seq: seq.current, observations: mine.observations, baseVersion: builtOn ?? mine.version, report: mine, ...(base ? { base } : {}) }));
+      setUnheld(false);
+    } catch { setUnheld(true); }
+  }
+
+  /** Let this screen's changes go: the sent report is all there is. */
+  async function discardSentAway() {
+    if (!principalId || !report) return;
+    setHandingOff(true);
+    await releaseIfCurrent(report.id, principalId, seq.current);
+    await dropAsides();
+    setSentAway(null);
+    setHandingOff(false);
+  }
+
+  /**
+   * Start a correction to the sent report and put this screen's changes into
+   * it. A new correction is saved with them straight away. Where a correction
+   * was already started, or the save is refused, the changes are held on the
+   * device against it instead, so its editor compares the two before anything
+   * is saved. Offline, they wait on the device and save when it opens.
+   */
+  async function correctWithChanges() {
+    if (!principalId || !report || !sentAway) return;
+    const reason = handoffReason.trim();
+    if (!reason) { setHandoffError('Say why this correction is needed.'); return; }
+    setHandingOff(true);
+    setHandoffError('');
+    setHandoffLink(null);
+    const back = safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`);
+    try {
+      let work = sentAway.work, target: Report = report;
+      let draft = await requestCorrection(report.id, reason);
+      // A correction was already sent: carry the changes onto that revision
+      // instead, judged against the same base, so nothing it changed is undone.
+      for (let n = 0; draft.state !== 'draft'; n++) {
+        if (n === 5) throw new Error('Too many corrections were sent at once.');
+        // A correction links its defect cards to the issues already raised; those links are not this screen's changes.
+        const links = new Set(sentAway.mine.observations.filter(o => !o.linkedIssueId).map(o => o.id));
+        const asSent: Report = { ...draft, observations: draft.observations.map(o => { if (!links.has(o.id) || !o.linkedIssueId) return o; const { linkedIssueId: _link, ...rest } = o; return rest; }) };
+        work = unsentWork(sentAway.mine, asSent, sentAway.base);
+        if (!work.changes.length) break;
+        target = draft;
+        draft = await requestCorrection(draft.id, reason);
+      }
+      if (draft.state === 'draft') {
+        // Unsaved work on this device for that correction comes first: overwriting it here would lose it.
+        if (await recover(draft.id, principalId)) {
+          setHandoffError(`This device holds unsaved changes to rev ${draft.revision}. Open it so they are saved, then come back here to add yours. Your changes are still kept on this device.`);
+          setHandoffLink({ href: withViewReturn(`/reports/${draft.id}`, back), label: `Open rev ${draft.revision}` });
+          return;
+        }
+        const observations = carryIntoCorrection(work.observations, draft);
+        const carried: Report = { ...draft, observations };
+        let done = false, compare = draft.version !== 1;
+        if (!compare) {
+          try { await saveReport(carried, draft.version, principalId); done = true; }
+          catch (error) { compare = error instanceof SaveConflict; }
+        }
+        if (!done) {
+          const held = { reportId: draft.id, principalId, seq: clientId(), observations, report: carried, tab: tabId() };
+          // Version 0 is never current, so the correction's editor shows both before saving.
+          // Its base is the cards a correction starts with, so edits already made to it are suggested, not undone.
+          const base: DraftBase = { cards: Object.fromEntries(carryIntoCorrection(target.observations, draft).map(o => [o.id, savedCopy(o)])) };
+          if (compare) await setAside({ ...held, baseVersion: 0, base });
+          else await keep({ ...held, baseVersion: draft.version });
+        }
+      }
+      await releaseIfCurrent(report.id, principalId, seq.current);
+      await dropAsides();
+      setSentAway(null);
+      router.push(withViewReturn(`/reports/${draft.id}`, back));
+    } catch (error) {
+      setHandoffError(error instanceof ApiError && error.offline
+        ? 'No connection, so the correction could not be started. Your changes are still kept on this device: try again when you have signal.'
+        : `${error instanceof Error ? error.message : 'The correction could not be started.'} Your changes are still kept on this device.`);
+    } finally {
+      setHandingOff(false);
+    }
+  }
+
+  /** Tell other tabs on this device that the draft moved on, or was sent. */
+  function announce(saved: Report, type: 'saved' | 'sent' = 'saved') {
+    try { const channel = new BroadcastChannel(CHANNEL); channel.postMessage({ type, reportId: saved.id, version: saved.version, tab: tabId() }); channel.close(); } catch {}
   }
 
   /**
@@ -395,10 +530,13 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
    */
   const checkServer = useCallback(async () => {
     const current = latest.current;
-    if (!current || current.state !== 'draft' || !principalId || sending.current || conflictRef.current || inFlight.current) return;
+    if (!current || current.state !== 'draft' || !principalId || sending.current || inFlight.current) return;
     const started = saveCount.current, typed = seq.current;
     let found: Report | undefined;
     try { found = await getReport(current.id); } catch { return; }
+    // Sent from elsewhere: sending changes no version, so this is checked first, even mid-choice.
+    if (found && found.state !== 'draft' && !sending.current && latest.current?.state === 'draft') { await showConflict(found, latest.current); return; }
+    if (conflictRef.current) return;
     // A save from this tab overlapped the check, so its answer may be this tab's own save.
     if (!found || inFlight.current || saveCount.current !== started || found.version <= (serverVersion.current ?? 0)) return;
     if (found.state === 'draft' && pending.current === null && seq.current === typed) {
@@ -421,6 +559,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       if (message.type === 'hello' && message.tab === tabId()) channel?.postMessage({ type: 'taken', tab: message.tab });
       if (message.type === 'taken' && message.tab === tabId()) renewTabId();
       if (message.type === 'saved' && message.reportId === id && (message.version ?? 0) > (serverVersion.current ?? 0)) void checkServer();
+      if (message.type === 'sent' && message.reportId === id) void checkServer();
     };
     channel.postMessage({ type: 'hello', tab: tabId() });
     const onVisible = () => { if (document.visibilityState === 'visible') void checkServer(); };
@@ -637,6 +776,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         name: signerName.trim() || report.author,
       });
       if (principalId) await releaseIfCurrent(report.id, principalId, seq.current);
+      announce(sent, 'sent');
       setReport(sent);
       pending.current = null;
       setSaveState("clean");
@@ -829,6 +969,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         </div>
       )}
 
+      {sent && sentAway && mine && <SentElsewhere sent={report} work={sentAway.work} unheld={unheld} busy={handingOff} error={handoffError} errorLink={handoffLink}
+        reason={handoffReason} onReason={setHandoffReason} onCorrect={correctWithChanges} onDiscard={discardSentAway} />}
+
       {sent && (
         <div className={`note ${report.review === "returned" ? "note-bad" : "note-ok"}`} style={{ marginTop: 16 }}>
           {report.review === "returned" && (
@@ -844,7 +987,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           </p>
           {/* Each step after sending, the same steps the office sees. */}
           <SubmissionStages report={report} tagClass={toneClass} when={fmtWhen} />
-          {mine && !correcting && (
+          {mine && !correcting && !sentAway && (
             <div className="btn-row" style={{ marginTop: 12 }}>
               <button className="btn-sm" onClick={() => setCorrecting(true)}>
                 {report.review === "returned" ? "Make the correction" : "Make a correction"}

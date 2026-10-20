@@ -70,6 +70,7 @@ export function createReport(projectId: string, author: string, principal?: Prin
 }
 
 const CHANGED_ELSEWHERE = 'This draft was saved from another tab or device. Your copy is kept: choose what to keep.';
+const SENT_ELSEWHERE = 'This report has already been sent. Your changes are kept on this screen: start a correction to send them.';
 export function saveDraft(id: string, incoming: Report, expectedVersion?: number, requestId?: string): StoreOutcome<Report> {
   return atomic(() => {
     // The signature joins the digest only when there is one, so receipts taken
@@ -82,14 +83,16 @@ export function saveDraft(id: string, incoming: Report, expectedVersion?: number
       if (previous) {
         if (previous.reportId !== id || previous.digest !== digest) return reject('A save request ID was reused with different content.');
         const current = getReport(id);
-        if (!current || current.state !== 'draft') return reject('That save was received, but the report has since been sent.');
+        if (!current) return reject('No such report.',404);
+        // The sent report goes back with the refusal, so the screen can offer its unsaved work as a correction.
+        if (current.state !== 'draft') return { ...reject(SENT_ELSEWHERE), current };
         if (current.version !== (previous.version ?? previous.receipt?.version)) return { ...reject(CHANGED_ELSEWHERE), current };
         return {ok:true,value:current};
       }
     }
     const existing = getReport(id);
     if (!existing) return reject('No such report.',404);
-    if (existing.state !== 'draft') return reject('This report has already been submitted.');
+    if (existing.state !== 'draft') return { ...reject(SENT_ELSEWHERE), current: existing };
     if (expectedVersion !== existing.version) return { ...reject(CHANGED_ELSEWHERE), current: existing };
     const { draftSignature: _previous, ...rest } = existing;
     const saved: Report = { ...rest, observations: incoming.observations, ...(signature ? { draftSignature: signature } : {}), version: existing.version + 1, lastSavedAt: new Date().toISOString() };
