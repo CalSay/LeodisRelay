@@ -42,8 +42,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   A shared phone that is not signed out shows the last person's held work,
   which was already on the device. Work typed on the offline page goes up by
   itself because no editor holds it; work an editor holds is still saved by
-  that editor, and an editor opened while a send is running waits for it
-  to finish before reading the server or the phone (found in review: it
+  that editor, and an editor opened while its own report is going up waits
+  for that report only, saying "Putting the work from this phone onto the
+  server first…", before reading the server or the phone (found in review: it
   could otherwise open on a copy half-way up and then be told the draft
   changed elsewhere). A save refused because the draft
   changed elsewhere is never forced: the copy stays on the phone and the note

@@ -24,7 +24,7 @@ import { CheckEditor } from "@/components/CheckEditor";
 import { CHECK_ANSWERS, checkCounts, checkHint, reportTypeOf } from "@/lib/reportTypes";
 import { SignaturePad } from "@/components/SignaturePad";
 import type { Issue as IssueSummary } from "@/lib/types";
-import { heldSendSettled } from '@/lib/heldSend';
+import { heldSendBusy, heldSendSettled } from '@/lib/heldSend';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { useRouter } from 'next/navigation';
 import { correctReport as requestCorrection } from '@/lib/api';
@@ -93,6 +93,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   const [report, setReport] = useState<Report | null>(null);
   const [missing, setMissing] = useState(false);
+  const [waitingForHeld, setWaitingForHeld] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("clean");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -217,9 +218,13 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     sentAwayRef.current = false;
     setSentAway(null);
     (async () => {
-      // Work from the offline page may be going up as this opens (HeldWork.tsx).
-      await heldSendSettled();
-      if (cancelled) return;
+      // This report's work from the offline page may be going up as it opens (HeldWork.tsx).
+      if (heldSendBusy(id)) {
+        setWaitingForHeld(true);
+        await heldSendSettled(id);
+        if (cancelled) return;
+        setWaitingForHeld(false);
+      }
       let found;
       try {
         found = await getReport(id);
@@ -836,7 +841,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   if (!report) {
     return (
       <main className="wrap">
-        <div className="empty" style={{ marginTop: 32 }}>Loading</div>
+        <div className="empty" style={{ marginTop: 32 }} role="status">{waitingForHeld ? 'Putting the work from this phone onto the server first…' : 'Loading'}</div>
       </main>
     );
   }
