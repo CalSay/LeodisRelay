@@ -12,6 +12,8 @@ import { VERIFICATION, VERIFICATION_LABEL, issueQueryParams, type IssuePage, typ
 type Filter = Exclude<IssueView, 'all'> | 'all';
 type SortState = { key: IssueSort; direction: SortDirection } | null;
 const FILTERS: [Filter, string, boolean][] = [['open', 'Open', false], ['overdue', 'Overdue', true], ['verify', 'To verify', false], ['unassigned', 'Unassigned', false], ['notReviewed', 'Not reviewed', false], ['disputed', 'Disputed', true], ['closed', 'Closed', false], ['all', 'All', false]];
+// What an empty list means, in words, for each filter.
+const EMPTY: Record<Filter, string> = { open: 'No open issues', overdue: 'Nothing is past its target date', verify: 'Nothing is waiting to be verified', unassigned: 'Every open issue has an owner', notReviewed: 'Every issue has been reviewed', disputed: 'No issue is disputed', closed: 'No issues have been closed', all: 'No issues have been raised' };
 const TRADES = ['Electrical', 'HVAC', 'P&H', 'Other / non-Leodis'];
 const SORT_NAME: Record<IssueSort, string> = { reference: 'reference', issue: 'issue', project: 'project', raised: 'date raised', owner: 'owner', target: 'target date', work: 'work', confirmation: 'confirmation' };
 // On a phone the column headings are hidden, so the orders people use most are offered as one list.
@@ -79,7 +81,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const changeSort = (key: IssueSort) => setSort(current => current?.key === key ? { key, direction: current.direction === 'ascending' ? 'descending' : 'ascending' } : { key, direction: 'ascending' });
   const name = (id: string) => ctx.projects.find(p => p.id === id)?.projectName ?? id;
   const code = (id: string) => ctx.projects.find(p => p.id === id)?.id ?? '';
-  const source = (i: Issue) => { const r = i.raisedByReport ? snap?.reports.find(x => x.id === i.raisedByReport) : undefined; return r ? shortRef(r.reference) : i.source === 'individual' ? 'Flagged on site' : '—'; };
+  const source = (i: Issue) => { const r = i.raisedByReport ? snap?.reports.find(x => x.id === i.raisedByReport) : undefined; return r ? shortRef(r.reference) : i.source === 'individual' ? 'Flagged on site' : ''; };
   // The snag list takes one company, so it is passed on only when the text names one (ignoring case and spacing).
   const same = (a: string) => a.trim().replace(/\s+/g, ' ').toLowerCase();
   const owner = company ? result.owners.find(o => same(o) === same(company)) : undefined;
@@ -120,7 +122,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
         <td className="c-ref"><span className="ref">{i.reference}</span></td>
         <td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{i.description}</div><div className="rowsub">{i.location || 'no location'} · {i.affectedTrade ?? (i.reporterTrade ? `reported by ${i.reporterTrade}` : 'trade not recorded')}</div></td>
         <td data-label="Project">{name(i.projectId)}</td>
-        <td className="due" data-label="Raised">{fmtDay(i.raisedAt)}<div className="rowsub">{source(i)}</div></td>
+        <td className="due" data-label="Raised">{fmtDay(i.raisedAt)}{source(i) && <div className="rowsub">{source(i)}</div>}</td>
         <td data-label="Owner">{i.owner.trim() || <span className="late">Unassigned</span>}</td>
         <td className="due" data-label="Target">{i.targetDate ? <><b className={late ? 'late' : ''}>{i.targetDate}</b>{late && ` · ${daysLate(i.targetDate, day)}d late`}</> : <span className="fine">—</span>}</td>
         <td data-label="Work"><WorkTag i={i} day={day} /></td><td data-label="Confirmation"><ConfirmTag i={i} reviewOn={!!ctx.statOf(i.projectId)?.reviewOn} /></td>
@@ -131,7 +133,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
           {active && i.confirmation === 'disputed' && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'triage', issue: i })}>Triage</Btn>}
           {active && i.confirmation === 'provisional' && <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'confirm', issue: i })}>Confirm</BtnQ>}
           {!active && i.confirmation !== 'withdrawn' && <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'reopen', issue: i })}>Reopen</BtnQ>}
-        </div></td></tr>; }) : <tr><td colSpan={9} className="empty">{filter === 'all' ? 'No issues' : `No ${FILTERS.find(f => f[0] === filter)?.[1].toLowerCase()} issues`}{narrowed ? ' match these filters' : ''}.{narrowed && <> <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button></>}</td></tr>}
+        </div></td></tr>; }) : <tr><td colSpan={9} className="empty">{EMPTY[filter]}{narrowed ? ' for these filters' : ''}.{narrowed && <> <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button></>}</td></tr>}
     </tbody></table>
     {result.total > 0 && <nav className="pager" aria-label="Pages of the issue register">
       <span>Showing {first}–{last} of {result.total}</span>

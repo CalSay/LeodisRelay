@@ -75,6 +75,115 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   to sign; add `verify-accessibility.mjs` to the browser checks in
   `CLAUDE.md`.
 
+## 2026-10-20 — Office desk usability pass on a laptop and desktop
+
+- Walked the office team's day at 1366px and 1920px, light and dark, as an
+  Admin: office landing, project sheet, Inbox and its reader, Issues,
+  Variations, Safety actions, Search, spreadsheet downloads and Before
+  handover. Screenshots before and after are in the project's
+  `ui-review/office-desk/`.
+- Fixed, because they were wrong rather than a matter of taste:
+  - Clicking a row in the Variations register opened the office overview, not
+    the variation: the register and the variation sheet's crumbs linked by
+    project number while the desk routes by project id. Both now use the id.
+  - At 1366px the Variations register scrolled sideways and cut off Decline,
+    because the "Raised in the office · name" line under the date could not
+    wrap. That line now wraps in plain type, so the row fits.
+  - In the Inbox reader the report stages ran into each other ("Waiting for
+    the PDF" over "Not yet read") at both widths: the desk's tag style
+    stopped them wrapping. Each stage's tag now wraps inside its own step.
+- Made consistent across Inbox, Issues and Variations (decided here, since
+  Issues already worked this way): a "Clear filters" button when a project,
+  trade or reason is chosen; the chosen chip marked pressed for screen
+  readers; Variations opens on `#/variations/show/<filter>` and the tab
+  itself starts again from "Awaiting instruction"; and an empty list says
+  what it means ("Every report has been read", "Nothing is waiting to be
+  verified", "No variations have been declined") instead of "Nothing here",
+  "No to verify issues" or "No variations all". The Inbox reader no longer
+  offers "Open the newest" for an empty list. The Issues register no longer
+  shows a lone dash under a date when the source report is unknown.
+- A project's sheet names the project in the browser tab ("Tetley Hall -
+  Block E · Office"), so several tabs can be told apart. Search opened on
+  its own goes "Back to Office" for Managers and Admins (it said "Back to
+  Site"). On a desktop the app bar shows the whole name and role instead of
+  "Office Admin · A…".
+- Help "What's new": "A tidier office desk".
+- Not changed: the report editor and offline pages (another thread is
+  there), wording of the long notes under each register, column order (each
+  register already leads with reference, title, project and date), and the
+  standalone pages' layout (Safety actions, Search, Before handover read
+  well at both widths).
+- Checks: `npm run typecheck`, `npm test`, `npm run build`, the new
+  `scripts/verify-office-desk.mjs` (73 checks at 1366 and 1920px, light and
+  dark) and the existing office, navigation, search, help, accessibility and
+  engineer browser checks (listed in the PR). `verify-issue-register.mjs`
+  now expects the new empty-list wording ("for these filters").
+- Not verified: Safari, Firefox and Edge; real office screens and zoom
+  levels other than 100%; a real screen reader.
+- Proposed (not added to `docs/tasks.json`): "UI-4 Office desk usability
+  pass at 1366 and 1920px". Follow-ups, too big for this PR: shorten the
+  long explanatory notes under each register into a Help link; let the
+  Variations register page on the server like Issues once it grows; a
+  "Download spreadsheet" on the Inbox; save each register's filters per
+  person so they survive a reload.
+
+## 2026-10-20 — Issues over time (new feature, proposed as FE-8)
+
+- Why this feature: every progress meeting asks "is the issue list getting
+  shorter?", and RELAY only answered for today (the register, snag lists,
+  Before handover). Seeing the trend tells the site team their closing work
+  is paying off and tells the office early when a project is slipping.
+  Chosen by Claude under Cal's standing autonomy and freedom to add
+  features; it is outside the report editor and the offline page, where
+  another thread works, and does not touch the office registers.
+- What it is: `/issue-trend?project=…`, every role on the project (it counts
+  issues every trade can already read). A headline ("Getting shorter: 3
+  issues open, down from 6 four weeks ago"), four figures (open now and past
+  target, raised and closed in the last four weeks, typical days to close,
+  oldest open issue with a link), a 12-week bar chart of what was open at
+  the end of each week with the past-target part in the alert colour (tap
+  or hover a week to read it out; legend, readout and a table so colour is
+  never the only cue), then the same figures week by week as a table.
+  Linked from "This project" on the engineer home and the office project
+  sheet; Back returns to wherever it was opened from.
+- Rules (`lib/issueTrend.ts`, pure): weeks run Monday to Sunday in the office
+  calendar; the current week counts up to today. History is rebuilt from what
+  each issue holds now: raised day, and for a closed issue the day of its
+  last office check. So an issue closed, reopened and still open counts as
+  open throughout; put forward as fixed is still open; withdrawn issues are
+  left out; a closed issue with no recorded check day counts as raised but
+  never as open or closed (the page says how many). "Past target" is judged
+  on each week's last day against the issue's target date as it is now, so a
+  target moved later shows fewer late in earlier weeks; like the register,
+  put forward as fixed still counts as late (Before handover does not). The
+  page says all of this in its footer. Hovering a week changes the readout
+  only; tapping, clicking or focusing picks it (`aria-pressed`).
+  It stores and changes nothing and makes no SharePoint write.
+- Not near rejected scope: no locations are grouped or matched (EXP-4), no
+  photographs (FE-2), no routing or requests (EXP-2).
+- Help: "What's new" entry `issue-trend` and a guide link.
+- A fresh-context review found no counting or access bugs; it asked for the
+  footer to say how target dates and undated closures count, for hover not
+  to change `aria-pressed`, and for the readout not to repeat each bar's
+  label to screen readers. All fixed.
+- Verified (Node 22 in this session; CI runs Node 24): `npm run typecheck`,
+  `npm test` (four new cases in `tests/issueTrend.test.ts`), `npm run build`,
+  new `scripts/verify-issue-trend.mjs` (28 checks: 390px light engineer from
+  home, 1440px dark manager from the office sheet, headline, figures, chart
+  readout by tap and hover, table, no sideways scroll, tap targets, Back
+  links, a project with no issues), `verify-accessibility` with
+  `/issue-trend` added (340 checks), and `verify-help`,
+  `verify-engineer-layout`, `verify-role-access`, `verify-before-handover`,
+  `verify-navigation`. Chart colours checked with a palette validator:
+  open and past-target bars are far enough apart in both themes for normal
+  and colour-blind vision. Screenshots in the project's `ui-review/issue-trend/`.
+- Not verified: a physical phone, Safari and Firefox, SharePoint mode, real
+  project history (the figures are only as good as the check dates held).
+- Not in `docs/tasks.json` (no task covers it). Proposed: "FE-8 Issues over
+  time: a project's issues raised, closed and open week by week, read-only".
+  Follow-ups: the same across every project on the office desk; a trend by
+  company on Issues by company.
+
 ## 2026-10-20 — FE-3e: offline capture, third slice (sign an inspection with no signal)
 
 - Why: #46 let an inspection be started and answered with no signal but it
@@ -371,6 +480,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   real phones, and rolling back after an inspection exists (the old version
   would show its checks as plain cards; not tried).
 
+
 ## 2026-10-20 — FE-3e: offline capture, second slice (start an inspection)
 
 - Why this slice: #41 proposed it first, and it is the gap engineers would hit
@@ -571,6 +681,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   place for the whole walk, prefilled into each action); a third type such as
   a commissioning record with readings; let the office edit checklists; add
   `verify-handover-inspection.mjs` to the browser checks in `CLAUDE.md`.
+
 
 ## 2026-10-20 — FE-3e: offline capture, first slice
 

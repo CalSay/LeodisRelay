@@ -4,6 +4,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useProjects } from './ProjectContext';
+import { usePrincipal } from './PrincipalContext';
+import { canManage } from '@/lib/auth/access';
 import { MIN_QUERY, searchWords, type SearchGroup, type SearchHit, type SearchKind, type SearchResults } from '@/lib/search';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 
@@ -29,7 +31,9 @@ export function SearchPage({ initialQuery, initialProject, returnTo }: { initial
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
-  const back = safeViewReturn(returnTo, '/engineer');
+  const principal = usePrincipal();
+  // Opened on its own, Back goes to the person's own landing page: the office desk for the office team.
+  const back = safeViewReturn(returnTo, principal && canManage(principal) ? '/office' : '/engineer');
   const here = `/search?q=${encodeURIComponent(query.trim())}${project ? `&project=${encodeURIComponent(project)}` : ''}${returnTo ? `&returnTo=${encodeURIComponent(back)}` : ''}`;
   const ready = query.trim().length >= MIN_QUERY;
   const words = searchWords(query);
