@@ -7,7 +7,7 @@ import {
   getReport,
   newObservation,
   openIssues as fetchOpenIssues,
-  projectLocations,
+  projectSuggestions,
   reviewReport,
   saveReport,
   submitReport,
@@ -15,6 +15,7 @@ import {
   type Report,
 } from "@/lib/api";
 import { ApiError, SaveConflict } from "@/lib/api";
+import type { ProjectSuggestions } from "@/lib/suggestions";
 import { clientId } from '@/lib/clientId';
 import { dropAside, hasUnsent, keep, recover, releaseIfCurrent, setAside } from "@/lib/localDraft";
 import { KindPicker, ObservationEditor } from "@/components/ObservationEditor";
@@ -82,7 +83,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [correcting,setCorrecting] = useState(false);
   const [correctionReason,setCorrectionReason] = useState('');
   const [correctionError,setCorrectionError] = useState('');
-  const [locations,setLocations] = useState<string[]>([]);
+  const [suggestions,setSuggestions] = useState<ProjectSuggestions>({ locations: [], companies: [] });
 
   const [report, setReport] = useState<Report | null>(null);
   const [missing, setMissing] = useState(false);
@@ -487,7 +488,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     fetchOpenIssues(report.projectId)
       .then(setProjectIssues)
       .catch(() => setProjectIssues([]));
-    projectLocations(report.projectId).then(setLocations).catch(() => setLocations([]));
+    projectSuggestions(report.projectId).then(setSuggestions).catch(() => setSuggestions({ locations: [], companies: [] }));
   }, [report?.projectId]);
 
   function update(next: Report) {
@@ -768,7 +769,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           observation={observation}
           index={index}
           openIssues={projectIssues}
-          locations={locations}
+          locations={suggestions.locations}
+          companies={suggestions.companies}
           photoWhere={(photoId) => { const w = whereOf.get(observation.id); const at = observation.photos.findIndex(p => p.id === photoId); return w && at >= 0 ? w.each[at] : undefined; }}
           onChange={(next) => update({ ...report, observations: report.observations.map((o) => (o.id === next.id ? next : o)) })}
           onRemove={() => removeCardNow(observation.id)}

@@ -14,6 +14,7 @@ import { capturePhoto, uploadPhotos } from './localMedia';
 import { localSaveJournal } from './localSaveJournal';
 import { SaveConflict, saveWithJournal, type SaveRequest } from './saveRequest';
 import type { SinceLastVisit } from './sinceLastVisit';
+import type { ProjectSuggestions } from './suggestions';
 
 const REPORTABLE_STATUSES = ["4. Active", "5. Defects Liability"];
 
@@ -265,10 +266,10 @@ export { SaveConflict } from './saveRequest';
 export type { Issue, IssueEvent, Observation, Photo, Report, ReportState, ReviewState, ReviewFinding } from "./types";
 export { reviewReport } from "./review";
 
-/** Places already typed on this project, newest first, for the Where chips. Never a catalogue. */
-export async function projectLocations(projectId: string): Promise<string[]> {
-  const data = await parse<{ locations: string[] }>(await request(`/api/locations?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
-  return data.locations;
+/** Places and responsible companies already typed on this project, newest first, for the card chips. Never a catalogue. */
+export async function projectSuggestions(projectId: string): Promise<ProjectSuggestions> {
+  const data = await parse<Partial<ProjectSuggestions>>(await request(`/api/locations?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
+  return { locations: data.locations ?? [], companies: data.companies ?? [] };
 }
 
 /* --------------------------------------------------------------- variations */
