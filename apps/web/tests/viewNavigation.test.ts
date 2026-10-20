@@ -40,3 +40,8 @@ test('a report opened from site coverage returns to the same fortnight', () => {
   const coverage = '/coverage?start=2026-09-28&returnTo=%2Foffice%23%2Fprojects';
   assert.equal(safeViewReturn(coverage, '/office'), coverage);
 });
+
+test('a snag list or issue opened from open issues by company returns to the same search', () => {
+  const companies = '/companies?q=acme&returnTo=%2Foffice%23%2Fissues';
+  assert.equal(safeViewReturn(companies, '/office'), companies);
+});

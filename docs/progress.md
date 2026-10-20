@@ -4,6 +4,64 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Open issues by company (new feature, proposed as NEW-7)
+
+- New office page `/companies`, opened from "By company" on the office
+  overview and on the Issues register: one card per company or person named
+  as an issue owner, across every project open to the manager. Each card
+  gives what is still to put right, how much is past target, what has been
+  marked fixed and waits for the office to check, and what was verified and
+  closed in the last 4 weeks; the item waiting longest (linked, with its
+  age); the trades involved; and one line per project with a "Snag list"
+  button for that company and project. Headline counts across the top, a
+  note when open issues have nobody named (linking to the register), and a
+  "Find a company or person" box kept in the address.
+- Why this feature: chasing subcontractors is a weekly office job, and the
+  snag list (NEW-2) works one project at a time, so answering "what does
+  Acme still owe us, and how late is it?" meant opening every project. This
+  was the snag list thread's suggested next step. It reads the issue
+  register only: no new store, no SharePoint write, no email, nothing sent
+  to the company.
+- Decisions: office only (Managers and Admins), like site coverage;
+  engineers get a 403 from `/api/company-issues` and are sent to the hub
+  from the page. Owners are free text, so a company is matched ignoring case
+  and spacing (as the snag list does) and labelled as its earliest issue
+  spelled it; "Acme" and "Acme Ltd" stay two, as said on the page, rather
+  than guessing. Withdrawn issues are left out; a target of today is not late; work
+  marked fixed but not yet checked still counts as past target once its
+  target has gone, the issue register's and snag list's rule, so the
+  counts agree with the snag list each line opens (the review caught a
+  first version that differed). "Closed lately" counts issues
+  closed now whose last office verification fell in the last 28 days, so a
+  company with only finished work still shows ("All clear"), and good work
+  is seen as well as late work. Cards are ordered most past target first,
+  then most to put right. Issues count on every reportable project (active or defects
+  liability) the person may open, the issue register's rule. Each project
+  line opens its snag list with the company as written on that project. Not EXP-2
+  (no requests or routing, nobody is contacted), not EXP-4 (no locations).
+  Rules in `lib/companyIssues.ts` (pure).
+- Verified on Node 24: `npm run typecheck`, `npm test` (8 new tests in
+  `tests/companyIssues.test.ts`, 1 in `viewNavigation.test.ts`), `npm run
+  build`. New `scripts/verify-company-issues.mjs` passed (28 checks:
+  signed-out and engineer refusals, links from the overview and the
+  register, order, per-company and headline counts, two spellings as one,
+  withdrawn left out, oldest item and its age, recent closures, nobody
+  named, finding a company, a snag list opened for that company and project
+  and Back keeping the search, 1440px dark and 390px light with no sideways
+  scroll and 44px snag list links). `verify-role-access` (61), `verify-office-landing` (19),
+  `verify-office-actions` (41), `verify-office-phone` (95),
+  `verify-snag-list` (24), `verify-site-coverage` (30) and
+  `verify-issue-register` (70) passed. Screenshots in the
+  project's `ui-review/company-issues/`.
+- Not verified: a physical phone, SharePoint mode (no live tenant), a
+  register with thousands of issues (it reads the whole authorised register
+  per request, as the register's own counts do).
+- Proposed task (not added to `docs/tasks.json`): "NEW-7 Open issues by
+  company — the office sees each company's open, past-target, to-check and
+  recently closed issues across every project, with each project's snag
+  list; browser check at 390 and 1440px, light and dark." Proposed: add
+  `verify-company-issues.mjs` to the browser checks list in `CLAUDE.md`.
+
 ## 2026-10-20 — FE-6b: traceable corrections and revisions
 
 - Issue history events now record the report revision behind them: an

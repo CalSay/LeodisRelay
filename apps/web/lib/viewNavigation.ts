@@ -1,4 +1,4 @@
-const RETURNABLE_VIEWS = new Set(['/office', '/engineer', '/projects', '/search', '/issues/snag-list', '/weekly-summary', '/photos', '/coverage']);
+const RETURNABLE_VIEWS = new Set(['/office', '/engineer', '/projects', '/search', '/issues/snag-list', '/weekly-summary', '/photos', '/coverage', '/companies']);
 
 /** Keep detail-page return links inside RELAY and within a known workspace. */
 export function safeViewReturn(raw: string | undefined, fallback: string): string {
