@@ -33,7 +33,7 @@ test('places only my sent reports on their visit day, across projects, never any
   assert.deepEqual(w.days.map(d => d.day), ['2026-10-12', '2026-10-13', '2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18']);
   const tue = w.days[1]!;
   assert.deepEqual(tue.projects.map(p => p.projectId), ['p2', 'p1'], 'projects in project-number order');
-  assert.deepEqual(tue.projects[1]!.reports[0]!.kinds, { update:1, defect:1, instruction:0, access:0 });
+  assert.deepEqual(tue.projects[1]!.reports[0]!.kinds, { update:1, defect:1, instruction:0, access:0, check:0 });
   assert.equal(tue.projects[1]!.reports[0]!.photos, 1);
   assert.deepEqual(tue.projects[1]!.reports[0]!.locations, ['Level 3 riser']);
   assert.equal(w.days[2]!.projects.length, 0, 'another engineer\'s report is not mine');
@@ -56,7 +56,7 @@ test('my drafts for the week are listed apart and do not make a day with records
     report({ id:'their-draft', state:'draft', visitDate:'2026-10-15', authorId:other.id }),
     report({ id:'fix', state:'draft', visitDate:'2026-10-16', corrects:'x' }),
   ] }, engineer, MONDAY, TODAY);
-  assert.deepEqual(w.days[3]!.projects[0]!.drafts, [{ id:'draft', reference:'011LME-SPR-001', cards:2, correction:false }]);
+  assert.deepEqual(w.days[3]!.projects[0]!.drafts, [{ id:'draft', reference:'011LME-SPR-001', cards:2, correction:false, typeName:'Site update' }]);
   assert.equal(w.days[4]!.projects[0]!.drafts[0]!.correction, true);
   assert.deepEqual(w.totals, { days:0, projects:0, reports:0, flagged:0, issueUpdates:0, drafts:2 });
 });

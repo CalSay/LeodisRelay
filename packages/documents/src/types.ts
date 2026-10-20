@@ -26,9 +26,18 @@ export interface DocObservation {
   actionNeeded: string;
   owner: string;
   photos: DocPhoto[];
+  /**
+   * On an inspection, the question this answers and the answer in words.
+   * `tone` is the answer as data, so the layout never parses the label.
+   */
+  check?: { question: string; answer: string; tone: "ok" | "action" | "na" | "open" };
 }
 
 export interface DocReport {
+  /** The kind of document, as printed above the project name. Absent: a site progress report. */
+  documentTitle?: string;
+  /** A checklist report: results table, then only the checks with something to show. */
+  inspection?: boolean;
   reference: string;
   projectName: string;
   projectNumber: string;

@@ -25,8 +25,11 @@ export function SignaturePad({
   initialImage,
   onNameChange,
   onChange,
+  hint = "Your name appears on the report whether or not you sign. The client signs the paper copy.",
 }: {
   name: string;
+  /** What signing means for this kind of report, under the pad. */
+  hint?: string;
   /** A signature saved earlier. Read once, when the pad first appears. */
   initialImage?: string | null;
   onNameChange: (next: string) => void;
@@ -199,9 +202,7 @@ export function SignaturePad({
         </button>
       </div>
 
-      <p className="hint">
-        Your name appears on the report whether or not you sign. The client signs the paper copy.
-      </p>
+      <p className="hint">{hint}</p>
     </div>
   );
 }

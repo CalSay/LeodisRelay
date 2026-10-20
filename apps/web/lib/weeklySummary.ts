@@ -2,6 +2,7 @@ import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import type { ObservationType } from './fixtures';
 import type { Issue, Report, Variation } from './types';
+import { checkCounts, reportTypeOf } from './reportTypes';
 
 /**
  * A project's week on one page: who was on site, what they reported, which
@@ -48,6 +49,8 @@ export interface WeekReport {
   photos: number;
   /** Where the work was, as the engineer wrote it, without repeats. */
   locations: string[];
+  /** An inspection: its name and how its checks came out. Its checks are not counted as cards. */
+  inspection?: { name: string; ok: number; action: number; na: number };
 }
 export interface WeekIssue { id: string; reference: string; location: string; description: string; owner: string; trade?: string; at: string; status: string }
 export interface WeekVariation { id: string; reference: string; location: string; description: string; at: string; status: string; workDone: boolean }
@@ -72,7 +75,7 @@ export interface WeeklySummary {
 
 const WORK: Record<Issue['work'], string> = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Fixed, to check', closed: 'Closed' };
 const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined' };
-const emptyKinds = (): Record<ObservationType, number> => ({ update: 0, defect: 0, instruction: 0, access: 0 });
+const emptyKinds = (): Record<ObservationType, number> => ({ update: 0, defect: 0, instruction: 0, access: 0, check: 0 });
 const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');
 const byRef = (a: { reference: string }, b: { reference: string }) => a.reference.localeCompare(b.reference, 'en', { numeric: true });
 
@@ -111,8 +114,11 @@ export function weeklySummary(sources: WeekSources, principal: Principal, projec
       const place = tidy(o.location);
       if (place && !places.has(place.toLowerCase())) places.set(place.toLowerCase(), place);
     }
+    const type = reportTypeOf(r);
+    const checks = type.checklist ? checkCounts(r.observations) : undefined;
     return { id: r.id, reference: r.reference, visitDate: r.visitDate, author: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}), revision: r.revision, review: r.review, kinds,
-      photos: r.observations.reduce((n, o) => n + o.photos.length, 0), locations: [...places.values()] };
+      photos: r.observations.reduce((n, o) => n + o.photos.length, 0), locations: [...places.values()],
+      ...(checks ? { inspection: { name: type.name, ok: checks.ok, action: checks.action, na: checks.na } } : {}) };
   }).sort((a, b) => a.visitDate.localeCompare(b.visitDate) || byRef(a, b));
   const kinds = emptyKinds();
   for (const r of reports) for (const k of Object.keys(kinds) as ObservationType[]) kinds[k] += r.kinds[k];

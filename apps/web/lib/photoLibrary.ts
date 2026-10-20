@@ -79,8 +79,9 @@ export function photoLibrary(sources: LibrarySources, principal: Principal, proj
   const superseded = new Set(sent.map(r => r.corrects).filter((id): id is string => Boolean(id)));
   const ordered = [...sent.filter(r => !superseded.has(r.id)), ...sent.filter(r => superseded.has(r.id)).sort((a, b) => b.revision - a.revision)];
   for (const r of ordered) for (const o of r.observations) {
-    const [group, label] = CARD[o.type] ?? ['progress', 'Progress'];
-    for (const p of o.photos) add(p, { day: r.visitDate, at: r.serverAcknowledgedAt ?? r.visitDate, group, label, location: tidy(o.location), description: tidy(o.whatHappened),
+    // An inspection's photograph is labelled by its answer and placed by its question.
+    const [group, label] = o.check ? (o.check.answer === 'action' ? ['defect', 'Inspection: action needed'] as const : ['progress', 'Inspection check'] as const) : CARD[o.type] ?? ['progress', 'Progress'];
+    for (const p of o.photos) add(p, { day: r.visitDate, at: r.serverAcknowledgedAt ?? r.visitDate, group, label, location: tidy(o.check ? o.check.question : o.location), description: tidy(o.whatHappened),
       by: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}), source: { kind: 'report', id: r.id, reference: r.reference } });
   }
 

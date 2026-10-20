@@ -6,6 +6,7 @@ import { validateObservations } from '@/lib/validatePhotos';
 import { invalidSignature } from '@/lib/validateSignature';
 import { canManage, ownsReport } from '@/lib/auth/access';
 import { IssueSyncError } from '@/lib/sharepoint/issues';
+import { invalidShape } from '@/lib/reportTypes';
 
 export const dynamic = "force-dynamic";
 
@@ -51,6 +52,8 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   }
   const validation = await validateObservations(body.observations, id, existing.observations, existing.corrects);
   if (validation) return NextResponse.json({ reason: validation }, { status: 422 });
+  const shape = invalidShape(existing, body.observations);
+  if (shape) return NextResponse.json({ reason: shape }, { status: 422 });
   const signatureProblem = invalidSignature(body.signature);
   if (signatureProblem) return NextResponse.json({ reason: signatureProblem }, { status: 422 });
 

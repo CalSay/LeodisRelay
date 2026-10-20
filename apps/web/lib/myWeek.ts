@@ -1,3 +1,4 @@
+import { checkCounts, reportTypeOf } from './reportTypes';
 import type { Principal } from '@relay/platform';
 import { canReadReport, ownsReport } from './auth/access';
 import type { ObservationType } from './fixtures';
@@ -24,8 +25,12 @@ export interface MyWeekReport {
   photos: number;
   /** Where the work was, as written, without repeats. */
   locations: string[];
+  /** An inspection: its name and how many checks need action, said instead of counting its checks. */
+  inspection?: { name: string; action: number };
 }
-export interface MyWeekDraft { id: string; reference: string; cards: number; correction: boolean }
+export interface MyWeekDraft { id: string; reference: string; cards: number; correction: boolean;
+  /** What kind of report the draft is, such as "Safety inspection". */
+  typeName: string }
 export type MyWeekIssueKind = 'flagged' | 'progress' | 'fixed';
 export interface MyWeekIssue { id: string; reference: string; description: string; location: string; at: string; kind: MyWeekIssueKind }
 export interface MyWeekProject {
@@ -53,7 +58,7 @@ export interface MyWeekSources { reports: Report[]; issues: Issue[] }
 const addDays = (ymd: string, n: number) => { const d = new Date(`${ymd}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');
 const byRef = (a: { reference: string }, b: { reference: string }) => a.reference.localeCompare(b.reference, 'en', { numeric: true });
-const emptyKinds = (): Record<ObservationType, number> => ({ update: 0, defect: 0, instruction: 0, access: 0 });
+const emptyKinds = (): Record<ObservationType, number> => ({ update: 0, defect: 0, instruction: 0, access: 0, check: 0 });
 
 /**
  * `projects` are the projects the person may open, in the order the app lists
@@ -88,13 +93,15 @@ export function myWeek(projects: MyWeekProjectSource[], sources: MyWeekSources, 
       const place = tidy(o.location);
       if (place && !places.has(place.toLowerCase())) places.set(place.toLowerCase(), place);
     }
+    const type = reportTypeOf(r), checks = type.checklist ? checkCounts(r.observations) : undefined;
     slot(r.visitDate, r.projectId)?.reports.push({ id: r.id, reference: r.reference, revision: r.revision, kinds,
-      photos: r.observations.reduce((n, o) => n + o.photos.length, 0), locations: [...places.values()] });
+      photos: r.observations.reduce((n, o) => n + o.photos.length, 0), locations: [...places.values()],
+      ...(checks ? { inspection: { name: type.name, action: checks.action } } : {}) });
   }
   // Drafts are theirs alone and not yet records, so they are counted apart.
   for (const r of readable) {
     if (r.state !== 'draft' || !ownsReport(principal, r) || !inWeek(r.visitDate)) continue;
-    slot(r.visitDate, r.projectId)?.drafts.push({ id: r.id, reference: r.reference, cards: r.observations.length, correction: Boolean(r.corrects) });
+    slot(r.visitDate, r.projectId)?.drafts.push({ id: r.id, reference: r.reference, cards: r.observations.length, correction: Boolean(r.corrects), typeName: reportTypeOf(r).name });
   }
 
   // Issue changes this person made on the issue itself. A sighting or fix

@@ -22,14 +22,14 @@ const fmtDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString(
 const fmtShort = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', { ...LONDON, day: 'numeric', month: 'short', year: 'numeric' });
 const fmtSent = (at: string) => { const d = new Date(at); return Number.isNaN(d.getTime()) ? '' : `${d.toLocaleDateString('en-GB', { ...LONDON, day: 'numeric', month: 'short' })}, ${d.toLocaleTimeString('en-GB', { ...LONDON, hour: '2-digit', minute: '2-digit' })}`; };
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
-const KIND: Record<ObservationType, [string, string]> = { update: ['Progress', 'progress'], defect: ['Defect', 'defect'], access: ['Access problem', 'access'], instruction: ['Variation required', 'variation'] };
+const KIND: Record<ObservationType, [string, string]> = { update: ['Progress', 'progress'], defect: ['Defect', 'defect'], access: ['Access problem', 'access'], instruction: ['Variation required', 'variation'], check: ['Check', 'progress'] };
 const PHOTOS_SHOWN = 4;
 
 function Card({ c, entry, here }: { c: DiaryCard; entry: DiaryEntry; here: string }) {
-  const [label, tone] = KIND[c.type] ?? ['Update', 'progress'];
+  const [label, tone] = c.check ? [c.check.answer, c.check.tone === 'action' ? 'defect' : 'progress'] : KIND[c.type] ?? ['Update', 'progress'];
   const extra = c.photos.length - PHOTOS_SHOWN;
   return <li className={`diary-card diary-tone-${tone}`}>
-    <p className="diary-card-head"><span className="diary-kind">{label}</span>{c.location ? <strong>{c.location}</strong> : <span className="diary-muted">No location recorded</span>}</p>
+    <p className="diary-card-head"><span className="diary-kind">{label}</span>{c.check ? <strong>{c.check.question}</strong> : c.location ? <strong>{c.location}</strong> : <span className="diary-muted">No location recorded</span>}</p>
     {c.whatHappened && <p className="diary-text">{c.whatHappened}</p>}
     {c.actionNeeded && <p className="diary-sub"><span>Action needed</span>{c.actionNeeded}</p>}
     {c.owner && <p className="diary-sub"><span>Who</span>{c.owner}</p>}
@@ -60,7 +60,9 @@ function Entry({ e, here, filtered }: { e: DiaryEntry; here: string; filtered: b
         <p>Earlier {earlier.length === 1 ? 'revision' : 'revisions'}: {earlier.map((r, n) => <span key={r.id}>{n > 0 && ', '}<Link href={withViewReturn(`/reports/${r.id}`, here)}>rev {r.revision}{r.sentAt ? `, sent ${fmtSent(r.sentAt)}` : ''}</Link></span>)}</p>
       </div>}
     </header>
+    {e.inspection && <p className="diary-inspection"><b>{e.inspection.name}</b>{[`${e.inspection.ok} satisfactory`, plural(e.inspection.action, 'action'), `${e.inspection.na} not applicable`].join(' · ')}</p>}
     {e.cards.length ? <ul className="diary-cards">{e.cards.map(c => <Card key={c.id} c={c} entry={e} here={here} />)}</ul>
+      : e.inspection ? (filtered ? null : <p className="diary-muted diary-empty-report">Nothing needed action.</p>)
       : <p className="diary-muted diary-empty-report">Sent with no cards.</p>}
     {filtered && e.cards.length < e.cardCount && <p className="diary-partial">Showing {e.cards.length} of {plural(e.cardCount, 'card')}. <Link href={withViewReturn(`/reports/${e.reportId}`, here)}>Open the report for all of them</Link></p>}
   </article>;

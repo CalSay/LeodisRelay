@@ -4,6 +4,75 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — EXP-5: report types, first type a safety inspection
+
+- RELAY now has report types (`lib/reportTypes.ts`). The site update is
+  unchanged and is still what every report without a `reportType` is. The
+  first new type is a **safety inspection**: a weekly walk round Leodis's own
+  work areas, with 12 fixed checks (housekeeping, access, work at height,
+  temporary electrics, isolations, hot works, fire routes, PPE, COSHH, RAMS,
+  storage, welfare). Each check is answered Satisfactory, Action needed or
+  Not applicable. Action needed asks what is wrong and what needs doing
+  (both required) and who is to do it and a photograph (suggested). It is
+  started from a new "Do a safety inspection" tile on the engineer home and
+  numbered in its own series (`011LME-SSI-001`).
+- Shared, not copied: it uses the same draft, autosave, device copy, conflict
+  choice, photographs, Undo, sending, revisions and corrections, PDF worker
+  and preview as the site update. Its checks are stored as cards of kind
+  `check` that keep the question they were asked, so a sent inspection reads
+  the same if the wording changes later.
+- Rules that differ from the progress workflow, as EXP-5 asks: every check
+  must be answered; a drawn signature is required (checked on the device and
+  again by the server); a save cannot add, remove, reword or retype a check
+  (`invalidShape`, so a check cannot become a defect); sending raises no
+  issues or variations, because safety actions are not defects in Leodis's
+  work and would muddle snag lists and the company chase list. The actions are
+  listed first on the PDF ("Actions arising") with who is to do each one.
+- Read back everywhere sent reports are read: the PDF and on-screen document
+  (title "Site Safety Inspection", "Inspection results" table, then notes and
+  photographs only for checks with something to show), the office report
+  sheet and register chips ("Safety inspection", "1 action"), the site diary
+  (a summary line, only checks needing action or with notes or photographs as
+  cards, and an "Inspections" filter), the weekly summary, since your last
+  visit, search, the photo library, unfinished reports, the notification
+  email text (still held in the outbox; nothing is sent).
+- Why this type first: Cal did not name one, and under his instruction to
+  decide without him it is the clearest structured inspection an M&E
+  engineer does every week, it needs no client or legal wording, and it
+  proves the engine handles a report that is not built from free cards and
+  does not raise records. Not FE-2, EXP-2 or EXP-4: no new photo workflow, no
+  routing, locations stay free text.
+- Verified on Node 24: `npm run typecheck`, `npm test` (13 new tests in
+  `tests/reportTypes.test.ts`; two existing tests now expect the extra
+  `check: 0` kind count), `npm run build`. New
+  `scripts/verify-report-types.mjs` passed (90 checks, 390px light and
+  1440px dark): start from home, answer all 12 with one action and one N/A,
+  photograph, signature required then drawn, send, server copy, no issue or
+  variation raised, the draft PDF's words (via `pdftotext`), sent view, site
+  diary, office sheet as a manager. Also passed unchanged:
+  `verify-role-access`, `verify-engineer-layout`, `verify-signature-reload`,
+  `verify-search`, `verify-report-editor`, `verify-undo-remove`,
+  `verify-site-diary`, `verify-weekly-summary`, `verify-draft-conflict`,
+  `verify-sent-elsewhere`, `verify-same-location`, `verify-suggestions`,
+  `verify-unfinished-reports`, `verify-office-actions`, `verify-photo-library`,
+  `verify-since-last-visit`, `verify-submission-stages`,
+  `verify-offline-drafts`, `verify-engineer-nav`, `verify-photo-uploads`,
+  `verify-review-queue`, `verify-issue-link`, `verify-office-landing`.
+- Fresh-context review found three places still reading an inspection as a
+  site update (the office project register's "progress only", the
+  sent-elsewhere panel naming cards by location, the offline recovery page
+  heading every check "Update"); all three now show the question and answer.
+- Merged main after #37 and #38: "My week" (#38) now names an inspection
+  and its actions instead of counting its checks; `verify-my-week` passed.
+- Not verified: a physical phone, the PDF rendered by the worker after
+  sending (the draft PDF uses the same renderer), SharePoint mode (no live
+  tenant). Wording of the 12 checks is a first set for Cal or the H&S lead to
+  change in `SAFETY_CHECKLIST`.
+- Proposed next (not built): let the office edit the checklist; track
+  inspection actions to closure (a light action list, or raising them as
+  issues if Cal prefers); more types on the same engine, such as a
+  pre-handover area inspection or a commissioning record; add
+  `verify-report-types.mjs` to the browser checks list in `CLAUDE.md`.
 ## 2026-10-20 — My week (new feature, proposed as NEW-9)
 
 - New `/my-week` page: the signed-in person's own week, Monday to Sunday,

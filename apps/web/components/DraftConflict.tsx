@@ -2,6 +2,7 @@
 import { useMemo, useState } from 'react';
 import type { Observation, Report } from '@/lib/types';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
+import { answerLabel } from '@/lib/reportTypes';
 import { choicesFor, compareDrafts, defaultChoice, mergeDrafts, mergeSummary, type CardChoice, type CardDiff, type DraftBase } from '@/lib/draftConflict';
 
 const fmtWhen = (iso?: string) => iso ? new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
@@ -29,7 +30,8 @@ const KEEP_ONE: Partial<Record<CardChoice, string>> = { here: 'Keep it', there: 
 
 /** The fields worth comparing, in the order the card asks them. */
 const FIELDS: { label: string; value: (o: Observation) => string }[] = [
-  { label: 'Kind', value: o => OBSERVATION_TYPES.find(t => t.value === o.type)?.short ?? o.type },
+  { label: 'Kind', value: o => o.check ? 'Check' : OBSERVATION_TYPES.find(t => t.value === o.type)?.short ?? o.type },
+  { label: 'Answer', value: o => o.check ? answerLabel(o.check.answer) : '—' },
   { label: 'Where', value: o => o.location.trim() || '—' },
   { label: 'What', value: o => o.whatHappened.trim() || '—' },
   { label: 'Action', value: o => o.actionNeeded.trim() || '—' },
@@ -91,7 +93,7 @@ export function DraftConflict({ here, there, base, saving, unheld, onSave }: {
       return <article key={card.id} className={`eng-conflict-card ${choice === 'none' ? 'is-out' : ''}`} data-card={card.id}>
         <header>
           <span className="no">{number(card)}</span>
-          <b>{one.location.trim() || 'No location yet'}</b>
+          <b>{one.check?.question ?? (one.location.trim() || 'No location yet')}</b>
           <span className={`eng-conflict-status st-${card.status}`}>{card.change ? CHANGE[card.change] : STATUS[card.status]}</span>
         </header>
         <div className={`eng-conflict-sides n${sides.length}`}>

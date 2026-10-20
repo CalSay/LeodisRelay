@@ -22,8 +22,13 @@ const fmtAt = (at: string) => fmtDay(londonDay(at));
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const KIND_WORD: Record<string, [string, string]> = { update: ['progress update', 'progress updates'], defect: ['defect', 'defects'], instruction: ['variation required', 'variations required'], access: ['access problem', 'access problems'] };
 
+/** Cards by kind. An inspection's checks are said by `inspectionLine`, not counted as cards. */
 function kindLine(kinds: WeekReport['kinds']): string {
-  return OBSERVATION_TYPES.filter(t => kinds[t.value]).map(t => { const [one, many] = KIND_WORD[t.value]!; return plural(kinds[t.value], one, many); }).join(', ') || 'no cards';
+  return OBSERVATION_TYPES.filter(t => t.value !== 'check' && kinds[t.value]).map(t => { const [one, many] = KIND_WORD[t.value]!; return plural(kinds[t.value], one, many); }).join(', ') || 'no cards';
+}
+
+function inspectionLine(i: NonNullable<WeekReport['inspection']>): string {
+  return `${i.name}: ${plural(i.action, 'action')}, ${i.ok} satisfactory, ${i.na} not applicable`;
 }
 
 function IssueRows({ rows, empty, here }: { rows: WeekIssue[]; empty: string; here: string }) {
@@ -135,10 +140,10 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
             <div><p><Link className="ref" href={withViewReturn(`/reports/${r.id}`, here)}>{r.reference}</Link>{r.revision > 1 && <span className="tag tag-draft">Rev {r.revision}</span>}
               {r.review === 'pending' && <span className="tag tag-draft">Awaiting review</span>}{r.review === 'returned' && <span className="tag tag-alert">Returned for changes</span>}</p>
               <p className="week-desc">{r.author}{r.trade ? ` · ${r.trade}` : ''}</p>
-              <p className="week-meta">{kindLine(r.kinds)}{r.photos ? ` · ${plural(r.photos, 'photograph')}` : ''}</p>
+              <p className="week-meta">{r.inspection ? inspectionLine(r.inspection) : kindLine(r.kinds)}{r.photos ? ` · ${plural(r.photos, 'photograph')}` : ''}</p>
               {r.locations.length > 0 && <p className="week-meta">{r.locations.join(' · ')}</p>}</div>
           </li>)}</ul> : <p className="week-none">No site reports were sent for visits this week.</p>}
-          {s.reports.length > 0 && <p className="week-total">Across the week: {kindLine(s.kinds)}.</p>}
+          {s.reports.length > 0 && <p className="week-total">Across the week: {[s.reports.some(r => !r.inspection) ? kindLine(s.kinds) : '', (() => { const n = s.reports.filter(r => r.inspection).length; return n ? plural(n, 'inspection') : ''; })()].filter(Boolean).join(', ')}.</p>}
         </section>
 
         <section className="week-section">
