@@ -84,8 +84,8 @@
       ],
       "status": "done",
       "passes": true,
-      "pr": null,
-      "notes": "Done 2026-10-20: the name and drawing save with the draft as draftSignature (server and device copy) and become signature on sending. Tests: apps/web/tests/signatures.test.ts. Browser check: scripts/verify-signature-reload.mjs (light and dark). Not checked on a physical phone."
+      "pr": 6,
+      "notes": "Done 2026-10-20 in PR #6: the name and drawing save with the draft as draftSignature (server and device copy) and become signature on sending. Tests: apps/web/tests/signatures.test.ts. Browser check: scripts/verify-signature-reload.mjs (light and dark). Not checked on a physical phone."
     },
     {
       "id": "FE-4a",
