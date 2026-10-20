@@ -38,7 +38,7 @@ export async function runOneJob(): Promise<boolean> {
           await registerReport(submitted);
           atomic(() => {
             const current = getRecord<Report>('reports', reportId)!;
-            putRecord('reports', { ...current, delivery: 'filed', deliveryError: undefined });
+            putRecord('reports', { ...current, delivery: 'filed', deliveryError: undefined, deliveryErrorStage: undefined });
           });
         } else if (job.kind === 'sharepoint-register') await registerReport(submitted);
         else throw new Error('Unknown SharePoint job kind.');
@@ -53,7 +53,7 @@ export async function runOneJob(): Promise<boolean> {
       atomic(() => {
         const current = getRecord<Report>('reports',reportId)!;
         const previouslyDelivered = current.issued?.records.some(record => !record.failure);
-        putRecord('reports',{ ...current, delivery: previouslyDelivered ? (current.issued?.transport === 'outbox' ? 'outbox' : 'sent') : 'rendered', deliveryError:undefined });
+        putRecord('reports',{ ...current, delivery: previouslyDelivered ? (current.issued?.transport === 'outbox' ? 'outbox' : 'sent') : 'rendered', deliveryError:undefined, deliveryErrorStage:undefined });
         if (!previouslyDelivered) {
           if (snapshot.projectSnapshot?.source) enqueue('sharepoint-file:'+reportId,'sharepoint-file',{reportId});
           else enqueue('delivery:'+reportId,'delivery',{ reportId });
@@ -69,7 +69,7 @@ export async function runOneJob(): Promise<boolean> {
       atomic(() => {
         const latest = getRecord<Report>('reports',reportId)!;
         const failed = outcome.records.some(r => r.failure) || outcome.unaddressed.length > 0;
-        putRecord('reports',{ ...latest, delivery: failed ? 'failed' : 'outbox', issued:{ ...outcome, records:[...(latest.issued?.records ?? []),...outcome.records] } });
+        putRecord('reports',{ ...latest, delivery: failed ? 'failed' : 'outbox', deliveryError: failed ? 'Local delivery failed or the recipient has no address.' : undefined, deliveryErrorStage: failed ? 'delivery' : undefined, issued:{ ...outcome, records:[...(latest.issued?.records ?? []),...outcome.records] } });
         finishJob(job,failed ? 'Local delivery failed or the recipient has no address.' : undefined);
       });
     } else throw new Error(`Unknown job kind: ${job.kind}`);
@@ -91,7 +91,7 @@ export async function runOneJob(): Promise<boolean> {
         return;
       }
       const current = getRecord<Report>('reports',reportId);
-      if (current) putRecord('reports',{ ...current, delivery:'failed', deliveryError:reason });
+      if (current) putRecord('reports',{ ...current, delivery:'failed', deliveryError:reason, deliveryErrorStage: job.kind === 'pdf' ? 'pdf' : 'delivery' });
       finishJob(job,reason);
     });
   } finally { clearInterval(heartbeat); }

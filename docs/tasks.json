@@ -154,10 +154,10 @@
         "The engineer can tell which text and photos are saved on the server and which are pending",
         "Browser check with the server stopped and restarted"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Partial: report-level save state shown (page.tsx SAVE map). No per-photo pending/uploaded indicator."
+      "status": "done",
+      "passes": true,
+      "pr": 17,
+      "notes": "Done 2026-10-20: each card row and each photograph in the report editor says On the server, Uploading, Not yet on the server or Only on this phone (lib/uploadStatus.ts), and the Check & send step sums up what is still to go up. While the server cannot be reached the editor retries every 15 seconds, so a stopped server catches up by itself. Tests: tests/uploadStatus.test.ts. Browser check: scripts/verify-photo-uploads.mjs (server stopped and restarted, 390px light and 1440px dark). Not checked on a physical phone."
     },
     {
       "id": "FE-4b",
@@ -248,10 +248,10 @@
         "Local outbox files are never shown as delivered email",
         "Browser check"
       ],
-      "status": "todo",
-      "passes": false,
+      "status": "done",
+      "passes": true,
       "pr": null,
-      "notes": "Partial: lib/status.ts separates receipt, review, delivery, acknowledgement; PDF preparation and delivery share one status line."
+      "notes": "Done 2026-10-20: lib/status.ts submissionStages gives a sent report its own steps (Received, Review only where review is used, PDF, Delivery, Read), shown by components/SubmissionStages.tsx in the office reader and on the engineer's report page. The worker records which step a failure belongs to (deliveryErrorStage). Delivery is stated from what happened: a local outbox file is 'Not emailed'; 'Emailed to ...' needs the mail transport to have sent it; SharePoint projects show filing. Tests in tests/submissionStages.test.ts; browser check scripts/verify-submission-stages.mjs."
     },
     {
       "id": "FE-1b",

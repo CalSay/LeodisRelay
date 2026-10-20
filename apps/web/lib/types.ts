@@ -54,6 +54,11 @@ export interface Report {
   sharepoint?: { status: 'pending' | 'registered' | 'filed' | 'failed'; url?: string; itemId?: string; error?: string };
   delivery?: 'pending' | 'rendered' | 'filed' | 'sent' | 'outbox' | 'failed';
   deliveryError?: string;
+  /**
+   * Which step `deliveryError` belongs to: making the PDF, or filing or
+   * notifying. Without it a failed notification reads as a failed PDF.
+   */
+  deliveryErrorStage?: 'pdf' | 'delivery';
   corrects?: string;
   correctionReason?: string;
   id: string;

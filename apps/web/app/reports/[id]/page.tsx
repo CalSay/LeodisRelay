@@ -24,9 +24,12 @@ import { usePrincipal } from '@/components/PrincipalContext';
 import { useRouter } from 'next/navigation';
 import { correctReport as requestCorrection } from '@/lib/api';
 import { ownsReport } from '@/lib/auth/access';
-import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
+import { toneClass } from '@/lib/status';
+import { SubmissionStages } from '@/components/SubmissionStages';
 import { OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
 import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { onPhotoUploads, uploadingPhotos } from '@/lib/localMedia';
+import { cardWhere, reportWhere, savedCopy, WHERE, type Where } from '@/lib/uploadStatus';
 
 type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error";
 
@@ -48,6 +51,11 @@ const SAVE: Record<SaveState, { dot: string; text: string }> = {
   unheld: { dot: "dot dot-bad", text: "NOT SAVED ANYWHERE — keep this page open" },
   error: { dot: "dot dot-bad", text: "Not saved — check connection" },
 };
+
+/** The dot beside a card or photograph: green only when the server has it. */
+const WHERE_DOT: Record<Where, string> = { server: 'dot dot-ok', uploading: 'dot dot-busy', pending: 'dot dot-busy', phone: 'dot dot-busy' };
+/** While the server cannot be reached, try again this often; coming back into signal also retries. */
+const RETRY_MS = 15_000;
 
 const KINDS: ObservationType[] = ['update', 'defect', 'instruction', 'access'];
 const fmtWhen = (iso?: string) => iso ? new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
@@ -74,6 +82,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [projectIssues, setProjectIssues] = useState<IssueSummary[]>([]);
   const [signerName, setSignerName] = useState("");
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
+  /** The draft as the server last accepted it, so every card can say whether it is on the server. */
+  const [onServer, setOnServer] = useState<OnServer>({ cards: {} });
+  const [uploading, setUploading] = useState<ReadonlySet<string>>(() => new Set());
 
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<Report | null>(null);
@@ -155,6 +166,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         if (!cancelled && held?.report) {
           seq.current=held.seq;serverVersion.current=held.baseVersion ?? 0;
           adoptSignature(held.report);
+          // The server could not be asked, so no card is known to be on it.
+          setOnServer({ cards: {} });
           setReport({...held.report,observations:held.observations,version:held.baseVersion ?? 0});
           setSaveState('phone');
         } else if (!cancelled) setMissing(true);
@@ -166,6 +179,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         return;
       }
       serverVersion.current = found.version;
+      setOnServer(onServerOf(found));
       // Retain the original base version. Local work is not necessarily newer
       // than changes made on another device while this phone was disconnected.
       const held = await recover(id, principalId);
@@ -196,19 +210,21 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
    * produces a queue of requests that all land at once and finish out of order.
    */
   const scheduleSave = useCallback(
-    (next: Report) => {
+    (next: Report, retry = false) => {
       if (!principalId) return;
 
       pending.current = next;
       setSaveState("saving");
       if (saveTimer.current) clearTimeout(saveTimer.current);
 
-      const mySeq = (seq.current = clientId());
+      // A retry sends what the device already holds, under the same number, so
+      // its copy (and when it was last changed) is left alone.
+      const mySeq = retry ? seq.current : (seq.current = clientId());
 
       // Mirror to the device first, and know whether it worked. Whatever the
       // network then does the work survives a reload, a crash or a flat
       // battery — but only if this actually succeeded, so the result is kept.
-      const held = keep({
+      const held = retry ? Promise.resolve(true) : keep({
         reportId: next.id,
         principalId,
         seq: mySeq,
@@ -233,6 +249,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             // since keeps its copy on the device.
             await releaseIfCurrent(toSave.id, principalId, mySeq);
             setReport((current) => (current ? { ...current, version: saved.version } : saved));
+            setOnServer(onServerOf(toSave));
             if (seq.current === mySeq) {
               pending.current = null;
               setSaveState('saved');
@@ -266,6 +283,19 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     window.addEventListener("online", onOnline);
     return () => window.removeEventListener("online", onOnline);
   }, [scheduleSave, principalId]);
+
+  // The phone can have signal while the server is down or restarting, so no
+  // "online" event comes. While the work is only on this phone, keep trying.
+  useEffect(() => {
+    if (saveState !== 'phone' || !principalId) return;
+    const timer = setInterval(() => {
+      const current = pending.current ?? latest.current;
+      if (current?.state === 'draft' && !sending.current && document.visibilityState === 'visible') scheduleSave(current, true);
+    }, RETRY_MS);
+    return () => clearInterval(timer);
+  }, [saveState, principalId, scheduleSave]);
+
+  useEffect(() => onPhotoUploads(() => setUploading(uploadingPhotos())), []);
 
   /** Show the name and drawing saved with the draft, before the pad first appears. */
   function adoptSignature(from: Report) {
@@ -344,6 +374,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       const saved = await saveReport(report, serverVersion.current ?? report.version,principalId ?? undefined);
       serverVersion.current = saved.version;
       setReport(saved);
+      setOnServer(onServerOf(report));
       const sent = await submitReport(saved, {
         ...(signatureImage ? { dataUrl: signatureImage } : {}),
         name: signerName.trim() || report.author,
@@ -408,12 +439,20 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const sent = report.state === "submitted";
   const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
   const mine = principal ? ownsReport(principal, report) : false;
-  const facts = [reviewStatus(report), deliveryStatus(report), acknowledgementStatus(report)].filter((f): f is NonNullable<typeof f> => f !== null);
   const counts = Object.fromEntries(KINDS.map(k => [k, report.observations.filter(o => o.type === k).length])) as Record<ObservationType, number>;
   // The open card. Side by side there is always one in the editor column; on
   // the phone every card starts folded, so the report reads as a short list.
   const open = report.observations.some(o => o.id === selectedSection) ? selectedSection : wide ? report.observations.at(-1)?.id ?? null : null;
   const shortRef = report.reference.split('-').slice(1).join('-');
+  // Where each card and photograph is. Offline means the server could not be
+  // reached, so anything not yet on it is only on this phone.
+  const offline = saveState === 'phone';
+  const whereOf = new Map(report.observations.map(o => [o.id, cardWhere(o, onServer.cards[o.id], uploading, offline)]));
+  // Removing a card or changing the signature also waits for a save, so the summary never goes green before it lands.
+  const whereAll = reportWhere([...whereOf.values()], offline, {
+    removed: Object.keys(onServer.cards).filter(cardId => !whereOf.has(cardId)).length,
+    signature: report.state === 'draft' && signatureCopy(report) !== onServer.signature && !(onServer.signature === undefined && !report.draftSignature),
+  });
   const kindOf = (o: Observation) => OBSERVATION_TYPES.find(t => t.value === o.type);
   const extras = (o: Observation) => [o.affectedTrade && `Trade: ${o.affectedTrade}`, o.variationReason, o.workDone && 'already carried out', o.askedBy && `asked for by ${o.askedBy}`, o.roughSize && ({ 'half-day': 'about half a day', day: 'about a day', 'two-days': 'about two days', more: 'more than two days' })[o.roughSize], o.partsEstimate !== undefined && `parts about £${o.partsEstimate}`].filter(Boolean).join(' · ');
 
@@ -455,6 +494,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         <span className="top"><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{choosing ? 'New' : k?.short ?? o.type}</span><b>{o.location.trim() || (choosing ? 'Choose a kind' : 'No location yet')}</b></span>
         <span className="desc">{choosing ? 'What kind of update is this?' : text || 'Nothing written yet'}</span>
         {!choosing && <span className="meta">{o.photos.length} photo{o.photos.length === 1 ? '' : 's'}{stopped ? <em> · {unlabelled(stopped.message, o)}</em> : null}</span>}
+        {!choosing && <CardWhereLine where={whereOf.get(o.id)} />}
       </div>
       {!wide && <span className="chev" aria-hidden="true">{isOpen ? '−' : '+'}</span>}
     </button>;
@@ -469,6 +509,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           index={index}
           openIssues={projectIssues}
           locations={locations}
+          photoWhere={(photoId) => { const w = whereOf.get(observation.id); const at = observation.photos.findIndex(p => p.id === photoId); return w && at >= 0 ? w.each[at] : undefined; }}
           onChange={(next) => update({ ...report, observations: report.observations.map((o) => (o.id === next.id ? next : o)) })}
           onRemove={() => { setPicking(p => p.filter(x => x !== observation.id)); update({ ...report, observations: report.observations.filter((o) => o.id !== observation.id) }); }}
         />
@@ -535,11 +576,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               View the document &rarr;
             </Link>
           </p>
-          {/* Review, delivery and whether anyone read it: the same three
-              facts the office sees, in the same words. */}
-          <p style={{ margin: "10px 0 0", display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {facts.map((f) => <span key={f.label} className={toneClass(f.tone)}>{f.label}</span>)}
-          </p>
+          {/* Each step after sending, the same steps the office sees. */}
+          <SubmissionStages report={report} tagClass={toneClass} when={fmtWhen} />
           {mine && !correcting && (
             <div className="btn-row" style={{ marginTop: 12 }}>
               <button className="btn-sm" onClick={() => setCorrecting(true)}>
@@ -621,6 +659,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             </div>
           )}
 
+          {whereAll.text && <p className={`eng-where eng-where-${whereAll.where}`} aria-live="polite"><span className={WHERE_DOT[whereAll.where]} />{whereAll.text}</p>}
+
           <div className="sec"><span className="lbl">In this report</span></div>
           <dl className="eng-sum">
             <div><dt>Progress</dt><dd>{counts.update}</dd></div>
@@ -678,6 +718,23 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       </>}
     </main>
   );
+}
+
+/** The draft as the server holds it: each card (savedCopy) and the signature. Unknown when the server could not be asked. */
+interface OnServer { cards: Record<string, string>; signature?: string }
+const signatureCopy = (r: Report) => JSON.stringify(r.draftSignature ?? null);
+function onServerOf(r: Report): OnServer {
+  return { cards: Object.fromEntries(r.observations.map(o => [o.id, savedCopy(o)])), signature: signatureCopy(r) };
+}
+
+/** One line under a folded card: on the server, or what is still to go up. */
+function CardWhereLine({ where }: { where: ReturnType<typeof cardWhere> | undefined }) {
+  if (!where) return null;
+  const left = where.photos - where.photosOnServer;
+  const detail = where.where === 'server' || where.where === 'uploading' ? ''
+    : !where.text ? (left ? ` · changes and ${left} photo${left === 1 ? '' : 's'}` : ' · changes')
+    : left ? ` · ${left} photo${left === 1 ? '' : 's'}` : '';
+  return <span className={`eng-where eng-where-${where.where}`}><span className={WHERE_DOT[where.where]} />{WHERE[where.where]}{detail}</span>;
 }
 
 /** A finding without its "Location: " prefix, for the row that already names the location. */

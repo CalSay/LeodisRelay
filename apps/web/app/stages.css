@@ -1,0 +1,20 @@
+/*
+ * Submission stages: one step per cell, ruled along the top in the step's
+ * colour so the row reads as a track. Words and tag shapes carry the state;
+ * the colour only repeats it.
+ */
+.stages{list-style:none;margin:var(--s3) 0 0;padding:0;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:var(--s2) var(--s3)}
+.stages li{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;padding-top:var(--s2);border-top:3px solid var(--line)}
+.stages li[data-tone="sent"]{border-top-color:var(--ok)}
+.stages li[data-tone="alert"]{border-top-color:var(--alert)}
+.stages .stage-t{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-3)}
+.stages .tag{white-space:normal;text-align:left}
+.stages small{font-size:12px;line-height:1.4;color:var(--text-2);overflow-wrap:anywhere}
+@media (max-width:600px){
+  .stages{grid-auto-flow:row;grid-template-columns:1fr;gap:0}
+  .stages li{display:grid;grid-template-columns:84px 1fr;align-items:center;gap:4px var(--s2);padding:var(--s2) 0 var(--s2) var(--s3);border-top:0;border-left:3px solid var(--line)}
+  .stages li[data-tone="sent"]{border-left-color:var(--ok)}
+  .stages li[data-tone="alert"]{border-left-color:var(--alert)}
+  .stages .tag{justify-self:start}
+  .stages small{grid-column:2}
+}
