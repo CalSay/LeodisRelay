@@ -56,7 +56,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   listed in the PR), with `verify-undo-remove`, `verify-same-location`,
   `verify-photo-uploads`, `verify-draft-conflict` and `verify-sent-elsewhere`
   updated for the new wording and the open row.
-- A fresh-context review found four gaps, all fixed: a card opened from a
+- Scope: no task in `docs/tasks.json` covers this. It rests on Cal's standing
+  instructions for this project (take agency; UI that is clear, easy to use
+  and inviting; freedom beyond the task list), not on `CLAUDE.md`, whose
+  "build only approved scope" rule predates them. The fresh-context review
+  flagged this; it is recorded here rather than changed.
+- A fresh-context review also found four correctness gaps, all fixed: a card opened from a
   Stop no longer said why (the open row now keeps the stop message), the
   phone's Remove read "Remove this card" while its accessible name was
   "Remove card 1", Undo focused a Remove button out of view at the card's
