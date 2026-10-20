@@ -47,3 +47,27 @@
   .co-unassigned{flex-direction:column;align-items:flex-start;}
   .co-find{max-width:none;}
 }
+/* Chase notes: the latest chase on show, earlier ones folded, and a short form. */
+.co-tags{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:6px;flex:none;max-width:60%;}
+.co-chase{margin:12px 0 0;padding:12px 0 0;border-top:1px solid var(--line);}
+.co-chase-head{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+.co-page .co-chase-head h3{margin:0;font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
+.co-chase-last{margin:8px 0 0;font-size:14px;line-height:1.45;overflow-wrap:anywhere;white-space:pre-line;}
+.co-chase-when{display:block;font-size:12.5px;color:var(--text-2);margin-bottom:2px;white-space:normal;}
+.co-chase-none{margin:6px 0 0;}
+.co-chase-missed{margin:8px 0 0;font-size:13.5px;line-height:1.45;color:var(--alert);}
+.co-chase-earlier{margin:8px 0 0;font-size:13.5px;}
+.co-chase-earlier summary{cursor:pointer;min-height:44px;display:flex;align-items:center;color:var(--text-2);}
+.co-chase-earlier ol{list-style:none;margin:0;padding:0;}
+.co-chase-earlier li{padding:8px 0;border-top:1px solid var(--line);line-height:1.45;overflow-wrap:anywhere;white-space:pre-line;}
+.co-chase-add{margin-top:10px;}
+.co-chase-form{display:flex;flex-direction:column;gap:6px;margin:10px 0 0;font-size:13px;color:var(--text-2);}
+.co-chase-form textarea{width:100%;font:inherit;font-size:16px;color:var(--text);min-height:76px;resize:vertical;}
+.co-chase-form input[type=date]{font-size:16px;min-height:44px;max-width:220px;color:var(--text);}
+.co-chase-form .note{margin:4px 0 0;}
+.co-chase-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;}
+.co-chase-actions button{min-height:44px;}
+@media (max-width:640px){
+  .co-chase-actions button{flex:1 1 140px;}
+  .co-chase-form input[type=date]{max-width:none;width:100%;}
+}
