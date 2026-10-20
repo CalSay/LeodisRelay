@@ -36,8 +36,71 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   passed. Before/after screenshots at 390px in light and dark.
 - Not verified: a physical phone and its on-screen keyboard (the action bar
   hides on focus, checked in Chromium only); iOS Safari.
-- Next: item 3 in `docs/ui-direction-2026-10-20.md` (engineer navigation).
+- Next: item 4 in `docs/ui-direction-2026-10-20.md` (empty states).
   CLAUDE.md's list of browser checks should gain `verify-report-editor.mjs`.
+
+## 2026-10-20 — UI-3: icons on the engineer navigation
+
+- Each engineer navigation entry (Site, Issues, Reports, Projects, Search) now
+  has a line icon beside its label. On the phone bar (600px and below) the
+  icon sits over the label in five equal columns, 56px tall, sans 12px. The
+  current view is gold, bold, on a tinted tile with a gold mark at the top.
+  On a wide screen the icons sit inline and the tab underline is unchanged.
+- Fixed: at 320px Search wrapped onto a second row of the bar (it was added
+  in NEW-1 after the bar was designed). All five now fit on one row.
+- The workspace keeps 96px plus the safe area clear at the bottom so the bar
+  never covers the last item. Hover colour only applies on devices with a
+  pointer, so a tapped entry does not stay gold on a phone.
+- Decision: icons are drawn inline (no icon library) to keep the bundle the
+  same and match the camera and search icons already in the app. Snag list
+  stays a link in the Issues view rather than a sixth bar entry: six would
+  not fit legibly at 320px and it belongs with the issues it lists.
+- Not in `docs/tasks.json`; the PR proposes UI-3. New
+  `scripts/verify-engineer-nav.mjs` (60 checks at 320, 390 and 1440px, light
+  and dark). It fails on main (no icons; Search on a second row at 320px)
+  and passes with this change.
+- Verified on Node 24: `npm run typecheck`, `npm test`, `npm run build`,
+  `verify-engineer-nav`, `verify-engineer-layout`, `verify-search` (31),
+  `verify-role-access` (61), `verify-unfinished-reports` (18). Before/after
+  screenshots at 320, 390 and 1440px in light and dark.
+- Not verified: a physical phone, iOS Safari's safe-area inset.
+- Next: item 4 in `docs/ui-direction-2026-10-20.md` (empty states).
+## 2026-10-20 — NEW-2: printable snag lists
+
+- New page `/issues/snag-list`: one project's open issues for a company or
+  person and/or a trade, grouped by location, each with reference,
+  description, what to do, owner, target date, a "Past target" or "Fixed, to
+  check" tag and the photograph taken when it was raised. It has tick boxes, a
+  "Checked by / Signature / Date" foot, and a "Print or save as PDF" button.
+  Printed, it is black on white with no app bar or controls. The prototype
+  banner still prints.
+- Opened from a "Snag list" link on the office Issues register, which carries
+  the project, owner and trade chosen there, and from the engineer Issues view
+  ("Snag list · Electrical"), which defaults to the engineer's trade.
+- Why this feature: handing a company its snags is a weekly job on every
+  site, and today the office copies rows out of the register by hand. It reads
+  the existing register only, so there is no new store or SharePoint write.
+- Decisions: read-only. Ticking on paper records nothing; the foot says to
+  use "Submit as complete" on the issue. Locations are grouped as written,
+  ignoring case and spacing, and labelled as the earliest issue spelled it, so
+  there is no location catalogue (EXP-4). Fixed work is listed last in each
+  location, not hidden, so the company can see what is waiting to be checked.
+  Trade follows the office register: the affected trade, else the reporter's.
+  Choices are kept in the address, so a list can be bookmarked, and an issue
+  opened from the list returns to the same list. Unreviewed issues are not
+  tagged: with review off (the default) every issue stays unreviewed, so the
+  tag would be on every row.
+- Added NEW-2 and a `snag` lane to `docs/tasks.json`.
+- Verified: `npm run typecheck` and `npm test` pass (7 new tests in
+  `tests/snagList.test.ts`, 1 in `viewNavigation.test.ts`). New
+  `scripts/verify-snag-list.mjs` passed (24 checks: engineer at 390 px light,
+  office at 1440 px dark, print media and an A4 PDF, project picker, back
+  from an issue). `verify-role-access`, `verify-engineer-layout`,
+  `verify-search` and `verify-office-landing` passed after main was merged in;
+  `verify-review-queue` and `verify-unfinished-reports` passed before.
+- Not verified: a physical printer or phone, Safari's print dialog,
+  SharePoint mode (no live tenant).
+- Next: a snag list per company across every project, if the office asks for it.
 
 ## 2026-10-20 — UI-1: office desk opens on the office position
 
