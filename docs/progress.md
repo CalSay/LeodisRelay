@@ -71,6 +71,46 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   inspection with last week's open safety actions shown; show the signature
   box nearer the top of the check step for inspections, where it is required.
 
+## 2026-10-20 — Second release check on main
+
+- Ran everything on main at dbb44ad (#2 to #27, #29 to #40, #42) under
+  Node 24: `npm run typecheck`, `npm test` (145 package + 252 web tests),
+  `npm run build` and all 36 `scripts/verify-*.mjs` browser checks, one
+  after another. All passed, `verify-pdf-navigation` included. After
+  merging #41 and #43 (774666a) everything was run again, browser checks
+  included; results in the PR.
+- Looked for faults between features built in parallel: no SQL migrations
+  exist (records are JSON), so nothing clashes or depends on order; every
+  page route is distinct; every returnable view added since #40 is in
+  `lib/viewNavigation.ts`; the summaries built before report types (#39)
+  (site diary, weekly summary, My week, since last visit, search, photo
+  library, unfinished reports, office desk) all handle inspection checks.
+- One fault found between features: #39 changed `public/offline.js` but
+  kept the service worker cache at `relay-public-v4`. The worker serves
+  `offline.js` from its cache first, so a phone that already held v4 would
+  keep the old offline page, which shows an inspection's checks as plain
+  untitled cards. #41 (offline capture), merged during this check, bumped
+  the cache to `relay-public-v5`, which covers #39's change too. So this PR
+  adds only the guard: `tests/serviceWorker.test.ts` pins the digest of
+  `offline.js` and `offline.html` (line endings normalised) to the cache
+  name, so the next change to either fails until the name is bumped. It
+  caught #41's change at once when main was merged in, and then #43
+  (pre-handover inspection), which changed `offline.js` again under v5.
+  #46 (offline inspection start), merged during this check, then moved the
+  cache to `relay-public-v7`, which covers both; the guard records v7.
+- `verify-offline-capture` failed once on the merged main ("dark: and the
+  photo") and passed on two re-runs: it counted thumbnails right after a
+  reload, before the phone's store had drawn them. It now waits for the
+  thumbnail first.
+- Deploy findings (nothing deployed): no new environment variables, no new
+  SharePoint columns. `upgrade-pilot.sh` still makes one live SharePoint
+  call (the two Variation Register columns, unchanged). A safety inspection
+  is filed as a PDF and listed in the Report Register like any report, with
+  its SSI reference as the title, using existing columns.
+- Not verified: a Docker image build, the server, a live SharePoint tenant,
+  real phones, and rolling back after an inspection exists (the old version
+  would show its checks as plain cards; not tried).
+
 ## 2026-10-20 — FE-3e: offline capture, second slice (start an inspection)
 
 - Why this slice: #41 proposed it first, and it is the gap engineers would hit
