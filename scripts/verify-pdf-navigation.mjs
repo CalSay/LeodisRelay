@@ -43,6 +43,9 @@ try {
   await page.waitForFunction(()=>document.querySelector('canvas')?.width>0 && !document.body.innerText.includes('Loading PDF'));
   assert.equal(context.pages().length,1,'No separate PDF window');
   const painted=await page.locator('canvas').evaluate(c=>{const b=c.getContext('2d').getImageData(0,0,c.width,c.height).data;for(let i=0;i<b.length;i+=4)if(b[i]<100&&b[i+1]<100&&b[i+2]<100&&b[i+3]>0)return true;return false;});
+  // Next.js adds an empty route announcer with the alert role; skip it.
+  const alert=(await page.getByRole('alert').allInnerTexts()).filter(t=>t.trim());
+  assert.deepEqual(alert,[],'The viewer must not show an error');
   assert.ok(painted,'PDF must render visible ink');
   await page.getByRole('button',{name:'Next page'}).click();
   await page.getByText('Page 2 of 2',{exact:true}).waitFor();
@@ -54,7 +57,8 @@ try {
   assert.equal(page.url(),preview,'Browser Back returns to RELAY preview');
   await page.getByRole('link',{name:'Open the PDF'}).click();
   await page.getByRole('link',{name:'Back to report'}).click();
-  await page.waitForURL(`**/reports/${report.id}`);
+  // The report link carries a return path, so match the pathname only.
+  await page.waitForURL(url=>url.pathname===`/reports/${report.id}`);
   assert.equal(new URL(page.url()).pathname,`/reports/${report.id}`);
   assert.deepEqual(errors,[]);
   console.log('Passed: two-page PDF rendered, paging/zoom, one window, browser Back and explicit return at 390px.');

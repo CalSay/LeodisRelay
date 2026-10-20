@@ -53,6 +53,23 @@
       "notes": "Proposed by the setup thread; needed before any 'Browser check' step can pass."
     },
     {
+      "id": "FIX-1",
+      "order": 1.5,
+      "lane": "tooling",
+      "depends_on": [],
+      "backlog": "tooling",
+      "title": "Show the in-app PDF on older browsers",
+      "description": "The in-app PDF viewer shows 'getOrInsertComputed is not a function' instead of the report on Chromium 141, and likely on older iPhones, because pdfjs-dist 6.3's modern build uses Map.prototype.getOrInsertComputed. Found by the TOOL-1 thread.",
+      "acceptance": [
+        "The viewer renders a report PDF on the preinstalled Chromium 141 with no error shown",
+        "scripts/verify-pdf-navigation.mjs passes after npm test && npm run build, and fails if the viewer shows an error"
+      ],
+      "status": "done",
+      "passes": true,
+      "pr": null,
+      "notes": "2026-10-20: apps/web/app/reports/[id]/pdf/page.tsx loads pdfjs-dist/legacy/build (page and worker), which polyfills newer browser features. verify-pdf-navigation now fails on any on-screen viewer error and matches the report URL by pathname. Not verified on a physical iPhone or in WebKit."
+    },
+    {
       "id": "FE-4c",
       "order": 2,
       "lane": "tests",
