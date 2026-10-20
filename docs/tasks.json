@@ -133,10 +133,10 @@
         "Home screen lists unfinished reports with project and last-saved time",
         "Browser check"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Partial: EngineerWorkspace shows drafts for the selected project only; device-only drafts and other projects are not surfaced."
+      "status": "done",
+      "passes": true,
+      "pr": 9,
+      "notes": "2026-10-20: the engineer home has an Unfinished reports list of every draft the engineer started, on every project open to them, newest change first, each with project, card count and last save (lib/unfinishedReports.ts). A copy on this device the server has not acknowledged shows Not yet on the server; a device copy the server cannot be asked about shows Only on this phone; a copy of a report the server says was sent is left out. Checked by tests/unfinishedReports.test.ts and scripts/verify-unfinished-reports.mjs."
     },
     {
       "id": "FE-3b",
