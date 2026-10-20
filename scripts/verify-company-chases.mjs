@@ -31,6 +31,7 @@ let seq=0;
 const issue=(extra)=>{seq++;putRecord('issues',{id:randomUUID(),reference:`011LME-ISS-${String(seq).padStart(3,'0')}`,projectId:'proj-011lme',location:'Level 2 riser',description:`Seeded issue ${seq}`,actionNeeded:'Make good',confirmation:'confirmed',work:'assigned',owner:'Acme Mechanical Ltd',targetDate:addDays(today,-2),raisedByReport:'',raisedAt:at(-10),affectedTrade:'HVAC',events:[],...extra});};
 issue({});issue({});
 issue({owner:'Sparks Ltd',affectedTrade:'Electrical'});
+issue({owner:'Gone Ltd',confirmation:'withdrawn'});
 issue({owner:'Tidy Plumbing',affectedTrade:'P&H',work:'closed',events:[{at:at(-3),actor:manager.name,kind:'verified',note:'',photos:[]}]});
 // Sparks were rung last week and promised yesterday: the promise has gone with their work still open.
 putRecord('company-chases',{id:'chase-seed-1',companyKey:'sparks ltd',owner:'Sparks Ltd',note:'Rang Jo, said they would finish the containment',promisedBy:addDays(today,-1),by:'Pat Office',byId:'entra:pat',at:at(-6)});
@@ -64,6 +65,7 @@ try {
     const {context,page,errors}=await open('Manager','dark',1440);
     // The API refuses a name that is not on any issue, and nonsense.
     check((await post(page,{...good,owner:'Nobody Ltd'})).status()===404,'office: a company with no issues is refused');
+    check((await post(page,{...good,owner:'Gone Ltd'})).status()===404,'office: a company the page does not show (only a withdrawn issue) is refused');
     check((await post(page,{...good,note:42})).status()===422,'office: a malformed chase is refused');
     check((await post(page,{...good,promisedBy:addDays(today,-1)})).status()===422,'office: a promise already gone is refused');
     check(records('company-chases').length===1,'office: nothing kept by the refused saves');
@@ -92,6 +94,7 @@ try {
     await acme.locator('.co-chase-last').waitFor();
     const last=await acme.locator('.co-chase').innerText();
     check(last.includes('Office Manager')&&last.includes('Rang Dave, back Thursday')&&new RegExp(`Promised · ${fmtDay(promised)}`,'i').test(last),`office: the new chase and its promise show: ${JSON.stringify(last)}`);
+    check(await acme.getByRole('button',{name:'Log a chase'}).evaluate(e=>e===document.activeElement)&&(await acme.getByRole('status').innerText()).includes('Chase saved'),'office: focus returns to Log a chase and the save is announced');
     check((await acme.getByRole('form').count())===0&&(await acme.getByRole('button',{name:'Log a chase'}).count())===1,'office: the form closes and can be opened again');
     // It is kept: a reload shows the same.
     await page.reload();await page.locator('.co-list').waitFor();

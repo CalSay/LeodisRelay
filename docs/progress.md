@@ -71,8 +71,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   to SharePoint, sends nothing and asks nobody to approve anything, so events
   stay distinct and it is not EXP-2. Companies are matched ignoring case and
   spacing as the page already does; nothing is checked against a company
-  list (EXP-4). Only Managers and Admins can log one, and only against a name
-  on an issue they can open. Each save carries the form's own id, so a retry
+  list (EXP-4). Only Managers and Admins can log one, and only against a company
+  the page shows them. Chases belong to the company, not a project: fine
+  while everyone can open every project, noted in the code for when access
+  is narrowed. Each save carries the form's own id, so a retry
   after a lost reply is not logged twice. Chases cannot be edited or removed:
   they are a log, and removing data needs Cal's go-ahead; a correction is a
   new chase.
@@ -92,6 +94,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   keeps the note, axe with the form open, 390px light and 1440px dark).
   Also passed: `verify-company-issues`, `verify-help`, `verify-role-access`,
   `verify-accessibility`.
+- Review: a fresh-context review found no blocking bugs; fixed what it
+  raised: focus now returns to "Log a chase" after Save or Cancel and a
+  screen reader hears "Chase saved"; the API refused only names with no
+  issue at all, so a company with only withdrawn or long-closed issues
+  could be given a note nobody would see (now it must be on the page);
+  chase times show the year when it is not this year; a lost reply followed
+  by edited words no longer leaves the form stuck on a refusal.
 - Not verified: a physical phone, Safari and Firefox (the date box looks
   different in each), a real screen reader, SharePoint mode.
 - Proposed (not added to `docs/tasks.json`): NEW-8 chase notes, with the

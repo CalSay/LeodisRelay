@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
@@ -22,7 +22,9 @@ const LONDON = { timeZone: 'Europe/London' } as const;
 const fmtDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', { ...LONDON, day: 'numeric', month: 'short', year: 'numeric' });
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const ageWords = (days: number) => days === 0 ? 'raised today' : days === 1 ? 'raised yesterday' : `${days} days`;
-const fmtWhen = (iso: string) => new Date(iso).toLocaleString('en-GB', { ...LONDON, day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+/** The year only when it is not this year, so last October's chase does not read as this month's. */
+const fmtWhen = (iso: string) => { const d = new Date(iso); const year = d.toLocaleDateString('en-GB', { ...LONDON, year: 'numeric' }) !== new Date().toLocaleDateString('en-GB', { ...LONDON, year: 'numeric' });
+  return d.toLocaleString('en-GB', { ...LONDON, day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}), hour: '2-digit', minute: '2-digit' }); };
 const PROMISE_WORDS = { due: 'Promised', met: 'Promise met', missed: 'Promise missed' } as const;
 const PROMISE_TAG = { due: 'tag-draft', met: 'tag-sent', missed: 'tag-alert' } as const;
 type WithChases = CompanyIssues & { chases: Record<string, CompanyChases> };
@@ -39,6 +41,11 @@ function ChaseLog({ line, chases, today, onSaved }: { line: CompanyLine; chases:
   const [requestId, setRequestId] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [said, setSaid] = useState('');
+  // Closing the form removes the focused control, so focus goes back to "Log a chase".
+  const addButton = useRef<HTMLButtonElement>(null);
+  const [refocus, setRefocus] = useState(false);
+  useEffect(() => { if (refocus && !open) { addButton.current?.focus(); setRefocus(false); } }, [refocus, open]);
   const recent = chases?.recent ?? [];
   const [latest, ...earlier] = recent;
   const promise = standingPromise(recent, line.toDo, today);
@@ -46,8 +53,8 @@ function ChaseLog({ line, chases, today, onSaved }: { line: CompanyLine; chases:
   const formId = `chase-${companyKey(line.owner).replace(/[^a-z0-9]+/g, '-')}`;
   if (!latest && !hasWork) return null;
 
-  const start = () => { setOpen(true); setError(''); setRequestId(clientId()); };
-  const cancel = () => { setOpen(false); setNote(''); setPromisedBy(''); setError(''); };
+  const start = () => { setOpen(true); setError(''); setSaid(''); setRequestId(clientId()); };
+  const cancel = () => { setOpen(false); setNote(''); setPromisedBy(''); setError(''); setRefocus(true); };
   const save = async (e: FormEvent) => {
     e.preventDefault();
     if (saving) return;
@@ -57,9 +64,14 @@ function ChaseLog({ line, chases, today, onSaved }: { line: CompanyLine; chases:
       const response = await fetch('/api/company-chases', { method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ owner: line.owner, note, promisedBy, requestId }) });
       const body = await response.json().catch(() => ({})) as Chase & { reason?: string };
+      if (response.status === 409) {
+        // An earlier try with this form was saved with other words and its reply was lost. Saving again keeps these words as a new chase.
+        setRequestId(clientId());
+        throw new Error('An earlier try was saved with different words. Save again to keep these words as a new chase, or reload to see it.');
+      }
       if (!response.ok) throw new Error(body.reason ?? `The chase could not be saved (${response.status}).`);
       onSaved(body);
-      setOpen(false); setNote(''); setPromisedBy('');
+      setOpen(false); setNote(''); setPromisedBy(''); setSaid(`Chase saved for ${line.owner}.`); setRefocus(true);
     } catch (err) {
       setError(err instanceof TypeError ? 'No connection. Your note is still here: try again when there is signal.' : err instanceof Error ? err.message : 'The chase could not be saved.');
     } finally { setSaving(false); }
@@ -90,7 +102,8 @@ function ChaseLog({ line, chases, today, onSaved }: { line: CompanyLine; chases:
       </div>
       <p className="co-sub">Kept in RELAY for the office. It does not change the issues or send anything.</p>
     </form>
-      : hasWork && <button type="button" className="co-snag co-chase-add" onClick={start}>Log a chase</button>}
+      : hasWork && <button ref={addButton} type="button" className="co-snag co-chase-add" onClick={start}>Log a chase</button>}
+    <p className="eng-sr" role="status">{said}</p>
   </section>;
 }
 

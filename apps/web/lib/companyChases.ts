@@ -11,6 +11,12 @@ import { companyKey } from './companyIssues';
  * owner or target date, sends nothing to anyone and asks no one to approve
  * anything. Companies are matched as the page matches them, ignoring case and
  * spacing; nothing is checked against a company list.
+ *
+ * A chase is about the company, not one project. In the pilot everyone can
+ * open every project; if access is ever narrowed per project, someone who
+ * sees a company on one project would read notes about its work on another,
+ * so chases would then need a project, or to be shown only to those who can
+ * open all of that company's projects.
  */
 
 export const NOTE_MAX = 500;
@@ -55,7 +61,7 @@ export function chaseProblem(input: ChaseInput, today: string): string | undefin
   return undefined;
 }
 
-/** Newest first; ties keep the later-logged chase on top. */
+/** Newest first; two chases in the same millisecond fall in a fixed (id) order. */
 export const newestFirst = (a: Chase, b: Chase) => b.at.localeCompare(a.at) || b.id.localeCompare(a.id);
 
 /** Each company's chases, newest first, the most recent `RECENT_CHASES` carried and the rest counted. Only the companies asked for. */
