@@ -248,10 +248,10 @@
         "Local outbox files are never shown as delivered email",
         "Browser check"
       ],
-      "status": "todo",
-      "passes": false,
+      "status": "done",
+      "passes": true,
       "pr": null,
-      "notes": "Partial: lib/status.ts separates receipt, review, delivery, acknowledgement; PDF preparation and delivery share one status line."
+      "notes": "Done 2026-10-20: lib/status.ts submissionStages gives a sent report its own steps (Received, Review only where review is used, PDF, Delivery, Read), shown by components/SubmissionStages.tsx in the office reader and on the engineer's report page. The worker records which step a failure belongs to (deliveryErrorStage). Delivery is stated from what happened: a local outbox file is 'Not emailed'; 'Emailed to ...' needs the mail transport to have sent it; SharePoint projects show filing. Tests in tests/submissionStages.test.ts; browser check scripts/verify-submission-stages.mjs."
     },
     {
       "id": "FE-1b",

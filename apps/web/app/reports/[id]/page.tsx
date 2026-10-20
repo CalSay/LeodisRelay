@@ -24,7 +24,8 @@ import { usePrincipal } from '@/components/PrincipalContext';
 import { useRouter } from 'next/navigation';
 import { correctReport as requestCorrection } from '@/lib/api';
 import { ownsReport } from '@/lib/auth/access';
-import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
+import { toneClass } from '@/lib/status';
+import { SubmissionStages } from '@/components/SubmissionStages';
 import { OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
 import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 
@@ -408,7 +409,6 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const sent = report.state === "submitted";
   const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
   const mine = principal ? ownsReport(principal, report) : false;
-  const facts = [reviewStatus(report), deliveryStatus(report), acknowledgementStatus(report)].filter((f): f is NonNullable<typeof f> => f !== null);
   const counts = Object.fromEntries(KINDS.map(k => [k, report.observations.filter(o => o.type === k).length])) as Record<ObservationType, number>;
   // The open card. Side by side there is always one in the editor column; on
   // the phone every card starts folded, so the report reads as a short list.
@@ -535,11 +535,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               View the document &rarr;
             </Link>
           </p>
-          {/* Review, delivery and whether anyone read it: the same three
-              facts the office sees, in the same words. */}
-          <p style={{ margin: "10px 0 0", display: "flex", gap: 6, flexWrap: "wrap" }}>
-            {facts.map((f) => <span key={f.label} className={toneClass(f.tone)}>{f.label}</span>)}
-          </p>
+          {/* Each step after sending, the same steps the office sees. */}
+          <SubmissionStages report={report} tagClass={toneClass} when={fmtWhen} />
           {mine && !correcting && (
             <div className="btn-row" style={{ marginTop: 12 }}>
               <button className="btn-sm" onClick={() => setCorrecting(true)}>
