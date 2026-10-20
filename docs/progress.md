@@ -74,6 +74,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Next (proposed, not built): start a safety inspection offline; show
   "Only on this phone" reports on the offline page grouped by project;
   add `verify-offline-capture.mjs` to the browser checks list in `CLAUDE.md`.
+
 ## 2026-10-20 — Navigation and consistency pass
 
 - Why: a dozen pages landed today, each from its own thread, and each named
