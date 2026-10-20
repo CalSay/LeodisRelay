@@ -136,6 +136,19 @@ try {
     eq(saves-photoBefore,1,`${label}: putting the photograph back was one save`);
     eq(uploads-photoUploads,0,`${label}: the photograph was not sent again`);
 
+    // 3b. Photo numbers repeat across cards: undo on the second card's photo 1 focuses that card's button.
+    await open(1);
+    await card().locator('input[type=file]').setInputFiles([await png('#558833')]);
+    await card().locator('.shot img').first().waitFor();
+    await stored(r=>r.observations[1].photos.length===1,'the second card photograph');
+    await settle();
+    await card().getByRole('button',{name:'Remove photo 1',exact:true}).click();
+    await bar.getByRole('button',{name:'Undo',exact:true}).click();
+    eq(await card().locator('.shot img').count(),1,`${label}: the second card's photograph is back`);
+    await page.waitForFunction(()=>{const a=document.activeElement;return a?.getAttribute('aria-label')==='Remove photo 1'&&!!a.offsetParent;});checks++;
+    ok(await card().getByRole('button',{name:'Remove photo 1',exact:true}).evaluate(b=>b===document.activeElement),`${label}: focus is on the restored photograph's own card`);
+    await settle();
+
     // 4. A second removal replaces the first; closing the bar keeps the removal.
     await open(2);
     await card().getByRole('button',{name:'Remove card 3',exact:true}).click();

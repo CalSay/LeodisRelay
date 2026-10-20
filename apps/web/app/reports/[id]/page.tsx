@@ -600,7 +600,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     // Focus lands on what came back: its Remove button, which names it.
     const card = observations.findIndex(o => o.id === cardId) + 1;
     const name = item.kind === 'card' ? `Remove card ${card}` : `Remove photo ${(observations[card - 1]?.photos.findIndex(p => p.id === item.photo.id) ?? 0) + 1}`;
-    setTimeout(() => document.querySelector<HTMLElement>(`#slot-${CSS.escape(cardId)} [aria-label="${name}"], #card-editor > div:not([hidden]) [aria-label="${name}"]`)?.focus({ preventScroll: true }), 50);
+    // Photo numbers repeat across cards, so look only inside the restored card.
+    const within = wide ? '#card-editor > div:not([hidden])' : `#slot-${CSS.escape(cardId)}`;
+    setTimeout(() => document.querySelector<HTMLElement>(`${within} [aria-label="${name}"]`)?.focus({ preventScroll: true }), 50);
   }
 
   // The home screen's "Request a variation" lands here with the card already started.

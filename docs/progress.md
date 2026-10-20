@@ -27,7 +27,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Cards step, and every removal is announced, even two worded the same. Rules in `lib/undoRemove.ts` (pure).
 - Verified on Node 24: `npm run typecheck`, `npm test` (8 new tests in
   `tests/undoRemove.test.ts`), `npm run build`. New
-  `scripts/verify-undo-remove.mjs` passed (76 checks, 390px light and 1440px
+  `scripts/verify-undo-remove.mjs` passed (82 checks, 390px light and 1440px
   dark: bar wording, 44px Undo on screen, card and photo back in place with
   the same ids on the server, one save and no upload on undo, a quick undo is
   one save, focus on Undo and back on the restored item, one bar at a time,
