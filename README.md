@@ -63,6 +63,10 @@ It does not replace the current pilot plan or authorise full-suite development.
 Agreed front-end improvements and unapproved expansion ideas are tracked in
 [docs/product-backlog.md](docs/product-backlog.md).
 
+Claude threads work from [CLAUDE.md](CLAUDE.md), the task queue in
+[docs/tasks.json](docs/tasks.json) and the running log in
+[docs/progress.md](docs/progress.md).
+
 Current completed optimisations, test evidence and remaining work are recorded in
 [docs/optimisation-progress.md](docs/optimisation-progress.md).
 

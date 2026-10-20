@@ -1,0 +1,283 @@
+{
+  "about": "Work queue for Claude threads, built from items Cal approved in docs/product-backlog.md. Threads may change only status, passes, pr and notes. Cal adds, removes or rewords tasks. Status values: todo, in_progress, done, blocked. Statuses were set on 2026-10-20 without auditing the code, so task AUDIT-1 comes first.",
+  "updated": "2026-10-20",
+  "tasks": [
+    {
+      "id": "AUDIT-1",
+      "backlog": "all",
+      "title": "Audit task statuses against the code",
+      "description": "Some approved items may already be partly or fully built (corrections, PM acknowledgement and draft recovery work landed 7-14 Sept). Check each task below against the code, tests and docs/optimisation-progress.md.",
+      "acceptance": [
+        "Every other task's notes say what already exists, with file paths",
+        "Tasks that are fully built and tested are proposed as done in the PR description, not set to done without evidence",
+        "No application code changes in this PR"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-1a",
+      "backlog": "FE-1",
+      "title": "Collapse updates into a summary",
+      "description": "Collapse completed updates into a description, location and photo-count summary.",
+      "acceptance": [
+        "A completed update shows as one line with description, location and photo count",
+        "The update can be expanded and edited again",
+        "Browser check of the engineer report screen on a phone-width viewport"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-1b",
+      "backlog": "FE-1",
+      "title": "Add another update at the same location",
+      "description": "Add another update at the same location without copying findings or evidence.",
+      "acceptance": [
+        "An action on an update starts a new update with the location filled in",
+        "Findings, photos and other evidence are not copied",
+        "Test covering the new update's fields"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-1c",
+      "backlog": "FE-1",
+      "title": "Suggest responsible companies and locations",
+      "description": "Suggest responsible companies. Location suggestions are optional, derived from prior entries, and need no setup or exact naming (EXP-4 rules out a location catalogue).",
+      "acceptance": [
+        "Suggestions come from prior entries on the same project",
+        "Free text is always accepted; nothing requires a maintained list or exact match",
+        "Test for the suggestion source"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-1d",
+      "backlog": "FE-1",
+      "title": "Undo removing an update or photograph",
+      "description": "Offer undo when removing an update or photograph.",
+      "acceptance": [
+        "Removing an update or photo shows an undo option",
+        "Undo restores it, including its photos, without a duplicate save",
+        "Test for remove then undo"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-3a",
+      "backlog": "FE-3",
+      "title": "Preserve signatures across reloads",
+      "description": "A signature captured in a draft survives a reload.",
+      "acceptance": [
+        "Sign, reload, signature still shown and saved to the server",
+        "Test covering signature persistence"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": "optimisation-progress.md lists signature persistence as unfinished"
+    },
+    {
+      "id": "FE-3b",
+      "backlog": "FE-3",
+      "title": "Show pending uploads and server acknowledgement",
+      "description": "Make pending uploads and server acknowledgement clear.",
+      "acceptance": [
+        "The engineer can tell which text and photos are saved on the server and which are pending",
+        "Browser check with the server stopped and restarted"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-3c",
+      "backlog": "FE-3",
+      "title": "Explain and resolve conflicting versions",
+      "description": "Explain and resolve conflicting versions without silently losing work, including two tabs editing one draft.",
+      "acceptance": [
+        "A conflicting save shows both versions and lets the user choose or merge",
+        "Neither version is lost silently",
+        "Tests for stale-save conflict and two-tab editing"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-3d",
+      "backlog": "FE-3",
+      "title": "Surface unfinished reports on the home screen",
+      "description": "Unfinished drafts appear on the engineer home screen.",
+      "acceptance": [
+        "Home screen lists unfinished reports with project and last-saved time",
+        "Browser check"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-3e",
+      "backlog": "FE-3",
+      "title": "Extend offline capture",
+      "description": "Extend offline capability deliberately beyond retained-text recovery, toward cold-start offline capture.",
+      "acceptance": [
+        "Scope of the extension agreed with Cal before building",
+        "Behaviour verified on physical iOS and Android devices"
+      ],
+      "status": "blocked",
+      "passes": false,
+      "pr": null,
+      "notes": "Needs Cal to agree the scope and to test on physical phones"
+    },
+    {
+      "id": "FE-4a",
+      "backlog": "FE-4",
+      "title": "Hide the review queue when review is disabled",
+      "description": "Review remains off by default; its queue is hidden when off.",
+      "acceptance": [
+        "With review off, no review queue or count appears in the PM view",
+        "Test or browser check for both settings"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-4b",
+      "backlog": "FE-4",
+      "title": "Action-focused PM view",
+      "description": "Surface new reports, unacknowledged reports, unassigned issues and verification.",
+      "acceptance": [
+        "PM view shows each of the four groups with counts",
+        "Browser check of the office view"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-4c",
+      "backlog": "FE-4",
+      "title": "Explicit PM acknowledgement",
+      "description": "PM acknowledgement with actor, timestamp and optional note, kept separate from server receipt, delivery, approval and issue closure. Sending never waits for acknowledgement.",
+      "acceptance": [
+        "Acknowledgement records actor and timestamp, optional note",
+        "It is stored and shown separately from receipt, delivery, approval and closure",
+        "Tests for the acknowledgement record"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-5a",
+      "backlog": "FE-5",
+      "title": "Search and filter the issue register",
+      "description": "Search and filter by location, responsible company and verification status, across the whole authorised register, not just the loaded page. Location search must not depend on a location catalogue (EXP-4).",
+      "acceptance": [
+        "Filters for location text, responsible company and verification status",
+        "Results cover the whole authorised register with pagination",
+        "Tests for the query, including SharePoint-backed paging with the fixture adapter"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-5b",
+      "backlog": "FE-5",
+      "title": "Show descriptions and thumbnails when linking an issue",
+      "description": "Show descriptions and/or thumbnails when linking an existing issue.",
+      "acceptance": [
+        "The link-issue picker shows each issue's description and a thumbnail where one exists",
+        "Browser check"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-6a",
+      "backlog": "FE-6",
+      "title": "Distinct submission stages",
+      "description": "Show acceptance, PDF preparation, delivery and PM acknowledgement as distinct stages.",
+      "acceptance": [
+        "Each stage shows separately with its own state",
+        "Local outbox files are never shown as delivered email",
+        "Browser check"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "FE-6b",
+      "backlog": "FE-6",
+      "title": "Traceable corrections and revisions",
+      "description": "Corrections create traceable revisions rather than overwriting sent reports, and resulting issue changes keep their report provenance.",
+      "acceptance": [
+        "A correction creates a new revision; the sent snapshot is unchanged",
+        "Issue changes from a correction record which revision made them",
+        "Tests for revision and provenance"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "EXP-1",
+      "backlog": "EXP-1",
+      "title": "Living site diary",
+      "description": "A chronological project timeline assembled from existing reports and observations, with no second round of data entry, preserving report provenance and revision history.",
+      "acceptance": [
+        "Timeline built only from existing report data",
+        "Each entry links to its report and revision",
+        "Tests for timeline assembly; browser check"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": ""
+    },
+    {
+      "id": "EXP-5",
+      "backlog": "EXP-5",
+      "title": "Additional report types",
+      "description": "Support additional report types on the shared capture, draft, evidence, submission, revision and PDF capabilities.",
+      "acceptance": [
+        "Cal names the first report type and its fields, signatures and rules",
+        "That type works end to end without assuming the progress-report workflow"
+      ],
+      "status": "blocked",
+      "passes": false,
+      "pr": null,
+      "notes": "Specific report types are not yet agreed; needs Cal"
+    }
+  ]
+}
