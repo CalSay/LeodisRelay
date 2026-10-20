@@ -49,7 +49,7 @@
       ],
       "status": "done",
       "passes": true,
-      "pr": null,
+      "pr": 5,
       "notes": "Done 2026-10-20: playwright 1.56.1 pinned as a root dev dependency (its Chromium revision 1194 is the one in /opt/pw-browsers). npm ci downloads no browsers, with or without PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD. verify-role-access and verify-engineer-layout pass; engineer-layout was updated for UI changes since September. verify-pdf-navigation fails on a real app fault: pdfjs-dist 6.3 calls Map.prototype.getOrInsertComputed, which Chromium 141 lacks, so the PDF viewer shows an error in older browsers. Not fixed here (outside this task)."
     },
     {
