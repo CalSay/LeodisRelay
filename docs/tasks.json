@@ -173,10 +173,10 @@
         "PM view shows each of the four groups with counts",
         "Browser check of the office view"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Partial: model.ts has notAcknowledged/isUnassigned/isVerify; no single view with all four groups and counts; 'new' is undefined."
+      "status": "done",
+      "passes": true,
+      "pr": 15,
+      "notes": "2026-10-20: the office position shows four groups with counts: New reports (received on the previous working day or since, London time; Monday counts Friday), Not yet read, Unassigned issues and Ready to verify, with Acknowledge, Assign and Verify on each row. lib/officeActions.ts holds the rules; each group opens its filtered list (#/inbox/show/new, #/inbox/show/notAck, #/issues/show/unassigned, #/issues/show/verify; the Inbox gained a New filter). Checked by tests/officeActions.test.ts and scripts/verify-office-actions.mjs. Bank holidays are not known."
     },
     {
       "id": "FE-3c",
@@ -211,10 +211,10 @@
         "The update can be expanded and edited again",
         "Browser check of the engineer report screen on a phone-width viewport"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Mostly built: report page 'Cards' rail shows location, kind, text and photo count (app/reports/[id]/page.tsx:462-491). Missing an explicit collapsed/completed state and a phone-width browser check."
+      "status": "done",
+      "passes": true,
+      "pr": 13,
+      "notes": "Done 2026-10-20 with UI direction item 2: below 900px every card folds to a summary row (kind, location, one-line description, photo count, and why it would stop sending); tapping a row opens that card under it, tapping again or Done with this card folds it. Wide screens keep the rail. scripts/verify-report-editor.mjs checks it at 390px and 1440px in light and dark."
     },
     {
       "id": "FE-5b",

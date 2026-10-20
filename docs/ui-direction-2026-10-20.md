@@ -81,6 +81,7 @@ iOS Safari, a live tenant.
 2. **Report editor flow.** Collapse cards that are not being edited, drop the
    repeated "Selected" line, and make "Check & send" a clear final step with a
    sticky action that never covers the field being typed in.
+   Done 20 October (see `docs/progress.md`, UI-2).
 3. **Engineer navigation.** Done in UI-3: each entry has a line icon with its
    label (icon over label on the phone bar), the current view is weighted with
    a gold mark and a tinted tile, all five entries sit on one row down to

@@ -1,39 +1,46 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { isNewReport, previousWorkingDay, sinceWords } from '@/lib/officeActions';
 import type { ReportSummary } from '@/lib/types';
 import type { Ctx } from './ctx';
 import { BtnQ, DeliveryTag, Found, ReviewTag, Tag } from './bits';
 import { ReportReader } from './ProjectsView';
 import { awaitingReview, byReceived, fmtWhen, notAcknowledged, notNotified, processingFailed, returned, shortRef } from './model';
 
-type Filter = 'all' | 'notAck' | 'review' | 'returned' | 'notNotified' | 'failed' | 'drafts';
-const FILTERS: [Filter, string, boolean][] = [['all', 'All', false], ['notAck', 'Not yet read', false], ['review', 'To review', true], ['returned', 'Returned', false], ['notNotified', 'PM not notified', false], ['failed', 'Processing failed', true], ['drafts', 'Drafts on site', false]];
+type Filter = 'all' | 'new' | 'notAck' | 'review' | 'returned' | 'notNotified' | 'failed' | 'drafts';
+const FILTERS: [Filter, string, boolean][] = [['all', 'All', false], ['new', 'New', false], ['notAck', 'Not yet read', false], ['review', 'To review', true], ['returned', 'Returned', false], ['notNotified', 'PM not notified', false], ['failed', 'Processing failed', true], ['drafts', 'Drafts on site', false]];
 
 /** Every report received, newest first, with the reader beside it. */
 export function InboxView({ ctx }: { ctx: Ctx }) {
-  const [chosen, setFilter] = useState<Filter>('all');
+  // #/inbox/show/<filter> opens on that filter, from the office position's groups.
+  const linked = ctx.route.a === 'show' ? FILTERS.find(([k]) => k === ctx.route.b)?.[0] : undefined;
+  const [chosen, setFilter] = useState<Filter>(linked ?? 'all');
+  // The tab itself (no record or filter in the route) starts again from all.
+  const bare = !ctx.route.a;
+  useEffect(() => { if (linked) setFilter(linked); else if (bare) setFilter('all'); }, [linked, bare]);
   const [project, setProject] = useState('');
   const [trade, setTrade] = useState('');
   const snap = ctx.snap;
-  const selected = ctx.route.a;
+  const selected = ctx.route.a === 'show' ? null : ctx.route.a;
+  const since = previousWorkingDay(ctx.day);
   if (!snap) return <div className="view"><div className="loading">Loading office records</div></div>;
   const scoped = (r: ReportSummary) => (!project || r.projectId === project) && (!trade || r.authorTrade === trade);
   const reports = snap.reports.filter(scoped).sort(byReceived);
   const drafts = snap.drafts.filter(scoped);
-  const counts: Record<Filter, number> = { all: reports.length, notAck: reports.filter(notAcknowledged).length, review: reports.filter(awaitingReview).length, returned: reports.filter(returned).length, notNotified: reports.filter(notNotified).length, failed: reports.filter(processingFailed).length, drafts: drafts.length };
+  const counts: Record<Filter, number> = { all: reports.length, new: reports.filter(r => isNewReport(r, since)).length, notAck: reports.filter(notAcknowledged).length, review: reports.filter(awaitingReview).length, returned: reports.filter(returned).length, notNotified: reports.filter(notNotified).length, failed: reports.filter(processingFailed).length, drafts: drafts.length };
   // The review filters only exist where review is used, for the project in view; it is off by default.
   const reviewOn = project ? !!ctx.statOf(project)?.reviewOn : ctx.reviewOn;
   const filters = reviewOn ? FILTERS : FILTERS.filter(([k]) => k !== 'review' && k !== 'returned');
   // A chosen filter that is no longer offered falls back to all, rather than an empty list with nothing selected.
   const filter = filters.some(([k]) => k === chosen) ? chosen : 'all';
-  const shown = filter === 'notNotified' ? reports.filter(notNotified) : filter === 'failed' ? reports.filter(processingFailed) : filter === 'notAck' ? reports.filter(notAcknowledged) : filter === 'review' ? reports.filter(awaitingReview) : filter === 'returned' ? reports.filter(returned) : reports;
+  const shown = filter === 'new' ? reports.filter(r => isNewReport(r, since)) : filter === 'notNotified' ? reports.filter(notNotified) : filter === 'failed' ? reports.filter(processingFailed) : filter === 'notAck' ? reports.filter(notAcknowledged) : filter === 'review' ? reports.filter(awaitingReview) : filter === 'returned' ? reports.filter(returned) : reports;
   const week = Date.now() - 7 * 86400000;
   const name = (id: string) => ctx.projects.find(p => p.id === id)?.projectName ?? id;
   const code = (id: string) => ctx.projects.find(p => p.id === id)?.id ?? '';
   return <div className="view">
     <div className="pagehead"><div><h3>Inbox</h3><p>{snap.reports.length} reports received · {snap.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week).length} this week · {counts.notAck} not yet read · {snap.drafts.length} draft{snap.drafts.length === 1 ? '' : 's'} in progress on site</p></div></div>
     <div className="filters">
-      {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
+      {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)} title={k === 'new' ? `Received ${sinceWords(since, ctx.day)}` : undefined}>{l} · {counts[k]}</button>)}
       <span className="spacer" />
       <label>Project <select value={project} onChange={e => setProject(e.target.value)}><option value="">All projects</option>{ctx.projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}</select></label>
       <label>Trade <select value={trade} onChange={e => setTrade(e.target.value)}><option value="">All trades</option>{['Electrical', 'HVAC', 'P&H'].map(t => <option key={t} value={t}>{t}</option>)}</select></label>
