@@ -84,7 +84,8 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const statOf = useCallback((code: string) => stats.find(s => s.code === code), [stats]);
   const attn = useMemo(() => attention(stats, day), [stats, day]);
   const me = { id: principal?.id ?? '', name: principal?.name ?? '', role: principal?.role ?? '', admin: principal ? isAdmin(principal) : false };
-  const ctx: Ctx = { snap, day, projects, stats, statOf, route, go, setDialog, refresh, me, team, loadTeam };
+  const reviewOn = stats.some(s => s.reviewOn);
+  const ctx: Ctx = { snap, day, projects, stats, reviewOn, statOf, route, go, setDialog, refresh, me, team, loadTeam };
 
   const onRootClick = (e: React.MouseEvent) => {
     const el = e.target as HTMLElement; const a = el.closest('a[href^="#/"]');

@@ -93,7 +93,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s?: ProjectStats; kind: s
     </div>
     {filter === 'action' && <>
       <div className="grp">Reports needing attention<i>{attnReports.length}</i></div>
-      {attnReports.length ? attnReports.map(reportRow) : <div className="empty" style={{ padding: 14 }}>Nothing waits for review or correction.</div>}
+      {attnReports.length ? attnReports.map(reportRow) : <div className="empty" style={{ padding: 14 }}>{s.reviewOn ? 'Nothing waits for review or correction.' : 'No report needs attention.'}</div>}
       <div className="grp">Issues needing action<i>{attnIssues.length} of {s.active.length}</i></div>
       {attnIssues.length ? attnIssues.map(issueRow) : <div className="empty" style={{ padding: 14 }}>Nothing overdue, unassigned, disputed or waiting to be verified.</div>}
       {attnVariations.length > 0 && <><div className="grp">Variations needing a quote or an instruction<i>{attnVariations.length} of {s.pendingVariations.length}</i></div>{attnVariations.map(variationRow)}</>}

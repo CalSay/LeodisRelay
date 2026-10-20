@@ -4,6 +4,30 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — FE-4a: hide the review queue when review is off
+
+- The office shows review filters and counts only where review is in use.
+  `lib/reviewQueue.ts` decides per project: the project requires review, or a
+  submitted report is still waiting for a decision. With review off (the
+  default for every project) the Inbox has no "To review" or "Returned"
+  filter, the Issues page has no "Not reviewed" filter or count, and the
+  project register no longer mentions review when nothing needs attention.
+- Decisions: a report left waiting from when review was required keeps the
+  queue on until someone decides it, so it is never hidden from the office.
+  "Not reviewed" is hidden too, because issues stay provisional when nobody
+  reviews reports, so that count grew on every project with review off. A
+  report that is itself pending or returned still shows its tag, and the
+  report reader keeps its "Review" row; both are facts about one report, not
+  a queue. The project sheet still states whether review is required.
+- Verified: `npm run typecheck` and `npm test` pass (web suite 60 tests, three
+  new in `tests/reviewQueue.test.ts`). New `scripts/verify-review-queue.mjs`
+  passed (12 checks): with a report waiting the filters and count show; after
+  a manager approves it they are gone. It fails on main. `verify-role-access.mjs`
+  passed.
+- Not verified: a project with review switched on from SharePoint (every
+  project has it off; the "on" case is a waiting report); a physical phone.
+- Next: FE-3d (show all unfinished reports on engineer home).
+
 ## 2026-10-20 — FE-3a: signatures survive a reload
 
 - The name and drawn signature on a draft now save with it, like any other

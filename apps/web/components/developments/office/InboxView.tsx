@@ -25,10 +25,12 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
   const week = Date.now() - 7 * 86400000;
   const name = (id: string) => ctx.projects.find(p => p.id === id)?.projectName ?? id;
   const code = (id: string) => ctx.projects.find(p => p.id === id)?.id ?? '';
+  // The review filters only exist where review is used; it is off by default.
+  const filters = ctx.reviewOn ? FILTERS : FILTERS.filter(([k]) => k !== 'review' && k !== 'returned');
   return <div className="view">
     <div className="pagehead"><div><h3>Inbox</h3><p>{snap.reports.length} reports received · {snap.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week).length} this week · {counts.notAck} not yet read · {snap.drafts.length} draft{snap.drafts.length === 1 ? '' : 's'} in progress on site</p></div></div>
     <div className="filters">
-      {FILTERS.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
+      {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
       <span className="spacer" />
       <label>Project <select value={project} onChange={e => setProject(e.target.value)}><option value="">All projects</option>{ctx.projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}</select></label>
       <label>Trade <select value={trade} onChange={e => setTrade(e.target.value)}><option value="">All trades</option>{['Electrical', 'HVAC', 'P&H'].map(t => <option key={t} value={t}>{t}</option>)}</select></label>

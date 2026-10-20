@@ -27,7 +27,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const snap = ctx.snap; const day = ctx.day;
   if (!snap) return <div className="view"><div className="loading">Loading office records</div></div>;
   const scoped = snap.issues.filter(i => (!project || i.projectId === project) && (!trade || i.affectedTrade === trade || (!i.affectedTrade && i.reporterTrade === trade)) && (!owner || i.owner === owner));
-  const pick: Record<Filter, (i: Issue) => boolean> = { open: isActive, overdue: i => isOverdue(i, day), verify: isVerify, unassigned: isUnassigned, notReviewed: isNotReviewed, disputed: isDisputed, closed: i => !isActive(i) };
+  const pick: Record<Filter, (i: Issue) => boolean> = { open: isActive, overdue: i => isOverdue(i, day), verify: isVerify, unassigned: isUnassigned, notReviewed: i => isNotReviewed(i) && !!ctx.statOf(i.projectId)?.reviewOn, disputed: isDisputed, closed: i => !isActive(i) };
   const counts = Object.fromEntries(FILTERS.map(([k]) => [k, scoped.filter(pick[k]).length])) as Record<Filter, number>;
   const rank = (i: Issue) => isOverdue(i, day) ? 0 : isDisputed(i) ? 1 : isVerify(i) ? 2 : isUnassigned(i) ? 3 : 4;
   const owners = [...new Set(snap.issues.map(i => i.owner.trim()).filter(Boolean))].sort();
@@ -41,11 +41,13 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const changeSort = (key: SortKey) => setSort(current => current?.key === key ? { key, direction: current.direction === 'ascending' ? 'descending' : 'ascending' } : { key, direction: 'ascending' });
   const source = (i: Issue) => { const r = i.raisedByReport ? snap.reports.find(x => x.id === i.raisedByReport) : undefined; return r ? shortRef(r.reference) : i.source === 'individual' ? 'Flagged on site' : '—'; };
   const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
+  // "Not reviewed" counts issues waiting on report review, so it only shows where review is used.
+  const filters = ctx.reviewOn ? FILTERS : FILTERS.filter(([k]) => k !== 'notReviewed');
   return <div className="view">
-    <div className="pagehead"><div><h3>Issues</h3><p>{counts.open} open across {ctx.projects.length} projects · {counts.overdue ? <span className="late">{counts.overdue} overdue</span> : 'none overdue'} · {counts.verify} awaiting verification · {counts.unassigned} unassigned · {counts.notReviewed} not reviewed · {counts.disputed} disputed</p></div>
+    <div className="pagehead"><div><h3>Issues</h3><p>{counts.open} open across {ctx.projects.length} projects · {counts.overdue ? <span className="late">{counts.overdue} overdue</span> : 'none overdue'} · {counts.verify} awaiting verification · {counts.unassigned} unassigned · {ctx.reviewOn && <>{counts.notReviewed} not reviewed · </>}{counts.disputed} disputed</p></div>
       <div className="actions">{counts.verify > 0 && <Btn onClick={() => { const i = scoped.filter(isVerify).find(x => !closureMine(x)); if (i) ctx.setDialog({ kind: 'verify', issue: i }); }}>Verify the oldest</Btn>}</div></div>
     <div className="filters">
-      {FILTERS.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
+      {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
       <button type="button" className={`chip ${sort === null ? 'on' : ''}`} onClick={() => setSort(null)}>Sort: priority</button>
       <span className="spacer" />
       <label>Project <select value={project} onChange={e => setProject(e.target.value)}><option value="">All projects</option>{ctx.projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}</select></label>
