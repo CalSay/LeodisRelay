@@ -74,7 +74,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   they raised, are left out, because "Came back from the office" already
   shows the office's answers to those; nothing appears twice. Each issue and
   variation shows once, by its latest change, and only if that change still
-  stands (a closed issue that was reopened shows as reopened). Withdrawn
+  stands (a closed issue that was reopened shows as reopened); one whose
+  latest change was the engineer's own is left out. Withdrawn
   issues and drafts are left out; a sent correction stands in for the report
   it corrects. Rules in `lib/sinceLastVisit.ts`, served by
   `/api/since-last-visit` with the weekly summary's project rule.
@@ -89,7 +90,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   reports, drafts, other projects and own work left out, your-trade marking,
   show more, back navigation, a second engineer's view, a first-time engineer
   sees 7 days, an empty project says so, signed-out and unknown-project
-  refusals, no sideways scroll). `verify-engineer-layout`,
+  refusals, no sideways scroll). A fresh-context review found no access
+  gaps; its fix (an issue the engineer moved last is not shown with an
+  older change, such as "Reopened" after they put it forward as fixed) is in. `verify-engineer-layout`,
   `verify-role-access` (61), `verify-unfinished-reports` (18) and
   `verify-engineer-nav` (60) still pass. Screenshots (not in the repo) are in
   the RELAY project's shared files under `ui-review/since-last-visit/`.

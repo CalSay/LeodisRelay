@@ -68,6 +68,7 @@ test('issues: each once, by the latest change that still stands, and never my ow
     issue({ id:'undone', work:'open', events:[ev('verified', '2026-10-16T09:00:00Z')] }),
     issue({ id:'reopened', work:'open', events:[ev('verified', '2026-10-16T09:00:00Z'), ev('reopened', '2026-10-19T09:00:00Z')] }),
     issue({ id:'assigned', work:'assigned', owner:'Acme', raisedAt:'2026-10-15T09:00:00Z', events:[ev('assigned', '2026-10-15T10:00:00Z')] }),
+    issue({ id:'reopened-then-i-fixed', work:'awaiting_verification', affectedTrade:'Electrical', events:[ev('reopened', '2026-10-16T09:00:00Z'), ev('closure_submitted', '2026-10-17T09:00:00Z', engineer.id)] }),
     issue({ id:'progress', events:[ev('progress', '2026-10-16T09:00:00Z')] }),
     issue({ id:'withdrawn', confirmation:'withdrawn', raisedAt:'2026-10-16T09:00:00Z' }),
     issue({ id:'before', work:'closed', events:[ev('verified', '2026-10-13T09:00:00Z')] }),

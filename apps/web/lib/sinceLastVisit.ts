@@ -72,7 +72,9 @@ export function sinceLastVisit(sources: CatchUpSources, principal: Principal, pr
   const mine = (actorId?: string) => !!actorId && actorId === principal.id;
   const issues = newestFirst(sources.issues.filter(i => i.projectId === projectId && i.confirmation !== 'withdrawn').flatMap((i): CatchUpIssue[] => {
     if (mine(i.reportedById ?? i.events[0]?.actorId)) return [];
-    const moved = i.events.filter(e => ISSUE_EVENT[e.kind] && after(e.at) && !mine(e.actorId)).at(-1);
+    const moved = i.events.filter(e => ISSUE_EVENT[e.kind] && after(e.at)).at(-1);
+    // The engineer made the latest move themselves (put it forward as fixed, say), so they already know where it stands.
+    if (moved && mine(moved.actorId)) return [];
     // A move that has since been undone is not news: "closed" on an issue that is open again would mislead.
     const change = moved && ISSUE_EVENT[moved.kind];
     const stands = change && (change !== 'closed' || i.work === 'closed') && (change !== 'fixed' || i.work === 'awaiting_verification' || i.work === 'closed');
