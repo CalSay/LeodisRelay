@@ -18,11 +18,19 @@ and layout, then the files below before changing anything.
     npm run build           # production web build + worker
     npm --workspace @relay/web run dev   # dev server on :4310
 
-Browser checks (Playwright, Chromium is preinstalled in cloud sessions) run
-after `npm test && npm run build`: `node scripts/verify-engineer-layout.mjs`,
-`verify-pdf-navigation.mjs`, `verify-role-access.mjs`. Set
-`RELAY_BROWSER_PATH` if Playwright cannot find Chromium. Run the relevant one
-for any UI change and say which you ran.
+Browser checks run after `npm test && npm run build`, from the repo root:
+
+    node scripts/verify-role-access.mjs       # role landing pages and HTTP permissions
+    node scripts/verify-engineer-layout.mjs   # engineer home, defect, card editor, send
+    node scripts/verify-signature-reload.mjs  # draft signature survives a reload
+    node scripts/verify-pdf-navigation.mjs    # in-app PDF viewer (fails on main: pdf.js 6 needs a newer Chromium)
+
+Playwright 1.56.1 is pinned to match the Chromium 141 preinstalled in cloud
+sessions (`PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers`); `npm ci` never
+downloads browsers. Elsewhere, run `npx playwright install chromium` once or
+set `RELAY_BROWSER_PATH` to a Chromium binary. Run the relevant check for any
+UI change and say which you ran. `RELAY_SCREENSHOT_DIR=<dir>` saves the
+engineer layout screenshots.
 
 ## Task list and progress log
 

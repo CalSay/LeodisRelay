@@ -47,10 +47,10 @@
         "At least one scripts/verify-*.mjs runs green in a cloud thread after npm test && npm run build",
         "CLAUDE.md names the exact command"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Proposed by the setup thread; needed before any 'Browser check' step can pass."
+      "status": "done",
+      "passes": true,
+      "pr": 5,
+      "notes": "Done 2026-10-20: playwright 1.56.1 pinned as a root dev dependency (its Chromium revision 1194 is the one in /opt/pw-browsers). npm ci downloads no browsers, with or without PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD. verify-role-access and verify-engineer-layout pass; engineer-layout was updated for UI changes since September. verify-pdf-navigation fails on a real app fault: pdfjs-dist 6.3 calls Map.prototype.getOrInsertComputed, which Chromium 141 lacks, so the PDF viewer shows an error in older browsers. Not fixed here (outside this task)."
     },
     {
       "id": "FE-4c",
