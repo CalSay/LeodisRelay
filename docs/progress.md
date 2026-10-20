@@ -4,6 +4,63 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Chase notes on Issues by company
+
+- Why: Issues by company (#33) tells the office who to chase, but there was
+  nowhere to write down that they had: who rang, what was said, and the day
+  the company promised to finish. That lives in heads and notebooks today, so
+  the next person to ring repeats the call and a broken promise goes
+  unnoticed. Chosen by Claude under Cal's standing freedom to add features;
+  it sits on an office page, away from the report editor another thread is in.
+- What: each company card on `/companies` now has a "Chased" section: the
+  latest chase (when, who, what was said, and the promised day if given),
+  earlier chases folded under "Earlier chases (n)", and "Log a chase" (a note
+  of up to 500 characters and an optional "Promised by" date, today to a year
+  ahead). The promise on the latest chase is shown as Promised, "Promise met"
+  once nothing is left to put right, or "Promise missed" once the day has gone
+  with work still to do; a missed promise is also tagged at the top of the
+  card. A later chase with no date sets the old promise aside.
+- Decisions: a chase is RELAY's own note (`company-chases` records in the
+  local store, like an acknowledgement); it changes no issue, writes nothing
+  to SharePoint, sends nothing and asks nobody to approve anything, so events
+  stay distinct and it is not EXP-2. Companies are matched ignoring case and
+  spacing as the page already does; nothing is checked against a company
+  list (EXP-4). Only Managers and Admins can log one, and only against a company
+  the page shows them. Chases belong to the company, not a project: fine
+  while everyone can open every project, noted in the code for when access
+  is narrowed. Each save carries the form's own id, so a retry
+  after a lost reply is not logged twice. Chases cannot be edited or removed:
+  they are a log, and removing data needs Cal's go-ahead; a correction is a
+  new chase.
+- Rules in `lib/companyChases.ts`, store in `lib/chaseStore.ts`, API
+  `POST /api/company-chases`; `GET /api/company-issues` now carries each
+  shown company's ten most recent chases and a count. Help: What's new entry
+  `company-chases`, a step in "Your day in the office", and the Issues by
+  company link text.
+- Also fixed: `verify-accessibility` failed on main before this change, at
+  the engineer home's "Since your last visit" link (axe `link-in-text-block`:
+  gold text only). It is underlined now.
+- Verified (Node 22 here; CI runs Node 24): `npm run typecheck`, `npm test`
+  (4 new tests), `npm run build`, new `scripts/verify-company-chases.mjs`
+  (office-only saves, refused names and past dates, a seeded missed promise,
+  logging a chase with a promise, kept after reload, a later chase setting the
+  promise aside, earlier chases, retries, issues untouched, no connection
+  keeps the note, axe with the form open, 390px light and 1440px dark).
+  Also passed: `verify-company-issues`, `verify-help`, `verify-role-access`,
+  `verify-accessibility`.
+- Review: a fresh-context review found no blocking bugs; fixed what it
+  raised: focus now returns to "Log a chase" after Save or Cancel and a
+  screen reader hears "Chase saved"; the API refused only names with no
+  issue at all, so a company with only withdrawn or long-closed issues
+  could be given a note nobody would see (now it must be on the page);
+  chase times show the year when it is not this year; a lost reply followed
+  by edited words no longer leaves the form stuck on a refusal.
+- Not verified: a physical phone, Safari and Firefox (the date box looks
+  different in each), a real screen reader, SharePoint mode.
+- Proposed (not added to `docs/tasks.json`): NEW-8 chase notes, with the
+  acceptance steps in the PR; add `verify-company-chases.mjs` to the browser
+  checks in `CLAUDE.md`.
+
 ## 2026-10-20 — First fix inspection (EXP-5, third report type)
 
 - Added a third checklist type, "First fix inspection" (First Fix Inspection,
