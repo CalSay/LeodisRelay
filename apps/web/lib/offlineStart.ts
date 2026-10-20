@@ -1,4 +1,5 @@
 import type { Observation, Report } from './types';
+import { CHECKLIST_TYPES, reportTypeOf, type ReportTypeId } from './reportTypes';
 
 /**
  * Reports started on a phone with no signal, and work typed on the offline
@@ -24,6 +25,12 @@ export const OFFLINE_PERSON_KEY = 'relay-offline-person';
 /** That person's reportable projects, for starting a report offline. */
 export const offlineProjectsKey = (principalId: string) => `relay-offline-projects:${principalId}`;
 
+/**
+ * The inspection types and their checks, so the offline page can start one.
+ * Not personal (the same for everyone), so it stays when a person signs out.
+ */
+export const OFFLINE_TYPES_KEY = 'relay-offline-types';
+
 export interface OfflinePerson { id: string; name: string }
 export interface OfflineProject { id: string; projectNumber: string; projectName: string }
 
@@ -35,6 +42,41 @@ export interface StartedOffline {
   projectNumber: string;
   visitDate: string;
   startedAt: string;
+  /** Absent: a site update. An inspection starts with its checks already on the phone. */
+  reportType?: ReportTypeId;
+}
+
+/** What the offline page needs to start each inspection: its name, line and checks. */
+export interface OfflineType { id: ReportTypeId; name: string; blurb: string; raisesIssues: boolean; checklist: { item: string; question: string; hint: string }[] }
+export const offlineTypes = (): OfflineType[] => CHECKLIST_TYPES.map(t => ({
+  id: t.id, name: t.name, blurb: t.blurb, raisesIssues: t.raisesRecords,
+  checklist: (t.checklist ?? []).map(c => ({ item: c.item, question: c.question, hint: c.hint })),
+}));
+
+/** "New site update · Tetley Hall", "New safety inspection · Tetley Hall": a report with no reference yet. */
+export const startedTitle = (started: Pick<StartedOffline, 'reportType' | 'projectName'>): string =>
+  `New ${reportTypeOf(started).name.toLowerCase()} · ${started.projectName}`;
+
+/**
+ * The checks a report started offline takes to the server, fitted onto the
+ * cards the server started it with. Each answer, its words and photographs
+ * move onto the server's check for the same item, so the server's ids and
+ * wording are kept and the save keeps the inspection's shape. If a check on
+ * the phone is not on the server's inspection (the checklist changed in
+ * between), the phone's copy is returned unchanged: the server refuses it,
+ * and it stays on the phone, named once, rather than losing an answer.
+ */
+export function fitStartedChecks(held: readonly Observation[], server: readonly Observation[]): Observation[] {
+  if (!server.some(o => o.check)) return [...held];
+  const byItem = new Map(held.filter(o => o.check).map(o => [o.check!.item, o]));
+  if (held.length !== byItem.size || [...byItem.keys()].some(item => !server.some(o => o.check?.item === item))) return [...held];
+  return server.map(card => {
+    const mine = card.check ? byItem.get(card.check.item) : undefined;
+    if (!mine) return card;
+    const { answer } = mine.check!;
+    return { ...card, location: mine.location, whatHappened: mine.whatHappened, actionNeeded: mine.actionNeeded, owner: mine.owner, photos: mine.photos,
+      check: { ...card.check!, ...(answer ? { answer } : {}) } };
+  });
 }
 
 /** The fields of a held copy (localDraft.ts HeldDraft) that the send needs. */

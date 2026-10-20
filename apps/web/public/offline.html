@@ -55,6 +55,15 @@ label.btn{position:relative}
 .adds button{flex-direction:column;align-items:flex-start;text-align:left;gap:2px}.adds small{color:var(--text-2);font-size:13px}
 .foot{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
 .hint{font-size:14px;color:var(--text-2)}
+.types{border:0;margin:12px 0 0;padding:0;min-width:0}.types legend{padding:0;margin-bottom:8px}
+.choices{display:grid;gap:8px;grid-template-columns:1fr}@media (min-width:560px){.choices{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.choice{display:flex;gap:10px;align-items:flex-start;border:1px solid var(--line-2);border-radius:3px;padding:12px 14px;background:var(--panel);cursor:pointer;min-height:48px}
+.choice:has(input:checked){border-color:var(--brass);box-shadow:inset 3px 0 0 var(--brass);background:var(--brass-wash)}
+.choice:focus-within{outline:2px solid var(--brass);outline-offset:2px}
+.choice input:focus-visible{outline:none}
+.choice input{margin:3px 0 0;width:18px;height:18px;flex:none;accent-color:var(--brass)}
+.choice strong{display:block}.choice small{display:block;color:var(--text-2);font-size:13px;line-height:1.4}
+.qhint{margin:6px 0 0;font-size:14px;color:var(--text-2)}
 </style><script src="/offline.js" defer></script></head>
 <body>
 <header><div class="bar"><span class="brand">RELAY<em>LEODIS</em></span><span id="net" class="net" role="status">No signal</span></div></header>
@@ -66,9 +75,10 @@ label.btn{position:relative}
 <p id="status" role="status">Checking this phone…</p><p id="error" role="alert"></p>
 <section id="start" class="panel" aria-labelledby="start-title" hidden>
 <h2 id="start-title">Start a site update</h2>
+<fieldset id="start-types" class="types" hidden><legend class="lbl">What are you writing?</legend><div id="start-choices" class="choices"></div></fieldset>
 <div class="row2"><label class="field">Project<select id="start-project"></select></label>
 <label class="field">Visit date<input id="start-date" type="date"></label></div>
-<p class="hint">It gets its reference when it reaches the server.</p>
+<p class="hint" id="start-hint">It gets its reference when it reaches the server.</p>
 <button id="start-go" class="primary" type="button">Start on this phone</button>
 </section>
 <section id="held" aria-labelledby="held-title" hidden>

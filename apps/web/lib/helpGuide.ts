@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'offline-inspection', added: '2026-10-20', audience: 'site', title: 'Start an inspection with no signal',
+    text: 'With no signal, you can now start a safety or handover inspection as well as a site update, answer its checks and take photographs. It goes up by itself once RELAY opens with signal; you sign it and send it then.' },
   { id: 'help', added: '2026-10-20', audience: 'all', title: 'This Help page',
     text: 'How RELAY works in plain words, what each status means, and this list of what is new. New things are marked until you have looked.' },
   { id: 'handover-inspection', added: '2026-10-20', audience: 'site', title: 'Handover inspection',
@@ -226,7 +228,8 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       '"Flag a defect" sends a photograph and a short note straight away, without a site update. Use it when something needs fixing before you finish the day.',
     ] },
     { id: 'no-signal', heading: 'No signal', ordered: false, steps: [
-      'RELAY still opens. You can start a site update, add cards and take photographs; they are marked "Only on this phone".',
+      'RELAY still opens. You can start a site update or an inspection, add cards or answer checks, and take photographs; they are marked "Only on this phone".',
+      'An inspection is signed in RELAY once you have signal again: the drawn signature is taken there.',
       'When you have signal again, open RELAY and the work goes up by itself. It stays a draft: nothing reaches the office until you sign and send.',
       'If you share a phone, sign out at the end of the day. Work held on the phone belongs to whoever was last signed in.',
     ] },
