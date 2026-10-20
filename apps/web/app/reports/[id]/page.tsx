@@ -192,6 +192,26 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     return () => window.removeEventListener('popstate', sync);
   }, []);
 
+  /**
+   * Where focus goes once a card or the check step has rendered, so a keyboard
+   * or screen reader is not left on "Next check" or a Stop that has just gone.
+   */
+  const focusNext = useRef<string | null>(null);
+  const focusTarget = useCallback((target: string) => {
+    const el = target === 'check' ? document.getElementById('report-check-title')
+      : wide ? document.querySelector<HTMLElement>(`[data-card-body="${CSS.escape(target)}"]`)
+      : document.querySelector<HTMLElement>(`#slot-${CSS.escape(target)} > button`);
+    el?.focus({ preventScroll: true });
+  }, [wide]);
+  useEffect(() => {
+    const target = focusNext.current;
+    if (!target) return;
+    // Wait for the step to change (it can follow Back, on popstate) and for that card to be the open one.
+    if (target === 'check' ? step !== 'check' : step !== 'cards' || selectedSection !== target) return;
+    focusNext.current = null;
+    focusTarget(target);
+  }, [step, selectedSection, focusTarget]);
+
   useEffect(() => {
     const typed = (el: EventTarget | null) => el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && !['file', 'checkbox', 'radio', 'button', 'submit'].includes(el.type));
     const onIn = (e: FocusEvent) => setTyping(typed(e.target));
@@ -889,6 +909,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   /** Open a card on the cards step and bring it into view. */
   function openCard(cardId: string) {
+    // Already open on this step, nothing renders: focus it now rather than leave a target for a later render.
+    if (step === 'cards' && selectedSection === cardId) { focusNext.current = null; requestAnimationFrame(() => focusTarget(cardId)); }
+    else focusNext.current = cardId;
     setSelectedSection(cardId);
     showCards();
     requestAnimationFrame(() => document.getElementById(wide ? 'card-editor' : `slot-${cardId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
@@ -896,6 +919,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   function showCheck() {
     if (step === 'check') return;
+    focusNext.current = 'check';
     try { window.history.pushState(window.history.state, '', '#check'); pushedCheck.current = true; } catch {}
     setStep('check');
     window.scrollTo({ top: 0 });
@@ -1064,7 +1088,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           )}
           <p style={{ margin: 0 }}>
             Received by Relay {fmtWhen(report.serverAcknowledgedAt)}. It can no longer be edited — a correction is issued as a new revision.{" "}
-            <Link href={withViewReturn(`/reports/${report.id}/preview`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))} style={{ color: "var(--brass)" }}>
+            <Link href={withViewReturn(`/reports/${report.id}/preview`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))} style={{ color: "var(--brass)", textDecoration: "underline", textUnderlineOffset: 3 }}>
               View the document &rarr;
             </Link>
           </p>
@@ -1097,14 +1121,14 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       )}
 
       {sent ? <>
-        <div className="sec"><span className="lbl">{checklist ? `${type.name} · ${answers.action} action${answers.action === 1 ? '' : 's'}` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`} · {photos} photograph{photos === 1 ? '' : 's'}</span></div>
+        <div className="sec"><h2 className="lbl">{checklist ? `${type.name} · ${answers.action} action${answers.action === 1 ? '' : 's'}` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`} · {photos} photograph{photos === 1 ? '' : 's'}</h2></div>
         {checklist ? report.observations.map((o, i) => { const action = o.check?.answer === 'action'; return <section key={o.id} className={`eng-sent-card ${action ? 'tone-defect' : 'tone-neutral'}`}>
-          <div className="head"><span className="lbl">Check {String(i + 1).padStart(2, '0')}</span><span className={`kind answer-${o.check?.answer ?? 'open'}`}>{CHECK_ANSWERS.find(a => a.value === o.check?.answer)?.label ?? 'Not answered'}</span></div>
+          <div className="head"><h3 className="lbl">Check {String(i + 1).padStart(2, '0')}</h3><span className={`kind answer-${o.check?.answer ?? 'open'}`}>{CHECK_ANSWERS.find(a => a.value === o.check?.answer)?.label ?? 'Not answered'}</span></div>
           <p><b>{o.check?.question}</b>{o.location.trim() ? <> · {o.location}</> : null}{o.whatHappened.trim() ? <><br />{o.whatHappened}</> : null}</p>
           {(o.actionNeeded.trim() || o.owner.trim()) && <small>{o.actionNeeded.trim() && `Action: ${o.actionNeeded}`}{o.actionNeeded.trim() && o.owner.trim() && ' · '}{o.owner.trim() && `For: ${o.owner}`}</small>}
           {o.photos.length > 0 && <small>{o.photos.length} photograph{o.photos.length === 1 ? '' : 's'}</small>}
         </section>; }) : report.observations.length === 0 ? <div className="empty">No updates were recorded on this visit.</div> : report.observations.map((o, i) => { const k = kindOf(o); return <section key={o.id} className={`eng-sent-card tone-${k?.tone ?? 'neutral'}`}>
-          <div className="head"><span className="lbl">Card {String(i + 1).padStart(2, '0')} · {o.location || 'No location'}</span><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{k?.short ?? o.type}</span></div>
+          <div className="head"><h3 className="lbl">Card {String(i + 1).padStart(2, '0')} · {o.location || 'No location'}</h3><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{k?.short ?? o.type}</span></div>
           <p>{o.whatHappened}</p>
           {(o.actionNeeded.trim() || o.owner.trim()) && <small>{o.actionNeeded.trim() && `Action: ${o.actionNeeded}`}{o.actionNeeded.trim() && o.owner.trim() && ' · '}{o.owner.trim() && `For: ${o.owner}`}</small>}
           {extras(o) && <small>{extras(o)}</small>}
@@ -1115,7 +1139,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             same scroll: build the report, then check, sign and send it. */}
         <nav className="eng-steps" aria-label="Report steps">
           <button type="button" aria-current={step === 'cards' ? 'step' : undefined} onClick={() => showCards()}><span className="n">1</span>{checklist ? 'Checks' : 'Cards'}<small>{checklist ? `${report.observations.length - unanswered.length}/${report.observations.length}` : report.observations.length}</small></button>
-          <button type="button" aria-current={step === 'check' ? 'step' : undefined} onClick={() => showCheck()}><span className="n">2</span>Check &amp; send{stopRows.length > 0 && <small className="late">{stopRows.length}</small>}</button>
+          <button type="button" aria-current={step === 'check' ? 'step' : undefined} onClick={() => showCheck()}><span className="n">2</span>Check &amp; send{stopRows.length > 0 && <small className="late">{stopRows.length}<span className="eng-sr"> {stopRows.length === 1 ? 'thing stops' : 'things stop'} it being sent</span></small>}</button>
         </nav>
 
         {step === 'cards' && (wide ? <div className="eng-editor-grid">
@@ -1129,11 +1153,12 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             {findings.length > 0 && <div className="eng-finds"><span className="lbl">Before you send</span>{findingRows(stopRows, 'stop')}{findingRows(note.slice(0, 3), 'note')}</div>}
           </aside>
           <div id="card-editor" style={{ scrollMarginTop: 24 }}>
-            {report.observations.length === 0 ? <KindPicker onPick={k => addCard(k)} /> : report.observations.map((o, i) => <div key={o.id} hidden={open !== o.id}>{cardBody(o, i)}</div>)}
+            {report.observations.length === 0 ? <KindPicker onPick={k => addCard(k)} /> : report.observations.map((o, i) => <div key={o.id} hidden={open !== o.id} data-card-body={o.id} tabIndex={-1} role="group" aria-label={`${o.check ? 'Check' : 'Card'} ${i + 1} of ${report.observations.length}`} className="eng-card-body">{cardBody(o, i)}</div>)}
           </div>
         </div> : <div className="eng-acc" id="card-editor">
           {/* On the phone each card folds to one summary row, and the open
               card unfolds under its own row rather than somewhere below. */}
+          {report.observations.length > 0 && <h2 className="eng-sr">{checklist ? 'Checks' : 'Cards'}</h2>}
           {report.observations.length === 0 ? <KindPicker onPick={k => addCard(k)} /> : <div className="eng-list">
             {report.observations.map((o, i) => <div key={o.id} id={`slot-${o.id}`} className={`eng-slot ${open === o.id ? 'open' : ''}`}>
               {cardRow(o, i)}
@@ -1144,6 +1169,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         </div>)}
 
         {step === 'check' && <div id="report-check" className="eng-check">
+          <h2 id="report-check-title" className="eng-sr" tabIndex={-1}>Check and send</h2>
           {findings.length === 0 ? (
             <div className="note note-ok">Everything needed is here.</div>
           ) : (
@@ -1158,7 +1184,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
           {whereAll.text && <p className={`eng-where eng-where-${whereAll.where}`} aria-live="polite"><span className={WHERE_DOT[whereAll.where]} />{whereAll.text}</p>}
 
-          <div className="sec"><span className="lbl">{checklist ? 'In this inspection' : 'In this report'}</span></div>
+          <div className="sec"><h2 className="lbl">{checklist ? 'In this inspection' : 'In this report'}</h2></div>
           {checklist ? <dl className="eng-sum">
             <div><dt>Satisfactory</dt><dd>{answers.ok}</dd></div>
             <div><dt>Action needed</dt><dd className={answers.action ? 'late' : ''}>{answers.action}<small>{answers.action ? (type.raisesRecords ? 'raise issues' : 'on the action list') : ''}</small></dd></div>
@@ -1190,7 +1216,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             </div>
           </div>}
 
-          <div className="sec"><span className="lbl">Sign</span></div>
+          <div className="sec"><h2 className="lbl">Sign</h2></div>
           {type.drawnSignature && <p className="hint eng-sign-hint">Draw your signature: an inspection is signed by the person who carried it out.</p>}
 
           <section className="panel">

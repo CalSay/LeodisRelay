@@ -155,11 +155,14 @@ export function SignaturePad({
         placeholder="Name as it should appear on the report"
       />
 
-      <label style={{ marginTop: 16 }}>Signature</label>
+      <label id="sign-pad-label" style={{ marginTop: 16 }}>Signature</label>
       <div className="sigwrap">
         <canvas
           ref={canvasRef}
           className="sigpad"
+          role="img"
+          aria-labelledby="sign-pad-label"
+          aria-describedby="sign-pad-state"
           onPointerDown={(e) => {
             e.currentTarget.setPointerCapture(e.pointerId);
             drawing.current = true;
@@ -182,13 +185,16 @@ export function SignaturePad({
             emit();
           }}
         />
-        {!hasInk && <span className="sighint">Sign here</span>}
+        {!hasInk && <span className="sighint" aria-hidden="true">Sign here</span>}
+        {/* The drawing said in words, for a screen reader. */}
+        <span id="sign-pad-state" className="eng-sr">{hasInk ? 'Signed: a signature is drawn.' : 'Not signed yet: draw your signature in the box with a finger, pen or mouse.'}</span>
       </div>
 
       <div className="btn-row" style={{ marginTop: 10 }}>
         <button
           type="button"
           className="btn-quiet btn-sm"
+          aria-label="Clear signature"
           onClick={() => {
             strokes.current = [];
             saved.current = null;

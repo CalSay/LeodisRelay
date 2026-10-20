@@ -99,7 +99,7 @@ eq(await card.getByText('Choose a recent place').count(),await card.locator('.en
     // A safety inspection just started.
     await page.goto(`${base}/engineer`);await page.getByText(/Do a safety inspection/).click();
     await page.waitForURL(/\/reports\//);await page.locator('.eng-cardrow').first().waitFor();
-    eq((await page.locator('.eng-steps button').nth(1).locator('small').innerText()).trim(),'2',`${label}: a new inspection has two things to do before sending, not 13`);
+    eq(await page.locator('.eng-steps button').nth(1).locator('small').evaluate(e=>e.firstChild.textContent.trim()),'2',`${label}: a new inspection has two things to do before sending, not 13`);
     if(phone){
       await page.locator('.eng-cardrow').first().click();
       const open=page.locator('.eng-slot.open');
