@@ -13,29 +13,36 @@ export interface HeldSendResult {
 
 let running: Promise<HeldSendResult> | undefined;
 
-/** Reports whose held copy this page is about to send or is sending, until that one is done. */
-const pending = new Map<string, { settled: Promise<void>; done: () => void }>();
+/**
+ * Reports whose held copy this page means to send: queued until its turn, then
+ * in flight until its result is written. An editor that opens on a queued
+ * report takes it over (its own save path sends it), so it waits only for a
+ * save already in flight for its own report, never for other reports' uploads.
+ */
+const pending = new Map<string, { settled: Promise<void>; done: () => void; flying: boolean }>();
+const takenOver = new Set<string>();
 function hold(reportId: string): void {
   if (pending.has(reportId)) return;
   let done!: () => void;
   const settled = new Promise<void>(resolve => { done = resolve; });
-  pending.set(reportId, { settled, done: () => { pending.delete(reportId); done(); } });
+  pending.set(reportId, { settled, flying: false, done: () => { pending.delete(reportId); done(); } });
 }
 const release = (reportId: string) => pending.get(reportId)?.done();
 
 /**
- * Settles once this page is no longer sending `reportId`'s held copy, or at
- * once if it is not. A report's editor waits for it before reading the server
- * and the held copy, so it never opens on a copy half-way to the server and
- * then finds its version moved underneath it. Other reports' uploads do not
- * hold it up.
+ * Settles once `reportId`'s held copy is safe for its editor to read: at once
+ * if this page is not sending it or has only queued it (the editor takes it
+ * over), or when a save already in flight for it has finished.
  */
 export function heldSendSettled(reportId: string): Promise<void> {
-  return pending.get(reportId)?.settled ?? Promise.resolve();
+  const entry = pending.get(reportId);
+  if (!entry) return Promise.resolve();
+  if (!entry.flying) { takenOver.add(reportId); entry.done(); return Promise.resolve(); }
+  return entry.settled;
 }
 
 /** Whether this page is sending `reportId`'s held copy now, for the words while the editor waits. */
-export const heldSendBusy = (reportId: string): boolean => pending.has(reportId);
+export const heldSendBusy = (reportId: string): boolean => !!pending.get(reportId)?.flying;
 
 /**
  * Send what this device holds for `principalId` from the offline page: start
@@ -55,7 +62,7 @@ export function sendHeldWork(principalId: string): Promise<HeldSendResult> {
 
 async function run(principalId: string): Promise<HeldSendResult> {
   try { return await sendAll(principalId); }
-  finally { for (const reportId of [...pending.keys()]) release(reportId); }
+  finally { for (const reportId of [...pending.keys()]) release(reportId); takenOver.clear(); }
 }
 
 async function sendAll(principalId: string): Promise<HeldSendResult> {
@@ -78,8 +85,11 @@ async function sendAll(principalId: string): Promise<HeldSendResult> {
   }
   // Read again: the adopted copies are now ordinary held copies marked to go up.
   const plan = planHeldSend(await listHeld(principalId), principalId).send;
-  for (const held of plan) hold(held.reportId);
+  for (const held of plan) if (!takenOver.has(held.reportId)) hold(held.reportId);
   for (const held of plan) {
+    const entry = pending.get(held.reportId);
+    if (!entry) continue; // Its editor opened and took it over.
+    entry.flying = true;
     try { if (await sendOne(held, result, startedReports, names) === 'offline') return result; }
     finally { release(held.reportId); }
   }

@@ -218,13 +218,12 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     sentAwayRef.current = false;
     setSentAway(null);
     (async () => {
-      // This report's work from the offline page may be going up as it opens (HeldWork.tsx).
-      if (heldSendBusy(id)) {
-        setWaitingForHeld(true);
-        await heldSendSettled(id);
-        if (cancelled) return;
-        setWaitingForHeld(false);
-      }
+      // This report's work from the offline page may be going up as it opens
+      // (HeldWork.tsx): wait for a save in flight, or take over one only queued.
+      setWaitingForHeld(heldSendBusy(id));
+      await heldSendSettled(id);
+      if (cancelled) return;
+      setWaitingForHeld(false);
       let found;
       try {
         found = await getReport(id);
