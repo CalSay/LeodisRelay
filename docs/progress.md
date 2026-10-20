@@ -62,6 +62,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   site update (the office project register's "progress only", the
   sent-elsewhere panel naming cards by location, the offline recovery page
   heading every check "Update"); all three now show the question and answer.
+- Merged main after #37 and #38: "My week" (#38) now names an inspection
+  and its actions instead of counting its checks; `verify-my-week` passed.
 - Not verified: a physical phone, the PDF rendered by the worker after
   sending (the draft PDF uses the same renderer), SharePoint mode (no live
   tenant). Wording of the 12 checks is a first set for Cal or the H&S lead to
@@ -71,6 +73,62 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   issues if Cal prefers); more types on the same engine, such as a
   pre-handover area inspection or a commissioning record; add
   `verify-report-types.mjs` to the browser checks list in `CLAUDE.md`.
+## 2026-10-20 — My week (new feature, proposed as NEW-9)
+
+- New `/my-week` page: the signed-in person's own week, Monday to Sunday,
+  across every project open to them. Each day lists the projects they have
+  records on: reports they sent (placed on the visit day they gave, with what
+  the cards found and where), defects they flagged on their own, and updates
+  or fixes they recorded on an issue page. Their drafts for the week are
+  marked "Not sent yet" with a note above the days. Headline counts, week
+  stepping, and "Copy for my timesheet", which copies one plain line per
+  weekday (weekends only with records) naming each project and what was
+  recorded, up to today. Reached from "Your week" on the engineer home and a "My week"
+  button on the engineer Reports view. New `GET /api/my-week`.
+- Why this feature: an engineer's week is spread over several projects, and
+  filling in a timesheet or answering "where were you on Tuesday?" meant
+  opening each project's reports in turn. The page gives them something back
+  for every report they send, which makes sending them worth it. Nothing is
+  typed in, stored, sent or written to SharePoint. Not FE-2 (photographs are
+  only counted), EXP-2 (no requests or routing) or EXP-4 (locations stay free
+  text, shown as written). Not the parked sole-trader product: there are no
+  hours, jobs, rates or invoices, only what was already recorded.
+- Decisions: every role may open it, and it only ever shows the person's own
+  records (reports by `authorId`, issue events by `actorId`), so a manager
+  who visits site gets the same page. A sent correction stands in for the
+  report it corrects. Issue events that came in with a report are left out
+  (the report already shows), as are office decisions (assigning,
+  verifying), which are desk work, not a record from site. Issue changes are
+  placed by their UK day. Drafts do not make "a day with records" and are left
+  out of the copied text, since the office does not have them. RELAY knows no
+  hours, and the page says so. Dates are spelt out in code (`dayLabel`), not
+  by the browser, because Chromium writes "Mon, 19 Oct" where Node writes
+  "Mon 19 Oct", and the mismatch broke the first paint. Rules in
+  `lib/myWeek.ts` (pure); same project rule as the weekly summary.
+- Verified on Node 24: `npm run typecheck`, `npm test` (6 new tests in
+  `tests/myWeek.test.ts` and one in `tests/viewNavigation.test.ts`),
+  `npm run build`. A fresh-context review found the copied text claimed
+  "nothing recorded" for days still to come; fixed. New `scripts/verify-my-week.mjs` passed (30 checks:
+  signed-out refusals; from the engineer home at 390px light, both projects on
+  Monday, another engineer's report and defect left out, last week left out,
+  the flagged defect and the issue update today but not the office's
+  verification, a corrected report once at rev 2, the draft marked, the
+  counts, no sideways scroll, the copied text, week stepping and Back to the
+  same week; from the Reports view at 1440px dark and printed on white; a
+  manager sees nobody else's records). `verify-engineer-layout`,
+  `verify-role-access` (61), `verify-unfinished-reports`,
+  `verify-weekly-summary`, `verify-engineer-nav`, `verify-site-diary` and
+  `verify-photo-library` passed.
+  Screenshots in the project's `ui-review/my-week/`.
+- Not verified: a physical phone, Safari and Firefox, the clipboard on iOS
+  (the page falls back to a text box to copy from), SharePoint mode (no live
+  tenant).
+- Proposed task (not added to `docs/tasks.json`): "NEW-9 My week — each
+  person sees their own week across every project, day by day, from what they
+  recorded, and can copy it for a timesheet; own records only; browser check
+  at 390 and 1440px." Proposed: add `verify-my-week.mjs` to the browser checks
+  list in `CLAUDE.md`. Possible follow-up: a link to My week from the office
+  desk for managers who visit site.
 
 ## 2026-10-20 — Unsaved changes when a draft is sent from another screen (FE-3c follow-up)
 
@@ -202,6 +260,43 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (all pages) and the variation register as CSV files; office only; browser
   check at 390 and 1440px." Proposed: add `verify-register-export.mjs` to the
   browser checks list in `CLAUDE.md`.
+
+## 2026-10-20 — Office registers on a phone (UI fix, follow-up from #35)
+
+- On a phone (700px and narrower) the office issue register, variation
+  register, inbox (received and drafts), team roster and the admin roster,
+  older drafts and notifications tables now show one card per row. Each card
+  leads with the reference and the title, then labelled lines (Project,
+  Raised, Owner, Target, Work, Confirmation; Quoted, Instructed, Margin on a
+  variation), then the row's buttons at full touch size. A tappable card shows
+  a "›". The desk keeps its tables unchanged.
+- The problem: at 390px the issue register pushed the whole page 666px
+  sideways (the hidden "Actions" heading sat outside the scrolled panel), and
+  the other registers were 640–1365px tables scrolling inside their panel, so
+  the buttons were off screen.
+- Decisions: cards rather than a narrower table, because nine columns cannot
+  be read side by side on a phone and the actions need to be reachable. One
+  shared rule (`table.reg.cards` plus `data-label` on cells in
+  `workspace.css`) so every office table behaves the same. Work and
+  Confirmation stay as two labelled lines, as on the desk. The column headings
+  carry the sort on the desk; on a phone they are hidden, so the issue
+  register gets an "Order" list (priority, target date, raised newest or
+  oldest, owner, project, reference) in place of the "Sort: priority" chip.
+  Filter boxes stack as aligned rows at least 40px tall. FE-5a filters, the
+  #26 office position and the #35 downloads are unchanged.
+- Verified on Node 24: `npm run typecheck`, `npm test` (145 package + 213 web),
+  `npm run build`, new `scripts/verify-office-registers.mjs` (247 checks: no
+  sideways scroll and every card inside its panel for all eight views, each
+  with rows (issues, variations, inbox, drafts, team, admin roster,
+  notifications with a long failure message, older drafts) at 320px and 390px
+  light and dark; labels, wrapping, 44px buttons, card and button
+  taps, filters and the order list on a phone; headings, one-line actions and
+  column sorting at 1440px). Also passed: `verify-issue-register`,
+  `verify-office-phone`, `verify-office-actions`, `verify-register-export`,
+  `verify-role-access`, `verify-office-landing`, `verify-review-queue`.
+  Screenshots in the project's shared files (`ui-review/office-registers/`).
+- Not verified: a physical phone. Proposed next: add
+  `verify-office-registers.mjs` to the browser checks in `CLAUDE.md`.
 
 ## 2026-10-20 — EXP-1: living site diary
 

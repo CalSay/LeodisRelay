@@ -31,6 +31,11 @@ test('a record opened from a weekly summary returns to the same week', () => {
   assert.equal(safeViewReturn(week, '/engineer'), week);
 });
 
+test('a record opened from my week returns to the same week', () => {
+  const mine = '/my-week?week=2026-10-12&returnTo=%2Fengineer';
+  assert.equal(safeViewReturn(mine, '/office'), mine);
+});
+
 test('a record opened from the photo library returns to the same photographs', () => {
   const photos = '/photos?project=p1&q=riser&show=defect&returnTo=%2Foffice';
   assert.equal(safeViewReturn(photos, '/engineer'), photos);
