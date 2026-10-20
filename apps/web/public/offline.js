@@ -91,8 +91,15 @@
     };
     if (!Number.isInteger(draft.baseVersion)) element('p','This older retained draft has no save version. Export it for comparison; Relay will not silently overwrite the server copy.',editor);
     for(const observation of selected.observations) {
-      const section=element('section','',editor);element('h3',observation.location || 'Update',section);
-      for(const [key,title] of [['location','Location'],['whatHappened','What happened'],['actionNeeded','Action needed'],['owner','Owner']]) {
+      const check=observation.check;
+      const section=element('section','',editor);element('h3',check ? check.question : observation.location || 'Update',section);
+      // An inspection's check: its answer can be changed here; the question cannot.
+      if(check) {
+        const label=element('label','Answer',section);const answer=element('select','',label);
+        for(const [value,title] of [['','Not answered'],['ok','Satisfactory'],['action','Action needed'],['na','Not applicable']]) {const option=element('option',title,answer);option.value=value;}
+        answer.value=check.answer ?? '';answer.onchange=()=>{if(answer.value)check.answer=answer.value;else delete check.answer;changed();};
+      }
+      for(const [key,title] of (check ? [['whatHappened','Notes or what is wrong'],['actionNeeded','What needs doing'],['owner','Who is to do it']] : [['location','Location'],['whatHappened','What happened'],['actionNeeded','Action needed'],['owner','Owner']])) {
         const label=element('label',title,section);const field=element(key==='whatHappened'||key==='actionNeeded'?'textarea':'input','',label);
         field.value=observation[key];field.oninput=()=>{observation[key]=field.value;changed();};
       }

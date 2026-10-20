@@ -49,7 +49,19 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   1440px dark): start from home, answer all 12 with one action and one N/A,
   photograph, signature required then drawn, send, server copy, no issue or
   variation raised, the draft PDF's words (via `pdftotext`), sent view, site
-  diary, office sheet as a manager. Other browser checks: see the PR.
+  diary, office sheet as a manager. Also passed unchanged:
+  `verify-role-access`, `verify-engineer-layout`, `verify-signature-reload`,
+  `verify-search`, `verify-report-editor`, `verify-undo-remove`,
+  `verify-site-diary`, `verify-weekly-summary`, `verify-draft-conflict`,
+  `verify-sent-elsewhere`, `verify-same-location`, `verify-suggestions`,
+  `verify-unfinished-reports`, `verify-office-actions`, `verify-photo-library`,
+  `verify-since-last-visit`, `verify-submission-stages`,
+  `verify-offline-drafts`, `verify-engineer-nav`, `verify-photo-uploads`,
+  `verify-review-queue`, `verify-issue-link`, `verify-office-landing`.
+- Fresh-context review found three places still reading an inspection as a
+  site update (the office project register's "progress only", the
+  sent-elsewhere panel naming cards by location, the offline recovery page
+  heading every check "Update"); all three now show the question and answer.
 - Not verified: a physical phone, the PDF rendered by the worker after
   sending (the draft PDF uses the same renderer), SharePoint mode (no live
   tenant). Wording of the 12 checks is a first set for Cal or the H&S lead to

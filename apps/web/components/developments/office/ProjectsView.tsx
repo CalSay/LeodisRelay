@@ -123,6 +123,8 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
 }
 
 function foundWords(r: ReportSummary): string {
+  // An inspection says what it is and how many checks need action.
+  if (r.checks) return `${reportTypeOf(r).name.toLowerCase()}, ${r.checks.action ? `${r.checks.action} action${r.checks.action === 1 ? '' : 's'}` : 'no actions'}`;
   const k = r.kindCounts;
   if (!k) return r.defectCount ? `${r.defectCount} raising an issue` : `${r.observationCount} section${r.observationCount === 1 ? '' : 's'}`;
   const parts: string[] = [];
