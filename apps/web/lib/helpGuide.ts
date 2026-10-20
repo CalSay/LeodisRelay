@@ -30,6 +30,8 @@ export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'site-notes', added: '2026-10-20', audience: 'all', title: 'Notes for the next visit',
     text: 'Leave word on a project for whoever is on site next: where a key is, an area that is locked, what is coming up. Anyone on the project can leave a note or mark one done with, and each shows who left it and when. Notes are not part of any report and are not sent to anyone. Open it from "This project" on your home screen or from the office project sheet.',
     link: { label: 'Open Notes for the next visit', href: '/site-notes' } },
+  { id: 'typed-signature', added: '2026-10-20', audience: 'all', title: 'Sign an inspection without drawing',
+    text: 'If you can\'t draw a signature, with a keyboard or screen reader say, choose "Type my name instead" when you sign an inspection: type your full name and tick the statement. It works with no signal too. The office and the PDF show it as a typed signature, with the statement, the time it was sent and who was signed in, so it is never mistaken for a drawing. Drawing works as before.' },
   { id: 'company-chases', added: '2026-10-20', audience: 'office', title: 'Chase notes on Issues by company',
     text: 'Each company on Issues by company now has "Log a chase": a line on what was said and, if they gave one, the day they promised to be done by. The card shows who chased last, when and what was promised, and marks "Promise missed" once that day has gone with work still to put right. The notes stay in RELAY for the office and do not change an issue.',
     link: { label: 'Log a chase', href: '/companies' } },
@@ -254,12 +256,17 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'Your home screen lists what came back from the office on the things you raised, in the office\'s words.',
       'The report itself shows each step it has reached: received, PDF, delivery and read. See "What the words mean" below.',
     ] },
+    { id: 'signing', heading: 'Signing an inspection', ordered: false, steps: [
+      'An inspection is signed by the person who carried it out. Draw your signature in the box with a finger, pen or mouse.',
+      'If you can\'t draw one, choose "Type my name instead", type your full name and tick the statement. It counts as your signature, and the office and the PDF show it as typed, with the time it was sent and who was signed in.',
+      'A site update needs no drawing: your name is printed on it either way.',
+    ] },
     { id: 'defect', heading: 'A defect on its own', ordered: false, steps: [
       '"Flag a defect" sends a photograph and a short note straight away, without a site update. Use it when something needs fixing before you finish the day.',
     ] },
     { id: 'no-signal', heading: 'No signal', ordered: false, steps: [
       'RELAY still opens. You can start a site update or an inspection, add cards or answer checks, and take photographs; they are marked "Only on this phone".',
-      'An inspection can be signed on the phone once every check is answered. Signing locks it and marks it "Signed · not sent yet". To change anything before RELAY starts sending it, take your signature back and sign again.',
+      'An inspection can be signed on the phone, drawn or by typing your name, once every check is answered. Signing locks it and marks it "Signed · not sent yet". To change anything before RELAY starts sending it, take your signature back and sign again.',
       'When you have signal again, open RELAY and the work goes up by itself. A signed inspection goes to the office, and RELAY says when it has gone; if it changed after you signed, it stays a draft for you to sign again. Everything else stays a draft until you sign and send.',
       'If you share a phone, sign out at the end of the day. Work held on the phone belongs to whoever was last signed in.',
     ] },
@@ -278,6 +285,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     { id: 'office-day', heading: 'Your day in the office', ordered: true, steps: [
       'Office opens on the office position: new reports, reports not yet read, unassigned issues and issues ready to verify, across every project.',
       'Open a report and "Acknowledge" it once you have read it. That is the only thing that marks it read; receipt and delivery do not.',
+      'A report\'s signature line says whether it was drawn or typed. A typed signature shows the statement the person ticked and who was signed in when it was sent.',
       'Give each new issue an owner and a target date. Overdue issues and work done without an instruction are listed under "Also needs attention".',
       'Chase companies with late work from Issues by company, and log each chase there with what they promised, so the next person to ring them knows.',
       'Leave word for the engineers on a project under "Notes for the next visit" on its project sheet, and read what they left each other.',

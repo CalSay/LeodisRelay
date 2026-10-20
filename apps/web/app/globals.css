@@ -1283,6 +1283,80 @@ button:disabled {
   color: var(--text-3);
 }
 
+/* Draw, or type the name for someone who cannot draw. Native radios and a
+   checkbox, so a keyboard and a screen reader work them as they expect. */
+.sigway {
+  border: 0;
+  margin: 16px 0 12px;
+  padding: 0;
+  min-width: 0;
+}
+.sigway legend {
+  padding: 0;
+  margin-bottom: 8px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+.sigway-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.sigway-options label,
+.sigconfirm {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  min-height: 48px;
+  padding: 12px 14px;
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  background: var(--panel);
+  font-size: 15px;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.sigway-options label:has(input:checked),
+.sigconfirm:has(input:checked) {
+  border-color: var(--brass);
+  box-shadow: inset 3px 0 0 var(--brass);
+  background: var(--brass-wash);
+}
+.sigway-options label:focus-within,
+.sigconfirm:focus-within {
+  outline: 2px solid var(--brass);
+  outline-offset: 2px;
+}
+.sigway-options input,
+.sigconfirm input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--brass);
+}
+.sigway-options input:focus,
+.sigconfirm input:focus { outline: none; }
+.sigconfirm { font-weight: 500; }
+/* The typed name, shown where a drawing would be. */
+.sigtyped-name {
+  margin: 12px 0 0;
+  padding: 14px 16px;
+  border: 1px dashed var(--line-2);
+  border-radius: var(--r);
+  background: var(--ground);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--text);
+}
+@media (max-width: 360px) {
+  .sigway-options { grid-template-columns: 1fr; }
+}
+
 /* Signed-in identity doubles as the sign-out control: one item rather than a
    name and a separate link competing for the same small space. */
 .whoami {

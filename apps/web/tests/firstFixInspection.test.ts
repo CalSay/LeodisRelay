@@ -32,7 +32,7 @@ test('the first fix inspection and its rules, without a store', async t => {
     assert.equal(firstFix.name, 'First fix inspection');
     assert.equal(firstFix.document, 'First Fix Inspection');
     assert.equal(firstFix.code, 'FFI');
-    assert.equal(firstFix.drawnSignature, true);
+    assert.equal(firstFix.signatureRequired, true);
     assert.equal(firstFix.raisesRecords, true);
     assert.equal(FIRST_FIX_CHECKLIST.length, 12);
     assert.match(firstFix.blurb, /^12 checks .*before ceilings and walls are closed.*snag list/);
