@@ -38,7 +38,7 @@ createReport('proj-011lme',engineer.name,engineer); // an unfinished report on t
 const P='proj-011lme';
 const pages={
   Engineer:[`/engineer?project=${P}`,`/engineer?project=${P}&view=issues`,`/engineer?project=${P}&view=reports`,`/engineer?project=${P}&view=projects`,`/engineer?project=${P}&view=defect`,
-    `/issues/snag-list?project=${P}`,'/issues/a11y-1','/search?q=fire',`/weekly-summary?project=${P}`,`/photos?project=${P}`,`/diary?project=${P}`,'/my-week',`/safety-actions?project=${P}`,'/help?for=site','/projects'],
+    `/issues/snag-list?project=${P}`,'/issues/a11y-1','/search?q=fire',`/weekly-summary?project=${P}`,`/photos?project=${P}`,`/diary?project=${P}`,'/my-week',`/safety-actions?project=${P}`,`/handover?project=${P}`,'/help?for=site','/projects'],
   Manager:['/office#/projects','/office#/inbox','/office#/issues','/office#/variations',`/projects/${P}`,'/coverage','/companies','/variations/a11y-v1','/issues/a11y-3','/help?for=office'],
   Admin:['/office#/admin','/admin'],
   signedOut:['/signin'],

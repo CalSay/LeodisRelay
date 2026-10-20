@@ -73,6 +73,56 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   update on the offline page; add `verify-offline-sign.mjs` and the other
   offline checks to the browser checks in `CLAUDE.md`.
 
+## 2026-10-20 — Before handover (new feature, proposed as FE-7)
+
+- Why this feature: as a job nears completion the project manager and the
+  engineers ask one question, "what is stopping us handing this over?". In
+  RELAY the answer was spread over the snag list, the issue register, the
+  variation register, Safety actions and each handover inspection. Chosen by
+  Claude under Cal's standing autonomy and freedom to add features; it is
+  outside the report editor and report types, where another thread works.
+- What it is: `/handover?project=…`, one page per project, every role (it
+  shows only what every trade on the project can already read; no prices).
+  A headline ("7 things still open in RELAY, 1 past target"), five counts
+  that jump to their lists, then: snags on our work by trade (Electrical,
+  HVAC, P&H, each with a link to that trade's snag list), fixes waiting to
+  be checked (who put them forward), sent handover inspections with how many
+  of their actions are still open, other trades' issues (and those with no
+  trade recorded), variations not yet instructed or declined (work already
+  done first), and open safety actions. Print or save as PDF. Linked from the
+  engineer home ("This project") and the office project sheet.
+- Rules: built in `lib/beforeHandover.ts`, pure over reports, issues and
+  variations, reusing `issueTrade` (snag list), `isActiveIssue` and
+  `safetyActions`. A corrected inspection counts once; an issue raised by an
+  earlier revision belongs to the latest one. Locations are ordered as
+  written, never matched to a catalogue (EXP-4). Drafts are left out. It
+  stores and changes nothing, sends nothing and makes no SharePoint write.
+- Not a handover pack: EXP-5 calls packs "a possible later extension". This
+  page lists what RELAY holds and says plainly that drawings, certificates,
+  O&M manuals and the client's own list are not covered.
+- Help: "What's new" entry `before-handover` and a guide link.
+- Verified (Node 22 in this session; CI runs Node 24): `npm run typecheck`,
+  `npm test` (four new cases in `tests/beforeHandover.test.ts`), `npm run
+  build`, new `scripts/verify-before-handover.mjs` (28 checks: 390px light
+  engineer, 1440px dark manager, print, 44px targets, back links). Re-ran
+  the help, engineer layout and nav, navigation, role access, safety
+  actions, office landing, office phone and weekly summary checks.
+  After merging main (#48), added `/handover` to
+  `verify-accessibility` (axe, 329 checks, passed) and re-ran the new check,
+  help, navigation and safety actions.
+  Screenshots in the project's `ui-review/before-handover/`.
+- A fresh-context review found four gaps, all fixed: an issue with no
+  affected trade was counted as our snag because the snag list falls back to
+  the reporter's trade (now only a handover inspection's own action does);
+  a trade's printed snag list also carries its fixes waiting to be checked
+  (now said under the list); an inspection that re-found an existing issue
+  claimed to have raised it (now only counted); and the page had no heading
+  while loading or on an error.
+- Not verified: a physical phone, Safari and Firefox, SharePoint mode.
+- Not in `docs/tasks.json` (no task covers it). Proposed: "FE-7 Before
+  handover: everything open on one project on one page, read-only, printable".
+  Follow-ups: an area filter (by location as written) for phased handovers;
+  showing it on the office desk for projects in their last month.
 ## 2026-10-20 — Accessibility pass over the engineer and office pages
 
 - Audited every engineer and office page built so far (28 pages, as engineer,

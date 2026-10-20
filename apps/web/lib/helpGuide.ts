@@ -29,6 +29,9 @@ export interface WhatsNew {
 export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'offline-sign', added: '2026-10-20', audience: 'site', title: 'Sign an inspection with no signal',
     text: 'With no signal, once every check is answered you can sign a safety or handover inspection on the phone. It is marked "Signed · not sent yet" and goes to the office by itself the next time RELAY opens with signal, and RELAY tells you when it has gone. If anything changed after you signed, it is not sent: you check it and sign again.' },
+  { id: 'before-handover', added: '2026-10-20', audience: 'all', title: 'Before handover',
+    text: 'One page per project with everything RELAY still has open: snags on our work by trade, fixes waiting to be checked, handover inspections and their open actions, other trades\' issues, variations not yet instructed and open safety actions. Ready to print for the handover meeting.',
+    link: { label: 'Open Before handover', href: '/handover' } },
   { id: 'easier-to-read', added: '2026-10-20', audience: 'all', title: 'Easier to read and to tap',
     text: 'Grey text is darker in the light theme and lighter in the dark theme, so it is easier to read outdoors or on a dim screen. On a phone, buttons, filters, tabs and Back links are at least a fingertip tall, and screen readers can now find the heading and main part of every office page.' },
   { id: 'editor-tidy', added: '2026-10-20', audience: 'site', title: 'A quicker, calmer report screen',
@@ -104,6 +107,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Weekly summary', href: '/weekly-summary', audience: 'all', text: 'A project\'s week on one page, for the site meeting.' },
   { label: 'Snag list', href: '/issues/snag-list', audience: 'all', text: 'Open issues for one company or trade, to print.' },
   { label: 'Safety actions', href: '/safety-actions', audience: 'all', text: 'What the safety inspections found, until it is put right.' },
+  { label: 'Before handover', href: '/handover', audience: 'all', text: 'Everything still open on one project, as it nears completion.' },
   { label: 'My week', href: '/my-week', audience: 'all', text: 'Your own week across every project.' },
   { label: 'Site coverage', href: '/coverage', audience: 'office', text: 'Which live projects have gone quiet.' },
   { label: 'Issues by company', href: '/companies', audience: 'office', text: 'Who to chase, and for what.' },

@@ -233,6 +233,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
             <Link className="eng-row" href={`/photos?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}><div className="main"><b>Photographs</b><span>Every photograph on the project, by location</span></div><span className="chev">›</span></Link>
             <Link className="eng-row" href={`/weekly-summary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}><div className="main"><b>Weekly summary</b><span>The week on one page, ready for the site meeting</span></div><span className="chev">›</span></Link>
             <Link className="eng-row" href={`/safety-actions?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}><div className="main"><b>Safety actions</b><span>What the safety inspections found, open until the next one finds it put right</span></div><span className="chev">›</span></Link>
+            <Link className="eng-row" href={`/handover?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}><div className="main"><b>Before handover</b><span>Everything still open on the project, on one page: snags, fixes to check, variations, safety</span></div><span className="chev">›</span></Link>
           </div>
           <section aria-labelledby="eng-my-week-title">
             <div className="eng-section-title"><h2 id="eng-my-week-title">Your week</h2></div>
