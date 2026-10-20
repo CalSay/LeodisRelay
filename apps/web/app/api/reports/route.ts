@@ -5,7 +5,7 @@ import { requireSession } from "@/lib/auth/guard";
 import { canManage } from '@/lib/auth/access';
 import { cachedProject, refreshProjects, reportableProject } from '@/lib/projects';
 import { sharePointMode } from '@/lib/sharepoint/config';
-import { isReportType } from '@/lib/reportTypes';
+import { inspectedName, isReportType, reportTypeOf, type ReportTypeId } from '@/lib/reportTypes';
 
 export const dynamic = "force-dynamic";
 
@@ -36,11 +36,14 @@ export async function POST(request: Request) {
   if (!guard.ok) return guard.response;
   const principal = guard.principal;
 
-  const body = (await request.json()) as { projectId?: string; reportType?: unknown; clientKey?: unknown; visitDate?: unknown };
+  const body = (await request.json()) as { projectId?: string; reportType?: unknown; clientKey?: unknown; visitDate?: unknown; inspected?: unknown };
   if (!body.projectId) {
     return NextResponse.json({ reason: "projectId is required." }, { status: 400 });
   }
   if (body.reportType !== undefined && !isReportType(body.reportType)) return NextResponse.json({ reason: 'Unknown report type.' }, { status: 422 });
+  // A tower inspection names its tower from the start, so every save and signature is about that one.
+  const inspected = inspectedName(reportTypeOf({ reportType: body.reportType as ReportTypeId | undefined }), body.inspected);
+  if (!inspected.ok) return NextResponse.json({ reason: inspected.reason }, { status: 422 });
   // A report started on a phone with no connection carries its own key and
   // visit date. Both or neither: a date alone would let any start backdate.
   if ((body.clientKey === undefined) !== (body.visitDate === undefined)) return NextResponse.json({ reason: 'A report started offline needs both its key and its visit date.' }, { status: 422 });
@@ -65,5 +68,5 @@ export async function POST(request: Request) {
     return NextResponse.json({reason:'This project is not open for reporting.'},{status:422});
   }
   return NextResponse.json(createReport(body.projectId, principal.name, principal, body.reportType ?? 'progress',
-    body.clientKey !== undefined ? { clientKey: body.clientKey as string, visitDate: body.visitDate as string } : undefined), { status: 201 });
+    body.clientKey !== undefined ? { clientKey: body.clientKey as string, visitDate: body.visitDate as string } : undefined, inspected.value), { status: 201 });
 }

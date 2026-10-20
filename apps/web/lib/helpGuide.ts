@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'tower-inspection', added: '2026-10-20', audience: 'all', title: 'Tower inspection',
+    text: 'Inspect a mobile tower or podium after it is put up or moved, and at least every seven days while it stays up. Tap "Do a tower inspection", say which tower (its tag number and where it stands) and answer 12 checks, from its tag to its guardrails. Each "Action needed" goes on Safety actions under that tower until a later inspection of the same tower finds it put right, and Safety actions shows when each tower is due its next inspection. It works with no signal like the other inspections. The checks are a first draft and may change.',
+    link: { label: 'Open Safety actions', href: '/safety-actions' } },
   { id: 'typed-signature', added: '2026-10-20', audience: 'all', title: 'Sign an inspection without drawing',
     text: 'If you can\'t draw a signature, with a keyboard or screen reader say, choose "Type my name instead" when you sign an inspection: type your full name and tick the statement. It works with no signal too. The office and the PDF show it as a typed signature, with the statement, the time it was sent and who was signed in, so it is never mistaken for a drawing. Drawing works as before.' },
   { id: 'company-chases', added: '2026-10-20', audience: 'office', title: 'Chase notes on Issues by company',
@@ -123,7 +126,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Photographs', href: '/photos', audience: 'all', text: 'Every photograph on a project, by location.' },
   { label: 'Weekly summary', href: '/weekly-summary', audience: 'all', text: 'A project\'s week on one page, for the site meeting.' },
   { label: 'Snag list', href: '/issues/snag-list', audience: 'all', text: 'Open issues for one company or trade, to print.' },
-  { label: 'Safety actions', href: '/safety-actions', audience: 'all', text: 'What the safety inspections found, until it is put right.' },
+  { label: 'Safety actions', href: '/safety-actions', audience: 'all', text: 'What the safety and tower inspections found, until it is put right, and which towers are due.' },
   { label: 'Before handover', href: '/handover', audience: 'all', text: 'Everything still open on one project, as it nears completion.' },
   { label: 'Issues over time', href: '/issue-trend', audience: 'all', text: 'Whether a project\'s issue list is getting shorter, week by week.' },
   { label: 'My week', href: '/my-week', audience: 'all', text: 'Your own week across every project.' },
@@ -166,7 +169,7 @@ export const GLOSSARY: readonly GuideGroup[] = [
   ] },
   { heading: 'An inspection check', terms: [
     { term: 'Satisfactory', meaning: 'Checked and fine.' },
-    { term: 'Action needed', meaning: 'Say what is wrong and what needs doing. On a safety inspection it stays on Safety actions until a later inspection finds it Satisfactory or Not applicable. On a handover or first fix inspection it becomes an issue on the snag list.' },
+    { term: 'Action needed', meaning: 'Say what is wrong and what needs doing. On a safety inspection it stays on Safety actions until a later inspection finds it Satisfactory or Not applicable; on a tower inspection, until a later inspection of the same tower does. On a handover or first fix inspection it becomes an issue on the snag list.' },
     { term: 'Not applicable', meaning: 'Nothing of this kind to check.' },
   ] },
 ];
@@ -256,6 +259,11 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'An inspection is signed by the person who carried it out. Draw your signature in the box with a finger, pen or mouse.',
       'If you can\'t draw one, choose "Type my name instead", type your full name and tick the statement. It counts as your signature, and the office and the PDF show it as typed, with the time it was sent and who was signed in.',
       'A site update needs no drawing: your name is printed on it either way.',
+    ] },
+    { id: 'tower', heading: 'A tower or podium', ordered: false, steps: [
+      'Inspect each mobile tower or podium after it is put up or moved, and at least every seven days while it stays up. Tap "Do a tower inspection" and say which one: its tag number and where it stands, such as "T3, level 2 east corridor". Use the same name each time, so its actions follow it.',
+      'If the name is wrong, tap "Rename" under the title before you send. One tower inspection is open at a time: send it before you start the next.',
+      'Safety actions lists each tower inspected in the last four weeks and when it is due again. If a tower fails, take the insert out of its tag so nobody uses it, and say what needs doing on the check.',
     ] },
     { id: 'defect', heading: 'A defect on its own', ordered: false, steps: [
       '"Flag a defect" sends a photograph and a short note straight away, without a site update. Use it when something needs fixing before you finish the day.',

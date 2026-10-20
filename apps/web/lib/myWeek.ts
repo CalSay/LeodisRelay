@@ -1,4 +1,4 @@
-import { checkCounts, reportTypeOf } from './reportTypes';
+import { checkCounts, reportName, reportTypeOf } from './reportTypes';
 import type { Principal } from '@relay/platform';
 import { canReadReport, ownsReport } from './auth/access';
 import type { ObservationType } from './fixtures';
@@ -96,7 +96,7 @@ export function myWeek(projects: MyWeekProjectSource[], sources: MyWeekSources, 
     const type = reportTypeOf(r), checks = type.checklist ? checkCounts(r.observations) : undefined;
     slot(r.visitDate, r.projectId)?.reports.push({ id: r.id, reference: r.reference, revision: r.revision, kinds,
       photos: r.observations.reduce((n, o) => n + o.photos.length, 0), locations: [...places.values()],
-      ...(checks ? { inspection: { name: type.name, action: checks.action } } : {}) });
+      ...(checks ? { inspection: { name: reportName(r), action: checks.action } } : {}) });
   }
   // Drafts are theirs alone and not yet records, so they are counted apart.
   for (const r of readable) {

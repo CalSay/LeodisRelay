@@ -38,6 +38,8 @@ export interface DocReport {
   documentTitle?: string;
   /** A checklist report: results table, then only the checks with something to show. */
   inspection?: boolean;
+  /** What the inspection was of, when it is of one thing: { label: "Tower or podium", value: "T3, level 2" }. */
+  inspected?: { label: string; value: string };
   reference: string;
   projectName: string;
   projectNumber: string;

@@ -127,7 +127,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
 
 function foundWords(r: ReportSummary): string {
   // An inspection says what it is and how many checks need action.
-  if (r.checks) return `${reportTypeOf(r).name.toLowerCase()}, ${r.checks.action ? `${r.checks.action} action${r.checks.action === 1 ? '' : 's'}` : 'no actions'}`;
+  if (r.checks) return `${reportTypeOf(r).name.toLowerCase()}${r.inspected ? ` of ${r.inspected}` : ''}, ${r.checks.action ? `${r.checks.action} action${r.checks.action === 1 ? '' : 's'}` : 'no actions'}`;
   const k = r.kindCounts;
   if (!k) return r.defectCount ? `${r.defectCount} raising an issue` : `${r.observationCount} section${r.observationCount === 1 ? '' : 's'}`;
   const parts: string[] = [];
@@ -287,7 +287,7 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
     } finally { setRetryingSharePoint(false); }
   }
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href={crumbsHome ?? `#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>{reportTypeOf(report).document}</div><h3>Visit {fmtDate(report.visitDate)}</h3><div className="rowsub"><span className="ref">{report.reference}</span><span className="sep">/</span>{report.author}{report.authorTrade ? ` · ${report.authorTrade}` : ''}<span className="sep">/</span>Rev {report.revision}</div></div>
+    <div className="sheet-title"><div><div className="crumbs"><a href={crumbsHome ?? `#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>{reportTypeOf(report).document}</div><h3>Visit {fmtDate(report.visitDate)}</h3>{report.inspected && reportTypeOf(report).inspects && <div className="rowsub sheet-inspected">{reportTypeOf(report).inspects!.label}: <b>{report.inspected}</b></div>}<div className="rowsub"><span className="ref">{report.reference}</span><span className="sep">/</span>{report.author}{report.authorTrade ? ` · ${report.authorTrade}` : ''}<span className="sep">/</span>Rev {report.revision}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/preview`, officeReturn(ctx))}>Full report</Link><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/pdf`, officeReturn(ctx))}>PDF</Link>
         {canReview ? <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'review', report: summary })}>Review</Btn>
           : !report.acknowledged ? <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'acknowledge', report: summary })}>Acknowledge</Btn> : null}

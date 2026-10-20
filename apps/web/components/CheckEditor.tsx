@@ -85,7 +85,7 @@ export function CheckEditor({ observation, index, total, hint, raises, actionPro
           <label htmlFor={`owner-${id}`}>Who is to do it</label>
           <input id={`owner-${id}`} type="text" value={observation.owner} onChange={(e) => set('owner', e.target.value)} placeholder="Name or company" autoComplete="off" />
           <Suggestions title="Recent companies" fewer="Show fewer companies" values={companies} current={observation.owner} onPick={c => set('owner', c)} />
-          <p className="hint">{raises ? 'Raised as an issue on the snag list when you send.' : 'Printed on the inspection’s action list.'}</p>
+          <p className="hint">{raises ? 'Raised as an issue on the snag list when you send.' : 'Printed on the inspection’s action list and followed on Safety actions.'}</p>
         </div>
       </div>
       <PhotoField observation={observation} note=" · recommended" {...(photoWhere ? { photoWhere } : {})} onChange={onChange} onRemovePhoto={onRemovePhoto} />

@@ -2,7 +2,7 @@ import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import type { ObservationType } from './fixtures';
 import type { CheckAnswer, Issue, Report, Variation } from './types';
-import { answerLabel, checkCounts, raisesIssue, reportTypeOf } from './reportTypes';
+import { answerLabel, checkCounts, raisesIssue, reportName, reportTypeOf } from './reportTypes';
 
 /**
  * The living site diary (EXP-1): a project's story, day by day, made only from
@@ -151,7 +151,7 @@ export function siteDiary(sources: DiarySources, principal: Principal, projectId
     if (filtering && !cards.length && !(counts && kind === 'check' && !terms.length)) continue;
     entries.push({ day: r.visitDate, entry: {
       reportId: r.id, ...base, revision: r.revision, review: r.review, cardCount: all.length, cards,
-      ...(counts ? { inspection: { name: type.name, ok: counts.ok, action: counts.action, na: counts.na } } : {}),
+      ...(counts ? { inspection: { name: reportName(r), ok: counts.ok, action: counts.action, na: counts.na } } : {}),
       ...(r.serverAcknowledgedAt ? { sentAt: r.serverAcknowledgedAt } : {}),
       revisions: chain.map(c => ({ id: c.id, revision: c.revision, ...(c.serverAcknowledgedAt ? { sentAt: c.serverAcknowledgedAt } : {}), ...(c.corrects && c.correctionReason ? { correctionReason: tidy(c.correctionReason) } : {}) })),
     } });

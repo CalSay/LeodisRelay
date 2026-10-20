@@ -46,12 +46,14 @@ export interface StartedOffline {
   startedAt: string;
   /** Absent: a site update. An inspection starts with its checks already on the phone. */
   reportType?: ReportTypeId;
+  /** On a type that inspects one thing, its name as typed on the phone (a tower inspection's tower). */
+  inspected?: string;
 }
 
 /** What the offline page needs to start each inspection: its name, line and checks. */
-export interface OfflineType { id: ReportTypeId; name: string; blurb: string; raisesIssues: boolean; checklist: { item: string; question: string; hint: string }[] }
+export interface OfflineType { id: ReportTypeId; name: string; blurb: string; raisesIssues: boolean; inspects?: { label: string; placeholder: string; hint: string }; checklist: { item: string; question: string; hint: string }[] }
 export const offlineTypes = (): OfflineType[] => CHECKLIST_TYPES.map(t => ({
-  id: t.id, name: t.name, blurb: t.blurb, raisesIssues: t.raisesRecords,
+  id: t.id, name: t.name, blurb: t.blurb, raisesIssues: t.raisesRecords, ...(t.inspects ? { inspects: { ...t.inspects } } : {}),
   checklist: (t.checklist ?? []).map(c => ({ item: c.item, question: c.question, hint: c.hint })),
 }));
 

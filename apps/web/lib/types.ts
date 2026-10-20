@@ -60,6 +60,12 @@ export type ReviewState = "not_required" | "pending" | "approved" | "returned";
 export interface Report {
   /** What kind of report this is (reportTypes.ts). Absent: a site progress report. */
   reportType?: import('./reportTypes').ReportTypeId;
+  /**
+   * What the inspection is about, on a type that inspects one thing (a tower
+   * inspection names its tower). Named when it is started; the author may
+   * rename it while it is a draft.
+   */
+  inspected?: string;
   projectSnapshot?: import('./projects').ConnectedProject;
   sharepoint?: { status: 'pending' | 'registered' | 'filed' | 'failed'; url?: string; itemId?: string; error?: string };
   delivery?: 'pending' | 'rendered' | 'filed' | 'sent' | 'outbox' | 'failed';

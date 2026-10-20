@@ -75,7 +75,7 @@ async function sendAll(principalId: string): Promise<HeldSendResult> {
   for (const held of firstPlan.start) {
     const started = held.started!;
     let report;
-    try { report = await startHeldReport(started.projectId, started.clientKey, started.visitDate, started.reportType); }
+    try { report = await startHeldReport(started.projectId, started.clientKey, started.visitDate, started.reportType, started.inspected); }
     catch (error) {
       if (error instanceof ApiError && error.offline) return result;
       await noteProblem(held, error, result, startedTitle(started), true);

@@ -1,6 +1,7 @@
 // Browser check: starting an inspection with no signal (FE-3e, second slice).
 // The app leaves the inspections' checks on the phone; the offline page starts
-// a safety, handover or first fix inspection with every check, takes answers, Where and
+// a safety, handover, first fix or tower inspection with every check (a tower
+// inspection asks which tower first), takes answers, Where and
 // photos, and the inspection goes up by itself once RELAY opens with signal.
 // npm test && npm run build; set RELAY_SCREENSHOT_DIR=<dir> to save screenshots.
 import assert from 'node:assert/strict';
@@ -38,8 +39,10 @@ try {
   const screenshot=process.env.RELAY_SCREENSHOT_DIR;if(screenshot)mkdirSync(screenshot,{recursive:true});
   // Light at phone width: a handover inspection, whose actions ask Where. Dark on a desk: a safety inspection.
   // Light on a desk: a first fix inspection, whose actions ask Where too.
-  for(const [scheme,width,type,name,code] of [['light',390,'handover-inspection','Handover inspection','PHI'],['dark',1440,'safety-inspection','Safety inspection','SSI'],['light',1440,'first-fix-inspection','First fix inspection','FFI']]){
-    const raises=type!=='safety-inspection';
+  // Dark at phone width: a tower inspection, which names its tower before it starts.
+  for(const [scheme,width,type,name,code] of [['light',390,'handover-inspection','Handover inspection','PHI'],['dark',1440,'safety-inspection','Safety inspection','SSI'],['light',1440,'first-fix-inspection','First fix inspection','FFI'],['dark',390,'tower-inspection','Tower inspection','TPI']]){
+    const raises=type!=='safety-inspection'&&type!=='tower-inspection';
+    const tower=type==='tower-inspection'?'T7, level 3 stair core':'';
     const before=new Set(mine().map(r=>r.id));
     const context=await browser.newContext({viewport:{width,height:900},colorScheme:scheme});await context.addCookies([{name:'relay_session',value:newSession(),url:base}]);
     let page=await context.newPage();const errors=[];const watch=p=>{p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.accept());};watch(page);
@@ -47,7 +50,7 @@ try {
     await page.evaluate(()=>navigator.serviceWorker.ready);
     await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
     const types=await page.evaluate(()=>JSON.parse(localStorage.getItem('relay-offline-types')||'[]'));
-    check(types.map(t=>t.id).join()==='safety-inspection,handover-inspection,first-fix-inspection'&&types.every(t=>t.checklist.length===12&&t.checklist.every(c=>c.item&&c.question)),`${scheme}: the app leaves every inspection and its checks on the phone`);
+    check(types.map(t=>t.id).join()==='safety-inspection,handover-inspection,first-fix-inspection,tower-inspection'&&types.every(t=>t.checklist.length===12&&t.checklist.every(c=>c.item&&c.question)),`${scheme}: the app leaves every inspection and its checks on the phone`);
     // No signal, cold start.
     await stop();
     await page.close();page=await context.newPage();watch(page);
@@ -55,11 +58,19 @@ try {
     await page.getByRole('heading',{name:'Keep reporting. It is saved on this phone.'}).waitFor();
     check(await page.getByRole('heading',{name:'Start a report'}).isVisible(),`${scheme}: the start panel offers more than a site update`);
     const choices=await page.locator('#start-choices .choice strong').allInnerTexts();
-    check(choices.join('|')==='Site update|Safety inspection|Handover inspection|First fix inspection',`${scheme}: four choices: ${choices}`);
+    check(choices.join('|')==='Site update|Safety inspection|Handover inspection|First fix inspection|Tower inspection',`${scheme}: five choices: ${choices}`);
+    check(await page.locator('#start-inspects').isHidden(),`${scheme}: no tower asked for a site update`);
     check(await page.getByRole('radio',{name:/^Site update/}).isChecked(),`${scheme}: a site update is chosen until another is picked`);
     await page.getByRole('radio',{name:new RegExp(`^${name}`)}).check();
+    if(tower){
+      check(await page.getByRole('textbox',{name:'Tower or podium'}).isVisible(),`${scheme}: a tower inspection asks which tower`);
+      await page.getByRole('button',{name:'Start on this phone'}).click();
+      await page.locator('#error',{hasText:'Say which tower or podium you are inspecting.'}).waitFor();
+      check((await heldKeys(page)).length===0,`${scheme}: nothing started without a tower`);
+      await page.getByRole('textbox',{name:'Tower or podium'}).fill(`  ${tower} `);
+    } else check(await page.locator('#start-inspects').isHidden(),`${scheme}: no tower asked for a ${name.toLowerCase()}`);
     await page.getByRole('button',{name:'Start on this phone'}).click();
-    await page.locator('#editor-title',{hasText:`New ${name.toLowerCase()} · Tetley Hall - Block E`}).waitFor();
+    await page.locator('#editor-title',{hasText:`New ${name.toLowerCase()}${tower?` of ${tower}`:''} · Tetley Hall - Block E`}).waitFor();
     check((await page.locator('.card').count())===12,`${scheme}: it starts with every check`);
     check(await page.getByRole('button',{name:/^Defect/}).count()===0&&await page.getByRole('button',{name:'Remove card 1'}).count()===0,`${scheme}: checks cannot be added or removed`);
     check((await page.locator('.card').nth(0).locator('.qhint').innerText()).length>10,`${scheme}: each check shows what to look at`);
@@ -94,6 +105,7 @@ try {
     const fresh=mine().filter(r=>!before.has(r.id));
     check(fresh.length===1,`${scheme}: one report on the server, not two`);
     const made=getReport(fresh[0].id);
+    check((made.inspected??'')===tower,`${scheme}: the tower reached the server as typed, tidied: ${made.inspected}`);
     check(made.reportType===type&&made.state==='draft'&&new RegExp(`-${code}-\\d{3}$`).test(made.reference),`${scheme}: it is a ${name.toLowerCase()} draft, numbered as one: ${made.reference}`);
     const o=made.observations;
     check(o.length===12&&o.every(c=>c.type==='check'&&c.check?.item),`${scheme}: with every check`);
@@ -108,7 +120,7 @@ try {
     check(errors.length===0,`${scheme}: no page errors: ${errors.join(' | ')}`);
     await context.close();
   }
-  console.log(`Offline inspection check passed (${checks} checks): checks left on the phone, a handover inspection (390px light), a safety inspection (1440px dark) and a first fix inspection (1440px light) started with no signal, answered with a photo, kept across a reload, and sent up by themselves as drafts when signal returned.`);
+  console.log(`Offline inspection check passed (${checks} checks): checks left on the phone, a handover inspection (390px light), a safety inspection (1440px dark), a first fix inspection (1440px light) and a tower inspection with its tower (390px dark) started with no signal, answered with a photo, kept across a reload, and sent up by themselves as drafts when signal returned.`);
 } finally {
   await browser?.close();await stop();
 }

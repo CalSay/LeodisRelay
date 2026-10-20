@@ -76,7 +76,7 @@ try {
     check(/Open 15 days/i.test(action)&&/Found 2 times/i.test(action),'engineer: open since the first inspection that found it, found twice');
     check(action.includes(first.reference)&&action.includes(second.reference),'engineer: names the inspections that found it');
     check(!block.includes('Draft only'),'engineer: a draft inspection is left out');
-    check(/Last inspection 011LME-SSI-002/.test(block)&&/9 days ago · another is due/.test(block),'engineer: last inspection and that another is due');
+    check(/Last safety inspection 011LME-SSI-002/.test(block)&&/9 days ago · another is due/.test(block),'engineer: last inspection and that another is due');
     // Cleared actions are folded away until asked for.
     const fold=page.locator('.sa-put-right summary');
     check(/Put right in the last 4 weeks \(1\)/.test(await fold.innerText()),'engineer: one put right');
