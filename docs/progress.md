@@ -4,6 +4,77 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Site information (new feature, proposed as NEW-7)
+
+- New page `/site-info?project=…`: one project's address (with "Open in
+  Maps" and "Copy address"), site hours, getting in and parking, safety and
+  induction notes, and up to 8 contacts with a large call button each. The
+  office (Managers and Admins) adds and edits it; engineers read it. It shows
+  who last updated it and when, and a short history of who changed which
+  section. Engineers reach it from "Site information ›" in the current
+  project band and a "Site information" row under "This project" on the home
+  screen, which shows the first line of the address and how many contacts
+  there are. The office reaches it from the project sheet, beside Weekly
+  summary and Photographs.
+- Why this feature: an engineer sent to a site they have not been to before,
+  or covering for someone, has to ring the office for the address, where to
+  park, which gate and who the site manager is. RELAY knows the project but
+  not how to get there or who to ring. Typed once by the office, it is on
+  every engineer's phone, and it is the first thing they need at the gate,
+  often with poor signal.
+- No signal: each time the home screen or the page loads it, the copy is kept
+  on the device (localStorage, per project). If the signal goes while the
+  page is open, it shows that copy and says when it was kept (opening the
+  page afresh with no signal needs the server, so it lands on the offline
+  screen instead); the offline screen
+  (`offline.html`) lists every kept copy with dial links, the site being
+  opened first. Kept copies are cleared on sign out and not shown after 30
+  days. Known gap: if a session simply expires without signing out, the
+  copies stay until then and the offline screen shows them to whoever opens
+  it on that device (the drafts on that screen are limited to the tab's last
+  signed-in person; site copies are not tied to a person). Every role can
+  read every project in the pilot, so this is not wider access, only contact
+  details outliving the session. The service worker cache
+  name moved to `relay-public-v4` so phones fetch the new offline script.
+- Decisions: every field is free text and may be blank; nothing is required
+  and there is no location list. A contact needs a name and a number that
+  looks like one (digits, spaces, brackets, dashes, optional leading +, at
+  least 6 digits). The form says not to put door codes, keysafe numbers or
+  alarm codes here, because everyone on the project can read it and it is
+  kept on phones. A save names the version it was made from; if someone saved
+  in between, the newer copy is shown above the form with this person's
+  changes kept, and saving again replaces it (nothing is merged unseen). A
+  save that changes nothing makes no new version. Stored in the local SQLite
+  store (`site-info` records, `lib/siteInfoStore.ts`); the SharePoint project
+  list has no such columns today, so if it gains them they should come from
+  there. The page updates its address with the browser's own history rather
+  than the router, since a router change with no signal reloads the page.
+- Not FE-2 (no photo work), not EXP-2 (no requests or routing: it is a
+  reference card, and the engineer still rings people directly), not EXP-4
+  (no location hierarchy; the address is free text), not the sole-trader
+  product.
+- Verified: `npm run typecheck`, `npm test` (5 new tests in
+  `tests/siteInfo.test.ts`: tidying and refusing input, dial and map links,
+  history, the store refusing a stale save and ignoring an unchanged one),
+  `npm run build`. New `scripts/verify-site-info.mjs` passed (32 checks:
+  signed-out and engineer refusals, unknown project, office editing from the
+  project sheet at 1440px dark with a refused number and a conflicting save,
+  engineer home row and page at 390px light with map and dial links and 48px
+  call buttons, the kept copy with no connection, the offline screen, sign out
+  clearing copies, the office form at 390px with no sideways scroll).
+  `verify-engineer-layout`, `verify-role-access` (61), `verify-office-landing`
+  (19), `verify-office-actions` (41), `verify-unfinished-reports` (18),
+  `verify-since-last-visit` (33) and `verify-engineer-nav` (60) still pass.
+  Screenshots (not in the repo) are in the RELAY project's shared files under
+  `ui-review/site-info/`.
+- Not verified: a physical phone (dialling and the maps app opening), iPhone
+  Safari's handling of the Google Maps link, the offline screen being served
+  by the service worker on a real loss of signal (the check opens it
+  directly), SharePoint mode (no live tenant).
+- Next: CLAUDE.md's list of browser checks should gain
+  `verify-site-info.mjs`. If the project list gains site address columns,
+  read the address from there.
+
 ## 2026-10-20 — Office actions on a phone (proposed UI-3, follows FE-4b)
 
 - On a phone the office desk now opens on the office position, with the

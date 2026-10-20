@@ -35,6 +35,7 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-band .lbl{color:var(--band-brass);}
 .eng-band h2{margin:6px 0 4px;font-size:24px;font-weight:500;line-height:1.2;letter-spacing:-.01em;color:var(--band-text);overflow-wrap:anywhere;}
 .eng-band p{margin:0;font-size:13px;color:var(--band-muted);}
+.eng-band a.eng-band-link{color:var(--band-brass);margin-left:12px;min-height:0;text-decoration:none;white-space:nowrap;}
 .eng-band button{border:0;background:none;color:var(--band-brass);padding:0;min-height:0!important;font:inherit;font-size:13px;}
 .eng-band .row{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap;}
 .eng-band .row a{display:inline-flex;align-items:center;justify-content:center;padding:0 16px;border:1px solid var(--band-line);border-radius:var(--r);color:var(--band-text);font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;}

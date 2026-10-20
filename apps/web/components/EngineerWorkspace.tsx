@@ -13,6 +13,7 @@ import { ownsReport } from '@/lib/auth/access';
 import { EngineerIssueList } from './EngineerIssueList';
 import { IndividualDefect } from './IndividualDefect';
 import { SinceLastVisit } from './SinceLastVisit';
+import { SiteInfoRow } from './SiteInfoRow';
 import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
 import { fmtMoney, variationValue } from '@/lib/variations';
 import { projectStatusGroups } from '@/lib/projectGroups';
@@ -178,7 +179,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
       {view==='home' && <>
         <div className="eng-heading"><p className="lbl">On site</p><h1>{principal?.name}</h1><p>{principal?.trade ? `${principal.trade} Engineer` : principal?.role} · {fmtDay(new Date().toISOString())}</p></div>
         <div className="eng-home-grid"><div>
-          <section className="eng-band"><span className="lbl">Current project</span><h2>{project.projectName}</h2><p><span className="ref" style={{color:'inherit'}}>{project.projectNumber}</span> · {project.projectManager}, project manager · <button type="button" onClick={()=>navigate('projects')}>Change ›</button></p></section>
+          <section className="eng-band"><span className="lbl">Current project</span><h2>{project.projectName}</h2><p><span className="ref" style={{color:'inherit'}}>{project.projectNumber}</span> · {project.projectManager}, project manager · <button type="button" onClick={()=>navigate('projects')}>Change ›</button> <Link className="eng-band-link" href={withViewReturn(`/site-info?${new URLSearchParams({ project: project.id })}`,engineerReturn())}>Site information ›</Link></p></section>
           <div className="eng-tiles">
             {currentDraft
               ? <Link className="eng-tile big" href={withViewReturn(`/reports/${currentDraft.id}`,engineerReturn())}><span className="kind tone-neutral">Site update</span><div><b>{currentDraft.corrects ? 'Continue the correction' : 'Continue today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'on server'}</small></div><span className="arrow">→</span></Link>
@@ -204,6 +205,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
           </div>
           <div className="eng-section-title"><h2>This project</h2><span className="r">{back ? `${back.open} open issue${back.open===1?'':'s'}` : ''}</span></div>
           <div className="eng-list">
+            <SiteInfoRow key={project.id} projectId={project.id} projectName={project.projectName} returnTo={engineerReturn()}/>
             <button type="button" className="eng-row" onClick={()=>navigate('issues')}><div className="main"><b>Site issues</b><span>{back ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
             <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Latest reports</b><span>{back ? `${back.reports} on file · every trade` : 'Submitted updates from every trade'}</span></div><span className="chev">›</span></button>
           </div>
