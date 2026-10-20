@@ -1,6 +1,6 @@
 import type { Observation, Report } from "./types";
 import type { DraftBase } from "./draftConflict";
-import type { StartedOffline } from "./offlineStart";
+import { fitStartedChecks, type StartedOffline } from "./offlineStart";
 
 /**
  * Unsent work held on the device.
@@ -326,7 +326,7 @@ export async function adoptStarted(startedKey:string,report:Report):Promise<stri
       const existing = store.get(key);
       existing.onsuccess = () => {
         if (!existing.result) store.put({ key, reportId:report.id, principalId:held.principalId, seq:held.seq,
-          observations:held.observations, heldAt:held.heldAt, baseVersion:report.version, report, heldOffline:true } satisfies HeldDraft);
+          observations:fitStartedChecks(held.observations,report.observations), heldAt:held.heldAt, baseVersion:report.version, report, heldOffline:true } satisfies HeldDraft);
         store.delete(startedKey);
         adopted = key;
       };

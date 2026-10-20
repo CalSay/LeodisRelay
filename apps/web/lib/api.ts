@@ -91,10 +91,10 @@ export async function createReport(projectId: string, author: string, reportType
 }
 
 /** Start, on the server, a report begun on a phone with no connection. Retrying with the same key returns the same report. */
-export async function startHeldReport(projectId: string, clientKey: string, visitDate: string): Promise<Report> {
+export async function startHeldReport(projectId: string, clientKey: string, visitDate: string, reportType?: ReportTypeId): Promise<Report> {
   return parse<Report>(await request('/api/reports', {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ projectId, clientKey, visitDate }),
+    body: JSON.stringify({ projectId, clientKey, visitDate, ...(reportType ? { reportType } : {}) }),
   }));
 }
 

@@ -69,7 +69,7 @@ export function unfinishedReports(
     const s = h.started;
     if (!s || !name.has(s.projectId)) continue;
     rows.push({ id:h.reportId, projectId:s.projectId, projectName:name.get(s.projectId)!, reference:'', visitDate:s.visitDate,
-      cards:h.observations.length, correction:false, typeName:'Site update', checklist:false, changedAt:h.heldAt, device:'only', started:true, problem:h.problem });
+      cards:h.observations.length, correction:false, ...kind(s), changedAt:h.heldAt, device:'only', started:true, problem:h.problem });
   }
   const latest = (r: UnfinishedReport) => [r.changedAt ?? '', r.savedAt ?? ''].sort().at(-1)!;
   return rows.sort((a, b) => latest(b).localeCompare(latest(a)) || a.id.localeCompare(b.id));

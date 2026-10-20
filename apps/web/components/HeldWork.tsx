@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { usePrincipal } from './PrincipalContext';
 import { sendHeldWork, type HeldSendResult } from '@/lib/heldSend';
-import { OFFLINE_PERSON_KEY, sentLine } from '@/lib/offlineStart';
+import { OFFLINE_PERSON_KEY, OFFLINE_TYPES_KEY, offlineTypes, sentLine } from '@/lib/offlineStart';
 
 /**
  * Work held on this device from the offline page goes up by itself once RELAY
@@ -16,7 +16,8 @@ import { OFFLINE_PERSON_KEY, sentLine } from '@/lib/offlineStart';
  * the editor waits for it (heldSendSettled) before reading anything.
  *
  * It also leaves the signed-in person on the device (name and id only), so the
- * offline page can open their held work when RELAY starts with no signal.
+ * offline page can open their held work when RELAY starts with no signal, and
+ * the inspection checklists, so it can start an inspection as well.
  */
 export function HeldWork() {
   const principal = usePrincipal();
@@ -28,6 +29,8 @@ export function HeldWork() {
     try {
       if (principal) localStorage.setItem(OFFLINE_PERSON_KEY, JSON.stringify({ id: principal.id, name: principal.name }));
       else localStorage.removeItem(OFFLINE_PERSON_KEY);
+      // The inspections and their checks, so the offline page can start one too.
+      if (principal) localStorage.setItem(OFFLINE_TYPES_KEY, JSON.stringify(offlineTypes()));
     } catch { /* Storage blocked: the offline page says to reconnect. */ }
   }, [principal]);
 
