@@ -39,6 +39,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a physical phone; SharePoint mode (no live tenant here);
   performance with thousands of records.
 - Next: a Search entry on the office desk once the office lane is free.
+
 ## 2026-10-20 — FE-3d: unfinished reports on the engineer home
 
 - The engineer home now has an "Unfinished reports" list under the start
