@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'before-handover', added: '2026-10-20', audience: 'all', title: 'Before handover',
+    text: 'One page per project with everything RELAY still has open: snags on our work by trade, fixes waiting to be checked, handover inspections and their open actions, other trades\' issues, variations not yet instructed and open safety actions. Ready to print for the handover meeting.',
+    link: { label: 'Open Before handover', href: '/handover' } },
   { id: 'editor-tidy', added: '2026-10-20', audience: 'site', title: 'A quicker, calmer report screen',
     text: 'On a phone the card you have open no longer repeats itself above and below, "Check & send" is no longer repeated inside each card (it stays at the foot of the screen), and an inspection just started lists its unanswered checks as one line rather than twelve. Optional suggestions are marked "Optional", so only a "Stop" stops you sending.' },
   { id: 'offline-inspection', added: '2026-10-20', audience: 'site', title: 'Start an inspection with no signal',
@@ -100,6 +103,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Weekly summary', href: '/weekly-summary', audience: 'all', text: 'A project\'s week on one page, for the site meeting.' },
   { label: 'Snag list', href: '/issues/snag-list', audience: 'all', text: 'Open issues for one company or trade, to print.' },
   { label: 'Safety actions', href: '/safety-actions', audience: 'all', text: 'What the safety inspections found, until it is put right.' },
+  { label: 'Before handover', href: '/handover', audience: 'all', text: 'Everything still open on one project, as it nears completion.' },
   { label: 'My week', href: '/my-week', audience: 'all', text: 'Your own week across every project.' },
   { label: 'Site coverage', href: '/coverage', audience: 'office', text: 'Which live projects have gone quiet.' },
   { label: 'Issues by company', href: '/companies', audience: 'office', text: 'Who to chase, and for what.' },
