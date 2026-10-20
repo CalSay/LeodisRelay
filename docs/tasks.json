@@ -67,7 +67,7 @@
       ],
       "status": "done",
       "passes": true,
-      "pr": null,
+      "pr": 4,
       "notes": "Built: serverStore.ts acknowledgeReport, route, office dialog (ProjectsView 'Read' row beside Received, Review, PDF and notification). 2026-10-20: tests/corrections.test.ts now asserts actor, id, timestamp and trimmed optional note are stored; receipt time, review, delivery and the raised issue are untouched; approval and issue closure do not set it; status.ts keeps each fact's own words. No application code changed."
     },
     {
