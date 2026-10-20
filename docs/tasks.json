@@ -11,7 +11,8 @@
       "office": "components/developments/office/*, lib/status.ts",
       "store": "lib/issueStore.ts, lib/types.ts, lib/sharepoint/issues.ts, app/api/issues/route.ts",
       "tests": "apps/web/tests only",
-      "search": "lib/search.ts, app/api/search, app/search, components/SearchPage.tsx, app/search.css"
+      "search": "lib/search.ts, app/api/search, app/search, components/SearchPage.tsx, app/search.css",
+      "snag": "app/issues/snag-list/*, lib/snagList.ts"
     },
     "ui_work": "Cal's standing priority: the UI must be clear, easy to use, professional and inviting. UI tasks from the 'UI clarity and polish' thread are added here with their own lane mapping; a UI task that edits editor or office files uses that lane.",
     "audit": "Statuses and notes below come from a read-only audit of main at 13e96a0 on 2026-10-20 (AUDIT-1). No browser checks have ever been run for these tasks; Playwright is not installed."
@@ -210,10 +211,10 @@
         "The update can be expanded and edited again",
         "Browser check of the engineer report screen on a phone-width viewport"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Mostly built: report page 'Cards' rail shows location, kind, text and photo count (app/reports/[id]/page.tsx:462-491). Missing an explicit collapsed/completed state and a phone-width browser check."
+      "status": "done",
+      "passes": true,
+      "pr": 13,
+      "notes": "Done 2026-10-20 with UI direction item 2: below 900px every card folds to a summary row (kind, location, one-line description, photo count, and why it would stop sending); tapping a row opens that card under it, tapping again or Done with this card folds it. Wide screens keep the rail. scripts/verify-report-editor.mjs checks it at 390px and 1440px in light and dark."
     },
     {
       "id": "FE-5b",
@@ -413,6 +414,25 @@
       "passes": true,
       "pr": 10,
       "notes": "Engineers had no way to find past work; the office search only looks at loaded records by reference and title. lib/search.ts, app/api/search, app/search, components/SearchPage.tsx; Search link in the engineer navigation. Office desk unchanged (office lane). Loads every record per search, fine for the pilot's volume; revisit with SQLite FTS if it grows."
+    },
+    {
+      "id": "NEW-2",
+      "order": 21,
+      "lane": "snag",
+      "depends_on": [],
+      "backlog": "new feature (Cal, 2026-10-20: freedom to add new features)",
+      "title": "Printable snag lists",
+      "description": "A snag list for one project: the open issues a company or trade has to put right, grouped by location, to hand over on paper or as a PDF, or walk the site with on a phone. Opened from the office Issues register and the engineer Issues view.",
+      "acceptance": [
+        "Lists only open issues on the chosen project, narrowed by company or person and by trade, grouped by free-text location with no location catalogue",
+        "Each item shows reference, description, what to do, owner, target date, a past-target or fixed tag and optionally the photograph taken when it was raised",
+        "Prints black on white without the app chrome, keeping the prototype banner",
+        "Tests for the list rules; browser check at 390px light and 1440px dark, including print"
+      ],
+      "status": "done",
+      "passes": true,
+      "pr": 12,
+      "notes": "lib/snagList.ts, app/issues/snag-list (page and snag.css), a Snag list link in office IssuesView and the engineer Issues view. Read-only: ticking on paper records nothing; work is still submitted as complete on each issue. Checked by tests/snagList.test.ts and scripts/verify-snag-list.mjs. Not verified: a physical printer or phone, SharePoint mode."
     }
   ]
 }

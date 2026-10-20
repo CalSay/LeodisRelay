@@ -1,0 +1,58 @@
+/* Snag list: one project's open issues by location, on screen and on paper.
+   On screen it follows the theme; printed it is always black on white, A4,
+   with the controls and app chrome left off. The prototype banner prints, so a
+   paper copy from a test server is never mistaken for the real thing. */
+.snag-page{max-width:900px;}
+.snag-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin:8px 0 20px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+.snag-controls label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text-2);flex:1 1 180px;min-width:0;}
+.snag-controls select{width:100%;}
+.snag-controls .snag-check{flex-direction:row;align-items:center;flex:0 0 auto;min-height:48px;color:var(--text);font-size:14px;}
+.snag-check input{width:20px;height:20px;accent-color:var(--brass);margin:0 8px 0 0;}
+.snag-controls .btn-primary{flex:0 0 auto;}
+.snag-sheet{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:24px;}
+.snag-head{border-bottom:2px solid var(--text);padding-bottom:14px;margin-bottom:8px;}
+.snag-head h1{margin:6px 0 2px;}
+.snag-for{font-size:16px;font-weight:600;margin:0 0 12px;}
+.snag-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 12px;}
+.snag-facts dt{font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
+.snag-facts dd{margin:2px 0 0;font-size:13.5px;overflow-wrap:anywhere;}
+.snag-summary{margin:0;font-size:14px;color:var(--text-2);}.snag-summary b{color:var(--text);}.snag-summary .late{color:var(--alert);}
+.snag-group{break-inside:auto;}
+.snag-group h2{display:flex;justify-content:space-between;gap:10px;margin:22px 0 4px;padding-bottom:6px;border-bottom:1px solid var(--line-2);font-size:16px;break-after:avoid;}
+.snag-group h2 span{font:500 11px var(--mono);color:var(--text-3);}
+.snag-group ol{list-style:none;margin:0;padding:0;}
+.snag-item{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:12px;align-items:start;padding:12px 0;border-bottom:1px solid var(--line);break-inside:avoid;}
+.snag-box{width:20px;height:20px;border:1.5px solid var(--text-2);border-radius:3px;margin-top:2px;}
+.snag-item.fixed .snag-box{border-color:var(--ok);background:var(--ok-wash);}
+.snag-body p{margin:0;}
+.snag-ref{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;margin-bottom:4px !important;}
+.snag-desc{font-size:15px;font-weight:500;line-height:1.4;}
+.snag-action{font-size:13.5px;line-height:1.45;margin-top:4px !important;color:var(--text-2);}.snag-action b{color:var(--text);font-weight:600;}
+.snag-meta{font-size:12.5px;color:var(--text-3);margin-top:6px !important;}
+.snag-photo{width:96px;height:72px;object-fit:cover;border-radius:4px;border:1px solid var(--line);background:var(--panel-2);}
+.snag-foot{margin-top:24px;font-size:12.5px;color:var(--text-2);}
+.snag-sign{display:grid;grid-template-columns:2fr 2fr 1fr;gap:16px;margin-top:28px;}
+.snag-sign span{border-top:1px solid var(--text-2);padding-top:4px;font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;}
+@media (max-width:640px){
+  .snag-sheet{padding:16px;}
+  .snag-facts{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .snag-item{grid-template-columns:22px minmax(0,1fr);}
+  .snag-photo{grid-column:2;width:100%;max-width:240px;height:auto;aspect-ratio:4/3;}
+  .snag-sign{grid-template-columns:1fr;}
+  .snag-controls .btn-primary{width:100%;}
+}
+@media print{
+  @page{size:A4;margin:14mm 12mm;}
+  /* On body, not :root, so these win over the theme rules on :root whatever their specificity. */
+  body{--panel:#fff;--panel-2:#f4f4f1;--ground:#fff;--text:#111;--text-2:#333;--text-3:#555;--line:#ccc;--line-2:#999;--brass:#5a4612;--alert:#8f2f19;--ok:#22573a;--ok-wash:transparent;--alert-wash:transparent;--caution-wash:transparent;}
+  html,body{background:#fff !important;color:#111;color-scheme:light;}
+  .appbar,.snag-noprint,.install-help{display:none !important;}
+  .banner{position:static !important;background:none !important;color:#111 !important;border-bottom:1px solid #999;font-size:9px;}
+  .eng-page.snag-page{padding:0;max-width:none;}
+  .snag-sheet{border:0;padding:0;border-radius:0;}
+  .snag-ref a{color:#111;text-decoration:none;}
+  .snag-photo{width:80px;height:60px;}
+  .snag-item{grid-template-columns:22px minmax(0,1fr) auto !important;}
+  .snag-facts{grid-template-columns:repeat(4,minmax(0,1fr)) !important;}
+  .snag-sign{grid-template-columns:2fr 2fr 1fr !important;}
+}

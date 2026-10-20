@@ -50,10 +50,12 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
     : filtered.sort((a, b) => rank(a) - rank(b) || (a.targetDate || '9999').localeCompare(b.targetDate || '9999') || b.raisedAt.localeCompare(a.raisedAt));
   const changeSort = (key: SortKey) => setSort(current => current?.key === key ? { key, direction: current.direction === 'ascending' ? 'descending' : 'ascending' } : { key, direction: 'ascending' });
   const source = (i: Issue) => { const r = i.raisedByReport ? snap.reports.find(x => x.id === i.raisedByReport) : undefined; return r ? shortRef(r.reference) : i.source === 'individual' ? 'Flagged on site' : '—'; };
+  // The snag list opens on the project, company and trade chosen here, and comes back to this register.
+  const snagHref = `/issues/snag-list?${new URLSearchParams({ ...(project ? { project } : {}), ...(owner ? { owner } : {}), ...(trade ? { trade } : {}), returnTo: '/office#/issues' })}`;
   const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
   return <div className="view">
     <div className="pagehead"><div><h3>Issues</h3><p>{counts.open} open across {ctx.projects.length} projects · {counts.overdue ? <span className="late">{counts.overdue} overdue</span> : 'none overdue'} · {counts.verify} awaiting verification · {counts.unassigned} unassigned · {reviewOn && <>{counts.notReviewed} not reviewed · </>}{counts.disputed} disputed</p></div>
-      <div className="actions">{counts.verify > 0 && <Btn onClick={() => { const i = scoped.filter(isVerify).find(x => !closureMine(x)); if (i) ctx.setDialog({ kind: 'verify', issue: i }); }}>Verify the oldest</Btn>}</div></div>
+      <div className="actions"><a className="btn btn-q" href={snagHref}>Snag list</a>{counts.verify > 0 && <Btn onClick={() => { const i = scoped.filter(isVerify).find(x => !closureMine(x)); if (i) ctx.setDialog({ kind: 'verify', issue: i }); }}>Verify the oldest</Btn>}</div></div>
     <div className="filters">
       {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
       <button type="button" className={`chip ${sort === null ? 'on' : ''}`} onClick={() => setSort(null)}>Sort: priority</button>

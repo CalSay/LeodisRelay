@@ -81,8 +81,11 @@ iOS Safari, a live tenant.
 2. **Report editor flow.** Collapse cards that are not being edited, drop the
    repeated "Selected" line, and make "Check & send" a clear final step with a
    sticky action that never covers the field being typed in.
-3. **Engineer navigation.** Icons with the labels, a stronger active state, and
-   bottom padding so the bar never hides content.
+   Done 20 October (see `docs/progress.md`, UI-2).
+3. **Engineer navigation.** Done in UI-3: each entry has a line icon with its
+   label (icon over label on the phone bar), the current view is weighted with
+   a gold mark and a tinted tile, all five entries sit on one row down to
+   320px, and the page padding clears the bar.
 4. **Empty states that invite action** across Inbox, Issues, Variations and the
    engineer "Came back from the office" panel.
 5. **Fix the stale layout check** so it runs again, and add the office desk at

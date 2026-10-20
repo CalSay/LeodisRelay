@@ -89,16 +89,19 @@ try {
   await visible.getByLabel('Where',{exact:true}).fill('Roof');
   try { await page.getByText('Saved on server',{exact:true}).waitFor(); }
   catch(error) { console.error(await page.locator('main').innerText()); throw error; }
+  // Below 900px the cards fold into a list and the open one unfolds under its row.
   await page.setViewportSize({width:820,height:1180});
-  assert.equal(await visible.getByLabel('What happened',{exact:true}).inputValue(),'Tablet section survives rotation');
-  await page.locator('.eng-rail .eng-list button').first().click();
-  await page.locator('.eng-rail .eng-list button').nth(1).click();
-  assert.equal(await visible.getByLabel('What happened',{exact:true}).inputValue(),'Tablet section survives rotation');
-  await page.reload();await page.locator('.eng-rail .eng-list button').nth(1).click();
-  assert.equal(await visible.getByLabel('What happened',{exact:true}).inputValue(),'Tablet section survives rotation');
+  const open=page.locator('.eng-slot.open');
+  assert.equal(await open.getByLabel('What happened',{exact:true}).inputValue(),'Tablet section survives rotation');
+  await page.locator('.eng-cardrow').first().click();
+  await page.locator('.eng-cardrow').nth(1).click();
+  assert.equal(await open.getByLabel('What happened',{exact:true}).inputValue(),'Tablet section survives rotation');
+  await page.reload();await page.locator('.eng-cardrow').nth(1).click();
+  assert.equal(await open.getByLabel('What happened',{exact:true}).inputValue(),'Tablet section survives rotation');
   if(screenshot)await page.screenshot({path:join(screenshot,'editor-portrait.png'),fullPage:true});
   await page.setViewportSize({width:1180,height:820});
   if(screenshot)await page.screenshot({path:join(screenshot,'editor-landscape.png'),fullPage:true});
+  await page.locator('.actionbar').getByRole('button',{name:'Check & send →',exact:true}).click();
   await page.getByRole('button',{name:'Send to office',exact:true}).click();
   await page.getByText(/Received by Relay/).waitFor();
   const saved=await context.request.get(base+`/api/reports/${own.id}`).then(r=>r.json());

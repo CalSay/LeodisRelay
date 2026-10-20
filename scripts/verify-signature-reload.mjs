@@ -33,7 +33,7 @@ try {
   for(const scheme of ['light','dark']){
     const context=await browser.newContext({viewport:{width:390,height:844},colorScheme:scheme});await context.addCookies([{name:'relay_session',value:session,url:base}]);
     const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-    await page.goto(`${base}/reports/${draft.id}`);
+    await page.goto(`${base}/reports/${draft.id}#check`); // the signature is on the Check & send step
     const pad=page.locator('canvas.sigpad');await pad.scrollIntoViewIfNeeded();
     if(scheme==='light'){
       await page.getByLabel('Your name',{exact:true}).fill('G. Stephenson');
