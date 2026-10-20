@@ -1,0 +1,53 @@
+/* Before handover: what one project still has open in RELAY. Follows the
+   theme on screen; printed it is black on white with the controls left off. */
+.ho-page{max-width:900px;}
+.ho-controls{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 16px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+.ho-controls label{font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
+.ho-controls select{flex:1 1 240px;min-height:44px;}
+.ho-controls button{min-height:44px;}
+.ho-head h1{margin:4px 0 8px;}
+.ho-verdict{margin:0 0 4px;padding:10px 14px;border-radius:8px;font-size:15.5px;line-height:1.45;border:1px solid var(--line);}
+.ho-verdict-open{border-color:color-mix(in srgb,var(--caution) 45%,transparent);background:var(--caution-wash);}
+.ho-verdict-clear{border-color:color-mix(in srgb,var(--ok) 45%,transparent);background:color-mix(in srgb,var(--ok) 10%,transparent);}
+.ho-sub{margin:6px 0 16px;font-size:13px;color:var(--text-2);}
+.ho-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:0 0 18px;}
+.ho-stat{display:flex;flex-direction:column;min-width:0;min-height:44px;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--panel);color:inherit;text-decoration:none;}
+.ho-stat.ho-stat-alert{border-color:color-mix(in srgb,var(--alert) 45%,transparent);background:var(--alert-wash);}
+.ho-stat.ho-stat-due{border-color:color-mix(in srgb,var(--caution) 45%,transparent);background:var(--caution-wash);}
+.ho-stat-label{font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
+.ho-stat-n{margin-top:4px;font-size:28px;font-weight:600;line-height:1.1;}
+.ho-stat small{display:block;font-size:12.5px;color:var(--text-2);margin-top:4px;}
+@media (hover:hover){.ho-stat:hover{border-color:var(--line-2);}}
+.ho-section{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 16px;margin-top:14px;scroll-margin-top:72px;}
+.eng-page .ho-section h2{margin:0 0 8px;font-size:17px;display:flex;align-items:baseline;gap:10px;}
+.ho-section h2 span,.ho-group h3 span{font:500 11.5px var(--mono);color:var(--text-3);}
+.ho-group+.ho-group{margin-top:14px;}
+.eng-page .ho-group h3{margin:2px 0 0;font-size:14px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;}
+.ho-group h3 a{margin-left:auto;display:inline-flex;align-items:center;min-height:44px;font-size:13px;font-weight:500;color:var(--brass);text-decoration:underline;text-underline-offset:3px;}
+.ho-rows{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.ho-rows li{padding:8px 0 8px 12px;border-left:3px solid var(--line-2);}
+.ho-rows li.ho-late{border-left-color:var(--alert);}
+.ho-rows p{margin:0;}
+.ho-tags{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-bottom:3px !important;}
+.ho-desc{font-size:14.5px;line-height:1.45;overflow-wrap:anywhere;}
+.ho-meta{font-size:12.5px;color:var(--text-2);margin-top:3px !important;overflow-wrap:anywhere;}
+.ho-note{font-size:13px;color:var(--text-2);margin:0 0 4px;}
+.ho-none{margin:0;font-size:13.5px;color:var(--text-2);}
+.ho-page a.ref{color:var(--brass);text-decoration:underline;text-underline-offset:3px;}
+.ho-foot{margin-top:20px;font-size:12.5px;color:var(--text-2);line-height:1.5;}
+@media (max-width:760px){
+  .ho-stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .ho-section{padding:12px;}
+  .ho-stat-n{font-size:24px;}
+}
+@media print{
+  @page{size:A4;margin:14mm 12mm;}
+  body{--panel:#fff;--panel-2:#fff;--ground:#fff;--text:#111;--text-2:#333;--text-3:#555;--line:#ccc;--line-2:#999;--brass:#5a4612;--alert:#8f2f19;--alert-wash:#fff;--caution-wash:#fff;}
+  html,body{background:#fff !important;color:#111;color-scheme:light;}
+  .appbar,.ho-noprint,.install-help,.eng-navigation{display:none !important;}
+  .eng-page.ho-page{padding:0;max-width:none;}
+  .ho-page a.ref{color:#111;text-decoration:none;}
+  .ho-section{break-inside:auto;}
+  .ho-rows li{break-inside:avoid;}
+  .ho-stats{grid-template-columns:repeat(5,minmax(0,1fr));}
+}
