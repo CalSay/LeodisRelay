@@ -143,7 +143,6 @@ export function ObservationEditor({
       <div className="field">
         <label>Kind</label>
         <div className="kindrow">{OBSERVATION_TYPES.map(t => <button key={t.value} type="button" className={`tone-${t.tone}`} aria-pressed={kind === t.value} onClick={() => changeKind(t.value)}>{kind === t.value && <span aria-hidden="true">✓</span>}{t.short}</button>)}</div>
-        {type && <p className="eng-kind-selected" aria-live="polite"><span aria-hidden="true">✓</span> Selected: <strong>{type.short}</strong></p>}
       </div>
 
       {where}

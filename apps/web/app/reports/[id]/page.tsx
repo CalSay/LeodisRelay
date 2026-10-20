@@ -103,6 +103,34 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [recovered,setRecovered] = useState(false);
   /** `?add=instruction` from the home tile opens the draft with a new card of that kind. Honoured once. */
   const addedFromLink = useRef(false);
+  /** Which step of the draft is showing: building the cards, or checking, signing and sending. */
+  const [step,setStep] = useState<'cards' | 'check'>('cards');
+  /** Set when this page pushed the #check entry, so the browser's Back returns to the cards. */
+  const pushedCheck = useRef(false);
+  /** A field has the keyboard: on the phone the action bar steps aside so it never covers it. */
+  const [typing,setTyping] = useState(false);
+  /** Side-by-side cards and editor from 900px, as in engineer.css; folded cards below that. */
+  const wide = useMediaQuery('(min-width: 900px)');
+
+  useEffect(() => {
+    const sync = () => {
+      const check = window.location.hash === '#check';
+      if (!check) pushedCheck.current = false;
+      setStep(check ? 'check' : 'cards');
+    };
+    sync();
+    window.addEventListener('popstate', sync);
+    return () => window.removeEventListener('popstate', sync);
+  }, []);
+
+  useEffect(() => {
+    const typed = (el: EventTarget | null) => el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement || (el instanceof HTMLInputElement && !['file', 'checkbox', 'radio', 'button', 'submit'].includes(el.type));
+    const onIn = (e: FocusEvent) => setTyping(typed(e.target));
+    const onOut = (e: FocusEvent) => { if (!typed(e.relatedTarget)) setTyping(false); };
+    document.addEventListener('focusin', onIn);
+    document.addEventListener('focusout', onOut);
+    return () => { document.removeEventListener('focusin', onIn); document.removeEventListener('focusout', onOut); };
+  }, []);
 
   useEffect(() => {
     fetch("/api/auth/me", { cache: "no-store" })
@@ -382,10 +410,75 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const mine = principal ? ownsReport(principal, report) : false;
   const facts = [reviewStatus(report), deliveryStatus(report), acknowledgementStatus(report)].filter((f): f is NonNullable<typeof f> => f !== null);
   const counts = Object.fromEntries(KINDS.map(k => [k, report.observations.filter(o => o.type === k).length])) as Record<ObservationType, number>;
-  const selected = report.observations.some(o => o.id === selectedSection) ? selectedSection : report.observations.at(-1)?.id ?? null;
+  // The open card. Side by side there is always one in the editor column; on
+  // the phone every card starts folded, so the report reads as a short list.
+  const open = report.observations.some(o => o.id === selectedSection) ? selectedSection : wide ? report.observations.at(-1)?.id ?? null : null;
   const shortRef = report.reference.split('-').slice(1).join('-');
   const kindOf = (o: Observation) => OBSERVATION_TYPES.find(t => t.value === o.type);
   const extras = (o: Observation) => [o.affectedTrade && `Trade: ${o.affectedTrade}`, o.variationReason, o.workDone && 'already carried out', o.askedBy && `asked for by ${o.askedBy}`, o.roughSize && ({ 'half-day': 'about half a day', day: 'about a day', 'two-days': 'about two days', more: 'more than two days' })[o.roughSize], o.partsEstimate !== undefined && `parts about £${o.partsEstimate}`].filter(Boolean).join(' · ');
+
+  /** Open a card on the cards step and bring it into view. */
+  function openCard(cardId: string) {
+    setSelectedSection(cardId);
+    showCards();
+    requestAnimationFrame(() => document.getElementById(wide ? 'card-editor' : `slot-${cardId}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
+
+  function showCheck() {
+    if (step === 'check') return;
+    try { window.history.pushState(window.history.state, '', '#check'); pushedCheck.current = true; } catch {}
+    setStep('check');
+    window.scrollTo({ top: 0 });
+  }
+
+  function showCards() {
+    if (step === 'cards') return;
+    if (pushedCheck.current) { window.history.back(); return; }
+    try { window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`); } catch {}
+    setStep('cards');
+  }
+
+  /**
+   * A card folded to one line: where, what kind, what was written and how many
+   * photographs, with a warning when sending would be stopped by it. Tapping
+   * it opens the card; on the phone tapping the open card folds it again.
+   */
+  const cardRow = (o: Observation, i: number) => {
+    const k = kindOf(o);
+    const stopped = stop.find(f => f.observationId === o.id);
+    const choosing = picking.includes(o.id);
+    const text = o.whatHappened.trim();
+    const isOpen = open === o.id;
+    return <button type="button" key={`row-${o.id}`} className={`eng-row eng-cardrow ${isOpen ? 'on' : ''} ${stopped ? 'late' : ''}`} aria-expanded={wide ? undefined : isOpen} aria-current={wide && isOpen ? 'true' : undefined} onClick={() => { if (!wide && isOpen) setSelectedSection(''); else openCard(o.id); }}>
+      <span className="no">{String(i + 1).padStart(2, '0')}</span>
+      <div className="main">
+        <span className="top"><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{choosing ? 'New' : k?.short ?? o.type}</span><b>{o.location.trim() || (choosing ? 'Choose a kind' : 'No location yet')}</b></span>
+        <span className="desc">{choosing ? 'What kind of update is this?' : text || 'Nothing written yet'}</span>
+        {!choosing && <span className="meta">{o.photos.length} photo{o.photos.length === 1 ? '' : 's'}{stopped ? <em> · {unlabelled(stopped.message, o)}</em> : null}</span>}
+      </div>
+      {!wide && <span className="chev" aria-hidden="true">{isOpen ? '−' : '+'}</span>}
+    </button>;
+  };
+
+  /** The open card's questions, or the kind picker for a card that has none yet. */
+  const cardBody = (observation: Observation, index: number) => picking.includes(observation.id)
+    ? <KindPicker onPick={k => { setPicking(p => p.filter(x => x !== observation.id)); const copy: Observation = { ...observation, type: k }; if (k === 'defect' && principal?.trade) copy.affectedTrade = principal.trade; update({ ...report, observations: report.observations.map(o => o.id === observation.id ? copy : o) }); }} />
+    : <>
+        <ObservationEditor
+          observation={observation}
+          index={index}
+          openIssues={projectIssues}
+          locations={locations}
+          onChange={(next) => update({ ...report, observations: report.observations.map((o) => (o.id === next.id ? next : o)) })}
+          onRemove={() => { setPicking(p => p.filter(x => x !== observation.id)); update({ ...report, observations: report.observations.filter((o) => o.id !== observation.id) }); }}
+        />
+        <div className="eng-card-actions">
+          {wide
+            ? <button type="button" onClick={() => addCard()} disabled={submitting}>+ Add another card</button>
+            : <button type="button" className="eng-done" onClick={() => { setSelectedSection(''); requestAnimationFrame(() => document.getElementById(`slot-${observation.id}`)?.scrollIntoView({ block: 'nearest' })); }}>Done with this card</button>}
+          <button type="button" className="eng-review-link" onClick={() => showCheck()}>Check &amp; send &rarr;</button>
+        </div>
+      </>;
 
   async function startCorrection() {
     if (!correctionReason.trim()) { setCorrectionError('Say why this correction is needed.'); return; }
@@ -400,7 +493,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     }
   }
 
-  const findingRows = (items: typeof findings, kind: 'stop' | 'note') => items.map((f, i) => <button key={`${kind}${i}`} type="button" className={`find ${kind === 'stop' ? 'find-stop' : 'find-note'}`} style={{ width: '100%', textAlign: 'left', minHeight: 0, background: 'none', font: 'inherit', cursor: f.observationId ? 'pointer' : 'default' }} onClick={() => { if (f.observationId) { setSelectedSection(f.observationId); document.getElementById('card-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); } }}>
+  const findingRows = (items: typeof findings, kind: 'stop' | 'note') => items.map((f, i) => <button key={`${kind}${i}`} type="button" className={`find ${kind === 'stop' ? 'find-stop' : 'find-note'}`} style={{ width: '100%', textAlign: 'left', minHeight: 0, background: 'none', font: 'inherit', cursor: f.observationId ? 'pointer' : 'default' }} onClick={() => { if (f.observationId) openCard(f.observationId); }}>
     <span className="find-kind">{kind === 'stop' ? 'Stop' : 'Check'}</span>
     <span>{f.message}</span>
   </button>);
@@ -483,100 +576,124 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           {o.photos.length > 0 && <small>{o.photos.length} photograph{o.photos.length === 1 ? '' : 's'}</small>}
         </section>; })}
       </> : <>
-        <div className="eng-editor-grid">
+        {/* Two steps, so the cards and the final check never compete for the
+            same scroll: build the report, then check, sign and send it. */}
+        <nav className="eng-steps" aria-label="Report steps">
+          <button type="button" aria-current={step === 'cards' ? 'step' : undefined} onClick={() => showCards()}><span className="n">1</span>Cards<small>{report.observations.length}</small></button>
+          <button type="button" aria-current={step === 'check' ? 'step' : undefined} onClick={() => showCheck()}><span className="n">2</span>Check &amp; send{stop.length > 0 && <small className="late">{stop.length}</small>}</button>
+        </nav>
+
+        {step === 'cards' && (wide ? <div className="eng-editor-grid">
           <aside className="eng-rail" aria-label="Cards in this update">
             <div className="eng-section-title" style={{ margin: 0 }}><h2>Cards</h2><span className="r">{report.observations.length}</span></div>
             <div className="eng-list">
               {report.observations.length === 0 && <div className="eng-empty">No cards yet. Add one for each thing you did, found or need.</div>}
-              {report.observations.map((o, i) => { const k = kindOf(o); const stopped = stop.some(f => f.observationId === o.id); return <button type="button" key={o.id} className={`eng-row ${selected === o.id ? 'on' : ''} ${stopped ? 'late' : ''}`} onClick={() => { setSelectedSection(o.id); document.getElementById('card-editor')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }}>
-                <span className="no">{String(i + 1).padStart(2, '0')}</span>
-                <div className="main"><b>{o.location || (picking.includes(o.id) ? 'New card' : `Card ${i + 1}`)}</b><span>{picking.includes(o.id) ? 'choose a kind' : `${k?.short ?? o.type} · ${o.whatHappened.trim() ? o.whatHappened.trim().slice(0, 48) + (o.whatHappened.trim().length > 48 ? '…' : '') : 'nothing written yet'} · ${o.photos.length} photo${o.photos.length === 1 ? '' : 's'}`}{stopped ? ' · needs something' : ''}</span></div>
-              </button>; })}
+              {report.observations.map((o, i) => cardRow(o, i))}
             </div>
             <button type="button" className="eng-add" disabled={submitting} onClick={() => addCard()}>+ Add a card</button>
             {findings.length > 0 && <div className="eng-finds"><span className="lbl">Before you send</span>{findingRows(stop, 'stop')}{findingRows(note.slice(0, 3), 'note')}</div>}
           </aside>
           <div id="card-editor" style={{ scrollMarginTop: 24 }}>
-            {report.observations.length === 0 ? <KindPicker onPick={k => addCard(k)} /> : report.observations.map((observation, index) => (
-              <div key={observation.id} hidden={selected !== observation.id}>
-                {picking.includes(observation.id)
-                  ? <KindPicker onPick={k => { setPicking(p => p.filter(x => x !== observation.id)); const copy: Observation = { ...observation, type: k }; if (k === 'defect' && principal?.trade) copy.affectedTrade = principal.trade; update({ ...report, observations: report.observations.map(o => o.id === observation.id ? copy : o) }); }} />
-                  : <ObservationEditor
-                      observation={observation}
-                      index={index}
-                      openIssues={projectIssues}
-                      locations={locations}
-                      onChange={(next) => update({ ...report, observations: report.observations.map((o) => (o.id === next.id ? next : o)) })}
-                      onRemove={() => { setPicking(p => p.filter(x => x !== observation.id)); update({ ...report, observations: report.observations.filter((o) => o.id !== observation.id) }); }}
-                    />}
-                {!picking.includes(observation.id) && <div className="eng-card-actions"><button type="button" onClick={() => addCard()} disabled={submitting}>+ Add another card</button><a href="#report-check" className="eng-review-link">Review &amp; send ↓</a></div>}
-              </div>
-            ))}
+            {report.observations.length === 0 ? <KindPicker onPick={k => addCard(k)} /> : report.observations.map((o, i) => <div key={o.id} hidden={open !== o.id}>{cardBody(o, i)}</div>)}
           </div>
-        </div>
+        </div> : <div className="eng-acc" id="card-editor">
+          {/* On the phone each card folds to one summary row, and the open
+              card unfolds under its own row rather than somewhere below. */}
+          {report.observations.length === 0 ? <KindPicker onPick={k => addCard(k)} /> : <div className="eng-list">
+            {report.observations.map((o, i) => <div key={o.id} id={`slot-${o.id}`} className={`eng-slot ${open === o.id ? 'open' : ''}`}>
+              {cardRow(o, i)}
+              <div hidden={open !== o.id}>{cardBody(o, i)}</div>
+            </div>)}
+          </div>}
+          {report.observations.length > 0 && <button type="button" className="eng-add" disabled={submitting} onClick={() => addCard()}>+ Add a card</button>}
+        </div>)}
 
-        <div id="report-check" className="sec"><span className="lbl">Check &amp; send</span></div>
-        <dl className="eng-sum">
-          <div><dt>Progress</dt><dd>{counts.update}</dd></div>
-          <div><dt>Defects</dt><dd className={counts.defect ? 'late' : ''}>{counts.defect}<small>{counts.defect ? 'raise issues' : ''}</small></dd></div>
-          <div><dt>Variations</dt><dd className={counts.instruction ? 'soon' : ''}>{counts.instruction}<small>{counts.instruction ? 'raise VOs' : ''}</small></dd></div>
-          <div><dt>Access</dt><dd>{counts.access}<small>{counts.access ? 'raise issues' : ''}</small></dd></div>
-        </dl>
+        {step === 'check' && <div id="report-check" className="eng-check">
+          {findings.length === 0 ? (
+            <div className="note note-ok">Everything needed is here.</div>
+          ) : (
+            <div className="eng-finds">
+              {/* Blocking omissions and things worth a look are separated: an
+                  engineer should be stopped by a defect with no photograph, and
+                  not stopped by a missing caption. */}
+              {findingRows(stop, 'stop')}
+              {findingRows(note, 'note')}
+            </div>
+          )}
 
-        {findings.length === 0 ? (
-          <div className="note note-ok">Everything needed is here.</div>
-        ) : (
-          <div className="eng-finds">
-            {/* Blocking omissions and things worth a look are separated: an
-                engineer should be stopped by a defect with no photograph, and
-                not stopped by a missing caption. */}
-            {findingRows(stop, 'stop')}
-            {findingRows(note, 'note')}
-          </div>
-        )}
+          <div className="sec"><span className="lbl">In this report</span></div>
+          <dl className="eng-sum">
+            <div><dt>Progress</dt><dd>{counts.update}</dd></div>
+            <div><dt>Defects</dt><dd className={counts.defect ? 'late' : ''}>{counts.defect}<small>{counts.defect ? 'raise issues' : ''}</small></dd></div>
+            <div><dt>Variations</dt><dd className={counts.instruction ? 'soon' : ''}>{counts.instruction}<small>{counts.instruction ? 'raise VOs' : ''}</small></dd></div>
+            <div><dt>Access</dt><dd>{counts.access}<small>{counts.access ? 'raise issues' : ''}</small></dd></div>
+          </dl>
 
-        {report.observations.length > 0 && <div className="eng-does">
-          <span className="lbl">What sending does</span>
-          <div className="eng-list" style={{ marginTop: 8 }}>
-            {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{counts.defect + counts.access} issue{counts.defect + counts.access === 1 ? '' : 's'} raised · not yet reviewed</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Linked ones add a sighting to the existing issue. ' : ''}The office assigns them; you’ll see who and when on your home screen.</span></div></div>}
-            {counts.instruction > 0 && <div className="eng-row"><div className="main"><b>{counts.instruction} variation{counts.instruction === 1 ? '' : 's'} raised · need a quote</b><span>{report.observations.some(o => o.type === 'instruction' && o.workDone) ? 'Marked as already done: the office gets the client’s sign-off before it is invoiced. ' : ''}The office prices it and puts it to the client.</span></div></div>}
-            <div className="eng-row"><div className="main"><b>Received the moment it lands</b><span>{project?.projectManager ?? 'The project manager'} is emailed when the mailbox is live; the office can read it straight away.</span></div></div>
-          </div>
+          {report.observations.length > 0 && <div className="eng-does">
+            <span className="lbl">What sending does</span>
+            <div className="eng-list" style={{ marginTop: 8 }}>
+              {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{counts.defect + counts.access} issue{counts.defect + counts.access === 1 ? '' : 's'} raised · not yet reviewed</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Linked ones add a sighting to the existing issue. ' : ''}The office assigns them; you’ll see who and when on your home screen.</span></div></div>}
+              {counts.instruction > 0 && <div className="eng-row"><div className="main"><b>{counts.instruction} variation{counts.instruction === 1 ? '' : 's'} raised · need a quote</b><span>{report.observations.some(o => o.type === 'instruction' && o.workDone) ? 'Marked as already done: the office gets the client’s sign-off before it is invoiced. ' : ''}The office prices it and puts it to the client.</span></div></div>}
+              <div className="eng-row"><div className="main"><b>Received the moment it lands</b><span>{project?.projectManager ?? 'The project manager'} is emailed when the mailbox is live; the office can read it straight away.</span></div></div>
+            </div>
+          </div>}
+
+          <div className="sec"><span className="lbl">Sign</span></div>
+
+          <section className="panel">
+            <div className="panel-body">
+              <SignaturePad
+                name={signerName}
+                initialImage={signatureImage}
+                onNameChange={(next) => updateSignature(next, signatureImage)}
+                onChange={(image) => updateSignature(signerName, image)}
+              />
+            </div>
+          </section>
         </div>}
-
-        <div className="sec"><span className="lbl">Sign</span></div>
-
-        <section className="panel">
-          <div className="panel-body">
-            <SignaturePad
-              name={signerName}
-              initialImage={signatureImage}
-              onNameChange={(next) => updateSignature(next, signatureImage)}
-              onChange={(image) => updateSignature(signerName, image)}
-            />
-          </div>
-        </section>
 
         {submitError && (
           <div className="note note-bad" style={{ marginTop: 16 }}>{submitError}</div>
         )}
 
         {/* One primary action, always reachable, with the save state beside
-            it so the two are never read separately. */}
-        <div className="actionbar">
+            it so the two are never read separately. On the phone it steps
+            aside while a field has the keyboard, so it never covers the
+            field being typed in. */}
+        <div className={`actionbar ${typing ? 'is-typing' : ''}`}>
           <div className="actionbar-inner">
             <span className="savestate" aria-live="polite">
               <span className={SAVE[saveState].dot} />
-              {stop.length > 0
-                ? <a className="actionbar-warning" href="#report-check"><b>{stop.length} {stop.length === 1 ? 'item needs' : 'items need'} attention</b><span>Review before sending ↑</span></a>
-                : <b>{SAVE[saveState].text || 'Ready to send'}</b>}
+              {step === 'check' && stop.length > 0
+                ? <span className="actionbar-warning"><b>{stop.length} {stop.length === 1 ? 'item needs' : 'items need'} attention</b><span>Tap one above to fix it</span></span>
+                : <b>{SAVE[saveState].text || (step === 'check' ? 'Ready to send' : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`)}</b>}
             </span>
-            <button className="btn-primary" onClick={send} disabled={submitting || stop.length > 0}>
-              {submitting ? "Sending…" : "Send to office"}
-            </button>
+            {step === 'cards'
+              ? <button className="btn-primary" onClick={() => showCheck()} disabled={submitting}>Check &amp; send &rarr;</button>
+              : <button className="btn-primary" onClick={send} disabled={submitting || stop.length > 0}>
+                  {submitting ? "Sending…" : "Send to office"}
+                </button>}
           </div>
         </div>
       </>}
     </main>
   );
+}
+
+/** A finding without its "Location: " prefix, for the row that already names the location. */
+function unlabelled(message: string, o: Observation): string {
+  const prefix = `${o.location || 'Unspecified location'}: `;
+  return message.startsWith(prefix) ? message.slice(prefix.length) : message;
+}
+
+function useMediaQuery(query: string): boolean {
+  const [matches, setMatches] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
+  useEffect(() => {
+    const list = window.matchMedia(query);
+    const onChange = () => setMatches(list.matches);
+    onChange();
+    list.addEventListener('change', onChange);
+    return () => list.removeEventListener('change', onChange);
+  }, [query]);
+  return matches;
 }

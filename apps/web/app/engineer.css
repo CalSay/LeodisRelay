@@ -96,8 +96,6 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-card .kindrow button{flex:1 1 110px;min-height:44px!important;padding:0 10px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--line-2);background:var(--ground);color:var(--text-2);border-radius:5px;}
 .eng-card .kindrow button span{font-size:14px;margin-right:5px;}
 .eng-card .kindrow button[aria-pressed=true]{border:2px solid var(--tone);color:var(--ground);background:var(--tone);font-weight:700;box-shadow:0 0 0 3px color-mix(in srgb,var(--tone) 20%,transparent);}
-.eng-kind-selected{display:flex;align-items:center;gap:6px;margin:10px 0 0;padding:8px 10px;border-radius:5px;background:var(--brass-wash);color:var(--brass);font-size:12px;}
-.eng-kind-selected strong{text-transform:uppercase;font-family:var(--mono);letter-spacing:.06em;}
 .eng-pick{display:grid;gap:14px;}
 .eng-pick h2{margin:0;}
 .eng-pick .eng-tiles{grid-template-columns:1fr 1fr;}
@@ -134,6 +132,38 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:9px;background:var(--panel-2);}
 .eng-card-actions>*{display:flex;align-items:center;justify-content:center;min-height:52px!important;padding:8px 16px;text-align:center;border-radius:6px;}
 .eng-review-link{border:1px solid var(--brass);background:var(--brass-wash);color:var(--brass);font-weight:600;}
+/* Report steps: build the cards, then check, sign and send. */
+.eng-steps{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:18px 0 0;border:1px solid var(--line-2);border-radius:9px;overflow:hidden;background:var(--panel);}
+.eng-steps button{display:flex;align-items:center;justify-content:center;gap:7px;min-height:52px!important;padding:0 8px;border:0;border-radius:0;background:none;color:var(--text-2);font:inherit;font-size:15px;white-space:nowrap;font-weight:500;border-bottom:3px solid transparent;}
+.eng-steps button+button{border-left:1px solid var(--line);}
+.eng-steps button[aria-current]{color:var(--text);font-weight:600;border-bottom-color:var(--brass);background:var(--brass-wash);}
+.eng-steps .n{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;border:1px solid currentColor;font-size:12px;font-variant-numeric:tabular-nums;}
+.eng-steps button[aria-current] .n{background:var(--brass);border-color:var(--brass);color:var(--brass-ink);}
+.eng-steps small{font-family:var(--mono);font-size:11px;color:var(--text-3);}
+.eng-steps small.late{color:var(--alert);}
+/* A card folded to its summary. */
+.eng-cardrow{cursor:pointer;}
+.eng-cardrow .top{display:flex;align-items:center;gap:8px;min-width:0;}
+.eng-cardrow .top b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.eng-cardrow .top .kind{flex:none;}
+.eng-cardrow .desc{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px!important;color:var(--text-2)!important;}
+.eng-cardrow .meta{font-size:12px;color:var(--text-3);}
+.eng-cardrow .meta em{font-style:normal;color:var(--alert);}
+.eng-cardrow .chev{font-size:20px;color:var(--brass);width:20px;text-align:center;}
+.eng-acc{margin-top:16px;display:grid;gap:12px;}
+.eng-acc .eng-list{margin:0;}
+.eng-slot{border-bottom:1px solid var(--line);scroll-margin-top:76px;}
+.eng-slot:last-child{border-bottom:0;}
+.eng-slot .eng-cardrow{border-bottom:0;}
+.eng-slot.open{background:var(--panel-2);}
+.eng-slot .eng-card{border-radius:0;box-shadow:none;border-width:1px 0 0 5px;border-top-color:var(--line);}
+.eng-slot .eng-card .head>.lbl{display:none;}
+.eng-slot .eng-card-actions{margin:0;border:0;border-top:1px solid var(--line);border-radius:0;}
+.eng-slot .eng-pick{padding:14px 12px;border-top:1px solid var(--line);}
+.eng-acc .eng-add{width:100%;border:1px dashed var(--brass);background:var(--brass-wash);color:var(--brass);border-radius:9px;font-weight:500;}
+.eng-done{border:1px solid var(--line-2);background:var(--panel);color:var(--text);font-weight:500;}
+.eng-check{margin-top:16px;}
+.eng-check>.eng-finds,.eng-check>.note{margin-top:4px;}
 .eng-report-editor .actionbar-warning{display:flex;flex-direction:column;gap:1px;color:var(--alert);line-height:1.25;}
 .eng-report-editor .actionbar-warning b{color:var(--alert);font-size:12px;}
 .eng-report-editor .actionbar-warning span{color:var(--text-2);font-family:var(--sans);font-size:11px;letter-spacing:0;}
@@ -206,6 +236,8 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
   .eng-report-editor .savestate{font-size:11px;align-items:flex-start;}
   .eng-report-editor .savestate>.dot{margin-top:6px;}
   .eng-report-editor .actionbar .btn-primary{min-width:150px;padding-inline:14px;}
+  .eng-report-editor .actionbar.is-typing{display:none;}
+  .eng-steps button{font-size:14px;}
   .eng-workspace{padding-bottom:100px;}
   .eng-workspace .eng-navigation{position:fixed;bottom:0;left:0;right:0;z-index:25;background:var(--panel);border:0;border-top:1px solid var(--line);margin:0;padding:8px 8px calc(8px + env(safe-area-inset-bottom));}
 }
