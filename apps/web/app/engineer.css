@@ -350,3 +350,11 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-tile.eng-tile-wide .kind{margin:0;}
 .eng-tile.eng-tile-wide>div{flex:1;min-width:0;}
 .eng-tile.eng-tile-wide .arrow{font-family:var(--mono);color:var(--brass);}
+
+/* Work held on this phone has gone up, or could not (HeldWork.tsx). */
+.held-send{max-width:1200px;margin:16px auto 0;padding:0 16px;display:grid;gap:8px;}
+.held-send .note{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:14.5px;}
+.held-send .note strong{font-weight:600;color:var(--text);}
+.held-send .note-bad strong{color:inherit;}
+.held-send a{color:var(--brass);font-weight:600;min-height:44px;display:inline-flex;align-items:center;}
+.held-send-close{margin-left:auto;min-height:44px;}
