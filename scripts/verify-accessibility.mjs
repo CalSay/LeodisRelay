@@ -81,6 +81,11 @@ try {
           }).map(e=>`${Math.round(e.getBoundingClientRect().width)}x${Math.round(e.getBoundingClientRect().height)} ${e.tagName.toLowerCase()}.${String(e.className).trim().replace(/\s+/g,'.')} "${(e.getAttribute('aria-label')||e.textContent||'').trim().slice(0,30)}"`),smallAllowed);
           check(!small.length,`${label}: controls at least 44px tall\n  ${small.join('\n  ')}`);
         }
+        if(!phone&&url.startsWith('/office')){
+          // The desk fills the window and its views scroll inside it, so the top bar and tabs stay put.
+          const fit=await page.evaluate(()=>{const ws=document.querySelector('.ws');return ws.scrollHeight-ws.clientHeight;});
+          check(fit<=1,`${label}: the office desk fits the window (${fit}px over)`);
+        }
         if(width===1440&&scheme==='light'){
           // Tab through the page: every stop shows a ring.
           await page.evaluate(()=>{document.activeElement?.blur();window.scrollTo(0,0);});const bare=[];

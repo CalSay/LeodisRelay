@@ -18,6 +18,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   secondary text is on almost every screen and site engineers read it
   outdoors; (2) the office desk's structure for screen readers; (3) tap
   targets on a phone; (4) the one cue given only by colour.
+- Compliance pages: their `.cm` palette is a copy of the office one, so
+  they take the same token fixes (decided here, to keep the two palettes
+  from drifting apart; the pages are otherwise untouched).
 - Contrast: only colour tokens changed, so both themes stay in step. Main
   pages: `--text-3` #6b6c65 to #5f605a (light), #666e75 to #8a9299 (dark).
   Office desk (`.ws`) and the compliance pages (`.cm`), same palette:
@@ -27,10 +30,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   #ec8a76 (#f09783 on compliance); compliance light aqua #267c76 to #1f6d68.
   Every pair now passes 4.5:1 on its own backgrounds. The dated concept
   files in `docs/` keep the old values.
-- Office desk: views sit in a `main` with a hidden `h1` ("Issues · Leodis
-  Developments office"); headings now run h2 page or column, h3 sheet or
-  panel, h4 group, instead of starting at h3/h4/h5. CSS matches either level,
-  so nothing moves. The tab bar is named "Office" and marks the current tab
+- Office desk: views sit in a `main` (a flex column, so on a desktop the
+  views still fill the desk and scroll inside it; the check now asserts the
+  desk fits the window) with a hidden `h1`, "Leodis Developments office";
+  headings now run h2 page or column, h3 sheet or panel, h4 group, instead
+  of starting at h3/h4/h5. CSS matches either level, so headings look the
+  same. The tab bar is named "Office" and marks the current tab
   (`aria-current`). The prototype banner is a named region and the app bar
   nav is named "Main". Empty table header cells say "Action" to screen
   readers.
@@ -45,7 +50,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Kept: wording, features and how data is saved; #40's Back links and page
   titles. Help's "What's new" has one line, "Easier to read and to tap".
 - New `scripts/verify-accessibility.mjs` (axe-core 4.10.3 added as a dev
-  dependency): 308 checks; zero axe violations on each page in light and dark
+  dependency): 318 checks; zero axe violations on each page in light and dark
   at 390px and 1440px, one h1 per page, controls at least 44px tall on a
   phone (listed exceptions: references inside rows, the coverage grid, hidden
   file inputs, checkboxes inside a label), a ring at every Tab stop.
