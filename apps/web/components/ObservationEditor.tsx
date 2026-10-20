@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { PhotoImage } from './PhotoImage';
+import { WHERE, type Where } from '@/lib/uploadStatus';
 import { CameraIcon } from './CameraIcon';
 import { readPhoto, type Observation, type Photo } from "@/lib/api";
 import type { Issue, RoughSize } from "@/lib/types";
@@ -36,6 +37,7 @@ export function ObservationEditor({
   index,
   openIssues,
   locations,
+  photoWhere,
   onChange,
   onRemove,
 }: {
@@ -43,6 +45,8 @@ export function ObservationEditor({
   index: number;
   openIssues: Issue[];
   locations: string[];
+  /** Whether a photograph has reached the server, when the page knows. */
+  photoWhere?: (photoId: string) => Where | undefined;
   onChange: (next: Observation) => void;
   onRemove: () => void;
 }) {
@@ -123,6 +127,7 @@ export function ObservationEditor({
         <PhotoImage src={photo.dataUrl} alt={photo.caption || `Photograph ${i + 1}`} />
         <div className="shot-body">
           <span className="shot-no">Photo {String(i + 1).padStart(2, "0")}</span>
+          {(() => { const w = photoWhere?.(photo.id); return w ? <span className={`eng-where eng-where-${w}`}><span className={w === 'server' ? 'dot dot-ok' : 'dot dot-busy'} />{WHERE[w]}</span> : null; })()}
           <input type="text" value={photo.caption} onChange={(e) => onChange({ ...observation, photos: observation.photos.map((p) => p.id === photo.id ? { ...p, caption: e.target.value } : p) })} placeholder="What does this show?" aria-label={`Caption for photograph ${i + 1}`} />
           <button className="btn-quiet btn-sm" onClick={() => onChange({ ...observation, photos: observation.photos.filter((p) => p.id !== photo.id) })}>Remove</button>
         </div>

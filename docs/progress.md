@@ -4,6 +4,49 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — FE-3b: which cards and photos are on the server
+
+- In the report editor every card row now ends with where the card is: "On
+  the server", "Uploading", "Not yet on the server" or "Only on this phone",
+  with what is still to go up ("changes and 1 photo"). Each photograph says
+  the same under its number. The Check & send step opens with one line: "The
+  card and 2 photos are on the server." or "1 card and 1 photo are only on
+  this phone. They go up by themselves when the server can be reached."
+  A removed card or a changed signature waiting for a save is named there
+  too, so the line never goes green before the save lands. The wording
+  matches the unfinished reports list (PR #9). Green dot only when the
+  server has it.
+- Decision: a photograph counts as on the server only once the server's copy
+  of the card lists it, not when its bytes arrive, because until then the
+  office cannot see it. The server only accepts a card whose photos it holds
+  (`validatePhotos.ts`), so a listed photo is known to be there. A new photo
+  is counted on its own, so adding one does not mark the card's words as
+  unsaved. Rules in `lib/uploadStatus.ts`; `lib/localMedia.ts` now reports
+  which photos are being sent.
+- Decision: while the server cannot be reached the editor retries every 15
+  seconds (only while the page is visible). Before, a server outage with the
+  phone still online never retried, because no "online" event comes; the
+  work sat on the phone until the engineer typed. Retries reuse the held copy
+  and do not move its "changed" time.
+- Verified on Node 24: `npm run typecheck`, `npm test` (web suite 92 tests,
+  ten new in `tests/uploadStatus.test.ts`), `npm run build`. New
+  `scripts/verify-photo-uploads.mjs` passed (22 checks at 390px light and
+  1440px dark): a photo goes up with the card; the server is stopped, a
+  second photo and a caption change show "Only on this phone"; the server is
+  restarted and, with nobody touching the page, everything shows "On the
+  server" and the server's copy has both photos and the caption.
+  `verify-report-editor` (58), `verify-engineer-layout`,
+  `verify-signature-reload`, `verify-unfinished-reports` (18) and
+  `verify-role-access` (61) passed. Screenshots in the project's
+  `ui-review/photo-upload-status/`.
+- Not verified: a physical phone or a real dropped signal (Chromium only, the
+  server process was stopped instead). Issue pages and the separate defect
+  form upload photos too and do not show this yet.
+- Next: proposed follow-ups in the PR: show the same status on issue photo
+  uploads; a caption typed while a photo is still being added can be lost
+  (the editor adds the photo to the card as it was when the camera opened).
+  CLAUDE.md's list of browser checks should gain `verify-photo-uploads.mjs`.
+
 ## 2026-10-20 — FE-6a: distinct submission stages
 
 - A sent report now shows its steps one by one, each with its own state:

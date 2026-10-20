@@ -55,6 +55,15 @@ export async function capturePhoto(file: File): Promise<Photo> {
 }
 
 const uploads = new Map<string, Promise<void>>();
+/** Photographs whose bytes are being sent right now, so the editor can say "Uploading". */
+const sending = new Set<string>();
+const listeners = new Set<() => void>();
+export function uploadingPhotos(): ReadonlySet<string> { return new Set(sending); }
+export function onPhotoUploads(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => { listeners.delete(listener); };
+}
+const changed = () => { for (const listener of listeners) listener(); };
 export async function uploadPhotos(photos: readonly Photo[], scope: { reportId: string } | { issueId: string }): Promise<void> {
   // Bounded upload memory and connection usage on phones. Repeated saves share an upload.
   for (const photo of photos) {
@@ -65,6 +74,7 @@ export async function uploadPhotos(photos: readonly Photo[], scope: { reportId: 
     if (!upload) {
       upload = (async () => {
         const blob = await localBlob(id);
+        if (blob) { sending.add(id); changed(); }
         if (!blob) return; // Already acknowledged by the media endpoint.
         const response = await fetch(`${mediaUrl(id)}?${new URLSearchParams(scope)}`, {
           method: 'PUT', headers: { 'content-type': blob.type }, body: blob,
@@ -77,7 +87,7 @@ export async function uploadPhotos(photos: readonly Photo[], scope: { reportId: 
         await storage('readwrite', store => store.put(true, `uploaded:${id}`));
       })();
       uploads.set(id, upload);
-      upload.catch(() => uploads.delete(id));
+      upload.catch(() => uploads.delete(id)).finally(() => { if (sending.delete(id)) changed(); });
     }
     await upload;
     uploads.delete(id);
