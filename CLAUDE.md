@@ -23,6 +23,7 @@ Browser checks run after `npm test && npm run build`, from the repo root:
     node scripts/verify-role-access.mjs       # role landing pages and HTTP permissions
     node scripts/verify-engineer-layout.mjs   # engineer home, defect, card editor, send
     node scripts/verify-signature-reload.mjs  # draft signature survives a reload
+    node scripts/verify-search.mjs            # search, its access rules and Back to results
     node scripts/verify-pdf-navigation.mjs    # in-app PDF viewer (fails on main: pdf.js 6 needs a newer Chromium)
 
 Playwright 1.56.1 is pinned to match the Chromium 141 preinstalled in cloud
