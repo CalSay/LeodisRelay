@@ -207,7 +207,7 @@ export function ObservationEditor({
       </>}
 
       {photos}
-      {folded && <button type="button" className="btn-quiet btn-sm eng-remove-card" onClick={onRemove} aria-label={`Remove card ${index + 1}`}>Remove this card</button>}
+      {folded && <button type="button" className="btn-quiet btn-sm eng-remove-card" onClick={onRemove} aria-label={`Remove card ${index + 1}`}>Remove card {index + 1}</button>}
     </section>
   );
 }

@@ -57,10 +57,12 @@ eq(await card.getByText('Choose a recent place').count(),await card.locator('.en
     if(phone){
       const row=page.locator('.eng-slot.open .eng-cardrow');
       eq(await row.locator('.desc').count(),0,`${label}: the open card's row is only its heading`);
-      eq(await row.locator('.meta').count(),0,`${label}: the open row does not repeat the photo count`);
+      ok(!/photo/.test(await row.innerText()),`${label}: the open row does not repeat the photo count`);
+      ok(/no description of what happened/.test(await row.innerText()),`${label}: the open row still says what would stop sending`);
       eq(await row.locator('.eng-where').count(),1,`${label}: the open row still says whether the card is on the server`);
       eq(await card.locator('.eng-card > .head').count(),0,`${label}: no heading line holding only Remove`);
       ok(await card.getByRole('button',{name:'Remove card 1'}).isVisible(),`${label}: Remove is at the foot of the card`);
+      eq((await card.getByRole('button',{name:'Remove card 1'}).innerText()).trim(),'Remove card 1',`${label}: Remove says what its accessible name says`);
     } else {
       ok(await card.getByRole('button',{name:'Remove card 1'}).isVisible(),`${label}: Remove stays in the card's heading`);
       ok(/card 01/i.test(await card.locator('.eng-card > .head').innerText()),`${label}: the card keeps its heading side by side`);
@@ -119,7 +121,11 @@ eq(await card.getByText('Choose a recent place').count(),await card.locator('.en
     ok(/11 checks not answered yet/.test(stops[0]),`${label}: the unanswered checks are counted in one line (${stops[0]})`);
     ok(/2 items need attention/.test(await page.locator('.actionbar').innerText()),`${label}: the bar counts the same two`);
     await page.locator('.find-stop').first().click();
-    if(phone){ok(/Safe ways in and out/.test(await page.locator('.eng-slot.open .eng-cardrow').innerText()),`${label}: the stop opens the first check still to answer`);}
+    if(phone){ok(/Safe ways in and out/.test(await page.locator('.eng-slot.open .eng-cardrow').innerText()),`${label}: the stop opens the first check still to answer`);
+      // An action with nothing written, opened from its Stop, still says why it stops.
+      await page.locator('.eng-slot.open').getByRole('button',{name:/Action needed/}).click();
+      ok(/say what is wrong/.test(await page.locator('.eng-slot.open .eng-cardrow').innerText()),`${label}: an open check opened from a Stop says what stops it`);
+      await page.locator('.eng-slot.open').getByRole('button',{name:/Not applicable/}).click();}
     else ok(await page.locator('#card-editor > div:not([hidden])').getByText('Safe ways in and out').isVisible(),`${label}: the stop opens the first check still to answer`);
     await page.locator('.actionbar').getByRole('button',{name:/Check & send/}).click();
     await page.locator('#report-check').waitFor();

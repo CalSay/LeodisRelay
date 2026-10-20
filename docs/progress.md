@@ -16,11 +16,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - What changed, and why each:
   - An open card on a phone no longer says the same thing three times. Its
     row is now its heading (number, kind, place) and whether it is on the
-    server yet; the description, photo count and stop message, all of which
-    the open card shows just below, come back when it folds. The
+    server yet, plus what stops it if anything does (so a card opened from a
+    Stop still says why); the description and photo count, which the open
+    card shows just below, come back when it folds. The
     card dropped its kind tag (the Kind buttons show it with a tick), and
-    Remove moved to the foot of the card ("Remove this card") instead of a
-    line of its own. Side by side (900px+) keeps the card heading and Remove.
+    Remove moved to the foot of the card instead of a
+    line of its own (labelled "Remove card 1", its accessible name). Undo
+    on the phone puts focus on the restored card's row. Side by side (900px+) keeps the card heading and Remove.
     An open check likewise hides its repeated answer tag and question (the
     question stays for screen readers: it names the answer buttons).
   - "Check & send" is offered once, in the action bar. The card's own copy
@@ -49,8 +51,16 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   changed wording.
 - Verified on Node 24: `npm run typecheck`, `npm test` (two new cases in
   `tests/uploadStatus.test.ts`), `npm run build`. New
-  `scripts/verify-editor-usability.mjs` (390px light, 1440px dark): see the PR
-  for the count and the other browser checks re-run. Screenshots in the
+  `scripts/verify-editor-usability.mjs` passed (55 checks, 390px light and
+  1440px dark). All other browser checks re-run and passed (40 scripts,
+  listed in the PR), with `verify-undo-remove`, `verify-same-location`,
+  `verify-photo-uploads`, `verify-draft-conflict` and `verify-sent-elsewhere`
+  updated for the new wording and the open row.
+- A fresh-context review found four gaps, all fixed: a card opened from a
+  Stop no longer said why (the open row now keeps the stop message), the
+  phone's Remove read "Remove this card" while its accessible name was
+  "Remove card 1", Undo focused a Remove button out of view at the card's
+  foot, and What's new overstated "Check & send" being in one place. Screenshots in the
   project's `ui-review/editor-usability/`.
 - Not verified: a physical phone, Safari and Firefox.
 - Not picked up: the accessibility pass's editor follow-ups; its PR was not up

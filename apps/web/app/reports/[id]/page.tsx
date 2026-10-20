@@ -754,7 +754,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     const name = item.kind === 'card' ? `Remove card ${card}` : `Remove photo ${(observations[card - 1]?.photos.findIndex(p => p.id === item.photo.id) ?? 0) + 1}`;
     // Photo numbers repeat across cards, so look only inside the restored card.
     const within = wide ? '#card-editor > div:not([hidden])' : `#slot-${CSS.escape(cardId)}`;
-    setTimeout(() => document.querySelector<HTMLElement>(`${within} [aria-label="${name}"]`)?.focus({ preventScroll: true }), 50);
+    // On the phone a card's Remove is at its foot, out of view, so focus goes to the card's row, which names it.
+    const target = !wide && item.kind === 'card' ? `${within} .eng-cardrow` : `${within} [aria-label="${name}"]`;
+    setTimeout(() => document.querySelector<HTMLElement>(target)?.focus({ preventScroll: true }), 50);
   }
 
   // The home screen's "Request a variation" lands here with the card already started.
@@ -928,6 +930,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           <span className="desc">{choosing ? 'What kind of update is this?' : text || 'Nothing written yet'}</span>
           {!choosing && <span className="meta">{o.photos.length} photo{o.photos.length === 1 ? '' : 's'}{stopped ? <em> · {unlabelled(stopped.message, o)}</em> : null}</span>}
         </>}
+        {/* Opened from a Stop, the card still says what stops it. */}
+        {isOpen && !wide && !choosing && stopped && <span className="meta"><em>{unlabelled(stopped.message, o)}</em></span>}
         {!choosing && <CardWhereLine where={whereOf.get(o.id)} />}
       </div>
       {!wide && <span className="chev" aria-hidden="true">{isOpen ? '−' : '+'}</span>}
@@ -944,6 +948,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       <span className="no">{String(i + 1).padStart(2, '0')}</span>
       <div className="main">
         <span className="top"><span className={`kind answer-${answer?.tone ?? 'open'}`}>{answer?.short ?? 'To do'}</span><b>{o.check?.question}</b></span>
+        {isOpen && !wide && stopped && answer && <span className="meta"><em>{stopped.message.slice((o.check?.question ?? '').length + 2)}</em></span>}
         {!(isOpen && !wide) && (text || o.photos.length > 0 || (stopped && answer)) && <span className="meta">{text ? text : ''}{text && o.photos.length ? ' · ' : ''}{o.photos.length ? `${o.photos.length} photo${o.photos.length === 1 ? '' : 's'}` : ''}{stopped && answer ? <em>{text || o.photos.length ? ' · ' : ''}{stopped.message.slice((o.check?.question ?? '').length + 2)}</em> : null}</span>}
         {(answer || o.photos.length > 0) && <CardWhereLine where={whereOf.get(o.id)} />}
       </div>
