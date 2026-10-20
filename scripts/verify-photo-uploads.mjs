@@ -59,11 +59,11 @@ try {
     await slot.getByLabel('Caption for photograph 1').fill('Bracket missing');
     await row.locator('.eng-where',{hasText:/changes/}).waitFor();
     await page.evaluate(()=>document.activeElement?.blur());
-    await page.locator('.savestate',{hasText:'On this device only'}).waitFor({timeout:20000});
+    await page.locator('.savestate',{hasText:'On this phone only'}).waitFor({timeout:20000});
     check((await shots.nth(0).locator('.eng-where').innerText())==='On the server',`${scheme}: the photo already sent stays on the server`);
     const offRow=await row.locator('.eng-where').innerText();
     check(offRow==='Only on this phone · changes and 1 photo',`${scheme}: the card says what is still to go up: ${offRow}`);
-    check(/On this device only/.test(await page.locator('.savestate').innerText()),`${scheme}: the save state agrees`);
+    check(/On this phone only/.test(await page.locator('.savestate').innerText()),`${scheme}: the save state agrees`);
     if(screenshot)await page.screenshot({path:join(screenshot,`uploads-offline-${scheme}-${width}.png`),fullPage:true});
     if(screenshot)await slot.locator('.shots').screenshot({path:join(screenshot,`uploads-offline-photos-${scheme}-${width}.png`)});
     await page.locator('.actionbar .btn-primary').click();

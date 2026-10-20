@@ -49,7 +49,9 @@ export async function POST(request: Request) {
     // Already started on an earlier try whose answer was lost: the same report,
     // even if the project has closed since.
     const previous = startedReport(principal.id, body.clientKey as string);
-    if (previous) return previous.projectId === body.projectId ? NextResponse.json(previous) : NextResponse.json({ reason: 'A report key was reused for another project.' }, { status: 422 });
+    if (previous) return previous.projectId !== body.projectId ? NextResponse.json({ reason: 'A report key was reused for another project.' }, { status: 422 })
+      : (previous.reportType ?? 'progress') !== (body.reportType ?? 'progress') ? NextResponse.json({ reason: 'A report key was reused for another kind of report.' }, { status: 422 })
+      : NextResponse.json(previous);
     const problem = visitDateProblem(body.visitDate);
     if (problem) return NextResponse.json({ reason: problem }, { status: 422 });
   }

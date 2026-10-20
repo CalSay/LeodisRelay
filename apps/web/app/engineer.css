@@ -360,3 +360,15 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .held-send .note-bad strong{color:inherit;}
 .held-send a{color:var(--brass);font-weight:600;min-height:44px;display:inline-flex;align-items:center;}
 .held-send-close{margin-left:auto;min-height:44px;}
+
+/* Usability pass (2026-10-20): on the phone an open card's row is its heading,
+   so the card does not repeat the answer and the question above its buttons.
+   The question stays for screen readers, which name the answers by it. */
+.eng-slot .eng-check-card>.head{display:none;}
+.eng-slot .eng-check-question{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+.eng-slot .eng-check-hint{margin-top:0;}
+/* The Draft or Sent tag stays beside the title on a phone instead of taking a line of its own. */
+.eng-report-editor>.pagehead,.eng-report-sent>.pagehead{flex-wrap:nowrap;align-items:flex-start;}
+.eng-report-editor>.pagehead .tag,.eng-report-sent>.pagehead .tag{flex:none;margin-top:4px;}
+.eng-remove-card{display:block;width:100%;margin-top:18px;}
+.eng-slot .eng-card>.field:first-child{margin-top:0;padding-top:4px;border-top:0;}

@@ -92,9 +92,11 @@ try {
     await undo.click();
     eq(await bar.count(),0,`${label}: the bar goes once used`);
     eq(await rows.count(),3,`${label}: the card is back in the list`);
-    ok(/Level 2 riser/.test(await rows.nth(0).innerText())&&/2 photos/.test(await rows.nth(0).innerText()),`${label}: it is back first, with its two photos`);
+    // Open on a phone, its row is only its heading; its two photographs are counted in the card below.
+    ok(/Level 2 riser/.test(await rows.nth(0).innerText())&&(!wide||/2 photos/.test(await rows.nth(0).innerText())),`${label}: it is back first${wide?', with its two photos':''}`);
     ok(wide?(await rows.nth(0).getAttribute('aria-current'))==='true':(await rows.nth(0).getAttribute('aria-expanded'))==='true',`${label}: the restored card is open`);
-    await page.waitForFunction(()=>document.activeElement?.getAttribute('aria-label')==='Remove card 1');checks++;
+    // Side by side focus is on the card's Remove; on a phone Remove is at the card's foot, so focus is on its row instead.
+    await page.waitForFunction(wide=>wide?document.activeElement?.getAttribute('aria-label')==='Remove card 1':document.activeElement===document.querySelector('.eng-cardrow'),wide);checks++;
     eq(await card().getByLabel('What needs doing',{exact:true}).inputValue(),'Replace the section',`${label}: its words are back`);
     eq(await card().locator('.shot img').count(),2,`${label}: its photographs are back`);
     let saved=await stored(r=>r.observations.length===3,'the card put back');

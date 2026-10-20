@@ -6,7 +6,8 @@ import {join} from 'node:path';
 import type {Principal} from '@relay/platform';
 import {createReport,getReport,saveDraft,startedReport} from '../lib/serverStore';
 import {database} from '../lib/storage';
-import {heldCounts,isClientKey,planHeldSend,sentLine,startedKey,startedReportId,visitDateProblem,type HeldWork} from '../lib/offlineStart';
+import {fitStartedChecks,heldCounts,isClientKey,offlineTypes,planHeldSend,sentLine,startedKey,startedReportId,startedTitle,visitDateProblem,type HeldWork} from '../lib/offlineStart';
+import {HANDOVER_CHECKLIST,SAFETY_CHECKLIST,invalidShape,reportTypeOf,startingCards} from '../lib/reportTypes';
 import {unfinishedReports} from '../lib/unfinishedReports';
 import type {Observation} from '../lib/types';
 
@@ -59,6 +60,52 @@ test('a report started offline shows on the home screen until the server has it'
   assert.equal(unfinishedReports([],[{reportId:startedReportId(KEY),heldAt:'',observations:[],started:{...started,projectId:'closed'}}],[{id:'proj-011lme',projectName:'T'}]).length,0,'not for a project no longer open to them');
 });
 
+test('an inspection started offline: its checks, its name, and how it fits the server\'s checks',() => {
+  const types = offlineTypes();
+  assert.deepEqual(types.map(t => t.id),['safety-inspection','handover-inspection']);
+  assert.equal(types[0]!.checklist.length,SAFETY_CHECKLIST.length);
+  assert.deepEqual([types[0]!.raisesIssues,types[1]!.raisesIssues],[false,true],'only a handover inspection\'s actions say where');
+  assert.equal(types[1]!.checklist[0]!.hint,HANDOVER_CHECKLIST[0]!.hint);
+  assert.equal(startedTitle(started),'New site update · Tetley Hall - Block E');
+  assert.equal(startedTitle({...started,reportType:'safety-inspection'}),'New safety inspection · Tetley Hall - Block E');
+
+  const server = startingCards(reportTypeOf({reportType:'handover-inspection'}));
+  // The phone's copy, as the offline page builds it, with one check answered and a photo.
+  const phone = server.map((o,i) => i === 2 ? {...o,location:'L2 east',whatHappened:'Grille missing',actionNeeded:'Fit grille',owner:'Ductwork',
+    photos:[{id:'p1',dataUrl:'/api/media/p1',caption:'',capturedAt:''}],check:{...o.check!,answer:'action' as const}} : {...o,check:{...o.check!,answer:'ok' as const}});
+  const fitted = fitStartedChecks(phone,server);
+  assert.deepEqual(fitted,phone,'the same checklist: the copy goes up as it is');
+  assert.equal(invalidShape({reportType:'handover-inspection',observations:server},fitted),null);
+
+  // The wording changed in a deploy while the phone had no signal: the server's words are kept, the answers move across.
+  const reworded = server.map(o => ({...o,check:{...o.check!,question:`${o.check!.question} (new wording)`}}));
+  const moved = fitStartedChecks(phone,reworded);
+  assert.equal(invalidShape({reportType:'handover-inspection',observations:reworded},moved),null);
+  assert.deepEqual([moved[2]!.check!.answer,moved[2]!.location,moved[2]!.photos.length,moved[2]!.check!.question],['action','L2 east',1,reworded[2]!.check!.question]);
+  assert.equal(moved[0]!.check!.answer,'ok');
+
+  // A check the phone answered is no longer on the server's inspection: never dropped; the copy is kept as it is, and the server refuses it.
+  const shorter = server.slice(1);
+  assert.deepEqual(fitStartedChecks(phone,shorter),phone);
+  assert.notEqual(invalidShape({reportType:'handover-inspection',observations:shorter},phone),null);
+  // A removed check the phone left untouched does not hold the rest back.
+  const untouched = server.map((o,i) => i === 0 ? o : {...o,check:{...o.check!,answer:'ok' as const}});
+  assert.equal(invalidShape({reportType:'handover-inspection',observations:shorter},fitStartedChecks(untouched,shorter)),null);
+  // A check added on the server since: it waits unanswered beside the phone's answers.
+  const longer = [...server,{...server[0]!,id:'obs-check-new',check:{item:'new',question:'A new check'}}];
+  const grown = fitStartedChecks(phone,longer);
+  assert.equal(grown.length,longer.length);
+  assert.equal(grown.at(-1)!.check!.answer,undefined);
+  // A site update's cards are not touched.
+  assert.deepEqual(fitStartedChecks([card('a')],[]),[card('a')]);
+});
+
+test('an inspection started offline shows on the home screen by its own name',() => {
+  const checks = startingCards(reportTypeOf({reportType:'safety-inspection'}));
+  const [row] = unfinishedReports([],[{reportId:startedReportId(KEY),heldAt:'2026-10-19T09:00:00Z',observations:checks,started:{...started,reportType:'safety-inspection'}}],[{id:'proj-011lme',projectName:'Tetley Hall - Block E'}]);
+  assert.deepEqual([row!.typeName,row!.checklist,row!.cards,row!.started],['Safety inspection',true,SAFETY_CHECKLIST.length,true]);
+});
+
 // One store per file: the connection is a module singleton that is not reopened after close.
 test('starting a report begun offline, against the real store',async t => {
   const root = mkdtempSync(join(tmpdir(),'relay-offline-start-'));
@@ -94,6 +141,14 @@ test('starting a report begun offline, against the real store',async t => {
       assert.notEqual(theirs.id,first.id);
       assert.equal(theirs.authorId,other.id);
       assert.equal(startedReport(other.id,KEY)?.id,theirs.id);
+    });
+
+    await t.test('an inspection started offline starts with its checks, and a retry returns it',() => {
+      const key = '44444444-4444-4444-8444-444444444444';
+      const inspection = createReport('proj-011lme',engineer.name,engineer,'safety-inspection',{clientKey:key,visitDate:'2026-10-18'});
+      assert.deepEqual([inspection.reportType,inspection.visitDate,inspection.observations.length],['safety-inspection','2026-10-18',SAFETY_CHECKLIST.length]);
+      assert.match(inspection.reference,/-SSI-\d{3}$/);
+      assert.equal(createReport('proj-011lme',engineer.name,engineer,'safety-inspection',{clientKey:key,visitDate:'2026-10-18'}).id,inspection.id);
     });
 
     await t.test('a report started with signal still takes today and keeps no key',() => {

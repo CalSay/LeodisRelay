@@ -29,6 +29,10 @@ export interface WhatsNew {
 export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'easier-to-read', added: '2026-10-20', audience: 'all', title: 'Easier to read and to tap',
     text: 'Grey text is darker in the light theme and lighter in the dark theme, so it is easier to read outdoors or on a dim screen. On a phone, buttons, filters, tabs and Back links are at least a fingertip tall, and screen readers can now find the heading and main part of every office page.' },
+  { id: 'editor-tidy', added: '2026-10-20', audience: 'site', title: 'A quicker, calmer report screen',
+    text: 'On a phone the card you have open no longer repeats itself above and below, "Check & send" is no longer repeated inside each card (it stays at the foot of the screen), and an inspection just started lists its unanswered checks as one line rather than twelve. Optional suggestions are marked "Optional", so only a "Stop" stops you sending.' },
+  { id: 'offline-inspection', added: '2026-10-20', audience: 'site', title: 'Start an inspection with no signal',
+    text: 'With no signal, you can now start a safety or handover inspection as well as a site update, answer its checks and take photographs. It goes up by itself once RELAY opens with signal; you sign it and send it then.' },
   { id: 'help', added: '2026-10-20', audience: 'all', title: 'This Help page',
     text: 'How RELAY works in plain words, what each status means, and this list of what is new. New things are marked until you have looked.' },
   { id: 'handover-inspection', added: '2026-10-20', audience: 'site', title: 'Handover inspection',
@@ -228,7 +232,8 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       '"Flag a defect" sends a photograph and a short note straight away, without a site update. Use it when something needs fixing before you finish the day.',
     ] },
     { id: 'no-signal', heading: 'No signal', ordered: false, steps: [
-      'RELAY still opens. You can start a site update, add cards and take photographs; they are marked "Only on this phone".',
+      'RELAY still opens. You can start a site update or an inspection, add cards or answer checks, and take photographs; they are marked "Only on this phone".',
+      'An inspection is signed in RELAY once you have signal again: the drawn signature is taken there.',
       'When you have signal again, open RELAY and the work goes up by itself. It stays a draft: nothing reaches the office until you sign and send.',
       'If you share a phone, sign out at the end of the day. Work held on the phone belongs to whoever was last signed in.',
     ] },

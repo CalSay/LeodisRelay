@@ -3,8 +3,10 @@
  * The offline page (FE-3e). The service worker keeps this file and
  * offline.html, so it opens when RELAY is started with no signal. It works on
  * the same device stores as the app (lib/localDraft.ts, lib/localMedia.ts):
- * an engineer can start a site update, add cards and photographs, and change
- * any report already held on this phone. What is typed here is marked
+ * an engineer can start a site update or an inspection, add cards and
+ * photographs or answer the checks, and change any report already held on
+ * this phone. The inspections' checks come from the app, which leaves them
+ * here while it has signal (lib/offlineStart.ts `offlineTypes`). What is typed here is marked
  * `heldOffline`, and a report started here carries `started`; the app sends
  * both by itself the next time it opens with signal (lib/heldSend.ts). */
 (() => {
@@ -32,15 +34,25 @@
   // A copy set aside while the engineer chose between two versions shares its
   // report with the ordinary copy, so it is named apart and never opened first.
   const aside = d => d.key.includes('::aside::');
-  // The checklist types (lib/reportTypes.ts). A handover inspection's actions raise issues, so each says where.
+  // The checklist types (lib/reportTypes.ts), as the app last left them on this
+  // phone. A handover inspection's actions raise issues, so each says where.
+  let types = [];
+  try { types = JSON.parse(localStorage.getItem('relay-offline-types') || '[]'); } catch {}
+  types = Array.isArray(types) ? types.filter(t => t && typeof t.id === 'string' && typeof t.name === 'string' && Array.isArray(t.checklist) && t.checklist.length
+    && t.checklist.every(c => c && typeof c.item === 'string' && typeof c.question === 'string')) : [];
   const TYPE_NAMES = { 'safety-inspection': 'Safety inspection', 'handover-inspection': 'Handover inspection' };
-  const inspection = d => Boolean(TYPE_NAMES[d.report?.reportType]) || d.observations.some(o => o.check);
-  const typeName = d => TYPE_NAMES[d.report?.reportType] || (inspection(d) ? 'Inspection' : 'Site update');
-  const raisesIssues = d => d.report?.reportType === 'handover-inspection';
-  const label = d => d.started ? `New site update · ${d.started.projectName}`
+  for (const t of types) TYPE_NAMES[t.id] = t.name;
+  const typeOf = d => d.report?.reportType || d.started?.reportType;
+  const inspection = d => Boolean(TYPE_NAMES[typeOf(d)]) || d.observations.some(o => o.check);
+  const typeName = d => TYPE_NAMES[typeOf(d)] || (inspection(d) ? 'Inspection' : 'Site update');
+  const raisesIssues = d => { const t = types.find(x => x.id === typeOf(d)); return t ? t.raisesIssues === true : typeOf(d) === 'handover-inspection'; };
+  const hintFor = (d, item) => types.find(x => x.id === typeOf(d))?.checklist.find(c => c.item === item)?.hint || '';
+  const label = d => d.started ? `New ${typeName(d).toLowerCase()} · ${d.started.projectName}`
     : `${d.report?.reference || d.reportId}${aside(d) ? ' (copy kept while choosing between two versions)' : ''}`;
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
   const photos = d => d.observations.reduce((n, o) => n + o.photos.length, 0);
+  // "4 of 12 checks answered" for an inspection, "3 cards" for a site update.
+  const cards = d => inspection(d) ? `${d.observations.filter(o => o.check?.answer).length} of ${plural(d.observations.length, 'check')} answered` : plural(d.observations.length, 'card');
   const when = iso => { try { return new Date(iso).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
   const day = iso => { try { return new Date(`${iso}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); } catch { return iso; } };
   const fail = e => { error.textContent = e?.message || 'This phone’s storage is not available. Keep this page open.'; };
@@ -183,7 +195,7 @@
     instruction: [['whatHappened', 'What extra work, and why'], ['actionNeeded', 'What needs doing'], ['owner', 'Who needs to respond']],
     access: [['whatHappened', 'What was blocked, and by whom'], ['actionNeeded', 'What needs doing'], ['owner', 'Who needs to respond']],
   };
-  function card(observation, index, fixed, raises) {
+  function card(observation, index, fixed, raises, hint) {
     const section = element('section', '', editor, 'card');
     section.setAttribute('aria-label', `Card ${index + 1}`);
     const head = element('div', '', section, 'cardhead');
@@ -191,6 +203,7 @@
     const check = observation.check;
     element('h3', check ? `${check.question}${observation.location ? ` · ${observation.location}` : ''}` : observation.location || `Card ${index + 1}`, head);
     element('span', 'Only on this phone', head, 'where');
+    if (check && hint) element('p', hint, section, 'qhint');
     if (check) {
       // An inspection's check: its answer can be changed here; the question cannot.
       const label = element('label', 'Answer', section, 'field'); const answer = element('select', '', label);
@@ -252,13 +265,15 @@
     element('p', d.started ? 'Started on this phone' : typeName(d), titles, 'lbl');
     element('h2', label(d), titles).id = 'editor-title';
     element('span', 'Only on this phone', head, 'tag');
-    const counts = `${plural(d.observations.length, inspection(d) ? 'check' : 'card')} · ${plural(photos(d), 'photo')}`;
+    const counts = `${cards(d)} · ${plural(photos(d), 'photo')}`;
     element('p', d.started ? `Visit ${day(d.started.visitDate)} · ${counts} · gets its reference when it reaches the server` : `${d.report?.projectSnapshot?.projectName ? `${d.report.projectSnapshot.projectName} · ` : ''}${counts}`, panel, 'hint');
+    // An inspection is signed in RELAY: the drawn signature is taken there, with signal.
+    if (d.started && inspection(d)) element('p', 'Answer what you can here. You sign it in RELAY when there is signal, and it is not sent until you do.', panel, 'hint');
     if (d.problem) element('p', `Last time it could not go to the server: ${d.problem}`, panel, 'danger');
     if (!d.started && !Number.isInteger(d.baseVersion)) element('p', 'This older copy has no save version. Export it to compare: RELAY will not overwrite the server’s copy with it.', panel, 'hint');
     const fixed = inspection(d);
     const target = editor;
-    d.observations.forEach((o, i) => card(o, i, fixed, raisesIssues(d)));
+    d.observations.forEach((o, i) => card(o, i, fixed, raisesIssues(d), o.check ? hintFor(d, o.check.item) : ''));
     if (!d.observations.length) element('p', d.started ? 'No cards yet. Add the first one below.' : 'No cards in this report yet.', target, 'empty');
     if (!fixed) {
       const adds = element('section', '', target, 'panel'); adds.setAttribute('aria-labelledby', 'add-title');
@@ -308,13 +323,13 @@
     const drafts = await allDrafts();
     const nav = $('drafts'); nav.replaceChildren();
     $('held').hidden = false;
-    if (!drafts.length) element('p', 'Nothing is waiting on this phone. Start a site update above.', nav, 'empty');
+    if (!drafts.length) element('p', $('start').hidden ? 'Nothing is waiting on this phone.' : 'Nothing is waiting on this phone. Start a report above.', nav, 'empty');
     for (const d of drafts) {
       const b = element('button', '', nav, 'item'); b.type = 'button';
       if (selected?.key === d.key) b.setAttribute('aria-current', 'true');
       const text = element('span', '', b);
       element('span', label(d), text, 't');
-      element('span', `${d.started ? `Visit ${day(d.started.visitDate)}` : typeName(d)} · ${plural(d.observations.length, inspection(d) ? 'check' : 'card')} · ${plural(photos(d), 'photo')} · changed ${when(d.heldAt)}`, text, 's');
+      element('span', `${d.started ? `Visit ${day(d.started.visitDate)}` : typeName(d)} · ${cards(d)} · ${plural(photos(d), 'photo')} · changed ${when(d.heldAt)}`, text, 's');
       element('span', 'Only on this phone', b, 'tag');
       b.onclick = async () => { const fresh = (await allDrafts()).find(x => x.key === d.key); if (fresh) await show(fresh); };
     }
@@ -329,17 +344,32 @@
     for (const p of projects) { const o = element('option', `${p.projectName} · ${p.projectNumber}`, select); o.value = p.id; }
     if (projects.some(p => p.id === current)) select.value = current;
     const date = $('start-date'); date.value = localDay(); date.max = localDay(); date.min = localDay(-30);
+    // A site update, or one of the inspections the app left on this phone.
+    const choices = [{ id: 'progress', name: 'Site update', blurb: 'Progress, defects, variations and access, one card at a time' }, ...types];
+    if (types.length) {
+      $('start-title').textContent = 'Start a report';
+      $('start-types').hidden = false;
+      for (const [i, t] of choices.entries()) {
+        const choice = element('label', '', $('start-choices'), 'choice');
+        const radio = element('input', '', choice); radio.type = 'radio'; radio.name = 'start-type'; radio.value = t.id; radio.checked = i === 0;
+        const words = element('span', '', choice); element('strong', t.name, words); if (t.blurb) element('small', t.blurb, words);
+      }
+    }
     $('start').hidden = false;
     $('start-go').onclick = async () => {
       const project = projects.find(p => p.id === select.value);
       if (!project) return;
+      const chosen = document.querySelector('input[name="start-type"]:checked')?.value || 'progress';
+      const type = types.find(t => t.id === chosen);
       if (!date.value || date.value > date.max || date.value < date.min) { fail(new Error('Choose a visit date in the last 30 days.')); return; }
       await chain;
       if (dirty || blocked) { fail(new Error('Export your unsaved changes before starting another report.')); return; }
       const clientKey = uuid();
-      const record = { key: `${principal}::new::${clientKey}`, reportId: `new:${clientKey}`, principalId: principal, seq: uuid(), observations: [], heldAt: new Date().toISOString(),
-        started: { clientKey, projectId: project.id, projectName: project.projectName, projectNumber: project.projectNumber, visitDate: date.value, startedAt: new Date().toISOString() } };
-      try { await put(record); await show(record); status.textContent = 'Started on this phone. Add your first card.'; } catch (e) { fail(e); }
+      // An inspection starts with every check, unanswered, as the server starts one (startingCards).
+      const observations = type ? type.checklist.map(c => ({ id: `obs-check-${c.item}`, type: 'check', location: '', whatHappened: '', actionNeeded: '', owner: '', photos: [], check: { item: c.item, question: c.question } })) : [];
+      const record = { key: `${principal}::new::${clientKey}`, reportId: `new:${clientKey}`, principalId: principal, seq: uuid(), observations, heldAt: new Date().toISOString(),
+        started: { clientKey, projectId: project.id, projectName: project.projectName, projectNumber: project.projectNumber, visitDate: date.value, startedAt: new Date().toISOString(), ...(type ? { reportType: type.id } : {}) } };
+      try { await put(record); await show(record); status.textContent = type ? 'Started on this phone. Answer the first check.' : 'Started on this phone. Add your first card.'; } catch (e) { fail(e); }
     };
   }
   // Is the server there? `navigator.onLine` says only that a network exists.

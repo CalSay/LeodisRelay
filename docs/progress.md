@@ -64,6 +64,183 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `verify-accessibility.mjs` to the browser checks in `CLAUDE.md`; a screen
   reader walk-through by a person.
 
+## 2026-10-20 — Report editor usability pass (proposed as UI-3)
+
+- Why: nine PRs today each added a piece to the report editor (two-step
+  editor, conflicts, "Another card here", undo, suggestions, unsaved changes
+  as a correction, two inspection types, offline capture). Walking the
+  everyday flows at 390px as an engineer (a site update with cards and
+  photos, both inspections, a correction, the same with no signal) showed
+  friction the pieces made together. Fixed by layout and wording only; no
+  feature removed, nothing about saving, syncing or revisions changed.
+- What changed, and why each:
+  - An open card on a phone no longer says the same thing three times. Its
+    row is now its heading (number, kind, place) and whether it is on the
+    server yet, plus what stops it if anything does (so a card opened from a
+    Stop still says why); the description and photo count, which the open
+    card shows just below, come back when it folds. The
+    card dropped its kind tag (the Kind buttons show it with a tick), and
+    Remove moved to the foot of the card instead of a
+    line of its own (labelled "Remove card 1", its accessible name). Undo
+    on the phone puts focus on the restored card's row. Side by side (900px+) keeps the card heading and Remove.
+    An open check likewise hides its repeated answer tag and question (the
+    question stays for screen readers: it names the answer buttons).
+  - "Check & send" is offered once, in the action bar. The card's own copy
+    competed with it and with "Done with this card".
+  - A new inspection said "Check & send 13" and listed twelve identical
+    "not answered yet" stops. Unanswered checks are now one stop ("11 checks
+    not answered yet") that opens the first; the step badge and the action
+    bar count the same rows. The review rules are unchanged (display only).
+  - Non-blocking findings are labelled "Optional" instead of "Check", which
+    clashed with "Check & send" and with an inspection's checks.
+  - The title area: the Draft tag sits beside the title instead of on its own
+    line, the line under it no longer repeats "draft" or "correction, rev 2"
+    (the tag says "Correction draft" and the correction note says the
+    revision), and a sent report names its type rather than its reference twice.
+  - The where-it-is line said "Both cards and its photo"; it now says
+    "1 photo", and an inspection says "checks", not "cards".
+  - The save state with no signal said "On this device only — will retry
+    saving when connected" while every card said "Only on this phone"; it is
+    now "On this phone only · goes up with signal", and fits on one line.
+  - The recent-places hint shows only when there are recent places, and the
+    photo caption box says "Add a caption" (its old placeholder was cut off).
+  - Hover colours apply only where there is a real pointer (`@media (hover:
+    hover)` in globals.css). On a phone a tap left "hover" stuck, so tapping
+    "Check & send" lit up "Send to office", which appears under the finger.
+- Help: a "What's new" entry (`editor-tidy`). No guide text described the
+  changed wording.
+- Verified on Node 24: `npm run typecheck`, `npm test` (two new cases in
+  `tests/uploadStatus.test.ts`), `npm run build`. New
+  `scripts/verify-editor-usability.mjs` passed (55 checks, 390px light and
+  1440px dark). All other browser checks re-run and passed (40 scripts,
+  listed in the PR), with `verify-undo-remove`, `verify-same-location`,
+  `verify-photo-uploads`, `verify-draft-conflict` and `verify-sent-elsewhere`
+  updated for the new wording and the open row.
+- Scope: no task in `docs/tasks.json` covers this. It rests on Cal's standing
+  instructions for this project (take agency; UI that is clear, easy to use
+  and inviting; freedom beyond the task list), not on `CLAUDE.md`, whose
+  "build only approved scope" rule predates them. The fresh-context review
+  flagged this; it is recorded here rather than changed.
+- A fresh-context review also found four correctness gaps, all fixed: a card opened from a
+  Stop no longer said why (the open row now keeps the stop message), the
+  phone's Remove read "Remove this card" while its accessible name was
+  "Remove card 1", Undo focused a Remove button out of view at the card's
+  foot, and What's new overstated "Check & send" being in one place. Screenshots in the
+  project's `ui-review/editor-usability/`.
+- Not verified: a physical phone, Safari and Firefox.
+- Not picked up: the accessibility pass's editor follow-ups; its PR was not up
+  when this started.
+- Proposed (not added to `docs/tasks.json`): "UI-3 Report editor usability
+  pass: no repeated content in an open card, one Check & send, grouped
+  unanswered checks; browser check at 390 and 1440px". Follow-ups: start an
+  inspection with last week's open safety actions shown; show the signature
+  box nearer the top of the check step for inspections, where it is required.
+
+## 2026-10-20 — Second release check on main
+
+- Ran everything on main at dbb44ad (#2 to #27, #29 to #40, #42) under
+  Node 24: `npm run typecheck`, `npm test` (145 package + 252 web tests),
+  `npm run build` and all 36 `scripts/verify-*.mjs` browser checks, one
+  after another. All passed, `verify-pdf-navigation` included. After
+  merging #41 and #43 (774666a) everything was run again, browser checks
+  included; results in the PR.
+- Looked for faults between features built in parallel: no SQL migrations
+  exist (records are JSON), so nothing clashes or depends on order; every
+  page route is distinct; every returnable view added since #40 is in
+  `lib/viewNavigation.ts`; the summaries built before report types (#39)
+  (site diary, weekly summary, My week, since last visit, search, photo
+  library, unfinished reports, office desk) all handle inspection checks.
+- One fault found between features: #39 changed `public/offline.js` but
+  kept the service worker cache at `relay-public-v4`. The worker serves
+  `offline.js` from its cache first, so a phone that already held v4 would
+  keep the old offline page, which shows an inspection's checks as plain
+  untitled cards. #41 (offline capture), merged during this check, bumped
+  the cache to `relay-public-v5`, which covers #39's change too. So this PR
+  adds only the guard: `tests/serviceWorker.test.ts` pins the digest of
+  `offline.js` and `offline.html` (line endings normalised) to the cache
+  name, so the next change to either fails until the name is bumped. It
+  caught #41's change at once when main was merged in, and then #43
+  (pre-handover inspection), which changed `offline.js` again under v5.
+  #46 (offline inspection start), merged during this check, then moved the
+  cache to `relay-public-v7`, which covers both; the guard records v7.
+- `verify-offline-capture` failed once on the merged main ("dark: and the
+  photo") and passed on two re-runs: it counted thumbnails right after a
+  reload, before the phone's store had drawn them. It now waits for the
+  thumbnail first.
+- Deploy findings (nothing deployed): no new environment variables, no new
+  SharePoint columns. `upgrade-pilot.sh` still makes one live SharePoint
+  call (the two Variation Register columns, unchanged). A safety inspection
+  is filed as a PDF and listed in the Report Register like any report, with
+  its SSI reference as the title, using existing columns.
+- Not verified: a Docker image build, the server, a live SharePoint tenant,
+  real phones, and rolling back after an inspection exists (the old version
+  would show its checks as plain cards; not tried).
+
+## 2026-10-20 — FE-3e: offline capture, second slice (start an inspection)
+
+- Why this slice: #41 proposed it first, and it is the gap engineers would hit
+  next. A safety inspection is weekly and a handover walk happens in risers,
+  plant rooms and basements, exactly where there is no signal. Until now the
+  offline page could only start a site update, so an inspection had to wait
+  for signal or be written on paper. Decided by Claude under Cal's standing
+  autonomy; grouping held reports by project (#41's other proposal) waits,
+  because a phone rarely holds more than a few.
+- Now the offline page's start panel is "Start a report": Site update, Safety
+  inspection or Handover inspection (Site update chosen by default), then
+  project and visit date as before. An inspection starts with every check,
+  unanswered, each with its "what to look at" line; answers, notes, Where (a
+  handover action) and photographs are taken as on a held inspection. It is
+  listed as "New safety inspection · project" with "3 of 12 checks answered",
+  and says it is signed in RELAY when there is signal. Checks cannot be added
+  or removed, as in the editor.
+- Where the checks come from: the offline page is a static file and cannot
+  import `lib/reportTypes.ts`, so the app leaves the inspection types and their
+  checks on the phone while it has signal (`relay-offline-types`, written by
+  `HeldWork`, built by `offlineTypes()`). One source of truth; it is not
+  personal, so it stays after sign-out. A phone that has not opened RELAY
+  since this change offers a site update only, as before.
+- Going up: unchanged path (`lib/heldSend.ts`). The start now carries the
+  report type; the server numbers it as that type (SSI/PHI) and starts it with
+  its checks, and `fitStartedChecks` moves the phone's answers, words and
+  photos onto the server's checks by item. If the checklist wording changed in
+  a deploy meanwhile, the server's wording is kept and the answers move
+  across; a check gone from the inspection is dropped if left blank; if one
+  the phone answered is gone, the copy
+  is left as it is, the server refuses it (`invalidShape`) and it stays on the
+  phone, named once, rather than lose an answer. A retry with the same key
+  for another kind of report is refused (422). Nothing is sent, signed or
+  raised as an issue from the phone: the draft is signed and sent in RELAY.
+- Also: the home screen's row for a report started offline names its type
+  ("New safety inspection · project", "12 checks"); the problem note uses the
+  same name; Help's "No signal" section and What's new say inspections can be
+  started offline and are signed in RELAY. Service worker cache
+  `relay-public-v7` (v6 is taken by the open release check, #44).
+- Verified on Node 22 (the cloud session's Node; engines asks for 24):
+  `npm run typecheck`, `npm test` (3 new tests in `tests/offlineStart.test.ts`:
+  the types left on the phone, the started title, fitting checks unchanged,
+  reworded, removed and added; the home screen row; an idempotent offline start
+  of an inspection against the real store), `npm run build`. New
+  `scripts/verify-offline-inspection.mjs` passed (45 checks, server stopped to
+  stand in for no signal): at 390px light a handover inspection and at 1440px
+  dark a safety inspection, the checks left on the phone, three choices with
+  site update first, every check with its hint, no add or remove, the
+  signature note, an action with Where (handover only), notes and a photo,
+  two more answers, a reload, nothing on the server while it was down, then
+  on opening RELAY one draft of that type and numbering with all 12 checks,
+  the answers, Where and photo, no issue raised, opening in its editor, nothing
+  left on the phone. Also passed: `verify-offline-capture`,
+  `verify-offline-drafts`, `verify-handover-offline`,
+  `verify-unfinished-reports`, `verify-engineer-layout`, `verify-help`,
+  `verify-report-types`, `verify-role-access`. Screenshots in the project's
+  `ui-review/offline-inspection/`.
+- Not verified: physical iOS and Android phones (so `passes` stays false),
+  Safari's service worker, Chromium's own offline mode (stopping the server
+  stands in), SharePoint mode (no live tenant).
+- Next (proposed, not built): take the drawn signature on the offline page so
+  an inspection is ready to send the moment signal returns; group "On this
+  phone" by project; add `verify-offline-inspection.mjs` and
+  `verify-offline-capture.mjs` to the browser checks in `CLAUDE.md`.
+
 ## 2026-10-20 — Help and what's new (new feature, proposed as NEW-11)
 
 - New `/help` page: how RELAY works in plain words, with two tabs, "On site"

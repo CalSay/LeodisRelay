@@ -124,6 +124,8 @@ try {
     check(rows.some(r=>/New site update · Tetley Hall - Block E/.test(r)&&/1 card · 1 photo/.test(r)&&/Only on this phone/i.test(r)),`${scheme}: the new report is listed with its card and photo: ${rows.join(' | ')}`);
     await page.locator('#drafts .item',{hasText:'New site update'}).click();
     check(await page.locator('.card').nth(0).getByLabel('What’s wrong').inputValue()==='Fire stopping missing round tray',`${scheme}: the words survive a reload`);
+    // The thumbnail is read back from the phone's store after the card is drawn, so wait for it.
+    await page.locator('.card .shot img').first().waitFor({timeout:5000}).catch(()=>{});
     check((await page.locator('.card .shot img').count())===1,`${scheme}: and the photo`);
     if(screenshot)await page.screenshot({path:join(screenshot,`offline-held-${scheme}-${width}.png`),fullPage:true});
     check(mine().filter(r=>!before.has(r.id)).length===(scheme==='dark'?2:1),`${scheme}: nothing new reached the server while it was out of reach`);

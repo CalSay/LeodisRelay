@@ -68,7 +68,7 @@ try {
     // Tab B cannot reach the server, so its edit is held on the phone; then tab A saves again.
     await b.route('**/api/reports/*',route=>route.request().method()==='PUT'?route.abort():route.continue());
     await (await what(b,'obs-riser')).fill('Tray labelled, fire stopping to do');
-    await state(b,'On this device only');
+    await state(b,'On this phone only');
     await a.bringToFront();
     await (await what(a,'obs-riser')).fill('Tray labelled and photographed');
     await state(a,'Saved on server');
@@ -118,7 +118,7 @@ try {
     await page.goto(`${base}/reports/${draft.id}`);await page.locator('.eng-cardrow').first().waitFor();
     await context.setOffline(true);
     await (await what(page,'obs-plant')).fill('Pumps set and aligned');
-    await state(page,'On this device only');
+    await state(page,'On this phone only');
     // The phone saves while the laptop is offline: a card removed and one added.
     const current=getReport(draft.id);
     eq(saveDraft(draft.id,{...current,observations:[current.observations[0],card('obs-phone','Riser door left open','L3 riser')]},current.version).ok,true,'the other device saved');
