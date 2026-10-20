@@ -64,7 +64,7 @@ test('a failure is shown on the step that failed',() => {
 });
 
 test('SharePoint projects are filed, not emailed',() => {
-  const projectSnapshot = {source:{siteId:'s',listId:'l',itemId:'102'}} as Report['projectSnapshot'];
+  const projectSnapshot = {source:{siteId:'s',listId:'l',itemId:'102'}} as NonNullable<Report['projectSnapshot']>;
   assert.equal(of(stages({delivery:'rendered',projectSnapshot}),'delivery')!.label,'Waiting to file in SharePoint');
   const filed = of(stages({delivery:'filed',projectSnapshot,sharepoint:{status:'filed'}}),'delivery')!;
   assert.equal(filed.label,'Filed in SharePoint');

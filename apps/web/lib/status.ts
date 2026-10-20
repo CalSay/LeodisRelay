@@ -96,8 +96,8 @@ export interface Stage extends StatusLine {
   key: StageKey;
   title: string;
   /** One plain sentence on what this state means, or why it stopped. */
-  detail?: string;
-  at?: string;
+  detail?: string | undefined;
+  at?: string | undefined;
 }
 
 /** Whether this report failed while the PDF was being made. */
