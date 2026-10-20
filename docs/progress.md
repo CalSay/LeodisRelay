@@ -558,7 +558,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   compact delivery tag; the steps belong on the report itself.
 - Rules in `lib/status.ts` (`submissionStages`), shown by
   `components/SubmissionStages.tsx` with `app/stages.css`.
-- Verified on Node 24: `npm run typecheck`, `npm test` (8 new tests in
+- Verified on Node 24: `npm run typecheck`, `npm test` (7 new tests in
   `tests/submissionStages.test.ts`, including the worker recording a PDF
   failure and a blocked delivery), `npm run build`. New
   `scripts/verify-submission-stages.mjs` passed (65 checks: six report
