@@ -43,6 +43,39 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   position and its four action groups are the first thing a manager sees on a
   phone; browser check at 320, 390 and 1440px, light and dark."
 
+## 2026-10-20 — FE-5b: descriptions and thumbnails when linking an issue
+
+- Variation cards asked "Is this on an issue already?" with a plain drop-down
+  of references and descriptions, no pictures. They now use the same picture
+  list as defect and access cards: each open issue with its description (cut
+  at two lines), a 56px thumbnail from its history, and its short reference,
+  location and owner. An issue with no photograph says "No photo" instead of
+  a blank grey square. Thumbnails were 40px; 56px is easier to recognise on
+  site.
+- The list still shows six, nearest location first, but "Show all 8 open
+  issues" now reaches the rest (before, issues past the sixth could not be
+  linked at all), and the issue a card is already linked to is always listed.
+  On variation cards that fixes a drop-down that showed blank when the linked
+  issue fell past the sixth.
+- Decisions: the thumbnail is the first photograph on the issue's history,
+  usually the one taken when it was raised, since that is what identifies
+  it. "Show all" rather than a search box: a project rarely has more than a
+  few dozen open issues and the office register already searches. Rules in
+  `lib/issueLink.ts` (pure); the picker is `IssueLinkPicker` in
+  `ObservationEditor.tsx`.
+- Verified on Node 24: `npm run typecheck`, `npm test` (5 new tests in
+  `tests/issueLink.test.ts`), `npm run build`. New
+  `scripts/verify-issue-link.mjs` passed (39 checks, 390px light and 1440px
+  dark: descriptions, thumbnail and "No photo", closed issues left out, order,
+  "Show all", linking and unlinking a variation saved across a reload, a
+  link past the sixth kept on "Show fewer", no sideways scroll); screenshots
+  in the project's `ui-review/issue-link/`. `verify-report-editor` (58),
+  `verify-engineer-layout`, `verify-draft-conflict` (23),
+  `verify-photo-uploads` (22) and `verify-role-access` (61) passed.
+- Not verified: a physical phone, a live SharePoint tenant (issue photos
+  from SharePoint use the same `PhotoImage` as before). Proposed: add
+  `verify-issue-link.mjs` to the browser checks list in `CLAUDE.md`.
+
 ## 2026-10-20 — Site coverage (new feature, proposed as NEW-6)
 
 - New office page `/coverage`, opened from "Site coverage" on the office
