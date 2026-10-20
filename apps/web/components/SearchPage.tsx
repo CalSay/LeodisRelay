@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useProjects } from './ProjectContext';
 import { MIN_QUERY, searchWords, type SearchGroup, type SearchHit, type SearchKind, type SearchResults } from '@/lib/search';
-import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 
 const HREF: Record<SearchKind, string> = { report: '/reports/', issue: '/issues/', variation: '/variations/' };
 const DONE = new Set(['Sent', 'Closed', 'Instructed']);
@@ -70,7 +70,7 @@ export function SearchPage({ initialQuery, initialProject, returnTo }: { initial
   </section>;
 
   return <main className="eng-page search-page">
-    <Link href={back} className="back">← Back</Link>
+    <Link href={back} className="back">&larr; {backLabel(back)}</Link>
     <div className="eng-heading"><h1>Search</h1><p>Find a report, issue or variation by any word you remember: a location, a reference, a company or a name.</p></div>
     <form className="search-form" role="search" onSubmit={e => { e.preventDefault(); setRetry(n => n + 1); }}>
       <label htmlFor="search-query">Search for

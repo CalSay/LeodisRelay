@@ -129,7 +129,7 @@ try {
     await entry(page,rev2.reference).getByRole('link',{name:rev2.reference,exact:true}).click();await page.waitForURL(`**/reports/${rev2.id}**`);
     await page.locator('a.back').first().click();await page.waitForURL(/\/diary\?.*q=riser/);await entry(page,rev2.reference).waitFor();
     check(await page.getByLabel('Find').inputValue()==='riser','engineer: back from a report returns to the diary with the words kept');
-    await page.getByRole('link',{name:'← Back'}).click();await page.waitForURL(/\/engineer\?project=proj-011lme$/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/engineer\?project=proj-011lme$/);
     check(true,'engineer: back returns to the engineer home');
     // The Reports view links it too.
     await page.goto(`${base}/engineer?project=proj-011lme&view=reports`);
@@ -149,7 +149,7 @@ try {
     await entry(page,rev2.reference).getByRole('link',{name:/011LME-ISS-401/}).click();await page.waitForURL('**/issues/diary-issue**');
     await page.goBack();await page.locator('.diary-entry').first().waitFor();
     check(true,'office: an issue opens from the diary and back returns');
-    await page.getByRole('link',{name:'← Back'}).click();await page.waitForURL(/\/office/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/office/);
     check(true,'office: back returns to the office');
     // A project with nothing sent yet says so plainly.
     await page.goto(`${base}/diary?project=proj-014lme`);await page.getByText('No site visits yet').waitFor();

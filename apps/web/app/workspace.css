@@ -397,3 +397,4 @@ body:has(.ws){overflow:hidden auto}
   .ws .filters .sort-chip{display:none}
   .ws .filters .phone-sort{display:grid}
 }
+.ws .results a.results-all{color:var(--acc);font-weight:500;justify-content:flex-start}

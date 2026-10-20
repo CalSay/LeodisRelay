@@ -7,7 +7,7 @@ import { usePrincipal } from './PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { dayLabel, myWeekText, type MyWeek, type MyWeekIssueKind, type MyWeekProject, type MyWeekReport } from '@/lib/myWeek';
-import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { londonDay, shiftWeek, weekEnd, weekStart } from '@/lib/weeklySummary';
 
 /**
@@ -72,7 +72,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
   const shown = w ? w.days.filter(d => !isWeekend(d.day) || d.projects.length) : [];
 
   return <main className="eng-page mw-page">
-    <Link href={back} className="back mw-noprint">&larr; Back</Link>
+    <Link href={back} className="back mw-noprint">&larr; {backLabel(back)}</Link>
     <div className="mw-head">
       <p className="lbl">My week</p>
       <h1>{principal?.name}</h1>

@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { QUIET_WORKING_DAYS, fortnightStart, isWeekend, shiftFortnight, type CoverageProject, type CoverageVisit, type SiteCoverage } from '@/lib/siteCoverage';
 import { londonDay } from '@/lib/weeklySummary';
 
@@ -99,7 +99,7 @@ export function SiteCoveragePage({ initialStart, returnTo }: { initialStart: str
   </tr>;
 
   return <main className="eng-page cov-page">
-    <Link href={back} className="back">&larr; Back</Link>
+    <Link href={back} className="back">&larr; {backLabel(back)}</Link>
     <header className="cov-head">
       <p className="lbl">Leodis Developments · Office</p>
       <h1>Site coverage</h1>

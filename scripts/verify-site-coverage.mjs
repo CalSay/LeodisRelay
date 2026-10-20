@@ -116,7 +116,7 @@ try {
     check(/Reported today/.test(await rowOf(page,'011LME').locator('.cov-last').innerText()),'office: the last report is still the latest, whichever fortnight is shown');
     await page.getByRole('button',{name:'Last two weeks'}).click();await page.waitForURL(u=>!u.search.includes('start='));
     check(true,'office: back to the last two weeks');
-    await page.getByRole('link',{name:'← Back'}).click();await page.waitForURL(/\/office/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/office/);
     check(true,'office: Back returns to the office');
     assert.deepEqual(errors,[],'office: page errors');
     await context.close();

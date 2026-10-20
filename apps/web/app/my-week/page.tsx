@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { currentPrincipal } from '@/lib/auth/session';
 import { MyWeekPage } from '@/components/MyWeekPage';
 import './my-week.css';
+
+export const metadata: Metadata = { title: 'My week' };
 
 export const dynamic = 'force-dynamic';
 /** Every signed-in person may see their own week; it shows nobody else's records. */

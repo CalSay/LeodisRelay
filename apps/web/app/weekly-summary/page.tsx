@@ -1,7 +1,10 @@
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { currentPrincipal } from '@/lib/auth/session';
 import { WeeklySummaryPage } from '@/components/WeeklySummaryPage';
 import './week.css';
+
+export const metadata: Metadata = { title: 'Weekly summary' };
 
 export const dynamic = 'force-dynamic';
 export default async function WeeklySummary({ searchParams }: { searchParams: Promise<{ project?: string; week?: string; returnTo?: string }> }) {

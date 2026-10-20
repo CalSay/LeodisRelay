@@ -1,5 +1,6 @@
 'use client';
 import { use, useEffect, useState } from 'react';
+import { PageTitle } from '@/components/PageTitle';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { projectIssues } from '@/lib/api';
@@ -9,7 +10,7 @@ import { usePrincipal } from '@/components/PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { mediaId } from '@/lib/media';
 import { raisedPhoto, snagList, snagOwners } from '@/lib/snagList';
-import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import './snag.css';
 
 /**
@@ -74,7 +75,8 @@ export default function SnagListPage({ searchParams }: { searchParams: Promise<{
   const forWhom = [owner, trade && `${trade} work`].filter(Boolean).join(' · ') || 'Every company and trade';
 
   return <main className="eng-page snag-page">
-    <Link href={back} className="back snag-noprint">&larr; Back to issues</Link>
+    <PageTitle title={project ? `Snag list · ${project.projectName}` : 'Snag list'} />
+    <Link href={back} className="back snag-noprint">&larr; {backLabel(back)}</Link>
     <div className="snag-controls snag-noprint" role="group" aria-label="Choose what the snag list shows">
       <label>Project<select value={projectId} onChange={e => { setProjectId(e.target.value); setOwner(''); }}>
         <option value="">Choose a project</option>

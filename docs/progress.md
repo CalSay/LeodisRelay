@@ -4,6 +4,61 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Navigation and consistency pass
+
+- Why: a dozen pages landed today, each from its own thread, and each named
+  its Back link, browser tab and entry points its own way. Checked every page
+  as an engineer and an office user at 390 and 1440px, then fixed what made
+  people hunt. Layout, wording and navigation only: no feature removed, no
+  change to what is saved.
+- Back links now say where they go, in the words of that page's own
+  navigation ("← Back to Reports", "← Back to Search results", "← Back to
+  Office"). Before, most said "← Back", the snag list always said "Back to
+  issues" even when opened from a weekly summary or the company page, and an
+  issue, report or variation named its project even when it came from search.
+  A detail page opened with no return path still names its project. One rule
+  in `lib/viewNavigation.ts` (`viewName`, `backLabel`), with unit tests.
+- Every page names its browser tab ("Site diary · RELAY", "011LME-ISS-301 ·
+  Issue · RELAY", "Issues · Office · RELAY"). Before, every tab read "Relay",
+  so tabs and the phone's app switcher could not be told apart. Server pages
+  use Next metadata; the engineer views, office tabs and client detail pages
+  use `components/PageTitle.tsx`.
+- Engineer home: "This project" now also lists Photographs and Weekly
+  summary, which were only reachable from the Reports view; "Latest reports"
+  is "Reports" to match the bottom bar; "Your week" moved below the project
+  rows, so on a phone the office's answers come first.
+- Engineer Reports view: the five buttons wrapped unevenly. Now one action,
+  then "Also on this project" with the four pages in an even two-column grid
+  on a phone. Report dates read "visit Mon, 19 Oct", not "2026-10-19". The
+  headings read "Reports" and "Issues", since the project band above already
+  names the project. An empty first page says what will appear there.
+- Office desk: the overview's Inbox, Variations and Issues buttons repeated the
+  tabs right above them, and the project sheet repeated Inbox; removed so the
+  pages the tabs do not reach (Site coverage, Issues by company, Weekly
+  summary, Photographs, Site diary) stand out. "By company" is now "Issues by
+  company". The top search's quick list matches references and titles only;
+  it now ends with "Search the words in every report, issue and variation",
+  which opens the full search on the same words and comes back to the same tab.
+- Kept: the engineer Issues view's disabled "Assigned to me" button, which
+  `docs/engineer-site-companion.md` records as a deliberate placeholder.
+- Verified on Node 24: `npm run typecheck`, `npm test` (2 new tests),
+  `npm run build`. New `scripts/verify-navigation.mjs` passed (74 checks: as an
+  engineer at 390px light and 1440px dark, tab titles on every view, the home
+  rows, Photographs and Back to Site, the Reports links and dates, no sideways
+  scroll, Weekly summary and Back to Reports, Search from Reports, an issue
+  from the results and Back to Search results with the search kept, the snag
+  list and Back to Issues, an issue with no return path naming its project; as
+  a manager at 1440px dark and 390px light, the desk and Issues tab titles, the
+  overview without repeated tabs, Issues by company and Back to Office, the
+  quick search handing over to the full search and Back to the same tab).
+  Existing browser checks updated from "← Back" to "← Back to …" and re-run
+  (results in the PR). Screenshots in the project's `ui-review/navigation/`.
+- Not verified: a physical phone, Safari and Firefox, SharePoint mode.
+- Proposed (not added to `docs/tasks.json`): add `verify-navigation.mjs` to
+  the browser checks in `CLAUDE.md`; a "My week" link on the office desk for
+  managers who visit site; one heading pattern for the standalone pages (some
+  put the project in the heading, some above it).
+
 ## 2026-10-20 — My week (new feature, proposed as NEW-9)
 
 - New `/my-week` page: the signed-in person's own week, Monday to Sunday,

@@ -68,7 +68,7 @@ try {
     await page.getByRole('link',{name:late.reference}).click();await page.waitForURL(`**/issues/${late.id}**`);
     await page.getByRole('link',{name:/Tetley Hall/}).first().click();await page.waitForURL(/\/issues\/snag-list\?.*photos=off/);await page.locator('.snag-sheet').waitFor();
     check(await items(page).count()===3&&await page.locator('.snag-photo').count()===0,'engineer: back from an issue returns to the same list and choices');
-    await page.getByRole('link',{name:/Back to issues/}).click();await page.waitForURL(/\/engineer\?project=proj-011lme&view=issues/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/engineer\?project=proj-011lme&view=issues/);
     check(true,'engineer: back returns to the Issues view');
     assert.deepEqual(errors,[],'engineer: page errors');
     await context.close();
@@ -100,7 +100,7 @@ try {
     const pdf=await page.pdf({format:'A4'});
     check(pdf.length>1000,`print: produces an A4 PDF (${pdf.length} bytes)`);
     await page.emulateMedia({media:'screen'});
-    await page.getByRole('link',{name:/Back to issues/}).click();await page.waitForURL(/\/office#\/issues/);
+    await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/office#\/issues/);
     check(true,'office: back returns to the register');
     assert.deepEqual(errors,[],'office: page errors');
     await context.close();

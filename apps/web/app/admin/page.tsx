@@ -1,8 +1,11 @@
+import type { Metadata } from 'next';
 import '../workspace.css';
 import { redirect } from 'next/navigation';
 import { currentPrincipal } from '@/lib/auth/session';
 import { isAdmin } from '@/lib/auth/access';
 import { OfficeDesk } from '@/components/developments/office/OfficeDesk';
+
+export const metadata: Metadata = { title: 'Admin' };
 
 export const dynamic = 'force-dynamic';
 

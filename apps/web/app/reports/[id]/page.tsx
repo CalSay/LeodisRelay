@@ -2,6 +2,7 @@
 import { useProjectLookup } from "@/components/ProjectContext";
 
 import { use, useCallback, useEffect, useRef, useState } from "react";
+import { PageTitle } from '@/components/PageTitle';
 import Link from "next/link";
 import {
   getReport,
@@ -28,7 +29,7 @@ import { ownsReport } from '@/lib/auth/access';
 import { toneClass } from '@/lib/status';
 import { SubmissionStages } from '@/components/SubmissionStages';
 import { OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
-import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { backLabel, safeViewReturn, viewName, withViewReturn } from '@/lib/viewNavigation';
 import { cardAtSameLocation, insertAfterSameLocation } from '@/lib/sameLocation';
 import { canUndo, removeCard, removedLabel, removePhoto, restoreRemoved, type Removed } from '@/lib/undoRemove';
 import { onPhotoUploads, uploadingPhotos } from '@/lib/localMedia';
@@ -947,8 +948,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   return (
     <main className={sent ? "wrap eng-page" : "wrap wrap-pad eng-report-editor"}>
+      <PageTitle title={sent ? report.reference : 'Site update'} />
       <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`)} className="back">
-        &larr; {project?.projectName ?? "Project"}
+        &larr; {returnTo && viewName(safeViewReturn(returnTo, '')) ? backLabel(safeViewReturn(returnTo, '')) : project?.projectName ?? "Project"}
       </Link>
 
       <div className="pagehead">

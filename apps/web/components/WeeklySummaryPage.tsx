@@ -7,7 +7,7 @@ import { useProjects } from './ProjectContext';
 import { usePrincipal } from './PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
-import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { londonDay, shiftWeek, weekStart, type WeekIssue, type WeekReport, type WeekVariation, type WeeklySummary } from '@/lib/weeklySummary';
 
 /**
@@ -91,7 +91,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
   const snagHref = `/issues/snag-list?${new URLSearchParams({ project: projectId, returnTo: here })}`;
 
   return <main className="eng-page week-page">
-    <Link href={back} className="back week-noprint">&larr; Back</Link>
+    <Link href={back} className="back week-noprint">&larr; {backLabel(back)}</Link>
     <div className="week-controls week-noprint">
       <label>Project<select value={projectId} onChange={e => setProjectId(e.target.value)}>
         <option value="">Choose a project</option>

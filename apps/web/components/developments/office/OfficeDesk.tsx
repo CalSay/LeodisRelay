@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import { PageTitle } from '@/components/PageTitle';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { Toasts, parseHash, useHashRoute } from '@/components/workspace/hooks';
 import { allIssues, allVariations, listProjects, officeAll, officeTeam, type OfficeTeam } from '@/lib/api';
@@ -115,12 +116,15 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   };
 
   return <div className="ws" onClick={onRootClick}>
+    <PageTitle title={`${route.tab === 'admin' ? 'Admin' : tabs.find(t => t[0] === route.tab)?.[1] ?? 'Projects'} · Office`} />
     <header className="topbar">
       <a className="logo" href="#/projects" aria-label="Projects"><b>RELAY</b><span>LEODIS DEVELOPMENTS</span></a>
       <div className="search">
         <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="Search projects, reports, issues, variations, engineers" autoComplete="off" aria-label="Search" />
         <kbd>/</kbd>
-        {q.trim() !== '' && <div className="results">{results.length ? results.map(r => <a key={r.key} href={r.go}><span className="ref">{r.ref}</span><span>{r.t}</span><span className="k">{r.k}</span></a>) : <div className="none">Nothing matches “{q}”.</div>}</div>}
+        {q.trim() !== '' && <div className="results">{results.length ? results.map(r => <a key={r.key} href={r.go}><span className="ref">{r.ref}</span><span>{r.t}</span><span className="k">{r.k}</span></a>) : <div className="none">Nothing matches “{q}” by reference, name or title.</div>}
+          {/* The quick list matches references, names and titles; the search page also reads what every card says. */}
+          {q.trim().length >= 2 && <Link className="results-all" href={`/search?${new URLSearchParams({ q: q.trim(), returnTo: `/office#/${[route.tab, route.a, route.b, route.c].filter(Boolean).join('/')}` })}`}>Search the words in every report, issue and variation →</Link>}</div>}
       </div>
       <div className="topbar-right">
         <button type="button" className={`bell ${attn.length ? '' : 'quiet'}`} onClick={() => setAttnOpen(o => !o)} aria-expanded={attnOpen}>Attention <b>{attn.length}</b></button>
