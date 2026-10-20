@@ -93,6 +93,8 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   const settled = s.variations.filter(v => v.instruction !== 'pending');
   return <div className="col">
     <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h2>Register · {s.project.projectName}</h2><i>{s.reports.length} reports · {s.active.length} open</i></div>
+    {/* A phone shows this column in place of the project sheet, so the project's pages come with it. */}
+    <div className="phone-only"><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /></div>
     <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
       {([['action', `Needs action · ${s.needsAction}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
     </div>
@@ -215,6 +217,19 @@ function LatestReports({ ctx, reports, showProject }: { ctx: Ctx; reports: Repor
   </tbody></table>;
 }
 
+/** The project's own pages, grouped as on the engineer's home screen. */
+const PROJECT_LINKS: { title: string; links: [string, string][] }[] = [
+  { title: 'Issues and safety', links: [['/safety-actions', 'Safety actions'], ['/issue-trend', 'Issues over time'], ['/handover', 'Before handover']] },
+  { title: 'Reports and records', links: [['/diary', 'Site diary'], ['/weekly-summary', 'Weekly summary'], ['/photos', 'Photographs']] },
+];
+function ProjectLinks({ ctx, projectId, heading: H = 'h4', projectPage }: { ctx: Ctx; projectId: string; heading?: 'h3' | 'h4'; projectPage?: boolean }) {
+  return <nav className="sheet-links" aria-label="On this project">
+    {PROJECT_LINKS.map((g, n) => <div key={g.title} className="sheet-links-group"><H>{g.title}</H><div>{g.links.map(([path, label]) => <Link key={path} className="btn btn-q btn-sm" href={`${path}?${new URLSearchParams({ project: projectId, returnTo: officeReturn(ctx) })}`}>{label}</Link>)}
+      {/* The sheet's title has "Project page"; on a phone, where the sheet is not shown, it goes with the records. */}
+      {projectPage && n === PROJECT_LINKS.length - 1 && <Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${projectId}`, officeReturn(ctx))}>Project page</Link>}</div></div>)}
+  </nav>;
+}
+
 function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   const p = s.project;
   const month = Date.now() - 30 * 86400000;
@@ -223,10 +238,11 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   const thisWeek = s.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week);
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
-      <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link><Link className="btn btn-q btn-sm" href={`/weekly-summary?${new URLSearchParams({ project: p.id, returnTo: officeReturn(ctx) })}`}>Weekly summary</Link><Link className="btn btn-q btn-sm" href={`/photos?${new URLSearchParams({ project: p.id, returnTo: officeReturn(ctx) })}`}>Photographs</Link><Link className="btn btn-q btn-sm" href={`/diary?${new URLSearchParams({ project: p.id, returnTo: officeReturn(ctx) })}`}>Site diary</Link><Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ project: p.id, returnTo: officeReturn(ctx) })}`}>Safety actions</Link><Link className="btn btn-q btn-sm" href={`/handover?${new URLSearchParams({ project: p.id, returnTo: officeReturn(ctx) })}`}>Before handover</Link><Link className="btn btn-q btn-sm" href={`/issue-trend?${new URLSearchParams({ project: p.id, returnTo: officeReturn(ctx) })}`}>Issues over time</Link></div></div>
+      <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link></div></div>
     <dl className="tb"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{s.reports.length ? `${s.reports.length} on file` : 'none yet'}{s.notNotified.length ? ` · ${s.notNotified.length} PM notification${s.notNotified.length === 1 ? '' : 's'} pending` : ''}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Ready to verify</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `closure submitted ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing awaiting verification'}</small></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></dd></div></dl>
     <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
     <dl className="tb" style={{ marginTop: 12 }}><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
+    <ProjectLinks ctx={ctx} projectId={p.id} />
     <SecH>Needs attention</SecH>
     <AttentionList ctx={ctx} s={s} limit={6} />
     <SecH right={<span className="r">{s.reports.length} on file</span>}>Latest reports</SecH>
