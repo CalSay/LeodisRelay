@@ -4,6 +4,48 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — FE-1d: undo removing a card or photograph
+
+- Removing a card or a photograph in the report editor still happens at
+  once, but a bar now appears above the action bar saying what went ("Card 02
+  removed · Defect · Level 2 riser · 2 photos", or "Photo 01 removed" with its
+  caption) with Undo and a close button. Undo puts back the same card or
+  photograph, with its id, words, photos and caption, in the place it came
+  from, and opens the card.
+- Decisions: Undo stays for 12 seconds, and holds while it has focus or a
+  pointer over it, so it is there when reached for but does not linger over
+  the action bar. One at a time: a second removal replaces the first, which
+  stands. The removal saves as normal (the device copy and the server stay
+  current); putting back is one more save of the same record, not a copy, and
+  photographs already on the server are not uploaded again. A quick remove and
+  undo lands as a single save, as the autosave pause folds the two together.
+  Undo is withdrawn when two versions of the draft need choosing between,
+  and cannot be pressed while the report is sending. The Remove buttons now
+  say which card or photo they remove to a screen reader; removing moves
+  focus to Undo (the pressed button has gone), Undo returns focus to the
+  restored card's or photo's Remove button, closing the bar returns it to the
+  Cards step, and every removal is announced, even two worded the same. Rules in `lib/undoRemove.ts` (pure).
+- Verified on Node 24: `npm run typecheck`, `npm test` (8 new tests in
+  `tests/undoRemove.test.ts`), `npm run build`. New
+  `scripts/verify-undo-remove.mjs` passed (76 checks, 390px light and 1440px
+  dark: bar wording, 44px Undo on screen, card and photo back in place with
+  the same ids on the server, one save and no upload on undo, a quick undo is
+  one save, focus on Undo and back on the restored item, one bar at a time,
+  Dismiss keeps the removal, the bar stays while focused and goes by itself
+  once left, no sideways scroll). `verify-report-editor` (58),
+  `verify-engineer-layout`, `verify-same-location` (54),
+  `verify-draft-conflict` (23), `verify-photo-uploads` (22),
+  `verify-issue-link` (39) and `verify-signature-reload` passed. Screenshots
+  in the project's `ui-review/undo-remove/`.
+- A photograph stored inline in a draft from before the upload service could
+  not be put back once its removal had saved (the server keeps only inline
+  photographs it already holds), so removing one, or a card holding one,
+  offers no Undo rather than an Undo that would fail.
+- Not verified: a physical phone, a screen reader. The
+  single defect form (`IndividualDefect.tsx`) has no undo for removing a
+  photo; proposed as a follow-up. Proposed: add `verify-undo-remove.mjs` to
+  the browser checks list in `CLAUDE.md`. Next in the editor lane: FE-1c.
+
 ## 2026-10-20 — FE-1b: another card at the same location
 
 - An open card with a location now offers "+ Another card here", with the
