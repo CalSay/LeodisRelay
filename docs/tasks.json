@@ -228,10 +228,10 @@
         "The link-issue picker shows each issue's description and a thumbnail where one exists",
         "Browser check"
       ],
-      "status": "todo",
-      "passes": false,
+      "status": "done",
+      "passes": true,
       "pr": null,
-      "notes": "Mostly built: defect/access picker shows description and thumbnail (ObservationEditor.tsx:85-111). Variation link is a plain select without thumbnail."
+      "notes": "Defect, access and variation cards share one picture list (IssueLinkPicker in ObservationEditor.tsx, rules in lib/issueLink.ts): description cut at two lines, a 56px thumbnail or 'No photo', nearest location first, the linked issue always listed, 'Show all' past six. Unit tests in tests/issueLink.test.ts; browser check scripts/verify-issue-link.mjs (39 checks)."
     },
     {
       "id": "FE-6a",
