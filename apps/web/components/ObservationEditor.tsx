@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { PhotoImage } from './PhotoImage';
+import { CameraIcon } from './CameraIcon';
 import { readPhoto, type Observation, type Photo } from "@/lib/api";
 import type { Issue, RoughSize } from "@/lib/types";
 import { OBSERVATION_TYPES, type ObservationType } from "@/lib/fixtures";
@@ -114,7 +115,7 @@ export function ObservationEditor({
     <label>Photographs{observation.photos.length > 0 ? ` · ${observation.photos.length}` : ""}{kind === 'defect' ? ' · at least one' : ''}</label>
     <label className="camera">
       <input ref={fileInput} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" multiple onChange={(e) => addPhotos(e.target.files)} />
-      Take photograph
+      <CameraIcon />{observation.photos.length ? "Add another photo" : "Take a photo"}
     </label>
     {photoError && <div className="note note-bad" style={{ marginTop: 12 }}>{photoError}</div>}
     {observation.photos.length > 0 && <div className="shots">

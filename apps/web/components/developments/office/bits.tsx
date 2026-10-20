@@ -33,7 +33,7 @@ export function Bar({ c }: { c: Rollup }) {
   return <div className="cbar"><i className="ok" style={{ width: p(c.closed) }} /><i className="soon" style={{ width: p(c.verify) }} /><i className="late" style={{ width: p(c.overdue) }} /><i className="none" style={{ width: p(c.open) }} /></div>;
 }
 export function Meta({ c }: { c: Rollup }) {
-  return <div className="meta"><span>{c.total} issues</span>{c.overdue > 0 && <span className="late">{c.overdue} overdue</span>}{c.verify > 0 && <span className="soon">{c.verify} to verify</span>}{c.open > 0 && <span>{c.open} open</span>}{c.total > 0 && !c.overdue && !c.verify && !c.open && <span>all closed</span>}</div>;
+  return <div className="meta"><span>{c.total} {c.total === 1 ? "issue" : "issues"}</span>{c.overdue > 0 && <span className="late">{c.overdue} overdue</span>}{c.verify > 0 && <span className="soon">{c.verify} to verify</span>}{c.open > 0 && <span>{c.open} open</span>}{c.total > 0 && !c.overdue && !c.verify && !c.open && <span>all closed</span>}</div>;
 }
 export const BarKey = () => <div className="cbar-key"><span className="k-ok">closed</span><span className="k-soon">to verify</span><span className="k-late">overdue</span><span className="k-none">open</span></div>;
 export const SecH = ({ children, right }: { children: ReactNode; right?: ReactNode }) => <div className="sec-h">{children}{right}</div>;

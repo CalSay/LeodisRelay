@@ -54,7 +54,9 @@ described in the deployment brief below. Local outbox messages are not sent emai
 ## Pilot deployment
 
 Approved sign-in/company-hub designs and their implemented navigation are recorded
-in [docs/design-decisions.md](docs/design-decisions.md).
+in [docs/design-decisions.md](docs/design-decisions.md). The standing direction for
+making the interface clear and inviting is in
+[docs/ui-direction-2026-10-20.md](docs/ui-direction-2026-10-20.md).
 
 The parked, exploratory commercial-product direction is captured in
 [RELAY by Leodis — initial product proposal](docs/relay-product-proposal.md).

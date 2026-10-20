@@ -543,7 +543,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             <span className="savestate" aria-live="polite">
               <span className={SAVE[saveState].dot} />
               {stop.length > 0
-                ? <a className="actionbar-warning" href="#report-check"><b>{stop.length} item{stop.length === 1 ? '' : 's'} need attention</b><span>Review before sending ↑</span></a>
+                ? <a className="actionbar-warning" href="#report-check"><b>{stop.length} {stop.length === 1 ? 'item needs' : 'items need'} attention</b><span>Review before sending ↑</span></a>
                 : <b>{SAVE[saveState].text || 'Ready to send'}</b>}
             </span>
             <button className="btn-primary" onClick={send} disabled={submitting || stop.length > 0}>
