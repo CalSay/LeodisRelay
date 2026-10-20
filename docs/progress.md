@@ -4,6 +4,43 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — NEW-2: printable snag lists
+
+- New page `/issues/snag-list`: one project's open issues for a company or
+  person and/or a trade, grouped by location, each with reference,
+  description, what to do, owner, target date, a "Past target" or "Fixed, to
+  check" tag and the photograph taken when it was raised. It has tick boxes, a
+  "Checked by / Signature / Date" foot, and a "Print or save as PDF" button.
+  Printed, it is black on white with no app bar or controls. The prototype
+  banner still prints.
+- Opened from a "Snag list" link on the office Issues register, which carries
+  the project, owner and trade chosen there, and from the engineer Issues view
+  ("Snag list · Electrical"), which defaults to the engineer's trade.
+- Why this feature: handing a company its snags is a weekly job on every
+  site, and today the office copies rows out of the register by hand. It reads
+  the existing register only, so there is no new store or SharePoint write.
+- Decisions: read-only. Ticking on paper records nothing; the foot says to
+  use "Submit as complete" on the issue. Locations are grouped as written,
+  ignoring case and spacing, and labelled as the earliest issue spelled it, so
+  there is no location catalogue (EXP-4). Fixed work is listed last in each
+  location, not hidden, so the company can see what is waiting to be checked.
+  Trade follows the office register: the affected trade, else the reporter's.
+  Choices are kept in the address, so a list can be bookmarked, and an issue
+  opened from the list returns to the same list. Unreviewed issues are not
+  tagged: with review off (the default) every issue stays unreviewed, so the
+  tag would be on every row.
+- Added NEW-2 and a `snag` lane to `docs/tasks.json`.
+- Verified: `npm run typecheck` and `npm test` pass (7 new tests in
+  `tests/snagList.test.ts`, 1 in `viewNavigation.test.ts`). New
+  `scripts/verify-snag-list.mjs` passed (24 checks: engineer at 390 px light,
+  office at 1440 px dark, print media and an A4 PDF, project picker, back
+  from an issue). `verify-role-access`, `verify-engineer-layout`,
+  `verify-search` and `verify-office-landing` passed after main was merged in;
+  `verify-review-queue` and `verify-unfinished-reports` passed before.
+- Not verified: a physical printer or phone, Safari's print dialog,
+  SharePoint mode (no live tenant).
+- Next: a snag list per company across every project, if the office asks for it.
+
 ## 2026-10-20 — UI-1: office desk opens on the office position
 
 - The office desk no longer opens on an empty "Select a project…" register

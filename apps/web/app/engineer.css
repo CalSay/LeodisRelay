@@ -215,3 +215,6 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
   .eng-report-editor .actionbar .btn-primary{width:100%;min-width:0;}
 }
 @media(max-width:450px){.eng-issue-card{flex-wrap:wrap;}.eng-issue-thumb{width:100%;}.eng-issue-thumb img{width:100%;height:140px;}}
+/* A link that reads as a secondary button, beside "Flag a defect". */
+.eng-link-button{display:inline-flex;align-items:center;min-height:48px;padding:0 20px;margin:4px 0 0 8px;border:1px solid var(--line-2);border-radius:var(--r);background:var(--panel-2);color:var(--text);font-size:14px;font-weight:500;}
+.eng-link-button:hover{background:var(--panel-3);}
