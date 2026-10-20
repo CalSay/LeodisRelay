@@ -98,13 +98,15 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   or written to SharePoint.
 - Verified on Node 24: `npm run typecheck`, `npm test` (6 new tests in
   `tests/safetyActions.test.ts`, one in `tests/viewNavigation.test.ts`),
-  `npm run build`. New `scripts/verify-safety-actions.mjs` passed (28 checks:
+  `npm run build`. New `scripts/verify-safety-actions.mjs` passed (30 checks:
   signed-out refusals; from the engineer home at 390px light, the open action
   found twice and its words, the cleared one folded then opened, the counts,
   a draft left out, no sideways scroll, every project with the corrected
   Kirkstall inspection clearing its action, tender and complete projects
   left out, a report opened and Back; from the Reports view at 1440px dark
-  and printed on white; from the office as a manager). `verify-navigation`
+  and printed on white with the put-right list opened; from the office as a
+  manager). A fresh-context review found printing left the put-right list
+  folded and "put right after the same day"; both fixed. `verify-navigation`
   now expects the new links and passed (76). Also passed:
   `verify-role-access` (61), `verify-engineer-layout`, `verify-engineer-nav`,
   `verify-office-landing`, `verify-report-types`, `verify-my-week`,

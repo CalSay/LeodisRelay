@@ -50,6 +50,12 @@ export function SafetyActionsPage({ initialProject, returnTo }: { initialProject
   if (returnTo) q.set('returnTo', returnTo);
   const here = `/safety-actions${q.size ? `?${q}` : ''}`;
   useEffect(() => { router.replace(here, { scroll: false }); }, [here, router]);
+  // A printed page is for the site meeting, so it carries what was put right too.
+  useEffect(() => {
+    const unfold = () => document.querySelectorAll<HTMLDetailsElement>('.sa-put-right').forEach(d => { d.open = true; });
+    window.addEventListener('beforeprint', unfold);
+    return () => window.removeEventListener('beforeprint', unfold);
+  }, []);
 
   // Only the live sites the page covers, in project-number order.
   const options = (data?.projects ?? []).slice().sort((a, b) => a.projectNumber.localeCompare(b.projectNumber, 'en', { numeric: true }));
@@ -77,7 +83,7 @@ export function SafetyActionsPage({ initialProject, returnTo }: { initialProject
   </li>;
 
   const clearedAction = (a: SafetyAction) => <li key={`${a.key}-cleared`} className="sa-action sa-cleared">
-    <p className="sa-tags"><span className="tag tag-sent">{ANSWER[a.cleared!.answer]}</span><span className="sa-meta-inline">put right after {a.days > 0 ? plural(a.days, 'day') : 'the same day'}</span></p>
+    <p className="sa-tags"><span className="tag tag-sent">{ANSWER[a.cleared!.answer]}</span><span className="sa-meta-inline">{a.days > 0 ? `put right after ${plural(a.days, 'day')}` : 'put right the same day'}</span></p>
     <h4>{a.question}</h4>
     {a.found && <p className="sa-found">Was: {a.found}</p>}
     {a.cleared!.note && <p className="sa-meta">Noted: {a.cleared!.note}</p>}

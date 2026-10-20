@@ -114,6 +114,9 @@ try {
     await page.goto(`${base}/engineer?project=proj-011lme&view=reports`);
     await page.getByRole('link',{name:'Safety actions'}).click();await page.waitForURL(/\/safety-actions\?/);await page.locator('.sa-project').first().waitFor();
     if(screenshot)await page.screenshot({path:join(screenshot,'safety-actions-dark-1440.png'),fullPage:true});
+    check(!(await page.locator('.sa-put-right').evaluate(d=>d.open)),'print: the put-right list starts folded on screen');
+    await page.evaluate(()=>window.dispatchEvent(new Event('beforeprint')));
+    check(await page.locator('.sa-put-right').evaluate(d=>d.open),'print: the put-right list is opened for printing');
     await page.emulateMedia({media:'print'});
     check(!(await page.locator('.appbar').isVisible())&&!(await page.locator('.sa-controls').isVisible())&&!(await page.locator('.back').isVisible()),'print: app bar, controls and back link hidden');
     const bg=await page.evaluate(()=>getComputedStyle(document.querySelector('.sa-project')).backgroundColor);
