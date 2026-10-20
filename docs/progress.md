@@ -4,6 +4,35 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Release readiness check on main
+
+- Ran everything on main at 1343f3c (#2 to #27) under Node 24: `npm ci`,
+  `npm run typecheck`, `npm test` (145 package + 168 web tests),
+  `npm run build` and all 23 `scripts/verify-*.mjs` browser checks. All
+  passed, including `verify-pdf-navigation` (CLAUDE.md still says it fails
+  on main; #7 fixed that). Proposed: drop that note from `CLAUDE.md`.
+- One fault between changes found and fixed: the draft conflict work (#23)
+  keeps a set-aside copy of a draft under its own key while the engineer
+  chooses between two versions. The offline page (`public/offline.js`) lists
+  every held copy, so it showed the same report twice with the same name,
+  and opening a report there could have picked either. The set-aside copy
+  is now named "(copy kept while choosing between two versions)" and the
+  ordinary copy opens first. Both stay listed, so nothing held on the phone
+  is hidden. The service worker cache is now `relay-public-v4`, because it
+  serves `offline.js` from its cache and phones would otherwise keep the old
+  file.
+- Verified: new `scripts/verify-offline-drafts.mjs` (5 checks; the old page
+  showed two identical buttons), typecheck, tests, build.
+- Deploy findings (nothing deployed, server not touched): no new environment
+  variables, no database migration (two new optional fields on reports only),
+  no new storage. `deploy/upgrade-pilot.sh` backs up the data volume, builds
+  and swaps the image, and `deploy/rollback-roles.sh` returns the previous
+  image. Release notes and steps are in the Claude
+  project's shared files (`releases/2026-10-20-release-notes.md`), not in
+  this repository.
+- Not verified: a Docker image build (no Docker daemon in the cloud
+  session), the server itself, a live SharePoint tenant, real phones.
+
 ## 2026-10-20 — FE-1b: another card at the same location
 
 - An open card with a location now offers "+ Another card here", with the
