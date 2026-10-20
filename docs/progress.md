@@ -4,52 +4,6 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
-## 2026-10-20 — Engineer home screen and office project sheet tidied
-
-- Why: each feature added today put its own link on the engineer home screen
-  and the office project sheet, so both had a long, unordered run of links
-  (eight rows under "This project" plus single-row "Your week" and "Help"
-  sections; seven buttons crowded beside the project's name). Asked for by the
-  coordinator under Cal's standing ask for a clear, inviting UI. Screenshots
-  before and after, 375px and 1440px, light and dark, are in the project's
-  `ui-review/home-and-project-sheet/`.
-- Engineer home: "This project" is now two labelled groups, daily ones first.
-  Issues and safety: Site issues, Safety actions, Issues over time, Before
-  handover. Reports and records: Reports, Site diary, Weekly summary,
-  Photographs. My week and Help are one section, "Your week and help", at the
-  foot. Each row's note is shorter so none runs past two lines at 375px. The
-  Reports view's "Also on this project" row follows the same order.
-- Office project sheet: the title keeps one button, "Project page". The six
-  project pages sit in one box under the project's figures and above "Needs
-  attention", in the same two groups and words as the engineer's home.
-- Found and fixed: on a phone the office desk shows a project's register in
-  place of its sheet, so none of the project's pages (Before handover, Site
-  diary and the rest) could be reached from the office on a phone. The same
-  grouped links now show at the top of the register on a phone only (hidden on
-  a desktop, where the sheet has them, so there is one set on screen), with
-  "Project page" at the end of the records group.
-- Decided here: group names "Issues and safety" and "Reports and records";
-  "daily first" judged as Site issues and Reports first, then weekly pages,
-  then handover. Nothing was removed; every page is still one tap away.
-- Help: "What's new" entry "A tidier home screen and project sheet", and a
-  line in the office guide saying where a project's pages are.
-- Checks: `npm run typecheck`, `npm test`, `npm run build`, the new
-  `scripts/verify-home-and-sheet.mjs` (118 checks at 375 and 1440px, light and
-  dark; `RELAY_SHOTS_ONLY=1` takes screenshots of older code without the
-  checks) and the existing browser checks: navigation, accessibility,
-  issue-trend, before-handover, office-desk, office-phone, office-landing,
-  engineer-layout, engineer-nav, help, since-last-visit, my-week,
-  weekly-summary, safety-actions, site-diary, photo-library, role-access,
-  unfinished-reports.
-  `verify-navigation.mjs` now finds the home links by the "This project"
-  region and expects the new Reports-view order.
-- Not changed: the report editor and offline page (another thread is there),
-  the left-hand column of the home screen (start tiles and Unfinished
-  reports), the office landing's buttons.
-- Not verified: real phones, Safari and Firefox, a real screen reader.
-- Proposed (not added to `docs/tasks.json`): "UI-5 Home screen and project
-  sheet grouping".
-
 ## 2026-10-20 — Chase notes on Issues by company
 
 - Why: Issues by company (#33) tells the office who to chase, but there was
@@ -106,6 +60,103 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Proposed (not added to `docs/tasks.json`): NEW-8 chase notes, with the
   acceptance steps in the PR; add `verify-company-chases.mjs` to the browser
   checks in `CLAUDE.md`.
+
+## 2026-10-20 — First fix inspection (EXP-5, third report type)
+
+- Added a third checklist type, "First fix inspection" (First Fix Inspection,
+  references `-FFI-`): a walk round one area before its ceilings, walls,
+  risers or boxing are closed, asking 12 checks on Leodis's first fix (run to
+  every point, supported, pressure, drainage and electrical tests recorded,
+  set out for the finishes, access panels, fire stopping, safe zones,
+  labelled, void clear). Drawn signature required. Each "Action needed" must
+  say where and raises an issue on the snag list, as on the handover
+  inspection. The checks are Claude's first draft (Cal named no type, and
+  under his 2026-10-20 instruction Claude decided), so the Help entry says
+  they may change.
+- Why this type: opening a ceiling again after it is boarded costs far more
+  than a walk round, and a signed record shows the area was ready when it was
+  closed. It fits the existing framework exactly (`lib/reportTypes.ts`), so
+  the editor, drafts, photographs, sending, corrections, PDF, site diary,
+  weekly summary, office sheet and no-signal page all work without new code.
+  Considered and not chosen: a tower and podium inspection (the Work at Height
+  Regulations record needs the tower named on the report, and inspections have
+  no report-level field yet) and a commissioning record (needs readings, a new
+  kind of answer).
+- Home screen tiles now take a short label from the type (`tag`: "Safety",
+  "Handover", "First fix") rather than the first word of its name, which
+  would have read "First".
+- No-signal page: knows the new type's name and that its actions say where
+  even before the app has left the checklists on the phone. Service worker
+  cache moves to `relay-public-v10`.
+- Help "What's new": "First fix inspection". Help wording on actions that
+  become issues and on starting and signing with no signal now covers every
+  inspection.
+- Checks: `npm run typecheck`, `npm test` (new `tests/firstFixInspection.test.ts`),
+  `npm run build`, the new `scripts/verify-first-fix-inspection.mjs` (110
+  checks, 390px light and 1440px dark), `verify-offline-inspection` (now also
+  starts a first fix inspection with no signal), `verify-handover-inspection`,
+  `verify-report-types`, `verify-offline-sign`, `verify-handover-offline`,
+  `verify-help`, `verify-engineer-layout`, `verify-role-access`,
+  `verify-editor-usability`, `verify-accessibility`, `verify-before-handover`
+  and `verify-unfinished-reports`. A fresh-context review found the Before
+  handover gap and the handover wording in the action prompt; both fixed.
+- Not verified: a physical phone; Cal or a site manager reading the checks.
+  Before handover now counts a first fix inspection's actions as snags on our
+  work, under the inspector's trade, as it already did for handover
+  inspections (otherwise they fell under "Other trades"); it still lists only
+  handover inspections in its inspections section. Safety actions follows
+  safety inspections only. Each inspection type now has its own prompt in an
+  action's "What needs doing" (first fix: "before it is closed in").
+- Proposed (not added to `docs/tasks.json`): a report-level "What was
+  inspected" field, which would allow a tower and podium inspection; the
+  office editing a checklist's wording; listing first fix inspections on
+  Before handover.
+
+## 2026-10-20 — Engineer home screen and office project sheet tidied
+
+- Why: each feature added today put its own link on the engineer home screen
+  and the office project sheet, so both had a long, unordered run of links
+  (eight rows under "This project" plus single-row "Your week" and "Help"
+  sections; seven buttons crowded beside the project's name). Asked for by the
+  coordinator under Cal's standing ask for a clear, inviting UI. Screenshots
+  before and after, 375px and 1440px, light and dark, are in the project's
+  `ui-review/home-and-project-sheet/`.
+- Engineer home: "This project" is now two labelled groups, daily ones first.
+  Issues and safety: Site issues, Safety actions, Issues over time, Before
+  handover. Reports and records: Reports, Site diary, Weekly summary,
+  Photographs. My week and Help are one section, "Your week and help", at the
+  foot. Each row's note is shorter so none runs past two lines at 375px. The
+  Reports view's "Also on this project" row follows the same order.
+- Office project sheet: the title keeps one button, "Project page". The six
+  project pages sit in one box under the project's figures and above "Needs
+  attention", in the same two groups and words as the engineer's home.
+- Found and fixed: on a phone the office desk shows a project's register in
+  place of its sheet, so none of the project's pages (Before handover, Site
+  diary and the rest) could be reached from the office on a phone. The same
+  grouped links now show at the top of the register on a phone only (hidden on
+  a desktop, where the sheet has them, so there is one set on screen), with
+  "Project page" at the end of the records group.
+- Decided here: group names "Issues and safety" and "Reports and records";
+  "daily first" judged as Site issues and Reports first, then weekly pages,
+  then handover. Nothing was removed; every page is still one tap away.
+- Help: "What's new" entry "A tidier home screen and project sheet", and a
+  line in the office guide saying where a project's pages are.
+- Checks: `npm run typecheck`, `npm test`, `npm run build`, the new
+  `scripts/verify-home-and-sheet.mjs` (118 checks at 375 and 1440px, light and
+  dark; `RELAY_SHOTS_ONLY=1` takes screenshots of older code without the
+  checks) and the existing browser checks: navigation, accessibility,
+  issue-trend, before-handover, office-desk, office-phone, office-landing,
+  engineer-layout, engineer-nav, help, since-last-visit, my-week,
+  weekly-summary, safety-actions, site-diary, photo-library, role-access,
+  unfinished-reports.
+  `verify-navigation.mjs` now finds the home links by the "This project"
+  region and expects the new Reports-view order.
+- Not changed: the report editor and offline page (another thread is there),
+  the left-hand column of the home screen (start tiles and Unfinished
+  reports), the office landing's buttons.
+- Not verified: real phones, Safari and Firefox, a real screen reader.
+- Proposed (not added to `docs/tasks.json`): "UI-5 Home screen and project
+  sheet grouping".
 
 ## 2026-10-20 — Accessibility follow-ups: the report editor and the no-signal page
 

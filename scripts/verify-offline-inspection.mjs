@@ -1,6 +1,6 @@
 // Browser check: starting an inspection with no signal (FE-3e, second slice).
 // The app leaves the inspections' checks on the phone; the offline page starts
-// a safety or handover inspection with every check, takes answers, Where and
+// a safety, handover or first fix inspection with every check, takes answers, Where and
 // photos, and the inspection goes up by itself once RELAY opens with signal.
 // npm test && npm run build; set RELAY_SCREENSHOT_DIR=<dir> to save screenshots.
 import assert from 'node:assert/strict';
@@ -37,7 +37,9 @@ try {
   browser=await chromium.launch({headless:true,...(process.env.RELAY_BROWSER_PATH?{executablePath:process.env.RELAY_BROWSER_PATH}:{})});
   const screenshot=process.env.RELAY_SCREENSHOT_DIR;if(screenshot)mkdirSync(screenshot,{recursive:true});
   // Light at phone width: a handover inspection, whose actions ask Where. Dark on a desk: a safety inspection.
-  for(const [scheme,width,type,name,code] of [['light',390,'handover-inspection','Handover inspection','PHI'],['dark',1440,'safety-inspection','Safety inspection','SSI']]){
+  // Light on a desk: a first fix inspection, whose actions ask Where too.
+  for(const [scheme,width,type,name,code] of [['light',390,'handover-inspection','Handover inspection','PHI'],['dark',1440,'safety-inspection','Safety inspection','SSI'],['light',1440,'first-fix-inspection','First fix inspection','FFI']]){
+    const raises=type!=='safety-inspection';
     const before=new Set(mine().map(r=>r.id));
     const context=await browser.newContext({viewport:{width,height:900},colorScheme:scheme});await context.addCookies([{name:'relay_session',value:newSession(),url:base}]);
     let page=await context.newPage();const errors=[];const watch=p=>{p.on('pageerror',e=>errors.push(e.message));p.on('dialog',d=>d.accept());};watch(page);
@@ -45,7 +47,7 @@ try {
     await page.evaluate(()=>navigator.serviceWorker.ready);
     await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
     const types=await page.evaluate(()=>JSON.parse(localStorage.getItem('relay-offline-types')||'[]'));
-    check(types.map(t=>t.id).join()==='safety-inspection,handover-inspection'&&types.every(t=>t.checklist.length===12&&t.checklist.every(c=>c.item&&c.question)),`${scheme}: the app leaves both inspections and their checks on the phone`);
+    check(types.map(t=>t.id).join()==='safety-inspection,handover-inspection,first-fix-inspection'&&types.every(t=>t.checklist.length===12&&t.checklist.every(c=>c.item&&c.question)),`${scheme}: the app leaves every inspection and its checks on the phone`);
     // No signal, cold start.
     await stop();
     await page.close();page=await context.newPage();watch(page);
@@ -53,7 +55,7 @@ try {
     await page.getByRole('heading',{name:'Keep reporting. It is saved on this phone.'}).waitFor();
     check(await page.getByRole('heading',{name:'Start a report'}).isVisible(),`${scheme}: the start panel offers more than a site update`);
     const choices=await page.locator('#start-choices .choice strong').allInnerTexts();
-    check(choices.join('|')==='Site update|Safety inspection|Handover inspection',`${scheme}: three choices: ${choices}`);
+    check(choices.join('|')==='Site update|Safety inspection|Handover inspection|First fix inspection',`${scheme}: four choices: ${choices}`);
     check(await page.getByRole('radio',{name:/^Site update/}).isChecked(),`${scheme}: a site update is chosen until another is picked`);
     await page.getByRole('radio',{name:new RegExp(`^${name}`)}).check();
     await page.getByRole('button',{name:'Start on this phone'}).click();
@@ -64,7 +66,7 @@ try {
     check(/Answer every check, then sign at the foot of the page/.test(await page.locator('#editor .panel').first().innerText()),`${scheme}: says where it is signed`);
     const first=page.locator('.card').nth(0);
     await first.getByLabel('Answer').selectOption('action');
-    if(type==='handover-inspection')await page.locator('.card').nth(0).getByLabel(/^Where/).fill('Level 2 east corridor');
+    if(raises)await page.locator('.card').nth(0).getByLabel(/^Where/).fill('Level 2 east corridor');
     else check(await page.locator('.card').nth(0).getByLabel(/^Where/).count()===0,`${scheme}: a safety action asks no Where`);
     await page.locator('.card').nth(0).getByLabel('Notes or what is wrong').fill('Tray lid missing over the door');
     await page.locator('.card').nth(0).getByLabel('What needs doing').fill('Fit the lid');
@@ -95,7 +97,7 @@ try {
     check(made.reportType===type&&made.state==='draft'&&new RegExp(`-${code}-\\d{3}$`).test(made.reference),`${scheme}: it is a ${name.toLowerCase()} draft, numbered as one: ${made.reference}`);
     const o=made.observations;
     check(o.length===12&&o.every(c=>c.type==='check'&&c.check?.item),`${scheme}: with every check`);
-    check(o[0].check.answer==='action'&&o[0].whatHappened==='Tray lid missing over the door'&&o[0].actionNeeded==='Fit the lid'&&o[0].photos.length===1&&o[0].location===(type==='handover-inspection'?'Level 2 east corridor':''),`${scheme}: the action, its words, Where and photo reached the server`);
+    check(o[0].check.answer==='action'&&o[0].whatHappened==='Tray lid missing over the door'&&o[0].actionNeeded==='Fit the lid'&&o[0].photos.length===1&&o[0].location===(raises?'Level 2 east corridor':''),`${scheme}: the action, its words, Where and photo reached the server`);
     check(o[1].check.answer==='ok'&&o[2].check.answer==='na'&&o.slice(3).every(c=>!c.check.answer),`${scheme}: and the other answers, the rest left open`);
     check(!JSON.stringify(records('issues')).includes(made.id),`${scheme}: nothing sent and no issue raised before it is signed and sent`);
     await page.locator('.held-send .note-ok').getByRole('link').click();
@@ -106,7 +108,7 @@ try {
     check(errors.length===0,`${scheme}: no page errors: ${errors.join(' | ')}`);
     await context.close();
   }
-  console.log(`Offline inspection check passed (${checks} checks): checks left on the phone, a handover inspection (390px light) and a safety inspection (1440px dark) started with no signal, answered with a photo, kept across a reload, and sent up by themselves as drafts when signal returned.`);
+  console.log(`Offline inspection check passed (${checks} checks): checks left on the phone, a handover inspection (390px light), a safety inspection (1440px dark) and a first fix inspection (1440px light) started with no signal, answered with a photo, kept across a reload, and sent up by themselves as drafts when signal returned.`);
 } finally {
   await browser?.close();await stop();
 }
