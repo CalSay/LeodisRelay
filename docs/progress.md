@@ -39,6 +39,42 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Next on this lane: EXP-1 (living site diary), which can now link each
   entry to its report and revision.
 
+## 2026-10-20 — FE-1c: suggest responsible companies and locations
+
+- "Who needs to respond" on a defect or access card now shows Recent
+  companies under the box: what was typed there on this project's sent
+  reports, plus the owner the office gave an issue, newest first (three shown,
+  "Show N more" for up to twelve). A tap fills the box; the hint says "Choose
+  one or type any name". Where keeps its Recent places chips, now drawn by the
+  same rule. Both chip sets share one small component in the editor.
+- Rules in `lib/suggestions.ts` (pure, tested): only the same project; only
+  sent reports, issues and variations, so words typed only in someone's draft
+  are never shown to anyone else; wording that differs only in case or
+  spacing is one chip, shown as last typed; blank and placeholder answers
+  ("unknown", "TBC", "n/a" and similar) are left out. An issue owner counts
+  from the issue's latest event, so a fresh assignment by the office ranks
+  near the top. Nothing is set up or maintained and nothing has to match
+  (EXP-4).
+- Decisions: progress and variation cards are not a source, because their
+  owner field is not "who must respond". "Who asked for it" on a variation is
+  a person on site, not a responsible company, so it is not suggested either.
+  The existing `/api/locations` route returns both lists (one request per
+  report) rather than adding a second route.
+- Verified on Node 24: `npm run typecheck`, `npm test` (5 new tests in
+  `tests/suggestions.test.ts`), `npm run build`. New
+  `scripts/verify-suggestions.mjs` passed (20 checks, 390px light and 1440px
+  dark: companies from sent reports newest first, a name only in another
+  engineer's draft not offered, places still shown without draft-only
+  places, a tap fills and saves, new wording is accepted and saved, no
+  sideways scroll). `verify-report-editor`, `verify-engineer-layout`,
+  `verify-same-location`, `verify-issue-link`, `verify-draft-conflict` and
+  `verify-undo-remove` passed after merging #30. Screenshots in the
+  project's `ui-review/suggestions/`.
+- Not verified: a physical phone. Proposed: add `verify-suggestions.mjs` to
+  the browser checks list in `CLAUDE.md`. Next in the editor lane: offer a
+  correction when a draft was sent from another tab while this tab has
+  unsaved changes (follow-up from #23).
+
 ## 2026-10-20 — FE-1d: undo removing a card or photograph
 
 - Removing a card or a photograph in the report editor still happens at

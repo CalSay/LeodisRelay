@@ -33,11 +33,26 @@ export function KindPicker({ onPick }: { onPick: (type: ObservationType) => void
   </div>;
 }
 
+/** Chips for words typed on this job before. Picking one fills the box; typing anything else is always fine. */
+function Suggestions({ title, fewer, values, current, onPick }: { title: string; fewer: string; values: string[]; current: string; onPick: (value: string) => void }) {
+  const [showAll, setShowAll] = useState(false);
+  if (values.length === 0) return null;
+  const visible = showAll ? values : values.slice(0, 3);
+  const hidden = values.length - visible.length;
+  const chosen = current.trim().replace(/\s+/g, ' ').toLowerCase();
+  return <div className="eng-suggestions">
+    <div className="eng-suggestions-head"><span>{title}</span><span>{values.length}</span></div>
+    <div className="eng-chips">{visible.map(v => <button key={v} type="button" className="eng-chip" aria-pressed={chosen === v.toLowerCase()} onClick={() => onPick(v)}>{v}</button>)}</div>
+    {(hidden > 0 || showAll) && <button type="button" className="eng-suggestions-toggle" onClick={() => setShowAll(value => !value)}>{showAll ? fewer : `Show ${hidden} more`}</button>}
+  </div>;
+}
+
 export function ObservationEditor({
   observation,
   index,
   openIssues,
   locations,
+  companies,
   photoWhere,
   onChange,
   onRemove,
@@ -47,6 +62,8 @@ export function ObservationEditor({
   index: number;
   openIssues: Issue[];
   locations: string[];
+  /** Who has been asked to respond on this project before, newest first. */
+  companies: string[];
   /** Whether a photograph has reached the server, when the page knows. */
   photoWhere?: (photoId: string) => Where | undefined;
   onChange: (next: Observation) => void;
@@ -56,7 +73,6 @@ export function ObservationEditor({
 }) {
   const principal = usePrincipal();
   const [photoError, setPhotoError] = useState<string | null>(null);
-  const [showAllLocations, setShowAllLocations] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
 
   const set = <K extends keyof Observation>(key: K, value: Observation[K]) => onChange({ ...observation, [key]: value });
@@ -81,8 +97,6 @@ export function ObservationEditor({
   const kind = observation.type;
   const raisesIssue = kind === "defect" || kind === "access";
   const id = observation.id;
-  const visibleLocations = showAllLocations ? locations : locations.slice(0, 3);
-  const hiddenLocationCount = Math.max(0, locations.length - visibleLocations.length);
 
   function changeKind(next: ObservationType) {
     const copy: Observation = { ...observation, type: next };
@@ -94,11 +108,7 @@ export function ObservationEditor({
   const where = <div className="field">
     <label htmlFor={`loc-${id}`}>Where</label>
     <input id={`loc-${id}`} type="text" value={observation.location} onChange={(e) => set("location", e.target.value)} placeholder="Level 2 — Riser" autoComplete="off" />
-    {locations.length > 0 && <div className="eng-suggestions">
-      <div className="eng-suggestions-head"><span>Recent places</span><span>{locations.length}</span></div>
-      <div className="eng-chips">{visibleLocations.map(l => <button key={l} type="button" className="eng-chip" aria-pressed={observation.location.trim().toLowerCase() === l.toLowerCase()} onClick={() => set("location", l)}>{l}</button>)}</div>
-      {(hiddenLocationCount > 0 || showAllLocations) && <button type="button" className="eng-suggestions-toggle" onClick={() => setShowAllLocations(value => !value)}>{showAllLocations ? 'Show fewer places' : `Show ${hiddenLocationCount} more`}</button>}
-    </div>}
+    <Suggestions title="Recent places" fewer="Show fewer places" values={locations} current={observation.location} onPick={l => set("location", l)} />
     <p className="hint">Choose a recent place or type anything; it does not have to match.</p>
   </div>;
 
@@ -179,8 +189,9 @@ export function ObservationEditor({
         </div>
         <div className="field">
           <label htmlFor={`owner-${id}`}>Who needs to respond</label>
-          <input id={`owner-${id}`} type="text" value={observation.owner} onChange={(e) => set("owner", e.target.value)} placeholder="Name or company" />
-          <p className="hint">Leave blank if you do not know; the office assigns it rather than guessing.</p>
+          <input id={`owner-${id}`} type="text" value={observation.owner} onChange={(e) => set("owner", e.target.value)} placeholder="Name or company" autoComplete="off" />
+          <Suggestions title="Recent companies" fewer="Show fewer companies" values={companies} current={observation.owner} onPick={c => set("owner", c)} />
+          <p className="hint">{companies.length ? 'Choose one or type any name. ' : ''}Leave blank if you do not know; the office assigns it rather than guessing.</p>
         </div>
       </div>}
 

@@ -302,10 +302,10 @@
         "Free text is always accepted; nothing requires a maintained list or exact match",
         "Test for the suggestion source"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Partial: location chips from prior entries exist (app/api/locations/route.ts, ObservationEditor.tsx:90-99). Engineer 'Who needs to respond' has no company suggestions; neither source is tested."
+      "status": "done",
+      "passes": true,
+      "pr": 32,
+      "notes": "Done 2026-10-20: 'Who needs to respond' on defect and access cards offers Recent companies from sent reports' defect/access cards and issue owners on the same project, newest first; Where keeps Recent places. Both now come from one pure rule (lib/suggestions.ts, tests/suggestions.test.ts); drafts never feed suggestions; blank and 'unknown'/'TBC' answers are left out; free text is always accepted. scripts/verify-suggestions.mjs at 390px light and 1440px dark."
     },
     {
       "id": "FE-5a",
