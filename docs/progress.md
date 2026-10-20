@@ -84,6 +84,137 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the follow-up. CLAUDE.md's list of browser checks should gain
   `verify-draft-conflict.mjs`.
 
+## 2026-10-20 — Issue confirmation wording follows the review setting
+
+- A provisional issue said "Not reviewed" in the office register, the office
+  issue sheet and the report reader, and "Not yet reviewed" on the issue page,
+  on every project. Review is off by default, so on most projects nobody will
+  ever review it and the words read as a missed step. Where the project uses
+  review it still says "Not reviewed"; where it does not, it says "As
+  reported", with "stands as the engineer reported it; this project does not
+  use review" on the issue sheet. Confirmed, Disputed and Withdrawn read the
+  same either way. The issue page's "Review" heading and the "Review" history
+  label for a confirmation event are now "Confirmation", since an office
+  confirm on a project without review is not a review.
+- Decisions: only the wording changes. The stored state stays `provisional`,
+  SharePoint still gets "Provisional", and the Confirm and Withdraw buttons
+  are unchanged. The office uses the same per-project rule as the "Not
+  reviewed" chip and count (required, or a report still waiting from when it
+  was), so a row and the count agree; `GET /api/issues/[id]` now returns that
+  `reviewOn` so the issue page words it the same way. The issue page's empty
+  owner now says "Not yet assigned" rather than "Awaiting confirmation",
+  which read as a confirmation step. Rules in `lib/issueConfirmation.ts`
+  (pure).
+- Verified on Node 24: `npm run typecheck`, `npm test` (2 new tests in
+  `tests/issueConfirmation.test.ts`), `npm run build`. `verify-review-queue`
+  now also checks the register row, the issue sheet and the issue page with
+  review in use and off (19 checks, was 12). "In use" there is a report still
+  waiting for review; the check does not switch a project's review setting
+  on, so that path is covered by the unit tests only; screenshots in the project's
+  `ui-review/issue-confirmation/`. `verify-issue-register` (70),
+  `verify-office-actions` (41), `verify-office-landing` (19),
+  `verify-role-access` (61) and `verify-search` (31) passed.
+- Not verified: a live SharePoint tenant, a physical device. Not in
+  `docs/tasks.json`; proposed in the PR.
+## 2026-10-20 — FE-5a: search and filter the issue register
+
+- The office issue register now filters by location text ("riser 2" finds
+  "Level 3, Riser 2"; any order, any case), responsible company (free text,
+  with the companies already named offered as suggestions, nothing to
+  maintain) and verification status: not put forward as fixed, waiting for
+  verification, or verified and closed. A new "All" chip lets the filters
+  reach closed issues too. "Clear filters" puts everything back.
+- Filtering, the chip counts, the order and the paging now run on the
+  server over the whole register the person may see, 50 to a page with
+  Previous and Next and "Showing 51–100 of 113". Before, the register
+  fetched every issue and filtered in the browser. The list refetches when
+  the office records reload, so a verify or assign shows at once.
+- Decisions: company and location match words as typed rather than against
+  a list (FE-1c and EXP-4 keep catalogues out). Company replaces the old
+  exact Owner drop-down; the snag list link carries the company when the
+  text names one, and the snag list now treats owners that differ only in
+  case or spacing as one company. "Not reviewed" counts only projects that
+  use review, as the office position does, and "Verify the oldest" picks
+  from the current search. A withdrawn issue has no verification status,
+  so it only shows with no verification filter. The rest of the office desk
+  (position, counts in the tabs) still uses its loaded snapshot; only the
+  register pages. The engineer Issues view is unchanged.
+- Rules in `lib/issueQuery.ts` (pure); `issueRegister` in
+  `lib/issueStore.ts` applies access first; `GET /api/issues?register=1`
+  returns one page. Other callers of `/api/issues` are unchanged. The
+  office model now reuses the register's overdue, disputed and not-reviewed
+  rules.
+- Verified on Node 24: `npm run typecheck`, `npm test` (10 new tests in
+  `tests/issueQuery.test.ts` and one in `snagList.test.ts`, one in SharePoint read mode with the issue
+  list split over two Graph pages, checking every item on both is reachable
+  through the register's pages and out-of-scope projects are left out),
+  `npm run build`. New `scripts/verify-issue-register.mjs` passed (70 checks:
+  130 seeded issues, paging through all 113 open, each filter, the snag
+  list link, a verify taken from a row, 1440px and 1200px, light and dark).
+  `verify-snag-list` (24, updated for the Company field),
+  `verify-office-actions` (41), `verify-office-landing` (19),
+  `verify-role-access` (61), `verify-review-queue` (12) and `verify-search`
+  (31) passed.
+- Not verified: a live SharePoint tenant (Graph paging is checked with a
+  stubbed client), a register of thousands of issues (the server still
+  reads the whole cache per request, as search does), a physical device.
+- Next: the same filters for the engineer Issues view if engineers ask;
+  CLAUDE.md's list of browser checks should gain
+  `verify-issue-register.mjs`.
+## 2026-10-20 — Since your last visit (new feature, proposed as NEW-5)
+
+- The engineer home now opens its right-hand column with "Since your last
+  visit": what other people recorded on the current project since the
+  engineer's own last report there. Three groups, newest first: reports from
+  others (who, trade, visit day, cards and defects, corrections marked),
+  issues (new, put forward as fixed, checked and closed, reopened, assigned,
+  with "Your trade" on issues for the engineer's trade) and variations (new,
+  instructed, declined, no prices). Each row opens the record and Back
+  returns to the home. Four rows per group, then "Show n more".
+- Why this feature: the first minute back on a site is "what has happened
+  since I was last here?". Today that means opening the reports list, the
+  issue register and asking the office. Engineers move between sites, so
+  this is the screen they see every time they arrive. It reads only what is
+  already recorded: no new store, no "mark as read", no setup, no SharePoint
+  write and no email.
+- Decisions: the last visit is the engineer's latest original report on the
+  project from an earlier day (today's report does not count, so the list
+  still makes sense after sending today's update; a correction sent later is
+  not a visit). Everything received by the server after that report was
+  received counts as new. With no earlier report it shows the last 7 days and
+  says so. The engineer's own reports and acts, and issues and variations
+  they raised, are left out, because "Came back from the office" already
+  shows the office's answers to those; nothing appears twice. Each issue and
+  variation shows once, by its latest change, and only if that change still
+  stands (a closed issue that was reopened shows as reopened); one whose
+  latest change was the engineer's own is left out. Withdrawn
+  issues and drafts are left out; a sent correction stands in for the report
+  it corrects. Rules in `lib/sinceLastVisit.ts`, served by
+  `/api/since-last-visit` with the weekly summary's project rule.
+- Not EXP-1: the site diary is a chronological project timeline. This is a
+  short, personal catch-up on the home screen and leaves the diary to its
+  own task. Not EXP-2 or EXP-4: no requests or routing, locations are free
+  text as written.
+- Verified: `npm run typecheck`, `npm test` (6 new tests in
+  `tests/sinceLastVisit.test.ts`), `npm run build`. New
+  `scripts/verify-since-last-visit.mjs` passed (33 checks: 390px light and
+  1440px dark, starting report named, others' report listed, earlier
+  reports, drafts, other projects and own work left out, your-trade marking,
+  show more, back navigation, a second engineer's view, a first-time engineer
+  sees 7 days, an empty project says so, signed-out and unknown-project
+  refusals, no sideways scroll). A fresh-context review found no access
+  gaps; its fix (an issue the engineer moved last is not shown with an
+  older change, such as "Reopened" after they put it forward as fixed) is in. `verify-engineer-layout`,
+  `verify-role-access` (61), `verify-unfinished-reports` (18) and
+  `verify-engineer-nav` (60) still pass. Screenshots (not in the repo) are in
+  the RELAY project's shared files under `ui-review/since-last-visit/`.
+- Not verified: a physical phone, SharePoint mode (no live tenant), a
+  project with thousands of records (it reads the project's records per
+  request, like the weekly summary).
+- Next: CLAUDE.md's list of browser checks should gain
+  `verify-since-last-visit.mjs`. If engineers use it, the same catch-up for a
+  project manager on the office project page.
+
 ## 2026-10-20 — Photo library per project (new feature, proposed as NEW-4)
 
 - New page `/photos`: every photograph on one project, newest first, grouped

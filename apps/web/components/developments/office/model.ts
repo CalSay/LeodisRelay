@@ -3,7 +3,9 @@ import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import type { Tone } from '@/lib/status';
 import { INSTRUCTION_LABEL } from '@/lib/variations';
 import { reviewInUse } from '@/lib/reviewQueue';
+import { confirmationLabel } from '@/lib/issueConfirmation';
 import { isActiveIssue, isUnassigned, isVerify, notAcknowledged } from '@/lib/officeActions';
+import { isDisputedIssue, isNotReviewedIssue, isOverdueIssue } from '@/lib/issueQuery';
 
 export { isUnassigned, isVerify, notAcknowledged };
 
@@ -19,9 +21,10 @@ export interface Snapshot { reports: ReportSummary[]; drafts: ReportSummary[]; i
 export const today = (): string => new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
 
 export const isActive = isActiveIssue;
-export const isOverdue = (i: Issue, day: string): boolean => isActive(i) && /^\d{4}-\d{2}-\d{2}$/.test(i.targetDate) && i.targetDate < day;
-export const isNotReviewed = (i: Issue): boolean => isActive(i) && i.confirmation === 'provisional';
-export const isDisputed = (i: Issue): boolean => isActive(i) && i.confirmation === 'disputed';
+// The register's rules, shared with the server query. Where review is off, projectStats leaves "not reviewed" empty, as the register does.
+export const isOverdue = isOverdueIssue;
+export const isNotReviewed = isNotReviewedIssue;
+export const isDisputed = isDisputedIssue;
 export const isClosed = (i: Issue): boolean => i.work === 'closed';
 
 /** Awaiting instruction with no quote yet: the office has not priced it, so nobody can be asked to instruct it. */
@@ -131,7 +134,6 @@ export const KIND: Record<ObservationType, { one: string; many: string; tone: st
 };
 
 export const WORK_LABEL: Record<Issue['work'], string> = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Verify', closed: 'Closed' };
-export const CONFIRM_LABEL: Record<Issue['confirmation'], string> = { provisional: 'Not reviewed', confirmed: 'Confirmed', disputed: 'Disputed', withdrawn: 'Withdrawn' };
 export function workTag(i: Issue, day: string): { label: string; cls: string } {
   if (i.confirmation === 'withdrawn') return { label: 'Withdrawn', cls: 'tag-quiet' };
   if (i.work === 'closed') return { label: 'Closed', cls: 'tag-ok' };
@@ -139,8 +141,9 @@ export function workTag(i: Issue, day: string): { label: string; cls: string } {
   if (i.work === 'awaiting_verification') return { label: 'Verify', cls: 'tag-caution' };
   return { label: WORK_LABEL[i.work], cls: i.work === 'open' ? 'tag-quiet' : 'tag-acc' };
 }
-export function confirmTag(i: Issue): { label: string; cls: string } {
-  return { label: CONFIRM_LABEL[i.confirmation], cls: i.confirmation === 'confirmed' ? 'tag-ok' : i.confirmation === 'disputed' ? 'tag-alert' : 'tag-quiet' };
+/** Where the project does not use review, a provisional issue reads "As reported", not "Not reviewed". */
+export function confirmTag(i: Issue, reviewOn: boolean): { label: string; cls: string } {
+  return { label: confirmationLabel(i.confirmation, reviewOn), cls: i.confirmation === 'confirmed' ? 'tag-ok' : i.confirmation === 'disputed' ? 'tag-alert' : 'tag-quiet' };
 }
 /**
  * The instruction state as a word and a shape. Work done without an

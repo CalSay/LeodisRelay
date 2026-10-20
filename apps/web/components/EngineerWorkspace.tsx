@@ -12,6 +12,7 @@ import { usePrincipal } from './PrincipalContext';
 import { ownsReport } from '@/lib/auth/access';
 import { EngineerIssueList } from './EngineerIssueList';
 import { IndividualDefect } from './IndividualDefect';
+import { SinceLastVisit } from './SinceLastVisit';
 import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
 import { fmtMoney, variationValue } from '@/lib/variations';
 import { projectStatusGroups } from '@/lib/projectGroups';
@@ -194,6 +195,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
             </div>
           </section>
         </div><div>
+          <SinceLastVisit key={project.id} projectId={project.id} returnTo={engineerReturn()}/>
           <div className="eng-section-title"><h2>Came back from the office</h2><span className="r">{back ? back.rows.length : '…'}</span></div>
           <div className="eng-list">
             {!back ? <div className="eng-empty">Checking with the office…</div>

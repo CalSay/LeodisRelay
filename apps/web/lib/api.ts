@@ -8,10 +8,12 @@
  */
 
 import type { FixtureProject } from "./fixtures";
+import { issueQueryParams, type IssuePage, type IssueQuery } from './issueQuery';
 import type { Issue, Observation, Photo, Report, ReportSummary, Variation } from "./types";
 import { capturePhoto, uploadPhotos } from './localMedia';
 import { localSaveJournal } from './localSaveJournal';
 import { SaveConflict, saveWithJournal, type SaveRequest } from './saveRequest';
+import type { SinceLastVisit } from './sinceLastVisit';
 
 const REPORTABLE_STATUSES = ["4. Active", "5. Defects Liability"];
 
@@ -192,6 +194,13 @@ export async function allIssues(): Promise<Issue[]> {
   return data.issues;
 }
 
+/** One page of the issue register, filtered, counted and ordered on the server. */
+export async function issueRegister(query: Partial<IssueQuery>): Promise<IssuePage> {
+  const params = issueQueryParams(query);
+  params.set('register', '1');
+  return parse<IssuePage>(await request(`/api/issues?${params}`, { cache: 'no-store' }));
+}
+
 /** One issue command, attributed by the server to whoever is signed in. */
 export async function issueCommand(issueId: string, body: { kind: string; note: string; owner?: string; targetDate?: string; expectedEtag?: string }): Promise<Issue> {
   return parse<Issue>(await request(`/api/issues/${issueId}`, {
@@ -270,6 +279,10 @@ export async function allVariations(): Promise<Variation[]> {
 export async function projectVariations(projectId: string): Promise<Variation[]> {
   const data = await parse<{ variations: Variation[] }>(await request(`/api/variations?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
   return data.variations;
+}
+/** What others recorded on the project since the signed-in person's last visit. */
+export async function sinceLastVisit(projectId: string): Promise<SinceLastVisit> {
+  return parse(await request(`/api/since-last-visit?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
 }
 export async function getVariation(id: string): Promise<Variation> {
   return parse<Variation>(await request(`/api/variations/${id}`, { cache: 'no-store' }));

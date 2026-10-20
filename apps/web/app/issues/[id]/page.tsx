@@ -11,6 +11,7 @@ import { uploadPhotos } from '@/lib/localMedia';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { safeViewReturn } from '@/lib/viewNavigation';
+import { confirmationLabel } from '@/lib/issueConfirmation';
 
 /**
  * One issue, across every visit that touched it.
@@ -32,8 +33,8 @@ const WORK_LABEL: Record<Issue["work"], string> = {
   closed: "Closed",
 };
 
-const CONFIRM_LABEL: Record<Issue["confirmation"], string> = {
-  provisional: "Not yet reviewed",
+// Provisional reads by whether review is in use (the API says); see confirmationLabel.
+const CONFIRM_LABEL: Record<Exclude<Issue["confirmation"], "provisional">, string> = {
   confirmed: "Confirmed",
   disputed: "Disputed — needs triage",
   withdrawn: "Withdrawn",
@@ -45,7 +46,7 @@ const EVENT_LABEL: Record<string, string> = {
   closure_submitted: "Closure submitted",
   verified: "Verified closed",
   reopened: "Reopened",
-  confirmation: "Review",
+  confirmation: "Confirmation",
   assigned: "Assigned",
 };
 
@@ -57,6 +58,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   const returnTo = use(searchParams).returnTo;
   const [issue, setIssue] = useState<Issue | null>(null);
   const [missing, setMissing] = useState(false);
+  const [reviewOn, setReviewOn] = useState(false);
   const [note, setNote] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [busy, setBusy] = useState(false);
@@ -65,7 +67,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   useEffect(() => {
     fetch(`/api/issues/${id}`, { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : Promise.reject()))
-      .then(setIssue)
+      .then(({ reviewOn, ...found }: Issue & { reviewOn?: boolean }) => { setIssue(found); setReviewOn(!!reviewOn); })
       .catch(() => setMissing(true));
   }, [id]);
 
@@ -147,10 +149,10 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
       {/* Two axes, stated separately and never merged into one status. */}
       <dl className="titleblock" style={{ marginTop: 24 }}>
         <div className="tb-cell"><dt>Work status</dt><dd>{WORK_LABEL[issue.work]}</dd></div>
-        <div className="tb-cell"><dt>Review</dt><dd>{CONFIRM_LABEL[issue.confirmation]}</dd></div>
+        <div className="tb-cell"><dt>Confirmation</dt><dd>{issue.confirmation === "provisional" ? confirmationLabel("provisional", reviewOn) : CONFIRM_LABEL[issue.confirmation]}</dd></div>
         <div className="tb-cell">
           <dt>Owner</dt>
-          <dd>{issue.owner.trim() || "Awaiting confirmation"}</dd>
+          <dd>{issue.owner.trim() || "Not yet assigned"}</dd>
         </div>
         <div className="tb-cell">
           <dt>Raised</dt>
