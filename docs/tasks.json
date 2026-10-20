@@ -377,7 +377,7 @@
       ],
       "status": "in_progress",
       "passes": false,
-      "pr": null,
+      "pr": 41,
       "notes": "First slice built (offline capture PR): with no signal RELAY opens on the offline page, which can start a site update, add and remove cards and photos, and change reports already held; it all goes up by itself when RELAY opens with signal. Scope decided by Claude under Cal's standing autonomy (2026-10-20 14:11), recorded in docs/progress.md. Not checked on physical iOS or Android phones, so passes stays false."
     },
     {
