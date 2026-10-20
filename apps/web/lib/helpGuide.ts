@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'issue-trend', added: '2026-10-20', audience: 'all', title: 'Issues over time',
+    text: 'See whether a project\'s issue list is getting shorter: for the last 12 weeks, how many issues were raised and closed each week and how many were still open, and past target, at the end of it. Opens from "This project" on your home screen and from the office project sheet.',
+    link: { label: 'Open Issues over time', href: '/issue-trend' } },
   { id: 'office-desk-tidy', added: '2026-10-20', audience: 'office', title: 'A tidier office desk',
     text: 'Clicking a variation in the Variations register now opens it, the register fits a laptop screen without scrolling sideways, and the report stages in the Inbox reader no longer run into each other. Inbox, Issues and Variations each have Clear filters, and an empty list says what it means, such as "Every report has been read".' },
   { id: 'offline-sign', added: '2026-10-20', audience: 'site', title: 'Sign an inspection with no signal',
@@ -110,6 +113,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Snag list', href: '/issues/snag-list', audience: 'all', text: 'Open issues for one company or trade, to print.' },
   { label: 'Safety actions', href: '/safety-actions', audience: 'all', text: 'What the safety inspections found, until it is put right.' },
   { label: 'Before handover', href: '/handover', audience: 'all', text: 'Everything still open on one project, as it nears completion.' },
+  { label: 'Issues over time', href: '/issue-trend', audience: 'all', text: 'Whether a project\'s issue list is getting shorter, week by week.' },
   { label: 'My week', href: '/my-week', audience: 'all', text: 'Your own week across every project.' },
   { label: 'Site coverage', href: '/coverage', audience: 'office', text: 'Which live projects have gone quiet.' },
   { label: 'Issues by company', href: '/companies', audience: 'office', text: 'Who to chase, and for what.' },
