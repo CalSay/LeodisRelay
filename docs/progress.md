@@ -4,6 +4,79 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Unsaved changes when a draft is sent from another screen (FE-3c follow-up)
+
+- Before: if a draft was sent from another tab or device while this screen
+  held changes the server never had, every later save was refused with "This
+  report has already been submitted", the save state said "Not saved — check
+  connection", and the changes stayed stuck in the editor and the device's
+  held copy with no way forward. A held copy found after a reload was
+  ignored and left on the device.
+- Now the screen switches to the sent report with a "Sent from another
+  screen" panel above it: when it was sent, how many changes on this screen
+  were not in it, and each one by card ("Changed here", "Added here",
+  "Removed here"). Two actions: "Start a correction with my changes" (with a
+  suggested reason the engineer can change) and "Discard my changes" (asks
+  first). Until one is chosen the changes are set aside on the device under
+  this tab's key, so a reload comes back to the same panel. A screen with
+  nothing unsaved just shows the sent report.
+- Starting the correction makes the usual rev + 1 draft and saves the
+  changes into it at once, then opens it. The sent revision and its snapshot
+  are never changed. Defect and access cards keep the issue link the
+  correction gives them, so sending it adds sightings, not new issues.
+- Server: a draft save refused because the report was sent now answers like
+  any other refused save (409 with `current`, the sent report, to the author
+  only), including the retried-request path. Tabs also announce a send, and a
+  check for a newer copy now looks at the state first, since sending changes
+  no version.
+- Decisions: what goes into the correction is the sent report with this
+  screen's own changes laid on top (`lib/sentElsewhere.ts`). Where the screen
+  knows the server copy it built on, a card the other screen changed or
+  removed, and this one left alone, keeps the sent version, so starting a
+  correction never quietly undoes what was sent. Where both changed a card,
+  or the base is unknown, this screen's wording goes in and the card says to
+  check it: the engineer chose to carry their changes, the sent wording stays
+  on file in the sent revision, and the correction is checked before it is
+  sent. The base is also known after a reload when the held copy was built on
+  the version that was sent (sending does not change the version). The
+  signature is not carried; a correction is signed when it is sent. If a
+  correction to the report already exists and has been changed, or the save
+  into it is refused, the changes are set aside against it at version 0, so
+  its editor shows the existing FE-3c comparison before anything is saved;
+  with no connection they are held on the device and save when it opens. If
+  this device holds unsaved work for that correction, the panel says to open
+  it first (with a link) rather than set it aside on top. If a correction was
+  already sent, the changes are judged again against that revision with the
+  same base and carried into a correction of it, so its changes are not
+  undone either.
+- A card one screen removed while the other edited it is kept in the
+  correction and listed with a note ("Removed here, kept", or "The other
+  screen removed this card before sending"), so neither side is dropped
+  without being shown. The set-aside copy keeps the version the work was
+  built on, so a reload gives the same offer.
+- Verified on Node 24: `npm run typecheck`, `npm test` (9 new tests in
+  `tests/sentElsewhere.test.ts`: what is carried with and without a base,
+  both-changed cards, a card removed on one side and edited on the other, issue links, a save refused with the sent report on
+  the real store including the retried-request path, and the changes saved
+  into a new correction while the original stays as sent), `npm run build`.
+  New `scripts/verify-sent-elsewhere.mjs` passed (33 checks: two tabs on a
+  phone at 390px light, one sending through the UI while the other held an
+  edit; the panel, a reload, the correction opening at rev 2 with the change
+  saved and nothing left held for the sent report; a laptop at 1440px dark
+  offline while another device changed and sent the draft: an edit and an
+  added card listed, the other device's change not listed, a tab with
+  nothing unsaved taking the sent report quietly, Discard asking first and
+  leaving nothing held, no correction made). `verify-draft-conflict`,
+  `verify-report-editor`, `verify-engineer-layout`,
+  `verify-signature-reload`, `verify-role-access`,
+  `verify-unfinished-reports`, `verify-offline-drafts`,
+  `verify-submission-stages`, `verify-undo-remove` and `verify-photo-uploads`
+  passed. Screenshots in the project's `ui-review/sent-elsewhere/`.
+- Not verified: a physical phone, Safari and Firefox, two devices on a real
+  network (a direct store write and send stands in for the other device), a
+  screen reader. Proposed: add `verify-sent-elsewhere.mjs` to the browser
+  checks list in `CLAUDE.md`.
+
 ## 2026-10-20 — Open issues by company (new feature, proposed as NEW-7)
 
 - New office page `/companies`, opened from "By company" on the office
