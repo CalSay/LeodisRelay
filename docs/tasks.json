@@ -411,7 +411,7 @@
       ],
       "status": "done",
       "passes": true,
-      "pr": null,
+      "pr": 10,
       "notes": "Engineers had no way to find past work; the office search only looks at loaded records by reference and title. lib/search.ts, app/api/search, app/search, components/SearchPage.tsx; Search link in the engineer navigation. Office desk unchanged (office lane). Loads every record per search, fine for the pilot's volume; revisit with SQLite FTS if it grows."
     }
   ]
