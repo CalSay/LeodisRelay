@@ -4,6 +4,41 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — FE-6b: traceable corrections and revisions
+
+- Issue history events now record the report revision behind them: an
+  optional `source` with the report ID, reference, revision, the update
+  (observation) ID and, for a correction, the report it corrects. Set on the
+  "raised" event, on a sighting added from a later report or a correction,
+  and on the confirm or dispute recorded when a report is reviewed. Changes
+  made on the issue itself (assign, close, verify, notes) carry none.
+- The issue page shows each one under the actor as a link to that report,
+  e.g. "From 011LME-SPR-001 rev 2, which corrects rev 1" or "Review of …".
+  Issues recorded before this keep no source; their first "raised" event
+  still links the report that raised it ("From the report that raised it")
+  from `raisedByReport`, which never changes. Older sightings are not
+  guessed from their note text.
+- Already in place and now tested: `correctReport` makes a new draft with its
+  own ID at revision + 1, and neither opening nor sending it touches the
+  original report or its sent snapshot.
+- Decisions: provenance is a structured field on the event rather than more
+  note text, so the site diary (EXP-1) can build on it without parsing. The
+  corrected revision is shown as rev − 1, since a correction is only made
+  from a sent report and takes its revision + 1. Events stay in RELAY's store
+  only (SharePoint issue sync keeps the local history), so nothing changes in
+  SharePoint. The report link has a 32px tap height.
+- Verified on Node 24: `npm run typecheck`, `npm test` (8 new tests in
+  `tests/issueProvenance.test.ts`), `npm run build`, new
+  `scripts/verify-issue-provenance.mjs` (18 checks, 390px light and 1440px
+  dark). `verify-role-access`, `verify-issue-register`,
+  `verify-engineer-layout`, `verify-search`, `verify-weekly-summary`,
+  `verify-since-last-visit` and `verify-photo-library` passed. Screenshots in
+  the project's `ui-review/issue-provenance/`.
+- Not verified: a physical phone, a live SharePoint tenant. Proposed: add
+  `verify-issue-provenance.mjs` to the browser checks list in `CLAUDE.md`.
+  Next on this lane: EXP-1 (living site diary), which can now link each
+  entry to its report and revision.
+
 ## 2026-10-20 — FE-1d: undo removing a card or photograph
 
 - Removing a card or a photograph in the report editor still happens at

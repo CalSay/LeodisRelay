@@ -399,6 +399,15 @@ a {
   margin: 3px 0 0;
 }
 
+/* The report revision behind an issue change (FE-6b): a tap target, not just a line. */
+.issue-event-source a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .row-meta .sep {
   color: var(--text-3);
   padding: 0 6px;

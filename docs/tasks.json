@@ -338,10 +338,10 @@
         "Issue changes from a correction record which revision made them",
         "Tests for revision and provenance"
       ],
-      "status": "todo",
-      "passes": false,
+      "status": "done",
+      "passes": true,
       "pr": null,
-      "notes": "Mostly built: correctReport creates a new revision; snapshot unchanged. Issue provenance is note text only (IssueEvent has no reportId/revision); no test that the sent snapshot is unchanged."
+      "notes": "Issue events now carry source {reportId, reference, revision, observationId, corrects} for raised, sighting and review-decision events; the issue history links each to its report revision. Tests in apps/web/tests/issueProvenance.test.ts; browser check scripts/verify-issue-provenance.mjs."
     },
     {
       "id": "EXP-1",

@@ -172,6 +172,21 @@ export type IssueEventKind =
   | "confirmation"
   | "assigned";
 
+/**
+ * The report revision behind an issue change (FE-6b). A correction is a new
+ * report with its own ID and a higher revision, so an event that names both
+ * says which version of the record made it, not just which visit.
+ */
+export interface IssueEventSource {
+  reportId: string;
+  reference: string;
+  revision: number;
+  /** The update inside that report; absent for a review decision on the whole report. */
+  observationId?: string;
+  /** Set when that revision corrects an earlier one: the report it replaces. */
+  corrects?: string;
+}
+
 export interface IssueEvent {
   actorId?: string;
   at: string;
@@ -179,6 +194,8 @@ export interface IssueEvent {
   kind: IssueEventKind;
   note: string;
   photos: Photo[];
+  /** Absent on changes made on the issue itself, and on events recorded before FE-6b. */
+  source?: IssueEventSource;
 }
 
 export interface Issue {
