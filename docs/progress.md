@@ -4,6 +4,65 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — EXP-5: second report type, a pre-handover inspection
+
+- New report type on the #39 engine: a **handover inspection**
+  (`Pre-Handover Inspection`, numbered `011LME-PHI-001`). An engineer walks
+  one area before it is handed over and answers 12 fixed checks on Leodis's
+  own M&E work: containment, pipework and ductwork, fittings, fire-stopping,
+  access panels, ceiling voids ready to close, labelling, testing,
+  commissioning, making good, clean and film off, and paperwork for the O&M
+  manual. Answers are the same three (Satisfactory, Action needed, Not
+  applicable); a drawn signature is required, as for a safety inspection.
+- The one rule that differs: **each "Action needed" raises an issue** on the
+  snag list when the inspection is sent, like a defect card on a site update.
+  So an action also asks **Where** (required, with recent places offered),
+  and the issue carries where, what is wrong, what needs doing, who, and the
+  photographs. A safety inspection still raises nothing.
+- Why this type and this rule: a pre-handover walk is the inspection an M&E
+  site engineer does most after weekly safety, and the one the office and the
+  client ask about ("is level 2 ready to close up?"). Unlike safety actions,
+  what it finds is unfinished or faulty work of our own, which is exactly what
+  the snag list tracks to closure; keeping those actions only on a PDF would
+  make the type worse than a site update with defect cards. Raised issues go
+  through the existing provisional/confirmed review and SharePoint issue sync
+  unchanged. Not FE-2, EXP-2 or EXP-4: no new photo workflow, no routing,
+  locations stay free text. The 12 checks are Claude's first set, kept in
+  `HANDOVER_CHECKLIST` for Cal or a contracts lead to change.
+- Built as framework, not a one-off: `raisesRecords` now also means "a
+  checklist's actions raise issues" (`raisesIssue` in `lib/reportTypes.ts`),
+  used by the issue store, corrections, the check step, the office sheet and
+  the site diary. The engineer home shows one tile per checklist type
+  (`CHECKLIST_TYPES`), so a third type needs no new home code.
+- Corrections: a correction points each action at the issue it raised, so
+  sending it adds a "Corrected in … rev 2" sighting rather than a second issue
+  (as `correctReport` already does for defects). A save cannot set or drop that
+  link itself (`invalidShape`). Sent revisions are untouched.
+- Where it reads back: the check step ("1 issue raised · not yet reviewed",
+  "raise issues"), the sent view, PDF and preview (actions and notes titled
+  "question · where"), the office report sheet (each action links its issue
+  instead of "On this inspection"), the site diary (card with where and its
+  issue), the photo library, the notification email text (still held in the
+  outbox). Weekly summary, My week, since your last visit, search and
+  unfinished reports read the type's name already and needed no change.
+- Verified on Node 24: `npm run typecheck`, `npm test` (6 new tests in
+  `tests/handoverInspection.test.ts`), `npm run build`. New
+  `scripts/verify-handover-inspection.mjs` passed (99 checks, 390px light and
+  1440px dark): start from home beside the other two tiles, Where hidden until
+  Action needed, all 12 answered, a missing Where stops sending and says why,
+  the draft PDF's words, drawn signature, send, one issue raised with where,
+  what, action, owner and photograph, no variation, sent view, site diary card
+  naming its issue, the office sheet linking the issue, the issue page.
+  Browser checks re-run: see the PR.
+- Not verified: a physical phone, the PDF rendered by the worker after sending
+  (the draft PDF uses the same renderer), SharePoint mode (no live tenant), and
+  starting a handover inspection offline (the offline page starts site updates
+  only; see the PR for how it reads a held one).
+- Proposed next (not built): an area field on the inspection itself (one
+  place for the whole walk, prefilled into each action); a third type such as
+  a commissioning record with readings; let the office edit checklists; add
+  `verify-handover-inspection.mjs` to the browser checks in `CLAUDE.md`.
+
 ## 2026-10-20 — Navigation and consistency pass
 
 - Why: a dozen pages landed today, each from its own thread, and each named

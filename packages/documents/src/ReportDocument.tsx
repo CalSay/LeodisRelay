@@ -299,6 +299,10 @@ function formatVisitDate(iso: string): string {
     : date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 }
 
+/** A card is titled by where it is; a check by its question, and where, if the action says (a handover inspection's do). */
+const itemTitle = (o: { location: string; check?: { question: string } | undefined }): string =>
+  o.check ? `${o.check.question}${o.location.trim() ? ` · ${o.location.trim()}` : ""}` : o.location || "Location not recorded";
+
 export function ReportDocument({ report }: { report: DocReport }) {
   const inspection = report.inspection === true;
   const actions = report.observations.filter((o) =>
@@ -383,7 +387,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
             {actions.map((observation, index) => (
               <View key={observation.id} style={s.tr} wrap={false}>
                 <Text style={[s.td, s.cNo]}>{String(index + 1).padStart(2, "0")}</Text>
-                <Text style={[s.td, s.cItem]}>{observation.check?.question ?? (observation.location || "Location not recorded")}</Text>
+                <Text style={[s.td, s.cItem]}>{itemTitle(observation)}</Text>
                 <Text style={[s.td, s.cAction]}>
                   {observation.actionNeeded.trim() || "To be determined"}
                 </Text>
@@ -441,7 +445,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
 
               <View style={[s.obsBody, { borderLeftColor: tone.rule }]}>
                 <View style={s.obsHead} wrap={false}>
-                  <Text style={s.obsTitle}>{observation.check?.question ?? (observation.location || "Location not recorded")}</Text>
+                  <Text style={s.obsTitle}>{itemTitle(observation)}</Text>
                   <View
                     style={[
                       s.chip,

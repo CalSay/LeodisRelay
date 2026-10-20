@@ -7,7 +7,7 @@ import { cachedProject, cachedProjects, reportableProject } from './projects';
 import { sharePointMode } from './sharepoint/config';
 import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } from './issueStore';
 import { raiseVariationsFromReport } from './variationStore';
-import { reportTypeOf, startingCards, type ReportTypeId } from './reportTypes';
+import { raisesIssue, reportTypeOf, startingCards, type ReportTypeId } from './reportTypes';
 import { atomic, getRecord, putRecord, records, pageRecords, enqueue, database } from './storage';
 
 /** `current`: on a draft save that lost a race, the draft as the server now holds it, so the author can compare. */
@@ -142,7 +142,7 @@ export async function submitReport(id: string, signature?: { dataUrl?: string; n
     };
     putRecord('reports',submitted);
     putRecord('snapshots',submitted);
-    // An inspection's actions stay on the inspection: it raises no issues or variations.
+    // A safety inspection's actions stay on the inspection; a handover inspection's raise issues.
     if (reportTypeOf(submitted).raisesRecords) {
       raiseFromReport(submitted);
       // Variations are raised beside issues, so the office sees both the moment the report lands.
@@ -188,7 +188,7 @@ export function correctReport(id: string, reason: string): StoreOutcome<Report> 
     // raising the same defect again under a new reference.
     const raised = records<Issue>('issues',original.projectId).filter(i => i.raisedByReport === id);
     const observations = base.observations.map(o => {
-      if (o.linkedIssueId || (o.type !== 'defect' && o.type !== 'access')) return o;
+      if (o.linkedIssueId || (o.type !== 'defect' && o.type !== 'access' && !raisesIssue(reportTypeOf(original), o))) return o;
       const match = raised.find(i => i.raisedByObservation === o.id)
         ?? raised.find(i => !i.raisedByObservation && i.location === o.location && i.description === o.whatHappened);
       return match ? { ...o, linkedIssueId: match.id } : o;

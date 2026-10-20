@@ -29,7 +29,7 @@ function Card({ c, entry, here }: { c: DiaryCard; entry: DiaryEntry; here: strin
   const [label, tone] = c.check ? [c.check.answer, c.check.tone === 'action' ? 'defect' : 'progress'] : KIND[c.type] ?? ['Update', 'progress'];
   const extra = c.photos.length - PHOTOS_SHOWN;
   return <li className={`diary-card diary-tone-${tone}`}>
-    <p className="diary-card-head"><span className="diary-kind">{label}</span>{c.check ? <strong>{c.check.question}</strong> : c.location ? <strong>{c.location}</strong> : <span className="diary-muted">No location recorded</span>}</p>
+    <p className="diary-card-head"><span className="diary-kind">{label}</span>{c.check ? <strong>{c.check.question}{c.location ? ` · ${c.location}` : ''}</strong> : c.location ? <strong>{c.location}</strong> : <span className="diary-muted">No location recorded</span>}</p>
     {c.whatHappened && <p className="diary-text">{c.whatHappened}</p>}
     {c.actionNeeded && <p className="diary-sub"><span>Action needed</span>{c.actionNeeded}</p>}
     {c.owner && <p className="diary-sub"><span>Who</span>{c.owner}</p>}
