@@ -1,5 +1,5 @@
 import type { Observation, Report, ReviewFinding } from "./types";
-import { reportTypeOf } from "./reportTypes";
+import { raisesIssue, reportTypeOf } from "./reportTypes";
 
 /**
  * What is missing before a report can be sent.
@@ -75,10 +75,12 @@ export function reviewReport(report: Report): ReviewFinding[] {
  * says what is wrong and what has to happen; who is to do it, and a
  * photograph, are worth adding but do not stop it. A satisfactory or not
  * applicable check needs nothing more. The person who inspected signs for
- * it, with a drawn signature.
+ * it, with a drawn signature. Where an action raises an issue (a handover
+ * inspection), it must also say where, as every issue on the snag list does.
  */
 function reviewInspection(report: Report): ReviewFinding[] {
   const findings: ReviewFinding[] = [];
+  const type = reportTypeOf(report);
   const short = (o: Observation) => o.check?.question ?? 'A check';
   for (const o of report.observations) {
     const answer = o.check?.answer;
@@ -88,6 +90,7 @@ function reviewInspection(report: Report): ReviewFinding[] {
     }
     if (answer !== 'action') continue;
     if (!o.whatHappened.trim()) findings.push({ observationId: o.id, field: 'whatHappened', message: `${short(o)}: say what is wrong`, blocking: true });
+    if (raisesIssue(type, o) && !o.location.trim()) findings.push({ observationId: o.id, field: 'location', message: `${short(o)}: say where, for the snag list`, blocking: true });
     if (!o.actionNeeded.trim()) findings.push({ observationId: o.id, field: 'actionNeeded', message: `${short(o)}: say what needs doing`, blocking: true });
     if (!o.owner.trim()) findings.push({ observationId: o.id, field: 'owner', message: `${short(o)}: nobody is named to do it`, blocking: false });
     if (o.photos.length === 0) findings.push({ observationId: o.id, field: 'photos', message: `${short(o)}: a photograph shows what was found`, blocking: false });

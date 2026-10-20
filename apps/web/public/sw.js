@@ -1,4 +1,4 @@
-const CACHE = 'relay-public-v5';
+const CACHE = 'relay-public-v6';
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(['/offline.html','/offline.js'])));
 });

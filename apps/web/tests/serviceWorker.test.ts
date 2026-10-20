@@ -14,7 +14,7 @@ const publicFile = (name: string) => readFileSync(resolve(__dirname, '../../publ
  * files to the cache name: change either file, bump CACHE in public/sw.js and
  * record the new name and digest here.
  */
-const RECORDED = { cache: 'relay-public-v5', digest: 'e595bd2aa77ec28c7800fbf4777e58b9cd20ad22090c193ca2d323ab118f2833' };
+const RECORDED = { cache: 'relay-public-v6', digest: 'cad129f81e4533fd21664a9c929b2c7ffe6eb1e68809de9b419f99403d10f05e' };
 
 test('the offline files have not changed under the same service worker cache name', () => {
   const cache = /const CACHE = '([^']+)'/.exec(publicFile('sw.js'))?.[1];

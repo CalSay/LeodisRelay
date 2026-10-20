@@ -949,6 +949,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         index={index}
         total={report.observations.length}
         hint={checkHint(type, observation.check?.item ?? '')}
+        raises={type.raisesRecords}
+        locations={suggestions.locations}
         companies={suggestions.companies}
         photoWhere={(photoId) => { const w = whereOf.get(observation.id); const at = observation.photos.findIndex(p => p.id === photoId); return w && at >= 0 ? w.each[at] : undefined; }}
         // Held open by choice once touched: the default (first one unanswered) moves on as soon as it is answered.
@@ -1080,7 +1082,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         <div className="sec"><span className="lbl">{checklist ? `${type.name} · ${answers.action} action${answers.action === 1 ? '' : 's'}` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`} · {photos} photograph{photos === 1 ? '' : 's'}</span></div>
         {checklist ? report.observations.map((o, i) => { const action = o.check?.answer === 'action'; return <section key={o.id} className={`eng-sent-card ${action ? 'tone-defect' : 'tone-neutral'}`}>
           <div className="head"><span className="lbl">Check {String(i + 1).padStart(2, '0')}</span><span className={`kind answer-${o.check?.answer ?? 'open'}`}>{CHECK_ANSWERS.find(a => a.value === o.check?.answer)?.label ?? 'Not answered'}</span></div>
-          <p><b>{o.check?.question}</b>{o.whatHappened.trim() ? <><br />{o.whatHappened}</> : null}</p>
+          <p><b>{o.check?.question}</b>{o.location.trim() ? <> · {o.location}</> : null}{o.whatHappened.trim() ? <><br />{o.whatHappened}</> : null}</p>
           {(o.actionNeeded.trim() || o.owner.trim()) && <small>{o.actionNeeded.trim() && `Action: ${o.actionNeeded}`}{o.actionNeeded.trim() && o.owner.trim() && ' · '}{o.owner.trim() && `For: ${o.owner}`}</small>}
           {o.photos.length > 0 && <small>{o.photos.length} photograph{o.photos.length === 1 ? '' : 's'}</small>}
         </section>; }) : report.observations.length === 0 ? <div className="empty">No updates were recorded on this visit.</div> : report.observations.map((o, i) => { const k = kindOf(o); return <section key={o.id} className={`eng-sent-card tone-${k?.tone ?? 'neutral'}`}>
@@ -1141,7 +1143,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           <div className="sec"><span className="lbl">{checklist ? 'In this inspection' : 'In this report'}</span></div>
           {checklist ? <dl className="eng-sum">
             <div><dt>Satisfactory</dt><dd>{answers.ok}</dd></div>
-            <div><dt>Action needed</dt><dd className={answers.action ? 'late' : ''}>{answers.action}<small>{answers.action ? 'on the action list' : ''}</small></dd></div>
+            <div><dt>Action needed</dt><dd className={answers.action ? 'late' : ''}>{answers.action}<small>{answers.action ? (type.raisesRecords ? 'raise issues' : 'on the action list') : ''}</small></dd></div>
             <div><dt>Not applicable</dt><dd>{answers.na}</dd></div>
             <div><dt>To answer</dt><dd className={answers.open ? 'soon' : ''}>{answers.open}</dd></div>
           </dl> : <dl className="eng-sum">
@@ -1154,7 +1156,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           {checklist && <div className="eng-does">
             <span className="lbl">What sending does</span>
             <div className="eng-list" style={{ marginTop: 8 }}>
-              <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} action${answers.action === 1 ? '' : 's'} listed on the inspection` : 'No actions to list'}</b><span>Printed at the top of the PDF with who is to do each one. Nothing is added to the issue register.</span></div></div>
+              {type.raisesRecords
+                ? <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} issue${answers.action === 1 ? '' : 's'} raised · not yet reviewed` : 'No issues to raise'}</b><span>{answers.action ? `${report.observations.some(o => o.check?.answer === 'action' && o.linkedIssueId) ? 'Linked ones add a sighting to the existing issue. ' : ''}Each action goes on the snag list with where it is, and is listed at the top of the PDF.` : 'Every check is satisfactory or does not apply: the area is ready to hand over.'}</span></div></div>
+                : <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} action${answers.action === 1 ? '' : 's'} listed on the inspection` : 'No actions to list'}</b><span>Printed at the top of the PDF with who is to do each one. Nothing is added to the issue register.</span></div></div>}
               <div className="eng-row"><div className="main"><b>Received the moment it lands</b><span>{project?.projectManager ?? 'The project manager'} is emailed when the mailbox is live; the office can read it straight away.</span></div></div>
             </div>
           </div>}
