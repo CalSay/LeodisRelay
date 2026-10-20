@@ -45,6 +45,8 @@ body:has(.ws){overflow:hidden auto}
 .ws .bell.quiet b{color:var(--ok)}
 .ws .tbtn{font-family:var(--sans);font-size:13px;color:var(--text-2);padding:4px 6px}
 .ws .tbtn:hover{color:var(--text)}
+.ws .tbtn-new{font:500 10px var(--mono);font-style:normal;margin-left:6px;padding:1px 6px;border-radius:9px;background:var(--acc);color:var(--acc-ink,#fff)}
+.ws .help-guide-link{align-self:flex-start}
 .ws .themebtn{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:13px;color:var(--text-2);border:1px solid var(--line);padding:4px 8px;min-height:0;border-radius:var(--r);margin:0;min-width:0}
 .ws .themebtn:hover{color:var(--acc);border-color:var(--acc)}
 .ws .attn-pop{position:absolute;right:24px;top:56px;width:440px;background:var(--panel);border:1px solid var(--alert);border-top:0;border-left-width:3px;box-shadow:0 12px 28px rgba(0,0,0,.14);z-index:6;max-height:70vh;overflow:auto}
@@ -264,6 +266,7 @@ body:has(.ws){overflow:hidden auto}
   .ws .search kbd{display:none}
   .ws .topbar-right{gap:var(--s2)}
   .ws .topbar-right .tbtn,.ws .topbar-right .themebtn{display:none}
+  .ws .topbar-right .tbtn.tbtn-help{display:inline-flex;align-items:center}
   .ws .whoami{max-width:150px;overflow:hidden;text-overflow:ellipsis}
   .ws .attn-pop{position:fixed;left:8px;right:8px;top:auto;bottom:72px;width:auto;border-top:1px solid var(--alert);max-height:60vh}
   .ws .hnav{position:fixed;left:0;right:0;bottom:0;z-index:20;border-bottom:0;border-top:1px solid var(--line-2);padding:0 4px calc(4px + env(safe-area-inset-bottom,0px));justify-content:space-around}
