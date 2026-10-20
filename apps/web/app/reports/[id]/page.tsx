@@ -30,6 +30,7 @@ import { SubmissionStages } from '@/components/SubmissionStages';
 import { OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
 import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 import { cardAtSameLocation, insertAfterSameLocation } from '@/lib/sameLocation';
+import { canUndo, removeCard, removedLabel, removePhoto, restoreRemoved, type Removed } from '@/lib/undoRemove';
 import { onPhotoUploads, uploadingPhotos } from '@/lib/localMedia';
 import { cardWhere, reportWhere, savedCopy, WHERE, type Where } from '@/lib/uploadStatus';
 import { compareDrafts, type DraftBase } from '@/lib/draftConflict';
@@ -64,6 +65,8 @@ const WHERE_DOT: Record<Where, string> = { server: 'dot dot-ok', uploading: 'dot
 const CHANNEL = 'relay-drafts';
 /** While the server cannot be reached, try again this often; coming back into signal also retries. */
 const RETRY_MS = 15_000;
+/** How long Undo stays offered after removing a card or photograph, unless the bar has focus or a pointer over it. */
+const UNDO_MS = 12_000;
 
 const KINDS: ObservationType[] = ['update', 'defect', 'instruction', 'access'];
 const fmtWhen = (iso?: string) => iso ? new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
@@ -150,6 +153,15 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [typing,setTyping] = useState(false);
   /** Side-by-side cards and editor from 900px, as in engineer.css; folded cards below that. */
   const wide = useMediaQuery('(min-width: 900px)');
+  /** The card or photograph just removed, offered back with Undo. One at a time: a second removal replaces it. */
+  const [removed,setRemoved] = useState<{ item: Removed; title: string; detail: string } | null>(null);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const undoButton = useRef<HTMLButtonElement>(null);
+  /**
+   * What a screen reader hears. Cleared and set again on each removal, so a
+   * second removal worded the same ("Photo 01 removed") is still announced.
+   */
+  const [undoSaid,setUndoSaid] = useState('');
 
   useEffect(() => {
     const sync = () => {
@@ -340,6 +352,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       setConflictBase(base);
       setConflict(theirs);
       setSaveState('conflict');
+      // Undo would act on a draft that is about to be chosen between, so it is withdrawn.
+      dismissUndo();
     }
     // Another tab's next edit or save would replace or release the shared held
     // copy, so this tab's work is also kept under its own key until the choice.
@@ -414,7 +428,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     return () => { channel?.close(); document.removeEventListener('visibilitychange', onVisible); };
   }, [id, checkServer]);
 
-  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); }, []);
+  useEffect(() => () => { if (saveTimer.current) clearTimeout(saveTimer.current); if (undoTimer.current) clearTimeout(undoTimer.current); }, []);
   useEffect(() => {
     if (recovered && report && principalId) { setRecovered(false); scheduleSave(report); }
   },[recovered,report,principalId,scheduleSave]);
@@ -511,6 +525,85 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     setPicking(p => [...p, o.id]);
     update({ ...current, observations: insertAfterSameLocation(current.observations, sourceId, o) });
     openCard(o.id);
+  }
+
+  /**
+   * Removing is immediate, and saves like any edit, but Undo is offered for a
+   * while. Undo puts back the same card or photograph, so the draft saves the
+   * record it already had rather than a copy, and photographs that reached the
+   * server are not sent again.
+   */
+  function removeCardNow(cardId: string) {
+    const current = latest.current;
+    if (!current || current.state !== 'draft' || sending.current) return;
+    const number = current.observations.findIndex(o => o.id === cardId) + 1;
+    const { observations, removed: item } = removeCard(current.observations, cardId, picking.includes(cardId));
+    if (!item || item.kind !== 'card') return;
+    setPicking(p => p.filter(x => x !== cardId));
+    update({ ...current, observations });
+    offerUndo(item, number, OBSERVATION_TYPES.find(t => t.value === item.card.type)?.short ?? item.card.type);
+  }
+
+  function removePhotoNow(cardId: string, photoId: string) {
+    const current = latest.current;
+    if (!current || current.state !== 'draft' || sending.current) return;
+    const number = current.observations.findIndex(o => o.id === cardId) + 1;
+    const { observations, removed: item } = removePhoto(current.observations, cardId, photoId);
+    if (!item) return;
+    update({ ...current, observations });
+    offerUndo(item, number, '');
+  }
+
+  function offerUndo(item: Removed, cardNumber: number, kindLabel: string) {
+    if (!canUndo(item)) { dismissUndo(); return; }
+    const label = removedLabel(item, cardNumber, kindLabel);
+    setRemoved({ item, ...label });
+    setUndoSaid('');
+    setTimeout(() => setUndoSaid(`${label.title}. ${label.detail}. Undo is focused.`), 100);
+    holdUndo(false);
+    // The Remove button pressed has gone, so focus goes to Undo rather than
+    // the top of the page; while it is there the offer does not run out.
+    requestAnimationFrame(() => undoButton.current?.focus({ preventScroll: true }));
+  }
+
+  /** Keep Undo on screen while it is being reached for; start the clock again once it is left. */
+  function holdUndo(hold: boolean) {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    undoTimer.current = hold ? null : setTimeout(() => setRemoved(null), UNDO_MS);
+  }
+
+  function dismissUndo() {
+    if (undoTimer.current) clearTimeout(undoTimer.current);
+    undoTimer.current = null;
+    setRemoved(null);
+    setUndoSaid('');
+  }
+
+  /** Closing the bar from the keyboard puts focus back on the cards rather than losing it. */
+  function closeUndo() {
+    dismissUndo();
+    requestAnimationFrame(() => document.querySelector<HTMLElement>('.eng-steps [aria-current="step"]')?.focus({ preventScroll: true }));
+  }
+
+  function undoRemove() {
+    const current = latest.current;
+    const item = removed?.item;
+    // Not while sending: the offer stays as it is rather than vanishing unused.
+    if (!item || !current || current.state !== 'draft' || sending.current) return;
+    dismissUndo();
+    const observations = restoreRemoved(current.observations, item);
+    // Already back, or the photograph's card has gone since: nothing to save.
+    if (!observations || observations === current.observations) return;
+    if (item.kind === 'card' && item.picking) setPicking(p => [...p, item.card.id]);
+    update({ ...current, observations });
+    const cardId = item.kind === 'card' ? item.card.id : item.cardId;
+    openCard(cardId);
+    // Focus lands on what came back: its Remove button, which names it.
+    const card = observations.findIndex(o => o.id === cardId) + 1;
+    const name = item.kind === 'card' ? `Remove card ${card}` : `Remove photo ${(observations[card - 1]?.photos.findIndex(p => p.id === item.photo.id) ?? 0) + 1}`;
+    // Photo numbers repeat across cards, so look only inside the restored card.
+    const within = wide ? '#card-editor > div:not([hidden])' : `#slot-${CSS.escape(cardId)}`;
+    setTimeout(() => document.querySelector<HTMLElement>(`${within} [aria-label="${name}"]`)?.focus({ preventScroll: true }), 50);
   }
 
   // The home screen's "Request a variation" lands here with the card already started.
@@ -680,7 +773,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           companies={suggestions.companies}
           photoWhere={(photoId) => { const w = whereOf.get(observation.id); const at = observation.photos.findIndex(p => p.id === photoId); return w && at >= 0 ? w.each[at] : undefined; }}
           onChange={(next) => update({ ...report, observations: report.observations.map((o) => (o.id === next.id ? next : o)) })}
-          onRemove={() => { setPicking(p => p.filter(x => x !== observation.id)); update({ ...report, observations: report.observations.filter((o) => o.id !== observation.id) }); }}
+          onRemove={() => removeCardNow(observation.id)}
+          onRemovePhoto={(photoId) => removePhotoNow(observation.id, photoId)}
         />
         <div className="eng-card-actions">
           {observation.location.trim() && <button type="button" className="eng-same-place" onClick={() => addAtSameLocation(observation.id)} disabled={submitting}>
@@ -873,6 +967,13 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             aside while a field has the keyboard, so it never covers the
             field being typed in. */}
         <div className={`actionbar ${typing ? 'is-typing' : ''}`}>
+          {/* Said to a screen reader as it happens; the bar below is for the eye and hand. */}
+          <span className="eng-undo-said" aria-live="polite">{undoSaid}</span>
+          {removed && <div className="eng-undo" onFocus={() => holdUndo(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) holdUndo(false); }} onPointerEnter={() => holdUndo(true)} onPointerLeave={() => holdUndo(false)}>
+            <span className="eng-undo-text"><b>{removed.title}</b><small>{removed.detail}</small></span>
+            <button ref={undoButton} type="button" className="eng-undo-button" onClick={undoRemove} disabled={submitting}>Undo</button>
+            <button type="button" className="eng-undo-close" onClick={closeUndo} aria-label="Dismiss">&times;</button>
+          </div>}
           <div className="actionbar-inner">
             <span className="savestate" aria-live="polite">
               <span className={SAVE[saveState].dot} />

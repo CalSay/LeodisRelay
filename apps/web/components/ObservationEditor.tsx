@@ -56,6 +56,7 @@ export function ObservationEditor({
   photoWhere,
   onChange,
   onRemove,
+  onRemovePhoto,
 }: {
   observation: Observation;
   index: number;
@@ -67,6 +68,8 @@ export function ObservationEditor({
   photoWhere?: (photoId: string) => Where | undefined;
   onChange: (next: Observation) => void;
   onRemove: () => void;
+  /** Takes one photograph off the card; the page keeps it so the removal can be undone. */
+  onRemovePhoto: (photoId: string) => void;
 }) {
   const principal = usePrincipal();
   const [photoError, setPhotoError] = useState<string | null>(null);
@@ -130,7 +133,7 @@ export function ObservationEditor({
           <span className="shot-no">Photo {String(i + 1).padStart(2, "0")}</span>
           {(() => { const w = photoWhere?.(photo.id); return w ? <span className={`eng-where eng-where-${w}`}><span className={w === 'server' ? 'dot dot-ok' : 'dot dot-busy'} />{WHERE[w]}</span> : null; })()}
           <input type="text" value={photo.caption} onChange={(e) => onChange({ ...observation, photos: observation.photos.map((p) => p.id === photo.id ? { ...p, caption: e.target.value } : p) })} placeholder="What does this show?" aria-label={`Caption for photograph ${i + 1}`} />
-          <button className="btn-quiet btn-sm" onClick={() => onChange({ ...observation, photos: observation.photos.filter((p) => p.id !== photo.id) })}>Remove</button>
+          <button type="button" className="btn-quiet btn-sm" onClick={() => onRemovePhoto(photo.id)} aria-label={`Remove photo ${i + 1}`}>Remove</button>
         </div>
       </figure>)}
     </div>}
@@ -142,7 +145,7 @@ export function ObservationEditor({
         <span className="lbl">Card {String(index + 1).padStart(2, "0")}</span>
         <div>
           {type && <span className={`kind ${tone}`}>{type.short}</span>}
-          <button className="btn-quiet btn-sm" onClick={onRemove}>Remove</button>
+          <button type="button" className="btn-quiet btn-sm" onClick={onRemove} aria-label={`Remove card ${index + 1}`}>Remove</button>
         </div>
       </div>
 
