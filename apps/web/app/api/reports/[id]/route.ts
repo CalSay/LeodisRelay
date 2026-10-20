@@ -87,7 +87,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     reviewer?: string;
     note?: string;
     reason?: string;
-    signature?: { dataUrl?: string; name: string };
+    signature?: { dataUrl?: string; name: string; typed?: true };
     expectedVersion?: number;
   };
 
@@ -116,7 +116,9 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
   if (body.signature !== undefined && (!body.signature || typeof body.signature.name !== 'string' ||
       (body.signature.dataUrl !== undefined && (typeof body.signature.dataUrl !== 'string' ||
-       body.signature.dataUrl.length > 1000000 || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(body.signature.dataUrl))))) {
+       body.signature.dataUrl.length > 1000000 || !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(body.signature.dataUrl))) ||
+      (body.signature.typed !== undefined && (body.signature.typed !== true || body.signature.dataUrl !== undefined)) ||
+      Object.keys(body.signature).some(key => !['name','dataUrl','typed'].includes(key)))) {
     return NextResponse.json({reason:'Invalid signature.'},{status:422});
   }
 
@@ -145,8 +147,10 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   }
   const outcome = await submitReport(
     id,
-    body.signature ? { ...body.signature, name: body.signature.name || principal.name } : undefined,
+    // A typed signature is the name as typed: never filled in for the person.
+    body.signature ? { ...body.signature, name: body.signature.typed ? body.signature.name : body.signature.name || principal.name } : undefined,
     body.expectedVersion,
+    principal.name,
   );
   return outcome.ok
     ? NextResponse.json(outcome.value)

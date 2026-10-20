@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'typed-signature', added: '2026-10-20', audience: 'all', title: 'Sign an inspection without drawing',
+    text: 'If you can\'t draw a signature, with a keyboard or screen reader say, choose "Type my name instead" when you sign an inspection: type your full name and tick the statement. It works with no signal too. The office and the PDF show it as a typed signature, with the statement, the time it was sent and who was signed in, so it is never mistaken for a drawing. Drawing works as before.' },
   { id: 'first-fix-inspection', added: '2026-10-20', audience: 'site', title: 'First fix inspection',
     text: 'Walk an area before its ceilings and walls are closed and answer 12 checks on our first fix: run, supported, tested, labelled and clear of the boards. Each "Action needed" goes on the snag list as an issue when you send it, so nothing gets closed in unfinished. It works with no signal like the other inspections. The checks are a first draft and may change. Start it from "Do a first fix inspection" on your home screen.',
     link: { label: 'Go to your home screen', href: '/engineer' } },
@@ -247,12 +249,17 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'Your home screen lists what came back from the office on the things you raised, in the office\'s words.',
       'The report itself shows each step it has reached: received, PDF, delivery and read. See "What the words mean" below.',
     ] },
+    { id: 'signing', heading: 'Signing an inspection', ordered: false, steps: [
+      'An inspection is signed by the person who carried it out. Draw your signature in the box with a finger, pen or mouse.',
+      'If you can\'t draw one, choose "Type my name instead", type your full name and tick the statement. It counts as your signature, and the office and the PDF show it as typed, with the time it was sent and who was signed in.',
+      'A site update needs no drawing: your name is printed on it either way.',
+    ] },
     { id: 'defect', heading: 'A defect on its own', ordered: false, steps: [
       '"Flag a defect" sends a photograph and a short note straight away, without a site update. Use it when something needs fixing before you finish the day.',
     ] },
     { id: 'no-signal', heading: 'No signal', ordered: false, steps: [
       'RELAY still opens. You can start a site update or an inspection, add cards or answer checks, and take photographs; they are marked "Only on this phone".',
-      'An inspection can be signed on the phone once every check is answered. Signing locks it and marks it "Signed · not sent yet". To change anything before RELAY starts sending it, take your signature back and sign again.',
+      'An inspection can be signed on the phone, drawn or by typing your name, once every check is answered. Signing locks it and marks it "Signed · not sent yet". To change anything before RELAY starts sending it, take your signature back and sign again.',
       'When you have signal again, open RELAY and the work goes up by itself. A signed inspection goes to the office, and RELAY says when it has gone; if it changed after you signed, it stays a draft for you to sign again. Everything else stays a draft until you sign and send.',
       'If you share a phone, sign out at the end of the day. Work held on the phone belongs to whoever was last signed in.',
     ] },
@@ -266,6 +273,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     { id: 'office-day', heading: 'Your day in the office', ordered: true, steps: [
       'Office opens on the office position: new reports, reports not yet read, unassigned issues and issues ready to verify, across every project.',
       'Open a report and "Acknowledge" it once you have read it. That is the only thing that marks it read; receipt and delivery do not.',
+      'A report\'s signature line says whether it was drawn or typed. A typed signature shows the statement the person ticked and who was signed in when it was sent.',
       'Give each new issue an owner and a target date. Overdue issues and work done without an instruction are listed under "Also needs attention".',
       'Price variations, then record the client\'s instruction with their reference, or decline. Nothing is deleted.',
     ] },

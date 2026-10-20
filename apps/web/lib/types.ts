@@ -102,8 +102,12 @@ export interface Report {
   serverAcknowledgedAt?: string;
   /** Last time the server accepted a draft save, for office draft visibility. */
   lastSavedAt?: string;
-  /** Captured at the point of sending. The drawn image is optional. */
-  signature?: { dataUrl?: string; name: string; signedAt: string };
+  /**
+   * Captured at the point of sending. The drawn image is optional on a site
+   * update. An inspection is drawn, or typed (signature.ts): a typed one keeps
+   * the statement that was ticked and who was signed in when it was sent.
+   */
+  signature?: { dataUrl?: string; name: string; signedAt: string; typed?: true; statement?: string; signedInAs?: string };
   /**
    * The name and drawing on a draft, saved like any other edit so a reload or
    * a flat battery does not lose them. Becomes `signature` only on sending.
@@ -308,4 +312,5 @@ export interface Variation {
   events: VariationEvent[];
 }
 
-export interface DraftSignature { name: string; dataUrl?: string }
+/** A drawing (`dataUrl`), or a typed name with the statement ticked (`typed`), never both. */
+export interface DraftSignature { name: string; dataUrl?: string; typed?: true }

@@ -4,6 +4,68 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Signing an inspection without drawing
+
+- Why: an inspection could only be signed by drawing, so someone using only a
+  keyboard or a screen reader could not sign one at all (found in PR #53's
+  accessibility pass). Asked for by the coordinator under Cal's standing asks
+  for a clear UI and for Claude to decide.
+- Decision (Claude's): where a signature is required (every inspection type:
+  safety, handover, first fix), the signer can choose "Type my name instead",
+  type their full name and tick a fixed statement: "I carried out this
+  inspection and this record is accurate. Typing my name and ticking this box
+  is my signature." Drawing stays the default and works as before. Anyone may
+  choose either way; RELAY cannot tell who can draw, and a typed signature is
+  kept as traceable as a drawn one:
+  - only the author's own signed-in session can send it (as before);
+  - the server, not the client, records the statement word for word
+    (`TYPED_STATEMENT`, lib/signature.ts), the time (`signedAt`) and who was
+    signed in (`signedInAs`), and marks it `typed`;
+  - a typed signature is never filled in with the author's name, a tick with
+    no name is refused, and typed plus a drawing, or a typed signature on a
+    site update, is refused (site updates print the name either way);
+  - the office report says "Signature drawn by" or "Signed by typing the name
+    … · signed in as …" and shows the statement; the PDF prints the typed name
+    where a drawing would go, "Typed signature · date, time · signed in as …"
+    and the statement, so it is never mistaken for a drawing.
+  Considered and not chosen: a keyboard-driven drawing (still a picture of
+  nothing a screen reader can check), or a PIN or second sign-in (RELAY's
+  sign-in is Microsoft's; adding another secret is more to forget on site
+  for no extra proof, since the session already identifies the person).
+- Choosing one way clears the other, so a draft never carries a drawing behind
+  a typed name. The choice and tick save with the draft and survive a reload.
+  `ReportTypeDef.drawnSignature` is renamed `signatureRequired`.
+- No signal: the offline page offers the same choice. A typed signature is
+  held like a drawn one (`signed.typed`, no `dataUrl`), locked, and sent by
+  itself when signal returns only if nothing changed since. The statement is
+  duplicated in public/offline.js; a test checks it matches. Service worker
+  cache moves to `relay-public-v11`. Also fixed: the offline page's "Open
+  RELAY to send it now" link was 24px tall on a phone (now 48px).
+- Help: What's new "Sign an inspection without drawing"; a new site guide
+  section "Signing an inspection"; the no-signal step and the office day say
+  how typed signatures show. Draft conflicts name a typed signature too.
+- Checks: `npm run typecheck`, `npm test` (332, new
+  `tests/typedSignature.test.ts`), `npm run build`, the new
+  `scripts/verify-typed-signature.mjs` (35 checks: keyboard-only typed
+  signing in the editor at 390px light and 1440px dark, reload, switching
+  back to drawing, sent; the office at 1440px light and 390px dark; the PDF
+  text; a first fix inspection typed-signed with no signal and sent by itself),
+  `verify-accessibility` editor and no-signal states (178 checks, now also
+  choosing, typing and ticking with the keyboard alone on both, and the
+  signed state on the no-signal page), `verify-offline-sign`,
+  `verify-signature-reload`, `verify-help`, `verify-handover-offline`,
+  `verify-offline-inspection`, `verify-first-fix-inspection`,
+  `verify-draft-conflict`, `verify-engineer-layout`, `verify-role-access`,
+  `verify-editor-usability` and `verify-report-types`.
+- Not verified: a real screen reader (VoiceOver, TalkBack, NVDA) or a physical
+  phone; whether Leodis's clients or auditors accept a typed signature on an
+  inspection (Cal may want to confirm). The full `verify-accessibility` run
+  stops on main at the engineer home's "Since your last visit" link
+  (link-in-text-block), which another open PR fixes; this PR's editor and
+  no-signal states were run on their own and pass.
+- Proposed (not added to `docs/tasks.json`): a typed signature option for the
+  compliance engineer screens; a skip link; main/h1 on compliance pages.
+
 ## 2026-10-20 — First fix inspection (EXP-5, third report type)
 
 - Added a third checklist type, "First fix inspection" (First Fix Inspection,

@@ -254,6 +254,9 @@ const s = StyleSheet.create({
   signRule: { borderBottomWidth: 1, borderBottomColor: RULE, marginBottom: 5 },
   signName: { fontSize: 9, fontWeight: 600 },
   signMeta: { fontSize: 7, color: FAINT, marginTop: 2 },
+  /* A typed signature sits where a drawing would, as the name typed. */
+  signTyped: { fontSize: 13, fontWeight: 600, marginBottom: 4 },
+  signStatement: { fontSize: 7, color: FAINT, marginTop: 3, lineHeight: 1.35 },
 
 });
 
@@ -300,6 +303,10 @@ function formatVisitDate(iso: string): string {
 }
 
 /** A card is titled by where it is; a check by its question, and where, if the action says (a handover inspection's do). */
+/** "20/10/2026, 23:05", UK time: a typed signature is dated to the minute, as it was sent. */
+const signedWhen = (iso: string): string =>
+  new Date(iso).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+
 const itemTitle = (o: { location: string; check?: { question: string } | undefined }): string =>
   o.check ? `${o.check.question}${o.location.trim() ? ` · ${o.location.trim()}` : ""}` : o.location || "Location not recorded";
 
@@ -505,17 +512,25 @@ export function ReportDocument({ report }: { report: DocReport }) {
               <Text style={s.signLabel}>{inspection ? "INSPECTED BY" : "PREPARED BY"}</Text>
             </View>
             <View style={s.signSpace}>
-              {report.signature?.dataUrl ? (
+              {report.signature?.typed ? (
+                <Text style={s.signTyped}>{report.signature.name}</Text>
+              ) : report.signature?.dataUrl ? (
                 <Image style={s.signImage} src={report.signature.dataUrl} />
               ) : null}
             </View>
             <View style={s.signRule} />
             <Text style={s.signName}>{report.signature?.name || report.author}</Text>
             <Text style={s.signMeta}>
-              {report.signature
+              {report.signature?.typed
+                ? `Typed signature · ${signedWhen(report.signature.signedAt)}${report.signature.signedInAs ? ` · signed in as ${report.signature.signedInAs}` : ""}`
+                : report.signature
                 ? `Signed ${new Date(report.signature.signedAt).toLocaleDateString("en-GB")}`
                 : "Not signed"}
             </Text>
+            {/* What the person ticked, word for word, so a typed signature says what it stands for. */}
+            {report.signature?.typed && report.signature.statement ? (
+              <Text style={s.signStatement}>“{report.signature.statement}”</Text>
+            ) : null}
           </View>
 
           {/*

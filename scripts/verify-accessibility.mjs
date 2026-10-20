@@ -7,7 +7,9 @@
 // engineer would use them (a site update and a safety inspection: cards, an
 // open card with a photo, Check & send with the signature, sent; on the
 // no-signal page: start, a card with a photo, and signing an inspection), and
-// each state gets the same checks.
+// each state gets the same checks. Signing an inspection by typing a name, in
+// place of drawing, is done with the keyboard alone on both, as someone who
+// cannot draw a signature would do it.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 // RELAY_SCREENSHOT_DIR=<dir> saves a screenshot of each page at each width.
 import assert from 'node:assert/strict';
@@ -54,6 +56,7 @@ const smallAllowed=[
   '.camera input,.eng-photo-picker input', // hidden file inputs; the visible button around them is the target
   'label input[type="checkbox"]', // the whole label is the target
   'label.choice input[type="radio"]', // the no-signal page's report types: the whole label is the target
+  '.sigway-options input[type="radio"]', // draw or type a signature: the whole label is the target
   'label.btn input[type="file"]', // the no-signal page's hidden file inputs; the label around them is the button
 ];
 const port=4344,base=`http://127.0.0.1:${port}`;let output='';
@@ -129,6 +132,16 @@ async function editorStates(scheme,width,phone){
   check(await page.evaluate(w=>{const a=document.activeElement;return w?a?.matches('[data-card-body]:not([hidden])'):a?.matches('.eng-slot.open > button');},!phone),`editor ${scheme} ${width}px: a Stop takes focus to the card it opens`);
   await page.locator('.actionbar').getByRole('button',{name:/Check & send/}).click();await page.locator('#report-check').waitFor();
   await state('inspection-check');
+  // Signed without drawing: chosen, typed and ticked with the keyboard alone.
+  const keyboard=async locator=>{await locator.focus();await page.keyboard.press('Space');};
+  await keyboard(page.getByRole('radio',{name:'Type my name instead'}));
+  await page.getByRole('textbox',{name:'Your full name'}).fill('Site Engineer');
+  await keyboard(page.getByRole('checkbox',{name:/I carried out this inspection/}));
+  await page.locator('.sigtyped-name',{hasText:'Site Engineer'}).waitFor();
+  check(await page.locator('.sigpad').isHidden(),`editor ${scheme} ${width}px: typing a name hides the drawing box`);
+  await page.waitForFunction(()=>!document.querySelector('#report-check')?.textContent?.includes('Sign below'));
+  check(await page.getByRole('status').filter({hasText:'Signed by typing the name Site Engineer'}).count()===1,`editor ${scheme} ${width}px: a screen reader hears that it is signed`);
+  await state('inspection-typed');
   // The no-signal page, as the phone shows it when the server cannot be reached.
   await page.goto(`${base}/engineer?project=${P}`);await page.locator('.eng-list').first().waitFor();
   await context.route('**/api/health',r=>r.abort());
@@ -149,6 +162,17 @@ async function editorStates(scheme,width,phone){
   await cards.nth(0).getByLabel('What needs doing').fill('Lock it');
   await page.locator('.sigpad').waitFor();
   await state('offline-sign');
+  // Signed with no signal, by typing a name, with the keyboard alone.
+  await keyboard(page.getByRole('radio',{name:/Type my name instead/}));
+  await page.getByRole('textbox',{name:'Your full name'}).fill('Site Engineer');
+  await keyboard(page.getByRole('checkbox',{name:/I carried out this inspection/}));
+  const signIt=page.getByRole('button',{name:'Sign it. Send when there is signal'});
+  check(await signIt.isEnabled(),`editor ${scheme} ${width}px: the no-signal page signs a typed name`);
+  await state('offline-typed');
+  await signIt.focus();await page.keyboard.press('Enter');
+  await page.locator('#sign-title',{hasText:'Signed. Not sent yet.'}).waitFor();
+  check(await page.locator('.typed-name',{hasText:'Site Engineer'}).count()===1,`editor ${scheme} ${width}px: the phone shows the typed signature`);
+  await state('offline-typed-signed');
   assert.deepEqual(errors,[],`editor ${scheme} ${width}px: page errors`);
   await context.close();
 }

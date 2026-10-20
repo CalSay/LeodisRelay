@@ -1,7 +1,7 @@
 import { ApiError, sendHeldSave, sendHeldSigned, startHeldReport } from './api';
 import { clientId } from './clientId';
 import { adoptStarted, listHeld, update, type HeldDraft } from './localDraft';
-import { planHeldSend, signedAsIs, startedTitle } from './offlineStart';
+import { heldSignature, planHeldSend, signedAsIs, startedTitle } from './offlineStart';
 import type { Report } from './types';
 import { SaveConflict } from './saveRequest';
 
@@ -123,7 +123,7 @@ async function sendOne(held: HeldDraft, result: HeldSendResult, startedReports: 
   let saved: Report;
   try {
     saved = await sendHeldSave(claimed.reportId, { requestId: sending.requestId, expectedVersion: sending.expectedVersion, observations: claimed.observations,
-      ...(signed ? { signature: { name: signed.name, dataUrl: signed.dataUrl } } : inspection ? { signature: null } : {}) });
+      ...(signed ? { signature: heldSignature(signed) } : inspection ? { signature: null } : {}) });
   }
   catch (error) {
     if (error instanceof ApiError && error.offline) return 'offline';
@@ -184,7 +184,7 @@ async function submitSigned(held: HeldDraft, version: number, result: HeldSendRe
   const signed = held.signed!;
   const name = (r: Pick<Report, 'id' | 'projectSnapshot'>) => names.get(r.id) ?? r.projectSnapshot?.projectName;
   let sent: Report;
-  try { sent = await sendHeldSigned(held.reportId, { name: signed.name, dataUrl: signed.dataUrl }, version); }
+  try { sent = await sendHeldSigned(held.reportId, heldSignature(signed), version); }
   catch (error) {
     if (error instanceof ApiError && error.offline) return 'offline';
     const reason = error instanceof Error ? error.message : 'The server would not send it.';

@@ -70,7 +70,7 @@ export function DraftConflict({ here, there, base, saving, unheld, onSave }: {
   }
 
   const number = (card: CardDiff) => String(comparison.cards.indexOf(card) + 1).padStart(2, '0');
-  const sigText = (r: Report) => r.draftSignature ? `${r.draftSignature.name}${r.draftSignature.dataUrl ? ', drawn' : ', not drawn'}` : 'Not signed';
+  const sigText = (r: Report) => r.draftSignature ? `${r.draftSignature.name}${r.draftSignature.dataUrl ? ', drawn' : r.draftSignature.typed ? ', typed and ticked' : ', not drawn'}` : 'Not signed';
 
   return <section className="eng-conflict" aria-labelledby="conflict-title">
     <div className="note note-bad">

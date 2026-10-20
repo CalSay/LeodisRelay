@@ -107,7 +107,7 @@ export async function startHeldReport(projectId: string, clientKey: string, visi
  * draft already has; an inspection signed on the phone carries its signature,
  * and null clears it.
  */
-export async function sendHeldSave(reportId: string, body: { requestId: string; expectedVersion: number; observations: Observation[]; signature?: { name: string; dataUrl: string } | null }): Promise<Report> {
+export async function sendHeldSave(reportId: string, body: { requestId: string; expectedVersion: number; observations: Observation[]; signature?: HeldSignature | null }): Promise<Report> {
   try { await uploadPhotos(body.observations.flatMap(o => o.photos), { reportId }); }
   catch (error) { if (error instanceof TypeError) throw new ApiError('No connection. Photographs remain on this phone.', true); throw error; }
   return parse<Report>(await request(`/api/reports/${reportId}`, {
@@ -115,8 +115,11 @@ export async function sendHeldSave(reportId: string, body: { requestId: string; 
   }));
 }
 
+/** A signature taken on the offline page: drawn, or a typed name with the statement ticked. */
+export type HeldSignature = { name: string; dataUrl: string } | { name: string; typed: true };
+
 /** Send to the office an inspection signed on the offline page, as saved at `expectedVersion`. */
-export async function sendHeldSigned(reportId: string, signature: { name: string; dataUrl: string }, expectedVersion: number): Promise<Report> {
+export async function sendHeldSigned(reportId: string, signature: HeldSignature, expectedVersion: number): Promise<Report> {
   return parse<Report>(await request(`/api/reports/${reportId}`, {
     method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ signature, expectedVersion }),
   }));
@@ -142,7 +145,7 @@ export async function saveReport(report: Report, expectedVersion?: number,princi
 
 export async function submitReport(
   report: Report,
-  signature?: { dataUrl?: string; name: string },
+  signature?: { dataUrl?: string; name: string; typed?: true },
 ): Promise<Report> {
   return parse<Report>(
     await request(`/api/reports/${report.id}`, {

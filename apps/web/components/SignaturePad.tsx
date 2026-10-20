@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { TYPED_STATEMENT } from "@/lib/signature";
 
 /**
  * Drawn signature, captured at the point of sending.
@@ -17,6 +18,11 @@ import { useEffect, useRef, useState } from "react";
  * A signature saved with the draft comes back as an image, not strokes. It is
  * drawn under any new strokes, recoloured to the theme's ink on screen, and
  * kept in the exported image, so reopening a draft shows what was signed.
+ *
+ * Where a signature is required (an inspection), someone who cannot draw one,
+ * with a keyboard or a screen reader say, may sign by typing their full name
+ * and ticking a statement instead (lib/signature.ts). One way at a time:
+ * choosing the other way clears what was there.
  */
 type Stroke = { x: number; y: number }[];
 
@@ -25,9 +31,15 @@ export function SignaturePad({
   initialImage,
   onNameChange,
   onChange,
+  typed = false,
+  onTypedChange,
   hint = "Your name appears on the report whether or not you sign. The client signs the paper copy.",
 }: {
   name: string;
+  /** Signed by typing the name and ticking the statement. */
+  typed?: boolean;
+  /** Given, the pad offers to sign by typing the name instead of drawing. */
+  onTypedChange?: (typed: boolean) => void;
   /** What signing means for this kind of report, under the pad. */
   hint?: string;
   /** A signature saved earlier. Read once, when the pad first appears. */
@@ -42,6 +54,26 @@ export function SignaturePad({
   /** Cleared before the saved image finished loading: it must not come back. */
   const cleared = useRef(false);
   const [hasInk, setHasInk] = useState(Boolean(initialImage));
+  const [mode, setMode] = useState<'draw' | 'type'>(typed && onTypedChange ? 'type' : 'draw');
+  // A typed signature that arrives later (a reload, another tab's version) shows as typed.
+  useEffect(() => { if (typed && onTypedChange) setMode('type'); }, [typed]);
+  const typing = mode === 'type' && Boolean(onTypedChange);
+
+  function clearDrawing() {
+    strokes.current = [];
+    saved.current = null;
+    cleared.current = true;
+    setHasInk(false);
+    paint();
+  }
+
+  function choose(next: 'draw' | 'type') {
+    if (next === mode) return;
+    setMode(next);
+    // The other way's signature goes: a drawing is not kept behind a typed name, nor a tick behind a drawing.
+    if (next === 'type') { clearDrawing(); onChange(null); }
+    else { onTypedChange?.(false); requestAnimationFrame(paint); }
+  }
 
   /** Fit the saved image inside the box without stretching it. */
   function placeSaved(image: HTMLImageElement, width: number, height: number) {
@@ -146,15 +178,41 @@ export function SignaturePad({
 
   return (
     <div className="field">
-      <label htmlFor="sign-name">Your name</label>
+      <label htmlFor="sign-name">{typing ? 'Your full name' : 'Your name'}</label>
       <input
         id="sign-name"
         type="text"
+        autoComplete="name"
+        maxLength={200}
         value={name}
         onChange={(e) => onNameChange(e.target.value)}
         placeholder="Name as it should appear on the report"
       />
 
+      {onTypedChange && <fieldset className="sigway">
+        <legend>How will you sign?</legend>
+        <div className="sigway-options">
+          <label><input type="radio" name="sign-way" value="draw" checked={!typing} onChange={() => choose('draw')} /> Draw my signature</label>
+          <label><input type="radio" name="sign-way" value="type" checked={typing} onChange={() => choose('type')} /> Type my name instead</label>
+        </div>
+      </fieldset>}
+
+      {typing && <div className="sigtyped">
+        <label className="sigconfirm">
+          <input
+            type="checkbox"
+            checked={typed}
+            onChange={(e) => onTypedChange?.(e.target.checked)}
+            aria-describedby="sign-typed-note"
+          />
+          <span>{TYPED_STATEMENT}</span>
+        </label>
+        {typed && name.trim() && <p className="sigtyped-name" aria-hidden="true">{name.trim()}</p>}
+        <p className="hint" id="sign-typed-note">For anyone who can’t draw a signature, with a keyboard or screen reader say. The office and the PDF show it as a typed signature, with this statement, the time it is sent and who was signed in.</p>
+        <span className="eng-sr" role="status">{typed ? (name.trim() ? `Signed by typing the name ${name.trim()}.` : 'Ticked, but type your full name to sign.') : 'Not signed yet: type your full name and tick the box.'}</span>
+      </div>}
+
+      <div hidden={typing}>
       <label id="sign-pad-label" style={{ marginTop: 16 }}>Signature</label>
       <div className="sigwrap">
         <canvas
@@ -196,16 +254,13 @@ export function SignaturePad({
           className="btn-quiet btn-sm"
           aria-label="Clear signature"
           onClick={() => {
-            strokes.current = [];
-            saved.current = null;
-            cleared.current = true;
-            setHasInk(false);
-            paint();
+            clearDrawing();
             onChange(null);
           }}
         >
           Clear
         </button>
+      </div>
       </div>
 
       <p className="hint">{hint}</p>

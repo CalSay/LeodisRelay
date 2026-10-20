@@ -54,8 +54,8 @@ export interface DocReport {
   /**
    * Signed off at the point of sending.
    *
-   * A drawn signature where the engineer provided one; the printed name and
-   * date stand on their own either way. The client box is deliberately left
+   * A drawn signature where the engineer provided one, or a typed one; the
+   * printed name and date stand on their own either way. The client box is deliberately left
    * blank for a wet signature — a typed name is not evidence of acceptance
    * (proposal 6.1), so the document must not offer somewhere to type one.
    */
@@ -63,5 +63,13 @@ export interface DocReport {
     dataUrl?: string;
     name: string;
     signedAt: string;
+    /**
+     * Signed by typing a full name and ticking `statement`, for someone who
+     * cannot draw one. Printed as typed, with the statement and who was signed
+     * in, so it is never mistaken for a drawing.
+     */
+    typed?: true;
+    statement?: string;
+    signedInAs?: string;
   };
 }
