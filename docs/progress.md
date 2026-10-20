@@ -55,6 +55,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Variations register page on the server like Issues once it grows; a
   "Download spreadsheet" on the Inbox; save each register's filters per
   person so they survive a reload.
+
 ## 2026-10-20 — FE-3e: offline capture, third slice (sign an inspection with no signal)
 
 - Why: #46 let an inspection be started and answered with no signal but it
@@ -351,6 +352,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   real phones, and rolling back after an inspection exists (the old version
   would show its checks as plain cards; not tried).
 
+
 ## 2026-10-20 — FE-3e: offline capture, second slice (start an inspection)
 
 - Why this slice: #41 proposed it first, and it is the gap engineers would hit
@@ -551,6 +553,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   place for the whole walk, prefilled into each action); a third type such as
   a commissioning record with readings; let the office edit checklists; add
   `verify-handover-inspection.mjs` to the browser checks in `CLAUDE.md`.
+
 
 ## 2026-10-20 — FE-3e: offline capture, first slice
 
