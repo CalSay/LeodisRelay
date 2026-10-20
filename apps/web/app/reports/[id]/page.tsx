@@ -24,6 +24,7 @@ import { CheckEditor } from "@/components/CheckEditor";
 import { CHECK_ANSWERS, checkCounts, checkHint, reportTypeOf } from "@/lib/reportTypes";
 import { SignaturePad } from "@/components/SignaturePad";
 import type { Issue as IssueSummary } from "@/lib/types";
+import { heldSendSettled } from '@/lib/heldSend';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { useRouter } from 'next/navigation';
 import { correctReport as requestCorrection } from '@/lib/api';
@@ -216,6 +217,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     sentAwayRef.current = false;
     setSentAway(null);
     (async () => {
+      // Work from the offline page may be going up as this opens (HeldWork.tsx).
+      await heldSendSettled();
+      if (cancelled) return;
       let found;
       try {
         found = await getReport(id);

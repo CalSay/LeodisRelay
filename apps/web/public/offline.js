@@ -278,6 +278,9 @@
         try {
           const db = await openDrafts();
           await new Promise((resolve, reject) => { const tx = db.transaction('unsent', 'readwrite'); tx.objectStore('unsent').delete(d.key); tx.oncomplete = () => { db.close(); resolve(); }; tx.onabort = () => { db.close(); reject(tx.error); }; });
+          // Its photos never reached the server, so they go too: nothing of it stays on the phone.
+          const ids = d.observations.flatMap(o => o.photos.map(p => p.id));
+          if (ids.length) await media('readwrite', store => { for (const id of ids) { store.delete(id); store.delete(`thumb:${id}`); store.delete(`uploaded:${id}`); } }).catch(() => undefined);
           selected = undefined; render(); status.textContent = 'Deleted from this phone.'; void list();
         } catch (e) { fail(e); }
       };

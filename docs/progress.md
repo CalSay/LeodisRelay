@@ -42,12 +42,17 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   A shared phone that is not signed out shows the last person's held work,
   which was already on the device. Work typed on the offline page goes up by
   itself because no editor holds it; work an editor holds is still saved by
-  that editor, so two senders never race. A save refused because the draft
+  that editor, and an editor opened while a send is running waits for it
+  to finish before reading the server or the phone (found in review: it
+  could otherwise open on a copy half-way up and then be told the draft
+  changed elsewhere). A save refused because the draft
   changed elsewhere is never forced: the copy stays on the phone and the note
   links to the report, whose editor already shows both versions to choose
   from (FE-3c). A start the server refuses is kept and tried again later, and
   each refusal is named once. Fields asked only by the full editor (trade,
   variation reason and the like) are filled there; they were never required.
+- Deleting a report started offline also deletes its photos from the phone
+  (found in review: the page said it was deleted from the phone).
 - Verified on Node 24: `npm run typecheck`, `npm test` (5 new tests in
   `tests/offlineStart.test.ts`: visit date rules, what goes up by itself, the
   wording, the home screen row, and an idempotent start against the real

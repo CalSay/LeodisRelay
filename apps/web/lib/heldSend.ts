@@ -14,6 +14,16 @@ export interface HeldSendResult {
 let running: Promise<HeldSendResult> | undefined;
 
 /**
+ * Settles once any send in progress on this page has finished. A report's
+ * editor waits for it before reading the server and the held copy, so it never
+ * opens on a copy that is half-way to the server and then finds its version
+ * moved underneath it.
+ */
+export function heldSendSettled(): Promise<void> {
+  return running ? running.then(() => undefined, () => undefined) : Promise.resolve();
+}
+
+/**
  * Send what this device holds for `principalId` from the offline page: start
  * each report begun offline, then save each copy last changed there. Runs one
  * at a time per page; a second call while one runs shares it.

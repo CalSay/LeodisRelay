@@ -11,8 +11,9 @@ import { OFFLINE_PERSON_KEY, sentLine } from '@/lib/offlineStart';
  * Work held on this device from the offline page goes up by itself once RELAY
  * opens with a connection, on whichever page opens first, and says so once.
  *
- * Not on a report's own page: its editor already saves and compares its held
- * copy, and two senders for one draft would only race each other.
+ * Not started on a report's own page: its editor already saves and compares
+ * its held copy. A send already running when a report opens carries on, and
+ * the editor waits for it (heldSendSettled) before reading anything.
  *
  * It also leaves the signed-in person on the device (name and id only), so the
  * offline page can open their held work when RELAY starts with no signal.
