@@ -66,7 +66,7 @@
       ],
       "status": "done",
       "passes": true,
-      "pr": null,
+      "pr": 7,
       "notes": "2026-10-20: apps/web/app/reports/[id]/pdf/page.tsx loads pdfjs-dist/legacy/build (page and worker), which polyfills newer browser features. verify-pdf-navigation now fails on any on-screen viewer error and matches the report URL by pathname. Not verified on a physical iPhone or in WebKit."
     },
     {
