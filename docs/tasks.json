@@ -358,10 +358,10 @@
         "Each entry links to its report and revision",
         "Tests for timeline assembly; browser check"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Not started. Depends on structured issue provenance from FE-6b."
+      "status": "done",
+      "passes": true,
+      "pr": 34,
+      "notes": "First slice: /diary built from sent reports only, each entry linking its revision and earlier revisions, with the issues and variations its cards raised. tests/siteDiary.test.ts, scripts/verify-site-diary.mjs. Proposed follow-ups in the PR."
     },
     {
       "id": "FE-3e",
