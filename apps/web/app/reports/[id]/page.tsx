@@ -107,7 +107,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [step,setStep] = useState<'cards' | 'check'>('cards');
   /** Set when this page pushed the #check entry, so the browser's Back returns to the cards. */
   const pushedCheck = useRef(false);
-  /** A field has the keyboard: on the phone the action bar steps aside so it never covers it. */
+  /** A text field has the keyboard: on the phone the action bar steps aside so it never covers it. A list does not, so it is left out. */
   const [typing,setTyping] = useState(false);
   /** Side-by-side cards and editor from 900px, as in engineer.css; folded cards below that. */
   const wide = useMediaQuery('(min-width: 900px)');
@@ -124,7 +124,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   }, []);
 
   useEffect(() => {
-    const typed = (el: EventTarget | null) => el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement || (el instanceof HTMLInputElement && !['file', 'checkbox', 'radio', 'button', 'submit'].includes(el.type));
+    const typed = (el: EventTarget | null) => el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && !['file', 'checkbox', 'radio', 'button', 'submit'].includes(el.type));
     const onIn = (e: FocusEvent) => setTyping(typed(e.target));
     const onOut = (e: FocusEvent) => { if (!typed(e.relatedTarget)) setTyping(false); };
     document.addEventListener('focusin', onIn);

@@ -17,9 +17,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   defect needs at least one photograph"). Tapping a row opens that card
   directly under it; tapping it again or "Done with this card" folds it.
   Wide screens keep the cards rail beside the open card. This is FE-1a.
-- On the phone the action bar steps aside while a text field, box or list
-  has the keyboard, so it never covers what is being typed. Tapping a
-  finding on the check step opens the card it is about.
+- On the phone the action bar steps aside while a text field or box has
+  the keyboard, so it never covers what is being typed. Drop-down lists do
+  not hide it. Tapping a finding on the check step opens the card it is
+  about.
 - Dropped the repeated "Selected: VARIATION" line under the kind buttons.
 - Decision: fold every card when a draft opens on the phone rather than
   opening the last one, so an engineer coming back to a draft sees the whole
