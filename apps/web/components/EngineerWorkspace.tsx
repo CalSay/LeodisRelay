@@ -20,6 +20,7 @@ import { fmtMoney, variationValue } from '@/lib/variations';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { withViewReturn } from '@/lib/viewNavigation';
 import { REPORT_TYPES, reportTypeOf, type ReportTypeId } from '@/lib/reportTypes';
+import { useWhatsNewCount } from './useWhatsNew';
 
 /**
  * The same words the office uses. A report is received when the server has
@@ -133,6 +134,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
     });
     return () => {cancelled=true;};
   },[principal,drafts]);
+  const newToYou = useWhatsNewCount('site');
   const unfinished = unfinishedReports(drafts, held.copies, projects, held.deviceOnly);
 
   useEffect(() => {
@@ -235,6 +237,12 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
             <div className="eng-section-title"><h2 id="eng-my-week-title">Your week</h2></div>
             <div className="eng-list">
               <Link className="eng-row" href={`/my-week?${new URLSearchParams({ returnTo: engineerReturn() })}`}><div className="main"><b>My week</b><span>Your days on every project, from what you sent · ready to copy into a timesheet</span></div><span className="chev">›</span></Link>
+            </div>
+          </section>
+          <section aria-labelledby="eng-help-title">
+            <div className="eng-section-title"><h2 id="eng-help-title">Help</h2></div>
+            <div className="eng-list">
+              <Link className="eng-row" href={`/help?${new URLSearchParams({ for: 'site', returnTo: engineerReturn() })}`}><div className="main"><b>How RELAY works and what’s new</b><span>What to tap, what happens after you send, and what the words mean</span>{newToYou > 0 && <div className="stat"><span className="tag tag-draft">{newToYou} new to you</span></div>}</div><span className="chev">›</span></Link>
             </div>
           </section>
         </div></div>

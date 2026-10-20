@@ -4,6 +4,63 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Help and what's new (new feature, proposed as NEW-11)
+
+- New `/help` page: how RELAY works in plain words, with two tabs, "On site"
+  and "In the office" (engineers land on the first, everyone else on the
+  second). It has "What's new" (each addition with its date, what it does and
+  a link to try it), "How it works" (a first site update in four steps, after
+  you send, a defect on its own, no signal, getting something wrong; for the
+  office: the day's work, closing an issue, review, the site meeting), "What
+  the words mean" (each status of a sent report, an issue, a variation and a
+  safety check, in the screens' own words) and "Where to find things".
+- "New" marks: each entry has a stable id. The ids someone has seen are kept
+  on their device, per person (`relay-help-seen:<id>`), so an entry says
+  "New" until they have opened Help once. Entries new to them are always
+  shown; otherwise the latest six, with "Show all". Nothing is stored on the
+  server and nothing is sent.
+- Ways in: "How RELAY works and what's new" at the foot of the engineer home
+  with "N new to you"; the office desk's existing Help button (now shown on a
+  phone too, with a count) whose dialog links to the page; "Help" in the app
+  bar on other pages. Pages opened from Help offer "← Back to Help" on the
+  same tab (`/help` added to `lib/viewNavigation.ts`).
+- Why this feature: more than twenty features reached RELAY today, each found
+  only by someone who happens to open the right screen, and the office's Help
+  dialog said two sentences. People use what they know exists, so this is the
+  cheapest way to make the work already done pay off, and it answers Cal's ask
+  for a UI that is clear and invites people in. Content is in
+  `lib/helpGuide.ts`, not the page, so each future feature adds one entry to
+  the top of `WHATS_NEW` (never reuse an id). Claims were checked against the
+  code, and a fresh-context review corrected five that were not exact (field
+  and card names, what "In progress" means, that review is a project setting
+  the office cannot switch on, held work going up once RELAY is opened). For
+  example: nothing is emailed because the Graph transport is not
+  wired; the closer cannot verify their own issue; Undo lasts 12 seconds. The review also found the office tab offered
+  engineers links to office-only pages; those are now left out for them. The
+  handover inspection (#43) is not listed because it has not merged.
+- Not FE-2, EXP-2 or EXP-4: no photo workflow, no routing, no locations.
+  Outside the report editor and report types.
+- Verified on Node 24: `npm run typecheck`, `npm test` (10 new tests in
+  `tests/helpGuide.test.ts`: office-only pages not offered to engineers, every link goes to a page that exists, ids unique
+  and newest first, tab filtering, landing tab, seen and new, a damaged stored
+  list, the status words match the screens, dates, Back to Help),
+  `npm run build`. New `scripts/verify-help.mjs` passed (33 checks: signed out;
+  engineer at 390px light from home with the new count, the guide, a page and
+  Back to Help, New gone on the next visit, Show all, the office tab with only
+  office-only entries new, the home count gone; 1440px dark, print and Back to
+  Site; manager at 1440px dark from the desk's Help with its count, Issues by
+  company and Back to Help, the count gone, the app bar link; office phone at
+  390px). Also passed: `verify-role-access` (61), `verify-engineer-layout`,
+  `verify-navigation` (76), `verify-engineer-nav` (60), `verify-office-landing`
+  (19), `verify-office-phone` (95), `verify-my-week`, `verify-safety-actions`.
+  Screenshots in the project's `ui-review/help/`.
+- Not verified: a physical phone, Safari and Firefox, SharePoint mode.
+- Proposed (not added to `docs/tasks.json`): "NEW-11 Help and what's new —
+  a guide for site and office, and what's new marked per person; browser
+  check at 390 and 1440px". Follow-ups: add `verify-help.mjs` to the browser
+  checks in `CLAUDE.md`, and a line in `CLAUDE.md` asking each feature PR to
+  add its `WHATS_NEW` entry; let Cal or the office edit the guide's wording.
+
 ## 2026-10-20 — FE-3e: offline capture, first slice
 
 - Before: with no signal, RELAY opened a recovery page that could only edit

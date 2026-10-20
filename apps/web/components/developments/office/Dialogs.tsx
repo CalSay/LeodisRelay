@@ -174,6 +174,7 @@ export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done
     </form></Modal>;
   }
   return <Modal className="ws-dialog" onClose={close}>{shell('Help & install', 'Leodis Relay', <>
+    <a className="btn help-guide-link" href={`/help?${new URLSearchParams({ for: 'office', returnTo: '/office' })}`}>How RELAY works and what’s new →</a>
     <p className="rowsub" style={{ margin: 0 }}>Engineers use the Engineer view on site for updates, individual defects and variation requests. The office reads submitted reports, works the issue register and prices and instructs variations; unfinished drafts stay private to their author.</p>
     <div className="panel"><InstallRelay alwaysShow /></div>
   </>, <BtnQ onClick={close}>Close</BtnQ>)}</Modal>;
