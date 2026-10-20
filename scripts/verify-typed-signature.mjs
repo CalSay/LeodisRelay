@@ -40,7 +40,11 @@ let browser,checks=0;const check=(ok,message)=>{assert.ok(ok,message);checks++;}
 const screenshot=process.env.RELAY_SCREENSHOT_DIR;
 // Choose a radio or tick a box from the keyboard: focus it and press Space.
 const press=async(page,locator)=>{await locator.focus();await page.keyboard.press('Space');};
-const typeName=async(page,name)=>{const box=page.getByRole('textbox',{name:'Your full name'});await box.focus();await page.keyboard.press('ControlOrMeta+A');await page.keyboard.type(name);};
+// Delete the name already there one key at a time, as a person would, then type their own.
+const typeName=async(page,name)=>{const box=page.getByRole('textbox',{name:'Your full name'});await box.focus();await page.keyboard.press('End');
+  for(let n=(await box.inputValue()).length;n>0;n--)await page.keyboard.press('Backspace');
+  await page.waitForTimeout(400);check(await box.inputValue()==='','emptying the name box leaves it empty: the author\'s name is not put back');
+  await page.keyboard.type(name);};
 // Wait until the server holds what the screen shows: the save bar says nothing while an item needs attention.
 const saved=async(ready)=>{for(let n=0;n<60;n++){if(ready())return;await new Promise(r=>setTimeout(r,250));}throw Error('the draft was not saved');};
 const statement=page=>page.getByRole('checkbox',{name:/I carried out this inspection/});
@@ -73,6 +77,14 @@ async function editor(scheme,width){
   // A reload keeps it typed and ticked.
   await page.reload();await page.locator('.sigway').waitFor();
   check(await page.getByRole('radio',{name:'Type my name instead'}).isChecked()&&await statement(page).isChecked()&&await page.getByRole('textbox',{name:'Your full name'}).inputValue()==='Tess Typed',`${label}: still typed and ticked after a reload`);
+  // Ticked with the name emptied, then reloaded: still empty, and it says the name is missing.
+  const nameBox=page.getByRole('textbox',{name:'Your full name'});await nameBox.focus();await page.keyboard.press('End');
+  for(let n=(await nameBox.inputValue()).length;n>0;n--)await page.keyboard.press('Backspace');
+  await saved(()=>getReport(draft.id).draftSignature?.name==='');
+  await page.reload();await page.locator('.sigway').waitFor();
+  check(await nameBox.inputValue()===''&&await page.locator('#report-check',{hasText:'Type your full name to sign'}).count()===1,`${label}: an emptied name stays empty after a reload, and it says so`);
+  await typeName(page,'Tess Typed');
+  await saved(()=>getReport(draft.id).draftSignature?.name==='Tess Typed');
   // Drawing instead takes the tick away; typing again needs a fresh tick.
   await press(page,page.getByRole('radio',{name:'Draw my signature'}));
   await page.waitForFunction(()=>!document.querySelector('.sigconfirm'));
