@@ -2,6 +2,7 @@ import type { Principal } from '@relay/platform';
 import { canReadReport, ownsReport } from './auth/access';
 import { londonDay } from './weeklySummary';
 import type { Issue, Report, Variation } from './types';
+import { reportTypeOf } from './reportTypes';
 
 /**
  * What happened on a project while an engineer was away: reports other trades
@@ -24,7 +25,9 @@ import type { Issue, Report, Variation } from './types';
 
 export const FIRST_LOOK_DAYS = 7;
 
-export interface CatchUpReport { id: string; reference: string; visitDate: string; at: string; author: string; trade?: string; cards: number; defects: number; correction: boolean }
+export interface CatchUpReport { id: string; reference: string; visitDate: string; at: string; author: string; trade?: string; cards: number; defects: number; correction: boolean;
+  /** An inspection: its name and how many checks need action, said instead of a card count. */
+  inspection?: { name: string; actions: number } }
 export type IssueChange = 'raised' | 'fixed' | 'closed' | 'reopened' | 'assigned';
 export interface CatchUpIssue { id: string; reference: string; location: string; description: string; at: string; by: string; change: IssueChange; owner: string; yourTrade: boolean }
 export type VariationChange = 'raised' | 'instructed' | 'declined';
@@ -66,6 +69,7 @@ export function sinceLastVisit(sources: CatchUpSources, principal: Principal, pr
   const reports = newestFirst(sent.filter(r => !ownsReport(principal, r) && !superseded.has(r.id) && after(r.serverAcknowledgedAt)).map(r => ({
     id: r.id, reference: r.reference, visitDate: r.visitDate, at: r.serverAcknowledgedAt!, author: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}),
     cards: r.observations.length, defects: r.observations.filter(o => o.type === 'defect').length, correction: !!r.corrects,
+    ...(reportTypeOf(r).checklist ? { inspection: { name: reportTypeOf(r).name, actions: r.observations.filter(o => o.check?.answer === 'action').length } } : {}),
   })));
 
   // Each issue once, by the latest thing that happened to it since, unless the engineer did it.

@@ -7,6 +7,7 @@ import { cachedProject, cachedProjects, reportableProject } from './projects';
 import { sharePointMode } from './sharepoint/config';
 import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } from './issueStore';
 import { raiseVariationsFromReport } from './variationStore';
+import { reportTypeOf, startingCards, type ReportTypeId } from './reportTypes';
 import { atomic, getRecord, putRecord, records, pageRecords, enqueue, database } from './storage';
 
 /** `current`: on a draft save that lost a race, the draft as the server now holds it, so the author can compare. */
@@ -38,25 +39,30 @@ export function reportsFor(principal: Principal, projectId?: string, offset = 0)
     // the office say "3 sections, Electrical" without reading a word.
     const allowed: ReportSummary = { id:r.id,projectId:r.projectId,reference:r.reference,visitDate:r.visitDate,
       author:r.author,...(r.authorId ? {authorId:r.authorId}:{}),...(r.authorTrade ? {authorTrade:r.authorTrade}:{}),
-      state:r.state,version:r.version,revision:r.revision,review:r.review,
+      state:r.state,version:r.version,revision:r.revision,review:r.review,...(r.reportType ? {reportType:r.reportType}:{}),
       ...(r.lastSavedAt ? {lastSavedAt:r.lastSavedAt}:{}),...(r.corrects ? {corrects:r.corrects}:{}),
       observationCount:r.observationCount,photoCount:0,defectCount:0 };
     return allowed;
   }), next: rows.length > 50 ? offset + 50 : null };
 }
 
-export function createReport(projectId: string, author: string, principal?: Principal): Report {
+export function createReport(projectId: string, author: string, principal?: Principal, reportType: ReportTypeId = 'progress'): Report {
   return atomic(() => {
     if (sharePointMode() === 'read') throw new Error('Report capture is disabled while SharePoint is read-only.');
     const project = cachedProject(projectId);
     if (!project) throw new Error('Project not found.');
-    const count = database().prepare("SELECT COUNT(*) AS n FROM records WHERE kind='reports' AND project=?").get(projectId)!;
+    const type = reportTypeOf({ reportType });
+    // Each type numbers its own reports: the third inspection is SSI-003 however many updates came first.
+    const count = type.id === 'progress'
+      ? database().prepare("SELECT COUNT(*) AS n FROM records WHERE kind='reports' AND project=? AND json_extract(data,'$.reportType') IS NULL").get(projectId)!
+      : database().prepare("SELECT COUNT(*) AS n FROM records WHERE kind='reports' AND project=? AND json_extract(data,'$.reportType')=?").get(projectId,type.id)!;
     const report: Report = {
       id: 'rep-' + randomUUID(), projectId, author, projectSnapshot: structuredClone(project),
+      ...(type.id === 'progress' ? {} : { reportType: type.id }),
       ...(principal ? { authorId:principal.id, ...(principal.trade ? {authorTrade:principal.trade}: {}) } : {}),
-      reference: `${project.source ? 'DEMO-' : ''}${project.projectNumber}-SPR-${String(Number(count.n) + 1).padStart(3,'0')}`,
+      reference: `${project.source ? 'DEMO-' : ''}${project.projectNumber}-${type.code}-${String(Number(count.n) + 1).padStart(3,'0')}`,
       visitDate: new Date().toISOString().slice(0,10), state: 'draft', version: 1,
-      revision: 1, review: 'not_required', observations: [], lastSavedAt: new Date().toISOString(),
+      revision: 1, review: 'not_required', observations: startingCards(type), lastSavedAt: new Date().toISOString(),
     };
     putRecord('reports',report);
     return report;
@@ -125,6 +131,7 @@ export async function submitReport(id: string, signature?: { dataUrl?: string; n
     if (!project || !reportableProject(project)) return reject('This project is no longer open for reporting.',422);
     const blocking = reviewReport(existing).filter(f => f.blocking);
     if (blocking.length) return reject(`${blocking.length} item(s) need completing before sending.`,422);
+    if (reportTypeOf(existing).drawnSignature && !signature?.dataUrl) return reject('Sign the inspection before sending: a typed name is not enough.',422);
     // The draft copy has done its job: what was sent is `signature`.
     const { draftSignature: _draft, ...sent } = existing;
     const submitted: Report = {
@@ -135,9 +142,12 @@ export async function submitReport(id: string, signature?: { dataUrl?: string; n
     };
     putRecord('reports',submitted);
     putRecord('snapshots',submitted);
-    raiseFromReport(submitted);
-    // Variations are raised beside issues, so the office sees both the moment the report lands.
-    raiseVariationsFromReport(submitted);
+    // An inspection's actions stay on the inspection: it raises no issues or variations.
+    if (reportTypeOf(submitted).raisesRecords) {
+      raiseFromReport(submitted);
+      // Variations are raised beside issues, so the office sees both the moment the report lands.
+      raiseVariationsFromReport(submitted);
+    }
     enqueue('pdf:' + id,'pdf',{ reportId: id });
     if (sharePointMode() === 'write') {
       enqueue('sharepoint-register:' + id,'sharepoint-register',{reportId:id});

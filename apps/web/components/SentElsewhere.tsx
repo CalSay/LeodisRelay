@@ -3,6 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { Report } from '@/lib/types';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
+import { answerLabel } from '@/lib/reportTypes';
 import type { UnsentChange, UnsentCheck, UnsentWork } from '@/lib/sentElsewhere';
 
 const fmtWhen = (iso?: string) => iso ? new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
@@ -46,14 +47,15 @@ export function SentElsewhere({ sent, work, unheld, busy, error, errorLink, reas
 
     <div className="sec"><span className="lbl">Not in the sent report · {changes}</span></div>
     {work.changes.map(c => {
-      const kind = OBSERVATION_TYPES.find(t => t.value === c.card.type)?.short ?? c.card.type;
+      // A check is named by its question and answer: it has no location, and often no note.
+      const kind = c.card.check ? answerLabel(c.card.check.answer) : OBSERVATION_TYPES.find(t => t.value === c.card.type)?.short ?? c.card.type;
       return <article key={`${c.kind}-${c.id}`} className={`eng-conflict-card ${c.kind === 'removed' && !c.check ? 'is-out' : ''}`} data-change={c.kind}>
         <header>
           <span className="no">{number(c)}</span>
-          <b>{c.card.location.trim() || 'No location yet'}</b>
+          <b>{c.card.check?.question ?? (c.card.location.trim() || 'No location yet')}</b>
           <span className="eng-conflict-status">{c.check === 'edited-there' ? 'Removed here, kept' : c.check === 'maybe-removed-here' ? 'Not on this screen' : KIND[c.kind]}</span>
         </header>
-        <p className="eng-sent-away-what"><span className="kind">{kind}</span> {c.card.whatHappened.trim() || 'Nothing written yet'}</p>
+        <p className="eng-sent-away-what"><span className="kind">{kind}</span> {c.card.whatHappened.trim() || (c.card.check ? 'No notes' : 'Nothing written yet')}</p>
         {c.check && <p className="hint eng-sent-away-check">{CHECK[c.check]}</p>}
       </article>;
     })}

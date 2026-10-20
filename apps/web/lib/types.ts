@@ -35,7 +35,15 @@ export interface Observation {
   roughSize?: RoughSize;
   /** The engineer's estimate of parts, in pounds, if known. */
   partsEstimate?: number;
+  /**
+   * On an inspection (EXP-5), the check this card answers. The question is
+   * kept with the answer, so a sent report says what was asked even if the
+   * checklist's wording changes later. Absent on every other card.
+   */
+  check?: { item: string; question: string; answer?: CheckAnswer };
 }
+/** Satisfactory, action needed, or not applicable. */
+export type CheckAnswer = 'ok' | 'action' | 'na';
 /** Half a day, a day, two days, or more: the size an engineer can say without pricing. */
 export type RoughSize = 'half-day' | 'day' | 'two-days' | 'more';
 
@@ -50,6 +58,8 @@ export type ReportState = "draft" | "submitted";
 export type ReviewState = "not_required" | "pending" | "approved" | "returned";
 
 export interface Report {
+  /** What kind of report this is (reportTypes.ts). Absent: a site progress report. */
+  reportType?: import('./reportTypes').ReportTypeId;
   projectSnapshot?: import('./projects').ConnectedProject;
   sharepoint?: { status: 'pending' | 'registered' | 'filed' | 'failed'; url?: string; itemId?: string; error?: string };
   delivery?: 'pending' | 'rendered' | 'filed' | 'sent' | 'outbox' | 'failed';
@@ -141,6 +151,8 @@ export type ReportSummary = Omit<Report, 'observations' | 'signature' | 'draftSi
    * the field existed; fall back to defectCount.
    */
   kindCounts?: Record<ObservationType, number>;
+  /** On an inspection: how many checks were satisfactory, need action, do not apply, or are unanswered. */
+  checks?: Record<CheckAnswer | 'open', number>;
 };
 export type IssueSummary = Omit<Issue, 'events'>;
 

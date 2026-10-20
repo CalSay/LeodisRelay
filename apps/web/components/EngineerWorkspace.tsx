@@ -18,6 +18,7 @@ import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '
 import { fmtMoney, variationValue } from '@/lib/variations';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { withViewReturn } from '@/lib/viewNavigation';
+import { REPORT_TYPES, reportTypeOf, type ReportTypeId } from '@/lib/reportTypes';
 
 /**
  * The same words the office uses. A report is received when the server has
@@ -97,7 +98,11 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   const [held,setHeld] = useState<{ copies: HeldDraft[]; deviceOnly: Set<string> }>({ copies: [], deviceOnly: new Set() });
   const project = projects.find(p => p.id === projectId);
   const ownDrafts = drafts.filter(r => r.projectId === projectId);
-  const currentDraft = ownDrafts[0];
+  // The site update in progress, and any inspection in progress, kept apart so
+  // "Request a variation" never lands on an inspection's checklist.
+  const currentDraft = ownDrafts.find(r => reportTypeOf(r).id === 'progress');
+  const inspectionDraft = ownDrafts.find(r => reportTypeOf(r).id === 'safety-inspection');
+  const inspectionType = REPORT_TYPES.find(t => t.id === 'safety-inspection')!;
   const preference = `relay-project:${principal?.id}`;
   const engineerReturn = (target: View = 'home') => `/engineer?project=${encodeURIComponent(projectId)}${target === 'home' ? '' : `&view=${target}`}`;
 
@@ -147,7 +152,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
         if(cancelled)return;
         const rows:Back[] = [];
         const returnTo = engineerReturn();
-        for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) rows.push({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:withViewReturn(`/reports/${r.id}`,returnTo), title:`Site update ${r.reference.split('-').slice(1).join('-')}`, sub:`Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned' });
+        for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) rows.push({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:withViewReturn(`/reports/${r.id}`,returnTo), title:`${reportTypeOf(r).name} ${r.reference.split("-").slice(1).join("-")}`, sub:`Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned' });
         for (const i of all) if (i.reportedById === principal.id || i.events[0]?.actorId === principal.id) rows.push({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}`,returnTo), title:i.description, sub:`${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'} · you raised it ${fmtDay(i.raisedAt)}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed' });
         for (const v of variations) if (v.raisedById === principal.id) rows.push({ at:v.events.at(-1)?.at ?? v.raisedAt, key:v.id, href:withViewReturn(`/variations/${v.id}`,returnTo), title:v.description, sub:`${v.reference.split('-').slice(1).join('-')} · ${v.location || 'no location'} · you raised it ${fmtDay(v.raisedAt)}`, tags:<VariationTags v={v}/>, late:v.workDone && v.instruction === 'pending' });
         rows.sort((a,b) => b.at.localeCompare(a.at));
@@ -162,11 +167,11 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
     setProjectId(id);setOffset(0);setScope('current');setView('home');
     try{localStorage.setItem(preference,id);}catch{}
   }
-  async function startReport(add?: 'instruction') {
+  async function startReport(add?: 'instruction', type: ReportTypeId = 'progress') {
     if(!project || creating)return;
     if (currentDraft && add) { router.push(withViewReturn(`/reports/${currentDraft.id}?add=${add}`,engineerReturn(view))); return; }
     setCreating(true);setError('');
-    try {const report = await createReport(project.id,principal?.name ?? '');router.push(withViewReturn(`/reports/${report.id}${add ? `?add=${add}` : ''}`,engineerReturn(view)));}
+    try {const report = await createReport(project.id,principal?.name ?? '',type);router.push(withViewReturn(`/reports/${report.id}${add ? `?add=${add}` : ''}`,engineerReturn(view)));}
     catch(e){setError(e instanceof Error?e.message:'Unable to start a report. Please try again.');setCreating(false);}
   }
 
@@ -190,12 +195,15 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
               : <button type="button" className="eng-tile big" onClick={()=>void startReport()} disabled={creating}><span className="kind tone-neutral">Site update</span><div><b>{creating?'Starting…':'Start a site update'}</b><small>Progress, defects, variations and access, one card at a time</small></div><span className="arrow">→</span></button>}
             <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo + a short note · sent on its own</small></div></button>
             <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work needing instruction · goes in your site update</small></div></button>
+            {inspectionDraft
+              ? <Link className="eng-tile eng-tile-wide" href={withViewReturn(`/reports/${inspectionDraft.id}`,engineerReturn())}><span className="kind answer-ok">Inspection</span><div><b>{inspectionDraft.corrects ? 'Continue the inspection correction' : 'Continue the safety inspection'}</b><small>{inspectionDraft.checks ? `${inspectionDraft.checks.ok + inspectionDraft.checks.action + inspectionDraft.checks.na} of ${inspectionDraft.observationCount} checks answered` : `${inspectionDraft.observationCount} checks`} · saved {fmtWhen(inspectionDraft.lastSavedAt) || 'on server'}</small></div><span className="arrow">→</span></Link>
+              : <button type="button" className="eng-tile eng-tile-wide" onClick={()=>void startReport(undefined,'safety-inspection')} disabled={creating}><span className="kind answer-ok">Inspection</span><div><b>Do a safety inspection</b><small>{inspectionType.blurb} · signed and sent as its own report</small></div><span className="arrow">→</span></button>}
           </div>
           <p className="eng-help">Defects flagged here are sent on their own. Everything else stays a draft until you sign and send.</p>
           <section aria-labelledby="eng-unfinished-title">
             <div className="eng-section-title"><h2 id="eng-unfinished-title">Unfinished reports</h2><span className="r">{unfinished.length}</span></div>
             <div className="eng-list">
-              {unfinished.length ? unfinished.map(r => <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : 'Site update'} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.cards} card{r.cards===1?'':'s'}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></Link>)
+              {unfinished.length ? unfinished.map(r => <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : r.typeName} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></Link>)
                 : <div className="eng-empty">Nothing unfinished. A report you start stays here, on every project, until you sign and send it.</div>}
             </div>
           </section>

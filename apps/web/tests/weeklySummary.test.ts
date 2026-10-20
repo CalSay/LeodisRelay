@@ -50,12 +50,12 @@ test('lists sent reports by visit day, never drafts, other projects or other wee
     report({ id:'last', visitDate:'2026-10-11' }),
   ] }, manager, 'p1', MONDAY, TODAY);
   assert.deepEqual(s.reports.map(r => r.id), ['tue', 'thu']);
-  assert.deepEqual(s.reports[0]!.kinds, { update:1, defect:1, instruction:1, access:0 });
+  assert.deepEqual(s.reports[0]!.kinds, { update:1, defect:1, instruction:1, access:0, check:0 });
   assert.equal(s.reports[0]!.photos, 1);
   assert.deepEqual(s.reports[0]!.locations, ['Level 3 riser', 'Plant room'], 'locations as written, repeats dropped ignoring case and spacing');
   assert.deepEqual(s.engineers, ['Pat Pipe', 'Sam Spark']);
   assert.deepEqual(s.siteDays, ['2026-10-13', '2026-10-15']);
-  assert.deepEqual(s.kinds, { update:1, defect:1, instruction:1, access:0 });
+  assert.deepEqual(s.kinds, { update:1, defect:1, instruction:1, access:0, check:0 });
   assert.equal(s.current, false);
 });
 

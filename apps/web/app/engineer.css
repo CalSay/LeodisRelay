@@ -327,3 +327,26 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-more{margin:0 0 20px;}
 .eng-more>.lbl{display:block;margin:0 0 8px;}
 @media (max-width:520px){.eng-more>div{display:grid;grid-template-columns:1fr 1fr;}.eng-more .eng-link-button{justify-content:center;padding:0 12px;}}
+
+/* Inspections (EXP-5): a fixed checklist, each check answered satisfactory, action needed or not applicable. */
+.answer-ok{--tone:var(--ok);}.answer-action{--tone:var(--alert);}.answer-na{--tone:var(--text-3);}.answer-open{--tone:var(--caution);}
+.eng-checkrow .top{align-items:flex-start;}
+.eng-checkrow .top .kind{min-width:52px;margin-top:1px;}
+.eng-checkrow .top b{white-space:normal;overflow:visible;line-height:1.35;}
+.eng-checkrow .meta{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.eng-check-question{margin:4px 0 0;font-size:18px;line-height:1.35;font-weight:600;letter-spacing:-.01em;}
+.eng-check-hint{margin:6px 0 2px;}
+.eng-answers{margin-top:8px;}
+.eng-answers button{flex:1 1 30%;min-height:52px!important;font-size:14px;font-weight:500;}
+.eng-answers button[aria-pressed=true].answer-ok{border-color:var(--ok);background:var(--ok-wash);color:var(--ok);}
+.eng-answers button[aria-pressed=true].answer-action{border-color:var(--alert);background:var(--alert-wash);color:var(--alert);}
+.eng-answers button[aria-pressed=true].answer-na{border-color:var(--line-2);background:var(--panel-2);color:var(--text);}
+.eng-next-check{grid-column:1/-1;flex-direction:column;gap:2px;border:1px solid var(--brass);background:var(--brass-wash);color:var(--brass);font-weight:600;}
+.eng-next-check small{color:var(--text-2);font-weight:400;font-size:12px;}
+.eng-card-actions>.eng-review-link:only-child{grid-column:1/-1;}
+.eng-sign-hint{margin:0 0 8px;}
+@media(max-width:380px){.eng-answers button{flex-basis:100%;}}
+.eng-tile.eng-tile-wide{grid-column:1/-1;min-height:0;flex-direction:row;align-items:center;gap:12px;}
+.eng-tile.eng-tile-wide .kind{margin:0;}
+.eng-tile.eng-tile-wide>div{flex:1;min-width:0;}
+.eng-tile.eng-tile-wide .arrow{font-family:var(--mono);color:var(--brass);}

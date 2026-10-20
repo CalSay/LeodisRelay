@@ -27,7 +27,7 @@ const ISSUE_WORD: Record<MyWeekIssueKind, string> = { flagged: 'Flagged a defect
 const recorded = (p: MyWeekProject) => p.reports.length + p.issues.length > 0;
 
 function kindLine(kinds: MyWeekReport['kinds']): string {
-  return OBSERVATION_TYPES.filter(t => kinds[t.value]).map(t => { const [one, many] = KIND_WORD[t.value]!; return plural(kinds[t.value], one, many); }).join(', ') || 'no cards';
+  return OBSERVATION_TYPES.filter(t => t.value !== 'check' && kinds[t.value]).map(t => { const [one, many] = KIND_WORD[t.value]!; return plural(kinds[t.value], one, many); }).join(', ') || 'no cards';
 }
 
 export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; returnTo?: string | undefined }) {
@@ -108,7 +108,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
                 <ul className="mw-rows">
                   {p.reports.map(r => <li key={r.id}>
                     <p><Link className="ref" href={withViewReturn(`/reports/${r.id}`, here)}>{r.reference}</Link><span className="tag tag-sent">Sent</span>{r.revision > 1 && <span className="tag tag-draft">Rev {r.revision}</span>}</p>
-                    <p className="mw-meta">{kindLine(r.kinds)}{r.photos ? ` · ${plural(r.photos, 'photograph')}` : ''}</p>
+                    <p className="mw-meta">{r.inspection ? `${r.inspection.name}, ${r.inspection.action ? plural(r.inspection.action, 'action') : 'no actions'}` : kindLine(r.kinds)}{r.photos ? ` · ${plural(r.photos, 'photograph')}` : ''}</p>
                     {r.locations.length > 0 && <p className="mw-meta">{r.locations.join(' · ')}</p>}
                   </li>)}
                   {p.issues.map(i => <li key={`${i.id}-${i.at}`}>
@@ -118,7 +118,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
                   </li>)}
                   {p.drafts.map(r => <li key={r.id} className="mw-draft">
                     <p><Link className="ref" href={withViewReturn(`/reports/${r.id}`, here)}>{r.reference}</Link><span className="tag tag-alert">Not sent yet</span></p>
-                    <p className="mw-meta">{r.correction ? 'Correction draft' : 'Site update draft'} · {plural(r.cards, 'card')} · open it to sign and send</p>
+                    <p className="mw-meta">{r.correction ? 'Correction draft' : `${r.typeName} draft`} · {plural(r.cards, r.typeName === 'Site update' ? 'card' : 'check')} · open it to sign and send</p>
                   </li>)}
                 </ul>
               </section>)}

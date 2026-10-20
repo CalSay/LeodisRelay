@@ -14,6 +14,7 @@ import { capturePhoto, uploadPhotos } from './localMedia';
 import { localSaveJournal } from './localSaveJournal';
 import { SaveConflict, saveWithJournal, type SaveRequest } from './saveRequest';
 import type { SinceLastVisit } from './sinceLastVisit';
+import type { ReportTypeId } from './reportTypes';
 import type { ProjectSuggestions } from './suggestions';
 
 const REPORTABLE_STATUSES = ["4. Active", "5. Defects Liability"];
@@ -79,12 +80,12 @@ export async function getReport(reportId: string): Promise<Report | undefined> {
   return parse<Report>(response);
 }
 
-export async function createReport(projectId: string, author: string): Promise<Report> {
+export async function createReport(projectId: string, author: string, reportType?: ReportTypeId): Promise<Report> {
   return parse<Report>(
     await request("/api/reports", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ projectId, author }),
+      body: JSON.stringify({ projectId, author, ...(reportType && reportType !== 'progress' ? { reportType } : {}) }),
     }),
   );
 }

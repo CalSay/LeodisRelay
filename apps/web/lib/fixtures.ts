@@ -97,7 +97,8 @@ export const FIXTURE_PROJECTS: FixtureProject[] = [
   },
 ];
 
-export type ObservationType = "update" | "defect" | "instruction" | "access";
+/** `check` is an inspection's answer to one question (reportTypes.ts); it is never picked as a card kind. */
+export type ObservationType = "update" | "defect" | "instruction" | "access" | "check";
 
 /**
  * The kinds of update an engineer can record.
@@ -160,7 +161,19 @@ export const OBSERVATION_TYPES: {
     pick: "Couldn't get to it",
     asks: "What was blocked and by whom.",
   },
+  {
+    value: "check",
+    label: "Inspection check",
+    hint: "One question on an inspection's checklist",
+    tone: "neutral",
+    short: "Check",
+    pick: "Answer a check",
+    asks: "Satisfactory, action needed or not applicable.",
+  },
 ];
+
+/** The kinds an engineer picks for a card on a site update. A check comes only with an inspection. */
+export const CARD_TYPES = OBSERVATION_TYPES.filter(t => t.value !== "check");
 
 export const FIXTURE_LOCATIONS = [
   "Level 1 - Riser",

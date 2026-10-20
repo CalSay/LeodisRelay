@@ -4,6 +4,7 @@ import { IssueSyncStatus } from '@/components/SharePointStatus';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import { deliveryStatus, reviewStatus } from '@/lib/status';
 import { fmtMoney } from '@/lib/variations';
+import { reportTypeOf } from '@/lib/reportTypes';
 import { KIND, confirmTag, found, instructionTag, toneTag, workTag, type Rollup } from './model';
 
 /** Status as a word, a shape and a colour; never colour alone. */
@@ -23,6 +24,9 @@ export function ReviewTag({ r, quiet }: { r: ReportSummary; quiet?: boolean }) {
 }
 /** What the visit found, as kind chips. Reads from the summary's per-kind counts. */
 export function Found({ r }: { r: ReportSummary }) {
+  // An inspection says what it is and what needs acting on, not "12 checks".
+  if (r.checks) return <div className="found"><span className="kind tone-neutral">{reportTypeOf(r).name}</span>
+    {r.checks.action > 0 ? <span className="kind tone-defect">{r.checks.action} {r.checks.action === 1 ? 'action' : 'actions'}</span> : r.checks.open === 0 && <span className="kind tone-neutral">no actions</span>}</div>;
   const f = found(r);
   if (!f.length) return <span className="rowsub">nothing recorded</span>;
   return <div className="found">{f.map(x => <span key={x.kind} className={`kind ${KIND[x.kind].tone}`}>{x.n} {x.n === 1 ? KIND[x.kind].one : KIND[x.kind].many}</span>)}</div>;

@@ -69,3 +69,6 @@
   .diary-entry{padding:12px;}
   .diary-more,.diary-end{margin-left:20px;}
 }
+/* An inspection says what it was and how its checks came out, before the ones that need action. */
+.diary-inspection{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;margin:10px 0 0;font-size:13.5px;color:var(--text-2);}
+.diary-inspection b{font:600 10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--text);}
