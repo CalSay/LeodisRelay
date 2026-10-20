@@ -64,14 +64,24 @@ label.btn{position:relative}
 .choice input{margin:3px 0 0;width:18px;height:18px;flex:none;accent-color:var(--brass)}
 .choice strong{display:block}.choice small{display:block;color:var(--text-2);font-size:13px;line-height:1.4}
 .qhint{margin:6px 0 0;font-size:14px;color:var(--text-2)}
+.tag.signed{border-color:var(--brass);color:var(--brass);background:var(--brass-wash)}
+.sign{border-color:var(--brass)}.sign h2{margin-top:4px}
+.siglabel{margin:14px 0 0;font-weight:600;font-size:14.5px}
+.todo{margin:8px 0;padding-left:20px}.todo li{margin:4px 0}
+.sigwrap{position:relative;margin-top:6px;border:1px solid var(--line-2);border-radius:3px;background:var(--panel)}
+.sigpad{display:block;width:100%;height:160px;touch-action:none;cursor:crosshair}
+.sighint{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--text-3);pointer-events:none}.sighint[hidden]{display:none}
+.signed-ink{background:#fff;border:1px solid var(--line);border-radius:3px;padding:8px;margin:12px 0;max-width:420px}.signed-ink img{display:block;width:100%;height:auto}
+button:disabled{opacity:.55;cursor:not-allowed}
+label.field input:disabled,label.field textarea:disabled,label.field select:disabled{background:var(--panel-2);color:var(--text);opacity:1}
 </style><script src="/offline.js" defer></script></head>
 <body>
 <header><div class="bar"><span class="brand">RELAY<em>LEODIS</em></span><span id="net" class="net" role="status">No signal</span></div></header>
 <main>
 <p class="lbl">Working without signal</p>
 <h1>Keep reporting. It is saved on this phone.</h1>
-<p class="lead">Everything you add here is kept on this phone, photos too. It goes to the server by itself the next time RELAY opens with signal. Nothing reaches the office until you sign and send it in RELAY.</p>
-<div id="back" class="panel back" hidden><p><strong>Signal is back.</strong> Open RELAY to put what is on this phone onto the server.</p><a class="btn primary" href="/engineer">Open RELAY</a></div>
+<p class="lead">Everything you add here is kept on this phone, photos too. It goes to the server by itself the next time RELAY opens with signal. Nothing reaches the office until you sign it: an inspection can be signed here, and a site update is signed and sent in RELAY.</p>
+<div id="back" class="panel back" hidden><p><strong>Signal is back.</strong> Open RELAY to put what is on this phone onto the server and send any inspection you have signed.</p><a class="btn primary" href="/engineer">Open RELAY</a></div>
 <p id="status" role="status">Checking this phone…</p><p id="error" role="alert"></p>
 <section id="start" class="panel" aria-labelledby="start-title" hidden>
 <h2 id="start-title">Start a site update</h2>

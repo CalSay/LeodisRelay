@@ -54,11 +54,11 @@ export function HeldWork() {
     {result.sent.length > 0 && <div className="note note-ok" role="status">
       <strong>{sentLine(result.sent)}</strong>{' '}
       {one ? <Link href={`/reports/${one.reportId}`}>Open {one.reference.split('-').slice(1).join('-')}{one.projectName ? ` · ${one.projectName}` : ''}</Link>
-        : <span>{result.sent.map(s => s.reference.split('-').slice(1).join('-')).join(', ')}. They are under Unfinished reports.</span>}
+        : <span>{result.sent.map(s => s.reference.split('-').slice(1).join('-')).join(', ')}.{result.sent.some(s => !s.submitted) ? ' Drafts are under Unfinished reports.' : ''}</span>}
       <button type="button" className="held-send-close" onClick={() => setResult(r => r && { ...r, sent: [] })} aria-label="Dismiss">Dismiss</button>
     </div>}
     {result.problems.map((p, i) => <div key={i} className="note note-bad" role="alert">
-      <strong>{p.title}: still only on this phone.</strong> {p.reason}{' '}
+      <strong>{p.title}: {p.headline ?? 'still only on this phone.'}</strong> {p.reason}{' '}
       {p.reportId ? <Link href={`/reports/${p.reportId}`}>Open it</Link> : <a href="/offline.html">See what is on this phone</a>}
     </div>)}
   </div>;

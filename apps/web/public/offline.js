@@ -8,7 +8,12 @@
  * this phone. The inspections' checks come from the app, which leaves them
  * here while it has signal (lib/offlineStart.ts `offlineTypes`). What is typed here is marked
  * `heldOffline`, and a report started here carries `started`; the app sends
- * both by itself the next time it opens with signal (lib/heldSend.ts). */
+ * both by itself the next time it opens with signal (lib/heldSend.ts).
+ *
+ * An inspection can be signed here once every check is answered. Signing
+ * locks it on this phone and records what was signed (`signedContent`); the
+ * app then sends it to the office by itself, but only if it is still exactly
+ * what was signed. Taking the signature back unlocks it. */
 (() => {
   const $ = id => document.getElementById(id);
   const status = $('status'), error = $('error'), editor = $('editor');
@@ -17,6 +22,11 @@
   let selected;
   let blocked = false;
   const urls = [];
+  // The signature being drawn for the open inspection: kept across redraws, cleared on switching report.
+  let strokes = [];
+  let signer = '';
+  let refreshSign = () => {};
+  let resize;
   // The tab's own signed-in person first; otherwise the person the app last
   // left on this device (cleared when they sign out), so a cold start works.
   let person = null;
@@ -50,6 +60,25 @@
   const label = d => d.started ? `New ${typeName(d).toLowerCase()} · ${d.started.projectName}`
     : `${d.report?.reference || d.reportId}${aside(d) ? ' (copy kept while choosing between two versions)' : ''}`;
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  // What a signature covers. Must match signedContent in lib/offlineStart.ts (tests/offlineSign.test.ts).
+  const signedContent = observations => JSON.stringify(observations.map(o => [o.type, o.check?.item ?? '', o.check?.question ?? '', o.check?.answer ?? '', o.location ?? '', o.whatHappened ?? '', o.actionNeeded ?? '', o.owner ?? '', (o.photos ?? []).map(p => [p.id, p.caption ?? ''])]));
+  // An inspection this page can sign: started here, or a draft the server has a version of.
+  const signable = d => inspection(d) && !aside(d) && (Boolean(d.started) || Number.isInteger(d.baseVersion));
+  const locked = d => Boolean(d?.signed);
+  // What stops an inspection being sent, as the server checks it (lib/review.ts reviewInspection).
+  function missing(d) {
+    const out = [];
+    const open = d.observations.filter(o => !o.check?.answer).length;
+    if (open) out.push(`${plural(open, 'check')} not answered yet`);
+    for (const o of d.observations) if (o.check?.answer === 'action') {
+      const q = o.check.question;
+      if (!(o.whatHappened || '').trim()) out.push(`${q}: say what is wrong`);
+      if (raisesIssues(d) && !(o.location || '').trim()) out.push(`${q}: say where, for the snag list`);
+      if (!(o.actionNeeded || '').trim()) out.push(`${q}: say what needs doing`);
+    }
+    return out;
+  }
+  const tagFor = d => d.signed ? 'Signed · not sent yet' : 'Only on this phone';
   const photos = d => d.observations.reduce((n, o) => n + o.photos.length, 0);
   // "4 of 12 checks answered" for an inspection, "3 cards" for a site update.
   const cards = d => inspection(d) ? `${d.observations.filter(o => o.check?.answer).length} of ${plural(d.observations.length, 'check')} answered` : plural(d.observations.length, 'card');
@@ -117,7 +146,9 @@
       const store = tx.objectStore('unsent');
       const request = store.get(snapshot.key);
       request.onsuccess = () => {
-        if (!request.result || request.result.seq !== snapshot.seq) { tx.abort(); return; }
+        const stored = request.result;
+        // A signed copy the app has saved on the server, or is saving now, is on its way: it cannot be taken back here.
+        if (!stored || stored.seq !== snapshot.seq || (stored.signed && (Number.isInteger(stored.signed.savedVersion) || (stored.sending && !snapshot.signed)))) { tx.abort(); return; }
         snapshot.seq = editId; snapshot.heldAt = new Date().toISOString();
         if (snapshot.report) snapshot.report.observations = snapshot.observations;
         // Typed here, so no editor holds it: the app sends it by itself.
@@ -130,6 +161,7 @@
     });
   }
   function changed() {
+    refreshSign();
     dirty = true; status.textContent = 'Saving on this phone…';
     chain = chain.then(save).then(() => {
       if (!blocked) { status.textContent = `Saved on this phone ${when(new Date().toISOString())}. Not on the server yet.`; void list(); }
@@ -151,6 +183,7 @@
       if (blob) { const url = URL.createObjectURL(blob); urls.push(url); const image = element('img', '', box); image.src = url; image.alt = photo.caption || `Photo ${index + 1}`; }
       else element('p', 'On the server, not kept on this phone.', box, 'hint');
     } catch { element('p', 'Not available on this phone.', box, 'hint'); }
+    if (locked(selected)) return;
     const remove = element('button', 'Remove', box, 'quiet danger'); remove.type = 'button';
     remove.setAttribute('aria-label', `Remove photo ${index + 1}`);
     remove.onclick = () => {
@@ -186,6 +219,7 @@
     const label = element('label', title, section, 'field');
     const input = element(multiline ? 'textarea' : 'input', '', label);
     input.value = observation[key] || '';
+    input.disabled = locked(selected);
     input.oninput = () => { observation[key] = input.value; changed(); };
     return input;
   }
@@ -202,13 +236,14 @@
     element('span', kindName(observation.type), head, `kind ${observation.type}`);
     const check = observation.check;
     element('h3', check ? `${check.question}${observation.location ? ` · ${observation.location}` : ''}` : observation.location || `Card ${index + 1}`, head);
-    element('span', 'Only on this phone', head, 'where');
+    element('span', tagFor(selected), head, 'where');
     if (check && hint) element('p', hint, section, 'qhint');
     if (check) {
       // An inspection's check: its answer can be changed here; the question cannot.
       const label = element('label', 'Answer', section, 'field'); const answer = element('select', '', label);
       for (const [value, title] of [['', 'Not answered'], ['ok', 'Satisfactory'], ['action', 'Action needed'], ['na', 'Not applicable']]) { const option = element('option', title, answer); option.value = value; }
       answer.value = check.answer ?? '';
+      answer.disabled = locked(selected);
       // As in the app's check editor: moving off "Action needed" clears what, who and where.
       answer.onchange = () => {
         if (answer.value) check.answer = answer.value; else delete check.answer;
@@ -233,6 +268,7 @@
     }
     const shots = element('div', '', section, 'shots');
     observation.photos.forEach((p, i) => void showPhoto(p, i, observation, shots));
+    if (locked(selected)) return;
     const acts = element('div', '', section, 'cardacts');
     const add = element('label', '', acts, 'btn'); element('span', observation.photos.length ? 'Add another photo' : 'Add a photo', add);
     const input = element('input', '', add); input.type = 'file'; input.accept = 'image/jpeg,image/png,image/webp'; input.multiple = true; input.setAttribute('capture', 'environment');
@@ -254,7 +290,112 @@
       };
     }
   }
+  /*
+   * Sign and send. Until every check is answered it lists what is left, as
+   * RELAY's check step does. Then the engineer types their name and draws a
+   * signature; signing locks the inspection on this phone. Signed, it says
+   * when it was signed and that it has not been sent, and offers to take the
+   * signature back, unless the app has already saved it on the server for sending.
+   */
+  function signing(d, parent) {
+    const box = element('section', '', parent, 'panel sign'); box.setAttribute('aria-labelledby', 'sign-title');
+    if (d.signed) {
+      element('p', 'Signed on this phone', box, 'lbl');
+      element('h2', 'Signed. Not sent yet.', box).id = 'sign-title';
+      element('p', `Signed by ${d.signed.name}, ${when(d.signed.signedAt)}. It goes to the office by itself the next time RELAY opens with signal, and RELAY tells you when it has gone. Until then it is only on this phone.`, box);
+      const paper = element('div', '', box, 'signed-ink'); const image = element('img', '', paper); image.src = d.signed.dataUrl; image.alt = `Signature of ${d.signed.name}`;
+      if (Number.isInteger(d.signed.savedVersion)) { element('p', 'It is on its way to the office. Open RELAY with signal to finish sending it.', box, 'hint'); return; }
+      const back = element('button', 'Take back signature to change it', box, 'quiet'); back.type = 'button';
+      back.onclick = async () => {
+        if (blocked || !confirm('Take back your signature? The inspection stays on this phone, unsigned, for you to change and sign again.')) return;
+        await chain;
+        // Read it again: RELAY in another tab may already be sending it.
+        const fresh = (await allDrafts().catch(() => [])).find(x => x.key === selected.key);
+        if (!fresh || fresh.seq !== selected.seq || Number.isInteger(fresh.signed?.savedVersion) || fresh.sending) {
+          if (fresh) { selected = structuredClone(fresh); render(); }
+          status.textContent = fresh && fresh.seq === selected.seq ? 'It is already on its way to the office, so the signature cannot be taken back here. Open RELAY with signal to finish sending it.'
+            : 'It has changed or gone from this phone since this page showed it. Look at "On this phone" below, or open RELAY with signal.';
+          void list();
+          return;
+        }
+        delete selected.signed;
+        try { await commit('Signature taken back. Change what you need, then sign again.'); } catch (e) { blocked = true; fail(e); }
+      };
+      return;
+    }
+    element('h2', 'Sign it', box).id = 'sign-title';
+    const todo = element('div', '', box);
+    const form = element('div', '', box);
+    const label = element('label', 'Your name', form, 'field'); const name = element('input', '', label);
+    name.value = signer; name.autocomplete = 'name'; name.maxLength = 200;
+    element('p', 'Signature', form, 'siglabel');
+    const wrap = element('div', '', form, 'sigwrap');
+    const canvas = element('canvas', '', wrap, 'sigpad');
+    canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', 'Signature: draw it with your finger');
+    const prompt = element('span', 'Sign here', wrap, 'sighint');
+    const acts = element('div', '', form, 'cardacts');
+    const go = element('button', 'Sign it. Send when there is signal', acts, 'primary'); go.type = 'button';
+    const clear = element('button', 'Clear', acts, 'quiet'); clear.type = 'button';
+    element('p', 'Signing locks it on this phone. It goes to the office by itself the next time RELAY opens with signal, only if nothing has changed since you signed. To change anything, take your signature back first.', form, 'hint');
+    const paint = () => {
+      const ratio = Math.min(2, window.devicePixelRatio || 1), box = canvas.getBoundingClientRect();
+      if (canvas.width !== Math.round(box.width * ratio) || canvas.height !== Math.round(box.height * ratio)) { canvas.width = Math.round(box.width * ratio); canvas.height = Math.round(box.height * ratio); }
+      const c = canvas.getContext('2d'); if (!c) return;
+      c.setTransform(ratio, 0, 0, ratio, 0, 0); c.clearRect(0, 0, box.width, box.height);
+      draw(c, getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#000');
+      prompt.hidden = strokes.length > 0;
+    };
+    const draw = (c, ink) => {
+      c.lineWidth = 2; c.lineCap = 'round'; c.lineJoin = 'round'; c.strokeStyle = ink;
+      for (const line of strokes) { if (!line.length) continue; c.beginPath(); c.moveTo(line[0].x, line[0].y); for (const p of line.slice(1)) c.lineTo(p.x, p.y); if (line.length === 1) c.lineTo(line[0].x + 0.1, line[0].y); c.stroke(); }
+    };
+    const at = e => { const r = canvas.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    let drawing = false;
+    canvas.onpointerdown = e => { canvas.setPointerCapture?.(e.pointerId); drawing = true; strokes.push([at(e)]); paint(); refreshSign(); };
+    canvas.onpointermove = e => { if (drawing) { strokes[strokes.length - 1].push(at(e)); paint(); } };
+    canvas.onpointerup = canvas.onpointercancel = () => { drawing = false; refreshSign(); };
+    clear.onclick = () => { strokes = []; paint(); refreshSign(); };
+    name.oninput = () => { signer = name.value; refreshSign(); };
+    resize?.disconnect(); resize = new ResizeObserver(paint); resize.observe(canvas);
+    refreshSign = () => {
+      const left = missing(d);
+      todo.replaceChildren();
+      form.hidden = left.length > 0;
+      if (left.length) {
+        element('p', 'Before you can sign, these need doing:', todo);
+        const items = element('ul', '', todo, 'todo'); for (const line of left) element('li', line, items);
+        element('p', 'A photo, and who is to do each action, are worth adding but do not stop you signing.', todo, 'hint');
+      }
+      go.disabled = left.length > 0 || !strokes.length || !signer.trim();
+    };
+    refreshSign();
+    go.onclick = async () => {
+      if (go.disabled) return;
+      await chain;
+      if (blocked || missing(selected).length) return;
+      // The PDF needs dark ink on a clear ground, whatever the screen's theme.
+      const out = document.createElement('canvas'); out.width = canvas.width; out.height = canvas.height;
+      const c = out.getContext('2d'); if (!c) return;
+      const box = canvas.getBoundingClientRect(); c.scale(out.width / box.width, out.height / box.height); draw(c, '#111111');
+      const dataUrl = out.toDataURL('image/png');
+      const name = signer.trim();
+      selected.signed = { name, dataUrl, signedAt: new Date().toISOString(), content: signedContent(selected.observations) };
+      // Kept apart from the report's own draft signature: RELAY's editor, if it
+      // takes the copy over before it goes, shows it unsigned to be signed there.
+      try { await commit('Signed on this phone. It goes to the office by itself when RELAY opens with signal.'); }
+      catch (e) { delete selected.signed; blocked = true; fail(e); }
+    };
+  }
+  // Keep a signature, or its taking back, at once, then show the page as it now stands.
+  async function commit(message) {
+    await save();
+    strokes = [];
+    render(); void list();
+    status.textContent = message;
+    $('sign-title')?.scrollIntoView({ block: 'start' });
+  }
   function render() {
+    refreshSign = () => {}; resize?.disconnect(); resize = undefined;
     urls.splice(0).forEach(URL.revokeObjectURL); editor.replaceChildren();
     if (!selected) return;
     const d = selected;
@@ -264,12 +405,12 @@
     const titles = element('div', '', head);
     element('p', d.started ? 'Started on this phone' : typeName(d), titles, 'lbl');
     element('h2', label(d), titles).id = 'editor-title';
-    element('span', 'Only on this phone', head, 'tag');
+    element('span', tagFor(d), head, d.signed ? 'tag signed' : 'tag');
     const counts = `${cards(d)} · ${plural(photos(d), 'photo')}`;
     element('p', d.started ? `Visit ${day(d.started.visitDate)} · ${counts} · gets its reference when it reaches the server` : `${d.report?.projectSnapshot?.projectName ? `${d.report.projectSnapshot.projectName} · ` : ''}${counts}`, panel, 'hint');
-    // An inspection is signed in RELAY: the drawn signature is taken there, with signal.
-    if (d.started && inspection(d)) element('p', 'Answer what you can here. You sign it in RELAY when there is signal, and it is not sent until you do.', panel, 'hint');
-    if (d.problem) element('p', `Last time it could not go to the server: ${d.problem}`, panel, 'danger');
+    // An inspection can be signed here, at the foot, once every check is answered.
+    if (signable(d) && !d.signed) element('p', 'Answer every check, then sign at the foot of the page. It goes to the office by itself the next time RELAY opens with signal.', panel, 'hint');
+    if (d.problem) element('p', `${Number.isInteger(d.signed?.savedVersion) ? 'Last time it could not be sent to the office' : 'Last time it could not go to the server'}: ${d.problem}`, panel, 'danger');
     if (!d.started && !Number.isInteger(d.baseVersion)) element('p', 'This older copy has no save version. Export it to compare: RELAY will not overwrite the server’s copy with it.', panel, 'hint');
     const fixed = inspection(d);
     const target = editor;
@@ -288,13 +429,16 @@
         };
       }
     }
+    if (signable(d)) signing(d, target);
     const foot = element('div', '', target, 'foot');
     const download = element('button', 'Export a copy', foot); download.type = 'button';
     download.onclick = () => {
       const url = URL.createObjectURL(new Blob([JSON.stringify(selected, null, 2)], { type: 'application/json' }));
       const a = document.createElement('a'); a.href = url; a.download = 'relay-held-report.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     };
-    if (d.started) {
+    if (d.signed) {
+      const link = element('a', 'Open RELAY to send it now', foot); link.href = '/engineer';
+    } else if (d.started) {
       const discard = element('button', 'Delete this report from the phone', foot, 'quiet danger'); discard.type = 'button';
       discard.onclick = async () => {
         if (!confirm('Delete this report and its cards from this phone? It has not reached the server, so it cannot be got back.')) return;
@@ -315,7 +459,7 @@
   async function show(draft) {
     await chain;
     if (dirty || blocked) { fail(new Error('Export your unsaved changes before switching reports.')); return; }
-    error.textContent = ''; selected = structuredClone(draft); render(); void list();
+    error.textContent = ''; selected = structuredClone(draft); strokes = []; signer = draft.signed?.name || person?.name || ''; render(); void list();
     status.textContent = `Saved on this phone${draft.heldAt ? ` ${when(draft.heldAt)}` : ''}. Not on the server yet.`;
     $('editor-title')?.scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
@@ -330,7 +474,7 @@
       const text = element('span', '', b);
       element('span', label(d), text, 't');
       element('span', `${d.started ? `Visit ${day(d.started.visitDate)}` : typeName(d)} · ${cards(d)} · ${plural(photos(d), 'photo')} · changed ${when(d.heldAt)}`, text, 's');
-      element('span', 'Only on this phone', b, 'tag');
+      element('span', tagFor(d), b, d.signed ? 'tag signed' : 'tag');
       b.onclick = async () => { const fresh = (await allDrafts()).find(x => x.key === d.key); if (fresh) await show(fresh); };
     }
     return drafts;
