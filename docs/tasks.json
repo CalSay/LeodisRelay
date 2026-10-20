@@ -173,10 +173,10 @@
         "PM view shows each of the four groups with counts",
         "Browser check of the office view"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "Partial: model.ts has notAcknowledged/isUnassigned/isVerify; no single view with all four groups and counts; 'new' is undefined."
+      "status": "done",
+      "passes": true,
+      "pr": 15,
+      "notes": "2026-10-20: the office position shows four groups with counts: New reports (received on the previous working day or since, London time; Monday counts Friday), Not yet read, Unassigned issues and Ready to verify, with Acknowledge, Assign and Verify on each row. lib/officeActions.ts holds the rules; each group opens its filtered list (#/inbox/show/new, #/inbox/show/notAck, #/issues/show/unassigned, #/issues/show/verify; the Inbox gained a New filter). Checked by tests/officeActions.test.ts and scripts/verify-office-actions.mjs. Bank holidays are not known."
     },
     {
       "id": "FE-3c",
