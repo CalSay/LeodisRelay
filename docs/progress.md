@@ -4,6 +4,52 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Engineer home screen and office project sheet tidied
+
+- Why: each feature added today put its own link on the engineer home screen
+  and the office project sheet, so both had a long, unordered run of links
+  (eight rows under "This project" plus single-row "Your week" and "Help"
+  sections; seven buttons crowded beside the project's name). Asked for by the
+  coordinator under Cal's standing ask for a clear, inviting UI. Screenshots
+  before and after, 375px and 1440px, light and dark, are in the project's
+  `ui-review/home-and-project-sheet/`.
+- Engineer home: "This project" is now two labelled groups, daily ones first.
+  Issues and safety: Site issues, Safety actions, Issues over time, Before
+  handover. Reports and records: Reports, Site diary, Weekly summary,
+  Photographs. My week and Help are one section, "Your week and help", at the
+  foot. Each row's note is shorter so none runs past two lines at 375px. The
+  Reports view's "Also on this project" row follows the same order.
+- Office project sheet: the title keeps one button, "Project page". The six
+  project pages sit in one box under the project's figures and above "Needs
+  attention", in the same two groups and words as the engineer's home.
+- Found and fixed: on a phone the office desk shows a project's register in
+  place of its sheet, so none of the project's pages (Before handover, Site
+  diary and the rest) could be reached from the office on a phone. The same
+  grouped links now show at the top of the register on a phone only (hidden on
+  a desktop, where the sheet has them, so there is one set on screen), with
+  "Project page" at the end of the records group.
+- Decided here: group names "Issues and safety" and "Reports and records";
+  "daily first" judged as Site issues and Reports first, then weekly pages,
+  then handover. Nothing was removed; every page is still one tap away.
+- Help: "What's new" entry "A tidier home screen and project sheet", and a
+  line in the office guide saying where a project's pages are.
+- Checks: `npm run typecheck`, `npm test`, `npm run build`, the new
+  `scripts/verify-home-and-sheet.mjs` (118 checks at 375 and 1440px, light and
+  dark; `RELAY_SHOTS_ONLY=1` takes screenshots of older code without the
+  checks) and the existing browser checks: navigation, accessibility,
+  issue-trend, before-handover, office-desk, office-phone, office-landing,
+  engineer-layout, engineer-nav, help, since-last-visit, my-week,
+  weekly-summary, safety-actions, site-diary, photo-library, role-access,
+  unfinished-reports.
+  `verify-navigation.mjs` now finds the home links by the "This project"
+  region and expects the new Reports-view order.
+- Not changed: the report editor and offline page (another thread is there),
+  the left-hand column of the home screen (start tiles and Unfinished
+  reports), the office landing's buttons.
+- Not verified: real phones, Safari and Firefox, a real screen reader.
+- Proposed (not added to `docs/tasks.json`): "UI-5 Home screen and project
+  sheet grouping".
+
 ## 2026-10-20 — Accessibility follow-ups: the report editor and the no-signal page
 
 - Why: #48 fixed the engineer and office pages but left the report editor

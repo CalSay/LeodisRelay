@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'home-sheet-tidy', added: '2026-10-20', audience: 'all', title: 'A tidier home screen and project sheet',
+    text: 'The pages about a project are now in two groups, Issues and safety, and Reports and records, with the ones used most first. On your home screen My week and Help sit together at the foot. In the office the project sheet keeps them in one box under its figures, and on a phone they now show above the project\'s register, where before they could not be reached.' },
   { id: 'editor-easier-to-read', added: '2026-10-20', audience: 'site', title: 'Report screen easier to read and to tap',
     text: 'On the report screen and the no-signal page, buttons and suggestions are at least a fingertip tall, the gold "Send to office" button stays readable under a mouse, and Access tags are darker. With a keyboard or screen reader, "Next check" and "Check & send" now take you to what opens, each group of choices says what it is for, and the signature box says whether it is signed.' },
   { id: 'issue-trend', added: '2026-10-20', audience: 'all', title: 'Issues over time',
@@ -275,6 +277,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     { id: 'meetings', heading: 'For the site meeting', ordered: false, steps: [
       'Weekly summary puts a project\'s week on one page. Snag lists print the open issues for one company or trade. Site diary reads back every visit.',
       'Issues by company is the chase list; Site coverage shows which live projects have gone quiet.',
+      'A project\'s own pages (Safety actions, Issues over time, Before handover, Site diary, Weekly summary, Photographs) are on its project sheet, under its figures. On a phone they are at the top of the project\'s register.',
     ] },
   ],
 };

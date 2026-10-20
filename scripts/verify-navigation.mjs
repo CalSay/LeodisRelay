@@ -45,7 +45,7 @@ try {
     // Home: every page about the project is one tap from "This project".
     await page.goto(`${base}/engineer?project=proj-011lme`);
     await title(page,'Site · RELAY',`${at} home`);
-    const project=page.locator('.eng-list').filter({has:page.getByText('Site issues')});
+    const project=page.getByRole('region',{name:'This project'});
     for(const name of ['Site issues','Reports','Site diary','Photographs','Weekly summary','Safety actions'])check(await project.getByText(name,{exact:true}).count()===1,`${at}: This project offers ${name}`);
     check(await page.getByRole('link',{name:/^My week/}).count()===1,`${at}: home still offers My week`);
     await shot(page,`nav-engineer-home-${scheme}-${width}`);
@@ -60,7 +60,7 @@ try {
     await page.getByRole('heading',{name:'Reports',exact:true}).waitFor();
     await title(page,'Reports · RELAY',`${at} reports`);
     const more=page.getByRole('navigation',{name:'More from these reports'});
-    check((await more.getByRole('link').allInnerTexts()).join('|')==='Site diary|Photographs|Weekly summary|Safety actions|My week',`${at}: the Reports view groups its links`);
+    check((await more.getByRole('link').allInnerTexts()).join('|')==='Site diary|Weekly summary|Photographs|Safety actions|My week',`${at}: the Reports view groups its links`);
     check(/visit \w{3},? \d+ \w{3}/.test(await page.locator('.eng-report-link').first().innerText()),`${at}: report dates read as days, not ISO dates`);
     await noSideways(page,`${at} reports`);
     await shot(page,`nav-engineer-reports-${scheme}-${width}`);

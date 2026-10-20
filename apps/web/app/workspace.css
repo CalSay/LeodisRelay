@@ -415,3 +415,14 @@ body:has(.ws){overflow:hidden auto}
   .ws .filters .phone-sort{display:grid}
 }
 .ws .results a.results-all{color:var(--acc);font-weight:500;justify-content:flex-start}
+
+/* Project sheet: the project's own pages, in the same two groups as the engineer's home screen. */
+.ws .sheet-links{display:grid;grid-template-columns:1fr 1fr;gap:var(--s3) var(--s4);margin-top:12px;padding:var(--s3);border:1px solid var(--line);background:var(--panel)}
+.ws .sheet-links-group :is(h3,h4){margin:0 0 var(--s2);font-family:var(--mono);font-size:10px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-3)}
+.ws .sheet-links-group>div{display:flex;flex-wrap:wrap;gap:var(--s2)}
+.ws .phone-only{display:none}
+@media (max-width:700px){
+  .ws .sheet-links{grid-template-columns:1fr}
+  .ws .phone-only{display:block;border-bottom:1px solid var(--line)}
+  .ws .phone-only .sheet-links{margin:0;border:0;padding:12px 16px}
+}
