@@ -4,6 +4,30 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — UI-1: office desk opens on the office position
+
+- The office desk no longer opens on an empty "Select a project…" register
+  column. With no project chosen it shows two columns: the project list and
+  the office position, which now takes the rest of the width (about 1,190px
+  at 1440px, was 790px). Choosing a project brings the register back as
+  before. The details column heading reads "Overview" until a project is
+  chosen.
+- Decision: show the office position full width rather than opening on the
+  first project with work waiting. The office position is the summary a
+  manager reads first, and jumping into one project would hide the others'
+  counts and change what the Projects tab means.
+- Fixed "1 reports received" and "1 open issues" on the office position.
+- Phone layout unchanged: it opens on the project list, as before.
+- Added UI-1 to `docs/tasks.json` and new `scripts/verify-office-landing.mjs`
+  (19 checks at 1440px and 390px, light and dark). It fails on main (three
+  columns at landing) and passes with this change.
+- Verified on Node 24: `npm run typecheck`, `npm test`, `npm run build`,
+  `verify-office-landing`, `verify-role-access` (61 checks),
+  `verify-review-queue` (12 checks) and `verify-engineer-layout` passed.
+  Before/after screenshots at 1440px in light and dark.
+- Not verified: a physical device; Compliance's office is unchanged.
+- Next: item 2 in `docs/ui-direction-2026-10-20.md` (report editor flow).
+
 ## 2026-10-20 — FE-3d: unfinished reports on the engineer home
 
 - The engineer home now has an "Unfinished reports" list under the start
