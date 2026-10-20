@@ -431,7 +431,7 @@
       ],
       "status": "done",
       "passes": true,
-      "pr": null,
+      "pr": 12,
       "notes": "lib/snagList.ts, app/issues/snag-list (page and snag.css), a Snag list link in office IssuesView and the engineer Issues view. Read-only: ticking on paper records nothing; work is still submitted as complete on each issue. Checked by tests/snagList.test.ts and scripts/verify-snag-list.mjs. Not verified: a physical printer or phone, SharePoint mode."
     }
   ]
