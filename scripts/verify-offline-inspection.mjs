@@ -45,7 +45,7 @@ try {
     await page.evaluate(()=>navigator.serviceWorker.ready);
     await page.reload();await page.waitForFunction(()=>!!navigator.serviceWorker.controller);
     const types=await page.evaluate(()=>JSON.parse(localStorage.getItem('relay-offline-types')||'[]'));
-    check(types.map(t=>t.id).join()==='safety-inspection,handover-inspection'&&types.every(t=>t.checklist.length===12&&t.checklist.every(c=>c.item&&c.question)),`${scheme}: the app leaves both inspections and their checks on the phone`);
+    check(types.map(t=>t.id).join()==='safety-inspection,handover-inspection,first-fix-inspection'&&types.every(t=>t.checklist.length===12&&t.checklist.every(c=>c.item&&c.question)),`${scheme}: the app leaves every inspection and its checks on the phone`);
     // No signal, cold start.
     await stop();
     await page.close();page=await context.newPage();watch(page);
