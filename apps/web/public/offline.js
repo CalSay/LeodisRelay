@@ -32,8 +32,11 @@
   // A copy set aside while the engineer chose between two versions shares its
   // report with the ordinary copy, so it is named apart and never opened first.
   const aside = d => d.key.includes('::aside::');
-  const inspection = d => d.report?.reportType === 'safety-inspection' || d.observations.some(o => o.check);
-  const typeName = d => inspection(d) ? 'Safety inspection' : 'Site update';
+  // The checklist types (lib/reportTypes.ts). A handover inspection's actions raise issues, so each says where.
+  const TYPE_NAMES = { 'safety-inspection': 'Safety inspection', 'handover-inspection': 'Handover inspection' };
+  const inspection = d => Boolean(TYPE_NAMES[d.report?.reportType]) || d.observations.some(o => o.check);
+  const typeName = d => TYPE_NAMES[d.report?.reportType] || (inspection(d) ? 'Inspection' : 'Site update');
+  const raisesIssues = d => d.report?.reportType === 'handover-inspection';
   const label = d => d.started ? `New site update · ${d.started.projectName}`
     : `${d.report?.reference || d.reportId}${aside(d) ? ' (copy kept while choosing between two versions)' : ''}`;
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
@@ -180,20 +183,26 @@
     instruction: [['whatHappened', 'What extra work, and why'], ['actionNeeded', 'What needs doing'], ['owner', 'Who needs to respond']],
     access: [['whatHappened', 'What was blocked, and by whom'], ['actionNeeded', 'What needs doing'], ['owner', 'Who needs to respond']],
   };
-  function card(observation, index, fixed) {
+  function card(observation, index, fixed, raises) {
     const section = element('section', '', editor, 'card');
     section.setAttribute('aria-label', `Card ${index + 1}`);
     const head = element('div', '', section, 'cardhead');
     element('span', kindName(observation.type), head, `kind ${observation.type}`);
     const check = observation.check;
-    element('h3', check ? check.question : observation.location || `Card ${index + 1}`, head);
+    element('h3', check ? `${check.question}${observation.location ? ` · ${observation.location}` : ''}` : observation.location || `Card ${index + 1}`, head);
     element('span', 'Only on this phone', head, 'where');
     if (check) {
       // An inspection's check: its answer can be changed here; the question cannot.
       const label = element('label', 'Answer', section, 'field'); const answer = element('select', '', label);
       for (const [value, title] of [['', 'Not answered'], ['ok', 'Satisfactory'], ['action', 'Action needed'], ['na', 'Not applicable']]) { const option = element('option', title, answer); option.value = value; }
       answer.value = check.answer ?? '';
-      answer.onchange = () => { if (answer.value) check.answer = answer.value; else delete check.answer; changed(); };
+      // As in the app's check editor: moving off "Action needed" clears what, who and where.
+      answer.onchange = () => {
+        if (answer.value) check.answer = answer.value; else delete check.answer;
+        if (answer.value !== 'action') { observation.actionNeeded = ''; observation.owner = ''; observation.location = ''; }
+        changed(); render();
+      };
+      if (raises && check.answer === 'action') field(section, observation, 'location', 'Where (for the snag list)', false);
       for (const [key, title] of [['whatHappened', 'Notes or what is wrong'], ['actionNeeded', 'What needs doing'], ['owner', 'Who is to do it']]) field(section, observation, key, title, key !== 'owner');
     } else {
       if (!fixed) {
@@ -249,7 +258,7 @@
     if (!d.started && !Number.isInteger(d.baseVersion)) element('p', 'This older copy has no save version. Export it to compare: RELAY will not overwrite the server’s copy with it.', panel, 'hint');
     const fixed = inspection(d);
     const target = editor;
-    d.observations.forEach((o, i) => card(o, i, fixed));
+    d.observations.forEach((o, i) => card(o, i, fixed, raisesIssues(d)));
     if (!d.observations.length) element('p', d.started ? 'No cards yet. Add the first one below.' : 'No cards in this report yet.', target, 'empty');
     if (!fixed) {
       const adds = element('section', '', target, 'panel'); adds.setAttribute('aria-labelledby', 'add-title');

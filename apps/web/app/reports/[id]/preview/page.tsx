@@ -24,6 +24,10 @@ import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
  *
  * Unknown owners and dates are labelled, never invented.
  */
+/** A card is titled by where it is; a check by its question, and where, if the action says (a handover inspection's do). */
+const itemTitle = (o: { location: string; check?: { question: string } | undefined }): string =>
+  o.check ? `${o.check.question}${o.location.trim() ? ` · ${o.location.trim()}` : ""}` : o.location || "Location not recorded";
+
 export default function PreviewPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
   const getProject = useProjectLookup();
   const { id } = use(params);
@@ -125,7 +129,7 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
                   {actions.map((observation, index) => (
                     <tr key={observation.id}>
                       <td>
-                        {index + 1}. {observation.check?.question ?? (observation.location || "Location not recorded")}
+                        {index + 1}. {itemTitle(observation)}
                       </td>
                       <td>{observation.actionNeeded.trim() || "To be determined"}</td>
                       {/*
@@ -165,7 +169,7 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
             return (
               <article key={observation.id} className="doc-obs">
                 <h3 className="doc-h3">
-                  {number}. {observation.check?.question ?? (observation.location || "Location not recorded")}
+                  {number}. {itemTitle(observation)}
                   <span className="doc-type">{observation.check ? answerLabel(observation.check.answer) : kind?.label ?? observation.type}</span>
                 </h3>
                 <p className="doc-body">{observation.whatHappened || (observation.check ? "No notes recorded." : "No description recorded.")}</p>

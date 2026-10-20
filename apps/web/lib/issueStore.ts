@@ -10,6 +10,7 @@ import { cachedProject, cachedProjects, reportableProject } from './projects';
 import type { Principal } from '@relay/platform';
 import { canAccessProject } from './auth/access';
 import { queryIssues, type IssuePage, type IssueQuery } from './issueQuery';
+import { raisesIssue, reportTypeOf } from './reportTypes';
 
 /**
  * Issue records for the prototype.
@@ -123,9 +124,11 @@ function raiseIssues(report: Report): Issue[] {
   let sequence = Number(database().prepare("SELECT count(*) AS n FROM records WHERE kind='issues' AND project=?").get(report.projectId)!.n);
   const project = cachedProject(report.projectId);
   const raised: Issue[] = [];
+  const type = reportTypeOf(report);
 
   for (const observation of report.observations) {
-    if (observation.type !== "defect" && observation.type !== "access") continue;
+    // A handover inspection's actions are snags in our own work, raised like defects.
+    if (observation.type !== "defect" && observation.type !== "access" && !raisesIssue(type, observation)) continue;
 
     if (observation.linkedIssueId) {
       const existing = getIssue(observation.linkedIssueId);

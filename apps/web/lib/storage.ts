@@ -1,4 +1,5 @@
-import { checkCounts } from './reportTypes';
+import { checkCounts, raisesIssue, reportTypeOf } from './reportTypes';
+import type { Report } from './types';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -81,7 +82,8 @@ export function putRecord(kind: string, row: { id: string; [key: string]: any })
   const summary = kind === 'reports' ? {
     ...small, observationCount: observations?.length ?? 0,
     photoCount: observations?.reduce((n: number, o: any) => n + o.photos.length, 0) ?? 0,
-    defectCount: observations?.filter((o: any) => o.type === 'defect' || o.type === 'access').length ?? 0,
+    // Every update that raises an issue, including a handover inspection's actions.
+    defectCount: observations?.filter((o: any) => o.type === 'defect' || o.type === 'access' || raisesIssue(reportTypeOf(row as Pick<Report,'reportType'>), o)).length ?? 0,
     // Per kind, so the office can say what a visit found rather than how many sections were typed.
     kindCounts: ['update','defect','instruction','access','check'].reduce((acc: Record<string, number>, kind) => {
       acc[kind] = observations?.filter((o: any) => o.type === kind).length ?? 0; return acc;
