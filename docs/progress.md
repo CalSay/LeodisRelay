@@ -25,14 +25,18 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   there is no location catalogue (EXP-4). Fixed work is listed last in each
   location, not hidden, so the company can see what is waiting to be checked.
   Trade follows the office register: the affected trade, else the reporter's.
-  Choices are kept in the address, so a list can be bookmarked.
+  Choices are kept in the address, so a list can be bookmarked, and an issue
+  opened from the list returns to the same list. Unreviewed issues are not
+  tagged: with review off (the default) every issue stays unreviewed, so the
+  tag would be on every row.
 - Added NEW-2 and a `snag` lane to `docs/tasks.json`.
 - Verified: `npm run typecheck` and `npm test` pass (7 new tests in
-  `tests/snagList.test.ts`). New `scripts/verify-snag-list.mjs` passed
-  (23 checks: engineer at 390 px light, office at 1440 px dark, print media
-  and an A4 PDF, project picker). `verify-role-access`,
-  `verify-engineer-layout`, `verify-review-queue` and
-  `verify-unfinished-reports` passed.
+  `tests/snagList.test.ts`, 1 in `viewNavigation.test.ts`). New
+  `scripts/verify-snag-list.mjs` passed (24 checks: engineer at 390 px light,
+  office at 1440 px dark, print media and an A4 PDF, project picker, back
+  from an issue). `verify-role-access`, `verify-engineer-layout`,
+  `verify-search` and `verify-office-landing` passed after main was merged in;
+  `verify-review-queue` and `verify-unfinished-reports` passed before.
 - Not verified: a physical printer or phone, Safari's print dialog,
   SharePoint mode (no live tenant).
 - Next: a snag list per company across every project, if the office asks for it.

@@ -9,7 +9,7 @@ import { usePrincipal } from '@/components/PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { mediaId } from '@/lib/media';
 import { raisedPhoto, snagList, snagOwners } from '@/lib/snagList';
-import { safeViewReturn } from '@/lib/viewNavigation';
+import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 import './snag.css';
 
 /**
@@ -55,16 +55,16 @@ export default function SnagListPage({ searchParams }: { searchParams: Promise<{
     return () => { cancelled = true; };
   }, [projectId, retry]);
 
-  // The address carries the choices, so a list can be bookmarked or opened again on another device.
-  useEffect(() => {
-    const q = new URLSearchParams();
-    if (projectId) q.set('project', projectId);
-    if (owner) q.set('owner', owner);
-    if (trade) q.set('trade', trade);
-    if (!photos) q.set('photos', 'off');
-    if (params.returnTo) q.set('returnTo', params.returnTo);
-    router.replace(`/issues/snag-list${q.size ? `?${q}` : ''}`, { scroll: false });
-  }, [projectId, owner, trade, photos, params.returnTo, router]);
+  // The address carries the choices, so a list can be bookmarked or opened again on another device,
+  // and an issue opened from the list comes back to the same list.
+  const q = new URLSearchParams();
+  if (projectId) q.set('project', projectId);
+  if (owner) q.set('owner', owner);
+  if (trade) q.set('trade', trade);
+  if (!photos) q.set('photos', 'off');
+  if (params.returnTo) q.set('returnTo', params.returnTo);
+  const here = `/issues/snag-list${q.size ? `?${q}` : ''}`;
+  useEffect(() => { router.replace(here, { scroll: false }); }, [here, router]);
 
   const day = today();
   const owners = issues ? snagOwners(issues, projectId) : [];
@@ -119,7 +119,7 @@ export default function SnagListPage({ searchParams }: { searchParams: Promise<{
               {group.rows.map(({ issue, overdue, fixed }) => { const photo = photos ? raisedPhoto(issue) : undefined; return <li key={issue.id} className={`snag-item${fixed ? ' fixed' : ''}`}>
                 <span className="snag-box" aria-hidden="true" />
                 <div className="snag-body">
-                  <p className="snag-ref"><Link href={`/issues/${issue.id}?returnTo=${encodeURIComponent(back)}`} className="ref">{issue.reference}</Link>
+                  <p className="snag-ref"><Link href={withViewReturn(`/issues/${issue.id}`, here)} className="ref">{issue.reference}</Link>
                     {fixed && <span className="tag tag-sent">Fixed, to check</span>}
                     {overdue && <span className="tag tag-alert">Past target</span>}</p>
                   <p className="snag-desc">{issue.description}</p>

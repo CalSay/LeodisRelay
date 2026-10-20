@@ -65,6 +65,9 @@ try {
     await page.getByLabel('Show photographs').uncheck();await page.waitForURL(/photos=off/);
     check(await page.locator('.snag-photo').count()===0&&new URL(page.url()).searchParams.get('photos')==='off','engineer: photographs can be left off, and the choice is in the address');
     if(screenshot)await page.screenshot({path:join(screenshot,'snag-light-390.png'),fullPage:true});
+    await page.getByRole('link',{name:late.reference}).click();await page.waitForURL(`**/issues/${late.id}**`);
+    await page.getByRole('link',{name:/Tetley Hall/}).first().click();await page.waitForURL(/\/issues\/snag-list\?.*photos=off/);await page.locator('.snag-sheet').waitFor();
+    check(await items(page).count()===3&&await page.locator('.snag-photo').count()===0,'engineer: back from an issue returns to the same list and choices');
     await page.getByRole('link',{name:/Back to issues/}).click();await page.waitForURL(/\/engineer\?project=proj-011lme&view=issues/);
     check(true,'engineer: back returns to the Issues view');
     assert.deepEqual(errors,[],'engineer: page errors');

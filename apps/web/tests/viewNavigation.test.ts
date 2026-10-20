@@ -20,3 +20,8 @@ test('a result opened from search returns to the same search', () => {
   const search = '/search?q=riser&project=p1';
   assert.equal(safeViewReturn(search, '/engineer'), search);
 });
+
+test('an issue opened from a snag list returns to the same list', () => {
+  const list = '/issues/snag-list?project=p1&owner=Sparks+Ltd&returnTo=%2Foffice%23%2Fissues';
+  assert.equal(safeViewReturn(list, '/engineer'), list);
+});
