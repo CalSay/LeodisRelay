@@ -1,5 +1,7 @@
 import type { Observation, Report } from './types';
 import { CHECKLIST_TYPES, reportTypeOf, type ReportTypeId } from './reportTypes';
+import { signs } from './signature';
+import type { HeldSignature } from './api';
 
 /**
  * Reports started on a phone with no signal, and work typed on the offline
@@ -105,12 +107,17 @@ export interface HeldWork {
 }
 
 /**
- * An inspection signed on the offline page. `content` is what was signed
+ * An inspection signed on the offline page, drawn (`dataUrl`) or typed with
+ * the statement ticked (`typed`, lib/signature.ts). `content` is what was signed
  * (signedContent), so a copy that changed afterwards is never sent with it.
  * `savedVersion` is set once the signed copy is saved on the server, so a
  * send interrupted between saving and sending finishes without saving again.
  */
-export interface SignedOffline { name: string; dataUrl: string; signedAt: string; content: string; savedVersion?: number }
+export interface SignedOffline { name: string; dataUrl?: string; typed?: true; signedAt: string; content: string; savedVersion?: number }
+
+/** What goes to the server for a phone signature: the drawing, or the typed name. */
+export const heldSignature = (signed: SignedOffline): HeldSignature =>
+  signed.typed ? { name: signed.name, typed: true } : { name: signed.name, dataUrl: signed.dataUrl ?? '' };
 
 /**
  * What a signature covers: each check's question and answer, the words on it
@@ -122,7 +129,7 @@ export const signedContent = (observations: readonly Observation[]): string => J
 
 /** Whether a held copy may go to the office with its signature: signed, and unchanged since. */
 export const signedAsIs = (held: Pick<HeldWork, 'signed' | 'observations'>): boolean =>
-  Boolean(held.signed?.dataUrl) && held.signed!.content === signedContent(held.observations);
+  signs(held.signed) && held.signed!.content === signedContent(held.observations);
 
 const UUID = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
 export const isClientKey = (value: unknown): value is string => typeof value === 'string' && UUID.test(value);

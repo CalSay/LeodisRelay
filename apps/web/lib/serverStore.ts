@@ -8,6 +8,7 @@ import { sharePointMode } from './sharepoint/config';
 import { confirmIssuesFromReport, disputeIssuesFromReport, raiseFromReport } from './issueStore';
 import { raiseVariationsFromReport } from './variationStore';
 import { raisesIssue, reportTypeOf, startingCards, type ReportTypeId } from './reportTypes';
+import { signs, TYPED_STATEMENT, type SignatureInput } from './signature';
 import { atomic, getRecord, putRecord, records, pageRecords, enqueue, database } from './storage';
 
 /** `current`: on a draft save that lost a race, the draft as the server now holds it, so the author can compare. */
@@ -135,7 +136,12 @@ export function mutateDraft(id: string, mutation: DraftMutation): StoreOutcome<R
   });
 }
 
-export async function submitReport(id: string, signature?: { dataUrl?: string; name: string }, expectedVersion?: number): Promise<StoreOutcome<Report>> {
+/**
+ * Send a draft to the office. `signedInAs` is the name of whoever is signed in
+ * and sending (always the author): a typed signature records it beside the
+ * typed name, with the statement that was ticked, so it is as traceable as a drawing.
+ */
+export async function submitReport(id: string, signature?: SignatureInput, expectedVersion?: number, signedInAs?: string): Promise<StoreOutcome<Report>> {
   return atomic(() => {
     const existing = getReport(id);
     if (!existing) return reject('No such report.',404);
@@ -146,14 +152,19 @@ export async function submitReport(id: string, signature?: { dataUrl?: string; n
     if (!project || !reportableProject(project)) return reject('This project is no longer open for reporting.',422);
     const blocking = reviewReport(existing).filter(f => f.blocking);
     if (blocking.length) return reject(`${blocking.length} item(s) need completing before sending.`,422);
-    if (reportTypeOf(existing).drawnSignature && !signature?.dataUrl) return reject('Sign the inspection before sending: a typed name is not enough.',422);
+    const type = reportTypeOf(existing);
+    // Typing a name to sign is for inspections, where a signature is required; a site update's name is printed either way.
+    if (signature?.typed && (!type.signatureRequired || signature.dataUrl)) return reject('Invalid signature.',422);
+    if (type.signatureRequired && !signs(signature)) return reject('Sign the inspection before sending: draw your signature, or type your full name and tick the statement.',422);
     // The draft copy has done its job: what was sent is `signature`.
     const { draftSignature: _draft, ...sent } = existing;
     const submitted: Report = {
       ...sent, state: 'submitted', serverAcknowledgedAt: new Date().toISOString(),
       review: cachedProject(existing.projectId)?.reviewRequired ? 'pending' : 'not_required',
       delivery: 'pending',
-      ...(signature ? { signature: { ...signature, signedAt: new Date().toISOString() } } : {}),
+      ...(signature ? { signature: signature.typed
+        ? { name: signature.name.trim(), typed: true as const, statement: TYPED_STATEMENT, ...(signedInAs ? { signedInAs } : {}), signedAt: new Date().toISOString() }
+        : { ...signature, signedAt: new Date().toISOString() } } : {}),
     };
     putRecord('reports',submitted);
     putRecord('snapshots',submitted);

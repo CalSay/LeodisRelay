@@ -1,5 +1,6 @@
 import type { Observation, Report, ReviewFinding } from "./types";
 import { raisesIssue, reportTypeOf } from "./reportTypes";
+import { signs } from "./signature";
 
 /**
  * What is missing before a report can be sent.
@@ -75,8 +76,9 @@ export function reviewReport(report: Report): ReviewFinding[] {
  * says what is wrong and what has to happen; who is to do it, and a
  * photograph, are worth adding but do not stop it. A satisfactory or not
  * applicable check needs nothing more. The person who inspected signs for
- * it, with a drawn signature. Where an action raises an issue (a handover
- * inspection), it must also say where, as every issue on the snag list does.
+ * it, with a drawn signature or a typed name and ticked statement
+ * (signature.ts). Where an action raises an issue (a handover inspection), it
+ * must also say where, as every issue on the snag list does.
  */
 function reviewInspection(report: Report): ReviewFinding[] {
   const findings: ReviewFinding[] = [];
@@ -98,8 +100,10 @@ function reviewInspection(report: Report): ReviewFinding[] {
   for (const o of report.observations) for (const photo of o.photos) {
     if (!photo.caption.trim()) findings.push({ observationId: o.id, field: 'caption', message: `${short(o)}: a photograph has no caption`, blocking: false });
   }
-  if (report.state === 'draft' && !report.draftSignature?.dataUrl) {
-    findings.push({ observationId: '', field: 'signature', message: 'Sign below: an inspection needs the inspector’s signature', blocking: true });
+  if (report.state === 'draft' && !signs(report.draftSignature)) {
+    findings.push({ observationId: '', field: 'signature', message: report.draftSignature?.typed
+      ? 'Type your full name to sign: the box is ticked but the name is empty'
+      : 'Sign below: an inspection needs the inspector’s signature', blocking: true });
   }
   return findings;
 }

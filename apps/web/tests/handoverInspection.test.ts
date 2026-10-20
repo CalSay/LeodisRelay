@@ -33,7 +33,7 @@ test('the handover inspection and its rules, without a store', async t => {
   await t.test('it is a checklist type of its own, signed, whose actions raise issues', () => {
     assert.deepEqual(CHECKLIST_TYPES.map(t => t.id), ['safety-inspection', 'handover-inspection', 'first-fix-inspection'], 'one home tile per checklist type');
     assert.equal(handover.code, 'PHI');
-    assert.equal(handover.drawnSignature, true);
+    assert.equal(handover.signatureRequired, true);
     assert.equal(new Set(HANDOVER_CHECKLIST.map(c => c.item)).size, HANDOVER_CHECKLIST.length, 'check keys are unique');
     const [first] = startingCards(handover);
     assert.equal(raisesIssue(handover, { check: { ...first!.check!, answer: 'action' } }), true);

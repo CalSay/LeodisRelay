@@ -25,6 +25,9 @@
   // The signature being drawn for the open inspection: kept across redraws, cleared on switching report.
   let strokes = [];
   let signer = '';
+  // Drawn, or typed for someone who cannot draw: the name and a ticked statement.
+  let signWay = 'draw';
+  let typedOk = false;
   let refreshSign = () => {};
   let resize;
   // The tab's own signed-in person first; otherwise the person the app last
@@ -60,6 +63,8 @@
   const label = d => d.started ? `New ${typeName(d).toLowerCase()} · ${d.started.projectName}`
     : `${d.report?.reference || d.reportId}${aside(d) ? ' (copy kept while choosing between two versions)' : ''}`;
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+  // Ticked to sign by typing a name. Must match TYPED_STATEMENT in lib/signature.ts (tests/typedSignature.test.ts).
+  const TYPED_STATEMENT = 'I carried out this inspection and this record is accurate. Typing my name and ticking this box is my signature.';
   // What a signature covers. Must match signedContent in lib/offlineStart.ts (tests/offlineSign.test.ts).
   const signedContent = observations => JSON.stringify(observations.map(o => [o.type, o.check?.item ?? '', o.check?.question ?? '', o.check?.answer ?? '', o.location ?? '', o.whatHappened ?? '', o.actionNeeded ?? '', o.owner ?? '', (o.photos ?? []).map(p => [p.id, p.caption ?? ''])]));
   // An inspection this page can sign: started here, or a draft the server has a version of.
@@ -293,7 +298,8 @@
   /*
    * Sign and send. Until every check is answered it lists what is left, as
    * RELAY's check step does. Then the engineer types their name and draws a
-   * signature; signing locks the inspection on this phone. Signed, it says
+   * signature, or (if they cannot draw) ticks a statement that typing their
+   * name is their signature; signing locks the inspection on this phone. Signed, it says
    * when it was signed and that it has not been sent, and offers to take the
    * signature back, unless the app has already saved it on the server for sending.
    */
@@ -302,8 +308,10 @@
     if (d.signed) {
       element('p', 'Signed on this phone', box, 'lbl');
       element('h2', 'Signed. Not sent yet.', box).id = 'sign-title';
-      element('p', `Signed by ${d.signed.name}, ${when(d.signed.signedAt)}. It goes to the office by itself the next time RELAY opens with signal, and RELAY tells you when it has gone. Until then it is only on this phone.`, box);
-      const paper = element('div', '', box, 'signed-ink'); const image = element('img', '', paper); image.src = d.signed.dataUrl; image.alt = `Signature of ${d.signed.name}`;
+      element('p', `Signed by ${d.signed.name}${d.signed.typed ? ' by typing their name' : ''}, ${when(d.signed.signedAt)}. It goes to the office by itself the next time RELAY opens with signal, and RELAY tells you when it has gone. Until then it is only on this phone.`, box);
+      const paper = element('div', '', box, 'signed-ink');
+      if (d.signed.typed) { element('p', d.signed.name, paper, 'typed-name'); element('p', `Typed signature: “${TYPED_STATEMENT}”`, paper, 'typed-note'); }
+      else { const image = element('img', '', paper); image.src = d.signed.dataUrl; image.alt = `Signature of ${d.signed.name}`; }
       if (Number.isInteger(d.signed.savedVersion)) { element('p', 'It is on its way to the office. Open RELAY with signal to finish sending it.', box, 'hint'); return; }
       const back = element('button', 'Take back signature to change it', box, 'quiet'); back.type = 'button';
       back.onclick = async () => {
@@ -328,14 +336,32 @@
     const form = element('div', '', box);
     const label = element('label', 'Your name', form, 'field'); const name = element('input', '', label);
     name.value = signer; name.autocomplete = 'name'; name.maxLength = 200;
-    element('p', 'Signature', form, 'siglabel');
-    const wrap = element('div', '', form, 'sigwrap');
+    // Draw, or type the name for someone who cannot draw (a keyboard or a screen reader, say).
+    const way = element('fieldset', '', form, 'types'); element('legend', 'How will you sign?', way, 'siglabel');
+    const ways = element('div', '', way, 'choices two');
+    const option = (value, title, note) => {
+      const l = element('label', '', ways, 'choice'); const r = element('input', '', l); r.type = 'radio'; r.name = 'sign-way'; r.value = value; r.checked = signWay === value;
+      const t = element('span', '', l); element('strong', title, t); element('small', note, t);
+      r.onchange = () => { signWay = value; strokes = []; typedOk = false; confirmBox.checked = false; showWay(); paint(); refreshSign(); };
+    };
+    const drawPart = element('div', '', form);
+    const typePart = element('div', '', form);
+    const confirmLine = element('label', '', typePart, 'choice confirm'); const confirmBox = element('input', '', confirmLine); confirmBox.type = 'checkbox'; confirmBox.checked = typedOk;
+    element('span', TYPED_STATEMENT, confirmLine);
+    element('p', 'The office and the PDF show it as a typed signature, with this statement and the time it is sent.', typePart, 'hint');
+    confirmBox.onchange = () => { typedOk = confirmBox.checked; refreshSign(); };
+    option('draw', 'Draw my signature', 'With a finger, pen or mouse.');
+    option('type', 'Type my name instead', 'If you can’t draw one: your full name and a tick.');
+    const showWay = () => { drawPart.hidden = signWay !== 'draw'; typePart.hidden = signWay !== 'type'; name.parentElement.firstChild.textContent = signWay === 'type' ? 'Your full name' : 'Your name'; };
+    element('p', 'Signature', drawPart, 'siglabel');
+    const wrap = element('div', '', drawPart, 'sigwrap');
     const canvas = element('canvas', '', wrap, 'sigpad');
     canvas.setAttribute('role', 'img'); canvas.setAttribute('aria-label', 'Signature: draw it with your finger');
     const prompt = element('span', 'Sign here', wrap, 'sighint');
     const acts = element('div', '', form, 'cardacts');
     const go = element('button', 'Sign it. Send when there is signal', acts, 'primary'); go.type = 'button';
-    const clear = element('button', 'Clear', acts, 'quiet'); clear.type = 'button'; clear.setAttribute('aria-label', 'Clear signature');
+    const clear = element('button', 'Clear', drawPart, 'quiet'); clear.type = 'button'; clear.setAttribute('aria-label', 'Clear signature');
+    showWay();
     element('p', 'Signing locks it on this phone. It goes to the office by itself the next time RELAY opens with signal, only if nothing has changed since you signed. To change anything, take your signature back first.', form, 'hint');
     const paint = () => {
       const ratio = Math.min(2, window.devicePixelRatio || 1), box = canvas.getBoundingClientRect();
@@ -366,13 +392,19 @@
         const items = element('ul', '', todo, 'todo'); for (const line of left) element('li', line, items);
         element('p', 'A photo, and who is to do each action, are worth adding but do not stop you signing.', todo, 'hint');
       }
-      go.disabled = left.length > 0 || !strokes.length || !signer.trim();
+      go.disabled = left.length > 0 || !signer.trim() || (signWay === 'type' ? !typedOk : !strokes.length);
     };
     refreshSign();
     go.onclick = async () => {
       if (go.disabled) return;
       await chain;
       if (blocked || missing(selected).length) return;
+      if (signWay === 'type') {
+        selected.signed = { name: signer.trim(), typed: true, signedAt: new Date().toISOString(), content: signedContent(selected.observations) };
+        try { await commit('Signed on this phone. It goes to the office by itself when RELAY opens with signal.'); }
+        catch (e) { delete selected.signed; blocked = true; fail(e); }
+        return;
+      }
       // The PDF needs dark ink on a clear ground, whatever the screen's theme.
       const out = document.createElement('canvas'); out.width = canvas.width; out.height = canvas.height;
       const c = out.getContext('2d'); if (!c) return;
@@ -389,7 +421,7 @@
   // Keep a signature, or its taking back, at once, then show the page as it now stands.
   async function commit(message) {
     await save();
-    strokes = [];
+    strokes = []; typedOk = false;
     render(); void list();
     status.textContent = message;
     $('sign-title')?.scrollIntoView({ block: 'start' });
@@ -459,7 +491,7 @@
   async function show(draft) {
     await chain;
     if (dirty || blocked) { fail(new Error('Export your unsaved changes before switching reports.')); return; }
-    error.textContent = ''; selected = structuredClone(draft); strokes = []; signer = draft.signed?.name || person?.name || ''; render(); void list();
+    error.textContent = ''; selected = structuredClone(draft); strokes = []; typedOk = false; signWay = 'draw'; signer = draft.signed?.name || person?.name || ''; render(); void list();
     status.textContent = `Saved on this phone${draft.heldAt ? ` ${when(draft.heldAt)}` : ''}. Not on the server yet.`;
     // Focus follows the report just opened, so a keyboard or screen reader starts there too.
     const title = $('editor-title'); if (title) { title.tabIndex = -1; title.focus({ preventScroll: true }); title.scrollIntoView({ block: 'start', behavior: 'smooth' }); }

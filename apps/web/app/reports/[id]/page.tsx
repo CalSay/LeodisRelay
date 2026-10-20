@@ -100,6 +100,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [projectIssues, setProjectIssues] = useState<IssueSummary[]>([]);
   const [signerName, setSignerName] = useState("");
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
+  /** Signed by typing the name and ticking the statement, in place of a drawing (lib/signature.ts). */
+  const [signatureTyped, setSignatureTyped] = useState(false);
+  const nameFilled = useRef(false);
   /** The draft as the server last accepted it, so every card can say whether it is on the server. */
   const [onServer, setOnServer] = useState<OnServer>({ cards: {} });
   /** The same, for code running outside a render: the base a conflict is judged against. */
@@ -423,6 +426,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     serverVersion.current = merged.version;
     setSignerName(merged.draftSignature?.name ?? merged.author);
     setSignatureImage(merged.draftSignature?.dataUrl ?? null);
+    setSignatureTyped(Boolean(merged.draftSignature?.typed));
     setReport(merged);
     // The set-aside copies go once the chosen version is held on the device in their place.
     void scheduleSave(merged).then(held => { if (held) void dropAsides(); });
@@ -573,7 +577,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     if (found.state === 'draft' && pending.current === null && seq.current === typed) {
       serverVersion.current = found.version;
       adoptSignature(found);
-      if (!found.draftSignature) { setSignerName(found.author); setSignatureImage(null); }
+      if (!found.draftSignature) { setSignerName(found.author); setSignatureImage(null); setSignatureTyped(false); }
       setOnServer(onServerOf(found));
       setReport(found);
       return;
@@ -633,21 +637,28 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     if (from.state !== 'draft' || !from.draftSignature) return;
     setSignerName(from.draftSignature.name);
     setSignatureImage(from.draftSignature.dataUrl ?? null);
+    setSignatureTyped(Boolean(from.draftSignature.typed));
   }
 
   /** The signature is part of the draft, so it saves and survives a reload like any edit. */
-  function updateSignature(name: string, image: string | null) {
+  function updateSignature(name: string, image: string | null, typed = false) {
+    // One way at a time: a typed signature has no drawing, and a drawing is not typed.
+    if (image) typed = false;
     setSignerName(name);
     setSignatureImage(image);
+    setSignatureTyped(typed);
     const current = latest.current;
     if (!current || current.state !== 'draft') return;
     const { draftSignature: _old, ...rest } = current;
-    update({ ...rest, draftSignature: { name, ...(image ? { dataUrl: image } : {}) } });
+    update({ ...rest, draftSignature: { name, ...(image ? { dataUrl: image } : typed ? { typed: true as const } : {}) } });
   }
 
   useEffect(() => {
     latest.current = report;
-    if (report && signerName === "") setSignerName(report.author);
+    // Filled in once, when the report first loads: emptying the box later
+    // (to type a different name to sign with) must not put the author's name back.
+    // A saved signature keeps its own name, even an empty one.
+    if (report && !nameFilled.current) { nameFilled.current = true; if (signerName === "" && !report.draftSignature) setSignerName(report.author); }
   }, [report]);
 
   // Context from previous visits. Fetched once the report is known so the
@@ -805,10 +816,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       announce(saved);
       setReport(saved);
       setOnServer(onServerOf(report, saved.version));
-      const sent = await submitReport(saved, {
-        ...(signatureImage ? { dataUrl: signatureImage } : {}),
-        name: signerName.trim() || report.author,
-      });
+      const sent = await submitReport(saved, signatureTyped && !signatureImage
+        // A typed signature is the name as typed: never filled in with the author's.
+        ? { name: signerName.trim(), typed: true }
+        : { ...(signatureImage ? { dataUrl: signatureImage } : {}), name: signerName.trim() || report.author });
       if (principalId) await releaseIfCurrent(report.id, principalId, seq.current);
       announce(sent, 'sent');
       setReport(sent);
@@ -1218,16 +1229,20 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           </div>}
 
           <div className="sec"><h2 className="lbl">Sign</h2></div>
-          {type.drawnSignature && <p className="hint eng-sign-hint">Draw your signature: an inspection is signed by the person who carried it out.</p>}
+          {type.signatureRequired && <p className="hint eng-sign-hint">An inspection is signed by the person who carried it out: draw your signature, or type your name if you can’t draw.</p>}
 
           <section className="panel">
             <div className="panel-body">
               <SignaturePad
                 name={signerName}
                 initialImage={signatureImage}
-                onNameChange={(next) => updateSignature(next, signatureImage)}
+                onNameChange={(next) => updateSignature(next, signatureImage, signatureTyped)}
                 onChange={(image) => updateSignature(signerName, image)}
-                {...(type.drawnSignature ? { hint: 'The drawing is required: it shows who carried out the inspection.' } : {})}
+                {...(type.signatureRequired ? {
+                  typed: signatureTyped,
+                  onTypedChange: (next: boolean) => updateSignature(signerName, null, next),
+                  hint: 'A signature is required: it shows who carried out the inspection.',
+                } : {})}
               />
             </div>
           </section>
