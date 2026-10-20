@@ -21,8 +21,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   - the server, not the client, records the statement word for word
     (`TYPED_STATEMENT`, lib/signature.ts), the time (`signedAt`) and who was
     signed in (`signedInAs`), and marks it `typed`;
-  - a typed signature is never filled in with the author's name, a tick with
-    no name is refused, and typed plus a drawing, or a typed signature on a
+  - the name box starts with the signed-in person's name, as it always has,
+    and they can change it; what is sent is the name in the box when they
+    tick, never filled in by the server, and a tick with no name is refused, and typed plus a drawing, or a typed signature on a
     site update, is refused (site updates print the name either way);
   - the office report says "Signature drawn by" or "Signed by typing the name
     … · signed in as …" and shows the statement; the PDF prints the typed name
@@ -33,7 +34,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   sign-in is Microsoft's; adding another secret is more to forget on site
   for no extra proof, since the session already identifies the person).
 - Choosing one way clears the other, so a draft never carries a drawing behind
-  a typed name. The choice and tick save with the draft and survive a reload.
+  a typed name. A ticked typed signature saves with the draft and survives a reload;
+  choosing "Type my name instead" without ticking yet is not saved, so a
+  reload shows the drawing box again.
   `ReportTypeDef.drawnSignature` is renamed `signatureRequired`.
 - No signal: the offline page offers the same choice. A typed signature is
   held like a drawn one (`signed.typed`, no `dataUrl`), locked, and sent by
@@ -44,13 +47,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Help: What's new "Sign an inspection without drawing"; a new site guide
   section "Signing an inspection"; the no-signal step and the office day say
   how typed signatures show. Draft conflicts name a typed signature too.
-- Checks: `npm run typecheck`, `npm test` (332, new
+- Checks: `npm run typecheck`, `npm test` (336, new
   `tests/typedSignature.test.ts`), `npm run build`, the new
-  `scripts/verify-typed-signature.mjs` (35 checks: keyboard-only typed
-  signing in the editor at 390px light and 1440px dark, reload, switching
-  back to drawing, sent; the office at 1440px light and 390px dark; the PDF
+  `scripts/verify-typed-signature.mjs` (38 checks: keyboard-only typed
+  signing in the editor at 390px light and 1440px dark, a name deleted key
+  by key stays empty, reload, switching back to drawing, sent; the office at 1440px light and 390px dark; the PDF
   text; a first fix inspection typed-signed with no signal and sent by itself),
-  `verify-accessibility` editor and no-signal states (178 checks, now also
+  `verify-accessibility` in full after merging main (518 checks, now also
   choosing, typing and ticking with the keyboard alone on both, and the
   signed state on the no-signal page), `verify-offline-sign`,
   `verify-signature-reload`, `verify-help`, `verify-handover-offline`,
@@ -59,10 +62,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `verify-editor-usability` and `verify-report-types`.
 - Not verified: a real screen reader (VoiceOver, TalkBack, NVDA) or a physical
   phone; whether Leodis's clients or auditors accept a typed signature on an
-  inspection (Cal may want to confirm). The full `verify-accessibility` run
-  stops on main at the engineer home's "Since your last visit" link
-  (link-in-text-block), which another open PR fixes; this PR's editor and
-  no-signal states were run on their own and pass.
+  inspection (Cal may want to confirm). A fresh-context review found the
+  author's name refilling an emptied name box and two overstated lines here;
+  all fixed.
 - Proposed (not added to `docs/tasks.json`): a typed signature option for the
   compliance engineer screens; a skip link; main/h1 on compliance pages.
 

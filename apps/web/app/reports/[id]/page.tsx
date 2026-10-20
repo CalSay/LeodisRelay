@@ -102,6 +102,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
   /** Signed by typing the name and ticking the statement, in place of a drawing (lib/signature.ts). */
   const [signatureTyped, setSignatureTyped] = useState(false);
+  const nameFilled = useRef(false);
   /** The draft as the server last accepted it, so every card can say whether it is on the server. */
   const [onServer, setOnServer] = useState<OnServer>({ cards: {} });
   /** The same, for code running outside a render: the base a conflict is judged against. */
@@ -654,7 +655,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   useEffect(() => {
     latest.current = report;
-    if (report && signerName === "") setSignerName(report.author);
+    // Filled in once, when the report first loads: emptying the box later
+    // (to type a different name to sign with) must not put the author's name back.
+    if (report && !nameFilled.current) { nameFilled.current = true; if (signerName === "") setSignerName(report.author); }
   }, [report]);
 
   // Context from previous visits. Fetched once the report is known so the

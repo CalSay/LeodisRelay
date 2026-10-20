@@ -40,7 +40,11 @@ let browser,checks=0;const check=(ok,message)=>{assert.ok(ok,message);checks++;}
 const screenshot=process.env.RELAY_SCREENSHOT_DIR;
 // Choose a radio or tick a box from the keyboard: focus it and press Space.
 const press=async(page,locator)=>{await locator.focus();await page.keyboard.press('Space');};
-const typeName=async(page,name)=>{const box=page.getByRole('textbox',{name:'Your full name'});await box.focus();await page.keyboard.press('ControlOrMeta+A');await page.keyboard.type(name);};
+// Delete the name already there one key at a time, as a person would, then type their own.
+const typeName=async(page,name)=>{const box=page.getByRole('textbox',{name:'Your full name'});await box.focus();await page.keyboard.press('End');
+  for(let n=(await box.inputValue()).length;n>0;n--)await page.keyboard.press('Backspace');
+  await page.waitForTimeout(400);check(await box.inputValue()==='','emptying the name box leaves it empty: the author\'s name is not put back');
+  await page.keyboard.type(name);};
 // Wait until the server holds what the screen shows: the save bar says nothing while an item needs attention.
 const saved=async(ready)=>{for(let n=0;n<60;n++){if(ready())return;await new Promise(r=>setTimeout(r,250));}throw Error('the draft was not saved');};
 const statement=page=>page.getByRole('checkbox',{name:/I carried out this inspection/});
