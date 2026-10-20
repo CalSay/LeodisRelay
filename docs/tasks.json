@@ -1,9 +1,26 @@
 {
-  "about": "Work queue for Claude threads, built from items Cal approved in docs/product-backlog.md. Threads may change only status, passes, pr and notes. Cal adds, removes or rewords tasks. Status values: todo, in_progress, done, blocked. Statuses were set on 2026-10-20 without auditing the code, so task AUDIT-1 comes first.",
+  "about": "Master plan and work queue for Claude threads, built from items Cal approved in docs/product-backlog.md. Threads may change only status, passes, pr and notes. Cal adds, removes or reorders tasks. Status values: todo, in_progress, done, blocked.",
   "updated": "2026-10-20",
+  "plan": {
+    "max_active_threads": 2,
+    "how_to_pick": "Take the lowest 'order' task whose status is todo, whose depends_on tasks are all done, and whose lane is not used by any running thread (including UI threads). One task per thread.",
+    "lanes": {
+      "tooling": "scripts/, package.json devDependencies, CI-adjacent test tooling",
+      "editor": "apps/web/app/reports/[id]/page.tsx, components/ObservationEditor.tsx, SignaturePad.tsx, lib/localDraft.ts, lib/serverStore.ts saveDraft, app/engineer.css",
+      "home": "components/EngineerWorkspace.tsx, app/engineer/page.tsx",
+      "office": "components/developments/office/*, lib/status.ts",
+      "store": "lib/issueStore.ts, lib/types.ts, lib/sharepoint/issues.ts, app/api/issues/route.ts",
+      "tests": "apps/web/tests only"
+    },
+    "ui_work": "Cal's standing priority: the UI must be clear, easy to use, professional and inviting. UI tasks from the 'UI clarity and polish' thread are added here with their own lane mapping; a UI task that edits editor or office files uses that lane.",
+    "audit": "Statuses and notes below come from a read-only audit of main at 13e96a0 on 2026-10-20 (AUDIT-1). No browser checks have ever been run for these tasks; Playwright is not installed."
+  },
   "tasks": [
     {
       "id": "AUDIT-1",
+      "order": 0,
+      "lane": "tests",
+      "depends_on": [],
       "backlog": "all",
       "title": "Audit task statuses against the code",
       "description": "Some approved items may already be partly or fully built (corrections, PM acknowledgement and draft recovery work landed 7-14 Sept). Check each task below against the code, tests and docs/optimisation-progress.md.",
@@ -12,172 +29,34 @@
         "Tasks that are fully built and tested are proposed as done in the PR description, not set to done without evidence",
         "No application code changes in this PR"
       ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": ""
+      "status": "done",
+      "passes": true,
+      "pr": 1,
+      "notes": "Done read-only on 2026-10-20; results are in each task's notes."
     },
     {
-      "id": "FE-1a",
-      "backlog": "FE-1",
-      "title": "Collapse updates into a summary",
-      "description": "Collapse completed updates into a description, location and photo-count summary.",
+      "id": "TOOL-1",
+      "order": 1,
+      "lane": "tooling",
+      "depends_on": [],
+      "backlog": "tooling",
+      "title": "Make browser checks runnable in cloud threads",
+      "description": "Acceptance steps need browser checks, but Playwright is not installed, so scripts/verify-*.mjs cannot run. Add Playwright as a dev dependency using the preinstalled Chromium, and document the command in CLAUDE.md.",
       "acceptance": [
-        "A completed update shows as one line with description, location and photo count",
-        "The update can be expanded and edited again",
-        "Browser check of the engineer report screen on a phone-width viewport"
+        "npm ci installs Playwright without downloading browsers (PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD)",
+        "At least one scripts/verify-*.mjs runs green in a cloud thread after npm test && npm run build",
+        "CLAUDE.md names the exact command"
       ],
       "status": "todo",
       "passes": false,
       "pr": null,
-      "notes": ""
-    },
-    {
-      "id": "FE-1b",
-      "backlog": "FE-1",
-      "title": "Add another update at the same location",
-      "description": "Add another update at the same location without copying findings or evidence.",
-      "acceptance": [
-        "An action on an update starts a new update with the location filled in",
-        "Findings, photos and other evidence are not copied",
-        "Test covering the new update's fields"
-      ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": ""
-    },
-    {
-      "id": "FE-1c",
-      "backlog": "FE-1",
-      "title": "Suggest responsible companies and locations",
-      "description": "Suggest responsible companies. Location suggestions are optional, derived from prior entries, and need no setup or exact naming (EXP-4 rules out a location catalogue).",
-      "acceptance": [
-        "Suggestions come from prior entries on the same project",
-        "Free text is always accepted; nothing requires a maintained list or exact match",
-        "Test for the suggestion source"
-      ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": ""
-    },
-    {
-      "id": "FE-1d",
-      "backlog": "FE-1",
-      "title": "Undo removing an update or photograph",
-      "description": "Offer undo when removing an update or photograph.",
-      "acceptance": [
-        "Removing an update or photo shows an undo option",
-        "Undo restores it, including its photos, without a duplicate save",
-        "Test for remove then undo"
-      ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": ""
-    },
-    {
-      "id": "FE-3a",
-      "backlog": "FE-3",
-      "title": "Preserve signatures across reloads",
-      "description": "A signature captured in a draft survives a reload.",
-      "acceptance": [
-        "Sign, reload, signature still shown and saved to the server",
-        "Test covering signature persistence"
-      ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": "optimisation-progress.md lists signature persistence as unfinished"
-    },
-    {
-      "id": "FE-3b",
-      "backlog": "FE-3",
-      "title": "Show pending uploads and server acknowledgement",
-      "description": "Make pending uploads and server acknowledgement clear.",
-      "acceptance": [
-        "The engineer can tell which text and photos are saved on the server and which are pending",
-        "Browser check with the server stopped and restarted"
-      ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": ""
-    },
-    {
-      "id": "FE-3c",
-      "backlog": "FE-3",
-      "title": "Explain and resolve conflicting versions",
-      "description": "Explain and resolve conflicting versions without silently losing work, including two tabs editing one draft.",
-      "acceptance": [
-        "A conflicting save shows both versions and lets the user choose or merge",
-        "Neither version is lost silently",
-        "Tests for stale-save conflict and two-tab editing"
-      ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": ""
-    },
-    {
-      "id": "FE-3d",
-      "backlog": "FE-3",
-      "title": "Surface unfinished reports on the home screen",
-      "description": "Unfinished drafts appear on the engineer home screen.",
-      "acceptance": [
-        "Home screen lists unfinished reports with project and last-saved time",
-        "Browser check"
-      ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": ""
-    },
-    {
-      "id": "FE-3e",
-      "backlog": "FE-3",
-      "title": "Extend offline capture",
-      "description": "Extend offline capability deliberately beyond retained-text recovery, toward cold-start offline capture.",
-      "acceptance": [
-        "Scope of the extension agreed with Cal before building",
-        "Behaviour verified on physical iOS and Android devices"
-      ],
-      "status": "blocked",
-      "passes": false,
-      "pr": null,
-      "notes": "Needs Cal to agree the scope and to test on physical phones"
-    },
-    {
-      "id": "FE-4a",
-      "backlog": "FE-4",
-      "title": "Hide the review queue when review is disabled",
-      "description": "Review remains off by default; its queue is hidden when off.",
-      "acceptance": [
-        "With review off, no review queue or count appears in the PM view",
-        "Test or browser check for both settings"
-      ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": ""
-    },
-    {
-      "id": "FE-4b",
-      "backlog": "FE-4",
-      "title": "Action-focused PM view",
-      "description": "Surface new reports, unacknowledged reports, unassigned issues and verification.",
-      "acceptance": [
-        "PM view shows each of the four groups with counts",
-        "Browser check of the office view"
-      ],
-      "status": "todo",
-      "passes": false,
-      "pr": null,
-      "notes": ""
+      "notes": "Proposed by the setup thread; needed before any 'Browser check' step can pass."
     },
     {
       "id": "FE-4c",
+      "order": 2,
+      "lane": "tests",
+      "depends_on": [],
       "backlog": "FE-4",
       "title": "Explicit PM acknowledgement",
       "description": "PM acknowledgement with actor, timestamp and optional note, kept separate from server receipt, delivery, approval and issue closure. Sending never waits for acknowledgement.",
@@ -189,25 +68,140 @@
       "status": "todo",
       "passes": false,
       "pr": null,
-      "notes": ""
+      "notes": "Built: serverStore.ts acknowledgeReport, route, office dialog, tests/corrections.test.ts:76-87. Only gap: test does not assert the note or separation from review/approval/closure. Close the test gap, then mark done."
     },
     {
-      "id": "FE-5a",
-      "backlog": "FE-5",
-      "title": "Search and filter the issue register",
-      "description": "Search and filter by location, responsible company and verification status, across the whole authorised register, not just the loaded page. Location search must not depend on a location catalogue (EXP-4).",
+      "id": "FE-3a",
+      "order": 3,
+      "lane": "editor",
+      "depends_on": [],
+      "backlog": "FE-3",
+      "title": "Preserve signatures across reloads",
+      "description": "A signature captured in a draft survives a reload.",
       "acceptance": [
-        "Filters for location text, responsible company and verification status",
-        "Results cover the whole authorised register with pagination",
-        "Tests for the query, including SharePoint-backed paging with the fixture adapter"
+        "Sign, reload, signature still shown and saved to the server",
+        "Test covering signature persistence"
       ],
       "status": "todo",
       "passes": false,
       "pr": null,
-      "notes": ""
+      "notes": "Not started: signature lives only in React state; HeldDraft has no signature field (lib/localDraft.ts)."
+    },
+    {
+      "id": "FE-4a",
+      "order": 4,
+      "lane": "office",
+      "depends_on": [],
+      "backlog": "FE-4",
+      "title": "Hide the review queue when review is disabled",
+      "description": "Review remains off by default; its queue is hidden when off.",
+      "acceptance": [
+        "With review off, no review queue or count appears in the PM view",
+        "Test or browser check for both settings"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": "Not started: review is off for every project but InboxView, ProjectsView and lib/status.ts still show review queue, counts and tags."
+    },
+    {
+      "id": "FE-3d",
+      "order": 5,
+      "lane": "home",
+      "depends_on": [],
+      "backlog": "FE-3",
+      "title": "Surface unfinished reports on the home screen",
+      "description": "Unfinished drafts appear on the engineer home screen.",
+      "acceptance": [
+        "Home screen lists unfinished reports with project and last-saved time",
+        "Browser check"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": "Partial: EngineerWorkspace shows drafts for the selected project only; device-only drafts and other projects are not surfaced."
+    },
+    {
+      "id": "FE-3b",
+      "order": 6,
+      "lane": "editor",
+      "depends_on": [
+        "FE-3a"
+      ],
+      "backlog": "FE-3",
+      "title": "Show pending uploads and server acknowledgement",
+      "description": "Make pending uploads and server acknowledgement clear.",
+      "acceptance": [
+        "The engineer can tell which text and photos are saved on the server and which are pending",
+        "Browser check with the server stopped and restarted"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": "Partial: report-level save state shown (page.tsx SAVE map). No per-photo pending/uploaded indicator."
+    },
+    {
+      "id": "FE-4b",
+      "order": 7,
+      "lane": "office",
+      "depends_on": [
+        "FE-4a"
+      ],
+      "backlog": "FE-4",
+      "title": "Action-focused PM view",
+      "description": "Surface new reports, unacknowledged reports, unassigned issues and verification.",
+      "acceptance": [
+        "PM view shows each of the four groups with counts",
+        "Browser check of the office view"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": "Partial: model.ts has notAcknowledged/isUnassigned/isVerify; no single view with all four groups and counts; 'new' is undefined."
+    },
+    {
+      "id": "FE-3c",
+      "order": 8,
+      "lane": "editor",
+      "depends_on": [
+        "FE-3b"
+      ],
+      "backlog": "FE-3",
+      "title": "Explain and resolve conflicting versions",
+      "description": "Explain and resolve conflicting versions without silently losing work, including two tabs editing one draft.",
+      "acceptance": [
+        "A conflicting save shows both versions and lets the user choose or merge",
+        "Neither version is lost silently",
+        "Tests for stale-save conflict and two-tab editing"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": "Not started: stale saves are rejected with a message only (serverStore.ts saveDraft); no compare UI or two-tab coordination."
+    },
+    {
+      "id": "FE-1a",
+      "order": 9,
+      "lane": "editor",
+      "depends_on": [],
+      "backlog": "FE-1",
+      "title": "Collapse updates into a summary",
+      "description": "Collapse completed updates into a description, location and photo-count summary.",
+      "acceptance": [
+        "A completed update shows as one line with description, location and photo count",
+        "The update can be expanded and edited again",
+        "Browser check of the engineer report screen on a phone-width viewport"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": "Mostly built: report page 'Cards' rail shows location, kind, text and photo count (app/reports/[id]/page.tsx:462-491). Missing an explicit collapsed/completed state and a phone-width browser check."
     },
     {
       "id": "FE-5b",
+      "order": 10,
+      "lane": "editor",
+      "depends_on": [],
       "backlog": "FE-5",
       "title": "Show descriptions and thumbnails when linking an issue",
       "description": "Show descriptions and/or thumbnails when linking an existing issue.",
@@ -218,10 +212,15 @@
       "status": "todo",
       "passes": false,
       "pr": null,
-      "notes": ""
+      "notes": "Mostly built: defect/access picker shows description and thumbnail (ObservationEditor.tsx:85-111). Variation link is a plain select without thumbnail."
     },
     {
       "id": "FE-6a",
+      "order": 11,
+      "lane": "office",
+      "depends_on": [
+        "FE-4b"
+      ],
       "backlog": "FE-6",
       "title": "Distinct submission stages",
       "description": "Show acceptance, PDF preparation, delivery and PM acknowledgement as distinct stages.",
@@ -233,10 +232,85 @@
       "status": "todo",
       "passes": false,
       "pr": null,
-      "notes": ""
+      "notes": "Partial: lib/status.ts separates receipt, review, delivery, acknowledgement; PDF preparation and delivery share one status line."
+    },
+    {
+      "id": "FE-1b",
+      "order": 12,
+      "lane": "editor",
+      "depends_on": [],
+      "backlog": "FE-1",
+      "title": "Add another update at the same location",
+      "description": "Add another update at the same location without copying findings or evidence.",
+      "acceptance": [
+        "An action on an update starts a new update with the location filled in",
+        "Findings, photos and other evidence are not copied",
+        "Test covering the new update's fields"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": "Not started: addCard() always starts a blank observation (app/reports/[id]/page.tsx:257)."
+    },
+    {
+      "id": "FE-1d",
+      "order": 13,
+      "lane": "editor",
+      "depends_on": [],
+      "backlog": "FE-1",
+      "title": "Undo removing an update or photograph",
+      "description": "Offer undo when removing an update or photograph.",
+      "acceptance": [
+        "Removing an update or photo shows an undo option",
+        "Undo restores it, including its photos, without a duplicate save",
+        "Test for remove then undo"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": "Not started: removing a card or photo is immediate (ObservationEditor.tsx:126,138)."
+    },
+    {
+      "id": "FE-1c",
+      "order": 14,
+      "lane": "editor",
+      "depends_on": [],
+      "backlog": "FE-1",
+      "title": "Suggest responsible companies and locations",
+      "description": "Suggest responsible companies. Location suggestions are optional, derived from prior entries, and need no setup or exact naming (EXP-4 rules out a location catalogue).",
+      "acceptance": [
+        "Suggestions come from prior entries on the same project",
+        "Free text is always accepted; nothing requires a maintained list or exact match",
+        "Test for the suggestion source"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": "Partial: location chips from prior entries exist (app/api/locations/route.ts, ObservationEditor.tsx:90-99). Engineer 'Who needs to respond' has no company suggestions; neither source is tested."
+    },
+    {
+      "id": "FE-5a",
+      "order": 15,
+      "lane": "store",
+      "depends_on": [],
+      "backlog": "FE-5",
+      "title": "Search and filter the issue register",
+      "description": "Search and filter by location, responsible company and verification status, across the whole authorised register, not just the loaded page. Location search must not depend on a location catalogue (EXP-4).",
+      "acceptance": [
+        "Filters for location text, responsible company and verification status",
+        "Results cover the whole authorised register with pagination",
+        "Tests for the query, including SharePoint-backed paging with the fixture adapter"
+      ],
+      "status": "todo",
+      "passes": false,
+      "pr": null,
+      "notes": "Not started: GET /api/issues returns everything and filters client-side; no location text search or server paging. Also touches office/IssuesView.tsx."
     },
     {
       "id": "FE-6b",
+      "order": 16,
+      "lane": "store",
+      "depends_on": [],
       "backlog": "FE-6",
       "title": "Traceable corrections and revisions",
       "description": "Corrections create traceable revisions rather than overwriting sent reports, and resulting issue changes keep their report provenance.",
@@ -248,10 +322,15 @@
       "status": "todo",
       "passes": false,
       "pr": null,
-      "notes": ""
+      "notes": "Mostly built: correctReport creates a new revision; snapshot unchanged. Issue provenance is note text only (IssueEvent has no reportId/revision); no test that the sent snapshot is unchanged."
     },
     {
       "id": "EXP-1",
+      "order": 17,
+      "lane": "store",
+      "depends_on": [
+        "FE-6b"
+      ],
       "backlog": "EXP-1",
       "title": "Living site diary",
       "description": "A chronological project timeline assembled from existing reports and observations, with no second round of data entry, preserving report provenance and revision history.",
@@ -263,10 +342,30 @@
       "status": "todo",
       "passes": false,
       "pr": null,
-      "notes": ""
+      "notes": "Not started. Depends on structured issue provenance from FE-6b."
+    },
+    {
+      "id": "FE-3e",
+      "order": 90,
+      "lane": "editor",
+      "depends_on": [],
+      "backlog": "FE-3",
+      "title": "Extend offline capture",
+      "description": "Extend offline capability deliberately beyond retained-text recovery, toward cold-start offline capture.",
+      "acceptance": [
+        "Scope of the extension agreed with Cal before building",
+        "Behaviour verified on physical iOS and Android devices"
+      ],
+      "status": "blocked",
+      "passes": false,
+      "pr": null,
+      "notes": "Needs Cal to agree the scope and to test on physical phones."
     },
     {
       "id": "EXP-5",
+      "order": 91,
+      "lane": "editor",
+      "depends_on": [],
       "backlog": "EXP-5",
       "title": "Additional report types",
       "description": "Support additional report types on the shared capture, draft, evidence, submission, revision and PDF capabilities.",
@@ -277,7 +376,7 @@
       "status": "blocked",
       "passes": false,
       "pr": null,
-      "notes": "Specific report types are not yet agreed; needs Cal"
+      "notes": "Specific report types are not yet agreed; needs Cal."
     }
   ]
 }

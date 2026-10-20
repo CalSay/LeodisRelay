@@ -13,4 +13,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   cloud sandbox); the hook scripts were exercised with and without code changes.
 - Not verified: CI on GitHub until this PR runs; Node 24 in cloud threads
   (the project's cloud environment still needs it).
-- Task statuses were not audited against the code. Next: AUDIT-1.
+- AUDIT-1 done (read-only): each task's notes now say what exists, with file
+  paths. Nothing meets its acceptance in full; FE-4c needs only a test, and
+  FE-1a, FE-5b and FE-6b are mostly built.
+- Added the master plan to `docs/tasks.json`: order, lanes (file areas that
+  must not be worked on by two threads at once), dependencies, and a limit of
+  two active threads. Added TOOL-1 because no browser check can run until
+  Playwright is installed.
+- Next: TOOL-1, then FE-4c, FE-3a, FE-4a.
