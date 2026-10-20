@@ -92,7 +92,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           storage, and an engineer testing on their own phone must never mistake
           it for the real thing.
         */}
-        <div className="banner">
+        <div className="banner" role="region" aria-label="Test system">
           {sharePointMode() === 'off' ? 'PROTOTYPE — EXAMPLE DATA — NOT FOR REAL SITE WORK' : 'SHAREPOINT CONNECTION TEST — NOT FOR REAL SITE WORK'}
           {provider.kind === "local" ? " — IDENTITY NOT CHECKED" : ""}
         </div>
@@ -103,7 +103,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <span>RELAY</span>
               <em>LEODIS</em>
             </Link>
-            <nav className="nav">
+            <nav className="nav" aria-label="Main">
               <Link href="/developments">Home</Link>
               <Link href="/">Companies</Link>
               {principal && <Link href={principal.role==='Engineer'?'/engineer?view=projects':'/projects'}>Projects</Link>}

@@ -45,7 +45,7 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
   };
   const d = (kind: 'variation-price' | 'variation-instruct' | 'variation-decline' | 'variation-reopen' | 'variation-details', variation: Variation) => ctx.setDialog({ kind, variation });
   return <div className="view">
-    <div className="pagehead"><div><h3>Variations</h3><p>{counts.pending} awaiting instruction across {ctx.projects.length} projects · {counts.unpriced ? `${counts.unpriced} without a quote` : 'all priced'} · {counts.exposed ? <span className="late">{counts.exposed} done without an instruction</span> : 'nothing done uninstructed'} · {counts.instructed} instructed worth {fmtMoney(instructedTotal)} · {counts.declined} declined</p></div>
+    <div className="pagehead"><div><h2>Variations</h2><p>{counts.pending} awaiting instruction across {ctx.projects.length} projects · {counts.unpriced ? `${counts.unpriced} without a quote` : 'all priced'} · {counts.exposed ? <span className="late">{counts.exposed} done without an instruction</span> : 'nothing done uninstructed'} · {counts.instructed} instructed worth {fmtMoney(instructedTotal)} · {counts.declined} declined</p></div>
       <div className="actions">{shown.length > 0 && <BtnQ onClick={download} aria-label={`Download ${shown.length} ${shown.length === 1 ? 'variation' : 'variations'} as a spreadsheet (CSV)`}>Download spreadsheet</BtnQ>}{counts.unpriced > 0 && <Btn onClick={() => { const v = shown.find(isUnpriced) ?? scoped.find(isUnpriced); if (v) d('variation-price', v); }}>Price the oldest</Btn>}</div></div>
     <div className="filters">
       {FILTERS.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
@@ -54,7 +54,7 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
       <label>Trade <select value={trade} onChange={e => setTrade(e.target.value)}><option value="">All trades</option>{VARIATION_TRADES.map(t => <option key={t} value={t}>{t}</option>)}</select></label>
       <label>Reason <select value={reason} onChange={e => setReason(e.target.value)}><option value="">Any reason</option>{VARIATION_REASONS.map(r => <option key={r} value={r}>{r}</option>)}</select></label>
     </div>
-    <div className="panel"><table className="reg cards"><thead><tr><th>Ref</th><th>Variation</th><th>Project</th><th>Raised</th><th>Instruction</th><th className="money">Quoted</th><th className="money">Instructed</th><th className="money">Margin</th><th></th></tr></thead><tbody>
+    <div className="panel"><table className="reg cards"><thead><tr><th>Ref</th><th>Variation</th><th>Project</th><th>Raised</th><th>Instruction</th><th className="money">Quoted</th><th className="money">Instructed</th><th className="money">Margin</th><th><span className="sr">Action</span></th></tr></thead><tbody>
       {shown.length ? shown.map(v => { const margin = estimatedMargin(v); const pct = v.instruction === 'declined' ? undefined : marginPct(v); return <tr key={v.id} className="clickable" onClick={() => ctx.go(`#/projects/${code(v.projectId)}/variation/${v.id}`)}>
         <td className="c-ref"><span className="ref">{v.reference}</span></td>
         <td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{v.description}</div><div className="rowsub">{v.location || 'no location'} · {v.trade ?? 'trade not set'} · {v.reason ?? 'reason not set'}{v.workDone && <> · <span className="late">work already done</span></>}</div></td>

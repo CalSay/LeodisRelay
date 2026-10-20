@@ -28,7 +28,7 @@
 
   --text: #1a1b19;
   --text-2: #55564f;
-  --text-3: #6b6c65;
+  --text-3: #5f605a;
 
   /* Brass, darkened to carry small text on paper. */
   --brass: #7d621b;
@@ -84,7 +84,7 @@
 
     --text: #e9ebec;
     --text-2: #99a1a8;
-    --text-3: #666e75;
+    --text-3: #8a9299;
 
     --brass: #d9ae4a;
     --brass-2: #a8842f;
@@ -115,7 +115,7 @@
 
   --text: #e9ebec;
   --text-2: #99a1a8;
-  --text-3: #666e75;
+  --text-3: #8a9299;
 
   --brass: #d9ae4a;
   --brass-2: #a8842f;
@@ -244,6 +244,9 @@ a {
   .appbar-inner { flex-wrap: wrap; padding-block: 8px; gap: 8px; }
   .nav { width: 100%; }
   .nav a, .nav button { min-height: 44px; }
+  /* Touch targets: at least 44px tall on a phone (accessibility pass). */
+  .brand { align-items: center; min-height: 44px; }
+  .back { min-height: 44px; padding-block: var(--s3) var(--s2); }
   .nav .whoami { white-space: normal; text-align: left; }
 }
 
@@ -1294,4 +1297,9 @@ button:disabled {
   color: var(--brass);
   border-color: var(--line-2);
   background: var(--brass-wash);
+}
+
+/* Segmented controls come after their base rule, so the phone size wins. */
+@media (max-width: 700px) {
+  .seg { min-height: 44px; }
 }

@@ -27,7 +27,7 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
   useEffect(() => { if (window.matchMedia('(max-width:700px)').matches) window.scrollTo(0, 0); }, [depth, s?.code, id]);
   const projects = <ProjectsCol key="projects" ctx={ctx} current={s} />;
   const main = <div key="main" className="col col-main">
-      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h4>{s ? 'Details' : 'Overview'}</h4><i>{s ? s.project.projectNumber : 'Office'}</i></div>
+      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h2>{s ? 'Details' : 'Overview'}</h2><i>{s ? s.project.projectNumber : 'Office'}</i></div>
       <div className="colpad">
         {!ctx.snap ? <div className="loading">Loading office records</div>
           : kind === 'report' && id ? <ReportReader ctx={ctx} id={id} />
@@ -49,7 +49,7 @@ function officeReturn(ctx: Ctx): string {
 
 function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
   return <div className="col col-projects">
-    <div className="col-head"><h4>Projects</h4><i>{ctx.projects.length} reportable</i></div>
+    <div className="col-head"><h2>Projects</h2><i>{ctx.projects.length} reportable</i></div>
     {projectStatusGroups(ctx.projects).map(group => <div key={group.status} className={`project-group project-group-${group.tone}`}>
       <div className="grp project-group-title">{group.label}<i>{group.projects.length}</i></div>
       {group.projects.map(p => {
@@ -92,7 +92,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   const closed = s.issues.filter(i => !isActive(i));
   const settled = s.variations.filter(v => v.instruction !== 'pending');
   return <div className="col">
-    <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h4>Register · {s.project.projectName}</h4><i>{s.reports.length} reports · {s.active.length} open</i></div>
+    <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h2>Register · {s.project.projectName}</h2><i>{s.reports.length} reports · {s.active.length} open</i></div>
     <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
       {([['action', `Needs action · ${s.needsAction}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
     </div>
@@ -145,7 +145,7 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const latest = snap.reports.slice(0, 6);
   const openIssues = snap.issues.filter(isActive).length;
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h4>Office position</h4><div className="rowsub">{ctx.projects.length} reportable project{ctx.projects.length === 1 ? '' : 's'} · {snap.reports.length} report{snap.reports.length === 1 ? '' : 's'} received · {openIssues} open issue{openIssues === 1 ? '' : 's'} · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
+    <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h3>Office position</h3><div className="rowsub">{ctx.projects.length} reportable project{ctx.projects.length === 1 ? '' : 's'} · {snap.reports.length} report{snap.reports.length === 1 ? '' : 's'} received · {openIssues} open issue{openIssues === 1 ? '' : 's'} · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link><Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions</Link></div></div>
     <OfficeActionGroups ctx={ctx} />
     <dl className="tb three"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{notNotified.length ? `${notNotified.length} PM notification${notNotified.length === 1 ? '' : 's'} pending` : 'project managers notified'}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Variations pending</dt><dd className={`big ${exposed.length ? 'late' : pendingVariations.length ? 'soon' : ''}`}>{pendingVariations.length}<small>{exposed.length ? `${exposed.length} done without an instruction` : pendingVariations.some(v => v.quotedValue === undefined) ? `${pendingVariations.filter(v => v.quotedValue === undefined).length} still to price` : 'all priced, awaiting the client'}</small></dd></div></dl>
@@ -200,7 +200,7 @@ function OfficeActionGroups({ ctx }: { ctx: Ctx }) {
   return <>
   <div className="act-strip" role="group" aria-label="What needs you">{groups.map(g => <button type="button" key={g.key} data-group={g.key} onClick={() => jump(g.key)}><b className={g.n ? g.tone : ''}>{g.n}</b><span>{g.title}</span></button>)}</div>
   <div className="acts">{groups.map(g => <section key={g.key} className="act" data-group={g.key} tabIndex={-1} aria-label={`${g.title}: ${g.n}`}>
-    <div className="act-h"><h5>{g.title}</h5><b className={`act-n ${g.n ? g.tone : ''}`}>{g.n}</b></div>
+    <div className="act-h"><h4>{g.title}</h4><b className={`act-n ${g.n ? g.tone : ''}`}>{g.n}</b></div>
     <div className="act-sub">{g.sub}</div>
     <div className="rmenu">{g.rows.length ? g.rows : <div className="empty">{g.empty}</div>}</div>
     {g.n > 0 && <a className="act-all" href={g.all}>{g.n > g.rows.length ? `Show all ${g.n}` : 'Open the list'} →</a>}
@@ -222,7 +222,7 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   const week = Date.now() - 7 * 86400000;
   const thisWeek = s.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week);
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h4>{p.projectName}</h4><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
+    <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link><Link className="btn btn-q btn-sm" href={`/weekly-summary?${new URLSearchParams({ project: p.id, returnTo: officeReturn(ctx) })}`}>Weekly summary</Link><Link className="btn btn-q btn-sm" href={`/photos?${new URLSearchParams({ project: p.id, returnTo: officeReturn(ctx) })}`}>Photographs</Link><Link className="btn btn-q btn-sm" href={`/diary?${new URLSearchParams({ project: p.id, returnTo: officeReturn(ctx) })}`}>Site diary</Link><Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ project: p.id, returnTo: officeReturn(ctx) })}`}>Safety actions</Link><Link className="btn btn-q btn-sm" href={`/handover?${new URLSearchParams({ project: p.id, returnTo: officeReturn(ctx) })}`}>Before handover</Link></div></div>
     <dl className="tb"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{s.reports.length ? `${s.reports.length} on file` : 'none yet'}{s.notNotified.length ? ` · ${s.notNotified.length} PM notification${s.notNotified.length === 1 ? '' : 's'} pending` : ''}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Ready to verify</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `closure submitted ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing awaiting verification'}</small></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></dd></div></dl>
     <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
@@ -270,7 +270,7 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
     } finally { setRetryingSharePoint(false); }
   }
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href={crumbsHome ?? `#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>{reportTypeOf(report).document}</div><h4>Visit {fmtDate(report.visitDate)}</h4><div className="rowsub"><span className="ref">{report.reference}</span><span className="sep">/</span>{report.author}{report.authorTrade ? ` · ${report.authorTrade}` : ''}<span className="sep">/</span>Rev {report.revision}</div></div>
+    <div className="sheet-title"><div><div className="crumbs"><a href={crumbsHome ?? `#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>{reportTypeOf(report).document}</div><h3>Visit {fmtDate(report.visitDate)}</h3><div className="rowsub"><span className="ref">{report.reference}</span><span className="sep">/</span>{report.author}{report.authorTrade ? ` · ${report.authorTrade}` : ''}<span className="sep">/</span>Rev {report.revision}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/preview`, officeReturn(ctx))}>Full report</Link><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/pdf`, officeReturn(ctx))}>PDF</Link>
         {canReview ? <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'review', report: summary })}>Review</Btn>
           : !report.acknowledged ? <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'acknowledge', report: summary })}>Acknowledge</Btn> : null}
@@ -332,7 +332,7 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
   const d = (kind: string) => ctx.setDialog(dialogFor(kind, issue, ctx));
   const linkedVariations = ctx.snap?.variations.filter(v => v.linkedIssueId === issue.id) ?? [];
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h4>{issue.description}</h4><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div></div>
+    <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h3>{issue.description}</h3><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div></div>
       <div className="actions">
         <Link className="btn btn-q btn-sm" href={withViewReturn(`/issues/${issue.id}`, officeReturn(ctx))}>Issue page</Link>
         {active && issue.work !== 'awaiting_verification' && (issue.owner ? <BtnQ className="btn-sm" onClick={() => d('assign')}>Reassign</BtnQ> : <Btn className="btn-sm" onClick={() => d('assign')}>Assign</Btn>)}
@@ -372,7 +372,7 @@ export function VariationSheet({ ctx, id }: { ctx: Ctx; id: string }) {
   const evidence = v.events.find(e => e.kind === 'raised')?.photos ?? [];
   const d = (kind: 'variation-price' | 'variation-instruct' | 'variation-decline' | 'variation-reopen' | 'variation-details') => ctx.setDialog({ kind, variation: v });
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Variation</div><h4>{v.description}</h4><div className="rowsub"><span className="ref">{v.reference}</span><span className="sep">/</span>{v.location || 'Location not recorded'}<span className="sep">/</span>{v.trade ?? 'trade not set'}<span className="sep">/</span>{v.reason ?? 'reason not set'}</div></div>
+    <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Variation</div><h3>{v.description}</h3><div className="rowsub"><span className="ref">{v.reference}</span><span className="sep">/</span>{v.location || 'Location not recorded'}<span className="sep">/</span>{v.trade ?? 'trade not set'}<span className="sep">/</span>{v.reason ?? 'reason not set'}</div></div>
       <div className="actions">
         <BtnQ className="btn-sm" onClick={() => d('variation-details')}>Edit details</BtnQ>
         {v.instruction === 'pending' && (v.quotedValue === undefined ? <Btn className="btn-sm" onClick={() => d('variation-price')}>Price</Btn> : <BtnQ className="btn-sm" onClick={() => d('variation-price')}>Reprice</BtnQ>)}
