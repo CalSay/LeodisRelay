@@ -61,6 +61,7 @@ test('Back links name the page they return to, in its own navigation words', () 
   assert.equal(backLabel('/companies?returnTo=%2Foffice'), 'Back to Issues by company');
   assert.equal(backLabel('/issues/snag-list?project=p1'), 'Back to Snag list');
   assert.equal(backLabel('/my-week?week=2026-10-12'), 'Back to My week');
+  assert.equal(backLabel('/safety-actions?project=p1'), 'Back to Safety actions');
 });
 
 test('an unknown return path falls back to a plain name, never a guess', () => {

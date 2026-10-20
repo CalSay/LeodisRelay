@@ -1,0 +1,60 @@
+/* Safety actions: open and recently cleared actions from the weekly safety
+   inspections. Follows the theme on screen; printed it is black on white
+   with the controls left off and the cleared list opened. */
+.sa-page{max-width:900px;}
+.sa-head h1{margin:4px 0 6px;}
+.sa-intro{margin:0 0 14px;font-size:15px;line-height:1.5;color:var(--text-2);max-width:62ch;}
+.sa-controls{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 16px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+.sa-controls label{font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
+.sa-controls select{flex:1 1 240px;min-height:44px;}
+.sa-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 18px;}
+.sa-stats div{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--panel);min-width:0;}
+.sa-stats div.sa-stat-alert{border-color:color-mix(in srgb,var(--alert) 45%,transparent);background:var(--alert-wash);}
+.sa-stats div.sa-stat-due{border-color:color-mix(in srgb,var(--caution) 45%,transparent);background:var(--caution-wash);}
+.sa-stats dt{font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
+.sa-stats dd{margin:4px 0 0;font-size:28px;font-weight:600;line-height:1.1;}
+.sa-stats small{display:block;font-size:12.5px;font-weight:400;color:var(--text-2);margin-top:4px;}
+.sa-projects{display:flex;flex-direction:column;gap:14px;}
+.sa-project{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 16px;break-inside:avoid-page;}
+.sa-project-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;justify-content:space-between;}
+.eng-page .sa-project h2{margin:0;font-size:17px;}
+.sa-project h2 .ref{color:var(--text-3);font-size:12px;margin-right:4px;}
+.sa-last{margin:6px 0 0;font-size:13px;color:var(--text-2);overflow-wrap:anywhere;}
+.sa-last.sa-due{color:var(--caution);font-weight:500;}
+.sa-none{margin:10px 0 0;font-size:13.5px;color:var(--text-2);}
+.sa-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;}
+.sa-action{padding:10px 0 10px 12px;border-left:3px solid var(--alert);}
+.sa-action.sa-cleared{border-left-color:var(--ok);}
+.sa-action p{margin:0;}
+.sa-tags{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:4px !important;}
+.sa-meta-inline{font:500 11.5px var(--mono);color:var(--text-3);}
+.eng-page .sa-action h4{margin:0 0 3px;font-size:15.5px;font-weight:600;line-height:1.35;}
+.sa-found{font-size:14.5px;line-height:1.45;overflow-wrap:anywhere;}
+.sa-detail{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:6px 0 4px;font-size:14px;}
+.sa-detail div{display:contents;}
+.sa-detail dt{font:500 10.5px/1.9 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);}
+.sa-detail dd{margin:0;overflow-wrap:anywhere;}
+.sa-meta{font-size:12.5px;color:var(--text-2);margin-top:3px !important;overflow-wrap:anywhere;}
+.sa-page a.ref{color:var(--brass);text-decoration:underline;text-underline-offset:3px;}
+.sa-put-right{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;}
+.sa-put-right summary{cursor:pointer;font-size:14px;font-weight:600;padding:6px 0;}
+.sa-never{margin-top:18px;padding:12px 16px;border:1px dashed var(--line-2);border-radius:10px;}
+.eng-page .sa-never h2{margin:0 0 6px;font-size:15px;display:flex;align-items:center;gap:8px;}
+.sa-count{font:500 11px var(--mono);color:var(--text-3);}
+.sa-never ul{margin:0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13.5px;color:var(--text-2);}
+.sa-never .ref{color:var(--text-3);font-size:11.5px;}
+.sa-empty p{margin:0;}
+.sa-foot{margin-top:20px;font-size:12.5px;color:var(--text-2);line-height:1.5;}
+@media (max-width:640px){
+  .sa-stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .sa-project{padding:12px;}
+  .sa-stats dd{font-size:24px;}
+}
+@media print{
+  @page{size:A4;margin:14mm 12mm;}
+  body{--panel:#fff;--panel-2:#fff;--ground:#fff;--text:#111;--text-2:#333;--text-3:#555;--line:#ccc;--line-2:#999;--brass:#5a4612;--alert:#8f2f19;}
+  html,body{background:#fff !important;color:#111;color-scheme:light;}
+  .appbar,.sa-noprint,.install-help{display:none !important;}
+  .eng-page.sa-page{padding:0;max-width:none;}
+  .sa-page a.ref{color:#111;text-decoration:none;}
+}
