@@ -34,6 +34,28 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a physical phone, or a real loss of signal (the check blocks one
   request in the browser instead).
 - Next: FE-3b (show pending uploads and server acknowledgement).
+## 2026-10-20 — FIX-1: in-app PDF on older browsers
+
+- The PDF viewer now loads pdf.js's legacy build (page and worker) instead of
+  the modern one. The modern pdfjs-dist 6.3 build calls
+  `Map.prototype.getOrInsertComputed`, which Chromium 141 and likely older
+  iPhones lack, so the viewer showed that error instead of the report.
+- Decision: the legacy build rather than pinning an older pdfjs-dist. It is
+  pdf.js's own supported route for older browsers, keeps current fixes, and
+  is larger (worker +4%, page script +13%, loaded only on the PDF page).
+  No hand-written polyfill to maintain.
+- `scripts/verify-pdf-navigation.mjs` now fails if the viewer shows an error
+  and prints it (before, it failed with only "PDF must render visible ink"), and matches
+  the report page by pathname because links now carry a return path.
+- Added FIX-1 to `docs/tasks.json` (found by the TOOL-1 thread).
+- Verified on Node 24: `npm run typecheck`, `npm test` (145 package, 57 web
+  tests), `npm run build`. `verify-pdf-navigation` fails on main with
+  "getOrInsertComputed is not a function" and passes with this change;
+  `verify-role-access` and `verify-engineer-layout` passed, using the
+  Playwright that TOOL-1 (PR #5) added.
+- Not verified: WebKit or a physical iPhone; no WebKit browser is installed
+  in the cloud session.
+- Next: the next task in `docs/tasks.json` order.
 
 ## 2026-10-20 — FE-4a: hide the review queue when review is off
 
