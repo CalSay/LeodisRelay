@@ -70,7 +70,7 @@ export function CheckEditor({ observation, index, total, hint, raises, actionPro
       {raises && <div className="field">
         <label htmlFor={`where-${id}`}>Where</label>
         <input id={`where-${id}`} type="text" value={observation.location} onChange={(e) => set('location', e.target.value)} placeholder="Room, riser or grid, e.g. L2 office 2.04" autoComplete="off" />
-        <Suggestions title="Recent places" fewer="Show fewer places" values={locations ?? []} current={observation.location} onPick={l => set('location', l)} />
+        <Suggestions compact title="Recent places" fewer="Show fewer places" values={locations ?? []} current={observation.location} onPick={l => set('location', l)} />
       </div>}
       <div className="field">
         <label htmlFor={`what-${id}`}>What’s wrong</label>

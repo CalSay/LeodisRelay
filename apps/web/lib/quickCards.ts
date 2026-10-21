@@ -25,7 +25,7 @@ export function withoutBlankCards(observations: Observation[]): Observation[] {
  * The places to offer on a card: the ones already on this report first, the
  * latest card's first, then the project's recent places, each once whatever
  * its case or spacing. A second card in the same room is one tap, even before
- * the first has been saved.
+ * the first has been saved. On an inspection the same goes for its checks.
  */
 export function placesToOffer(observations: Observation[], exceptId: string, recent: string[]): string[] {
   const seen = new Set<string>();
@@ -36,7 +36,9 @@ export function placesToOffer(observations: Observation[], exceptId: string, rec
     if (!tidy || seen.has(key)) return;
     seen.add(key); out.push(tidy);
   };
-  for (const o of [...observations].reverse()) if (o.id !== exceptId && !o.check) add(o.location);
+  // An inspection's checks offer the places its other checks named; a site update has no checks.
+  const onCheck = observations.some(o => o.id === exceptId && o.check);
+  for (const o of [...observations].reverse()) if (o.id !== exceptId && (onCheck || !o.check)) add(o.location);
   for (const place of recent) add(place);
   return out;
 }

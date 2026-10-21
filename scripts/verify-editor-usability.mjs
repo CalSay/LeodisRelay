@@ -106,7 +106,7 @@ try {
     await page.waitForURL(/\/reports\//);await page.locator('.eng-cardrow').first().waitFor();
     eq(await page.locator('.eng-steps button').nth(1).locator('small').evaluate(e=>e.firstChild.textContent.trim()),'2',`${label}: a new inspection has two things to do before sending, not 13`);
     if(phone){
-      await page.locator('.eng-cardrow').first().click();
+      // The first check opens by itself, on a phone too (2026-10-21).
       const open=page.locator('.eng-slot.open');
       await open.locator('.eng-answers').waitFor();
       eq(await visible('.eng-slot.open .eng-check-card > .head'),0,`${label}: the open check does not repeat its answer tag`);

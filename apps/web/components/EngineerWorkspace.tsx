@@ -356,7 +356,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
         {issues===null ? !error && <p role="status">Loading issues…</p>
           : show==='yours' ? <YourIssues projects={projects} issues={issues} projectId={projectId} returnTo={engineerReturn('issues')} onAll={()=>pickIssues('all','all')}/>
           : (scope==='all'?projects:[project]).map(p=>{const here=issues.filter(i=>i.projectId===p.id);const rows=(show==='open'?here.filter(isOpen):here).map(issue=>({issue}));return <section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList rows={rows} empty={show==='open'?'No open issues on this project.':'No issues have been raised on this project.'} returnTo={engineerReturn('issues')}/></section>;})}</>}
-      {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues')} returnTo={engineerReturn('issues')}/>}
+      {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues','open')} returnTo={engineerReturn('issues')}/>}
     </>}
   </main>;
 }
@@ -374,7 +374,7 @@ function YourIssues({projects,issues,projectId,returnTo,onAll}:{projects:Fixture
     .map(p => ({ p, ...yourIssues(issues.filter(i => i.projectId === p.id), principal) }))
     .filter(s => s.toDo.length || s.waiting);
   const waitingLine = (n:number) => `${n} put forward as fixed, waiting for the office to check`;
-  if (!sites.length) return <section className="eng-panel eng-yours-empty"><p className="eng-help">Nothing open for you on {projects.length === 1 ? 'this site' : `any of your ${projects.length} sites`}. Issues you raise, or that are for your trade, show here until they are fixed.</p><button type="button" onClick={onAll}>See all issues</button></section>;
+  if (!sites.length) return <section className="eng-panel eng-yours-empty"><p className="eng-help">Nothing open for you on {projects.length === 1 ? 'this site' : `any of your ${projects.length} sites`}. Issues you raise{principal.trade ? ', or that are for your trade,' : ''} show here until they are fixed.</p><button type="button" onClick={onAll}>See all issues</button></section>;
   return <>{sites.map(({p,toDo,waiting}) => <section className="eng-panel" key={p.id} aria-labelledby={`yours-${p.id}`}>
     <h2 id={`yours-${p.id}`}>{p.projectName}{' '}<span className="eng-yours-count">{toDo.length} to do</span></h2>
     {waiting > 0 && <p className="eng-help eng-yours-waiting">{waitingLine(waiting)}</p>}

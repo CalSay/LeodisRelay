@@ -108,7 +108,7 @@ try {
     const rows=page.locator('.eng-checkrow');
     eq(await rows.count(),N,`${label}: one row per check`);
     const card=()=>page.locator(wide?'#card-editor .eng-card:visible':'.eng-slot.open .eng-card');
-    if(!wide)await rows.nth(0).click();
+    // The first check opens by itself, on a phone too (2026-10-21).
     await card().getByRole('heading',{name:TOWER_CHECKLIST[0].question}).waitFor();checks++;
     await card().getByRole('button',{name:'Action needed'}).click();
     eq(await card().getByLabel('Where',{exact:true}).count(),0,`${label}: an action asks no Where: the tower is where`);
@@ -122,13 +122,12 @@ try {
     for(let i=1;i<N;i++){
       // Typing hides the bottom bar; leaving the field brings it back and moves the page, so leave it first.
       if(i===1){await card().getByLabel('Who is to do it',{exact:true}).blur();await sleep(300);}
-      await page.locator('.eng-next-check:visible').click();
+      {const next=page.locator('.eng-next-check:visible');if(await next.count())await next.click();}
       await card().getByRole('heading',{name:TOWER_CHECKLIST[i].question}).waitFor({timeout:5000}).catch(async e=>{await page.screenshot({path:join(process.env.DEBUG_DIR||root,'fail.png'),fullPage:true});console.log(await page.locator('.eng-slot').evaluateAll(b=>b.map(x=>x.className+' '+x.id)));throw e;});
       await card().getByRole('button',{name:TOWER_CHECKLIST[i].item==='stabilisers'?'Not applicable':'Satisfactory'}).click();
     }
     checks++;
-    await page.locator('.eng-review-link:visible').filter({hasText:'All answered'}).click();
-    await page.locator('#report-check').waitFor();
+    await page.locator('#report-check').waitFor(); // the last answer opens Check & sign by itself
     const does=await page.locator('.eng-does').innerText();
     ok(/1 action listed on the inspection/.test(does)&&/followed on Safety actions/.test(does)&&/Nothing is added to the issue register/.test(does),`${label}: it says what sending does: ${does}`);
     let saved;for(let k=0;k<40;k++){saved=getRecord('reports',id);if(saved.observations.filter(o=>o.check?.answer).length===N)break;await sleep(250);}

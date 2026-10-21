@@ -66,6 +66,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Open); site headings read "Tetley Hall3 to do" to a screen reader (space
   added); the heading mentioned a trade for engineers with none, and the empty
   state's "See all issues" showed one project (now every project).
+  A second review found two more, fixed: the defect receipt's "View project
+  issues" opened Yours (it now opens Open on the project, and
+  verify-engineer-layout checks it), and the empty Yours line mentioned a
+  trade for engineers with none.
 - Help: "What's new" line `issues-yours`.
 - Screenshots: `ui-review/end-of-week-pass/` in project files.
 - Not verified: real phones, screen readers, an engineer working across
@@ -75,6 +79,124 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   My week shows "Put forward as fixed" for an issue the office has since sent
   back or closed. Both are small My week wording jobs.
 
+## 2026-10-21 — Quicker inspections on a phone
+
+- Why: walked an engineer through a handover inspection on main 433691d at
+  390px (12 checks: three needing action, each with a recent place, words
+  and a photo; one not applicable; the rest satisfactory; draw a signature,
+  send). 43 taps and about 3,960px of scrolling. Ten of the taps did nothing
+  but move on: "Next check" after every satisfactory or not applicable
+  answer (8), "All answered · check & sign" (1), and opening check 1, since
+  on a phone no check was open on arrival (the wide editor already opened
+  it). The Recent places panel on an action check was the old boxed list,
+  one full-width row per place (about 260px with its Where box), where site
+  update cards have had compact chips since #107. Coordinator approved the
+  pick; decided without asking Cal, per his 07:02 ask (fewer taps, less on
+  screen). Not a `docs/tasks.json` task; no status changed.
+- Changed (report editor, `CheckEditor.tsx`, `reports/[id]/page.tsx`):
+  on a phone an inspection opens at its first check still to answer (once,
+  as the draft opens, like #114's empty card). A first answer of
+  Satisfactory or Not applicable opens the next check still to answer by
+  itself, with focus on it (its row on a phone, its body side by side);
+  after the last one Check & sign opens, focus on its heading, Back returns
+  to the checks. Action needed stays open to fill in, and changing an
+  answer already given never moves on. The folded row now says the answer
+  in words ("Satisfactory", "Action needed", "Not applicable", was "OK",
+  "Action", "N/A") so a mis-tap is easy to spot; one tap on the row opens
+  the check again. Recent places on an action check are compact chips
+  (`Suggestions compact`, as on site update cards), with the places this
+  inspection's other checks named first (`placesToOffer` now includes
+  checks when asked for a check). Recent companies unchanged. Safety and
+  tower inspections (behind the Safety, permits and deliveries switch) get
+  the same behaviour through the shared editor; nothing else of theirs
+  changed. Help "What's new" line added.
+- Review (fresh context) found two small gaps, both fixed: a check's change
+  now builds on the latest copy of the report (a photograph read in the
+  background could have undone an answer given meanwhile; this was already
+  so before), and a check moves on at most once, so a quick second tap
+  before the page redraws cannot leave Action needed folded.
+- Result: the same walk is 33 taps and about 3,220px of scrolling. The Where
+  box with its places is 125px.
+- Checks: typecheck, `npm test` (146 + 514, 1 new in `quickCards.test.ts`),
+  build. New `scripts/verify-quicker-inspections.mjs` (100, light and dark
+  at 390px, dark at 1440px): first check open on arrival, Satisfactory moves
+  on with focus, no "Next check" on a check still to answer, the row says
+  Satisfactory, one tap reopens, Action needed and a changed answer stay
+  put, compact chips (no count, shared rows, 48px), this inspection's place
+  first, a chip fills Where and is saved, the last answer opens Check &
+  sign with focus, all answers saved, every row says its answer, axe on an
+  open action check, no sideways scroll. Updated for the new flow (they
+  tapped "Next check" after every answer, or tapped check 1's row, which now
+  folds it): verify-handover-inspection, verify-first-fix-inspection,
+  verify-report-types, verify-tower-inspection, verify-editor-usability,
+  verify-editor-wide, verify-accessibility, verify-day-walkthrough; all
+  pass (verify-day-walkthrough, 114, after merging main with #120's fix to
+  its permit step; its first run after the merge stopped before the
+  inspections, the second passed). Also passed: verify-offline-inspection, verify-offline-sign,
+  verify-handover-offline, verify-typed-signature, verify-safety-actions,
+  verify-recent-places, verify-fewest-taps, verify-quicker-update,
+  verify-help. Screenshots before and after: project files
+  `ui-review/quicker-inspections/`.
+- Not verified: a real phone, a screen reader.
+
+## 2026-10-21 — Inbox report on its own screen on a phone
+
+- Why: a manager's phone walk on main (390px, light and dark; three
+  projects, three engineers, four weeks of reports, 214 in the Inbox) checked
+  who was on site today, what each engineer sent, what came back fixed, and
+  putting one item back. Most of it was fine: who was on site today is on the
+  overview's first screen (#118), fixed items open to Verify or Not finished
+  in one or two taps, a project opens with its four figures (#111). The
+  break was the Inbox: tapping a report only highlighted the row, because the
+  reader opened under the whole list, 41,819px down. Picked and built without
+  asking Cal (his autonomy message; 07:02 ask that the office gets what it
+  needs easily). Not a `docs/tasks.json` task; no status changed.
+- Change (`InboxView.tsx`, `workspace.css`, phone only, 700px and under):
+  with a report open the Inbox heading, filters and list step aside, so the
+  report is at the top of the screen. "‹ Inbox" (44px tall) in the reader's
+  heading, and the phone's own Back, return to the list at the place it was
+  scrolled to, with the same filter. How: picking a report notes the filter
+  and scroll position on the list's own history entry (`replaceState`), and
+  the list reads it back when that entry comes back. A popstate flag did not
+  work: the router re-renders before a second listener runs. The Inbox tab
+  pushes a fresh entry with no note, so it still opens on All at the top,
+  even with a report open. A report opened by its address has "‹ Inbox" go
+  to the list. Leaving the Inbox for another tab and coming back by Back
+  restores the list too; "‹ Inbox" after that opens it on All. Opening still
+  marks it seen (#88). "Drafts on site" with a report in the address keeps
+  its filters on screen. The button's spoken name is "Back to Inbox". The
+  desk keeps the list and reader side by side (1440 and 1280 checked).
+- Same screen: inspection tags ("Tower inspection · Podium P3, plant room")
+  were cut off at the right edge of phone rows; `.kind` tags now wrap in
+  phone cards like `.tag` does. An empty "Status" label (a report nobody has
+  opened) no longer shows on phone rows.
+- Checks: typecheck, `npm test` (146 + 513), build. New
+  `scripts/verify-inbox-phone.mjs` (58): report at the top, list hidden,
+  Seen by the office, "‹ Inbox" and Back return within 40px of the place,
+  "Not seen yet" kept (count one fewer), the Inbox tab pressed with a report
+  open goes to All at the top, Back after turning the phone sideways keeps
+  the filter, Drafts on site keeps its filters, no tag cut,
+  no sideways scroll, desk side by side at 1440 dark and 1280 light.
+  `verify-office-inbox` now expects the report on its own on a phone (was
+  "the reader is under the list"). Also run and passing: verify-office-inbox
+  (80), verify-seen-by-office, verify-office-phone, verify-help,
+  verify-office-sections, verify-office-links, verify-role-access,
+  verify-accessibility (584), verify-day-walkthrough, verify-first-time-use,
+  verify-office-actions, verify-office-desk, verify-office-registers,
+  verify-review-queue, verify-september-office. verify-day-walkthrough
+  failed once and passed on a rerun on the same build (no Inbox step failed).
+- A fresh-context review found no blocking bugs and five smaller points:
+  the Inbox tab and the phone turned sideways (both fixed as above), Drafts
+  on site (fixed), the "‹" read aloud (fixed), and a check that did not test
+  the tab (now it does).
+- Screenshots: project files `ui-review/manager-phone-pass/` (before: a
+  tapped report with nothing visible changing, a cut tag; after: the report
+  open, the list, the desk).
+- Not verified: real phones (iPhone or Android Back gesture), screen readers.
+- Next (proposal, not built): Inbox rows on a phone are up to 221px tall
+  (label column for each field), so 214 reports are about 44,000px; a
+  two-line phone row (who · project · time, then what was found) would
+  roughly halve that.
 ## 2026-10-21 — Tenth release check: main ready at 0d56773
 
 - Why: about ten merges since the ninth check (#110 to #118), several on the
