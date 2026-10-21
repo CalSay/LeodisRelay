@@ -6,6 +6,8 @@ import { listReports } from '@/lib/serverStore';
 import { refreshProjects, reportableProject } from '@/lib/projects';
 import { safetyActions } from '@/lib/safetyActions';
 import { londonDay } from '@/lib/weeklySummary';
+import { database } from '@/lib/storage';
+import type { InspectionDraft, ReportSummary } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,5 +22,13 @@ export async function GET(request: Request) {
   // `?project=` narrows it to one project, for the counts on a project's own screens (engineer home).
   const only = new URL(request.url).searchParams.get('project');
   const open = projects.filter(p => reportableProject(p) && canAccessProject(guard.principal, p.id) && (!only || p.id === only));
-  return jsonResponse(request, safetyActions(open, open.flatMap(p => listReports(p.id)), guard.principal, londonDay(new Date())));
+  // An engineer's own safety and tower inspections still in draft, so the page offers
+  // to carry on with one rather than start a second, as the site home does. Read with
+  // the rest on every load, so coming Back from the editor never shows an old list.
+  const drafts: InspectionDraft[] = guard.principal.role !== 'Engineer' ? [] : database()
+    .prepare("SELECT summary FROM records WHERE kind='reports' AND state='draft' AND json_extract(data,'$.authorId')=? AND json_extract(data,'$.reportType') IN ('safety-inspection','tower-inspection') ORDER BY updated DESC,id DESC")
+    .all(guard.principal.id).map(row => JSON.parse(row.summary as string) as ReportSummary)
+    .filter(r => open.some(p => p.id === r.projectId))
+    .map(r => ({ id: r.id, projectId: r.projectId, reportType: r.reportType as InspectionDraft['reportType'], ...(r.inspected ? { inspected: r.inspected } : {}), ...(r.corrects ? { correction: true as const } : {}) }));
+  return jsonResponse(request, { ...safetyActions(open, open.flatMap(p => listReports(p.id)), guard.principal, londonDay(new Date())), drafts });
 }

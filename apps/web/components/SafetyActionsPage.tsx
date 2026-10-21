@@ -6,6 +6,9 @@ import { useRouter } from 'next/navigation';
 import { usePrincipal } from './PrincipalContext';
 import { useProjects } from './ProjectContext';
 import { canManage } from '@/lib/auth/access';
+import { createReport } from '@/lib/api';
+import { inspectedKey } from '@/lib/reportTypes';
+import type { InspectionDraft } from '@/lib/types';
 import { dayLabel } from '@/lib/myWeek';
 import { CLEARED_DAYS, INSPECTION_DUE_DAYS, TOWER_DUE_DAYS, type SafetyAction, type SafetyActions, type SafetyProject } from '@/lib/safetyActions';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
@@ -14,7 +17,9 @@ import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation'
  * Safety actions: what the weekly safety inspections and tower inspections
  * found needing action, on every project or one, kept open until a later
  * inspection finds it put right, and which towers are due their next
- * inspection. It reads sent inspections and changes nothing.
+ * inspection. It reads sent inspections and changes nothing, but an engineer
+ * can start the inspection that is due from here (or carry on with the one
+ * already in draft), and comes back here from it.
  */
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
@@ -26,10 +31,16 @@ export function SafetyActionsPage({ initialProject, returnTo }: { initialProject
   const projects = useProjects();
   const router = useRouter();
   const [projectId, setProjectId] = useState(projects.some(p => p.id === initialProject) ? initialProject : '');
-  const [data, setData] = useState<SafetyActions | null>(null);
+  const [data, setData] = useState<(SafetyActions & { drafts?: InspectionDraft[] }) | null>(null);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
+  // The start button pressed, while its inspection is being made, and why it could not be.
+  const [starting, setStarting] = useState('');
+  const [startError, setStartError] = useState<{ key: string; message: string } | null>(null);
   const manager = principal ? canManage(principal) : false;
+  // Starting an inspection is site work: the office's page stays read-only.
+  const canStart = principal?.role === 'Engineer';
+  const drafts = data?.drafts ?? [];
   const back = safeViewReturn(returnTo, manager ? '/office' : `/engineer${projectId ? `?project=${encodeURIComponent(projectId)}` : ''}`);
 
   useEffect(() => {
@@ -73,6 +84,55 @@ export function SafetyActionsPage({ initialProject, returnTo }: { initialProject
     towers: shown.reduce((n, p) => n + p.towers.length, 0),
     towersDue: shown.reduce((n, p) => n + p.towers.filter(t => t.due).length, 0),
   };
+  const draftOf = (projectId: string, type: InspectionDraft['reportType']) => drafts.find(d => d.projectId === projectId && d.reportType === type);
+  const editor = (id: string) => withViewReturn(`/reports/${id}`, here);
+  async function start(key: string, projectId: string, type: InspectionDraft['reportType'], tower?: string) {
+    if (starting) return;
+    setStarting(key); setStartError(null);
+    try { router.push(editor((await createReport(projectId, principal?.name ?? '', type, tower)).id)); }
+    catch (e) {
+      setStartError({ key, message: e instanceof TypeError ? 'No connection. Start it from the Site page, which works with no signal.' : e instanceof Error ? e.message : 'The inspection could not be started. Try again.' });
+      setStarting('');
+    }
+  }
+  const problem = (key: string) => startError?.key === key && <p className="sa-start-problem sa-noprint" role="alert">{startError.message}</p>;
+
+  /**
+   * What an engineer can do next on a project: the weekly safety inspection,
+   * and a tower inspection already in draft. A tower's own Inspect button is
+   * on its row. One of each is in draft at a time, as on the site home.
+   */
+  const startRow = (p: SafetyProject) => {
+    if (!canStart) return null;
+    const safety = draftOf(p.projectId, 'safety-inspection');
+    const tower = draftOf(p.projectId, 'tower-inspection');
+    const key = `safety:${p.projectId}`;
+    const urgent = p.due || !p.inspections;
+    return <div key={p.projectId} className="sa-start sa-noprint">
+      <div className="sa-start-buttons">
+        {safety
+          ? <Link className="sa-start-button btn-primary" href={editor(safety.id)} aria-label={`${safety.correction ? 'Continue the safety inspection correction' : 'Continue the safety inspection'} on ${p.projectNumber} ${p.projectName}`}>{safety.correction ? 'Continue the safety inspection correction' : 'Continue the safety inspection'}</Link>
+          : <button type="button" className={`sa-start-button${urgent ? ' btn-primary' : ''}`} onClick={() => void start(key, p.projectId, 'safety-inspection')} disabled={Boolean(starting)}
+            aria-label={starting === key ? undefined : `Do a safety inspection on ${p.projectNumber} ${p.projectName}`}>
+            {starting === key ? 'Starting…' : 'Do a safety inspection'}
+          </button>}
+        {tower && <Link className="sa-start-button" href={editor(tower.id)} aria-label={`Continue the tower inspection${tower.inspected ? ` of ${tower.inspected}` : ''} on ${p.projectNumber} ${p.projectName}`}>{`Continue the tower inspection${tower.inspected ? ` of ${tower.inspected}` : ''}`}</Link>}
+      </div>
+      {problem(key)}
+    </div>;
+  };
+  const towerStart = (p: SafetyProject, t: SafetyProject['towers'][number]) => {
+    // A tower inspection in draft is carried on with from the row above; start the next once it is sent.
+    if (!canStart || draftOf(p.projectId, 'tower-inspection')) return null;
+    const key = `tower:${p.projectId}:${inspectedKey(t.name)}`;
+    return <>
+      <button type="button" className={`sa-tower-start sa-noprint${t.due ? ' btn-primary' : ''}`} onClick={() => void start(key, p.projectId, 'tower-inspection', t.name)} disabled={Boolean(starting)}
+        aria-label={starting === key ? `Starting the inspection of ${t.name}` : `Inspect ${t.name}`}>
+        {starting === key ? 'Starting…' : 'Inspect'}
+      </button>
+      {problem(key)}
+    </>;
+  };
   const report = (r: { id: string; reference: string }) => <Link className="ref" href={withViewReturn(`/reports/${r.id}`, here)}>{r.reference}</Link>;
 
   const openAction = (a: SafetyAction) => <li key={a.key} className="sa-action">
@@ -104,10 +164,12 @@ export function SafetyActionsPage({ initialProject, returnTo }: { initialProject
     </div>
     {p.last ? <p className={`sa-last${p.due ? ' sa-due' : ''}`}>Last safety inspection {report(p.last)} on {dayLabel(p.last.visitDate)} by {p.last.author}, {ago(p.sinceLast ?? 0)}{p.due ? ' · another is due' : ''} · {plural(p.inspections, 'inspection')} sent</p>
       : <p className="sa-last">No weekly safety inspection sent yet.</p>}
+    {startRow(p)}
     {p.towers.length > 0 && <div className="sa-towers">
       <h3 className="lbl">Towers and podiums</h3>
       <ul>{p.towers.map(t => <li key={t.name} className={t.due ? 'sa-due' : ''}>
-        <b>{t.name}</b> <span>last inspected {report(t.last)} on {dayLabel(t.last.visitDate)} by {t.last.author}, {ago(t.sinceLast)}{t.due ? ' · another is due' : ''}{t.open ? ` · ${plural(t.open, 'action')} open` : ''}</span>
+        <div className="sa-tower-line"><p><b>{t.name}</b> <span>last inspected {report(t.last)} on {dayLabel(t.last.visitDate)} by {t.last.author}, {ago(t.sinceLast)}{t.due ? ' · another is due' : ''}{t.open ? ` · ${plural(t.open, 'action')} open` : ''}</span></p>
+        {towerStart(p, t)}</div>
       </li>)}</ul>
     </div>}
     {p.open.length > 0
@@ -146,10 +208,10 @@ export function SafetyActionsPage({ initialProject, returnTo }: { initialProject
         </dl>
         {inspected.length > 0 && <div className="sa-projects">{inspected.map(projectBlock)}</div>}
         {never.length > 0 && (projectId
-          ? <div className="eng-panel sa-empty"><p>No safety inspection has been sent from this project yet. An engineer starts one from <b>Do a safety inspection</b> on the Site page.</p></div>
+          ? <div className="eng-panel sa-empty"><p>{canStart ? 'No safety inspection has been sent from this project yet.' : <>No safety inspection has been sent from this project yet. An engineer starts one from <b>Do a safety inspection</b> on the Site page or here.</>}</p>{never.map(startRow)}</div>
           : <section className="sa-never" aria-labelledby="sa-never-title">
             <h2 id="sa-never-title">No safety inspection sent yet <span className="sa-count">{never.length}</span></h2>
-            <ul>{never.map(p => <li key={p.projectId}><span className="ref">{p.projectNumber}</span> {p.projectName}</li>)}</ul>
+            <ul className={canStart ? 'sa-never-start' : undefined}>{never.map(p => <li key={p.projectId}><span><span className="ref">{p.projectNumber}</span> {p.projectName}</span>{startRow(p)}</li>)}</ul>
           </section>)}
         {!shown.length && <div className="eng-panel sa-empty"><p>{projectId ? 'This project is not active or in defects liability, so it has no safety inspections to follow.' : 'No active or defects liability projects are open to you.'}</p></div>}
         <p className="sa-foot">Made from the safety and tower inspections sent in RELAY, in visit order. A tower not inspected for four weeks is taken to be down and is no longer listed, though its open actions stay. A corrected inspection replaces the one it corrects. Nothing here is typed in or changed: to clear an action, the next inspection answers its check.</p>
