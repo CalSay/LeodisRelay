@@ -30,6 +30,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
     permits lead with the permit number; "Day" is now "Given on".
   - Days were the UTC day of the moment (an issue raised at 00:30 BST showed
     the day before); now the UK day, as on screen. Times stay UK time.
+    Not reached: a variation's Instructed on and an issue's target date are
+    cut to their first 10 characters when read from SharePoint, so if a live
+    list stores a summer day as 23:00 UTC the day before, both would be a day
+    early on screen and in the file. Untested (no live tenant); worth a look
+    once RELAY reads the live lists.
   - The issue file's "Responsible company" is now "Owner", the heading on the
     register it comes from. Variations: "Instructed on" before "Instructed by".
   - Download error messages left to the error-messages thread.
@@ -43,7 +48,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   … · when: why" on permits and talks); left alone. Card-style project pages
   (permits, talks, safety actions, diary) stay cards: they are read on a
   phone on site, not a desk register.
-- Checks: `npm run typecheck`, `npm test` (146 + 405). New
+- Checks: `npm run typecheck`, `npm test` (146 + 402). New
   `scripts/verify-register-downloads.mjs` (100 checks): downloads issues,
   variations, permits and talks through their pages as the office at 1440px
   dark and 390px light and as an engineer at 390px, and checks the file name,
