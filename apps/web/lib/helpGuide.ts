@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'sent-report-two-steps', added: '2026-10-21', audience: 'site', title: 'A sent report, at a glance',
+    text: 'A report you have sent now shows two things: that RELAY received it, and whether the office has seen it. The PDF and delivery steps, which matter more to the office, are folded under "PDF and delivery"; tap it to see them. If either one goes wrong it shows straight away. The office still sees every step. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'office-simpler-day', added: '2026-10-21', audience: 'office', title: 'A simpler office',
     text: 'Report lists in the office no longer say "PM not notified" on every row: there is no delivery tag unless there is a problem with it, and each report still shows every step when you open it. A project\'s sheet no longer repeats the Needs action list and the reports that sit in the column beside it. The Team tab is in plain words (who can sign in, their role and whether they are signed in now), the top bar\'s "Companies" is now "Switch company", and Admin no longer shows a "Planned" button that did nothing.',
     link: { label: 'Open the office', href: '/office' } },

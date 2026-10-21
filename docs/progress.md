@@ -4,6 +4,39 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — A sent report, at a glance (engineer)
+
+- Why: the first "bigger idea" in PR #90. Cal (2026-10-21 07:02) wants
+  RELAY easy for engineers. A sent report showed an engineer five steps
+  (received, PDF, delivery, seen, plus review where asked) and a note that
+  repeated "Received by RELAY". The PDF and delivery steps matter to the
+  office, not the engineer. Not a `docs/tasks.json` task, so no status
+  changed there.
+- Changed: on the engineer's report page (`/reports/[id]`, anyone who is not
+  a Manager or Admin) a sent report shows Received, Review (only where the
+  project asks for it) and Seen. PDF and Delivery fold under "PDF and
+  delivery", whose line says how each stands ("PDF ready · Delivery not
+  emailed"). A PDF or delivery step that went wrong stays out of the fold,
+  so a problem is never hidden. The note above no longer repeats "Received
+  by RELAY" (the Received step shows it with its time). The office reader
+  and Managers and Admins on the report page still see every step open, so
+  the events stay distinct. Help "What's new": "A sent report, at a glance".
+- Checks: `npm run typecheck`, `npm test` (146 + 441), `npm run build`.
+  Browser checks passing: submission-stages (145, adds fold checks for every
+  case, alerts kept open, office unchanged), seen-by-office, engineer-day,
+  engineer-layout, role-access, signature-reload, search, help,
+  accessibility (584), day-walkthrough, first-time-use, office-actions,
+  office-phone, office-desk, error-messages, unfinished-reports,
+  sent-elsewhere. Scripts updated: engineer pages now have two `ol.stages`
+  lists, so waits use the first; engineer-layout waits for the Received step;
+  engineer-day opens the fold before reading the delivery words.
+  verify-offline-capture fails at line 151 (new offline draft under
+  Unfinished reports) on main too, before this change: #90 made today's
+  draft open from the big button rather than that list. Not fixed here.
+  Screenshots before and after: project files
+  `ui-review/sent-report-two-steps/`.
+- Not verified: no real phone, no live tenant, no real engineer.
+
 ## 2026-10-21 — Manager's day, simplified
 
 - Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information
