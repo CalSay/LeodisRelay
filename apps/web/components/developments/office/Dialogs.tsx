@@ -7,12 +7,14 @@ import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, expectedCost, fmt
 import { Modal, formValues, toast } from '@/components/workspace/hooks';
 import { InstallRelay } from '@/components/InstallRelay';
 import { Btn, BtnQ } from './bits';
+import { CheckFix } from './CheckFix';
 import { today } from './model';
 
 export type Dialog =
   | { kind: 'assign'; issue: Issue; owners: string[] }
-  | { kind: 'verify'; issue: Issue }
-  | { kind: 'reopen'; issue: Issue }
+  /** `list` is the list the button was pressed on, so checking goes on through its fixes in its order. */
+  | { kind: 'verify'; issue: Issue; list?: () => Promise<Issue[]> }
+  | { kind: 'reopen'; issue: Issue; list?: () => Promise<Issue[]> }
   | { kind: 'confirm'; issue: Issue }
   | { kind: 'withdraw'; issue: Issue }
   | { kind: 'triage'; issue: Issue }
@@ -31,7 +33,7 @@ export type Dialog =
  * (confirm, withdraw, send back, decline, reopen); the server refuses them
  * otherwise, so the dialog asks up front rather than bouncing an error back.
  */
-export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done: () => void }) {
+export function Dialogs({ d, close, done, me }: { d: Dialog; close: () => void; done: () => void; me: { id: string; name: string } }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   // One identity per opened dialog: pressing the button twice, or retrying after a dropped connection, never raises a second variation.
@@ -66,6 +68,10 @@ export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done
         <p className="rowsub" style={{ margin: 0 }}>Owners are names or companies, not accounts. The engineer who reported it is not changed.</p>
       </>, <Foot label={i.owner ? 'Reassign' : 'Assign'} />)}
     </form></Modal>;
+  }
+  // A fix waiting to be checked: the defect and the fix side by side, then the next one.
+  if ((d.kind === 'verify' || d.kind === 'reopen') && d.issue.work === 'awaiting_verification') {
+    return <CheckFix start={d.issue} list={d.list} me={me} startWith={d.kind} close={close} done={done} />;
   }
   if (d.kind === 'verify' || d.kind === 'reopen') {
     const i = d.issue; const verify = d.kind === 'verify';

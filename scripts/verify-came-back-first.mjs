@@ -8,7 +8,7 @@
 // Checks, light and dark at 390px and dark at 1440px: the section comes before
 // Inspections on the page and for a screen reader; the issue the office answered is
 // its first row, whole on the first screen above the bottom bar on a phone, with
-// what the office wrote (at 1440px the office reopens it without a word, and it
+// what the office wrote (at 1440px an older record sent back without a word, and it
 // still comes first); then the rest newest first; tapping it opens the issue
 // ready to update; no sideways scroll, 48px rows, no page errors.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
@@ -28,7 +28,7 @@ const root=mkdtempSync(join(tmpdir(),'relay-came-back-first-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord}=require('../apps/web/.test-build/lib/storage.js');
 const {createReport,saveDraft,submitReport}=require('../apps/web/.test-build/lib/serverStore.js');
-const {listIssues,applyCommand}=require('../apps/web/.test-build/lib/issueStore.js');
+const {listIssues,applyCommand,getIssue}=require('../apps/web/.test-build/lib/issueStore.js');
 const {runOneJob}=require('../apps/web/.test-build/lib/reportWorker.js');
 const manager={id:'entra:cf-manager',oid:'cf-manager',name:'Olive Office',email:'olive@example.test',role:'Manager'};
 const P='proj-011lme';
@@ -55,8 +55,10 @@ const seed=async n=>{
   await send(engineer,[ob('update','Level 2 corridor','Containment to grid C'),ob('defect','Level 2 riser',riser,{actionNeeded:'Fire stop the riser',owner:'Leodis',affectedTrade:'Electrical',photos:photo})]);
   const issue=listIssues(P).find(i=>i.description===riser&&i.reportedById===engineer.id);
   assert.ok(applyCommand(issue.id,{kind:'submit_closure',actor:engineer.name,actorId:engineer.id,note:'Done'}).ok);
-  // On the desktop run the office taps "Not finished" without a word: still sent back, still first.
-  assert.ok(applyCommand(issue.id,{kind:'reopen',actor:manager.name,actorId:manager.id,note:n==='dark-1440'?'':QUESTION}).ok);
+  // On the desktop run the issue was sent back without a word, as RELAY allowed before a reason was needed
+  // (21 Oct 2026): an older record like that is still sent back, still first.
+  assert.ok(applyCommand(issue.id,{kind:'reopen',actor:manager.name,actorId:manager.id,note:QUESTION}).ok);
+  if(n==='dark-1440'){const back=getIssue(issue.id);back.events.at(-1).note='';putRecord('issues',back);}
   await new Promise(r=>setTimeout(r,20));
   await send(engineer,[ob('update','Flat 3.02','Second fix sockets done'),ob('defect','Flat 2.04','Socket faceplate cracked',{actionNeeded:'Replace',owner:'Leodis',affectedTrade:'Electrical',photos:photo})]);
   return {engineer,riser,issueId:issue.id};

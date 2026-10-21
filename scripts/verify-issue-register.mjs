@@ -118,8 +118,10 @@ try {
   const page=await desk.newPage();page.on('pageerror',e=>errors.push(e.message));
   const waiting=want(i=>i.work==='awaiting_verification');
   await page.goto(`${base}/office#/issues/show/verify`);await showing(page,waiting);
+  // Verify opens "Check this fix" (2026-10-21), which goes on to the next fix; Stop leaves it there.
   await page.locator('table.reg tbody tr').first().getByRole('button',{name:'Verify'}).click();
-  await page.locator('.ws-dialog button[type=submit]').click();
+  await page.locator('dialog.cf-dialog[open]').getByRole('button',{name:'Verify and close'}).click();
+  if(waiting>1){await page.waitForFunction(()=>/2 of /.test(document.querySelector('dialog.cf-dialog[open] h2')?.textContent??''));await page.locator('dialog.cf-dialog[open]').getByRole('button',{name:'Stop',exact:true}).click();}
   await showing(page,waiting-1);checks++;
   await desk.close();
   assert.deepEqual(errors,[],'page errors');checks++;

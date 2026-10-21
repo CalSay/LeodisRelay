@@ -278,6 +278,11 @@ export async function issueRegister(query: Partial<IssueQuery>): Promise<IssuePa
   return parse<IssuePage>(await request(`/api/issues?${params}`, { cache: 'no-store' }));
 }
 
+/** One issue with its whole history, photographs included; the office desk's own copy carries only the latest event. */
+export async function getIssue(issueId: string): Promise<Issue> {
+  return parse<Issue>(await request(`/api/issues/${encodeURIComponent(issueId)}`, { cache: 'no-store' }));
+}
+
 /** One issue command, attributed by the server to whoever is signed in. */
 export async function issueCommand(issueId: string, body: { kind: string; note: string; owner?: string; targetDate?: string; expectedEtag?: string }): Promise<Issue> {
   return parse<Issue>(await request(`/api/issues/${issueId}`, {

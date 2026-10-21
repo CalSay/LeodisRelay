@@ -4,6 +4,79 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Check fixes one after another
+
+- Why: a walk of an office manager checking 25 fixes put forward by three
+  engineers (1440px, local example data on Tetley Hall and Kirkstall Gate; notes
+  and screenshots in project files `ui-review/checking-fixes/`) found that Verify
+  and "Not finished" on the overview, the register and "Verify the oldest" opened
+  a dialog showing only the description and who put it forward: no photo of the
+  defect, no photo or note sent with the fix. To see them the office opened the
+  issue and scrolled its history (the fix at the top, the defect at the bottom),
+  and after verifying the screen stayed on the closed issue: about three clicks
+  and a scroll per fix. "Not finished" also went through with no reason, so the
+  engineer saw the issue back as plain "In progress" with no word why. The
+  coordinator approved this as the walk's one pick. Not a `docs/tasks.json` task;
+  no status changed.
+- Changed: a fix waiting to be checked opens "Check this fix"
+  (`components/developments/office/CheckFix.tsx`): the defect's photos as raised
+  beside the photos sent with the latest fix (`lib/checkFix.ts`), the engineer's
+  note, who put it forward and when, the company and target. Photos open full size
+  in a new tab (the issue page has no photo viewer to share). "No photo was taken
+  of the defect", "No photo was sent with the fix" and "No note was sent with the
+  fix" are said plainly, and such a fix can still be verified. The office desk's
+  copy of an issue carries no photos (#62), so each fix is loaded whole, and the
+  next one ahead of time. After Verify or Not finished the next fix on the same
+  list opens ("4 of 25"): the overview's Fixed, to check panel and the Attention
+  list in their order; a register row through every page of the register's
+  current filters and order; "Verify the oldest" oldest first, by the register's
+  own rule. Skip changes nothing; Stop, Esc or the end of the list closes it and
+  says what was done ("1 verified, 1 sent back."). Each decision refreshes the
+  office records, so every figure behind comes from #128's shared helper; the
+  dialog has no figures of its own. A fix someone else checked meanwhile says so
+  and can only be skipped. No form, so Enter never verifies; focus goes to the
+  fix's heading, or to the note when opened with Not finished. The person who put
+  a fix forward sees no Verify button, as before. The issue sheet's own buttons
+  open the same dialog for that one issue.
+- Decided: a reason is needed to send a fix back, in the dialog and on the server
+  (`lib/issueStore.ts`), with the same words, so an older app open on a phone gets
+  "Say what is left to do, so the engineer knows why it came back." rather than a
+  silent send-back. Reopening a closed issue is unchanged. Records already sent
+  back without a word are left as they are and still show as sent back;
+  `verify-came-back-first` now makes such a record directly instead of through the
+  refused command. Help: a "What's new" line and a step under "Closing an issue".
+- Checks: typecheck, `npm test` (146 + 537; new `checkFix.test.ts`), build. New
+  `scripts/verify-check-fixes.mjs` (70 checks): 25 fixes; from the overview the
+  dialog follows the panel's order, Enter changes nothing, Verify moves on, an
+  empty Not finished is refused in plain words and nothing changes, then goes with
+  a reason, Skip changes nothing, Esc stops and the panel, Issues tab, register
+  chips and project list all agree; the server refuses an empty send-back; "Verify
+  the oldest" goes oldest first; a register row filtered to one company goes
+  through its 3 fixes in the register's order and closes by itself; no photo and
+  no note said plainly; photos load full size; side by side at 1440 and 1024,
+  stacked at 390, light and dark, axe on the dialog, 44px buttons on a phone, no
+  page errors. Screenshots `ui-review/checking-fixes/after-*`. Also passed:
+  issue-register (its dialog step now presses "Verify and close" in the new
+  dialog, then Stop), office-registers, simpler-issue-page, office-actions,
+  issues-yours, my-week-counts, role-access, came-back-first, help, office-desk,
+  office-phone, office-words, issue-figures, office-landing, office-links,
+  seen-by-office. A fresh-context review found six things, all fixed: deciding
+  before the register's list had loaded closed the dialog (deciding now waits
+  for the list), a decision refused because the issue changed kept the old copy
+  (it is read again), loads were repeated, Esc while recording lost the summary,
+  a list could hold one issue twice, and a linked photo's caption was not read
+  out.
+- Found, not fixed: on the verify script's data the office top bar is 156px wider
+  than a 1024px window (the page scrolls sideways before the dialog opens; the
+  walk's data at 1024 did not); the issue sheet shows its target as "2026-10-13"
+  where everything else says "13 Oct"; "waiting N days" counts from an issue's
+  last event, not from when it was put forward; the engineer's "N put forward as
+  fixed, waiting for the office" line cannot be opened; "Came back from the
+  office" also lists fixes still waiting, because the office assigned them earlier.
+- Not verified: a live tenant, real SharePoint issue lists, a real phone, a
+  screen reader.
+- Next: the twelfth release check after this and the no-signal site update PR.
+
 ## 2026-10-21 — A month on one page
 
 - Why: the monthly progress walk (project files

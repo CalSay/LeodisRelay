@@ -7,7 +7,7 @@ import { Btn, BtnQ, ConfirmTag, SortHead, WorkTag } from './bits';
 import { daysLate, fmtDay, isActive, isOverdue, shortRef } from './model';
 import type { SortDirection } from '@/lib/tableSorting';
 import { issueRegister } from '@/lib/api';
-import { VERIFICATION, VERIFICATION_LABEL, issueQueryParams, type IssuePage, type IssueSort, type IssueView, type Verification } from '@/lib/issueQuery';
+import { MAX_PAGE_SIZE, VERIFICATION, VERIFICATION_LABEL, issueQueryParams, type IssuePage, type IssueSort, type IssueView, type Verification } from '@/lib/issueQuery';
 import { DownloadLink } from '@/components/DownloadLink';
 
 type Filter = Exclude<IssueView, 'all'> | 'all';
@@ -90,6 +90,17 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
   // Within this search, so the button never opens an issue the register is not showing.
   const oldestToVerify = result.oldestToVerify;
+  // Checking goes on through this search's fixes, every page of it, in the order on screen.
+  const searched = async (view: Filter): Promise<Issue[]> => {
+    const out: Issue[] = [];
+    for (let n = 1; ; n++) {
+      const r = await issueRegister({ view, projectId: project, trade, location, company, verification: verification || undefined, sort: sort ?? undefined, page: n, pageSize: MAX_PAGE_SIZE });
+      out.push(...r.issues); if (n >= r.pages) return out;
+    }
+  };
+  const fixesHere = () => searched(filter);
+  // "Verify the oldest" goes on oldest first, by the register's own rule for which is oldest, leaving out the person's own closures.
+  const oldestFirst = async () => (await searched('verify')).filter(i => !closureMine(i)).sort((a, b) => a.raisedAt.localeCompare(b.raisedAt) || a.reference.localeCompare(b.reference));
   const narrowed = !!(project || trade || location || company || verification);
   const first = (result.page - 1) * result.pageSize + 1, last = first + shown.length - 1;
   // The file holds this search, every page of it, in the order on screen.
@@ -97,7 +108,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const clear = () => { setProject(''); setTrade(''); setLocationText(''); setCompanyText(''); setVerification(''); };
   return <div className="view">
     <div className="pagehead"><div><h2>Issues</h2><p>{counts.open} open{narrowed ? ' in this search' : ` across ${ctx.projects.length} projects`} · {counts.overdue ? <span className="late">{counts.overdue} overdue</span> : 'none overdue'} · {counts.verify} fixed, to check · {counts.unassigned} unassigned · {reviewOn && <>{counts.notReviewed} not reviewed · </>}{counts.disputed} disputed</p></div>
-      <div className="actions"><a className="btn btn-q" href={`/companies?${new URLSearchParams({ returnTo: '/office#/issues' })}`}>Issues by company</a><a className="btn btn-q" href={snagHref}>Snag list</a>{result.total > 0 && <DownloadLink className="btn btn-q" href={downloadHref} what="spreadsheet" aria-label={`Download ${result.total} ${result.total === 1 ? 'issue' : 'issues'} as a spreadsheet (CSV)`}>Download spreadsheet</DownloadLink>}{oldestToVerify && <Btn onClick={() => ctx.setDialog({ kind: 'verify', issue: oldestToVerify })}>Verify the oldest</Btn>}</div></div>
+      <div className="actions"><a className="btn btn-q" href={`/companies?${new URLSearchParams({ returnTo: '/office#/issues' })}`}>Issues by company</a><a className="btn btn-q" href={snagHref}>Snag list</a>{result.total > 0 && <DownloadLink className="btn btn-q" href={downloadHref} what="spreadsheet" aria-label={`Download ${result.total} ${result.total === 1 ? 'issue' : 'issues'} as a spreadsheet (CSV)`}>Download spreadsheet</DownloadLink>}{oldestToVerify && <Btn onClick={() => ctx.setDialog({ kind: 'verify', issue: oldestToVerify, list: oldestFirst })}>Verify the oldest</Btn>}</div></div>
     <div className="filters">
       {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
       <span className="spacer" />
@@ -128,8 +139,8 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
         <td className="due" data-label="Target">{i.targetDate ? <><b className={late ? 'late' : ''}>{fmtDay(i.targetDate)}</b>{late && ` · ${daysLate(i.targetDate, day)}d late`}</> : <span className="fine">—</span>}</td>
         <td data-label="Work"><WorkTag i={i} day={day} /></td><td data-label="Confirmation"><ConfirmTag i={i} reviewOn={!!ctx.statOf(i.projectId)?.reviewOn} /></td>
         <td className="c-actions" onClick={e => e.stopPropagation()}><div className="actions">
-          {active && i.work === 'awaiting_verification' && !closureMine(i) && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i })}>Verify</Btn>}
-          {active && i.work === 'awaiting_verification' && <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'reopen', issue: i })}>Not finished</BtnQ>}
+          {active && i.work === 'awaiting_verification' && !closureMine(i) && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: fixesHere })}>Verify</Btn>}
+          {active && i.work === 'awaiting_verification' && <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'reopen', issue: i, list: fixesHere })}>Not finished</BtnQ>}
           {active && i.work !== 'awaiting_verification' && (i.owner.trim() ? <BtnQ className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Reassign</BtnQ> : <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)}
           {active && i.confirmation === 'disputed' && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'triage', issue: i })}>Triage</Btn>}
           {active && i.confirmation === 'provisional' && <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'confirm', issue: i })}>Confirm</BtnQ>}
