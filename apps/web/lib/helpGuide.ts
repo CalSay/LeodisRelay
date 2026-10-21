@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'inspection-pdf-found', added: '2026-10-21', audience: 'all', title: 'Inspection PDFs say what was wrong',
+    text: 'In an inspection PDF, each row under "Actions arising" now says what was found ("Found: open edge with only a strap across it") above the action, so a client or contractor reading the first page knows what to put right without turning to the notes. Long notes are shortened there and point to the full notes further on. PDFs already made stay as they were.' },
   { id: 'editor-wide-screens', added: '2026-10-21', audience: 'all', title: 'Reports and inspections on a tablet or computer',
     text: 'On a tablet or a computer, the last buttons on a report or inspection are no longer hidden behind the bar at the bottom. The bar lines up with the page, and the check step puts signing beside what is being sent, with a larger box to sign in. A long list of checks scrolls in its own column and keeps the open check in sight. On every screen, a defect linked to an issue already raised takes that issue\'s trade, the check step says how many issues are new and how many add to ones already raised, and while changes are still being saved it says "being saved" rather than "not yet on the server".' },
   { id: 'assign-on-issue', added: '2026-10-21', audience: 'office', title: 'Assign from the issue itself',
