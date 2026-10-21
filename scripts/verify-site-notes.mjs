@@ -170,7 +170,8 @@ try {
   {
     const {context,page}=await open('Engineer','light',390);
     await page.goto(`${base}/help?for=site`);
-    // Help draws the latest few entries first and the rest once it knows this person has not seen them, so wait.
+    // Help draws the latest few entries first; older ones are under Show all.
+    const more=page.getByRole('button',{name:/^Show all \d+$/});await more.waitFor();await more.click();
     check(await page.getByRole('heading',{name:'Notes for the next visit',exact:true}).waitFor({timeout:5000}).then(()=>true,()=>false),'help: What\'s new lists Notes for the next visit');
     await context.close();
   }

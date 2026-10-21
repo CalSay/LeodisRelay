@@ -130,6 +130,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   left out a delivery sorted this week that arrived last week (now in, like
   permits); a permit recorded and closed counted twice in My week's figure;
   the Help line said "on a phone" though the register shows on a desktop too.
+- Browser checks: all 64 `scripts/verify-*.mjs` passed on the final build
+  after one fix: `verify-site-notes` and `verify-toolbox-talks` looked for
+  their Help entries among the latest six, which this PR's new entry pushes
+  past; they now press "Show all" first, as a newcomer would.
 - Not verified: a real phone or tablet, a live tenant or SharePoint, a real
   screen reader.
 

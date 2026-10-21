@@ -212,6 +212,8 @@ try {
   {
     const {context,page}=await open(engineer,'light',390);
     await page.goto(`${base}/help?for=site`);
+    // Help shows the latest few; older entries are under Show all.
+    const more=page.getByRole('button',{name:/^Show all \d+$/});await more.waitFor();await more.click();
     check(await page.getByRole('heading',{name:'Toolbox talks'}).count()>0,'help: What\'s new lists Toolbox talks');
     await context.close();
   }
