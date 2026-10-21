@@ -27,10 +27,11 @@ export function SafetyActionsRow({ projectId, href }: { projectId: string; href:
   </div><span className="chev">›</span></Link>;
 }
 
-/** "2 open · 1 tower due · safety inspection due", or "Nothing open". */
-export function safetySummary(t: Pick<SafetyActions['totals'], 'open' | 'due' | 'towersDue'>): string {
+/** "2 open · 1 tower due · safety inspection due", or "Nothing open · no safety inspection yet". */
+export function safetySummary(t: Pick<SafetyActions['totals'], 'open' | 'due' | 'towersDue' | 'never'>): string {
   const parts = [t.open ? `${t.open} open` : 'Nothing open'];
   if (t.towersDue) parts.push(`${t.towersDue} tower${t.towersDue === 1 ? '' : 's'} due`);
   if (t.due) parts.push('safety inspection due');
+  else if (t.never) parts.push('no safety inspection yet');
   return parts.join(' · ');
 }

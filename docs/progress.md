@@ -27,14 +27,16 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   - Safety actions had no count anywhere, so two open actions and a tower due
     were invisible from the home screen and the office overview. The home row
     now reads "2 open · 1 tower due" (and "safety inspection due" when a week
-    has passed); the office overview button "Safety actions · 2 open".
+    has passed, "no safety inspection yet" when there has been none); the
+    office overview button "Safety actions · 2 open".
     `/api/safety-actions?project=` narrows the work to one project for the home.
   - The report PDF viewer and report summary still had the old Home /
     Companies / Projects bar and no tab name; they now use the shared header
     (`eng-page`), are named "Report PDF" and "Report summary · <ref>", and the
     summary's "← Report" reads "← Back to report".
   - The office overview's "Received this week 6 · 7 PM notifications pending"
-    counted every report ever waiting; it now counts this week's only.
+    counted every report ever waiting; it now says this week's apart from
+    older ones ("2 pending · 3 older") and never "notified" while any waits.
   - Engineer Issues had a disabled "Assigned to me · Coming soon" button and a
     developer note under it; removed (owners are companies, not accounts).
 - Check: `scripts/verify-day-walkthrough.mjs` (59 checks) runs the whole day

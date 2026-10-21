@@ -202,6 +202,9 @@ try {
   ok(/Open actions\s*2/i.test(saStats)&&/Towers due\s*1/i.test(saStats),`Safety actions: matches the home screen: ${JSON.stringify(saStats)}`);
   // 5. No signal in the riser: the home screen says it cannot check rather than showing nothing open.
   await page.goto(home);await row('Site issues').filter({hasText:/open/}).waitFor();await sleep(500);
+  // Playwright's offline switch does not reach the service worker's own fetch, so the
+  // reload is the page the worker cached and every API call fails, as on a phone that
+  // still has RELAY open. If that changes, abort /api/** with page.route instead.
   await ec.setOffline(true);
   await page.reload();
   await page.getByText('No signal, so RELAY cannot check with the office just now.').waitFor({timeout:15000});checks++;
