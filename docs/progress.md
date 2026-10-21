@@ -4,6 +4,35 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Seventh release check (main at 3e470fc, #83 to #88)
+
+- Why: a release check before any deploy, asked for by the coordinator after
+  #85 hid the safety, permits and deliveries records (Cal, 07:02). Not a
+  `docs/tasks.json` task; no code changed.
+- Run on 2243efb, then dad1563 (#86) and 3e470fc (#87, #88) as they merged:
+  `npm run typecheck`, `npm test` (146 + 441), `npm run build`, all 69
+  `scripts/verify-*.mjs` on Node 22. The busy-projects speed check went over
+  its tightest API budgets by 10 to 80 ms on different pages each run, on
+  the #85 and #86 builds alike, and passed alone; the deliveries check read
+  the focus early once and passed three times in a row after.
+- Switch off: seeded a talk, a short delivery, an overdue permit, a sent
+  safety inspection with an open action and a sent tower inspection, then
+  read 30 engineer and office pages (390px and 1440px) and the issue
+  spreadsheet. Nothing of them shows apart from sent safety and tower
+  reports in report lists, Came back from the office, the Inbox and the site
+  diary, as #85 chose. Switch on brings all back; nothing deleted. A safety
+  and a tower inspection held offline still reached the server after the
+  switch was turned off while they were held.
+- A full site update on a 390px phone (progress and photo, defect and photo,
+  variation), seen in Where each project stands, Latest from site, Issues,
+  Variations, its PDF and the phone register; the engineer then saw "Seen
+  by the office". No fault found.
+- Release notes refreshed in the project files
+  (`releases/2026-10-20-release-notes.md`): #83 to #88, where the Admin turns
+  the switch on, rollback with the switch, after-deploy checks.
+- Not verified: a real phone, a screen reader, the live server or tenant,
+  the Docker image build.
+
 ## 2026-10-21 — Seen by the office
 
 - Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information it
