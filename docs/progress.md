@@ -4,6 +4,37 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Sixth release check (main at e2e84ff, #74 to #78)
+
+- Why: the coordinator's release check before a first deploy. Not a
+  `docs/tasks.json` task, so no status changed there.
+- Fresh checkout of e2e84ff: `npm ci`, `npm run typecheck`, `npm test`
+  (146 + 415), `npm run build` and all 63 browser checks, one after another.
+  62 passed. `verify-site-notes` failed every time (4 of 4): since #75 a first
+  visit to Help shows only the latest six What's new entries with "Show all"
+  under them, and Notes for the next visit is far below. RELAY is right, the
+  check was out of date. It now opens the full list first (clicking again if
+  the page was not ready), and so do the permits and toolbox talks checks,
+  which would have broken the same way once newer entries push theirs down
+  (the toolbox one also read the page without waiting), and the deliveries
+  check from #80, merged during this check. Each passed three runs in a row.
+- Second full run on main at 04334f5 (after #80 and #81): typecheck,
+  `npm test` (146 + 425), build and all 64 browser checks; 63 passed.
+  `verify-toolbox-talks` failed once reading where the keyboard focus was
+  a split second before the page moved it (the same race #74 fixed for the
+  withdrawn talk, on the other three focus checks). Those checks, and the
+  same eight in the permits and deliveries checks copied from it, now wait
+  up to 2 s for the focus. Each of the three checks passed three runs in a
+  row.
+- Found and fixed separately in #79: SharePoint date-only fields read a day
+  early in summer, and a report started online just after midnight BST.
+- Deploy needs nothing new since #73: permits are a new kind of record in the
+  same table (no database change), no new settings, no SharePoint columns,
+  and the no-signal page is unchanged (`relay-public-v14`). Release notes in
+  the project files cover everything merged up to this PR except #28.
+- Not verified: building the Docker image (no Docker here), a real phone,
+  the live server and tenant.
+
 ## 2026-10-21 — Deliveries
 
 - Why: a new feature chosen by Claude for site and office (Cal's go-ahead to
@@ -131,9 +162,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   permits); a permit recorded and closed counted twice in My week's figure;
   the Help line said "on a phone" though the register shows on a desktop too.
 - Browser checks: all 64 `scripts/verify-*.mjs` passed on the final build
-  after one fix: `verify-site-notes` and `verify-toolbox-talks` looked for
-  their Help entries among the latest six, which this PR's new entry pushes
-  past; they now press "Show all" first, as a newcomer would.
+  once `verify-site-notes` and `verify-toolbox-talks` opened the full What's
+  new list (this PR's entry pushes theirs past the latest six); main's #81
+  made the same fix, so its version is kept after merging main.
 - Not verified: a real phone or tablet, a live tenant or SharePoint, a real
   screen reader.
 

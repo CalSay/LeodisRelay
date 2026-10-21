@@ -83,7 +83,7 @@ try {
 
     // Record a talk: empty first, then a starter topic and the same people as last time.
     await page.getByRole('button',{name:'Record a toolbox talk'}).click();
-    check(await page.evaluate(()=>document.activeElement?.id==='tt-topic'),'engineer: the form opens on the topic');
+    check(await page.waitForFunction(()=>document.activeElement?.id==='tt-topic',null,{timeout:2000}).then(()=>true,()=>false),'engineer: the form opens on the topic');
     check(await page.getByLabel('Given by').inputValue()==='Sam Spark','engineer: given by starts as the signed-in engineer');
     check(await page.getByLabel('Given on').inputValue()===daysBack(0),'engineer: the day starts as today');
     await page.getByRole('button',{name:'Save toolbox talk'}).click();
@@ -106,7 +106,7 @@ try {
     await page.getByRole('button',{name:'Save toolbox talk'}).click();
     await page.waitForFunction(()=>document.querySelectorAll('.tt-talk').length===2);
     check(!(await page.locator('.tt-form').count()),'engineer: the form closes after saving');
-    check(await page.evaluate(()=>document.activeElement?.textContent==='Record a toolbox talk'),'engineer: focus returns to Record a toolbox talk');
+    check(await page.waitForFunction(()=>document.activeElement?.textContent==='Record a toolbox talk',null,{timeout:2000}).then(()=>true,()=>false),'engineer: focus returns to Record a toolbox talk');
     check(/Toolbox talk recorded: Working at height, 4 people attending/.test(await page.locator('.eng-sr[role="status"]').innerText()),'engineer: a screen reader hears it was saved');
     const first=talks(page).first();
     check((await first.locator('.tt-topic-text').innerText()).trim()==='Working at height','engineer: the new talk is at the top');
@@ -133,7 +133,7 @@ try {
     check((await page.locator('.tt-talk',{hasText:'Hot works'}).getByRole('button',{name:/^Withdraw/}).count())===0,'engineer: no Withdraw on a talk someone else recorded');
     const retry=page.locator('.tt-talk',{hasText:'Retry talk'});
     await retry.getByRole('button',{name:/^Withdraw: Retry talk/}).click();
-    check(await page.evaluate(()=>document.activeElement?.id?.startsWith('tt-reason-')),'engineer: focus moves to the reason');
+    check(await page.waitForFunction(()=>document.activeElement?.id?.startsWith('tt-reason-'),null,{timeout:2000}).then(()=>true,()=>false),'engineer: focus moves to the reason');
     await retry.getByRole('button',{name:'Withdraw record'}).click();
     check(/Say why/.test(await retry.locator('[role="alert"]').innerText()),'engineer: a withdrawal needs a reason');
     await retry.getByLabel('Why withdraw it?').fill('Recorded by mistake while testing');
@@ -212,9 +212,16 @@ try {
   {
     const {context,page}=await open(engineer,'light',390);
     await page.goto(`${base}/help?for=site`);
-    // Help shows the latest few; older entries are under Show all.
-    const more=page.getByRole('button',{name:/^Show all \d+$/});await more.waitFor();await more.click();
-    check(await page.getByRole('heading',{name:'Toolbox talks'}).count()>0,'help: What\'s new lists Toolbox talks');
+    // Help shows the latest few entries and the rest under "Show all" (a first visit marks none as new),
+    // so open the full list, again if the first click came before the page was ready.
+    const whatsNew=page.locator('#help-new'),entry=whatsNew.getByRole('heading',{name:'Toolbox talks',exact:true}),more=whatsNew.getByRole('button',{name:/^Show all/});
+    let listed=false;
+    for(const until=Date.now()+8000;!listed&&Date.now()<until;){
+      if(await entry.count()){listed=true;break;}
+      if(await more.count())await more.click().catch(()=>{});
+      await page.waitForTimeout(200);
+    }
+    check(listed,'help: What\'s new lists Toolbox talks');
     await context.close();
   }
   console.log(`Toolbox talks check passed (${checks} checks): refused saves, engineer home row, recording with starters and the same people, figures, reload, retries, withdrawing and who may, spreadsheet, office from the project sheet, other and complete projects, no connection, axe, 390px light and 1440px dark.`);
