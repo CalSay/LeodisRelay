@@ -4,7 +4,6 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
-<<<<<<< HEAD
 ## 2026-10-21 — Shorter issues list for engineers
 
 - Why: Cal (2026-10-21 07:02): engineers are hands-on people and want a
@@ -27,7 +26,6 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `ui-review/simpler-issue-list/`.
 - Not verified: a real phone, a real engineer, the live server or tenant.
 
-=======
 ## 2026-10-21 — A sent report, at a glance (engineer)
 
 - Why: the first "bigger idea" in PR #90. Cal (2026-10-21 07:02) wants
@@ -60,7 +58,6 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Screenshots before and after: project files
   `ui-review/sent-report-two-steps/`.
 - Not verified: no real phone, no live tenant, no real engineer.
->>>>>>> origin/main
 ## 2026-10-21 — Simpler issue page for engineers
 
 - Why: Cal (2026-10-21 07:02): engineers are hands-on people, not IT people.
