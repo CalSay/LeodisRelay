@@ -46,7 +46,7 @@ test('an action stays open until a later inspection answers the check satisfacto
   assert.equal(open.days, 15);
   assert.equal(open.key, `p1:housekeeping:${first.id}`);
   assert.deepEqual(p1.cleared.map(a => [a.item, a.cleared?.answer, a.cleared?.note, a.days, a.found]), [['fire', 'ok', 'Pallets moved', 7, 'Fire point blocked']]);
-  assert.deepEqual(s.totals, { open:1, projects:1, cleared:1, due:1, never:1 });
+  assert.deepEqual(s.totals, { open:1, projects:1, cleared:1, due:1, never:1, towersDue:0 });
   assert.equal(s.projects[0]!.projectId, 'p1', 'projects with open actions first');
   assert.equal(s.projects[1]!.inspections, 0);
 });

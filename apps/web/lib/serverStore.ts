@@ -58,7 +58,8 @@ export function startedReport(principalId: string, clientKey: string): Report | 
   return previous ? getReport(previous.reportId) : undefined;
 }
 
-export function createReport(projectId: string, author: string, principal?: Principal, reportType: ReportTypeId = 'progress', started?: { clientKey: string; visitDate: string }): Report {
+/** `inspected`: on a type that inspects one thing, its name, already checked with `inspectedName`. */
+export function createReport(projectId: string, author: string, principal?: Principal, reportType: ReportTypeId = 'progress', started?: { clientKey: string; visitDate: string }, inspected?: string): Report {
   return atomic(() => {
     const startKey = started && principal ? `${principal.id}:${started.clientKey}` : undefined;
     const previous = started && principal ? startedReport(principal.id, started.clientKey) : undefined;
@@ -74,6 +75,7 @@ export function createReport(projectId: string, author: string, principal?: Prin
     const report: Report = {
       id: 'rep-' + randomUUID(), projectId, author, projectSnapshot: structuredClone(project),
       ...(type.id === 'progress' ? {} : { reportType: type.id }),
+      ...(type.inspects && inspected ? { inspected } : {}),
       ...(principal ? { authorId:principal.id, ...(principal.trade ? {authorTrade:principal.trade}: {}) } : {}),
       reference: `${project.source ? 'DEMO-' : ''}${project.projectNumber}-${type.code}-${String(Number(count.n) + 1).padStart(3,'0')}`,
       visitDate: started?.visitDate ?? new Date().toISOString().slice(0,10), state: 'draft', version: 1,
@@ -114,6 +116,24 @@ export function saveDraft(id: string, incoming: Report, expectedVersion?: number
     const saved: Report = { ...rest, observations: incoming.observations, ...(signature ? { draftSignature: signature } : {}), version: existing.version + 1, lastSavedAt: new Date().toISOString() };
     putRecord('reports',saved);
     if (key) putRecord('save-receipts',{id:key,reportId:id,digest,version:saved.version});
+    return { ok: true, value: saved };
+  });
+}
+
+/**
+ * Rename what a draft inspection is about: a tower named T3 that was T4. Only
+ * while it is a draft, so what was signed and sent never changes. It is not
+ * a save of the checks, so the draft's version stays as it is and an open
+ * editor is not told its copy is out of date.
+ */
+export function renameInspected(id: string, inspected: string): StoreOutcome<Report> {
+  return atomic(() => {
+    const existing = getReport(id);
+    if (!existing) return reject('No such report.',404);
+    if (existing.state !== 'draft') return { ...reject(SENT_ELSEWHERE), current: existing };
+    if (!reportTypeOf(existing).inspects) return reject('This report does not name one thing inspected.',422);
+    const saved: Report = { ...existing, inspected, lastSavedAt: new Date().toISOString() };
+    putRecord('reports',saved);
     return { ok: true, value: saved };
   });
 }

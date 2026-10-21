@@ -21,6 +21,7 @@ export async function documentModel(report: Report): Promise<DocReport> {
   return {
     ...(type.id === 'progress' ? {} : { documentTitle: type.document }),
     ...(type.checklist ? { inspection: true } : {}),
+    ...(type.inspects && report.inspected ? { inspected: { label: type.inspects.label, value: report.inspected } } : {}),
     reference: report.reference, projectName: project?.projectName ?? report.projectId,
     projectNumber: project?.projectNumber ?? '', clientName: project?.clientName ?? '',
     clientAccountNumber: project?.clientAccountNumber ?? '', visitDate: report.visitDate,

@@ -1,6 +1,7 @@
 import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import type { Report } from './types';
+import { inspectedKey } from './reportTypes';
 
 /**
  * Safety actions: what the weekly safety inspections found needing action,
@@ -15,6 +16,12 @@ import type { Report } from './types';
  * "Satisfactory" or "Not applicable" on the same check clears it. Nothing is
  * stored or typed in: the next inspection is the record that it was put
  * right, as it is on a paper inspection.
+ *
+ * Tower inspections (EXP-5) are followed the same way, but each tower on its
+ * own: an action found on tower T3 is cleared only by a later inspection of
+ * T3, matched by name ignoring case and spacing. Each tower inspected
+ * recently is listed with its last inspection, and is due once that is more
+ * than seven days old, as the Work at Height Regulations expect.
  */
 
 export interface SafetyInspectionRef {
@@ -36,6 +43,8 @@ export interface SafetyAction {
   actionNeeded: string;
   who: string;
   location: string;
+  /** On a tower inspection, the tower or podium, as last named. Absent: the weekly safety inspection. */
+  tower?: string;
   /** Photographs on the check in the most recent inspection that found it. */
   photos: number;
   raised: SafetyInspectionRef;
@@ -49,12 +58,24 @@ export interface SafetyAction {
   days: number;
 }
 
+/** A tower or podium inspected lately, and whether its next inspection is due. */
+export interface TowerState {
+  name: string;
+  last: SafetyInspectionRef;
+  sinceLast: number;
+  due: boolean;
+  /** Its actions still open. */
+  open: number;
+}
+
 export interface SafetyProject {
   projectId: string;
   projectNumber: string;
   projectName: string;
-  /** Sent inspections, counting a corrected one once. */
+  /** Sent weekly safety inspections, counting a corrected one once. */
   inspections: number;
+  /** Towers and podiums inspected in the last TOWER_SHOWN_DAYS days, most overdue first. */
+  towers: TowerState[];
   last?: SafetyInspectionRef;
   /** Days since the last inspection's visit day; absent when there has been none. */
   sinceLast?: number;
@@ -70,7 +91,7 @@ export interface SafetyActions {
   today: string;
   /** Projects with open actions first (longest open first), then the rest in project-number order. */
   projects: SafetyProject[];
-  totals: { open: number; projects: number; cleared: number; due: number; never: number };
+  totals: { open: number; projects: number; cleared: number; due: number; never: number; towersDue: number };
 }
 
 export interface SafetyProjectSource { id: string; projectNumber: string; projectName: string }
@@ -79,6 +100,14 @@ export interface SafetyProjectSource { id: string; projectNumber: string; projec
 export const INSPECTION_DUE_DAYS = 7;
 /** How far back cleared actions are listed: long enough to see last month's put right. */
 export const CLEARED_DAYS = 28;
+/** Towers are inspected at least every seven days while they stay up: due on the seventh day. */
+export const TOWER_DUE_DAYS = 7;
+/**
+ * A tower not inspected for this long has most likely been taken down, so it
+ * is no longer listed as due. Its open actions stay open until a later
+ * inspection of it clears them.
+ */
+export const TOWER_SHOWN_DAYS = 28;
 
 const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');
 export const daysBetween = (from: string, to: string) =>
@@ -96,37 +125,54 @@ export function safetyActions(projects: SafetyProjectSource[], reports: Report[]
   const sent = reports.filter(r => known.has(r.projectId) && r.state === 'submitted' && canReadReport(principal, r));
   // A sent correction stands in for the inspection it corrects.
   const superseded = new Set(sent.map(r => r.corrects).filter((id): id is string => Boolean(id)));
-  const inspections = sent.filter(r => r.reportType === 'safety-inspection' && !superseded.has(r.id))
+  const followed = sent.filter(r => (r.reportType === 'safety-inspection' || (r.reportType === 'tower-inspection' && r.inspected)) && !superseded.has(r.id))
     .sort((a, b) => a.visitDate.localeCompare(b.visitDate) || a.reference.localeCompare(b.reference, 'en', { numeric: true }));
 
   const out = projects.map(p => {
-    const mine = inspections.filter(r => r.projectId === p.id);
+    const all = followed.filter(r => r.projectId === p.id);
+    const mine = all.filter(r => r.reportType === 'safety-inspection');
     const open = new Map<string, SafetyAction>();
     const cleared: SafetyAction[] = [];
-    for (const r of mine) {
+    // Each tower's latest inspection, by the tower's name ignoring case and spacing.
+    const towers = new Map<string, { name: string; last: SafetyInspectionRef }>();
+    for (const r of all) {
+      const tower = r.reportType === 'tower-inspection' ? tidy(r.inspected!) : undefined;
+      // A safety inspection's check is followed by its item; a tower's, by the tower and its item.
+      const scope = tower ? `tower:${inspectedKey(tower)}:` : '';
+      if (tower) towers.set(inspectedKey(tower), { name: tower, last: ref(r) });
       for (const o of r.observations) {
         if (o.type !== 'check' || !o.check?.answer) continue;
         const { item, question, answer } = o.check;
-        const was = open.get(item);
+        const was = open.get(scope + item);
         if (answer === 'action') {
           const latest = ref(r);
-          open.set(item, {
-            key: was?.key ?? `${p.id}:${item}:${r.id}`, item, question: tidy(question),
+          open.set(scope + item, {
+            key: was?.key ?? `${p.id}:${scope}${item}:${r.id}`, item, question: tidy(question),
             found: tidy(o.whatHappened), actionNeeded: tidy(o.actionNeeded), who: tidy(o.owner), location: tidy(o.location), photos: o.photos.length,
+            ...(tower ? { tower } : {}),
             raised: was?.raised ?? latest, latest, times: (was?.times ?? 0) + 1, days: 0,
           });
         } else if (was) {
-          open.delete(item);
+          open.delete(scope + item);
           cleared.push({ ...was, cleared: { ...ref(r), answer, note: tidy(o.whatHappened) }, days: daysBetween(was.raised.visitDate, r.visitDate) });
         }
       }
     }
     const last = mine.length ? ref(mine[mine.length - 1]!) : undefined;
     const sinceLast = last ? daysBetween(last.visitDate, today) : undefined;
+    // An action names its tower as the tower list does: as it was last inspected.
+    const named = (a: SafetyAction): SafetyAction => a.tower ? { ...a, tower: towers.get(inspectedKey(a.tower))?.name ?? a.tower } : a;
+    const openActions = [...open.values()].map(named);
+    cleared.splice(0, cleared.length, ...cleared.map(named));
+    const towerList: TowerState[] = [...towers.entries()].map(([key, t]) => {
+      const sinceLast = daysBetween(t.last.visitDate, today);
+      return { name: t.name, last: t.last, sinceLast, due: sinceLast >= TOWER_DUE_DAYS, open: openActions.filter(a => a.tower && inspectedKey(a.tower) === key).length };
+    }).filter(t => t.sinceLast <= TOWER_SHOWN_DAYS)
+      .sort((a, b) => b.sinceLast - a.sinceLast || a.name.localeCompare(b.name, 'en', { numeric: true }));
     const project: SafetyProject = {
-      projectId: p.id, projectNumber: p.projectNumber, projectName: p.projectName, inspections: mine.length,
+      projectId: p.id, projectNumber: p.projectNumber, projectName: p.projectName, inspections: mine.length, towers: towerList,
       due: sinceLast !== undefined && sinceLast > INSPECTION_DUE_DAYS,
-      open: [...open.values()].map(a => ({ ...a, days: daysBetween(a.raised.visitDate, today) }))
+      open: openActions.map(a => ({ ...a, days: daysBetween(a.raised.visitDate, today) }))
         .sort((a, b) => a.raised.visitDate.localeCompare(b.raised.visitDate) || a.question.localeCompare(b.question)),
       cleared: cleared.filter(a => daysBetween(a.cleared!.visitDate, today) <= CLEARED_DAYS)
         .sort((a, b) => b.cleared!.visitDate.localeCompare(a.cleared!.visitDate) || a.question.localeCompare(b.question)),
@@ -146,6 +192,7 @@ export function safetyActions(projects: SafetyProjectSource[], reports: Report[]
       cleared: out.reduce((n, p) => n + p.cleared.length, 0),
       due: out.filter(p => p.due).length,
       never: out.filter(p => !p.inspections).length,
+      towersDue: out.reduce((n, p) => n + p.towers.filter(t => t.due).length, 0),
     },
   };
 }

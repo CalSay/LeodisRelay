@@ -158,6 +158,8 @@ const s = StyleSheet.create({
    */
   tb: { flexDirection: "row", marginTop: 14, borderTopWidth: 1, borderColor: RULE, paddingTop: 4 },
   tbGroup: { width: "50%", paddingRight: 18 },
+  /** One thing inspected, across the full width under the title block. */
+  tbWide: { width: "100%", paddingRight: 18 },
   tbRow: { flexDirection: "row", alignItems: "baseline", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: HAIR },
   /* Sized to its own text, not the column, so a short label is a small box. */
   /* Fixed width, so every value in the group starts on the same line. */
@@ -431,6 +433,11 @@ export function ReportDocument({ report }: { report: DocReport }) {
             <Field label="Revision" value={String(report.revision)} code />
           </View>
         </View>
+        {report.inspected && (
+          <View style={s.tbWide}>
+            <Field label={report.inspected.label} value={report.inspected.value} />
+          </View>
+        )}
 
         {report.correction ? (
           <View style={s.correction} wrap={false}>

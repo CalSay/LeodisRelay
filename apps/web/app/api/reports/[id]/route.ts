@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { acknowledgeReport, correctReport, getReport, reviewSubmission, saveDraft, submitReport } from "@/lib/serverStore";
+import { acknowledgeReport, correctReport, getReport, renameInspected, reviewSubmission, saveDraft, submitReport } from "@/lib/serverStore";
 import { requireSession, visibleTo } from "@/lib/auth/guard";
 import type { DraftSignature, Report } from "@/lib/types";
 import { validateObservations } from '@/lib/validatePhotos';
 import { invalidSignature } from '@/lib/validateSignature';
 import { canManage, ownsReport } from '@/lib/auth/access';
 import { IssueSyncError } from '@/lib/sharepoint/issues';
-import { invalidShape } from '@/lib/reportTypes';
+import { inspectedName, invalidShape, reportTypeOf } from '@/lib/reportTypes';
 
 export const dynamic = "force-dynamic";
 
@@ -82,7 +82,8 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   const body = (await request.json().catch(() => ({}))) as {
-    action?: "review" | "correct" | "acknowledge";
+    action?: "review" | "correct" | "acknowledge" | "rename";
+    inspected?: unknown;
     decision?: "approve" | "return";
     reviewer?: string;
     note?: string;
@@ -94,7 +95,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
   const principal = guard.principal;
-  if (body.action !== undefined && !['review','correct','acknowledge'].includes(body.action)) return NextResponse.json({reason:'Unknown report action.'},{status:422});
+  if (body.action !== undefined && !['review','correct','acknowledge','rename'].includes(body.action)) return NextResponse.json({reason:'Unknown report action.'},{status:422});
   if (body.note !== undefined && typeof body.note !== 'string') return NextResponse.json({reason:'Review note must be text.'},{status:422});
 
   try {
@@ -103,6 +104,17 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
     if (!canManage(principal)) return NextResponse.json({reason:'Manager access required.'},{status:403});
     const outcome = acknowledgeReport(id, principal, body.note ?? '');
     return outcome.ok ? NextResponse.json(outcome.value) : NextResponse.json({ reason: outcome.reason }, { status: outcome.status });
+  }
+
+  // The author renames what their draft inspection is about.
+  if (body.action === 'rename') {
+    const draft = getReport(id);
+    if (!draft || !ownsReport(principal,draft)) return NextResponse.json({ reason: 'Only the author can rename what was inspected.' }, { status: 403 });
+    const name = inspectedName(reportTypeOf(draft), body.inspected);
+    if (!name.ok || name.value === undefined) return NextResponse.json({ reason: name.ok ? 'This report does not name one thing inspected.' : name.reason }, { status: 422 });
+    const outcome = renameInspected(id, name.value);
+    return outcome.ok ? NextResponse.json(outcome.value)
+      : NextResponse.json({ reason: outcome.reason, ...(outcome.current ? { current: outcome.current } : {}) }, { status: outcome.status });
   }
 
   // A new revision, by the author, of a report already sent. The sent one is

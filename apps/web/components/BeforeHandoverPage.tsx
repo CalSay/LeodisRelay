@@ -154,9 +154,9 @@ export function BeforeHandoverPage({ initialProject, returnTo }: { initialProjec
         <Section id="ho-safety" title="Safety actions still open" count={d.safety.length ? String(d.safety.length) : 'none'}>
           {d.safety.length ? <ul className="ho-rows">{d.safety.map(a => <li key={a.key} className="ho-late">
             <p className="ho-tags"><Link className="ref" href={withViewReturn(`/reports/${a.latest.id}`, here)}>{a.latest.reference}</Link><span className="tag tag-alert">Open {a.days > 0 ? plural(a.days, 'day') : 'since today'}</span></p>
-            <p className="ho-desc">{a.question}</p>
+            <p className="ho-desc">{a.tower ? `${a.tower}: ${a.question}` : a.question}</p>
             <p className="ho-meta">{[a.actionNeeded || a.found, a.location, a.who].filter(Boolean).join(' · ')}</p>
-          </li>)}</ul> : <p className="ho-none">{d.safetyInspected ? 'The last safety inspection left nothing open.' : 'No safety inspection has been sent from this project yet.'}</p>}
+          </li>)}</ul> : <p className="ho-none">{d.safetyInspected ? 'The safety and tower inspections left nothing open.' : 'No safety or tower inspection has been sent from this project yet.'}</p>}
         </Section>
 
         <footer className="ho-foot">
