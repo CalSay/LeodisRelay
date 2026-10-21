@@ -4,6 +4,44 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — My week counts every issue raised, and says what happened to a fix
+
+- Why: written up in PR #123. My week's "Defects flagged" counted only defects
+  flagged on their own, so an engineer who raised every defect in their site
+  updates read 0; and "Put forward as fixed" stayed on an issue the office had
+  since sent back or closed. Decided without asking Cal (his autonomy message
+  and 07:02 ask). Not a `docs/tasks.json` task; no status changed.
+- Office side checked: the Weekly summary's "Issues raised" counts every issue
+  raised on the project that week by its UK raised day, whatever route (report
+  defect and access cards, inspection actions, defects flagged on their own).
+  The overview and Last visit name people and count report cards, not issues
+  per person. The office count was right, so only My week changed.
+- Now (`lib/myWeek.ts`, `MyWeekPage.tsx`): the tile is "Issues raised": every
+  issue the person raised in the week on projects open to them
+  (`raisedIssue` from `lib/cameBack.ts`, by `raisedAt` UK day), each once, the
+  same rule as the Weekly summary. A further sighting in a later update, or a
+  sent correction, links to the existing issue and raises nothing, so neither
+  counts again. Issues raised in a report stay under that report's line ("2
+  defects, 1 access problem"); only defects flagged on their own get a row, as
+  before. `totals.flagged` became `totals.raised`. A "Put forward as fixed" row
+  now adds "Since then the office sent it back as not finished." (reopened
+  after it) or "Since then the office checked it and closed it." (verified and
+  closed now). The footnote says what the count covers. Help "What's new" line
+  `my-week-issues-raised`.
+- Edge: a report sent this week for last week's visit is listed under last
+  week, but its issues count in the week they were raised, as on the Weekly
+  summary.
+- Checks: typecheck, `npm test` (146 + 521; two new `myWeek.test.ts` cases),
+  build. New `scripts/verify-my-week-counts.mjs` (13 checks): seeds through the
+  real code a site update with two defects and an access problem, a later
+  sighting, a sent correction, another engineer's defect, a fix sent back and
+  one closed; flags a defect from the phone; checks Issues raised 3 then 4 at
+  390px light and dark, the two "Since then" lines, and the office Weekly
+  summary's Issues raised 4 for the same site and week. `verify-my-week`
+  updated for the new label and passes. Screenshots in project files
+  `ui-review/my-week-counts/`.
+- Not verified: real phones, screen readers.
+
 ## 2026-10-21 — Engineer's end of week: "Yours" on the Issues tab
 
 - Why: a walk of an engineer's Friday afternoon on main at 390px, light and

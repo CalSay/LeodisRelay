@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { usePrincipal } from './PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
-import { dayLabel, myWeekText, type MyWeek, type MyWeekIssueKind, type MyWeekProject, type MyWeekRecordKind, type MyWeekReport } from '@/lib/myWeek';
+import { dayLabel, myWeekText, type MyWeek, type MyWeekFixOutcome, type MyWeekIssueKind, type MyWeekProject, type MyWeekRecordKind, type MyWeekReport } from '@/lib/myWeek';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { londonDay, shiftWeek, weekEnd, weekStart } from '@/lib/weeklySummary';
 import { failure } from '@/lib/failure';
@@ -27,6 +27,8 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 const isWeekend = (ymd: string) => new Date(`${ymd}T12:00:00Z`).getUTCDay() % 6 === 0;
 const KIND_WORD: Record<string, [string, string]> = { update: ['progress update', 'progress updates'], defect: ['defect', 'defects'], instruction: ['variation required', 'variations required'], access: ['access problem', 'access problems'] };
 const ISSUE_WORD: Record<MyWeekIssueKind, string> = { flagged: 'Flagged a defect', progress: 'Recorded an update', fixed: 'Put forward as fixed' };
+/** A fix put forward that the office has since dealt with, said plainly so the old tag is not read as where it stands now. */
+const SINCE_WORD: Record<MyWeekFixOutcome, string> = { 'sent-back': 'Since then the office sent it back as not finished.', closed: 'Since then the office checked it and closed it.' };
 const recorded = (p: MyWeekProject) => p.reports.length + p.issues.length + p.records.length > 0;
 /** The project page a site record lives on. */
 const RECORD_PAGE: Record<MyWeekRecordKind, string> = { talk: '/toolbox-talks', permit: '/permits', 'permit-closed': '/permits', delivery: '/deliveries', 'delivery-sorted': '/deliveries' };
@@ -103,7 +105,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
           <div><dt>Days with records</dt><dd>{w.totals.days}</dd></div>
           <div><dt>Projects</dt><dd>{w.totals.projects}</dd></div>
           <div><dt>Reports sent</dt><dd>{w.totals.reports}{w.totals.records > 0 && <small>{plural(w.totals.records, 'other site record')}</small>}</dd></div>
-          <div><dt>Defects flagged</dt><dd>{w.totals.flagged}<small>{plural(w.totals.issueUpdates, 'issue update')}</small></dd></div>
+          <div><dt>Issues raised</dt><dd>{w.totals.raised}<small>{plural(w.totals.issueUpdates, 'issue update')}</small></dd></div>
         </dl>
         {!w.totals.days && !w.totals.drafts && <p className="note mw-nothing">Nothing recorded {w.current ? 'this week yet' : 'that week'}. Reports you send, defects you flag on their own, updates you add on an issue{safetyRecords ? ', and toolbox talks, permits and deliveries you record' : ''} show here, day by day.</p>}
         {w.totals.drafts > 0 && <p className="note mw-unsent">{w.totals.drafts === 1 ? 'One report for this week is' : `${w.totals.drafts} reports for this week are`} not sent yet. {w.totals.drafts === 1 ? 'It is' : 'They are'} marked below; the office has not got {w.totals.drafts === 1 ? 'it' : 'them'}.</p>}
@@ -123,6 +125,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
                     <p><Link className="ref" href={withViewReturn(`/issues/${i.id}`, here)}>{i.reference}</Link><span className={`tag ${i.kind === 'flagged' ? 'tag-alert' : 'tag-draft'}`}>{ISSUE_WORD[i.kind]}</span><span className="mw-time">{fmtTime(i.at)}</span></p>
                     <p className="mw-desc">{i.description}</p>
                     {i.location && <p className="mw-meta">{i.location}</p>}
+                    {i.since && <p className="mw-since">{SINCE_WORD[i.since]}</p>}
                   </li>)}
                   {p.records.map(r => <li key={`${r.kind}-${r.id}`}>
                     <p><Link className="mw-rec" href={withViewReturn(`${RECORD_PAGE[r.kind]}?${new URLSearchParams({ project: p.projectId })}`, here)}>{r.title}</Link>{londonDay(r.at) === d.day && <span className="mw-time">{fmtTime(r.at)}</span>}</p>
@@ -136,7 +139,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
               </section>)}
           </li>)}
         </ol>
-        <p className="mw-foot">Made from what you recorded in RELAY: reports you sent, placed on the visit day you gave; defects you flagged on their own; updates you added on an issue{safetyRecords ? '; and toolbox talks, permits and deliveries you recorded, closed or sorted' : ''}. A corrected report replaces the one it corrects. RELAY does not know your hours, so check the times before you send a timesheet.</p>
+        <p className="mw-foot">Made from what you recorded in RELAY: reports you sent, placed on the visit day you gave; defects you flagged on their own; updates you added on an issue{safetyRecords ? '; and toolbox talks, permits and deliveries you recorded, closed or sorted' : ''}. Issues raised counts each defect, access problem or inspection action you raised this week once, whether it came from a report or you flagged it on its own: the same count the office sees. A corrected report replaces the one it corrects. RELAY does not know your hours, so check the times before you send a timesheet.</p>
       </>}
   </main>;
 }

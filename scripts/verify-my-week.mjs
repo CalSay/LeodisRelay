@@ -81,7 +81,7 @@ try {
     check(/One report for this week is not sent yet/.test(text),'engineer: the unsent draft is called out above the days');
     const stats=await page.locator('.mw-stats').innerText();
     const days=monday===today?1:2;
-    check(new RegExp(`Days with records\\s*${days}`,'i').test(stats)&&/Projects\s*2/i.test(stats)&&/Reports sent\s*3/i.test(stats)&&/Defects flagged\s*1/i.test(stats)&&/1 issue update/.test(stats),`engineer: headline counts: ${JSON.stringify(stats)}`);
+    check(new RegExp(`Days with records\\s*${days}`,'i').test(stats)&&/Projects\s*2/i.test(stats)&&/Reports sent\s*3/i.test(stats)&&/Issues raised\s*1/i.test(stats)&&/1 issue update/.test(stats),`engineer: headline counts: ${JSON.stringify(stats)}`);
     const width=await page.evaluate(()=>document.documentElement.scrollWidth);
     check(width<=390,`engineer: no sideways scroll at 390px (${width})`);
     if(screenshot)await page.screenshot({path:join(screenshot,'my-week-light-390.png'),fullPage:true});

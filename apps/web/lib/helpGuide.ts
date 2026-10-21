@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'my-week-issues-raised', added: '2026-10-21', audience: 'all', title: 'My week counts every issue you raised',
+    text: 'My week used to say "Defects flagged" and counted only defects flagged on their own, so a week of defects sent in site updates read as none. It now says "Issues raised" and counts every defect, access problem or inspection action you raised that week, from a report or flagged on its own, each once: the same count the office sees under "Issues raised" on the Weekly summary. A defect seen again in a later update, or a corrected report, is not counted twice. An issue you put forward as fixed now also says what the office did since: sent it back as not finished, or checked it and closed it. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open My week', href: '/my-week' } },
   { id: 'issues-yours', added: '2026-10-21', audience: 'site', title: 'Your issues on every site, in one list',
     text: 'The Issues tab now opens on "Yours": the open issues you raised or added to, or that are for your trade, on every site you work on, a section per site with how many are still to do. Anything the office sent back comes first, with what they wrote. Once you put one forward as fixed it leaves the list and the site says how many are waiting for the office to check. "Open" and "All issues" still show every trade on a project, and after you open an issue, Back brings you to the same list. Checked in a phone-sized browser, not on a real phone.',
     link: { label: 'Open your issues', href: '/engineer?view=issues' } },
