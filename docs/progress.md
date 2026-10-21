@@ -4,6 +4,38 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Quicker site update writing
+
+- Why: Cal's 07:02 direction (simple for hands-on engineers). The #110
+  walk-through found two slow spots in the site update editor at 390px: an
+  empty card opened from "Carry on" was folded (one more tap before typing),
+  and each photo tile was 287px tall with "On the server" on it, so four
+  photos took 586px and pushed the next card far down. Decided without asking
+  Cal, per his autonomy message. Not a `docs/tasks.json` task; no status changed.
+- Change: on a phone, a draft whose last card is still empty (`isBlankCard`)
+  opens that card ready to type, once as it opens (not with `?add=`, not
+  inspections, not wide screens, which already open the last card). Cards
+  with anything on them stay folded. Photo tiles (`PhotoField`, used by update
+  cards and inspection checks) are now the picture with the caption box under
+  it: photo number top left, Remove top right (48px, away from the caption),
+  and where it is bottom left. "On the server" shows as a green dot and is
+  still read out to screen readers; "Not yet on the server" and "Only on this
+  phone" still show in words. 287px to 179px a tile, four photos 586px to
+  369px at 390px. Display only: no new photo features (FE-2 stays out). Help
+  "What's new" line.
+- Checks: typecheck, `npm test`, build. New `scripts/verify-quicker-update.mjs`
+  (109 checks, 390px light and dark, 1440px dark): empty card opens ready to
+  type from "Carry on" and saves typing; once written it opens folded; only
+  the empty third card opens on a three-card draft; tile height, two to a
+  row, Remove 48px on the picture and clear of the caption, "On the server"
+  read out but a dot, a photo added with no signal says so in words, a
+  caption saves, Remove works, no sideways scroll. Also rerun, one at a time
+  (results in the PR): one-caption-line, send-on-signal, recent-places,
+  fewest-taps, lighter-card, offline-capture, photo-uploads, undo-remove,
+  editor-wide, engineer-layout, help, report-types, accessibility.
+  Screenshots before and after: project files `ui-review/quicker-update/`.
+- Not verified: a real phone, a screen reader.
+
 ## 2026-10-21 — What the office wrote, where the engineer looks
 
 - Why: Cal's 07:02 direction (simple for hands-on engineers, the office gets

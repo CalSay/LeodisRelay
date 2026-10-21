@@ -369,16 +369,24 @@ export function PhotoField({ observation, note, photoWhere, onChange, onRemovePh
       <CameraIcon />{observation.photos.length ? "Add another photo" : "Take a photo"}
     </label>
     {photoError && <div className="note note-bad" style={{ marginTop: 12 }}>{photoError}</div>}
-    {observation.photos.length > 0 && <div className="shots">
-      {observation.photos.map((photo, i) => <figure key={photo.id} className="shot" style={{ margin: 0 }}>
-        <PhotoImage src={photo.dataUrl} alt={photo.caption || `Photograph ${i + 1}`} />
-        <div className="shot-body">
-          <span className="shot-no">Photo {String(i + 1).padStart(2, "0")}</span>
-          {(() => { const w = photoWhere?.(photo.id); return w ? <span className={`eng-where eng-where-${w}`}><span className={w === 'server' ? 'dot dot-ok' : 'dot dot-busy'} />{WHERE[w]}</span> : null; })()}
-          <input type="text" value={photo.caption} onChange={(e) => onChange({ ...observation, photos: observation.photos.map((p) => p.id === photo.id ? { ...p, caption: e.target.value } : p) })} placeholder="Add a caption" aria-label={`Caption for photograph ${i + 1}`} />
-          <button type="button" className="btn-quiet btn-sm" onClick={() => onRemovePhoto(photo.id)} aria-label={`Remove photo ${i + 1}`}>Remove</button>
-        </div>
-      </figure>)}
+    {/* Small tiles, two to a row on a phone, so a few photographs do not push the next card far down:
+        the picture carries its number, Remove (top right, away from the caption) and, only while it
+        has not gone up yet, where it is. "On the server" is the usual case, so it is only a dot. */}
+    {observation.photos.length > 0 && <div className="shots shots-tight">
+      {observation.photos.map((photo, i) => {
+        const w = photoWhere?.(photo.id);
+        return <figure key={photo.id} className="shot" style={{ margin: 0 }}>
+          <div className="shot-pic">
+            <PhotoImage src={photo.dataUrl} alt={photo.caption || `Photograph ${i + 1}`} />
+            <span className="shot-no">Photo {String(i + 1).padStart(2, "0")}</span>
+            {w && <span className={`eng-where eng-where-${w} shot-where`}><span className={w === 'server' ? 'dot dot-ok' : 'dot dot-busy'} /><span className={w === 'server' ? 'shot-where-said' : undefined}>{WHERE[w]}</span></span>}
+            <button type="button" className="shot-remove" onClick={() => onRemovePhoto(photo.id)} aria-label={`Remove photo ${i + 1}`}><span aria-hidden="true">Remove</span></button>
+          </div>
+          <div className="shot-body">
+            <input type="text" value={photo.caption} onChange={(e) => onChange({ ...observation, photos: observation.photos.map((p) => p.id === photo.id ? { ...p, caption: e.target.value } : p) })} placeholder="Add a caption" aria-label={`Caption for photograph ${i + 1}`} />
+          </div>
+        </figure>;
+      })}
     </div>}
   </div>;
 }

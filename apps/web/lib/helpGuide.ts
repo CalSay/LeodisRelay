@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'quicker-update-cards', added: '2026-10-21', audience: 'site', title: 'Straight back to typing, and smaller photos',
+    text: 'If you leave today\'s site update with an empty card, "Carry on with today’s update" now opens that card ready to type, instead of folded. Photos on a card are now small tiles, two to a row on a phone, with the caption box under each and Remove in the corner of the picture, so a few photos no longer push the next card far down. A green dot on a photo means it is on the server; one that is not there yet still says so in words. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'office-words-came-back', added: '2026-10-21', audience: 'site', title: 'What the office wrote, where you look',
     text: 'When the office sends back an issue you put forward as fixed, with a question, or writes on a variation you raised, "Came back from the office" on the home screen now shows who wrote, when, and the first line or two of what they said. So does a note the office leaves on a report you sent. Opening the issue shows it at the top, above "Put forward as fixed", instead of folded away in History (a long note shows its first lines, with "Show all of it"); a variation shows it under the office\'s answer. Once you add anything to it, it counts as answered and stays in the history. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'counts-lead-somewhere', added: '2026-10-21', audience: 'office', title: 'Figures that open what they count',
