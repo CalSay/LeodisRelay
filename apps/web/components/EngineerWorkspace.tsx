@@ -18,6 +18,7 @@ import { EngineerIssueList } from './EngineerIssueList';
 import { IndividualDefect } from './IndividualDefect';
 import { SinceLastVisit } from './SinceLastVisit';
 import { SiteNotesRow } from './SiteNotesRow';
+import { DeliveriesRow } from './DeliveriesRow';
 import { ToolboxTalksRow } from './ToolboxTalksRow';
 import { PermitsRow } from './PermitsRow';
 import { PageTitle } from './PageTitle';
@@ -257,6 +258,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
               <div className="eng-list">
                 <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back && !back.failed ? `${back.reports} on file · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
                 <SiteNotesRow key={projectId} projectId={projectId} href={`/site-notes?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
+                <DeliveriesRow key={`dl-${projectId}`} projectId={projectId} href={`/deliveries?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
                 {projectPage('/diary','Site diary','Every visit, day by day')}
                 {projectPage('/weekly-summary','Weekly summary','The week on one page, for the site meeting')}
                 {projectPage('/photos','Photographs','Every photograph, by location')}

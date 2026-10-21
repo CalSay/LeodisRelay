@@ -9,6 +9,7 @@ import { isDisputedIssue, isNotReviewedIssue, isOverdueIssue } from '@/lib/issue
 import { dateShort, dayLong, whenShort } from '@/lib/dates';
 import { safetyAttention, type SafetyActions } from '@/lib/safetyActions';
 import { permitAttention, type PermitsAll } from '@/lib/permits';
+import { deliveryAttention, type DeliveriesAll } from '@/lib/deliveries';
 
 export { isUnassigned, isVerify, notAcknowledged };
 
@@ -24,6 +25,8 @@ export interface Snapshot {
   safety: SafetyActions | null;
   /** Open permits past their end time on the same projects; null when it could not be read, so no permit line is claimed either way. */
   permits: PermitsAll | null;
+  /** Deliveries still to sort on the same projects; null when it could not be read, so no delivery line is claimed either way. */
+  deliveries: DeliveriesAll | null;
 }
 
 /** Today in the office's calendar, as YYYY-MM-DD, so target dates compare as strings. */
@@ -192,8 +195,8 @@ export const shortRef = (reference: string): string => reference.split('-').slic
 
 /** Everything that needs a person, across the portfolio, most urgent first. */
 export interface AttentionItem { key: string; title: string; sub: string; tag: { label: string; cls: string }; go: string; action?: { label: string; primary?: boolean; kind: 'retry' | 'verify' | 'assign' | 'triage' | 'review' | 'chase' | 'confirm' | 'price' | 'instruct'; issue?: Issue; report?: ReportSummary; variation?: Variation } }
-export function attention(stats: ProjectStats[], day: string, safety?: SafetyActions | null, returnTo = '/office', permits?: PermitsAll | null): AttentionItem[] {
-  const out: AttentionItem[] = [...safetyItems(stats, safety, returnTo), ...permitItems(stats, permits, returnTo)].map(s => ({ key: s.key, title: s.title, sub: s.sub, tag: s.tag, go: s.go }));
+export function attention(stats: ProjectStats[], day: string, safety?: SafetyActions | null, returnTo = '/office', permits?: PermitsAll | null, deliveries?: DeliveriesAll | null): AttentionItem[] {
+  const out: AttentionItem[] = [...safetyItems(stats, safety, returnTo), ...permitItems(stats, permits, returnTo), ...deliveryItems(stats, deliveries, returnTo)].map(s => ({ key: s.key, title: s.title, sub: s.sub, tag: s.tag, go: s.go }));
   for (const s of stats) {
     for (const r of s.failed) out.push({ key: `ne-${r.id}`, title: 'Report could not be processed', sub: `${r.reference} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}. ${r.deliveryError ?? 'The worker gave up on it.'}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${s.code}/report/${r.id}` });
     for (const r of s.pendingReview) out.push({ key: `rv-${r.id}`, title: 'Report awaiting review', sub: `${r.reference} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${s.code}/report/${r.id}`, action: { label: 'Review', kind: 'review', report: r } });
@@ -208,7 +211,9 @@ export function attention(stats: ProjectStats[], day: string, safety?: SafetyAct
   // Safety comes straight after a report the worker gave up on: a tower due its inspection or a
   // safety action open is a risk to people on site today, where an overdue issue is late work.
   // A permit left open past its end time comes with them: nobody has said the fire watch was kept.
-  const order = ['ne', 'tw', 'sa', 'pw', 'si', 'od', 'vx', 'rv', 'dp', 'vf', 'ua'];
+  // A delivery still to sort follows work done with nothing in writing: both are money and time
+  // the office can still recover with a phone call, if it is made while the paperwork is to hand.
+  const order = ['ne', 'tw', 'sa', 'pw', 'si', 'od', 'vx', 'dl', 'rv', 'dp', 'vf', 'ua'];
   const rank = (t: AttentionItem) => { const n = order.indexOf(t.key.slice(0, 2)); return n < 0 ? order.length : n; };
   return out.sort((a, b) => rank(a) - rank(b));
 }
@@ -235,6 +240,18 @@ export function permitItems(stats: ProjectStats[], permits: PermitsAll | null | 
   const shown = new Set(stats.map(s => s.code));
   return permitAttention(permits, d => fmtDay(d)).filter(p => shown.has(p.projectId))
     .map(p => ({ ...p, go: `/permits?${new URLSearchParams({ project: p.projectId, returnTo })}` }));
+}
+
+/**
+ * Deliveries' lines for Needs attention, on the projects in view: one per
+ * project with deliveries short, damaged or wrong and not yet sorted, each
+ * linking to that project's Deliveries page (lib/deliveries.ts `deliveryAttention`).
+ */
+export function deliveryItems(stats: ProjectStats[], deliveries: DeliveriesAll | null | undefined, returnTo: string) {
+  if (!deliveries) return [];
+  const shown = new Set(stats.map(s => s.code));
+  return deliveryAttention(deliveries, d => fmtDay(d)).filter(p => shown.has(p.projectId))
+    .map(p => ({ ...p, go: `/deliveries?${new URLSearchParams({ project: p.projectId, returnTo })}` }));
 }
 
 /** Owners already used on a project, for the assignment dialog's suggestions. */

@@ -47,6 +47,7 @@ const pages={
     {path:`/site-notes?project=${P}`,has:['No notes on this project.']},
     {path:`/toolbox-talks?project=${P}`,has:['No toolbox talks recorded on this project yet.']},
     {path:`/permits?project=${P}`,has:['No permits recorded on this project yet.','no permit open']},
+    {path:`/deliveries?project=${P}`,has:['No deliveries recorded on this project yet.','nothing waiting on a supplier']},
     {path:`/reports/${draft.id}/preview`,has:['Nothing recorded yet. Cards added to the report show here.'],not:[/No actions or decisions arise/]},
     {path:'/help?for=site',has:['New to RELAY? Start with How it works'],not:[/new to you/i],after:async(page,label)=>{
       check(/^How it works/.test(await page.locator('.help-section-title').first().innerText()),`${label}: How it works comes first`);
@@ -67,6 +68,7 @@ const pages={
     {path:`/safety-actions?project=${P}`,has:['No safety inspection has been sent from this project yet.']},
     {path:`/toolbox-talks?project=${P}`,has:['No toolbox talks recorded on this project yet.']},
     {path:`/permits?project=${P}`,has:['No permits recorded on this project yet.','no permit open']},
+    {path:`/deliveries?project=${P}`,has:['No deliveries recorded on this project yet.','nothing waiting on a supplier']},
     {path:`/issue-trend?project=${P}`,has:['No issues in the last 12 weeks.']},
     {path:'/help?for=office',has:['New to RELAY? Start with How it works']},
   ],

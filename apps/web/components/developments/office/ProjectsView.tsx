@@ -15,7 +15,7 @@ import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, f
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, Found, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
-import { WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
+import { WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
 import { signatureMethod } from '@/lib/signature';
 
 /* --------------------------------------------------------------- columns */
@@ -186,10 +186,13 @@ function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectSt
   const safetyLines = safetyItems(scope, ctx.snap?.safety, officeReturn(ctx));
   const safety = [...safetyLines.filter(i => i.kind !== 'inspection'), ...permitItems(scope, ctx.snap?.permits, officeReturn(ctx)), ...safetyLines.filter(i => i.kind === 'inspection')]
     .map(i => ({ key: i.key, ref: i.projectNumber, b: i.title, sub: i.sub, tag: i.tag, go: i.go }));
+  // Deliveries still to sort come after work done with no instruction, as in model.ts `attention`.
+  const deliveries = deliveryItems(scope, ctx.snap?.deliveries, officeReturn(ctx)).map(i => ({ key: i.key, ref: i.projectNumber, b: i.title, sub: i.sub, tag: i.tag, go: i.go }));
   const items = [...failed, ...safety, ...scope.flatMap(st => [
     ...st.pendingReview.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Awaiting review', sub: `${st.project.projectName} · ${r.author}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${st.code}/report/${r.id}` })),
     ...st.overdue.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · ${i.owner || 'unassigned'} · target ${fmtDay(i.targetDate)}`, tag: { label: `${daysLate(i.targetDate, ctx.day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
     ...st.exposedVariations.map(v => ({ key: v.id, ref: shortRef(v.reference), b: v.description, sub: `${st.project.projectName} · work done, no written instruction`, tag: { label: 'Not instructed', cls: 'tag-alert' }, go: `#/projects/${st.code}/variation/${v.id}` })),
+    ...deliveries.filter(d => d.key === `dl-${st.code}`),
     ...st.disputed.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · disputed at review`, tag: { label: 'Triage', cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
     // The office position lists verification and unassigned issues in their own groups above.
     ...(skipActions ? [] : st.verify).map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · closure by ${i.closureSubmittedBy ?? 'unknown'}`, tag: { label: 'Fixed, to check', cls: 'tag-caution' }, go: `#/projects/${st.code}/issue/${i.id}` })),
@@ -247,7 +250,7 @@ function LatestReports({ ctx, reports, showProject }: { ctx: Ctx; reports: Repor
 /** The project's own pages, grouped as on the engineer's home screen. */
 const PROJECT_LINKS: { title: string; links: [string, string][] }[] = [
   { title: 'Issues and safety', links: [['/safety-actions', 'Safety actions'], ['/toolbox-talks', 'Toolbox talks'], ['/permits', 'Permits to work'], ['/issue-trend', 'Issues over time'], ['/handover', 'Before handover']] },
-  { title: 'Reports and records', links: [['/diary', 'Site diary'], ['/weekly-summary', 'Weekly summary'], ['/photos', 'Photographs'], ['/site-notes', 'Notes for the next visit']] },
+  { title: 'Reports and records', links: [['/diary', 'Site diary'], ['/weekly-summary', 'Weekly summary'], ['/photos', 'Photographs'], ['/site-notes', 'Notes for the next visit'], ['/deliveries', 'Deliveries']] },
 ];
 function ProjectLinks({ ctx, projectId, heading: H = 'h4', projectPage }: { ctx: Ctx; projectId: string; heading?: 'h3' | 'h4'; projectPage?: boolean }) {
   return <nav className="sheet-links" aria-label="On this project">
