@@ -16,8 +16,9 @@ import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, f
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, Found, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
-import { WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
+import { WORK_LABEL, notAcknowledged, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
 import { signatureMethod } from '@/lib/signature';
+import { LATEST_DAYS, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
 
 /* --------------------------------------------------------------- columns */
 export function ProjectsView({ ctx }: { ctx: Ctx }) {
@@ -61,7 +62,7 @@ function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
       return <a key={p.id} className={`item ${current?.code === p.id ? 'on' : ''}`} href={`#/projects/${p.id}`}>
         <div className="item-top"><div className="rowtitle">{p.projectName}</div><span className="arrow">›</span></div>
         <div className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager} · {p.division.replace('Leodis ', '')}</div>
-        {s ? <><Bar c={s.rollup} /><Meta c={s.rollup} />{s.pendingVariations.length > 0 && <div className="meta"><span className={s.exposedVariations.length ? 'late' : ''}>{s.pendingVariations.length} variation{s.pendingVariations.length === 1 ? '' : 's'} awaiting instruction</span></div>}</> : <div className="cbar" style={{ marginTop: 8 }} />}
+        {s ? <><Bar c={s.rollup} /><Meta c={s.rollup} /><VisitMeta s={s} day={ctx.day} />{s.pendingVariations.length > 0 && <div className="meta"><span className={s.exposedVariations.length ? 'late' : ''}>{s.pendingVariations.length} variation{s.pendingVariations.length === 1 ? '' : 's'} awaiting instruction</span></div>}</> : <div className="cbar" style={{ marginTop: 8 }} />}
       </a>;
       })}
     </div>)}
@@ -69,10 +70,28 @@ function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
   </div>;
 }
 
+/** "Last visit today · Electrical", or how long an active site has gone without a report. */
+function VisitMeta({ s, day }: { s: ProjectStats; day: string }) {
+  const v = lastVisitWords(s.standing, day);
+  const last = s.standing.last;
+  return <div className="meta"><span className={v.quiet ? 'late' : ''}>{v.quiet ?? (last ? `Last visit ${visitDay(last.visitDate, day)}${last.trade ? ` · ${last.trade}` : ''}` : 'No visit yet')}</span></div>;
+}
+
+/** True on a phone, where the register stands in for the project sheet. */
+function usePhone(): boolean {
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    const m = window.matchMedia('(max-width:700px)'); const on = () => setPhone(m.matches);
+    on(); m.addEventListener('change', on); return () => m.removeEventListener('change', on);
+  }, []);
+  return phone;
+}
+
 type Filter = 'action' | 'reports' | 'issues' | 'variations' | 'drafts';
 function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: string | null; id: string | null }) {
   const [filter, setFilter] = useState<Filter>('action');
   useEffect(() => { setFilter('action'); }, [s.code]);
+  const phone = usePhone();
   const day = ctx.day;
   const reportRow = (r: ReportSummary) => <a key={r.id} className={`arow ${kind === 'report' && id === r.id ? 'on' : ''}`} href={`#/projects/${s.code}/report/${r.id}`}>
     <span className="ref">{shortRef(r.reference)}{r.revision > 1 ? ` r${r.revision}` : ''}</span>
@@ -99,8 +118,8 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   const settled = s.variations.filter(v => v.instruction !== 'pending');
   return <div className="col">
     <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h2>Register · {s.project.projectName}</h2><i>{s.reports.length} report{s.reports.length === 1 ? '' : 's'} · {s.active.length} open</i></div>
-    {/* A phone shows this column in place of the project sheet, so the project's pages come with it. */}
-    <div className="phone-only"><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /></div>
+    {/* A phone shows this column in place of the project sheet, so where the project stands and what site said come first. */}
+    {phone && <div className="phone-only register-standing"><VisitMeta s={s} day={day} /><LatestFromSite ctx={ctx} s={s} shown={2} /></div>}
     <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
       {([['action', `Needs action · ${s.needsAction + onSite.length}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
     </div>
@@ -127,6 +146,8 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
       {settled.length ? settled.map(variationRow) : <div className="empty" style={{ padding: 14 }}>No variations instructed or declined yet.</div>}
     </>}
     {filter === 'drafts' && (s.drafts.length ? s.drafts.map(draftRow) : <div className="empty">No drafts saved to the server on this project.</div>)}
+    {/* And the project's other pages after its records. */}
+    <div className="phone-only"><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /></div>
     <div className="colpad sticky-foot"><div className="rowsub">{filter === 'action' ? `${onSite.length ? 'Safety, permit and delivery lines each open their own page. ' : ''}Needs action hides ${count(s.reports.length - attnReports.length, 'report')}, ${count(s.issues.length - attnIssues.length, 'issue')} and ${count(s.variations.length - attnVariations.length, 'variation')} that need nobody.` : ''} Reports, issues and variations share one column because the office reads them as one stream. Work held only on an engineer’s device is not visible here.</div></div>
   </div>;
 }
@@ -144,44 +165,78 @@ function foundWords(r: ReportSummary): string {
   return parts.join(', ');
 }
 
-/** "2 PM notifications pending · 3 older", never "notified" while any is waiting. */
-function notNotifiedWords(week: number, older: number, received: number): string {
-  const parts = [];
-  if (week) parts.push(`${week} PM notification${week === 1 ? '' : 's'} pending`);
-  if (older) parts.push(week ? `${older} older` : `${older} older PM notification${older === 1 ? '' : 's'} pending`);
-  return parts.length ? parts.join(' · ') : received ? 'project managers notified' : 'none this week';
-}
-
 /* ---------------------------------------------------------------- sheets */
 function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const snap = ctx.snap!;
-  const week = Date.now() - 7 * 86400000;
-  const thisWeek = snap.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week);
-  const overdue = ctx.stats.flatMap(s => s.overdue), notNotified = ctx.stats.flatMap(s => s.notNotified);
-  const pendingVariations = ctx.stats.flatMap(s => s.pendingVariations), exposed = ctx.stats.flatMap(s => s.exposedVariations);
-  const latest = snap.reports.slice(0, 6);
+  const pendingVariations = ctx.stats.flatMap(s => s.pendingVariations);
   const openIssues = snap.issues.filter(isActive).length;
-  // This week's apart from older ones: "7 pending" under "6 received" read as nonsense, but an older one still waiting must not vanish.
-  const thisWeekIds = new Set(thisWeek.map(r => r.id)), pendingThisWeek = notNotified.filter(r => thisWeekIds.has(r.id));
+  const groups = actionGroups(ctx);
   // Read with the rest of the desk, so the button, the bell and Needs attention count from one answer.
   const safety = snap.safety?.totals;
   // Switched off by the office (lib/featureSwitch.ts): no button to a page that is not in use.
   const { safetyRecords } = useFeatures();
+  // Where each project stands comes first: it is the question the office opens RELAY to answer.
+  // The totals, overdue count and latest reports that used to sit here are in that list, the
+  // action groups and the Inbox, so they are no longer repeated.
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h3>Office position</h3><div className="rowsub">{ctx.projects.length} reportable project{ctx.projects.length === 1 ? '' : 's'} · {snap.reports.length} report{snap.reports.length === 1 ? '' : 's'} received · {openIssues} open issue{openIssues === 1 ? '' : 's'} · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link>{safetyRecords && <Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions{safety ? ` · ${safety.open} open` : ''}</Link>}</div></div>
     {!snap.reports.length && !snap.issues.length && !snap.variations.length && <div className="note info office-first" role="status"><span>
       <b>Nothing has come in from site yet.</b> Reports arrive in the Inbox as engineers send them, and their defects and variations fill the Issues and Variations registers. Choose a project to see its sheet, or open Help for how RELAY works.
     </span></div>}
-    <OfficeActionGroups ctx={ctx} />
-    <dl className="tb three"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{notNotifiedWords(pendingThisWeek.length, notNotified.length - pendingThisWeek.length, thisWeek.length)}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Variations pending</dt><dd className={`big ${exposed.length ? 'late' : pendingVariations.length ? 'soon' : ''}`}>{pendingVariations.length}<small>{exposed.length ? `${exposed.length} done without an instruction` : pendingVariations.some(v => v.quotedValue === undefined) ? `${pendingVariations.filter(v => v.quotedValue === undefined).length} still to price` : pendingVariations.length ? 'all priced, awaiting the client' : 'none awaiting instruction'}</small></dd></div></dl>
+    <ActionStrip groups={groups} />
+    <ProjectGlance ctx={ctx} />
+    <ActionGroups groups={groups} />
     <SecH right={<a href="#/issues">All →</a>}>Also needs attention</SecH>
     <AttentionList ctx={ctx} limit={6} skipActions />
-    {/* A phone leaves the wide table to the Inbox; New reports above already lists the latest. */}
-    <div className="office-latest"><SecH right={<a href="#/inbox">All {snap.reports.length} →</a>}>Latest reports</SecH>
-    <LatestReports ctx={ctx} reports={latest} showProject /></div>
     <p className="rowsub" style={{ marginTop: 16 }}>A report is <b>received</b> when the server has it and on file from then on. The email to the project manager is a notification that it came in, and <b>read</b> means someone in the office acknowledged it. Choose a project to drill in.</p>
   </div>;
+}
+
+/** "today", "yesterday" or "Mon 19 Oct". */
+function visitDay(visitDate: string, day: string): string {
+  return recentDay(visitDate, day) ?? fmtDay(visitDate);
+}
+/** The last visit in words, with whether an active site has gone quiet. */
+function lastVisitWords(st: ProjectStanding, day: string): { when: string; who: string; quiet: string | null } {
+  if (!st.last) return { when: 'No visit yet', who: 'no report sent from site', quiet: st.quiet ? 'No report yet' : null };
+  const when = visitDay(st.last.visitDate, day);
+  return { when: when.charAt(0).toUpperCase() + when.slice(1), who: `${st.last.author}${st.last.trade ? `, ${st.last.trade}` : ''}`,
+    quiet: st.quiet ? `No report for ${count(st.workingDaysSince ?? 0, 'working day')}` : null };
+}
+
+/**
+ * Every project on one list, each answering the office's questions in the
+ * same place: when was somebody last there, how much was reported this week
+ * and by whom, what is still open, which variations wait, and how much needs
+ * the office. Built from the records the desk already holds.
+ */
+function ProjectGlance({ ctx }: { ctx: Ctx }) {
+  const day = ctx.day;
+  return <section className="glance" aria-labelledby="glance-h">
+    <SecH right={<Link href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Day by day →</Link>}><span id="glance-h">Where each project stands</span></SecH>
+    {projectStatusGroups(ctx.projects).filter(g => g.projects.length).map(group => <div key={group.status} className="glance-group">
+      <div className="grp">{group.label}<i>{group.projects.length}</i></div>
+      <ul className="glance-list">{group.projects.map(p => {
+        const s = ctx.statOf(p.id); if (!s) return null;
+        const v = lastVisitWords(s.standing, day);
+        const exposed = s.exposedVariations.length, unpriced = s.unpricedVariations.length;
+        // The same count as the project register's Needs action chip; reports not yet read are said beside it.
+        const action = s.needsAction + siteItems(ctx, s).length, unread = s.reports.filter(notAcknowledged).length;
+        return <li key={p.id}><a className="glance-row" href={`#/projects/${p.id}`}>
+          <span className="glance-name"><b>{p.projectName}</b><span className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager}</span></span>
+          <dl className="glance-cells">
+            <div><dt>Last visit</dt><dd className={v.quiet ? 'late' : ''}>{v.when}<small>{v.quiet ?? v.who}</small></dd></div>
+            <div><dt>This week</dt><dd>{count(s.standing.thisWeek, 'visit')}<small>{s.standing.tradesThisWeek.join(', ') || 'nobody yet'}</small></dd></div>
+            <div><dt>Open issues</dt><dd className={s.overdue.length ? 'late' : ''}>{s.active.length}<small>{s.overdue.length ? `${s.overdue.length} overdue` : 'none overdue'}</small></dd></div>
+            <div><dt>Variations waiting</dt><dd className={exposed ? 'late' : unpriced ? 'soon' : ''}>{s.pendingVariations.length}<small>{exposed ? `${exposed} done, not instructed` : unpriced ? `${unpriced} to price` : s.pendingVariations.length ? 'priced, with the client' : 'none waiting'}</small></dd></div>
+            <div><dt>Needs action</dt><dd className={action ? 'soon' : ''}>{action}<small>{action ? 'for the office' : 'nothing for the office'}{unread ? ` · ${count(unread, 'report')} not read` : ''}</small></dd></div>
+          </dl>
+          <span className="arrow" aria-hidden="true">›</span>
+        </a></li>;
+      })}</ul>
+    </div>)}
+  </section>;
 }
 
 /** A project's safety, permit and delivery lines for Needs attention, in the order model.ts `attention` gives them. */
@@ -216,7 +271,8 @@ function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectSt
 }
 
 /** New, not yet read, unassigned and fixed, to check: what a project manager acts on, each with its count. */
-function OfficeActionGroups({ ctx }: { ctx: Ctx }) {
+interface ActionGroup { key: string; title: string; sub: string; n: number; tone: string; all: string; empty: string; rows: ReactNode[] }
+function actionGroups(ctx: Ctx): ActionGroup[] {
   const reports = ctx.stats.flatMap(s => s.reports), issues = ctx.stats.flatMap(s => s.issues);
   const a = officeActions(reports, issues, ctx.day);
   // "Every report has been read" with none received reads as if some had been.
@@ -225,7 +281,7 @@ function OfficeActionGroups({ ctx }: { ctx: Ctx }) {
   const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
   const reportRow = (r: ReportSummary, action?: ReactNode) => <div key={r.id}><a className="rt" href={`#/projects/${r.projectId}/report/${r.id}`}><b>{project(r.projectId)} · {r.author}</b><span>{shortRef(r.reference)} · received {fmtWhen(r.serverAcknowledgedAt)}</span></a>{action}</div>;
   const issueRow = (i: Issue, sub: string, action?: ReactNode) => <div key={i.id}><a className="rt" href={`#/projects/${i.projectId}/issue/${i.id}`}><b>{i.description}</b><span>{project(i.projectId)} · {sub}</span></a>{action}</div>;
-  const groups: { key: string; title: string; sub: string; n: number; tone: string; all: string; empty: string; rows: ReactNode[] }[] = [
+  return [
     { key: 'new', title: 'New reports', sub: `Received ${sinceWords(a.since, ctx.day)}`, n: a.newReports.length, tone: '', all: '#/inbox/show/new', empty: `No reports received ${sinceWords(a.since, ctx.day)}.`,
       rows: a.newReports.slice(0, 4).map(r => reportRow(r, r.acknowledged ? <Tag label="Read" cls="tag-ok" /> : <DeliveryTag r={r} />)) },
     { key: 'notAck', title: 'Not yet read', sub: 'Received, nobody has acknowledged it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: anyReports ? 'Every report has been read.' : 'No reports received yet.',
@@ -235,27 +291,28 @@ function OfficeActionGroups({ ctx }: { ctx: Ctx }) {
     { key: 'verify', title: 'Fixed, to check', sub: 'Put forward as fixed; someone else checks it', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be checked.',
       rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · waiting ${daysSince(i.events.at(-1)?.at)} days`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i })}>Verify</Btn>)) },
   ];
-  // On a phone the groups stack, so their counts are gathered at the top, each a tap from its group.
+}
+/** On a phone the groups stack under the project list, so their counts are gathered at the top, each a tap from its group. */
+function ActionStrip({ groups }: { groups: ActionGroup[] }) {
   const jump = (key: string) => {
     const el = document.querySelector<HTMLElement>(`.act[data-group="${key}"]`);
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     el?.focus({ preventScroll: true });
   };
-  return <>
-  <div className="act-strip" role="group" aria-label="What needs you">{groups.map(g => <button type="button" key={g.key} data-group={g.key} onClick={() => jump(g.key)}><b className={g.n ? g.tone : ''}>{g.n}</b><span>{g.title}</span></button>)}</div>
-  <div className="acts">{groups.map(g => <section key={g.key} className="act" data-group={g.key} tabIndex={-1} aria-label={`${g.title}: ${g.n}`}>
+  return <div className="act-strip" role="group" aria-label="What needs you">{groups.map(g => <button type="button" key={g.key} data-group={g.key} onClick={() => jump(g.key)}><b className={g.n ? g.tone : ''}>{g.n}</b><span>{g.title}</span></button>)}</div>;
+}
+function ActionGroups({ groups }: { groups: ActionGroup[] }) {
+  return <div className="acts">{groups.map(g => <section key={g.key} className="act" data-group={g.key} tabIndex={-1} aria-label={`${g.title}: ${g.n}`}>
     <div className="act-h"><h4>{g.title}</h4><b className={`act-n ${g.n ? g.tone : ''}`}>{g.n}</b></div>
     <div className="act-sub">{g.sub}</div>
     <div className="rmenu">{g.rows.length ? g.rows : <div className="empty">{g.empty}</div>}</div>
     {g.n > 0 && <a className="act-all" href={g.all}>{g.n > g.rows.length ? `Show all ${g.n}` : 'Open the list'} →</a>}
-  </section>)}</div>
-  </>;
+  </section>)}</div>;
 }
 
-function LatestReports({ ctx, reports, showProject }: { ctx: Ctx; reports: ReportSummary[]; showProject?: boolean }) {
-  const code = (r: ReportSummary) => ctx.projects.find(p => p.id === r.projectId)?.id ?? '';
-  return <table className="reg tight"><thead><tr><th>Ref</th>{showProject && <th>Project</th>}<th>Engineer</th><th>Received</th><th>Found</th><th>Status</th></tr></thead><tbody>
-    {reports.length ? reports.map(r => <tr key={r.id} className="clickable" onClick={() => ctx.go(`#/projects/${code(r)}/report/${r.id}`)}><td><span className="ref">{shortRef(r.reference)}</span></td>{showProject && <td>{ctx.projects.find(p => p.id === r.projectId)?.projectName ?? r.projectId}</td>}<td>{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due">{r.serverAcknowledgedAt ? fmtWhen(r.serverAcknowledgedAt) : '—'}</td><td><Found r={r} /></td><td>{r.review === 'pending' ? <Tag label="To review" cls="tag-caution" /> : r.review === 'returned' ? <Tag label="Returned" cls="tag-alert" /> : r.acknowledged ? <Tag label="Read" cls="tag-ok" /> : <DeliveryTag r={r} />}</td></tr>) : <tr><td colSpan={showProject ? 6 : 5} className="empty">No reports received yet.</td></tr>}
+function LatestReports({ ctx, reports }: { ctx: Ctx; reports: ReportSummary[] }) {
+  return <table className="reg tight"><thead><tr><th>Ref</th><th>Engineer</th><th>Received</th><th>Found</th><th>Status</th></tr></thead><tbody>
+    {reports.length ? reports.map(r => <tr key={r.id} className="clickable" onClick={() => ctx.go(`#/projects/${r.projectId}/report/${r.id}`)}><td><span className="ref">{shortRef(r.reference)}</span></td><td>{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due">{r.serverAcknowledgedAt ? fmtWhen(r.serverAcknowledgedAt) : '—'}</td><td><Found r={r} /></td><td>{r.review === 'pending' ? <Tag label="To review" cls="tag-caution" /> : r.review === 'returned' ? <Tag label="Returned" cls="tag-alert" /> : r.acknowledged ? <Tag label="Read" cls="tag-ok" /> : <DeliveryTag r={r} />}</td></tr>) : <tr><td colSpan={5} className="empty">No reports received yet.</td></tr>}
   </tbody></table>;
 }
 
@@ -280,23 +337,74 @@ function ProjectLinks({ ctx, projectId, heading: H = 'h4', projectPage }: { ctx:
 
 function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   const p = s.project;
+  // A phone hides the sheet behind the register, which shows Latest from site itself.
+  const phone = usePhone();
   const month = Date.now() - 30 * 86400000;
   const engineers = [...new Set(s.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > month).map(r => r.author))];
-  const week = Date.now() - 7 * 86400000;
-  const thisWeek = s.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week);
+  const v = lastVisitWords(s.standing, ctx.day);
+  // Where it stands, then what site said, then what needs the office; the project's other pages and its details after them.
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link></div></div>
-    <dl className="tb"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{s.reports.length ? `${s.reports.length} on file` : 'none yet'}{s.notNotified.length ? ` · ${s.notNotified.length} PM notification${s.notNotified.length === 1 ? '' : 's'} pending` : ''}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Fixed, to check</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `put forward ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing waiting to be checked'}</small></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></dd></div></dl>
+    <dl className="tb"><div><dt>Last visit</dt><dd className={`big ${v.quiet ? 'late' : ''}`}>{v.when}<small>{v.quiet ? `${v.quiet} · ` : ''}{v.who} · {count(s.standing.thisWeek, 'visit')} this week</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'} · {s.active.length} open</small></dd></div><div><dt>Fixed, to check</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `put forward ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing waiting to be checked'}</small></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></dd></div></dl>
     <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
-    <dl className="tb" style={{ marginTop: 12 }}><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
-    <ProjectLinks ctx={ctx} projectId={p.id} />
+    {!phone && <LatestFromSite ctx={ctx} s={s} />}
     <SecH>Needs attention</SecH>
     <AttentionList ctx={ctx} s={s} limit={6} />
     <SecH right={<span className="r">{s.reports.length} on file</span>}>Latest reports</SecH>
     <LatestReports ctx={ctx} reports={s.reports.slice(0, 5)} />
     {s.drafts.length > 0 && <p className="rowsub" style={{ marginTop: 12 }}>{s.drafts.length} draft{s.drafts.length === 1 ? '' : 's'} in progress on site. Contents stay private until sent.</p>}
+    <ProjectLinks ctx={ctx} projectId={p.id} />
+    <dl className="tb" style={{ marginTop: 12 }}><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
   </div>;
+}
+
+/** How many progress lines each trade shows before "and N more in the report"; a phone's register shows two. */
+const LINES_SHOWN = 4;
+/**
+ * What site last said about progress, trade by trade: each trade's newest
+ * site update in the last fortnight, its progress and access cards in the
+ * order written. Defects and variations are in the registers, so they are
+ * counted here, not repeated. Reads the reports the register lists.
+ */
+function LatestFromSite({ ctx, s, shown = LINES_SHOWN }: { ctx: Ctx; s: ProjectStats; shown?: number }) {
+  const latest = s.standing.latest;
+  const ids = latest.map(r => r.id).join(',');
+  const [loaded, setLoaded] = useState<{ ids: string; reports: Map<string, Report> } | null>(null);
+  const [failed, setFailed] = useState('');
+  // A load that failed is tried again with the desk's next refresh.
+  const retry = failed === ids ? ctx.snap?.loadedAt : '';
+  useEffect(() => {
+    if (!ids) return;
+    let stopped = false; setFailed('');
+    Promise.all(ids.split(',').map(id => getReport(id)))
+      .then(rs => { if (!stopped) setLoaded({ ids, reports: new Map(rs.filter((r): r is Report => !!r).map(r => [r.id, r])) }); })
+      .catch(() => { if (!stopped) setFailed(ids); });
+    return () => { stopped = true; };
+  }, [ids, retry]);
+  const body = !latest.length ? <div className="empty" style={{ padding: 14 }}>No site update in the last {LATEST_DAYS} days.</div>
+    : failed === ids ? <div className="empty" style={{ padding: 14 }}>The latest reports could not be loaded just now. RELAY will try again; each one also opens from the project’s reports.</div>
+    : loaded?.ids !== ids ? <div className="loading" style={{ minHeight: 80 }}>Loading what site said</div>
+    : <div className="from-site">{latest.map(r => {
+      const full = loaded.reports.get(r.id); const lines = full ? progressLines(full) : [];
+      const others = foundOthers(r);
+      return <article key={r.id} className="from-site-visit">
+        <a className="from-site-h" href={`#/projects/${s.code}/report/${r.id}`}><b>{r.authorTrade ?? 'Trade not recorded'}</b><span>{r.author} · {visitDay(r.visitDate, ctx.day)} · <span className="ref">{shortRef(r.reference)}</span></span><span className="arrow" aria-hidden="true">›</span></a>
+        {lines.length ? <ul>{lines.slice(0, shown).map(l => <li key={l.id}>{l.kind === 'access' && <span className="kind tone-access">Access</span>}<b>{l.location || 'No location'}</b>{l.text ? ` — ${l.text}` : ''}</li>)}</ul>
+          : <p className="rowsub">{full ? 'No progress written on this visit.' : 'This report could not be opened here.'}</p>}
+        {(lines.length > shown || others) && <p className="rowsub">{lines.length > shown ? `And ${lines.length - shown} more in the report.` : ''}{lines.length > shown && others ? ' ' : ''}{others ? `Also raised ${others}.` : ''}</p>}
+      </article>;
+    })}</div>;
+  return <section aria-labelledby={`from-site-${s.code}`}>
+    <SecH right={<span className="r">each trade’s newest update</span>}><span id={`from-site-${s.code}`}>Latest from site</span></SecH>
+    {body}
+  </section>;
+}
+/** "2 defects and 1 variation", or '' when the visit raised neither. */
+function foundOthers(r: ReportSummary): string {
+  const k = r.kindCounts; if (!k) return r.defectCount ? count(r.defectCount, 'defect') : '';
+  const parts = [k.defect ? count(k.defect, 'defect') : '', k.instruction ? count(k.instruction, 'variation') : ''].filter(Boolean);
+  return parts.join(' and ');
 }
 
 /* ---------------------------------------------------------------- reader */

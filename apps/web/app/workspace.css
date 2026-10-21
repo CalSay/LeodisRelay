@@ -219,7 +219,8 @@ body:has(.ws){overflow:hidden auto}
 .ws .project-group-active{--project-tone:var(--ok);--project-wash:var(--ok-wash)}
 .ws .project-group-dlp{--project-tone:var(--caution);--project-wash:var(--caution-wash)}
 .ws .arow{display:flex;align-items:center;gap:var(--s3);padding:var(--s2) var(--s4);border-bottom:1px solid var(--line);border-left:2px solid transparent;width:100%;text-align:left}
-.ws .arow:hover{background:var(--sunken)}
+/* Only where there is a pointer: a tap on a phone would leave the row shaded, and an alert tag on it short of contrast. */
+@media (hover:hover){.ws .arow:hover{background:var(--sunken)}}
 .ws .arow.on{background:var(--acc-wash);border-left-color:var(--acc)}
 .ws .arow .ref{font-size:11px;width:76px;flex:none}
 .ws .arow .nm{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -361,12 +362,10 @@ body:has(.ws){overflow:hidden auto}
   .ws .act .rmenu>div>.btn,.ws .act .rmenu>div>.btn-q,.ws .act .rmenu>div>.tag{flex:none}
   .ws .act-all{display:flex;align-items:center;min-height:44px;padding:0 var(--s3)}
   .ws .act .empty{padding:var(--s2) 0}
-  .ws .office-latest{display:none}
-  /* A phone opens on the office position, with the project list after it. */
+  /* A phone opens on the office position alone: its "Where each project stands" list is the project list. */
   .ws .cols[data-depth="1"]{display:flex;flex-direction:column}
-  .ws .cols[data-depth="1"] .col{display:flex}
-  .ws .cols[data-depth="1"] .col-main{border-bottom:1px solid var(--line-2)}
-  .ws .cols[data-depth="1"] .col-projects{border-right:0}
+  .ws .cols[data-depth="1"] .col-main{display:flex}
+  .ws .cols[data-depth="1"] .col-projects{display:none}
 }
 /* Office registers: a table on the desk, one card per row on a phone. Cells
    carry data-label, which the phone layout shows beside each value because
@@ -425,4 +424,49 @@ body:has(.ws){overflow:hidden auto}
   .ws .sheet-links{grid-template-columns:1fr}
   .ws .phone-only{display:block;border-bottom:1px solid var(--line)}
   .ws .phone-only .sheet-links{margin:0;border:0;padding:12px 16px}
+}
+
+/* Where each project stands (office position): one row per project on the
+   desk, the name over a two-column grid of answers on a phone. */
+.ws .glance{margin-top:var(--s4)}
+.ws .glance-group+.glance-group{margin-top:var(--s3)}
+.ws .glance-list{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-top:0;background:var(--panel)}
+.ws .glance-list li+li{border-top:1px solid var(--line)}
+.ws .glance-row{display:grid;grid-template-columns:minmax(170px,1.3fr) 5fr 14px;gap:var(--s3);align-items:center;padding:var(--s3) var(--s4);color:var(--text);text-decoration:none;min-height:44px}
+.ws .glance-row:hover{background:var(--panel-2)}
+.ws .glance-row:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.ws .glance-row .arrow{font-family:var(--mono);font-size:12px;color:var(--text-3)}
+.ws .glance-name{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ws .glance-name b{font-weight:500;font-size:15px;overflow-wrap:anywhere}
+.ws .glance-cells{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:var(--s3);margin:0}
+.ws .glance-cells dt{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3)}
+.ws .glance-cells dd{margin:2px 0 0;font-size:18px;font-weight:500;font-variant-numeric:tabular-nums;line-height:1.2}
+.ws .glance-cells dd small{display:block;font-size:12px;font-weight:400;color:var(--text-3);margin-top:2px;overflow-wrap:anywhere}
+.ws .glance-cells dd.late small{color:var(--alert)}
+/* Latest from site: each trade's newest site update, its progress lines under it. */
+.ws .from-site{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--s3)}
+.ws .from-site-visit{border:1px solid var(--line);background:var(--panel);padding:var(--s3) var(--s4);min-width:0}
+.ws .from-site-h{display:grid;grid-template-columns:1fr 14px;column-gap:var(--s2);color:var(--text);text-decoration:none;min-height:44px;align-content:center}
+.ws .from-site-h b{font-weight:500}
+.ws .from-site-h span:not(.arrow){grid-column:1;font-size:12px;color:var(--text-3)}
+.ws .from-site-h .arrow{grid-column:2;grid-row:1 / span 2;align-self:center;font-family:var(--mono);color:var(--text-3)}
+.ws .from-site-h:hover b{text-decoration:underline}
+.ws .from-site ul{margin:var(--s2) 0 0;padding:0 0 0 var(--s4);font-size:13px;line-height:1.45}
+.ws .from-site li+li{margin-top:var(--s1)}
+.ws .from-site li .kind{margin-right:6px}
+.ws .from-site li b{font-weight:500}
+.ws .from-site-visit>.rowsub{margin-top:var(--s2)}
+@media (max-width:700px){
+  .ws .glance-row{grid-template-columns:1fr 14px;padding:var(--s3)}
+  /* Last visit and this week share the first row; issues, variations and the office's count the second. */
+  .ws .glance-cells{grid-column:1;grid-template-columns:repeat(6,minmax(0,1fr));row-gap:var(--s2)}
+  .ws .glance-cells>div{grid-column:span 2}
+  .ws .glance-cells>div:nth-child(-n+2){grid-column:span 3}
+  /* Needs attention on a phone: the reference above the line, so the words get the width. */
+  .ws .sheet>.rmenu>a{flex-wrap:wrap;row-gap:2px}
+  .ws .sheet>.rmenu>a>.ref{width:100%}
+  .ws .glance-row .arrow{grid-column:2;grid-row:1 / span 2}
+  .ws .register-standing{padding:var(--s2) var(--s4) var(--s3)}
+  .ws .register-standing .meta{margin-top:0}
+  .ws .from-site{grid-template-columns:1fr}
 }

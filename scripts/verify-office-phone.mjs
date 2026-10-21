@@ -1,8 +1,9 @@
 // Browser check: on a phone the office desk opens on the office position, so
 // a project manager away from a desk sees the four action groups (new
 // reports, not yet read, unassigned issues, ready to verify) with their counts
-// and buttons, and the project list follows below. The desk at 1440px keeps
-// its layout: the project column on the left, two groups to a row.
+// and buttons, with "Where each project stands" between their counts and the
+// groups standing in for the project list. The desk at 1440px keeps its
+// layout: the project column on the left, two groups to a row.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 // RELAY_SCREENSHOT_DIR=<dir> saves the office position at 320px, 390px and 1440px, light and dark.
 import assert from 'node:assert/strict';
@@ -54,8 +55,7 @@ try {
       await page.goto(`${base}/office#/projects`);await group(page,'verify').waitFor();
       if(shot){await page.screenshot({path:join(shot,`office-phone-${width}-${colorScheme}.png`)});await page.screenshot({path:join(shot,`office-phone-${width}-${colorScheme}-full.png`),fullPage:true});}
       const cols=await visibleCols(page);
-      assert.deepEqual(cols.map(c=>c.head),['Overview','Projects'],`${label}: the office position and the project list both show`);checks++;
-      assert.ok(cols[0].top<cols[1].top,`${label}: the office position comes first`);checks++;
+      assert.deepEqual(cols.map(c=>c.head),['Overview'],`${label}: the office position alone, its project list standing in for the column`);checks++;
       assert.ok(await group(page,'new').isVisible(),`${label}: the action groups are on screen`);checks++;
       assert.deepEqual([await count(page,'new'),await count(page,'notAck'),await count(page,'unassigned'),await count(page,'verify')],[2,2,1,1],`${label}: each group's count`);checks++;
       // The four counts sit together at the top, each a tap away from its group.
@@ -78,11 +78,13 @@ try {
       const long=group(page,'unassigned').locator('a.rt b').first();
       assert.ok(await long.evaluate(e=>e.scrollWidth<=e.clientWidth),`${label}: a long issue description wraps rather than being cut`);checks++;
       assert.ok(await overflow(page)<=0,`${label}: no horizontal scroll`);checks++;
-      assert.equal(await page.locator('.office-latest').isVisible(),false,`${label}: the wide latest reports table is left to the Inbox`);checks++;
-      // A project is still one tap away.
-      assert.equal(await page.evaluate(()=>document.querySelector('.cols > .col')?.classList.contains('col-main')),true,`${label}: the office position comes first in reading order`);checks++;
-      const item=page.locator('.col-projects a.item').first();await item.scrollIntoViewIfNeeded();
-      assert.ok(await page.evaluate(()=>scrollY)>300,`${label}: the project list is below the office position`);checks++;
+      assert.equal(await page.locator('.office-latest').count(),0,`${label}: no latest reports table; the Inbox has them`);checks++;
+      // A project is one tap away, straight under the counts.
+      await page.evaluate(()=>scrollTo(0,0));
+      const item=page.locator('.glance-row').first();
+      const itemBox=await item.boundingBox(),stripBox=await page.locator('.act-strip').boundingBox(),groupBox=await group(page,'new').boundingBox();
+      assert.ok(stripBox.y<itemBox.y&&itemBox.y<groupBox.y,`${label}: the project list sits between the counts and the groups`);checks++;
+      assert.ok(itemBox.height>=44,`${label}: a project row is big enough to tap`);checks++;
       await item.tap();
       await page.locator('.cols[data-depth="2"]').waitFor();
       assert.deepEqual((await visibleCols(page)).map(c=>c.head)[0].startsWith('Register'),true,`${label}: a project opens its register`);checks++;
@@ -102,7 +104,7 @@ try {
     assert.equal(await page.locator('.act-strip').isVisible(),false,`${label}: no count tiles on the desk`);checks++;
     const tops=await page.locator('.act').evaluateAll(els=>els.map(e=>Math.round(e.getBoundingClientRect().top)));
     assert.equal(new Set(tops).size,2,`${label}: two groups to a row`);checks++;
-    assert.ok(await page.locator('.office-latest').isVisible(),`${label}: latest reports still shown`);checks++;
+    assert.ok(await page.locator('.glance-row').first().isVisible(),`${label}: where each project stands is shown on the desk too`);checks++;
     assert.ok(await overflow(page)<=0,`${label}: no horizontal scroll`);checks++;
     await desk.close();
   }

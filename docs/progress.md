@@ -4,6 +4,72 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Office view of project progress
+
+- Why: Cal, 07:02 today: RELAY is for site auditing of project progress and
+  has to get the office the information it needs. A pass on /office from the
+  seat of a manager who has to know where every project stands. Not a
+  `docs/tasks.json` task, so no status changed there.
+- Walked: the office position, project sheet, phone register, Site coverage
+  and Weekly summary at 1440px dark and 390px light, over three projects with
+  a month of seeded reports. For each project: when was it last visited, what
+  progress was reported, what is outstanding, which variations wait, what
+  needs the office. Last visit and progress were on no office screen (only
+  Site coverage, one page away); the overview answered "what needs the
+  office" but not "where does each project stand"; on a phone the project
+  list sat about 5,000px down, under every other list.
+- Changed (decisions Claude's):
+  - Office position opens with "Where each project stands": one row a
+    project, Active then Defects liability, each giving last visit (who and
+    trade), visits this week and by which trades, open issues and how many
+    overdue, variations waiting (done without an instruction, to price), and
+    the office's count. An active site with no report for three working days
+    is marked, as Site coverage marks it; a defects liability site never is.
+    Rules in `lib/projectStanding.ts`, counted as Site coverage counts (a
+    sent correction stands in for what it corrects; inspections are visits).
+  - Cut from the overview: the "Received this week / Overdue actions /
+    Variations pending" block (now per project in the list) and the latest
+    reports table (the New reports group and the Inbox have them). "PM
+    notifications pending" goes with the block: it is an outbox state, still
+    on each report's tag.
+  - On a phone, the overview's list replaces the second project column that
+    sat under everything; the four count tiles stay on top.
+  - Project sheet: the first figure is now Last visit (with visits this
+    week), and "Latest from site" shows each trade's newest site update from
+    the last fortnight: its progress and access lines in the engineer's
+    words (four, then "and N more"), with defects and variations counted, not
+    repeated. The project's own pages and its details (project manager,
+    client account, review, engineers) moved below its reports.
+  - Phone register (which stands in for the sheet): starts with the last
+    visit and Latest from site (two lines a trade); the project's pages moved
+    after its records. The project column on the desk gives each project's
+    last visit, or that it has gone quiet.
+  - Rows no longer stay shaded after a tap on a phone (`.arow:hover` only
+    where there is a pointer): the new check's axe run found an alert tag on
+    a tapped row at 4.32:1.
+- Nothing new is asked of engineers; nothing sends, writes to SharePoint or
+  deletes. Help: the office day steps and What's new "Where each project
+  stands".
+- Checks: `npm run typecheck`, `npm test` (146 + 436; new
+  `tests/projectStanding.test.ts`), `npm run build`. New
+  `scripts/verify-office-progress.mjs` (74 checks: the five answers per
+  project and the count matching the register, quiet and defects liability sites, a correction counted once,
+  inspections left out of Latest from site, words of the correction not the
+  original, what is left out said, the row and trade headings opening the
+  right pages, a report that will not load, a project with no recent update,
+  axe at 1440px dark and 390px light, tap sizes, no sideways scroll; passed
+  five runs). Updated for the new layout: `verify-office-landing`,
+  `verify-office-phone`, `verify-day-walkthrough` (reads the project's row in
+  place of the cut "Received this week"), `verify-first-time-use`,
+  `verify-home-and-sheet` (links after Needs attention / after the
+  register). Every browser check run after merging main (#85): see the PR.
+  Screenshots before and after in the project files,
+  `ui-review/office-progress/`.
+- Not verified: a real phone or tablet, a screen reader, the live server.
+- Proposed, not built: a "Behind" flag per project needs a programme or
+  target dates RELAY does not hold, so it was left out; the Weekly summary
+  could open from each project row.
+
 ## 2026-10-21 — Simpler RELAY for site engineers
 
 - Why: Cal, 07:02 today: too much health and safety and checking of outside
