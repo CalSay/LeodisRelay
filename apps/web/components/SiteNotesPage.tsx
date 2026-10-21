@@ -8,12 +8,15 @@ import { useProjects } from './ProjectContext';
 import { canManage } from '@/lib/auth/access';
 import { clientId } from '@/lib/clientId';
 import { DONE_DAYS, NOTE_MAX, type ProjectNotes, type SiteNote } from '@/lib/siteNotes';
+import { keepProjectNotesOnDevice } from '@/lib/offlineNotes';
 import { safeViewReturn, backLabel } from '@/lib/viewNavigation';
 
 /**
  * Notes for the next visit: word left on a project for whoever is on site
  * next, by an engineer or the office. Not part of any report and never sent;
  * a note stays until someone marks it done with. Rules in `lib/siteNotes.ts`.
+ * The open notes are kept on the phone as they are read, for the no-signal
+ * page to show (`lib/offlineNotes.ts`).
  */
 
 type Loaded = ProjectNotes & { live: boolean };
@@ -34,6 +37,7 @@ const who = (n: SiteNote) => `${n.by}${n.byTrade ? ` · ${n.byTrade}` : ''}`;
 
 export function SiteNotesPage({ initialProject, returnTo }: { initialProject: string; returnTo?: string | undefined }) {
   const principal = usePrincipal();
+  const principalId = principal?.id;
   const projects = useProjects();
   const router = useRouter();
   const [projectId, setProjectId] = useState(projects.some(p => p.id === initialProject) ? initialProject : projects.length === 1 ? projects[0]!.id : '');
@@ -65,6 +69,11 @@ export function SiteNotesPage({ initialProject, returnTo }: { initialProject: st
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'The notes could not be loaded.'); });
     return () => { cancelled = true; };
   }, [projectId, retry]);
+
+  // Whatever the server last said is what this phone keeps for reading with no signal.
+  useEffect(() => {
+    if (data && principalId) keepProjectNotesOnDevice(principalId, data.projectId, data.open);
+  }, [data, principalId]);
 
   // The address carries the project, so a reload or a shared link opens the same notes.
   const q = new URLSearchParams();

@@ -77,6 +77,13 @@ label.btn{position:relative}
 .choice.confirm{margin-top:12px;font-weight:600;font-size:14.5px;line-height:1.4}
 .typed-name{margin:0;color:#111;font-size:22px;font-weight:600}.typed-note{margin:6px 0 0;color:#4e5158;font-size:13px}
 .signed-ink{background:#fff;border:1px solid var(--line);border-radius:3px;padding:8px;margin:12px 0;max-width:420px}.signed-ink img{display:block;width:100%;height:auto}
+.nproj{border-top:1px solid var(--line);margin-top:12px;padding-top:4px}
+.nproj summary{cursor:pointer;min-height:48px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:600}
+.nproj summary .s{font-weight:400;color:var(--text-2);font-size:14px}
+.nsaved{margin:0 0 8px;font-size:14px;color:var(--text-2)}.nsaved.old{color:var(--alert)}
+.nlist{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.nlist li{border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:3px;padding:10px 12px;background:var(--panel)}
+.nlist p{margin:0;white-space:pre-wrap;overflow-wrap:anywhere}.nlist .meta{margin-top:4px;font-size:13.5px;color:var(--text-2);white-space:normal}
 button:disabled{opacity:.55;cursor:not-allowed}
 label.field input:disabled,label.field textarea:disabled,label.field select:disabled{background:var(--panel-2);color:var(--text);opacity:1}
 </style><script src="/offline.js" defer></script></head>
@@ -88,6 +95,11 @@ label.field input:disabled,label.field textarea:disabled,label.field select:disa
 <p class="lead">Everything you add here is kept on this phone, photos too. It goes to the server by itself the next time RELAY opens with signal. Nothing reaches the office until you sign it: an inspection can be signed here, and a site update is signed and sent in RELAY.</p>
 <div id="back" class="panel back" hidden><p><strong>Signal is back.</strong> Open RELAY to put what is on this phone onto the server and send any inspection you have signed.</p><a class="btn primary" href="/engineer">Open RELAY</a></div>
 <p id="status" role="status">Checking this phone…</p><p id="error" role="alert"></p>
+<section id="notes" class="panel" aria-labelledby="notes-title" hidden>
+<h2 id="notes-title">Notes for the next visit</h2>
+<p class="hint">Kept on this phone the last time RELAY opened with signal, so notes left or marked done with since then are not here. Read only: leave a note or mark one done with in RELAY once there is signal.</p>
+<div id="notes-list"></div>
+</section>
 <section id="start" class="panel" aria-labelledby="start-title" hidden>
 <h2 id="start-title">Start a site update</h2>
 <fieldset id="start-types" class="types" hidden><legend class="lbl">What are you writing?</legend><div id="start-choices" class="choices"></div></fieldset>

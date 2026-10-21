@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { ApiError, createReport, getReport, listReports, projectIssues, projectVariations } from '@/lib/api';
 import { listHeld, type HeldDraft } from '@/lib/localDraft';
 import { offlineProjectsKey } from '@/lib/offlineStart';
+import { keepNotesOnDevice } from '@/lib/offlineNotes';
 import { unfinishedReports, type UnfinishedReport } from '@/lib/unfinishedReports';
 import type { FixtureProject } from '@/lib/fixtures';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
@@ -121,6 +122,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   useEffect(() => {
     if (!principal) return;
     try { localStorage.setItem(offlineProjectsKey(principal.id),JSON.stringify(projects.map(p => ({ id:p.id, projectNumber:p.projectNumber, projectName:p.projectName })))); } catch {}
+    // And the open notes for the next visit on those projects, to read with no signal (offlineNotes.ts).
+    void keepNotesOnDevice(principal.id);
   },[principal,projects]);
 
   // Copies on this device that the server has not acknowledged. One the server
