@@ -1,7 +1,8 @@
 'use client';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
-import { issueCommand, reviewReportDecision, variationCommand } from '@/lib/api';
+import type { FixtureProject } from '@/lib/fixtures';
+import { issueCommand, raiseVariation, reviewReportDecision, variationCommand } from '@/lib/api';
 import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, expectedCost, fmtMoney, fmtPct, marginPct, readCosting, suggestedQuote, type Costing } from '@/lib/variations';
 import { Modal, formValues, toast } from '@/components/workspace/hooks';
 import { InstallRelay } from '@/components/InstallRelay';
@@ -21,6 +22,7 @@ export type Dialog =
   | { kind: 'variation-decline'; variation: Variation }
   | { kind: 'variation-reopen'; variation: Variation }
   | { kind: 'variation-details'; variation: Variation }
+  | { kind: 'variation-new'; projects: FixtureProject[]; projectId?: string; opened: (v: Variation) => void }
   | { kind: 'help' };
 
 /**
@@ -32,6 +34,8 @@ export type Dialog =
 export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done: () => void }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  // One identity per opened dialog: pressing the button twice, or retrying after a dropped connection, never raises a second variation.
+  const [requestId] = useState(() => crypto.randomUUID());
   const shell = (title: string, sub: string, body: ReactNode, foot: ReactNode) => <>
     <div className="dlg-head"><div>{sub && <div className="crumbs">{sub}</div>}<h2>{title}</h2></div><button type="button" className="x" onClick={close} aria-label="Close">×</button></div>
     <div className="dlg-body">{body}{error && <div className="note bad" style={{ margin: 0 }}><span>{error}</span></div>}</div>
@@ -138,7 +142,7 @@ export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done
       return decline ? `${v.reference} declined.` : `${v.reference} reopened; it is awaiting instruction again.`;
     })}>
       {shell(decline ? 'Decline' : 'Reopen', `${v.reference} · ${v.location || 'no location'}`, <>
-        <div className={`note ${decline ? 'bad' : 'warn'}`} style={{ margin: 0 }}><span><b>{v.description}</b><br />{decline ? 'Declined says the client will not instruct it, or Leodis will not do it. The variation stays on the register as declined; it is not deleted.' : v.instruction === 'instructed' ? 'Reopening an instructed variation puts it back to awaiting instruction. The recorded instruction stays in the history.' : 'Reopening a declined variation puts it back to awaiting instruction.'}{v.workDone && decline && ' This work has already been carried out; declining leaves it unrecoverable unless the record is corrected.'}</span></div>
+        <div className={`note ${decline ? 'bad' : 'warn'}`} style={{ margin: 0 }}><span><b>{v.description}</b><br />{decline ? 'Declined says the client will not instruct it, or Leodis will not do it. The variation stays on the register as declined; it is not deleted.' : v.instruction === 'instructed' ? 'Reopening an instructed variation puts it back to awaiting instruction. The recorded instruction stays in the history.' : v.instruction === 'within_contract' ? 'Reopening a variation marked within contract puts it back to awaiting instruction, so it can be priced and charged.' : 'Reopening a declined variation puts it back to awaiting instruction.'}{v.workDone && decline && ' This work has already been carried out; declining leaves it unrecoverable unless the record is corrected.'}</span></div>
         <div className="f"><label>Reason · recorded on the variation</label><textarea name="note" placeholder="Why" autoFocus /></div>
       </>, <Foot label={decline ? 'Decline' : 'Reopen'} danger={decline} />)}
     </form></Modal>;
@@ -161,6 +165,32 @@ export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done
         <div className="f"><label>Note · optional</label><textarea name="note" placeholder="What changed and why" /></div>
         <p className="rowsub" style={{ margin: 0 }}>The engineer’s original wording stays in the history. Ticking “already carried out” puts it at the top of Attention until it is instructed: that is work Leodis cannot yet invoice.</p>
       </>, <Foot label="Save details" />)}
+    </form></Modal>;
+  }
+  if (d.kind === 'variation-new') {
+    const fixed = d.projects.find(p => p.id === d.projectId);
+    return <Modal className="ws-dialog" onClose={close}><form onSubmit={submit(async f => {
+      const project = d.projects.find(p => p.id === f.projectId);
+      if (!project) throw new Error('Choose the project.');
+      if (!f.description?.trim()) throw new Error('Describe the variation.');
+      const v = await raiseVariation({ requestId, projectId: project.id, description: f.description, location: f.location ?? '', trade: f.trade ?? '', reason: f.reason ?? '',
+        workDone: f.workDone === 'on', askedBy: f.askedBy ?? '', note: f.note ?? '' });
+      d.opened(v);
+      return `${v.reference} added to ${project.projectName}. It needs a quote.`;
+    })}>
+      {shell('Add a variation', fixed ? `${fixed.projectNumber} · ${fixed.projectName}` : 'Raised by the office', <>
+        <div className="f"><label htmlFor="vn-projectId">Project</label><select id="vn-projectId" name="projectId" defaultValue={d.projectId ?? ''} autoFocus={!fixed}><option value="" disabled>Choose a project</option>{d.projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} · {p.projectName}</option>)}</select></div>
+        <div className="f"><label htmlFor="vn-description">Variation</label><textarea id="vn-description" name="description" placeholder="What is being asked for, beyond the contract" autoFocus={!!fixed} /></div>
+        <div className="f-row three">
+          <div className="f"><label htmlFor="vn-location">Location</label><input id="vn-location" name="location" placeholder="L1 plantroom" /></div>
+          <div className="f"><label htmlFor="vn-trade">Trade</label><select id="vn-trade" name="trade" defaultValue=""><option value="">Not set</option>{VARIATION_TRADES.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+          <div className="f"><label htmlFor="vn-reason">Reason</label><select id="vn-reason" name="reason" defaultValue=""><option value="">Not set</option>{VARIATION_REASONS.map(r => <option key={r} value={r}>{r}</option>)}</select></div>
+        </div>
+        <div className="f"><label htmlFor="vn-askedBy">Asked for by · optional</label><input id="vn-askedBy" name="askedBy" placeholder="Name and company" /></div>
+        <div className="f check"><input id="vn-done" name="workDone" type="checkbox" /><label htmlFor="vn-done">Work already carried out without a written instruction</label></div>
+        <div className="f"><label htmlFor="vn-note">Note · optional</label><textarea id="vn-note" name="note" placeholder="How the office heard about it: client email of 18 Sep, site meeting" /></div>
+        <p className="rowsub" style={{ margin: 0 }}>It joins the register awaiting instruction and unpriced, raised by you, and takes the project’s next VO number. Price it and record the client’s instruction from the variation, as for one raised on site. Who asked is not an instruction.</p>
+      </>, <Foot label="Add variation" />)}
     </form></Modal>;
   }
   return <Modal className="ws-dialog" onClose={close}>{shell('Help & install', 'Leodis Relay', <>

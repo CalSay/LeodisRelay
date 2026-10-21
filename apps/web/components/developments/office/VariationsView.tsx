@@ -1,20 +1,20 @@
 'use client';
 import { useEffect, useState } from 'react';
 import type { Variation } from '@/lib/types';
-import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, fmtMoney, fmtPct, marginPct, variationValue } from '@/lib/variations';
+import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, fmtMoney, fmtPct, isCharged, marginPct, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
 import { registerFileName, toCsv, variationRows } from '@/lib/registerExport';
 import { Btn, BtnQ, InstructionTag, Money, SortHead } from './bits';
 import type { SortDirection } from '@/lib/tableSorting';
 import { byRaised, fmtDay, isExposed, isPending, isUnpriced, shortRef } from './model';
 
-type Filter = 'pending' | 'unpriced' | 'exposed' | 'instructed' | 'declined' | 'all';
-const FILTERS: [Filter, string, boolean][] = [['pending', 'Awaiting instruction', false], ['unpriced', 'Needs a quote', false], ['exposed', 'Done, not instructed', true], ['instructed', 'Instructed', false], ['declined', 'Declined', false], ['all', 'All', false]];
+type Filter = 'pending' | 'unpriced' | 'exposed' | 'instructed' | 'declined' | 'within' | 'all';
+const FILTERS: [Filter, string, boolean][] = [['pending', 'Awaiting instruction', false], ['unpriced', 'Needs a quote', false], ['exposed', 'Done, not instructed', true], ['instructed', 'Instructed', false], ['declined', 'Declined', false], ['within', 'Within contract', false], ['all', 'All', false]];
 
 // What an empty list means, in words, for each filter.
 /** Before anything has been raised: where variations come from. */
 const FIRST = 'No variations have been raised yet. Variation cards in site updates arrive here for you to price and put to the client.';
-const EMPTY: Record<Filter, string> = { pending: 'Nothing is awaiting instruction', unpriced: 'Every variation awaiting instruction has a quote', exposed: 'No work has been done without an instruction', instructed: 'No variations have been instructed', declined: 'No variations have been declined', all: 'No variations have been raised' };
+const EMPTY: Record<Filter, string> = { pending: 'Nothing is awaiting instruction', unpriced: 'Every variation awaiting instruction has a quote', exposed: 'No work has been done without an instruction', instructed: 'No variations have been instructed', declined: 'No variations have been declined', within: 'No variations have been marked within contract', all: 'No variations have been raised' };
 
 // Ordered by a column, as Issues are: the same headings to press on a desk and the same Order list on a phone.
 type VariationSort = 'reference' | 'variation' | 'project' | 'raised' | 'instruction' | 'quoted' | 'instructed' | 'margin';
@@ -54,13 +54,13 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
   const snap = ctx.snap;
   if (!snap) return <div className="view"><div className="loading">Loading office records</div></div>;
   const scoped = snap.variations.filter(v => (!project || v.projectId === project) && (!trade || v.trade === trade) && (!reason || v.reason === reason));
-  const pick: Record<Filter, (v: Variation) => boolean> = { pending: isPending, unpriced: isUnpriced, exposed: isExposed, instructed: v => v.instruction === 'instructed', declined: v => v.instruction === 'declined', all: () => true };
+  const pick: Record<Filter, (v: Variation) => boolean> = { pending: isPending, unpriced: isUnpriced, exposed: isExposed, instructed: v => v.instruction === 'instructed', declined: v => v.instruction === 'declined', within: v => v.instruction === 'within_contract', all: () => true };
   const counts = Object.fromEntries(FILTERS.map(([k]) => [k, scoped.filter(pick[k]).length])) as Record<Filter, number>;
   const rank = (v: Variation) => isExposed(v) ? 0 : isUnpriced(v) ? 1 : isPending(v) ? 2 : v.instruction === 'instructed' ? 3 : 4;
   const name = (id: string) => ctx.projects.find(p => p.id === id)?.projectName ?? id;
   const sortValue: Record<VariationSort, (v: Variation) => string | number | undefined> = {
     reference: v => v.reference, variation: v => v.description, project: v => name(v.projectId), raised: v => v.raisedAt, instruction: v => rank(v),
-    quoted: v => v.quotedValue, instructed: v => v.instruction === 'instructed' ? variationValue(v) : undefined, margin: v => v.instruction === 'declined' ? undefined : estimatedMargin(v),
+    quoted: v => v.quotedValue, instructed: v => v.instruction === 'instructed' ? variationValue(v) : undefined, margin: v => isCharged(v) ? estimatedMargin(v) : undefined,
   };
   const filtered = scoped.filter(pick[filter]);
   const shown = sort ? sortVariations(filtered, sort, sortValue[sort.key]) : filtered.sort((a, b) => rank(a) - rank(b) || byRaised(a, b));
@@ -85,8 +85,8 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
   };
   const d = (kind: 'variation-price' | 'variation-instruct' | 'variation-decline' | 'variation-reopen' | 'variation-details', variation: Variation) => ctx.setDialog({ kind, variation });
   return <div className="view">
-    <div className="pagehead"><div><h2>Variations</h2><p>{counts.pending} awaiting instruction{narrowed ? ' in this search' : ` across ${ctx.projects.length} projects`} · {counts.unpriced ? `${counts.unpriced} without a quote` : 'all priced'} · {counts.exposed ? <span className="late">{counts.exposed} done without an instruction</span> : 'nothing done uninstructed'} · {counts.instructed ? `${counts.instructed} instructed worth ${fmtMoney(instructedTotal)}` : '0 instructed'} · {counts.declined} declined</p></div>
-      <div className="actions">{shown.length > 0 && <BtnQ onClick={download} aria-label={`Download ${shown.length} ${shown.length === 1 ? 'variation' : 'variations'} as a spreadsheet (CSV)`}>Download spreadsheet</BtnQ>}{counts.unpriced > 0 && <Btn onClick={() => { const v = shown.find(isUnpriced) ?? scoped.find(isUnpriced); if (v) d('variation-price', v); }}>Price the oldest</Btn>}</div></div>
+    <div className="pagehead"><div><h2>Variations</h2><p>{counts.pending} awaiting instruction{narrowed ? ' in this search' : ` across ${ctx.projects.length} projects`} · {counts.unpriced ? `${counts.unpriced} without a quote` : 'all priced'} · {counts.exposed ? <span className="late">{counts.exposed} done without an instruction</span> : 'nothing done uninstructed'} · {counts.instructed ? `${counts.instructed} instructed worth ${fmtMoney(instructedTotal)}` : '0 instructed'} · {counts.declined} declined{counts.within ? ` · ${counts.within} within contract` : ''}</p></div>
+      <div className="actions"><BtnQ onClick={() => ctx.setDialog({ kind: 'variation-new', projects: ctx.projects, ...(project ? { projectId: project } : {}), opened: v => ctx.go(`#/projects/${v.projectId}/variation/${v.id}`) })}>Add variation</BtnQ>{shown.length > 0 && <BtnQ onClick={download} aria-label={`Download ${shown.length} ${shown.length === 1 ? 'variation' : 'variations'} as a spreadsheet (CSV)`}>Download spreadsheet</BtnQ>}{counts.unpriced > 0 && <Btn onClick={() => { const v = shown.find(isUnpriced) ?? scoped.find(isUnpriced); if (v) d('variation-price', v); }}>Price the oldest</Btn>}</div></div>
     <div className="filters">
       {FILTERS.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
       <span className="spacer" />
@@ -103,22 +103,22 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
       {narrowed && <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button>}
     </div>
     <div className="panel"><table className="reg cards"><thead><tr><SortHead label="Ref" column="reference" sort={sort} change={changeSort} /><SortHead label="Variation" column="variation" sort={sort} change={changeSort} /><SortHead label="Project" column="project" sort={sort} change={changeSort} /><SortHead label="Raised" column="raised" sort={sort} change={changeSort} /><SortHead label="Instruction" column="instruction" sort={sort} change={changeSort} /><SortHead className="money" label="Quoted" column="quoted" sort={sort} change={changeSort} /><SortHead className="money" label="Instructed" column="instructed" sort={sort} change={changeSort} /><SortHead className="money" label="Margin" column="margin" sort={sort} change={changeSort} /><th><span className="sr">Action</span></th></tr></thead><tbody>
-      {shown.length ? shown.map(v => { const margin = estimatedMargin(v); const pct = v.instruction === 'declined' ? undefined : marginPct(v); return <tr key={v.id} className="clickable" onClick={() => ctx.go(`#/projects/${code(v.projectId)}/variation/${v.id}`)}>
+      {shown.length ? shown.map(v => { const margin = estimatedMargin(v); const pct = isCharged(v) ? marginPct(v) : undefined; return <tr key={v.id} className="clickable" onClick={() => ctx.go(`#/projects/${code(v.projectId)}/variation/${v.id}`)}>
         <td className="c-ref"><span className="ref">{v.reference}</span></td>
         <td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{v.description}</div><div className="rowsub">{v.location || 'no location'} · {v.trade ?? 'trade not set'} · {v.reason ?? 'reason not set'}{v.workDone && <> · <span className="late">work already done</span></>}</div></td>
         <td data-label="Project">{name(v.projectId)}</td>
-        <td className="due" data-label="Raised">{fmtDay(v.raisedAt)}<div className="rowsub">{source(v)} · {v.raisedBy}</div></td>
-        <td data-label="Instruction"><InstructionTag v={v} />{v.instruction === 'instructed' && <div className="rowsub">{v.instructionReference} · {v.instructedBy} · {v.instructedOn}</div>}{v.instruction === 'declined' && <div className="rowsub">{v.events.slice().reverse().find(e => e.kind === 'declined')?.note}</div>}</td>
+        <td className="due" data-label="Raised">{fmtDay(v.raisedAt)}<div className="rowsub">{source(v)} · {ctx.nameOf(v.raisedById, v.raisedBy)}</div></td>
+        <td data-label="Instruction"><InstructionTag v={v} />{v.instruction === 'instructed' && <div className="rowsub">{v.instructionReference} · {v.instructedBy} · {v.instructedOn}</div>}{v.instruction === 'declined' && <div className="rowsub">{v.events.slice().reverse().find(e => e.kind === 'declined')?.note}</div>}{v.instruction === 'within_contract' && <div className="rowsub">Not charged{v.events.slice().reverse().find(e => e.kind === 'within_contract')?.note ? ` · ${v.events.slice().reverse().find(e => e.kind === 'within_contract')?.note}` : ''}</div>}</td>
         <td className="money" data-label="Quoted"><Money n={v.quotedValue} /></td>
         <td className="money" data-label="Instructed"><Money n={v.instruction === 'instructed' ? variationValue(v) : undefined} /></td>
-        <td className="money" data-label="Margin">{v.instruction === 'declined' ? <span className="fine">—</span> : <><Money n={margin} className={margin !== undefined && margin < 0 ? 'late' : ''} />{pct !== undefined && <div className="rowsub num">{fmtPct(pct)}</div>}</>}</td>
+        <td className="money" data-label="Margin">{!isCharged(v) ? <span className="fine">—</span> : <><Money n={margin} className={margin !== undefined && margin < 0 ? 'late' : ''} />{pct !== undefined && <div className="rowsub num">{fmtPct(pct)}</div>}</>}</td>
         <td className="c-actions" onClick={e => e.stopPropagation()}><div className="actions">
           {v.instruction === 'pending' && (v.quotedValue === undefined ? <Btn className="btn-sm" onClick={() => d('variation-price', v)}>Price</Btn> : <BtnQ className="btn-sm" onClick={() => d('variation-price', v)}>Reprice</BtnQ>)}
           {v.instruction === 'pending' && (v.quotedValue === undefined ? <BtnQ className="btn-sm" onClick={() => d('variation-instruct', v)}>Instruct</BtnQ> : <Btn className="btn-sm" onClick={() => d('variation-instruct', v)}>Instruct</Btn>)}
           {v.instruction === 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-decline', v)}>Decline</BtnQ>}
           {v.instruction !== 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-reopen', v)}>Reopen</BtnQ>}
         </div></td></tr>; }) : <tr><td colSpan={9} className="empty">{snap.variations.length === 0 && !narrowed ? FIRST : <>{EMPTY[filter]}{narrowed ? ' for these filters' : ''}.</>}{narrowed && <> <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button></>}</td></tr>}
-    </tbody>{shown.length > 1 && <tfoot><tr><td colSpan={5} className="c-title">{shown.length} shown</td><td className="money" data-label="Quoted"><Money n={sum(v => v.quotedValue)} /></td><td className="money" data-label="Instructed"><Money n={sum(v => v.instruction === 'instructed' ? variationValue(v) : undefined)} /></td><td className="money" data-label="Margin"><Money n={sum(v => v.instruction === 'declined' ? undefined : estimatedMargin(v))} /></td><td /></tr></tfoot>}</table>
+    </tbody>{shown.length > 1 && <tfoot><tr><td colSpan={5} className="c-title">{shown.length} shown</td><td className="money" data-label="Quoted"><Money n={sum(v => v.instruction === 'within_contract' ? undefined : v.quotedValue)} /></td><td className="money" data-label="Instructed"><Money n={sum(v => v.instruction === 'instructed' ? variationValue(v) : undefined)} /></td><td className="money" data-label="Margin"><Money n={sum(v => isCharged(v) ? estimatedMargin(v) : undefined)} /></td><td /></tr></tfoot>}</table>
       <div className="panel-foot">{sort ? `Sorted by ${SORT_NAME[sort.key]}, ${sort.direction}.` : 'Priority order: done without an instruction first, then needing a quote, awaiting instruction, instructed and declined; newest first within each.'} Quoted is what was put to the client; instructed is what they agreed, and it fixes the value from then on. Margin is the value less expected cost (labour × rate, parts, plant and subcontract), so it is an estimate until the job is costed. “Done, not instructed” is work carried out on a say-so with nothing in writing; get the client’s sign-off recorded before it is invoiced. Download spreadsheet saves the variations shown here, in this order, with their figures, as a CSV file that opens in Excel.</div></div>
   </div>;
 }

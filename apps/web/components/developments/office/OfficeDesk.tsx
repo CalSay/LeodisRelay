@@ -6,7 +6,7 @@ import { PageTitle } from '@/components/PageTitle';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { useWhatsNew } from '@/components/useWhatsNew';
 import { Toasts, parseHash, useHashRoute } from '@/components/workspace/hooks';
-import { allIssues, allVariations, listProjects, officeAll, officeTeam, permitsAll, deliveriesAll, safetyActionsAll, type OfficeTeam } from '@/lib/api';
+import { allIssues, allVariations, listProjects, officeAll, officeTeam, relayNames, permitsAll, deliveriesAll, safetyActionsAll, type OfficeTeam } from '@/lib/api';
 import { useFeatures } from '@/components/FeaturesContext';
 import { canAccessProject, isAdmin } from '@/lib/auth/access';
 import { useProjects } from '@/components/ProjectContext';
@@ -44,6 +44,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [error, setError] = useState('');
   const [team, setTeam] = useState<OfficeTeam | null>(null);
+  const [names, setNames] = useState<Record<string, string>>({});
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const { count: newToYou, newcomer } = useWhatsNew('office');
   const [q, setQ] = useState('');
@@ -55,11 +56,13 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const refresh = useCallback(async () => {
     const g = ++generation.current;
     try {
-      const [{ reports, drafts }, issues, variations, currentProjects, safety, permits, deliveries] = await Promise.all([
+      const [{ reports, drafts }, issues, variations, currentProjects, currentNames, safety, permits, deliveries] = await Promise.all([
         officeAll(),
         allIssues(),
         allVariations(),
         listProjects(),
+        // Names set in Relay by an Admin; an empty list when none are set or it cannot be read.
+        relayNames(),
         // Only while the office has them on (lib/featureSwitch.ts); off, they stay null and no line is shown.
         // Safety actions failing to load must not stop the desk: it keeps the last answer it had.
         safetyRecords ? safetyActionsAll().catch(() => undefined) : null,
@@ -70,6 +73,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
       ]);
       if (g !== generation.current) return;
       setProjectData(currentProjects);
+      setNames(currentNames);
       setSnap(prev => ({ reports, drafts, issues, variations, loadedAt: new Date().toISOString(), safety: safety === null ? null : safety ?? prev?.safety ?? null, permits: permits === null ? null : permits ?? prev?.permits ?? null, deliveries: deliveries === null ? null : deliveries ?? prev?.deliveries ?? null }));
       setError('');
     } catch (e) {
@@ -98,7 +102,8 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const attn = useMemo(() => attention(stats, day, snap?.safety, here, snap?.permits, snap?.deliveries), [stats, day, snap?.safety, here, snap?.permits, snap?.deliveries]);
   const me = { id: principal?.id ?? '', name: principal?.name ?? '', role: principal?.role ?? '', admin: principal ? isAdmin(principal) : false };
   const reviewOn = stats.some(s => s.reviewOn);
-  const ctx: Ctx = { snap, day, projects, stats, reviewOn, statOf, route, go, setDialog, refresh, me, team, loadTeam };
+  const nameOf = useCallback((id: string | undefined, fallback: string) => (id && names[id]) || fallback, [names]);
+  const ctx: Ctx = { snap, day, projects, stats, reviewOn, statOf, route, go, setDialog, refresh, me, team, loadTeam, nameOf };
 
   const onRootClick = (e: React.MouseEvent) => {
     const el = e.target as HTMLElement; const a = el.closest('a[href^="#/"]');

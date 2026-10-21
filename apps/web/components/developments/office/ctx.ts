@@ -20,5 +20,10 @@ export interface Ctx {
   refresh: () => Promise<void>;
   me: { id: string; name: string; role: string; admin: boolean };
   team: OfficeTeam | null;
+  /**
+   * The name to show for a person. Looks up the name set in Relay by account id
+   * and falls back to the name copied onto the record.
+   */
+  nameOf: (id: string | undefined, fallback: string) => string;
   loadTeam: () => void;
 }

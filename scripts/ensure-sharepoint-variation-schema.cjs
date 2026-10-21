@@ -3,9 +3,25 @@
 /**
  * Idempotent migration for the two Variation Register fields RELAY needs for
  * safe synchronization. Existing manual/demo rows are deliberately untouched.
+ *
+ * The Instruction choice column is only ever READ here: the app cannot change
+ * that column's schema, so a missing choice is added by hand in SharePoint and
+ * this script stops the upgrade until it is.
  */
 const SITE = 'leodisdevelopments.sharepoint.com,7fc89dbf-9b60-4018-bb49-1bcdb28a5fd6,5213073c-845c-4e0f-aac1-a3e7e1bcfa9e';
 const LIST = '78ba0d7f-64df-4284-b95f-8036cea718fc';
+/** Must match INSTRUCTION_CHOICE in apps/web/lib/variations.ts. */
+const INSTRUCTION_CHOICES = ['Pending', 'Instructed', 'Declined', 'Within contract'];
+
+/** Read-only check of the Instruction choices. Never modifies the column. */
+function checkInstructionChoices(columns) {
+  const instruction = columns.find(column => column.name === 'Instruction');
+  if (!instruction?.choice) throw new Error('The Instruction column in the SharePoint Variation Register is missing or is not a Choice column.');
+  const offered = Array.isArray(instruction.choice.choices) ? instruction.choice.choices : [];
+  if (!offered.includes('Within contract')) throw new Error("Add the choice 'Within contract' to the Instruction column in the SharePoint Variation Register, then run the upgrade again.");
+  const missing = INSTRUCTION_CHOICES.filter(choice => !offered.includes(choice));
+  if (missing.length) throw new Error(`Add the choice${missing.length === 1 ? '' : 's'} ${missing.map(choice => `'${choice}'`).join(', ')} to the Instruction column in the SharePoint Variation Register, then run the upgrade again.`);
+}
 
 async function token() {
   const tenant = process.env.ENTRA_TENANT_ID;
@@ -31,6 +47,7 @@ async function main() {
   const accessToken = await token();
   const base = `/sites/${encodeURIComponent(SITE)}/lists/${encodeURIComponent(LIST)}/columns`;
   let columns = (await graph(accessToken, base)).value;
+  checkInstructionChoices(columns);
   const additions = [
     {
       name: 'RelayVariationId', displayName: 'RELAY Variation ID', indexed: true,
@@ -50,7 +67,7 @@ async function main() {
   const identity = columns.find(column => column.name === 'RelayVariationId');
   if (!identity?.indexed || !identity?.enforceUniqueValues) throw new Error('RELAY Variation ID was not created as an indexed unique field.');
   if (!columns.some(column => column.name === 'WorkUndertakenBeforeInstruction' && column.boolean)) throw new Error('Work Undertaken Before Instruction was not created as a Yes/No field.');
-  console.log('PASS: SharePoint Variation Register synchronization fields.');
+  console.log('PASS: SharePoint Variation Register synchronization fields and Instruction choices.');
 }
 
 main().catch(error => { console.error(error instanceof Error ? error.message : error); process.exitCode = 1; });

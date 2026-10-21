@@ -4,6 +4,45 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — September office work merged into main
+
+- Why: Cal asked to deploy all recent changes (10:25). The first deploy
+  failed safely at the image build: the live pilot runs a branch,
+  `office-release-2`, deployed on 21 September from Cal's office PC and
+  never merged (4 commits on 13e96a0). Main unpacked over it left those
+  files behind, and deploying main alone would have removed screens the
+  office has used for a month. Cal chose (decision card, 10:58): merge it
+  into main first, then deploy.
+- Kept from September, ported onto today's office screens: names set in
+  RELAY (Admin > People: add, rename, change role, take off and put back on
+  the checklist, with a change log; never grants access), office
+  corrections (Quick actions on each card of a sent report: falls under
+  our contract, already raised, add a note, with a change log under the
+  card; the report and PDF stay as sent), Within contract variations (not
+  charged, own filter, reopenable), a note-only issue event, add a
+  variation from the office (Variations tab and project sheet), the
+  read-only SharePoint connection check (Admin > Notifications &
+  processing), and the upgrade script running the Variation Register
+  schema step inside the live container. Server code merged as written.
+- Not kept: the September visual redesign of the office (stub cards,
+  marks, its own CSS, a Reports tab). Decision: main's office has moved on
+  since (#51, #86, #88, #91 and others: plainer words, Seen by the office,
+  the Safety, permits and deliveries switch), so the features were ported
+  onto it rather than bringing back a second look. The Inbox's widen
+  reader button and per-row "corrected" chips were part of that redesign
+  and are left out; the reader shows the count instead.
+- Note for the deploy: the upgrade script's schema step now stops the
+  upgrade unless the SharePoint Variation Register's Instruction column
+  offers "Within contract". It only reads that column. Live has run the
+  September code since 21 September, so it should already be there.
+- Checks: `npm run typecheck`, `npm test` (146 + 464), `npm run build`;
+  all 72 browser checks one at a time (verify-busy-projects missed one
+  speed budget by 16 ms and passed on a re-run, as before) and the new
+  `verify-september-office` (34 checks: People, quick actions, within
+  contract, add a variation, axe, 390px light and 1440px dark).
+- Not verified: no live tenant, no real phone; the live data's existing
+  corrections and names were not opened in this build.
+
 ## 2026-10-21 — Report's actions readable on an office phone
 
 - Found by the eighth release check (walkthrough on main 0e56592): on a
@@ -20,6 +59,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   and 1440px dark (26 checks, screenshots before and after); verify-office-phone,
   verify-office-desk, verify-seen-by-office, verify-office-progress.
 - Not verified: a real phone.
+
 ## 2026-10-21 — Came back from the office, straight to the update
 
 - Why: the second idea in PR #92. Cal (2026-10-21 07:02) wants RELAY easy

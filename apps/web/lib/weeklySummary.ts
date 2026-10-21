@@ -86,7 +86,7 @@ export interface WeeklySummary {
   site: { talks: WeekTalk[]; permits: WeekPermit[]; deliveries: WeekDelivery[] };
 }
 
-const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined' };
+const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined', within_contract: 'Within contract' };
 const emptyKinds = (): Record<ObservationType, number> => ({ update: 0, defect: 0, instruction: 0, access: 0, check: 0 });
 const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');
 const byRef = (a: { reference: string }, b: { reference: string }) => naturalOrder(a.reference, b.reference);
