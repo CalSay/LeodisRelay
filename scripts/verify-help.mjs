@@ -1,5 +1,6 @@
 // Browser check for Help and what's new: the guide, the "New" marks kept per
-// person on the device, the two tabs, and the ways in from the engineer home,
+// person on the device (none for someone opening Help for the first time, who
+// is new to RELAY and gets How it works first), the two tabs, and the ways in from the engineer home,
 // the office desk (also on a phone) and the app bar.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 import assert from 'node:assert/strict';
@@ -45,28 +46,30 @@ try {
     const {context,page,errors}=await open('Engineer','light',390);
     await page.goto(`${base}/engineer?project=proj-011lme`);
     const row=page.getByRole('link',{name:/How RELAY works and what’s new/});await row.waitFor();
-    await page.getByText(`${siteCount} new to you`).waitFor();
-    check(true,`engineer: home offers Help with ${siteCount} new to someone who has never opened it`);
+    await row.getByText('Start here').waitFor();
+    check(!(await page.getByText(/new to you/).count()),`engineer: home says "Start here", not ${siteCount} new, to someone who has never opened Help`);
     await row.click();await page.waitForURL(/\/help\?/);await page.locator('.help-new li').first().waitFor();
     check(new URL(page.url()).searchParams.get('for')==='site','engineer: opens on the site tab');
     check(await page.title()==='Help · RELAY',`engineer: tab named (${await page.title()})`);
     check(await page.getByRole('button',{name:'On site'}).getAttribute('aria-pressed')==='true','engineer: "On site" is selected');
     check(/How RELAY works/.test(await page.locator('h1').innerText()),'engineer: heading');
-    await page.locator('.help-new li.is-new').first().waitFor();
-    check((await page.locator('.help-section-title').first().innerText()).toLowerCase().includes(`${siteCount} new to you`),'engineer: says how many are new');
-    check((await page.locator('.help-new li.is-new').count())===siteCount,'engineer: every entry is marked New on a first visit, so none is hidden behind "Show all"');
+    await page.locator('.help-first').waitFor();
+    check(/^How it works/.test(await page.locator('.help-section-title').first().innerText()),'engineer: on a first visit How it works comes first');
+    check((await page.locator('.help-new li.is-new').count())===0&&!(await page.locator('main').innerText()).toLowerCase().includes('new to you'),'engineer: on a first visit nothing is marked New, as all of it is new to them');
+    check((await page.locator('.help-new li').count())===6,'engineer: on a first visit the latest six are shown');
     const text=await page.locator('main').innerText();
-    check(text.includes('Start a site update with no signal')&&!text.includes('Issues by company'),'engineer: site entries, no office-only entries or links');
+    check(text.includes(whatsNewFor('site')[0].title)&&!text.includes('Issues by company'),'engineer: site entries, no office-only entries or links');
     check(text.includes('Your first site update')&&text.includes('Send to office')&&text.includes('Make a correction'),'engineer: the guide names the real buttons');
     check(text.includes('Fixed, to check')&&text.includes('Action needed')&&text.includes('Not emailed'),'engineer: the words explained');
     check((await page.locator('.help-steps li').count())===4,'engineer: four steps to a first update');
     await noSideways(page,390,'engineer');
     if(screenshot)await page.screenshot({path:join(screenshot,'help-site-light-390.png'),fullPage:true});
     // A page opened from Help comes back to it, on the same tab.
-    await page.getByRole('link',{name:'Open My week →'}).click();await page.waitForURL(/\/my-week\?/);
+    await page.locator('.help-links').getByRole('link',{name:/^My week/}).click();await page.waitForURL(/\/my-week\?/);
     await page.getByRole('link',{name:'← Back to Help'}).click();await page.waitForURL(/\/help\?for=site/);await page.locator('.help-new li').first().waitFor();
     check(true,'engineer: My week opened from Help offers Back to Help');
     check((await page.locator('.help-new li.is-new').count())===0&&!(await page.locator('.help-section-title').first().innerText()).toLowerCase().includes('new to you'),'engineer: nothing is New on the next visit');
+    check(/^What’s new/.test(await page.locator('.help-section-title').first().innerText())&&!(await page.locator('.help-first').count()),'engineer: on the next visit What\'s new comes first again');
     check((await page.locator('.help-new li').count())===6,'engineer: once seen, six are shown');
     await page.getByRole('button',{name:`Show all ${siteCount}`}).click();
     check((await page.locator('.help-new li').count())===siteCount,'engineer: Show all lists every entry');
@@ -78,7 +81,7 @@ try {
     check((await page.locator('.help-new li.is-new').count())===officeCount-whatsNewFor('office').filter(e=>e.audience==='all').length,'engineer: only the office-only entries are new on the office tab');
     await page.goto(`${base}/engineer?project=proj-011lme`);await page.getByRole('link',{name:/How RELAY works and what’s new/}).waitFor();
     await page.waitForTimeout(300);
-    check(!(await page.getByText(/new to you/).count()),'engineer: home no longer shows a new count');
+    check(!(await page.getByText(/new to you/).count())&&!(await page.getByText('Start here').count()),'engineer: home no longer shows a new count or Start here');
     assert.deepEqual(errors,[],'engineer: page errors');
     await context.close();
   }
@@ -107,16 +110,21 @@ try {
   {
     const {context,page,errors}=await open('Manager','dark',1440);
     await page.goto(`${base}/office#/projects`);
-    const help=page.locator('.tbtn-help');await help.waitFor();
-    await page.waitForFunction(n=>document.querySelector('.tbtn-help .tbtn-new')?.textContent===String(n),officeCount);
-    check(true,`manager: Help shows ${officeCount} new`);
+    let help=page.locator('.tbtn-help');await help.waitFor();await page.waitForTimeout(300);
+    check(!(await page.locator('.tbtn-help .tbtn-new').count()),'manager: no count on Help for someone who has never opened it');
+    // Someone who opened Help before the last two entries were added.
+    const older=whatsNewFor('office').slice(2).map(e=>e.id);
+    await page.evaluate(([id,seen])=>localStorage.setItem(`relay-help-seen:${id}`,JSON.stringify(seen)),[manager.id,older]);
+    await page.reload();help=page.locator('.tbtn-help');await help.waitFor();
+    await page.waitForFunction(()=>document.querySelector('.tbtn-help .tbtn-new')?.textContent==='2');
+    check(true,'manager: Help shows the 2 added since their last visit');
     await help.click();
     await page.getByRole('link',{name:/How RELAY works and what’s new/}).click();await page.waitForURL(/\/help\?/);await page.locator('.help-new li').first().waitFor();
     check(new URL(page.url()).searchParams.get('for')==='office','manager: opens on the office tab');
     const text=await page.locator('main').innerText();
     check(text.includes('Your day in the office')&&text.includes('Acknowledge')&&text.includes('Site coverage'),'manager: the office guide and office links');
     if(screenshot)await page.screenshot({path:join(screenshot,'help-office-dark-1440.png'),fullPage:true});
-    await page.getByRole('link',{name:'Open Issues by company →'}).click();await page.waitForURL(/\/companies\?/);
+    await page.locator('.help-links').getByRole('link',{name:/^Issues by company/}).click();await page.waitForURL(/\/companies\?/);
     await page.getByRole('link',{name:'← Back to Help'}).click();await page.waitForURL(/\/help\?for=office/);
     check(true,'manager: Issues by company opened from Help comes back to Help');
     await page.getByRole('link',{name:'← Back to Office'}).click();await page.waitForURL(/\/office/);

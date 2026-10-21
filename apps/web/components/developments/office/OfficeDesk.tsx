@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PageTitle } from '@/components/PageTitle';
 import { usePrincipal } from '@/components/PrincipalContext';
-import { useWhatsNewCount } from '@/components/useWhatsNew';
+import { useWhatsNew } from '@/components/useWhatsNew';
 import { Toasts, parseHash, useHashRoute } from '@/components/workspace/hooks';
 import { allIssues, allVariations, listProjects, officeAll, officeTeam, safetyActionsAll, type OfficeTeam } from '@/lib/api';
 import { canAccessProject, isAdmin } from '@/lib/auth/access';
@@ -44,7 +44,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const [error, setError] = useState('');
   const [team, setTeam] = useState<OfficeTeam | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
-  const newToYou = useWhatsNewCount('office');
+  const { count: newToYou, newcomer } = useWhatsNew('office');
   const [q, setQ] = useState('');
   const [attnOpen, setAttnOpen] = useState(false);
   const generation = useRef(0);
@@ -138,7 +138,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
         <button type="button" className={`bell ${attn.length ? '' : 'quiet'}`} onClick={() => setAttnOpen(o => !o)} aria-expanded={attnOpen}>Attention <b>{attn.length}</b></button>
         <form action="/api/auth/signout" method="POST" style={{ display: 'inline' }}><button type="submit" className="whoami" title="Sign out">{me.name} · <em>{me.role}</em></button></form>
         <ThemeToggle />
-        <button type="button" className="tbtn tbtn-help" onClick={() => setDialog({ kind: 'help' })}>Help{newToYou > 0 && <i className="tbtn-new" aria-label={`${newToYou} new`}>{newToYou}</i>}</button>
+        <button type="button" className="tbtn tbtn-help" onClick={() => setDialog({ kind: 'help' })}>Help{!newcomer && newToYou > 0 && <i className="tbtn-new" aria-label={`${newToYou} new`}>{newToYou}</i>}</button>
         <Link className="tbtn" href="/engineer">Engineer view</Link>
         <Link className="tbtn" href="/">Companies</Link>
       </div>

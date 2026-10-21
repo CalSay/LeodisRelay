@@ -84,7 +84,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
         <button type="button" onClick={() => setWeek(thisWeek)} disabled={week === thisWeek}>This week</button>
         <button type="button" onClick={() => setWeek(x => shiftWeek(x, 1))} disabled={week >= thisWeek}>Next week &rarr;</button>
       </div>
-      <button type="button" className="btn-primary" onClick={() => void copy()} disabled={!w}>Copy for my timesheet</button>
+      <button type="button" className="btn-primary" onClick={() => void copy()} disabled={!w || !w.totals.days}>Copy for my timesheet</button>
     </div>
     {copied === 'done' && <p className="note note-ok mw-noprint" role="status">Copied. Paste it into your timesheet or a message.</p>}
     {copied === 'manual' && <div className="mw-copy mw-noprint"><label htmlFor="mw-text">This phone did not allow copying. Select the text below and copy it.</label><textarea id="mw-text" readOnly value={text} rows={Math.min(10, text.split('\n').length)} onFocus={e => e.currentTarget.select()} /></div>}
@@ -98,6 +98,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
           <div><dt>Reports sent</dt><dd>{w.totals.reports}</dd></div>
           <div><dt>Defects flagged</dt><dd>{w.totals.flagged}<small>{plural(w.totals.issueUpdates, 'issue update')}</small></dd></div>
         </dl>
+        {!w.totals.days && !w.totals.drafts && <p className="note mw-nothing">Nothing recorded {w.current ? 'this week yet' : 'that week'}. Reports you send, defects you flag on their own and updates you add on an issue show here, day by day.</p>}
         {w.totals.drafts > 0 && <p className="note mw-unsent">{w.totals.drafts === 1 ? 'One report for this week is' : `${w.totals.drafts} reports for this week are`} not sent yet. {w.totals.drafts === 1 ? 'It is' : 'They are'} marked below; the office has not got {w.totals.drafts === 1 ? 'it' : 'them'}.</p>}
         <ol className="mw-days">
           {shown.map(d => <li key={d.day} className={`mw-day${d.day === today ? ' mw-today' : ''}${d.projects.length ? '' : ' mw-empty'}`}>

@@ -134,7 +134,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
         </dl>
 
         <section className="week-section">
-          <h2>On site<span>{plural(s.reports.length, 'report')}</span></h2>
+          <h2>On site<span>{s.reports.length ? plural(s.reports.length, 'report') : 'no reports'}</span></h2>
           {s.reports.length ? <ul className="week-rows">{s.reports.map(r => <li key={r.id}>
             <span className="week-when">{fmtDay(r.visitDate)}</span>
             <div><p><Link className="ref" href={withViewReturn(`/reports/${r.id}`, here)}>{r.reference}</Link>{r.revision > 1 && <span className="tag tag-draft">Rev {r.revision}</span>}
@@ -156,7 +156,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
         </section>
 
         <section className="week-section">
-          <h2>Variations<span>{plural(s.variationsRaised.length + s.variationsInstructed.length, 'change')}</span></h2>
+          <h2>Variations<span>{s.variationsRaised.length + s.variationsInstructed.length ? plural(s.variationsRaised.length + s.variationsInstructed.length, 'change') : 'no changes'}</span></h2>
           <h3>Raised</h3><VariationRows rows={s.variationsRaised} empty="No variations raised this week." here={here} />
           <h3>Instructed by the client</h3><VariationRows rows={s.variationsInstructed} empty="No variations instructed this week." here={here} />
         </section>

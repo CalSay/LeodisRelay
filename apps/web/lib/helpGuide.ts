@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'first-day-pages', added: '2026-10-21', audience: 'all', title: 'Clearer on your first day',
+    text: 'Pages with nothing on them yet now say so plainly and say what fills them. Issues over time no longer draws an empty chart and twelve weeks of noughts, Site coverage no longer calls every site "gone quiet" before any has sent a report, and the office overview says "Nothing has come in from site yet" and "No reports received yet" rather than "Every report has been read"; the Inbox, Issues and Variations say where their records will come from. If you have never opened Help, it now opens with How it works, nothing is marked new, and on site the link to it says "Start here". A draft with nothing on it says so in its preview and PDF.' },
   { id: 'toolbox-talks', added: '2026-10-21', audience: 'all', title: 'Toolbox talks',
     text: 'Record each safety briefing you give on site: the topic, the day, who gave it and the name of everyone who attended. Tap a topic to start from, or "Same people as the last talk" when the same gang is there. The page shows when the last talk was and how many there have been in four weeks, and downloads the whole record as a spreadsheet for an audit. A talk entered by mistake is withdrawn with a reason and stays listed. Toolbox talks are not part of any report and are not sent to anyone. Open it from "This project" on your home screen or from the office project sheet.',
     link: { label: 'Open Toolbox talks', href: '/toolbox-talks' } },
