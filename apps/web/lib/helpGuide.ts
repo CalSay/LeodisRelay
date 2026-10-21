@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'one-caption-line', added: '2026-10-21', audience: 'all', title: 'A shorter list before sending',
+    text: '"Check & send" no longer lists every photograph without a caption on a line of its own. They now share one line at the end, such as "6 photographs have no caption", so the notes that matter to the office (a variation with no photo, nobody named to do an action) are easy to see. Captions are still optional and the caption box is still under each photo. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'simpler-office-screens', added: '2026-10-21', audience: 'office', title: 'One place for each thing in the office',
     text: 'The office position now fills the screen: "Where each project stands" is the project list, so the second list of projects beside it has gone (it comes back once you open a project). The "New reports" group has gone: reports nobody has opened are under "Not seen yet", and the Inbox\'s New filter lists everything new. "Also needs attention" now comes from the same list as the Attention bell, less the unassigned and fixed, to check issues that have their own groups above it. People, names and roles are on the Team tab, so the Admin edits the same list everyone else reads; old links to Admin > People open it.',
     link: { label: 'Open the office', href: '/office' } },

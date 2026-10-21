@@ -9,6 +9,10 @@ import { signs } from "./signature";
  * never disagree about whether a report is complete. Blocking omissions are
  * separated from things worth noticing: an engineer should be stopped by a
  * defect with no photograph and not by a missing caption.
+ *
+ * Photographs with no caption make one line at the end (2026-10-21), not a
+ * line each: the card a photograph sits on already says where and what, and
+ * a line per photograph buried the notes that matter to the office.
  */
 export function reviewReport(report: Report): ReviewFinding[] {
   if (reportTypeOf(report).checklist) return reviewInspection(report);
@@ -47,17 +51,10 @@ export function reviewReport(report: Report): ReviewFinding[] {
         blocking: false,
       });
     }
-    for (const photo of observation.photos) {
-      if (photo.caption.trim().length === 0) {
-        findings.push({
-          observationId: observation.id,
-          field: "caption",
-          message: `${label}: a photograph has no caption`,
-          blocking: false,
-        });
-      }
-    }
   }
+
+  const uncaptioned = noCaption(report);
+  if (uncaptioned) findings.push(uncaptioned);
 
   if (report.observations.length === 0) {
     findings.push({
@@ -98,13 +95,20 @@ function reviewInspection(report: Report): ReviewFinding[] {
     if (!o.owner.trim()) findings.push({ observationId: o.id, field: 'owner', message: `${short(o)}: nobody is named to do it`, blocking: false });
     if (o.photos.length === 0) findings.push({ observationId: o.id, field: 'photos', message: `${short(o)}: a photograph shows what was found`, blocking: false });
   }
-  for (const o of report.observations) for (const photo of o.photos) {
-    if (!photo.caption.trim()) findings.push({ observationId: o.id, field: 'caption', message: `${short(o)}: a photograph has no caption`, blocking: false });
-  }
+  const uncaptioned = noCaption(report);
+  if (uncaptioned) findings.push(uncaptioned);
   if (report.state === 'draft' && !signs(report.draftSignature)) {
     findings.push({ observationId: '', field: 'signature', message: report.draftSignature?.typed
       ? 'Type your full name to sign: the box is ticked but the name is empty'
       : 'Sign below: an inspection needs the inspector’s signature', blocking: true });
   }
   return findings;
+}
+
+/** One line for every photograph still without a caption, opening the first card that has one. */
+function noCaption(report: Report): ReviewFinding | undefined {
+  const cards = report.observations.filter(o => o.photos.some(p => !p.caption.trim()));
+  const count = cards.reduce((n, o) => n + o.photos.filter(p => !p.caption.trim()).length, 0);
+  if (count === 0 || !cards[0]) return undefined;
+  return { observationId: cards[0].id, field: 'caption', message: count === 1 ? '1 photograph has no caption' : `${count} photographs have no caption`, blocking: false };
 }
