@@ -1,5 +1,6 @@
 import { naturalOrder } from './naturalOrder';
 import type { Issue } from './types';
+import { isOverdueIssue } from './officeActions';
 
 /**
  * A snag list: the open issues on one project that someone has to put right,
@@ -39,7 +40,7 @@ export function snagList(issues: Issue[], scope: SnagScope, day: string): SnagLi
   for (const issue of byAge) {
     const k = key(issue.location);
     const group = groups.get(k) ?? { location: issue.location.trim().replace(/\s+/g, ' ') || NO_LOCATION, rows: [] };
-    group.rows.push({ issue, overdue: /^\d{4}-\d{2}-\d{2}$/.test(issue.targetDate) && issue.targetDate < day, fixed: issue.work === 'awaiting_verification' });
+    group.rows.push({ issue, overdue: isOverdueIssue(issue, day), fixed: issue.work === 'awaiting_verification' });
     groups.set(k, group);
   }
   // Within a location: still to do before fixed, earliest target first, then by reference.

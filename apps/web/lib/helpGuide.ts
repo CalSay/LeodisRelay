@@ -29,8 +29,14 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+<<<<<<< HEAD
   { id: 'update-send-on-signal-anywhere', added: '2026-10-21', audience: 'site', title: 'A site update sent with no signal goes from any page',
     text: 'Tap "Send to office" with no signal and you no longer have to stay on the report for it to go. Carry on in RELAY: a line at the top of each page says "Waiting for signal" and that your site update is kept on your phone, the same words a defect uses, and once there is signal it goes to the office by itself, whichever page is open, then says it has gone with a link to it. If you closed RELAY, opening it again with signal sends it. It goes exactly once, with its photographs, even with RELAY open in two tabs. Only what you checked goes: change it first and it waits for you to send it again. Checked in a phone-sized browser with its signal switched off, not on a real phone.' },
+=======
+  { id: 'issue-figures-agree', added: '2026-10-21', audience: 'office', title: 'Issue figures that agree',
+    text: 'Open, overdue and fixed, to check now mean the same everywhere in the office: the project list, a project\'s figures, "Where each project stands", the Issues register, Issues by company, snag lists, Before handover, the Weekly summary and Issues over time. Open is every issue not yet closed or withdrawn. Overdue is past its target date and not yet put forward as fixed. Fixed, to check is waiting for someone to check it and is never counted as overdue, because the company has done its part. Before, the project list could say "55 overdue" with nothing to check while the figures beside it said 22 were fixed, to check.',
+    link: { label: 'Open the office', href: '/office' } },
+>>>>>>> origin/main
   { id: 'my-week-issues-raised', added: '2026-10-21', audience: 'all', title: 'My week counts every issue you raised',
     text: 'My week used to say "Defects flagged" and counted only defects flagged on their own, so a week of defects sent in site updates read as none. It now says "Issues raised" and counts every defect, access problem or inspection action you raised that week, from a report or flagged on its own, each once: the same count the office sees under "Issues raised" on the Weekly summary. A defect seen again in a later update, or a corrected report, is not counted twice. An issue you put forward as fixed now also says what the office did since: sent it back as not finished, checked it and closed it, or closed it and then opened it again. Checked in a phone-sized browser, not on a real phone.',
     link: { label: 'Open My week', href: '/my-week' } },

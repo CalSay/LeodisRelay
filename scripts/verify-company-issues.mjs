@@ -80,19 +80,19 @@ try {
     const names=await page.locator('.co-card h2').allInnerTexts();
     check(JSON.stringify(names)===JSON.stringify(['Acme Mechanical Ltd','Sparks Ltd','Tidy Plumbing']),`office: past target first, one Sparks for two spellings, a recent closure shown, an old one not: ${JSON.stringify(names)}`);
     const acme=cardOf(page,'Acme Mechanical Ltd');
-    check(await num(acme,'To put right')==='2'&&await num(acme,'Past target')==='2'&&await num(acme,'Fixed, to check')==='1',`office: Acme counts, the withdrawn issue left out and unchecked fixed work late as on the register`);
-    check(await acme.evaluate(e=>e.classList.contains('co-late'))&&/2 past target/i.test(await acme.locator('.co-top .tag').innerText()),'office: a company with late work is marked');
+    check(await num(acme,'To put right')==='2'&&await num(acme,'Past target')==='1'&&await num(acme,'Fixed, to check')==='1',`office: Acme counts, the withdrawn issue left out and fixed work waiting for the office not late, as on the register`);
+    check(await acme.evaluate(e=>e.classList.contains('co-late'))&&/1 past target/i.test(await acme.locator('.co-top .tag').innerText()),'office: a company with late work is marked');
     const oldest=await acme.locator('.co-oldest').innerText();
     check(oldest.includes(acmeOldest.reference)&&/20 days since it was raised/.test(oldest),`office: the oldest item and its age: ${JSON.stringify(oldest)}`);
     const projects=await acme.locator('.co-projects li').allInnerTexts();
-    check(projects.length===2&&projects[0].includes('011LME')&&projects[0].includes('2 to put right · 1 past target')&&projects[1].includes('014LME')&&projects[1].includes('1 past target · 1 to check'),`office: one line per project, most late first: ${JSON.stringify(projects)}`);
+    check(projects.length===2&&projects[0].includes('011LME')&&projects[0].includes('2 to put right · 1 past target')&&projects[1].includes('014LME')&&projects[1].includes('1 to check')&&!projects[1].includes('past target'),`office: one line per project, most late first: ${JSON.stringify(projects)}`);
     check(/HVAC/.test(await acme.locator('.co-trades').innerText()),'office: the trade is shown');
     const sparks=cardOf(page,'Sparks Ltd');
     check(await num(sparks,'To put right')==='2'&&await num(sparks,'Closed, 4 weeks')==='1',`office: Sparks has two to do and one closed lately`);
     const tidy=cardOf(page,'Tidy Plumbing');
     check(/All clear/i.test(await tidy.locator('.co-top').innerText())&&/Nothing open/.test(await tidy.innerText()),'office: a company with only closed work is all clear');
     const stats=await page.locator('.co-stats').innerText();
-    check(/Companies with work\s*2/i.test(stats)&&/4 issues to put right/.test(stats)&&/Past target\s*2/i.test(stats)&&/Fixed, to check\s*1/i.test(stats)&&/Closed lately\s*2/i.test(stats),`office: headline counts: ${JSON.stringify(stats)}`);
+    check(/Companies with work\s*2/i.test(stats)&&/4 issues to put right/.test(stats)&&/Past target\s*1/i.test(stats)&&/Fixed, to check\s*1/i.test(stats)&&/Closed lately\s*2/i.test(stats),`office: headline counts: ${JSON.stringify(stats)}`);
     const unassigned=await page.locator('.co-unassigned').innerText();
     check(/1 open issue with nobody named, 1 past target/.test(unassigned),`office: issues with nobody named: ${JSON.stringify(unassigned)}`);
     check(!(await page.locator('main').innerText()).includes(withdrawn.reference),'office: the withdrawn issue is nowhere on the page');
@@ -113,7 +113,7 @@ try {
     await page.getByRole('link',{name:'Snag list for Acme Mechanical Ltd on Kirkstall Gate - Phase 2'}).click();
     await page.waitForURL(/\/issues\/snag-list\?/);await page.locator('.snag-sheet').waitFor();
     const late=await page.locator('.snag-summary').innerText();
-    check(/0 to put right/.test(late)&&/1 past target/.test(late)&&/1 marked fixed/.test(late),`office: the snag list counts the same as the company line: ${JSON.stringify(late)}`);
+    check(/0 to put right/.test(late)&&!/past target/.test(late)&&/1 marked fixed/.test(late),`office: the snag list counts the same as the company line: ${JSON.stringify(late)}`);
     await page.goBack();await page.locator('.co-list').waitFor();
     check((await page.getByLabel('Find a company or person').inputValue())==='acme'&&(await page.locator('.co-card').count())===1,'office: Back from the snag list keeps the search');
     // The oldest item opens its issue.

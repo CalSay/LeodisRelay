@@ -10,6 +10,22 @@ import type { Issue, ReportSummary } from './types';
 export const isActiveIssue = (i: Issue): boolean => i.work !== 'closed' && i.confirmation !== 'withdrawn';
 export const isUnassigned = (i: Issue): boolean => isActiveIssue(i) && i.owner.trim() === '';
 export const isVerify = (i: Issue): boolean => isActiveIssue(i) && i.work === 'awaiting_verification';
+/**
+ * The office's issue figures, one meaning each wherever they are shown:
+ * open is every issue not closed or withdrawn; fixed, to check is put forward
+ * as fixed and waiting for someone to check it; overdue is open, past its
+ * target date and not put forward as fixed. Fixed, to check is never overdue:
+ * the company has done its part and the wait is the office's. `day` is today
+ * in the office calendar, as YYYY-MM-DD.
+ */
+export const isOverdueIssue = (i: Issue, day: string): boolean =>
+  isActiveIssue(i) && i.work !== 'awaiting_verification' && /^\d{4}-\d{2}-\d{2}$/.test(i.targetDate) && i.targetDate < day;
+export interface IssueFigures { open: number; overdue: number; toCheck: number }
+export const issueFigures = (issues: Issue[], day: string): IssueFigures => ({
+  open: issues.filter(isActiveIssue).length,
+  overdue: issues.filter(i => isOverdueIssue(i, day)).length,
+  toCheck: issues.filter(isVerify).length,
+});
 export const notAcknowledged = (r: ReportSummary): boolean => r.state === 'submitted' && !r.acknowledged;
 /**
  * Whether this person opening the report marks it seen by the office: a sent

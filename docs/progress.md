@@ -82,6 +82,71 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   RELAY, screen readers. Nothing sends while RELAY is closed (no background
   sync), as before.
 
+## 2026-10-21 — Office issue figures agree
+
+- Why: a walk of an office manager preparing a monthly progress meeting (1440px,
+  local example data: Tetley Hall and Kirkstall Gate, 45 days from three
+  engineers; notes and screenshots in project files
+  `ui-review/monthly-progress/`) found the project list card for Tetley Hall
+  saying "146 issues, 55 overdue, 52 open" with nothing to check, while the
+  sheet beside it said "Fixed, to check 22" and the overview said "107 open".
+  The register, the project list, the sheet, Attention, Issues by company and
+  snag lists counted an issue put forward as fixed but past its target as
+  overdue; the Weekly summary and Before handover did not. The coordinator put
+  this before the walk's own pick (a month view) because wrong numbers mislead
+  the office every day and a month page would show the same figures. Decided
+  without asking Cal (his autonomy message). Not a `docs/tasks.json` task; no
+  status changed.
+- One meaning for each figure, everywhere the office sees it
+  (`lib/officeActions.ts`: `isOverdueIssue`, `issueFigures`):
+  **open** is every issue not closed or withdrawn (fixed, to check included);
+  **fixed, to check** is put forward as fixed and waiting for someone to check
+  it; **overdue** (also "past target") is open, past its target date and not
+  put forward as fixed. Fixed, to check is never overdue: the company has done
+  its part and the wait is the office's.
+- Changed: the register's Overdue filter, chips, priority sort and spreadsheet
+  "days late" (`issueQuery` re-exports the one rule); the project list bar and
+  its line now read "7 open · 2 overdue · 3 to check" (the bar's last part is
+  "open, not late"; "N issues" is gone, as it left out withdrawn issues while the
+  register's Issues chip counts them); the sheet, the phone summary,
+  "Where each project stands", the Issues tab count and Attention (a fixed
+  issue past target was listed twice, as overdue and to check); Issues by
+  company and snag lists; the Weekly summary and Before handover now call the
+  shared helper instead of their own copy of the rule; Issues over time leaves
+  out of "past target" an issue that was put forward as fixed by the end of that
+  week and not sent back (from its history), so today's figure matches the
+  sheet. Engineer My week has no open or overdue figures, so nothing changed
+  there. Team list (#125) and the phone Inbox report screen (#122) untouched.
+  Help "What's new" line added.
+- Checks: typecheck, `npm test` (146 + 526; new tests in
+  `officeActions.test.ts` and `issueTrend.test.ts`; the company and snag list
+  tests that asserted the old rule now assert the new one), build. New
+  `scripts/verify-issue-figures.mjs` (45 checks, 1440 light and dark, 390
+  light): Tetley Hall with 2 overdue, 3 fixed to check (2 of them past
+  target), a closed and a withdrawn issue past target: the overview row, the
+  Issues tab, the project list card and bar, the sheet, the register heading
+  and chips, Issues by company, the snag list, the Weekly summary, Issues over
+  time and the phone summary all say 7 open, 2 overdue, 3 to check; Overdue
+  actions opens 2 rows and Fixed, to check 3 (desk and phone); no fixed issue
+  is shown as overdue anywhere; axe; no sideways scroll. Screenshots
+  `ui-review/monthly-progress/figures-*`. `verify-company-issues` asserted the
+  old rule and now asserts the new one (Acme: 1 past target, not 2). Also
+  passed: office-links, office-progress, snag-list, issue-trend,
+  issue-register, weekly-summary, before-handover, day-walkthrough (second
+  run; the first timed out filling a defect card, and it passed on main too),
+  home-and-sheet, office-phone, register-export, office-sections,
+  september-office, help, company-chases, office-actions, office-landing,
+  office-desk, role-access, register-downloads, issue-assign.
+- Found, not fixed: in light mode the project list's group headings (Active,
+  Defects liability period) measure 4.2 to 4.4:1 against their wash, under
+  the 4.5:1 axe asks for; the new check leaves them out of its axe run.
+- Not verified: a live tenant, real SharePoint issue lists, a real phone, a
+  screen reader.
+- Next: the walk's pick, a "Month" choice on the Weekly summary page (month
+  figures and a row a week, progress grouped by place, behind or stuck, still
+  open and with whom, a few photographs), built on these figures. Walk notes:
+  project files `ui-review/monthly-progress/walk-notes.md`.
+
 ## 2026-10-21 — Eleventh release check: main ready at 6def5e8
 
 - Why: eight merges since the tenth check (#119 to #126), with inspections

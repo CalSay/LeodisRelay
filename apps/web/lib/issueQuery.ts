@@ -1,6 +1,8 @@
 import type { Issue } from './types';
-import { isActiveIssue, isUnassigned, isVerify } from './officeActions';
+import { isActiveIssue, isOverdueIssue, isUnassigned, isVerify } from './officeActions';
 import { sortTableRows, type SortDirection } from './tableSorting';
+
+export { isOverdueIssue };
 
 /**
  * The issue register as a query: filter, count, sort and page on the server,
@@ -100,7 +102,6 @@ export function issueQueryParams(q: Partial<IssueQuery>): URLSearchParams {
   return p;
 }
 
-export const isOverdueIssue = (i: Issue, day: string): boolean => isActiveIssue(i) && /^\d{4}-\d{2}-\d{2}$/.test(i.targetDate) && i.targetDate < day;
 export const isNotReviewedIssue = (i: Issue): boolean => isActiveIssue(i) && i.confirmation === 'provisional';
 export const isDisputedIssue = (i: Issue): boolean => isActiveIssue(i) && i.confirmation === 'disputed';
 
