@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'counts-lead-somewhere', added: '2026-10-21', audience: 'office', title: 'Figures that open what they count',
+    text: 'On a project sheet, each figure at the top now opens what it counts: Last visit opens that report, Overdue actions and Fixed, to check open the Issues register on that project and filter, and Variations opens the Variations register on that project. In Latest from site, "And N more in the report" opens the report. In the Weekly summary, a visit\'s "N photographs" opens Photographs on that day with that report\'s photographs, and "fixed and waiting to be checked" opens the Issues register on that project. On a phone, the last visit line above a project\'s register opens that report.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'photos-by-day', added: '2026-10-21', audience: 'all', title: 'Photographs from one day',
     text: 'Photographs now has a Day choice: pick a day, such as "Tue 13 Oct 2026", to see only that day\'s photographs, with how many each day has. Photographs from a report are under its visit day; those added to an issue or variation later are under the day they were added. "Newer day" and "Older day" step one day with photographs at a time, and "Every day" goes back to the full list. Choosing another project goes back to every day. The day stays in the page\'s link, so you can send someone straight to it.',
     link: { label: 'Open Photographs', href: '/photos' } },

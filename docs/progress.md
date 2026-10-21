@@ -27,6 +27,55 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - `verify-editor-usability` now expects no hint line under recent places.
 - Not verified: a real phone, a screen reader.
 
+## 2026-10-21 — Office counts that open what they count
+
+- Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information
+  it needs. #106 proposed linking the Weekly summary's "N photographs" to that
+  day's photographs. Walking the office screens on main 4f08eb5 (desk 1440px
+  dark, phone 390px light) found more figures the office would click that
+  went nowhere: the project sheet's four figures (Last visit, Overdue actions,
+  Fixed, to check, Variations), Latest from site's "And N more in the
+  report", the phone register's last visit line, and the Weekly summary's
+  "N fixed and waiting to be checked". Not a
+  `docs/tasks.json` task; no status changed.
+- Changed (existing links and filters only; no new pages or counts):
+  Weekly summary "N photographs" opens Photographs on the visit day with the
+  report's reference in Find, so the count matches what shows (it can
+  differ when a correction dropped photographs, which keep the reference) (another
+  engineer's photographs that day are left out; "Every day" and clearing Find
+  widen it). For office people, "fixed and waiting to be checked" opens the
+  Issues register on that project; engineers keep the words and the snag list
+  link. "Past target" stays words: it leaves out issues already put forward as
+  fixed, which the register's Overdue keeps, so the list would not match. The Issues and Variations registers now take a
+  project after the filter in the desk link (`#/issues/show/overdue/<project>`);
+  a link without one, or the tab itself, is every project again. Project sheet figures open the
+  last visit's report, the register on Overdue or Fixed, to check, and
+  Variations on Awaiting instruction, each on that project; a figure with
+  nothing to open stays plain text. Style: the figure keeps its colour, a row's
+  "›" arrow marks it, the small line underlines on hover; other new links are
+  underlined in the line's own colour. Help "What's new": "Figures that open
+  what they count".
+- Decided not to link: the "Where each project stands" cells (each row is
+  already one link to the project, whose figures now open the lists; links
+  inside a link are not allowed, and the row is the phone's tap target); the
+  project column's lines (same reason); the bar's "3 issues · 1 overdue · 1 to
+  check" under the sheet figures (the figures above it now open the same
+  lists). Site coverage already links each visit and last report.
+- Checks: typecheck, `npm test` (146 + 480), build. New
+  `scripts/verify-office-links.mjs` (52 checks, 1440px dark and 390px light,
+  plus an engineer). Browser checks one at a time: verify-office-progress
+  (75), verify-september-office (43), verify-accessibility (584),
+  verify-help (36), verify-photo-library (51), verify-office-sections (63),
+  verify-office-desk (73), verify-office-phone (91), verify-home-and-sheet
+  (254), verify-role-access (95), verify-day-walkthrough (114; stopped once
+  in the engineer's defect card, which this does not touch, then passed twice
+  and on main). Screenshots: project files `ui-review/office-links/`.
+  A fresh-context review found three points, all fixed: the photographs link
+  printed brass and underlined (now plain black, checked), "past target"
+  opened a longer list than it counts (now words), and the Issues or
+  Variations tab kept a linked project (now every project).
+- Not verified: a real phone, the live server or tenant.
+
 ## 2026-10-21 — Photographs from one day
 
 - Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information

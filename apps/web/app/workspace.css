@@ -459,6 +459,13 @@ body:has(.ws){overflow:hidden auto}
 .ws .from-site li .kind{margin-right:6px}
 .ws .from-site li b{font-weight:500}
 .ws .from-site-visit>.rowsub{margin-top:var(--s2)}
+/* A figure or line that opens what it counts: the desk's quiet link, an arrow like a row's, underlined on hover. */
+.ws .tb-go{display:block;position:relative;padding-right:var(--s4);color:inherit;text-decoration:none}
+.ws .tb-go .arrow{position:absolute;right:0;top:2px;font-family:var(--mono);font-size:13px;color:var(--text-3)}
+.ws .tb-go:focus-visible,.ws .from-site-more:focus-visible,.ws .meta-go:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+@media (hover:hover){.ws .tb-go:hover small{text-decoration:underline;text-underline-offset:3px}}
+.ws .from-site-more,.ws .meta-go{color:inherit;text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--text-3)}
+.ws .meta-go.late{color:var(--alert)}
 @media (max-width:700px){
   .ws .glance-row{grid-template-columns:1fr 14px;padding:var(--s3)}
   /* Last visit and this week share the first row; issues, variations and the office's count the second. */
@@ -475,4 +482,5 @@ body:has(.ws){overflow:hidden auto}
   .ws .register-standing{padding:var(--s2) var(--s4) var(--s3)}
   .ws .register-standing .meta{margin-top:0}
   .ws .from-site{grid-template-columns:1fr}
+  .ws .from-site-more,.ws .meta-go{display:inline-flex;align-items:center;min-height:44px}
 }

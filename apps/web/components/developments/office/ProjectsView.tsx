@@ -78,10 +78,12 @@ function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
 }
 
 /** "Last visit today · Electrical", or how long an active site has gone without a report. */
-function VisitMeta({ s, day }: { s: ProjectStats; day: string }) {
+function VisitMeta({ s, day, link }: { s: ProjectStats; day: string; link?: boolean }) {
   const v = lastVisitWords(s.standing, day);
   const last = s.standing.last;
-  return <div className="meta"><span className={v.quiet ? 'late' : ''}>{v.quiet ?? (last ? `Last visit ${visitDay(last.visitDate, day)}${last.trade ? ` · ${last.trade}` : ''}` : 'No visit yet')}</span></div>;
+  const words = v.quiet ?? (last ? `Last visit ${visitDay(last.visitDate, day)}${last.trade ? ` · ${last.trade}` : ''}` : 'No visit yet');
+  // Inside a project's row it is part of that link; on the phone's register it opens the last visit's report.
+  return <div className="meta">{link && last ? <a className={`meta-go ${v.quiet ? 'late' : ''}`} href={`#/projects/${s.code}/report/${last.reportId}`}>{words}</a> : <span className={v.quiet ? 'late' : ''}>{words}</span>}</div>;
 }
 
 /** True on a phone, where the register stands in for the project sheet. */
@@ -126,7 +128,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   return <div className="col">
     <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h2>Register · {s.project.projectName}</h2><i>{s.reports.length} report{s.reports.length === 1 ? '' : 's'} · {s.active.length} open</i></div>
     {/* A phone shows this column in place of the project sheet, so where the project stands and what site said come first. */}
-    {phone && <div className="phone-only register-standing"><VisitMeta s={s} day={day} /><LatestFromSite ctx={ctx} s={s} shown={2} /></div>}
+    {phone && <div className="phone-only register-standing"><VisitMeta s={s} day={day} link /><LatestFromSite ctx={ctx} s={s} shown={2} /></div>}
     <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
       {([['action', `Needs action · ${s.needsAction + onSite.length}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
     </div>
@@ -329,6 +331,11 @@ function ProjectLinks({ ctx, projectId, heading: H = 'h4', projectPage }: { ctx:
   </nav>;
 }
 
+/** A figure that opens what it counts, or just the figure when there is nothing to open. */
+function Go({ href, children }: { href: string | undefined; children: ReactNode }) {
+  return href ? <a className="tb-go" href={href}>{children}<span className="arrow" aria-hidden="true">›</span></a> : <>{children}</>;
+}
+
 function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   const p = s.project;
   // A phone hides the sheet behind the register, which shows Latest from site itself.
@@ -341,7 +348,8 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
       <div className="actions"><BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'variation-new', projects: ctx.projects, projectId: p.id, opened: v => ctx.go(`#/projects/${s.code}/variation/${v.id}`) })}>Add variation</BtnQ><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link></div></div>
-    <dl className="tb"><div><dt>Last visit</dt><dd className={`big ${v.quiet ? 'late' : ''}`}>{v.when}<small>{v.quiet ? `${v.quiet} · ` : ''}{v.who} · {count(s.standing.thisWeek, 'visit')} this week</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'} · {s.active.length} open</small></dd></div><div><dt>Fixed, to check</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `put forward ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing waiting to be checked'}</small></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></dd></div></dl>
+    {/* Each figure opens what it counts: the last visit's report, or the register on this project and filter. */}
+    <dl className="tb"><div><dt>Last visit</dt><dd className={`big ${v.quiet ? 'late' : ''}`}><Go href={s.standing.last && `#/projects/${s.code}/report/${s.standing.last.reportId}`}>{v.when}<small>{v.quiet ? `${v.quiet} · ` : ''}{v.who} · {count(s.standing.thisWeek, 'visit')} this week</small></Go></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}><Go href={s.overdue.length ? `#/issues/show/overdue/${p.id}` : undefined}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'} · {s.active.length} open</small></Go></dd></div><div><dt>Fixed, to check</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}><Go href={s.verify.length ? `#/issues/show/verify/${p.id}` : undefined}>{s.verify.length}<small>{s.verify.length ? `put forward ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing waiting to be checked'}</small></Go></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}><Go href={s.pendingVariations.length ? `#/variations/show/pending/${p.id}` : undefined}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></Go></dd></div></dl>
     <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
     {!phone && <LatestFromSite ctx={ctx} s={s} />}
     {s.drafts.length > 0 && <p className="rowsub" style={{ marginTop: 12 }}>{s.drafts.length} draft{s.drafts.length === 1 ? '' : 's'} in progress on site. Contents stay private until sent.</p>}
@@ -383,7 +391,7 @@ function LatestFromSite({ ctx, s, shown = LINES_SHOWN }: { ctx: Ctx; s: ProjectS
         <a className="from-site-h" href={`#/projects/${s.code}/report/${r.id}`}><b>{r.authorTrade ?? 'Trade not recorded'}</b><span>{r.author} · {visitDay(r.visitDate, ctx.day)} · <span className="ref">{shortRef(r.reference)}</span></span><span className="arrow" aria-hidden="true">›</span></a>
         {lines.length ? <ul>{lines.slice(0, shown).map(l => <li key={l.id}>{l.kind === 'access' && <span className="kind tone-access">Access</span>}<b>{l.location || 'No location'}</b>{l.text ? ` — ${l.text}` : ''}</li>)}</ul>
           : <p className="rowsub">{full ? 'No progress written on this visit.' : 'This report could not be opened here.'}</p>}
-        {(lines.length > shown || others) && <p className="rowsub">{lines.length > shown ? `And ${lines.length - shown} more in the report.` : ''}{lines.length > shown && others ? ' ' : ''}{others ? `Also raised ${others}.` : ''}</p>}
+        {(lines.length > shown || others) && <p className="rowsub">{lines.length > shown && <a className="from-site-more" href={`#/projects/${s.code}/report/${r.id}`}>And {lines.length - shown} more in the report</a>}{lines.length > shown && '.'}{lines.length > shown && others ? ' ' : ''}{others ? `Also raised ${others}.` : ''}</p>}
       </article>;
     })}</div>;
   return <section aria-labelledby={`from-site-${s.code}`}>
