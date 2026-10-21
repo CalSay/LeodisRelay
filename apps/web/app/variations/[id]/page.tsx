@@ -8,7 +8,7 @@ import { useProjectLookup } from '@/components/ProjectContext';
 import type { Variation } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
 import { VariationTags } from '@/components/EngineerWorkspace';
-import { fmtMoney, variationValue } from '@/lib/variations';
+import { fmtMoney, signedCopyLink, variationValue } from '@/lib/variations';
 import { backLabel, safeViewReturn } from '@/lib/viewNavigation';
 import { dayShort } from '@/lib/dates';
 
@@ -74,7 +74,7 @@ export default function VariationPage({ params, searchParams }: { params: Promis
       <span className="lbl">The office</span>
       <h2 style={{ fontSize: 20 }}>{headline}</h2>
       <p>{detail}</p>
-      {v.instruction === 'instructed' && v.signedInstruction && <div className="row"><a href={v.signedInstruction} target="_blank" rel="noreferrer">Open the signed copy ↗</a></div>}
+      {v.instruction === 'instructed' && signedCopyLink(v) && <div className="row"><a href={signedCopyLink(v)} target="_blank" rel="noreferrer">Open the signed copy ↗</a></div>}
     </section>
 
     <section className="eng-panel">

@@ -1,6 +1,7 @@
 import { ConfidentialClientApplication } from "@azure/msal-node";
 import { principalIdFor, type Principal } from "@relay/platform";
 import { accessFromRoles } from './access';
+import { SignInRefused } from './signInErrors';
 
 /**
  * Where identity comes from.
@@ -73,11 +74,11 @@ export function entraProvider(config: EntraConfig): AuthProvider {
 
       const oid = claims.oid ?? result.uniqueId;
       if (claims.tid?.toLowerCase() !== config.tenantId.toLowerCase()) {
-        throw new Error('This account is not in the configured Leodis tenant.');
+        throw new SignInRefused('tenant');
       }
       const access = accessFromRoles(claims.roles);
       if (!oid) {
-        throw new Error("Microsoft did not return an account identifier.");
+        throw new SignInRefused('account');
       }
 
       return {

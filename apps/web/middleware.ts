@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { crossSiteChange } from "./lib/crossSite";
 
 /**
  * Require a session for everything except sign-in itself.
@@ -14,6 +15,9 @@ const PUBLIC = ["/signin", "/api/auth", "/api/health"];
 
 export function middleware(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  if (crossSiteChange(request)) {
+    return NextResponse.json({ reason: "This change did not come from RELAY, so it was not made." }, { status: 403 });
+  }
   if (['/sw.js', '/offline.html', '/offline.js', '/manifest.webmanifest', '/icon', '/icon-192', '/apple-icon'].includes(pathname)) return NextResponse.next();
   if (PUBLIC.some((p) => pathname.startsWith(p))) return NextResponse.next();
 
