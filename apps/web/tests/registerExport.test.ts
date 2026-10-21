@@ -4,6 +4,7 @@ import { ISSUE_COLUMNS, VARIATION_COLUMNS, instructionWords, issueRows, register
 import { sheetDay, sheetTime } from '../lib/sheet';
 import { PERMIT_COLUMNS, permitRows, type Permit } from '../lib/permits';
 import { TALK_COLUMNS, talkRows, type ToolboxTalk } from '../lib/toolboxTalks';
+import { DELIVERY_COLUMNS, deliveryRows, type Delivery } from '../lib/deliveries';
 import { queryIssues } from '../lib/issueQuery';
 import type { Issue, Variation } from '../lib/types';
 
@@ -121,7 +122,7 @@ test('days and times are written in UK time, as Excel reads them', () => {
 });
 
 test('every register file shares the house column order', () => {
-  const registers: [string, readonly string[]][] = [['issues', ISSUE_COLUMNS], ['variations', VARIATION_COLUMNS], ['permits', PERMIT_COLUMNS], ['toolbox talks', TALK_COLUMNS]];
+  const registers: [string, readonly string[]][] = [['issues', ISSUE_COLUMNS], ['variations', VARIATION_COLUMNS], ['permits', PERMIT_COLUMNS], ['toolbox talks', TALK_COLUMNS], ['deliveries', DELIVERY_COLUMNS]];
   for (const [name, columns] of registers) {
     const at = columns.indexOf('Project number');
     assert.ok(at >= 0 && at <= 1, `${name}: project number first, after the reference if there is one`);
@@ -133,7 +134,7 @@ test('every register file shares the house column order', () => {
     }
     assert.equal(new Set(columns).size, columns.length, `${name}: no heading twice`);
   }
-  for (const columns of [PERMIT_COLUMNS, TALK_COLUMNS] as readonly (readonly string[])[]) {
+  for (const columns of [PERMIT_COLUMNS, TALK_COLUMNS, DELIVERY_COLUMNS] as readonly (readonly string[])[]) {
     assert.deepEqual(columns.slice(-3), ['Withdrawn on', 'Withdrawn by', 'Withdrawn because'], 'a withdrawn record keeps its row, with when, who and why last');
     assert.ok(columns.includes('Status'));
   }
@@ -144,11 +145,13 @@ test('typed text in every register file is protected from running as a formula',
   const bad = '=HYPERLINK("http://example.test","x")';
   const permit: Permit = { id: 'p', projectId: 'p1', kind: 'hot-works', work: bad, issuedBy: '+Site', heldBy: '@Pat', day: TODAY, ends: `${TODAY}T17:00`, notes: '-note', by: 'Sam', byId: 's', at: `${TODAY}T08:00:00Z` };
   const talk: ToolboxTalk = { id: 't', projectId: 'p1', day: TODAY, topic: bad, givenBy: '=1+1', attendees: ['-Jo', 'Zoë Brontë'], by: 'Sam', byId: 's', at: `${TODAY}T08:00:00Z` };
+  const delivery: Delivery = { id: 'd', projectId: 'p1', supplier: '+Wholesale', items: bad, noteNumber: '-1', day: TODAY, receivedBy: '@Pat', storedAt: '=A1', condition: 'short', problem: '-2 reels', by: 'Sam', byId: 's', at: `${TODAY}T08:00:00Z` };
   const files = [
     toCsv(issueRows([issue('1', { description: bad, owner: '@Owner' })], { ...context, reviewOn: () => false })),
     toCsv(variationRows([variation('1', { description: bad, raisedBy: '+Dan' })], context)),
     toCsv([[...PERMIT_COLUMNS], ...permitRows([permit], TODAY, project)]),
     toCsv([[...TALK_COLUMNS], ...talkRows([talk], project)]),
+    toCsv([[...DELIVERY_COLUMNS], ...deliveryRows([delivery], project)]),
   ];
   for (const csv of files) {
     const cells = csv.slice(1).split('\r\n')[1]!.match(/("([^"]|"")*"|[^,]*)/g)!.filter(c => c !== '').map(c => c.startsWith('"') ? c.slice(1, -1).replace(/""/g, '"') : c);

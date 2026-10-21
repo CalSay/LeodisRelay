@@ -4,6 +4,72 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Deliveries
+
+- Why: a new feature chosen by Claude for site and office (Cal's go-ahead to
+  add features). Materials arrive on an M&E job most days; a short or damaged
+  delivery today is a photo of the delivery note in someone's phone, and the
+  office hears about it too late to chase the supplier or claim a credit.
+  Not a `docs/tasks.json` task, so no status changed there. Checked against
+  the backlog: not FE-2 (no photographs), not EXP-2 (nothing is routed,
+  approved or sent; chasing the supplier stays a phone call), not EXP-4
+  ("Where it was put" is optional free text, no location list). No report
+  editor change. "Delivered" on a report still means filed; this is
+  materials, and the code says so.
+- What: `/deliveries?project=…` for every role on a project. Record the
+  supplier (the last four different suppliers are one tap), what arrived,
+  the day (today or up to 7 days back), who took it in (starts as the
+  signed-in person), where it was put and the delivery note number
+  (optional), and whether it was all there: all there, short, damaged or
+  wrong items. Anything but all there needs "what was wrong" and stays under
+  "To sort" until someone on the project marks it sorted, saying how. Withdraw
+  with a reason (whoever recorded it, or the office), as permits. Spreadsheet
+  `relay-deliveries-<project>-<day>.csv` in the house column order. Local
+  store kind `deliveries`; nothing is sent or written to SharePoint. Closed
+  projects take no new ones.
+- Where: a "Deliveries" row under Reports and records on the engineer home
+  ("2 in the last 7 days · 1 to sort"), a link in the office project sheet's
+  Reports and records group, and one line per project in the office's
+  Attention list and Needs attention ("Short delivery from Edmundson
+  Electrical, not sorted yet"), after work done with no instruction. The desk
+  reads `GET /api/deliveries` (no project) with its other records; if that
+  fails it keeps the last answer and claims nothing new.
+- Decisions (Claude's): anyone on the project may mark a delivery sorted,
+  because site sees the rest arrive and the office agrees the credit; a note
+  saying how is required so "sorted" is a statement, not a tap. The home row
+  has no red edge: a short delivery is late material, not a safety risk.
+  Deliveries stay out of the site diary, which is built only from reports
+  (EXP-1). Fields scroll clear of the sticky top bar when a refusal moves
+  focus to them.
+- Help: What's new "Deliveries", and a Where to find things entry.
+- Checks: `npm run typecheck`, `npm test` (146 + 422; new
+  `tests/deliveries.test.ts`, and deliveries added to the shared register
+  column-order and formula-protection tests). New
+  `scripts/verify-deliveries.mjs` (87 checks): refused saves (signed out, no
+  supplier, nothing listed, unknown condition, short with no detail, future,
+  too old, too long, malformed, missing and complete projects, sorting one
+  that was all there), the home row, a recent supplier, a short delivery kept
+  to sort, reload, a retry kept once, withdrawing and who may, marking sorted
+  from the office, the spreadsheet, the office Attention list and Needs
+  attention and the line leaving once sorted, the project sheet link, no
+  connection keeps the form, an empty project, axe at 390px light and 1440px
+  dark, 44px controls, no sideways scroll. `verify-home-and-sheet.mjs` and
+  `verify-first-time-use.mjs` expect the new row, link and empty page.
+  Existing checks run against this branch's build after merging #78, all
+  passing: deliveries (87), home-and-sheet (142), first-time-use (358), help
+  (36), accessibility (584), office-desk (73), role-access (95), permits
+  (85), toolbox-talks (68), office-actions (41), day-walkthrough (87),
+  error-messages (68), register-downloads (100), engineer-layout,
+  navigation (76), office-landing (19), safety-actions (30), busy-projects
+  (38 timings), office-phone (95). The deliveries check's title wait was
+  raised to 10 s after one run read an empty tab title (the known race).
+- Not verified: a physical phone, screen readers, a live tenant (none
+  needed: nothing leaves RELAY). With no signal a delivery cannot be
+  recorded; what was typed stays in the form.
+- Proposed, not built: record deliveries with no signal; a photo of the
+  delivery note (would need judging against FE-2 first); deliveries still to
+  sort on the weekly summary.
+
 ## 2026-10-21 — SharePoint dates and visit dates in British Summer Time
 
 - Why: found by the sixth release check on main (e2e84ff), following the open

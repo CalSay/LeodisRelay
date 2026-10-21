@@ -1,6 +1,6 @@
 /**
- * What every register spreadsheet shares, so the issue, variation, permit and
- * toolbox talk files read as one set: one way to write a cell (with the
+ * What every register spreadsheet shares, so the issue, variation, permit,
+ * toolbox talk and delivery files read as one set: one way to write a cell (with the
  * formula protection from the security review), one way to write a day and a
  * time, and one way to name the file.
  *
@@ -33,7 +33,7 @@ export function toCsv(rows: readonly (readonly Cell[])[]): string {
   return '﻿' + rows.map(r => r.map(cell).join(',')).join('\r\n') + '\r\n';
 }
 
-export type RegisterKind = 'issues' | 'variations' | 'permits' | 'toolbox-talks';
+export type RegisterKind = 'issues' | 'variations' | 'permits' | 'toolbox-talks' | 'deliveries';
 
 /** `relay-issues-2026-10-20.csv`, or `relay-permits-011LME-2026-10-21.csv` when the file is for one project. */
 export function registerFileName(kind: RegisterKind, day: string, projectNumber?: string): string {
