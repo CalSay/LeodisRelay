@@ -77,14 +77,18 @@ export function fieldsEqual(actual: Record<string, unknown>, desired: Record<str
     if (other && typeof other === 'object' && ('Url' in other || 'url' in other)) other = (other as {Url?:string;url?:string}).Url ?? (other as {url?:string}).url;
     if (value === null || value === '') return other === undefined || other === null || other === '';
     if (key.endsWith('LookupId')) return String(other) === String(value);
-    if (['Target_x0020_Date','VisitDate','InstructedOn'].includes(key)) return siteDate(other) === siteDate(value);
+    if (['Target_x0020_Date','VisitDate','InstructedOn'].includes(key)) return sharePointDay(other) === sharePointDay(value);
     if (key.endsWith('_At') || ['ReceivedAt','ReviewedAt'].includes(key)) {
       return Math.trunc(Date.parse(String(other)) / 1000) === Math.trunc(Date.parse(String(value)) / 1000);
     }
     return other === value;
   });
 }
-function siteDate(value: unknown): string {
+// A SharePoint date-only column comes back from Graph as a UTC moment: midnight in the site's
+// time zone, so a summer day on a UK site reads as 23:00Z the day before, while a day RELAY
+// wrote as "YYYY-MM-DD" may read as 00:00Z. The UK day of the moment is right either way.
+export function sharePointDay(value: unknown): string {
+  if (value === undefined || value === null || value === '') return '';
   const text = String(value);
   if (/^\d{4}-\d{2}-\d{2}$/.test(text)) return text;
   const date = new Date(text);
@@ -155,7 +159,7 @@ export async function refreshIssues(): Promise<void> {
         description: text(f.Description), location: text(f.Location), actionNeeded: text(f.Required_x0020_Action),
         confirmation: enumKey(CONFIRMATION, f.Confirmation_x0020_Status), work,
         owner: text(f.External_x0020_Owner) || people.find(p => p.id === String(f.Assigned_x0020_ToLookupId))?.name || '',
-        targetDate: text(f.Target_x0020_Date).slice(0, 10), raisedAt: text(f.Raised_x0020_At),
+        targetDate: sharePointDay(text(f.Target_x0020_Date)), raisedAt: text(f.Raised_x0020_At),
         raisedByReport: text(f.Source_x0020_Report_x0020_ID), reportedBy: by?.name,
         reportedById: by ? principalForPerson(by) : undefined,
         closureSubmittedBy: closure?.name, closureSubmittedById: closure ? principalForPerson(closure) : undefined,

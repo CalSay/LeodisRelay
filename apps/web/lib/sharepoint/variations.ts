@@ -3,7 +3,7 @@ import type { Issue, Variation } from '../types';
 import { atomic, enqueue, getRecord, putRecord, records } from '../storage';
 import { cachedProject, projectIdentity, refreshProjects, reportableProject } from '../projects';
 import { assertProjectWrite, OPERATIONS, sharePointMode, writableProjectItemIds } from './config';
-import { fieldsEqual } from './issues';
+import { fieldsEqual, sharePointDay } from './issues';
 import { graph, GraphError, type ListItem } from './graph';
 import { personLookup, principalForPerson, sitePeople } from './people';
 
@@ -154,7 +154,7 @@ export async function refreshVariations(): Promise<void> {
         ...(trade ? { trade } : {}), ...(reason ? { reason } : {}),
         ...(text(f.InstructionReference) ? { instructionReference: text(f.InstructionReference) } : {}),
         ...(text(f.InstructedBy) ? { instructedBy: text(f.InstructedBy) } : {}),
-        ...(text(f.InstructedOn) ? { instructedOn: text(f.InstructedOn).slice(0,10) } : {}),
+        ...(text(f.InstructedOn) ? { instructedOn: sharePointDay(text(f.InstructedOn)) } : {}),
         ...(signedInstruction ? { signedInstruction } : {}),
         ...(labourHours !== undefined ? { labourHours } : {}), ...(labourRate !== undefined ? { labourRate } : {}),
         ...(partsCost !== undefined ? { partsCost } : {}), ...(plantSubcontract !== undefined ? { plantSubcontract } : {}),
