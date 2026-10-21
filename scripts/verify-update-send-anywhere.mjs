@@ -275,8 +275,32 @@ try {
       assert.deepEqual(errors,[],`${label}: page errors`);
       await context.close();
     }
+    // 5. The save on the way to sending reached RELAY but its answer was lost; RELAY closed,
+    // then opened again in a new tab (which knows nothing of that save): it still goes, once.
+    {
+      const {who,context,page,errors,id,label}=await phone(scheme,width);
+      await toCheck(page);
+      const before=getRecord('reports',id).version;
+      let cut=0;
+      await page.route(u=>u.pathname===`/api/reports/${id}`,async route=>{
+        if(route.request().method()==='PUT'&&!cut){cut++;await route.fetch();return route.abort('internetdisconnected');}
+        if(route.request().method()!=='GET')return route.abort('internetdisconnected');
+        return route.continue();
+      });
+      await sendButton(page).click();
+      await waitingNote(page).waitFor({timeout:10000});
+      ok(getRecord('reports',id).version>before&&getRecord('reports',id).state==='draft',`${label} lost save answer: saved on RELAY, not sent yet`);
+      await page.close();
+      const other=await context.newPage();other.on('pageerror',e=>errors.push(e.message));
+      await other.goto(`${base}/my-week`);
+      await sentNote(other).waitFor({timeout:20000});
+      const mine=reportsBy(who);
+      ok(mine.length===1&&mine[0].state==='submitted'&&issuesFrom(id).length===1,`${label} lost save answer: reopened, it went once, not refused as changed elsewhere`);
+      assert.deepEqual(errors,[],`${label}: page errors`);
+      await context.close();
+    }
   }
-  console.log(`Site update send-anywhere check passed (${checks} checks): sent with no signal and left, it goes by itself from another page once signal is back, exactly once with every card and photograph (one taken with no signal), says so with a link, and the waiting line uses the defect's words; reopened on another page it goes; a site update, a defect and a signed inspection waiting together, two tabs, a reload and "Try now" mid-send each arrive once; taken back to the cards in another tab it does not go. 390px light and dark, 1440px dark.`);
+  console.log(`Site update send-anywhere check passed (${checks} checks): sent with no signal and left, it goes by itself from another page once signal is back, exactly once with every card and photograph (one taken with no signal), says so with a link, and the waiting line uses the defect's words; reopened on another page it goes; a site update, a defect and a signed inspection waiting together, two tabs, a reload and "Try now" mid-send each arrive once; taken back to the cards in another tab it does not go; a save whose answer was lost, reopened in a new tab, still goes once. 390px light and dark, 1440px dark.`);
 } catch (error) { console.error(output.slice(-3000)); throw error; }
 finally {
   await browser?.close();

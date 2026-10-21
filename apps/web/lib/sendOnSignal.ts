@@ -15,12 +15,26 @@
 export const SEND_ON_SIGNAL_KEY = 'relay-send-on-signal';
 
 /**
- * `seq` is the held copy's edit number when Send was tapped, so only that
- * copy goes by itself away from its page; `what` names it for the words
- * ("site update"). Both are missing from lines written before 2026-10-21's
- * second change: those go only from the report's own page, as before.
+ * `checked` is what the engineer checked and sent (checkedCopy), so only a
+ * held copy still saying exactly that goes by itself away from its page;
+ * `what` names it for the words ("site update"). Both are missing from lines
+ * written before 2026-10-21's second change: those go only from the report's
+ * own page, as before.
  */
-export interface WaitingToSend { reportId: string; principalId: string; at: string; seq?: number | string; what?: string }
+export interface WaitingToSend { reportId: string; principalId: string; at: string; checked?: string; what?: string }
+
+/**
+ * A short fingerprint of a draft's cards and signature, to tell whether the
+ * copy on the phone is still the one checked when Send was tapped. By
+ * content, not edit number: the report page renews the number when it saves
+ * the same work again.
+ */
+export function checkedCopy(observations: readonly unknown[], signature: unknown): string {
+  const text = JSON.stringify([observations, signature ?? null]);
+  let a = 5381, b = 52711;
+  for (let i = 0; i < text.length; i++) { const c = text.charCodeAt(i); a = (a * 33) ^ c; b = (b * 31) ^ c; }
+  return `${text.length.toString(36)}-${(a >>> 0).toString(36)}-${(b >>> 0).toString(36)}`;
+}
 
 type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 const store = (given?: Store): Store | undefined => {
@@ -33,7 +47,7 @@ function read(s: Store | undefined): WaitingToSend[] {
   try {
     const list: unknown = JSON.parse(s.getItem(SEND_ON_SIGNAL_KEY) ?? '[]');
     return Array.isArray(list) ? list.filter((w): w is WaitingToSend => !!w && typeof w.reportId === 'string' && typeof w.principalId === 'string' && typeof w.at === 'string'
-      && (w.seq === undefined || typeof w.seq === 'string' || typeof w.seq === 'number') && (w.what === undefined || typeof w.what === 'string')) : [];
+      && (w.checked === undefined || typeof w.checked === 'string') && (w.what === undefined || typeof w.what === 'string')) : [];
   } catch { return []; }
 }
 
@@ -59,10 +73,10 @@ export const isWaitingToSend = (reportId: string, principalId: string, given?: S
   waitingToSend(principalId, given).includes(reportId);
 
 /** The engineer tapped Send with no signal: send it as soon as there is some. */
-export function markWaitingToSend(reportId: string, principalId: string, at = new Date().toISOString(), given?: Store, held: Pick<WaitingToSend, 'seq' | 'what'> = {}): void {
+export function markWaitingToSend(reportId: string, principalId: string, at = new Date().toISOString(), given?: Store, held: Pick<WaitingToSend, 'checked' | 'what'> = {}): void {
   const s = store(given);
   write(s, [...read(s).filter(w => !(w.reportId === reportId && w.principalId === principalId)), { reportId, principalId, at,
-    ...(held.seq !== undefined ? { seq: held.seq } : {}), ...(held.what ? { what: held.what } : {}) }]);
+    ...(held.checked ? { checked: held.checked } : {}), ...(held.what ? { what: held.what } : {}) }]);
 }
 
 /** Sent, changed, refused or taken back: no longer waiting, for anyone on this device. */

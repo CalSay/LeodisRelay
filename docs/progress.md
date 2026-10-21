@@ -4,6 +4,84 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — A site update sent with no signal goes from any page
+
+- Why: the eleventh release check found that a site update sent with no
+  signal went by itself only while its own page stayed open (#105), while a
+  defect goes from any page (#116). An engineer who tapped Send in a dead spot
+  and moved on, or closed RELAY, could leave site with the office never
+  getting the update. Decided under Cal's autonomy message (20 Oct 14:11) and
+  his 07:02 ask (engineers should not have to think about it). FE-3e note
+  updated; `passes` stays false (no real phone).
+- Reused #116 rather than building a second sender: `DefectsOnSignal` became
+  `components/SendOnSignal.tsx`, one set of triggers (online, focus, back in
+  view, every 15 s, and on opening RELAY) for both. Defects send exactly as
+  before. New `lib/heldUpdate.ts` sends a waiting site update (or an
+  inspection sent from the report screen) from any other page: the copy the
+  editor held on the phone when Send was tapped (`localDraft.ts`), saved with
+  the shared save journal (uploading any photographs only on the phone
+  first), then sent with the signature saved with the draft, or the author's
+  name, as the Send button does.
+- Exactly once: one send per report per page; a Web Lock
+  (`relay-update-send:<id>`) taken by both the background sender and the
+  report page's own send; the waiting line re-read inside the lock, so a
+  second tab finds it gone and sends nothing (an open report page then shows
+  it sent); the report page opening while a send is on its way waits for it.
+  Behind that the server already answers a repeated save and a repeated send
+  with the same report. A lost answer between save and send tries again on
+  the saved version, and a save refused because these very cards were already
+  sent counts as sent; one refused because these very cards were already
+  saved (a save whose answer was lost, retried from a new tab) just sends.
+- Only what was checked goes: the waiting line (`relay-send-on-signal`) now
+  keeps a fingerprint of the cards and signature checked (`checked`,
+  `checkedCopy`) and what it is ("site update"). By content, not edit
+  number, as the report page renews the number when it saves the same work.
+  A copy that changed since Send, a copy changed or sent elsewhere, or a
+  refusal stops it going by itself and says "Site update not sent to the
+  office." with the reason and "Open it". Lines written before this change
+  (no number) still go only from their own page, as before.
+- What the engineer sees: on any page but the one already showing it, one
+  line at the top while anything waits, in the defect screen's words:
+  "Waiting for signal. Your site update and a defect are kept on this phone
+  and go to the office by themselves as soon as there is signal, while RELAY
+  is open." Once it goes: "Site update sent to the office by itself once
+  there was signal: 011LME-SPR-001. Open it". The home tile and Unfinished
+  row now say it goes by itself rather than "open it with signal". No new
+  screens. Help "What's new" line `update-send-on-signal-anywhere`, and the
+  No signal guide step updated.
+- Checks: typecheck; `npm test` (146 + 528; new `heldUpdate.test.ts`, one new
+  `sendOnSignal.test.ts` case); build. New
+  `scripts/verify-update-send-anywhere.mjs` (port 4477, 73 checks): sent with
+  no signal (one photograph taken with no signal), then on to the Site page:
+  the line says waiting for signal, and once signal is back it goes from
+  there, once, with every card and photograph (each fetched back from the
+  server), one issue, one variation, and the line goes; closed and reopened on
+  My week it goes; a site update, a defect and an inspection signed with no
+  signal waiting together, two tabs, one reloaded part-way and "Try now"
+  tapped as it goes: each arrives once; taken back to the cards in another
+  tab, it does not go. 390px light and dark, 1440px dark.
+  `verify-send-on-signal` changed where the behaviour did: closed and
+  reopened, the home screen now sends it by itself once RELAY answers
+  (it used to need the tile tapped). On the final build, 44 browser
+  checks one at a time all pass: both send-on-signal checks and every
+  offline, draft, sent-elsewhere, signature, defect, editor, engineer home,
+  Help, accessibility, role access and search check. Screenshots at 390px
+  light and dark and 1440px dark in project files
+  (`ui-review/offline-site-update/`).
+- Fresh-context review found four bugs, all fixed: a lost save answer
+  retried from a new tab was refused as "changed somewhere else" (now sends);
+  moving between pages dropped answers on their way, hiding a refusal (the
+  open page is now read, not a reason to restart); two report pages waiting
+  set each other trying in a loop through the storage event (now only a line
+  taken away counts); and a re-saved, unchanged copy read as "changed after
+  Send" (now judged by content). A report page whose line another tab took
+  away while it is still a draft no longer sends by itself (a second review
+  pass found that this must not apply when the phone could not keep the line
+  at all; fixed with an in-page flag). Second pass otherwise clean.
+- Not verified: real phones, real weak signal, a locked phone that suspends
+  RELAY, screen readers. Nothing sends while RELAY is closed (no background
+  sync), as before.
+
 ## 2026-10-21 — Eleventh release check: main ready at 6def5e8
 
 - Why: eight merges since the tenth check (#119 to #126), with inspections

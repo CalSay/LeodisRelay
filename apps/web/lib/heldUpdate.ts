@@ -4,7 +4,7 @@ import { compareDrafts } from './draftConflict';
 import { heldKey, recover, releaseIfCurrent, update, type HeldDraft } from './localDraft';
 import { reviewReport } from './review';
 import { SaveConflict } from './saveRequest';
-import { clearWaitingToSend, waitingLines } from './sendOnSignal';
+import { checkedCopy, clearWaitingToSend, waitingLines } from './sendOnSignal';
 import type { Report } from './types';
 
 /**
@@ -14,8 +14,8 @@ import type { Report } from './types';
  * sends it there; anywhere else components/SendOnSignal.tsx calls this.
  *
  * What goes is the copy the editor held on the phone when Send was tapped
- * (localDraft.ts), and only if it is still that copy (the waiting line's
- * `seq`): nothing the engineer did not check goes by itself. The signature is
+ * (localDraft.ts), and only if it still says what was checked (the waiting
+ * line's `checked`): nothing the engineer did not check goes by itself. The signature is
  * the one saved with it, or the author's name, as the editor's Send uses.
  *
  * It only goes once: one send at a time per report on a page (shared with a
@@ -80,8 +80,8 @@ export function draftSignatureToSend(report: Report): { dataUrl?: string; name: 
 async function post(reportId: string, principalId: string): Promise<UpdateSendResult> {
   // Read inside the lock: a tab that sent it first has taken the line away.
   const line = waitingLines(principalId).find(w => w.reportId === reportId);
-  // A line from before it held the copy's number is left to the report's own page.
-  if (!line || line.seq === undefined) return { kind: 'skipped' };
+  // A line from before it held what was checked is left to the report's own page.
+  if (!line || line.checked === undefined) return { kind: 'skipped' };
   const what = line.what ?? 'report';
   const stop = (reason: string): UpdateSendResult => { clearWaitingToSend(reportId); return { kind: 'refused', reportId, what, reason }; };
   const held = await recover(reportId, principalId).catch(() => null);
@@ -92,7 +92,7 @@ async function post(reportId: string, principalId: string): Promise<UpdateSendRe
     if (now?.state === 'submitted') { clearWaitingToSend(reportId); return { kind: 'skipped' }; }
     return stop('This phone no longer holds it as you sent it. Open it to check it and send it again.');
   }
-  if (held.seq !== line.seq) return stop('It changed after you tapped Send. Open it to check it and send it again.');
+  if (checkedCopy(held.observations, held.report.draftSignature) !== line.checked) return stop('It changed after you tapped Send. Open it to check it and send it again.');
   return sendHeld(held as HeldDraft & { report: Report; baseVersion: number }, principalId, stop);
 }
 
@@ -106,6 +106,7 @@ async function sendHeld(held: HeldDraft & { report: Report; baseVersion: number 
     clearWaitingToSend(report.id);
     return { kind: 'sent', report: sent };
   };
+  const submit = (saved: Report) => submitSaved(held, report, saved, done, stop);
   let saved: Report;
   try { saved = await saveReport(report, held.baseVersion, principalId); }
   catch (error) {
@@ -113,11 +114,18 @@ async function sendHeld(held: HeldDraft & { report: Report; baseVersion: number 
       const current = error.current;
       // Sent with these very cards: an earlier try whose answer was lost.
       if (current.state === 'submitted' && !compareDrafts(report, { ...current, ...(report.draftSignature ? { draftSignature: report.draftSignature } : {}) }).differs) return done(current);
+      // Saved already with these very cards and signature (a save whose answer was lost): only the sending is left.
+      if (current.state === 'draft' && !compareDrafts(report, current).differs) return submit(current);
       return stop(current.state === 'draft' ? 'It was changed somewhere else too. Open it to choose what to keep.' : 'It was sent from somewhere else. Open it to check what went.');
     }
     if (waits(error)) return { kind: 'waiting' };
     return stop(error instanceof Error && error.message ? error.message : 'RELAY could not take it.');
   }
+  return submit(saved);
+}
+
+/** Saved as checked at `saved.version`: send exactly that to the office. */
+async function submitSaved(held: HeldDraft, report: Report, saved: Report, done: (sent: Report) => Promise<UpdateSendResult>, stop: (reason: string) => UpdateSendResult): Promise<UpdateSendResult> {
   // Saved: a lost answer below tries again on this version, rather than saving on the old one.
   await update(held.key, h => h.seq === held.seq ? { ...h, baseVersion: saved.version, report: { ...(h.report ?? saved), version: saved.version } } : undefined).catch(() => null);
   let sent: Report;

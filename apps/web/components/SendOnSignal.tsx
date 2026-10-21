@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePrincipal } from './PrincipalContext';
 import { announceDefectResult, heldDefectsToSend, refusedNow, sendHeldDefect, sendingNow } from '@/lib/heldDefect';
 import { sendWaitingUpdate, updateSending } from '@/lib/heldUpdate';
@@ -42,13 +42,16 @@ export function SendOnSignal() {
   const [waiting, setWaiting] = useState<{ updates: string[]; defects: number; offline: boolean }>({ updates: [], defects: 0, offline: false });
   /** The report whose own page is open: it sends itself, and says so itself. */
   const here = pathname.startsWith('/reports/') ? decodeURIComponent(pathname.split('/')[2] ?? '') : '';
+  // Read when trying, not a reason to start again: moving between pages must not drop an answer on its way.
+  const hereRef = useRef(here);
+  hereRef.current = here;
 
   const look = useCallback(() => {
     if (!principal) return;
     const defects = heldDefectsToSend(principal.id).filter(d => !refusedNow(d.defect.requestId) && !shownHere(d.key)).length;
-    const updates = waitingLines(principal.id).filter(w => w.reportId !== here && w.seq !== undefined).map(w => w.what ?? 'report');
+    const updates = waitingLines(principal.id).filter(w => w.reportId !== hereRef.current && w.checked !== undefined).map(w => w.what ?? 'report');
     setWaiting({ updates, defects, offline: typeof navigator !== 'undefined' && navigator.onLine === false });
-  }, [principal, here]);
+  }, [principal]);
 
   useEffect(() => {
     if (!principal) return;
@@ -68,7 +71,7 @@ export function SendOnSignal() {
       }
       for (const line of waitingLines(principal.id)) {
         // Its own page is open: the page sends it, and shows how it went.
-        if (line.reportId === here || updateSending(line.reportId)) continue;
+        if (line.reportId === hereRef.current || updateSending(line.reportId)) continue;
         void sendWaitingUpdate(line.reportId, principal.id).then(result => {
           if (stopped) return;
           look();
@@ -98,7 +101,9 @@ export function SendOnSignal() {
       window.removeEventListener('focus', trySend); window.removeEventListener('storage', onStorage); window.removeEventListener(SHOWN_HERE_EVENT, look);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [principal, here, look, router]);
+  }, [principal, look, router]);
+  // A different page shows different things waiting.
+  useEffect(look, [here, look]);
 
   // The line, said as the defect screen says it: what is kept, and that it goes by itself.
   const updates = waiting.updates.length === 1 ? [`your ${waiting.updates[0]}`]

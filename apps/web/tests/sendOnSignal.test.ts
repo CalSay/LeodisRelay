@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { SEND_ON_SIGNAL_KEY, clearWaitingToSend, isWaitingToSend, markWaitingToSend, waitingLines, waitingToSend } from '../lib/sendOnSignal';
+import { SEND_ON_SIGNAL_KEY, checkedCopy, clearWaitingToSend, isWaitingToSend, markWaitingToSend, waitingLines, waitingToSend } from '../lib/sendOnSignal';
 
 /** A stand-in for localStorage. */
 function memory(initial: Record<string, string> = {}) {
@@ -53,14 +53,22 @@ test('reports sent with no signal wait on this phone until sent or taken back', 
 
 test('a waiting line keeps which held copy was sent, and what it is', () => {
   const s = memory();
-  markWaitingToSend('rep-1', 'sam', '2026-10-21T09:00:00Z', s, { seq: 'edit-7', what: 'site update' });
+  markWaitingToSend('rep-1', 'sam', '2026-10-21T09:00:00Z', s, { checked: 'abc', what: 'site update' });
   markWaitingToSend('rep-2', 'sam', '2026-10-21T09:01:00Z', s);
   assert.deepEqual(waitingLines('sam', s), [
-    { reportId: 'rep-1', principalId: 'sam', at: '2026-10-21T09:00:00Z', seq: 'edit-7', what: 'site update' },
+    { reportId: 'rep-1', principalId: 'sam', at: '2026-10-21T09:00:00Z', checked: 'abc', what: 'site update' },
     { reportId: 'rep-2', principalId: 'sam', at: '2026-10-21T09:01:00Z' },
   ]);
   assert.deepEqual(waitingToSend('sam', s), ['rep-1', 'rep-2']);
   // A line someone else wrote with a number that is not one is left out.
-  const odd = memory({ [SEND_ON_SIGNAL_KEY]: JSON.stringify([{ reportId: 'rep-3', principalId: 'sam', at: 'x', seq: { n: 1 } }]) });
+  const odd = memory({ [SEND_ON_SIGNAL_KEY]: JSON.stringify([{ reportId: 'rep-3', principalId: 'sam', at: 'x', checked: 7 }]) });
   assert.deepEqual(waitingLines('sam', odd), []);
+});
+
+test('what was checked is told apart by content, not by edit number', () => {
+  const cards = [{ id: 'o1', whatHappened: 'Containment complete', photos: [{ id: 'p1' }] }];
+  assert.equal(checkedCopy(cards, { name: 'Sam' }), checkedCopy(JSON.parse(JSON.stringify(cards)), { name: 'Sam' }));
+  assert.notEqual(checkedCopy(cards, { name: 'Sam' }), checkedCopy([{ ...cards[0], whatHappened: 'Containment complete to grid D' }], { name: 'Sam' }));
+  assert.notEqual(checkedCopy(cards, { name: 'Sam' }), checkedCopy(cards, { name: 'S. Signal' }), 'a changed signature is a change');
+  assert.notEqual(checkedCopy(cards, undefined), checkedCopy([...cards, { id: 'o2', photos: [] }], undefined));
 });
