@@ -10,6 +10,7 @@ import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { londonDay, shiftWeek, weekStart, type WeekIssue, type WeekReport, type WeekVariation, type WeeklySummary } from '@/lib/weeklySummary';
 import { dayShort } from '@/lib/dates';
+import { failure } from '@/lib/failure';
 
 /**
  * One project's week, for the weekly site or client meeting: who was on site,
@@ -75,7 +76,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
     fetch(`/api/weekly-summary?${new URLSearchParams({ projectId, week })}`, { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as WeeklySummary & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `The summary could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'The summary could not be loaded.');
         if (!cancelled) setSummary(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'The summary could not be loaded.'); });

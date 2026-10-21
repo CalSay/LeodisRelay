@@ -16,6 +16,7 @@ import {
   type Report,
 } from "@/lib/api";
 import { ApiError, SaveConflict } from "@/lib/api";
+import { saveProblem, sendProblem } from '@/lib/saveProblem';
 import type { ProjectSuggestions } from "@/lib/suggestions";
 import { clientId } from '@/lib/clientId';
 import { dropAside, hasUnsent, keep, recover, releaseIfCurrent, setAside } from "@/lib/localDraft";
@@ -45,7 +46,7 @@ import { renewTabId, tabId } from '@/lib/tabId';
 import { carryIntoCorrection, SENT_ELSEWHERE_REASON, unsentWork, type UnsentWork } from '@/lib/sentElsewhere';
 import { SentElsewhere } from '@/components/SentElsewhere';
 
-type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "error" | "conflict";
+type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "signedout" | "server" | "error" | "conflict";
 
 /**
  * Where the work is, said plainly.
@@ -63,7 +64,11 @@ const SAVE: Record<SaveState, { dot: string; text: string }> = {
   // The dangerous state, and the only one that warrants alarm: the work is
   // neither on the server nor held on the device, so closing the page loses it.
   unheld: { dot: "dot dot-bad", text: "NOT SAVED ANYWHERE — keep this page open" },
-  error: { dot: "dot dot-bad", text: "Not saved — check connection" },
+  // Neither is anyone's fault on site, and the work is on the phone: amber, not red.
+  signedout: { dot: "dot dot-busy", text: "Signed out · kept on this phone" },
+  server: { dot: "dot dot-busy", text: "Server not answering · kept on this phone" },
+  // Refused (a photograph the server cannot read, a box too long): the message says what to change.
+  error: { dot: "dot dot-bad", text: "Not saved · kept on this phone" },
   conflict: { dot: "dot dot-bad", text: "Saved elsewhere too — choose what to keep" },
 };
 
@@ -73,6 +78,15 @@ const WHERE_DOT: Record<Where, string> = { server: 'dot dot-ok', uploading: 'dot
 const CHANNEL = 'relay-drafts';
 /** While the server cannot be reached, try again this often; coming back into signal also retries. */
 const RETRY_MS = 15_000;
+/** A save taking longer than this says so, and says where the work is meanwhile. */
+const SLOW_MS = 8_000;
+const NO_CONNECTION = 'No connection, so this report could not be opened, and this phone holds no copy of it. Open it again when there is signal.';
+
+/** The card a photograph is on, by its place or its check, to find it by. */
+function cardName(report: Report, photoId: string): string | undefined {
+  const o = report.observations.find(x => x.photos.some(p => p.id === photoId));
+  return o ? (o.check?.question || o.location || '').trim() || undefined : undefined;
+}
 /** How long Undo stays offered after removing a card or photograph, unless the bar has focus or a pointer over it. */
 const UNDO_MS = 12_000;
 
@@ -95,7 +109,16 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [suggestions,setSuggestions] = useState<ProjectSuggestions>({ locations: [], companies: [] });
 
   const [report, setReport] = useState<Report | null>(null);
-  const [missing, setMissing] = useState(false);
+  /** Why the report could not be opened, said in place of it. */
+  const [missing, setMissing] = useState<string | null>(null);
+  /** The session has gone before the report opened: nothing to keep on screen, so sign in here. */
+  const [signedOut, setSignedOut] = useState(false);
+  /** Why the last save did not reach the server, shown above the bar until a save does. */
+  const [saveProblemText, setSaveProblemText] = useState<string | null>(null);
+  /** A save that has taken a while: said, so a slow server does not look like a hang. */
+  const [slow, setSlow] = useState(false);
+  /** Whether the device took a copy of the last edit, for the slow-save words. */
+  const lastHeld = useRef(true);
   const [waitingForHeld, setWaitingForHeld] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("clean");
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -242,9 +265,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       .then((d) => {
         const principal = d?.principal?.id ?? null;
         setPrincipalId(principal);
+        if (!principal) setSignedOut(true);
         try { if (principal) sessionStorage.setItem('relay-offline-principal',principal); else sessionStorage.removeItem('relay-offline-principal'); } catch {}
       })
-      .catch(() => {setPrincipalId(null);setMissing(true);});
+      .catch(() => {setPrincipalId(null);setMissing(NO_CONNECTION);});
   }, []);
 
   useEffect(() => {
@@ -260,9 +284,11 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       if (cancelled) return;
       setWaitingForHeld(false);
       let found;
+      let failed: unknown;
       try {
         found = await getReport(id);
-      } catch {
+      } catch (error) {
+        failed = error;
         const held = await recover(id,principalId,tabId());
         if (held?.key.includes('::aside::')) { asides.current.add(held.key); restoredBase.current = held.base; }
         if (!cancelled && held?.report) {
@@ -272,12 +298,12 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           setOnServer({ cards: {} });
           setReport({...held.report,observations:held.observations,version:held.baseVersion ?? 0});
           setSaveState('phone');
-        } else if (!cancelled) setMissing(true);
+        } else if (!cancelled) setMissing(failed instanceof ApiError && !failed.offline ? failed.message : NO_CONNECTION);
         return;
       }
       if (cancelled) return;
       if (!found) {
-        setMissing(true);
+        setMissing('This report could not be found. It may have been removed, or the link may be wrong.');
         return;
       }
       serverVersion.current = found.version;
@@ -347,6 +373,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         () => true,
         () => false,
       );
+      void held.then(ok => { lastHeld.current = ok; });
 
       saveTimer.current = setTimeout(() => {
         // Queued behind whatever is already running, so there is never more
@@ -367,14 +394,17 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             if (seq.current === mySeq) {
               pending.current = null;
               setSaveState('saved');
+              setSaveProblemText(null);
             }
           } catch (error) {
             if (error instanceof SaveConflict) { await showConflict(error.current, latest.current ?? toSave); return; }
-            if (!(error instanceof ApiError && error.offline)) setSubmitError(error instanceof Error ? error.message : 'Unable to save.');
             const offline = error instanceof ApiError && error.offline;
+            const kept = await held;
             // Not on the server. Whether that is merely inconvenient or
             // actually dangerous depends on whether the device took a copy.
-            if (seq.current === mySeq) setSaveState((await held) ? (offline ? "phone" : "error") : "unheld");
+            const problem = offline ? null : saveProblem(error, kept, photoId => cardName(latest.current ?? toSave, photoId));
+            setSaveProblemText(problem?.message ?? null);
+            if (seq.current === mySeq) setSaveState(kept ? (offline ? "phone" : problem!.state) : "unheld");
           } finally {
             inFlight.current = false;
           }
@@ -632,15 +662,25 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   }, [scheduleSave, principalId]);
 
   // The phone can have signal while the server is down or restarting, so no
-  // "online" event comes. While the work is only on this phone, keep trying.
+  // "online" event comes. While the work is only on this phone, keep trying:
+  // with no signal, with the server not answering, and when signed out (signing
+  // in again in another tab is all it takes; coming back to this tab tries at once).
   useEffect(() => {
-    if (saveState !== 'phone' || !principalId) return;
-    const timer = setInterval(() => {
+    if (!['phone', 'server', 'signedout'].includes(saveState) || !principalId) return;
+    const retry = () => {
       const current = pending.current ?? latest.current;
       if (current?.state === 'draft' && !sending.current && document.visibilityState === 'visible') scheduleSave(current, true);
-    }, RETRY_MS);
-    return () => clearInterval(timer);
+    };
+    const timer = setInterval(retry, RETRY_MS);
+    window.addEventListener('focus', retry);
+    return () => { clearInterval(timer); window.removeEventListener('focus', retry); };
   }, [saveState, principalId, scheduleSave]);
+
+  useEffect(() => {
+    if (saveState !== 'saving') { setSlow(false); return; }
+    const timer = setTimeout(() => setSlow(true), SLOW_MS);
+    return () => clearTimeout(timer);
+  }, [saveState]);
 
   useEffect(() => onPhotoUploads(() => setUploading(uploadingPhotos())), []);
 
@@ -841,7 +881,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       if (error instanceof SaveConflict) {
         // Saved elsewhere since this screen last saved: nothing is sent until the engineer chooses.
         await showConflict(error.current, report);
-      } else if (error instanceof ApiError && error.offline) {
+      } else {
         // Sending failed, so make certain the device is holding the work before
         // telling anyone it is safe.
         const held = principalId
@@ -858,14 +898,17 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               () => false,
             )
           : false;
-        setSaveState(held ? "phone" : "unheld");
-        setSubmitError(
-          held
-            ? "No connection, so this has not reached the office yet. Your work is held on this phone — try again when you have signal."
-            : "No connection, and this device would not store a copy. Do not close this page: your work only exists on this screen. Move somewhere with signal and send again.",
-        );
-      } else {
-        setSubmitError(error instanceof Error ? error.message : "That could not be sent.");
+        if (error instanceof ApiError && error.offline) {
+          setSaveState(held ? "phone" : "unheld");
+          setSubmitError(
+            held
+              ? "No connection, so this has not reached the office yet. Your work is held on this phone — try again when you have signal."
+              : "No connection, and this device would not store a copy. Do not close this page: your work only exists on this screen. Move somewhere with signal and send again.",
+          );
+        } else {
+          if (!held) setSaveState("unheld");
+          setSubmitError(sendProblem(error, held, photoId => cardName(report, photoId)));
+        }
       }
     } finally {
       sending.current = false;
@@ -873,11 +916,20 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     }
   }
 
+  if (signedOut) {
+    return (
+      <main className="wrap eng-page">
+        <Link href={safeViewReturn(returnTo, '/engineer')} className="back">&larr; {backLabel(safeViewReturn(returnTo, '/engineer'))}</Link>
+        <div className="empty" role="alert">You are signed out, so this report cannot be opened. Sign in again to carry on: anything this phone holds for it comes back once you are in.</div>
+        <p><a className="eng-link-button" href={`/signin?returnTo=${encodeURIComponent(`/reports/${id}`)}`}>Sign in again</a></p>
+      </main>
+    );
+  }
   if (missing) {
     return (
       <main className="wrap eng-page">
         <Link href={safeViewReturn(returnTo, '/engineer')} className="back">&larr; {backLabel(safeViewReturn(returnTo, '/engineer'))}</Link>
-        <div className="empty">This report could not be loaded. Check your connection or sign in again.</div>
+        <div className="empty" role="alert">{missing}</div>
         <a href="/offline.html">See what is on this phone</a>
       </main>
     );
@@ -1274,9 +1326,6 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           </div>
         </div>}
 
-        {submitError && (
-          <div className="note note-bad" style={{ marginTop: 16 }}>{submitError}</div>
-        )}
 
         {/* One primary action, always reachable, with the save state beside
             it so the two are never read separately. On the phone it steps
@@ -1290,12 +1339,14 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             <button ref={undoButton} type="button" className="eng-undo-button" onClick={undoRemove} disabled={submitting}>Undo</button>
             <button type="button" className="eng-undo-close" onClick={closeUndo} aria-label="Dismiss">&times;</button>
           </div>}
+          {/* Why the work is not on the server, where it is seen: above the button, not below the cards. */}
+          {(submitError || saveProblemText) && <div className={`note eng-save-problem ${!submitError && (saveState === 'signedout' || saveState === 'server') ? 'is-waiting' : 'note-bad'}`} role="alert">{submitError ?? saveProblemText}</div>}
           <div className="actionbar-inner">
             <span className="savestate" aria-live="polite">
               <span className={SAVE[saveState].dot} />
               {step === 'check' && stop.length > 0
                 ? <span className="actionbar-warning"><b>{stopRows.length} {stopRows.length === 1 ? 'item needs' : 'items need'} attention</b><span>Tap one above to fix it</span></span>
-                : <b>{SAVE[saveState].text || (step === 'check' ? 'Ready to send' : checklist ? `${report.observations.length - unanswered.length} of ${report.observations.length} answered` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`)}</b>}
+                : <b>{saveState === 'saving' && slow ? (lastHeld.current ? 'Still saving · kept on this phone' : 'Still saving · keep this page open') : SAVE[saveState].text || (step === 'check' ? 'Ready to send' : checklist ? `${report.observations.length - unanswered.length} of ${report.observations.length} answered` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`)}</b>}
             </span>
             {step === 'cards'
               ? <button className="btn-primary" onClick={() => showCheck()} disabled={submitting}>Check &amp; send &rarr;</button>

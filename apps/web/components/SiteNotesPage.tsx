@@ -11,6 +11,7 @@ import { DONE_DAYS, NOTE_MAX, type ProjectNotes, type SiteNote } from '@/lib/sit
 import { keepProjectNotesOnDevice } from '@/lib/offlineNotes';
 import { safeViewReturn, backLabel } from '@/lib/viewNavigation';
 import { whenShort } from '@/lib/dates';
+import { failure } from '@/lib/failure';
 
 /**
  * Notes for the next visit: word left on a project for whoever is on site
@@ -59,7 +60,7 @@ export function SiteNotesPage({ initialProject, returnTo }: { initialProject: st
     fetch(`/api/site-notes?${new URLSearchParams({ project: projectId })}`, { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as Loaded & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `The notes could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'The notes could not be loaded.');
         if (!cancelled) setData(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'The notes could not be loaded.'); });
@@ -99,7 +100,7 @@ export function SiteNotesPage({ initialProject, returnTo }: { initialProject: st
         setRequestId(clientId());
         throw new Error('An earlier try was saved with different words. Save again to keep these words as a new note, or reload to see it.');
       }
-      if (!response.ok) throw new Error(body.reason ?? `The note could not be saved (${response.status}).`);
+      if (!response.ok) throw failure(response.status, body, 'The note could not be saved.', 'What you typed is still here.');
       replace(body);
       setText(''); setRequestId(clientId()); setSaid('Note left for the next visit.');
       box.current?.focus();
@@ -114,7 +115,7 @@ export function SiteNotesPage({ initialProject, returnTo }: { initialProject: st
     try {
       const response = await fetch(`/api/site-notes/${encodeURIComponent(note.id)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ done }) });
       const body = await response.json().catch(() => ({})) as SiteNote & { reason?: string };
-      if (!response.ok) throw new Error(body.reason ?? `The note could not be changed (${response.status}).`);
+      if (!response.ok) throw failure(response.status, body, 'The note could not be changed.');
       replace(body);
       setSaid(done ? 'Note marked done with. It is kept below for two weeks if you need it back.' : 'Note put back.');
       // The button pressed has moved list, so focus goes to the form where the next thing usually happens.

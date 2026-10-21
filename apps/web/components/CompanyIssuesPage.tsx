@@ -8,6 +8,7 @@ import { RECENT_DAYS, companyKey, matchCompanies, type CompanyIssues, type Compa
 import { NOTE_MAX, standingPromise, type Chase, type CompanyChases } from '@/lib/companyChases';
 import { clientId } from '@/lib/clientId';
 import { dateShort, whenShort } from '@/lib/dates';
+import { failure } from '@/lib/failure';
 
 /**
  * Open issues by company, for the office: who still has work to put right
@@ -68,7 +69,7 @@ function ChaseLog({ line, chases, today, onSaved }: { line: CompanyLine; chases:
         setRequestId(clientId());
         throw new Error('An earlier try was saved with different words. Save again to keep these words as a new chase, or reload to see it.');
       }
-      if (!response.ok) throw new Error(body.reason ?? `The chase could not be saved (${response.status}).`);
+      if (!response.ok) throw failure(response.status, body, 'The chase could not be saved.', 'What you typed is still here.');
       onSaved(body);
       setOpen(false); setNote(''); setPromisedBy(''); setSaid(`Chase saved for ${line.owner}.`); setRefocus(true);
     } catch (err) {
@@ -124,7 +125,7 @@ export function CompanyIssuesPage({ initialQuery, returnTo }: { initialQuery: st
     fetch('/api/company-issues', { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as WithChases & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `The issues could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'The issues could not be loaded.');
         if (!cancelled) setData(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'The issues could not be loaded.'); });

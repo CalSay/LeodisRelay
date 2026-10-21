@@ -9,6 +9,7 @@ import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { dayLabel, myWeekText, type MyWeek, type MyWeekIssueKind, type MyWeekProject, type MyWeekReport } from '@/lib/myWeek';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { londonDay, shiftWeek, weekEnd, weekStart } from '@/lib/weeklySummary';
+import { failure } from '@/lib/failure';
 
 /**
  * The signed-in person's own week, day by day across every project: where
@@ -48,7 +49,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
     fetch(`/api/my-week?${new URLSearchParams({ week })}`, { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as MyWeek & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `Your week could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'Your week could not be loaded.');
         if (!cancelled) setData(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'Your week could not be loaded.'); });

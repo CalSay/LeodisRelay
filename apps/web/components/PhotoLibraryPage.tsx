@@ -10,6 +10,7 @@ import { mediaId } from '@/lib/media';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { matchesPhoto, PHOTO_GROUPS, type LibraryPhoto, type PhotoGroup, type PhotoLibrary } from '@/lib/photoLibrary';
 import { dayShort } from '@/lib/dates';
+import { failure } from '@/lib/failure';
 
 /**
  * Every photograph on a project, newest first and grouped by day, so "what
@@ -50,7 +51,7 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ret
     fetch(`/api/photos?${new URLSearchParams({ projectId })}`, { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as PhotoLibrary & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `The photographs could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'The photographs could not be loaded.');
         if (!cancelled) setLibrary(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'The photographs could not be loaded.'); });

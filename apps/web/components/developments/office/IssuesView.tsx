@@ -8,6 +8,7 @@ import { daysLate, fmtDay, isActive, isOverdue, shortRef } from './model';
 import type { SortDirection } from '@/lib/tableSorting';
 import { issueRegister } from '@/lib/api';
 import { VERIFICATION, VERIFICATION_LABEL, issueQueryParams, type IssuePage, type IssueSort, type IssueView, type Verification } from '@/lib/issueQuery';
+import { DownloadLink } from '@/components/DownloadLink';
 
 type Filter = Exclude<IssueView, 'all'> | 'all';
 type SortState = { key: IssueSort; direction: SortDirection } | null;
@@ -97,7 +98,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const clear = () => { setProject(''); setTrade(''); setLocationText(''); setCompanyText(''); setVerification(''); };
   return <div className="view">
     <div className="pagehead"><div><h2>Issues</h2><p>{counts.open} open{narrowed ? ' in this search' : ` across ${ctx.projects.length} projects`} · {counts.overdue ? <span className="late">{counts.overdue} overdue</span> : 'none overdue'} · {counts.verify} fixed, to check · {counts.unassigned} unassigned · {reviewOn && <>{counts.notReviewed} not reviewed · </>}{counts.disputed} disputed</p></div>
-      <div className="actions"><a className="btn btn-q" href={`/companies?${new URLSearchParams({ returnTo: '/office#/issues' })}`}>Issues by company</a><a className="btn btn-q" href={snagHref}>Snag list</a>{result.total > 0 && <a className="btn btn-q" href={downloadHref} download aria-label={`Download ${result.total} ${result.total === 1 ? 'issue' : 'issues'} as a spreadsheet (CSV)`}>Download spreadsheet</a>}{oldestToVerify && <Btn onClick={() => ctx.setDialog({ kind: 'verify', issue: oldestToVerify })}>Verify the oldest</Btn>}</div></div>
+      <div className="actions"><a className="btn btn-q" href={`/companies?${new URLSearchParams({ returnTo: '/office#/issues' })}`}>Issues by company</a><a className="btn btn-q" href={snagHref}>Snag list</a>{result.total > 0 && <DownloadLink className="btn btn-q" href={downloadHref} what="spreadsheet" aria-label={`Download ${result.total} ${result.total === 1 ? 'issue' : 'issues'} as a spreadsheet (CSV)`}>Download spreadsheet</DownloadLink>}{oldestToVerify && <Btn onClick={() => ctx.setDialog({ kind: 'verify', issue: oldestToVerify })}>Verify the oldest</Btn>}</div></div>
     <div className="filters">
       {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
       <span className="spacer" />

@@ -425,3 +425,8 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 @media(min-width:1280px){
   .eng-editor-grid{grid-template-columns:300px minmax(0,1fr);}
 }
+/* Why the work is not on the server yet: above the button, where it is read with the save state. */
+.actionbar .eng-save-problem{max-width:1072px;margin:0 auto 10px;font-size:13.5px;line-height:1.45;max-height:40vh;overflow-y:auto;}
+.eng-too-long{margin-top:12px;}
+/* Signed out, or the server not answering: nothing is wrong with the work, so amber and calm, not red. */
+.actionbar .eng-save-problem.is-waiting{border-color:color-mix(in srgb,var(--caution) 40%,transparent);border-left-color:var(--caution);background:var(--caution-wash);color:var(--text);}

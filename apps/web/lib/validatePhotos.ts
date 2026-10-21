@@ -24,8 +24,8 @@ export async function validatePhotos(photos: unknown, scope: { reportId: string;
   return null;
 }
 
-/** The most one text box on a card or check may hold. */
-export const TEXT_MAX = 10_000;
+export { TEXT_MAX } from './textLimits';
+import { TEXT_MAX } from './textLimits';
 
 export async function validateObservations(value: unknown, reportId: string, existing: readonly Observation[], correctsReportId?: string): Promise<string | null> {
   if (!Array.isArray(value) || value.length > 200) return 'Updates must be a list of up to 200 items.';
@@ -33,7 +33,12 @@ export async function validateObservations(value: unknown, reportId: string, exi
   for (const o of value) {
     if (!o || ['id','type','location','whatHappened','actionNeeded','owner'].some(k => typeof o[k] !== 'string')) return 'Malformed update.';
     // Far beyond anything typed on site; it stops one save filling the server's memory and disk.
-    if (o.id.length > 100 || ['location','whatHappened','actionNeeded','owner'].some(k => o[k].length > TEXT_MAX)) return `Keep each box under ${TEXT_MAX.toLocaleString('en-GB')} characters.`;
+    if (o.id.length > 100) return 'Malformed update.';
+    if (['location','whatHappened','actionNeeded','owner'].some(k => o[k].length > TEXT_MAX)) {
+      // Named, so the engineer can find the card; the editor says the same beside the box.
+      const card = (typeof o.check?.question === 'string' && o.check.question ? o.check.question : o.location).trim().slice(0, 80);
+      return `${card ? `The card “${card}”` : 'A card'} has a box over ${TEXT_MAX.toLocaleString('en-GB')} characters, so it was not saved. Shorten it, then it saves by itself.`;
+    }
     if (!['update','defect','instruction','access','check'].includes(o.type)) return 'Unknown update type.';
     if (o.check !== undefined && (!o.check || typeof o.check.item !== 'string' || typeof o.check.question !== 'string' || (o.check.answer !== undefined && !['ok','action','na'].includes(o.check.answer)))) return 'Malformed check.';
     if (!o.id || ids.has(o.id)) return 'Update IDs must be unique.';

@@ -129,10 +129,11 @@ function memoryIndexedDB() {
 
 /** The report routes, as app/api/reports does them, over the real store. `offline` makes every request fail as a lost connection does. */
 function fakeServer() {
-  const state = {offline:false,offlineSend:false,calls:[] as string[],refuseSend:undefined as string | undefined,failSend:false,dropSendAnswer:false};
+  const state = {offline:false,offlineSend:false,calls:[] as string[],refuseSend:undefined as string | undefined,failSend:false,dropSendAnswer:false,failSave:false,signedOut:false};
   const json = (status:number,value:unknown) => new Response(JSON.stringify(value),{status,headers:{'content-type':'application/json'}});
   globalThis.fetch = (async (input:string,init?:RequestInit) => {
     if (state.offline) throw new TypeError('fetch failed');
+    if (state.signedOut) return json(401,{reason:'Please sign in again.'});
     const method = init?.method ?? 'GET';
     const body = init?.body ? JSON.parse(String(init.body)) as Record<string,unknown> : {};
     state.calls.push(`${method} ${input}`);
@@ -143,6 +144,8 @@ function fakeServer() {
     const existing = id ? getReport(id) : undefined;
     if (!id || !existing) return json(404,{reason:'No such report.'});
     if (method === 'PUT') {
+      // A proxy's error page, as Caddy gives while RELAY restarts.
+      if (state.failSave) return new Response('<h1>502 Bad Gateway</h1>',{status:502,headers:{'content-type':'text/html'}});
       const signatureProblem = invalidSignature(body.signature);
       if (signatureProblem) return json(422,{reason:signatureProblem});
       const observations = body.observations as Observation[];
@@ -272,6 +275,43 @@ test('a signed inspection goes to the office by itself, only as it was signed',a
       assert.equal(getReport(kept!.reportId)?.state,'draft');
       const last = await sendHeldWork(engineer.id);
       assert.equal(last.sent[0]?.submitted,true);
+      assert.deepEqual(await listHeld(engineer.id),[]);
+    });
+
+    await t.test('the server down when saving: kept on the phone as it is, signed, named once without a code, sent next time',async () => {
+      const key = '68888888-8888-4888-8888-888888888888';
+      const checks = answered();
+      await keepStarted(key,checks,sign(checks));
+      server.failSave = true;
+      const first = await sendHeldWork(engineer.id);
+      const again = await sendHeldWork(engineer.id);
+      server.failSave = false;
+      assert.equal(first.problems.length,1);
+      assert.match(first.problems[0]!.reason,/server is not answering.*kept on this phone as it is/);
+      assert.doesNotMatch(first.problems[0]!.reason,/502|Bad Gateway/);
+      assert.equal(again.problems.length,0,'named once');
+      const [kept] = await listHeld(engineer.id);
+      assert.equal(kept?.signed?.name,'K. Wright','the signature from the phone is kept');
+      assert.equal(kept?.heldOffline,true,'still marked to go up by itself');
+      const last = await sendHeldWork(engineer.id);
+      assert.equal(last.sent[0]?.submitted,true);
+      assert.equal(getReport(last.sent[0]!.reportId)?.signature?.name,'K. Wright');
+      assert.deepEqual(await listHeld(engineer.id),[]);
+    });
+
+    await t.test('signed out partway: kept on the phone as it is, signed, and sent once signed in again',async () => {
+      const key = '69999999-9999-4999-8999-999999999999';
+      const checks = answered();
+      await keepStarted(key,checks,sign(checks));
+      server.signedOut = true;
+      const out = await sendHeldWork(engineer.id);
+      server.signedOut = false;
+      assert.deepEqual(out.sent,[]);
+      assert.match(out.problems[0]!.reason,/signed out.*goes by itself once you sign in again/);
+      const [kept] = await listHeld(engineer.id);
+      assert.equal(kept?.signed?.name,'K. Wright','the signature from the phone is kept');
+      const back = await sendHeldWork(engineer.id);
+      assert.equal(back.sent[0]?.submitted,true);
       assert.deepEqual(await listHeld(engineer.id),[]);
     });
 

@@ -78,6 +78,7 @@ async function sendAll(principalId: string): Promise<HeldSendResult> {
     try { report = await startHeldReport(started.projectId, started.clientKey, started.visitDate, started.reportType, started.inspected); }
     catch (error) {
       if (error instanceof ApiError && error.offline) return result;
+      if (error instanceof ApiError && error.passing) { await noteWaiting(held, error, result, startedTitle(started)); return result; }
       await noteProblem(held, error, result, startedTitle(started), true);
       continue;
     }
@@ -127,6 +128,9 @@ async function sendOne(held: HeldDraft, result: HeldSendResult, startedReports: 
   }
   catch (error) {
     if (error instanceof ApiError && error.offline) return 'offline';
+    // Signed out, or the server at fault: nothing is wrong with the work, so
+    // it is kept exactly as it is (its signature too) and goes next time.
+    if (error instanceof ApiError && error.passing) { await noteWaiting(claimed, error, result, claimed.report?.reference ?? 'A report on this phone'); return 'offline'; }
     await noteProblem(claimed, error, result, claimed.report?.reference ?? 'A report on this phone', false);
     return;
   }
@@ -187,10 +191,12 @@ async function submitSigned(held: HeldDraft, version: number, result: HeldSendRe
   try { sent = await sendHeldSigned(held.reportId, heldSignature(signed), version); }
   catch (error) {
     if (error instanceof ApiError && error.offline) return 'offline';
-    const reason = error instanceof Error ? error.message : 'The server would not send it.';
-    // A fault on the server's side (a 5xx): kept as it is, signed and saved,
-    // and tried again next time. Named once. A refusal (4xx) is final.
-    if (!(error instanceof ApiError) || error.status === undefined || error.status >= 500) {
+    const reason = error instanceof ApiError && error.signedOut ? 'You have been signed out, so it has not gone to the office yet.'
+      : error instanceof ApiError && error.passing ? 'RELAY’s server is not answering, so it has not gone to the office yet.'
+      : error instanceof Error ? error.message : 'The server would not send it.';
+    // A fault on the server's side (a 5xx), or signed out: kept as it is,
+    // signed and saved, and tried again next time. Named once. A refusal (4xx) is final.
+    if (!(error instanceof ApiError) || error.status === undefined || error.passing) {
       const kept = await update(held.key, h => h.signed?.savedVersion === version ? { ...h, problem: reason } : undefined).catch(() => null);
       if (kept && held.problem !== reason) result.problems.push({ reportId: held.reportId, title: held.report?.reference ?? 'A signed inspection', reason: `${reason} It is signed and saved, and RELAY tries again next time it opens.`, headline: 'not sent to the office yet.' });
       return;
@@ -209,6 +215,19 @@ async function submitSigned(held: HeldDraft, version: number, result: HeldSendRe
     return;
   }
   result.sent.push({ reportId: sent.id, reference: sent.reference, projectName: name(sent), started: startedReports.has(sent.id), submitted: true });
+}
+
+/**
+ * Signed out, or RELAY's server not answering: the held copy stays exactly as
+ * it is, signature and all, and goes by itself next time. Named once.
+ */
+async function noteWaiting(held: HeldDraft, error: ApiError, result: HeldSendResult, title: string): Promise<void> {
+  const reason = error.signedOut
+    ? 'You have been signed out, so it has not gone yet. It is kept on this phone as it is, and goes by itself once you sign in again.'
+    : 'RELAY’s server is not answering, so it has not gone yet. It is kept on this phone as it is, and goes by itself when the server answers.';
+  if (held.problem === reason) return;
+  await update(held.key, h => ({ ...h, problem: reason })).catch(() => null);
+  result.problems.push({ ...(held.started ? {} : { reportId: held.reportId }), title, reason, headline: 'not sent yet.' });
 }
 
 async function noteProblem(held: HeldDraft, error: unknown, result: HeldSendResult, title: string, retry: boolean): Promise<void> {

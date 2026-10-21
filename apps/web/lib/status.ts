@@ -125,6 +125,8 @@ function pdfStage(report: Report): Stage {
 function deliveryStage(report: Report, pdf: Stage): Stage {
   const base = { key: 'delivery' as const, title: 'Delivery' };
   if (report.sharepoint?.status === 'failed') return { ...base, label: 'SharePoint needs attention', tone: 'alert', detail: report.sharepoint.error ?? 'Filing in SharePoint failed.' };
+  // Missed once and being tried again: said, but not yet anyone's problem.
+  if ((report.sharepoint?.status === 'pending' || report.sharepoint?.status === 'registered') && report.sharepoint.error && report.delivery !== 'filed') return { ...base, label: 'Trying SharePoint again', tone: 'draft', detail: report.sharepoint.error };
   if (pdf.label !== 'Ready') return { ...base, label: 'Waiting for the PDF', tone: 'draft' };
   // Projects from SharePoint are filed there; Relay does not email for them.
   if (report.projectSnapshot?.source) {

@@ -39,7 +39,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
 
   const snapshot = report.state === 'submitted' ? getRecord<Report>('snapshots',id) ?? report : report;
   const buffer = report.state === 'submitted' ? await readPdf(snapshot) : await ensurePdf(snapshot);
-  if (!buffer) return NextResponse.json({ reason:'PDF is queued for preparation. Try again shortly.' },{ status:409, headers:{ 'retry-after':'3' } });
+  if (!buffer) return NextResponse.json({ reason:'The PDF is still being made. Try again in a moment.' },{ status:409, headers:{ 'retry-after':'3' } });
 
   const fileName = reportFileName(report);
 

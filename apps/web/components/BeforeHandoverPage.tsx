@@ -10,6 +10,7 @@ import { dayLabel } from '@/lib/myWeek';
 import { londonDay } from '@/lib/weeklySummary';
 import type { BeforeHandover, HandoverIssue } from '@/lib/beforeHandover';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
+import { failure } from '@/lib/failure';
 
 /**
  * Before handover: everything RELAY still has open on one project, on one
@@ -58,7 +59,7 @@ export function BeforeHandoverPage({ initialProject, returnTo }: { initialProjec
     fetch(`/api/before-handover?${new URLSearchParams({ projectId })}`, { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as BeforeHandover & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `The list could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'The list could not be loaded.');
         if (!cancelled) setData(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'The list could not be loaded.'); });

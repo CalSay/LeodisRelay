@@ -4,6 +4,73 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — What people see when something goes wrong
+
+- Why: a cross-app quality pass asked for by the coordinator. Each feature
+  was built mostly on the happy path; this goes through the failures a site
+  engineer or the office will meet. Not a `docs/tasks.json` task, so no
+  status changed there.
+- One voice for failures (`lib/failure.ts`): every message says what
+  happened, whether the work is safe and what to do. No status codes, proxy
+  error pages or "Failed to fetch" as the message; the server's own reason is
+  kept when it gave one. The 16 pages that showed "(502)"-style codes use it.
+- Report editor (Claude's decisions):
+  - Signed out partway: the bar says "Signed out · kept on this phone", a
+    note above the button says the work is kept, and a prompt on any page
+    offers "Sign in again" in a new tab (`SignedOutPrompt`, `/signed-in`), so
+    nothing on screen is lost. The editor saves by itself once signed in
+    (on coming back to the tab, and every 15 s). Before, it said "check
+    connection", and a report opened after the session had gone stuck on
+    "Loading".
+  - Server not answering (502/503/5xx): amber, "kept on this phone", and it
+    retries by itself as it already did with no signal. A save still going
+    after 8 s says "Still saving · kept on this phone".
+  - Problems now show above the button, not below the cards, so they are seen
+    on a phone. Amber for signed out or server down, red for a refusal.
+  - A refused save (a box over 10,000 characters, a photograph the server
+    cannot read) was kept in the save journal and replayed before every later
+    save, so the report could never save again even once put right. Refusals
+    are now dropped from the journal like conflicts; no answer is still kept
+    and replayed unchanged (`lib/saveRequest.ts`, test added).
+  - A box over 10,000 characters is pointed out on the card before saving;
+    nothing is cut off. The server's refusal names the card.
+  - Photographs: each file is checked on its own, so one of the wrong type or
+    over 20 MB no longer drops the others chosen with it; the message names
+    each one and why. A photograph the server will not take names its card
+    and says to remove it. A phone out of storage says so.
+- Work held from the no-signal page: if the server is down or the person is
+  signed out when it goes up, it now stays exactly as it was, signature
+  included, and goes next time. Before, a save refused that way lost the
+  phone signature and was handed to the editor (tests added).
+- Downloads: the issue register and toolbox talk spreadsheets and the PDF
+  download fetch first and say beside the button when they fail, instead of
+  a "Failed" download or a file of error text (`DownloadLink`).
+- PDF viewer: a PDF this browser cannot draw (old browser, pdf.js) says so and
+  offers the download, instead of pdf.js's own error text.
+- SharePoint: Microsoft's refusals are in plain words with the status in
+  brackets at the end (`graphFailureWords`). A report whose filing misses
+  once now shows "Trying SharePoint again … the report is safe in RELAY"
+  rather than "needs attention"; it fails only when Microsoft refuses
+  outright or RELAY gives up after 8 tries. PDF and notification failures
+  show plain words; the technical reason stays on the job for an Admin.
+- New page-not-found, error and last-resort pages with a way home and Try
+  again (`app/not-found.tsx`, `error.tsx`, `global-error.tsx`). Before, a
+  page that broke showed "Application error: a client-side exception".
+- Security review (#73) unchanged in effect: the cross-site refusal now also
+  carries `code: "cross-site"` so RELAY's screens can say it in their words;
+  length limits, headers and sign-in fixes untouched.
+- Help: one "What's new" line. Nothing claims real-phone testing.
+- Check: `npm run typecheck`, `npm test` (new `tests/failureMessages.test.ts`,
+  saveRequest and offlineSign additions). New `scripts/verify-error-messages.mjs`
+  (68 checks, phone light and desktop dark) forces each failure and checks the
+  words and that the work is still there. Accessibility check now includes
+  the page-not-found and signed-in pages. Every `scripts/verify-*.mjs` was
+  run against this branch's production build (results in the PR).
+  Before and after screenshots: project files `ui-review/errors/`.
+- Not verified: a real phone, a live tenant or SharePoint, the live server
+  behind Caddy (its own 502 page is simulated in the check), a real screen
+  reader.
+
 ## 2026-10-21 — Fifth release check (main at 2cbf367, #2–#73 minus #28)
 
 - Why: integration and release check after the security review, asked for
