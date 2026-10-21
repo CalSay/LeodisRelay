@@ -4,6 +4,22 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Issues over time quick again on busy projects
+
+- Why: the twelfth release check (main 40ff4fd, #2-#129) ran every browser
+  check; `verify-busy-projects` failed on `/api/issue-trend` at 173-184 ms in
+  three runs against its 100 ms budget. The same check on 6def5e8 answered in
+  44 ms. #128 made each week's open and past-target counts call `isOpenOn` and
+  `isLateOn`, which worked out the London day of the raise date, the closing
+  check and every event again for each of 12 weeks per issue.
+- Changed: `lib/issueTrend.ts` works those days out once per issue
+  (`issueDays`) and passes them in. The rules are untouched; the monthly
+  summary still calls the same functions and gets the same answers.
+- Verified: typecheck, `npm test` (146 + 537), build; `verify-busy-projects`
+  passes alone with issue-trend at 54 ms. A fresh-context review found the
+  change behaves exactly as before.
+- Not verified: real phones or a live server.
+
 ## 2026-10-21 — Check fixes one after another
 
 - Why: a walk of an office manager checking 25 fixes put forward by three

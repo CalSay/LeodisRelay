@@ -64,10 +64,29 @@ function closedOn(issue: Issue): string {
   return verified ? londonDay(verified.at) : '';
 }
 
+/**
+ * The days an issue's history turns on, worked out once: reading the London day
+ * of every date again for each week made Issues over time four times slower on
+ * a busy project.
+ */
+export interface IssueDays {
+  raised: string;
+  closed: string;
+  /** Its fixes, send-backs and checks, oldest first, each with its day. */
+  marks: { day: string; kind: string }[];
+}
+export function issueDays(issue: Issue): IssueDays {
+  return {
+    raised: londonDay(issue.raisedAt),
+    closed: closedOn(issue),
+    marks: issue.events.filter(e => e.kind === 'closure_submitted' || e.kind === 'reopened' || e.kind === 'verified').map(e => ({ day: londonDay(e.at), kind: e.kind })),
+  };
+}
+
 /** Put forward as fixed at the end of `day`: its latest fix, send-back or check by then was a fix. */
-function putForwardOn(issue: Issue, day: string): boolean {
+function putForwardOn(issue: Issue, day: string, days: IssueDays): boolean {
   if (issue.work === 'awaiting_verification' && !issue.events.some(e => e.kind === 'closure_submitted')) return true; // no history: as it stands now
-  const last = issue.events.filter(e => (e.kind === 'closure_submitted' || e.kind === 'reopened' || e.kind === 'verified') && londonDay(e.at) <= day).at(-1);
+  const last = days.marks.filter(m => m.day <= day).at(-1);
   return last?.kind === 'closure_submitted';
 }
 
@@ -76,13 +95,11 @@ function putForwardOn(issue: Issue, day: string): boolean {
  * then. A closure with no recorded day is never open. On today this is the
  * register's open (lib/officeActions.ts `isActiveIssue`).
  */
-export function isOpenOn(issue: Issue, day: string): boolean {
+export function isOpenOn(issue: Issue, day: string, days: IssueDays = issueDays(issue)): boolean {
   if (issue.confirmation === 'withdrawn') return false;
-  const raised = londonDay(issue.raisedAt);
-  if (!raised || raised > day) return false;
+  if (!days.raised || days.raised > day) return false;
   if (issue.work !== 'closed') return true;
-  const closed = closedOn(issue);
-  return Boolean(closed) && closed > day;
+  return Boolean(days.closed) && days.closed > day;
 }
 
 /**
@@ -91,15 +108,15 @@ export function isOpenOn(issue: Issue, day: string): boolean {
  * by then (or sent back or checked since). On today it is the register's rule
  * itself, so the figure always matches the project sheet.
  */
-export function isLateOn(issue: Issue, day: string, today: string): boolean {
+export function isLateOn(issue: Issue, day: string, today: string, days: IssueDays = issueDays(issue)): boolean {
   if (day === today) return isOverdueIssue(issue, today);
-  if (!isOpenOn(issue, day)) return false;
-  return isDay(issue.targetDate) && issue.targetDate < day && !putForwardOn(issue, day);
+  if (!isOpenOn(issue, day, days)) return false;
+  return isDay(issue.targetDate) && issue.targetDate < day && !putForwardOn(issue, day, days);
 }
 
 /** Open and put forward as fixed at the end of `day`, waiting for the office to check it: "fixed, to check" on that day. */
-export function isToCheckOn(issue: Issue, day: string, today: string): boolean {
-  return isOpenOn(issue, day) && (day === today ? issue.work === 'awaiting_verification' : putForwardOn(issue, day));
+export function isToCheckOn(issue: Issue, day: string, today: string, days: IssueDays = issueDays(issue)): boolean {
+  return isOpenOn(issue, day, days) && (day === today ? issue.work === 'awaiting_verification' : putForwardOn(issue, day, days));
 }
 
 /** `today` is YYYY-MM-DD in the office calendar. Issues from other projects are ignored. */
@@ -109,12 +126,12 @@ export function issueTrend(issues: Issue[], projectId: string, today: string): I
   const first = mondays[0]!;
   const rows = issues
     .filter(i => i.projectId === projectId && i.confirmation !== 'withdrawn')
-    .map(i => ({ issue: i, raised: londonDay(i.raisedAt), closed: closedOn(i), undated: i.work === 'closed' && !closedOn(i) }))
+    .map(i => { const days = issueDays(i); return { issue: i, days, raised: days.raised, closed: days.closed, undated: i.work === 'closed' && !days.closed }; })
     .filter(r => r.raised);
 
   // The same rules the monthly summary reads its month-end figures with.
-  const openOn = (day: string) => rows.filter(r => isOpenOn(r.issue, day));
-  const lateOn = (day: string) => rows.filter(r => isLateOn(r.issue, day, today)).length;
+  const openOn = (day: string) => rows.filter(r => isOpenOn(r.issue, day, r.days));
+  const lateOn = (day: string) => rows.filter(r => isLateOn(r.issue, day, today, r.days)).length;
 
   const weeks: TrendWeek[] = mondays.map(monday => {
     const end = monday === thisWeek ? today : weekEnd(monday);
