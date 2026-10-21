@@ -21,7 +21,7 @@ import { dialogFor } from './OfficeDesk';
 import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
 import { WORK_LABEL, notAcknowledged, daysLate, daysSince, attention, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
 import { signatureMethod } from '@/lib/signature';
-import { LATEST_DAYS, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
+import { LATEST_DAYS, peopleWords, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
 import { OUR_CONTRACT, canCorrect, duplicateOf, isWithinContract, modesFor, pickPool, pickTag, priorOwner, type Target } from './corrections';
 import './quickactions.css';
 
@@ -200,11 +200,11 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
 function visitDay(visitDate: string, day: string): string {
   return recentDay(visitDate, day) ?? fmtDay(visitDate);
 }
-/** The last visit in words, with whether an active site has gone quiet. */
+/** The last visit in words: its day, everyone on site that day, and whether an active site has gone quiet. */
 function lastVisitWords(st: ProjectStanding, day: string): { when: string; who: string; quiet: string | null } {
   if (!st.last) return { when: 'No visit yet', who: 'no report sent from site', quiet: st.quiet ? 'No report yet' : null };
   const when = visitDay(st.last.visitDate, day);
-  return { when: when.charAt(0).toUpperCase() + when.slice(1), who: `${st.last.author}${st.last.trade ? `, ${st.last.trade}` : ''}`,
+  return { when: when.charAt(0).toUpperCase() + when.slice(1), who: peopleWords(st.lastDayPeople),
     quiet: st.quiet ? `No report for ${count(st.workingDaysSince ?? 0, 'working day')}` : null };
 }
 

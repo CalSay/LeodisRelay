@@ -23,6 +23,8 @@ export const LATEST_DAYS = 14;
 export interface ProjectStanding {
   /** The latest visit on or before today. */
   last?: { reportId: string; visitDate: string; author: string; trade?: string };
+  /** Everyone who sent a visit on the last visit day, once each, in Site coverage's order (the same order as `last`): who was on site that day. */
+  lastDayPeople: { author: string; trade?: string }[];
   /** Full working days since the last visit (today is still going, so it is not counted). */
   workingDaysSince?: number;
   quiet: boolean;
@@ -43,6 +45,16 @@ export function projectStanding(project: { status: string }, reports: ReportSumm
   const superseded = new Set(sent.map(r => r.corrects).filter((id): id is string => Boolean(id)));
   const visits = sent.filter(r => !superseded.has(r.id) && DAY.test(r.visitDate) && r.visitDate <= today).sort(newest);
   const latestVisit = visits[0];
+  const lastDayPeople: ProjectStanding['lastDayPeople'] = [];
+  // One entry a person: by their sign-in where the report has it, else by name.
+  const seen = new Set<string>();
+  for (const r of visits) {
+    if (r.visitDate !== latestVisit!.visitDate) break;
+    const author = r.author.trim(), key = r.authorId ?? author;
+    if (!author || seen.has(key)) continue;
+    seen.add(key);
+    lastDayPeople.push({ author, ...(r.authorTrade ? { trade: r.authorTrade } : {}) });
+  }
   const workingDaysSince = latestVisit ? workingDaysBetween(latestVisit.visitDate, today) : -1;
   const monday = weekStart(today, today);
   const week = visits.filter(r => r.visitDate >= monday);
@@ -56,6 +68,7 @@ export function projectStanding(project: { status: string }, reports: ReportSumm
   }
   return {
     ...(latestVisit ? { last: { reportId: latestVisit.id, visitDate: latestVisit.visitDate, author: latestVisit.author, ...(latestVisit.authorTrade ? { trade: latestVisit.authorTrade } : {}) }, workingDaysSince } : {}),
+    lastDayPeople,
     quiet: project.status === ACTIVE_PROJECT_STATUS && (!latestVisit || workingDaysSince >= QUIET_WORKING_DAYS),
     thisWeek: week.length,
     tradesThisWeek: [...new Set(week.map(r => r.authorTrade).filter((t): t is NonNullable<typeof t> => Boolean(t)))].sort(),
@@ -66,6 +79,22 @@ export function projectStanding(project: { status: string }, reports: ReportSumm
 /** "today", "yesterday", or null when it is longer ago and the date says it better. */
 export function recentDay(visitDate: string, today: string): string | null {
   return visitDate === today ? 'today' : visitDate === addDays(today, -1) ? 'yesterday' : null;
+}
+
+/** How many names "Last visit" gives before "and N more". */
+export const PEOPLE_SHOWN = 3;
+
+/**
+ * Who was on site on the last visit day, in words: one person with their
+ * trade ("Sam Spark, Electrical"), more by name ("Sam Spark, Hana Duct and Pat
+ * Pipe"), and past PEOPLE_SHOWN names "and N more".
+ */
+export function peopleWords(people: ProjectStanding['lastDayPeople']): string {
+  if (!people.length) return '';
+  if (people.length === 1) return `${people[0]!.author}${people[0]!.trade ? `, ${people[0]!.trade}` : ''}`;
+  const names = people.map(p => p.author);
+  if (names.length > PEOPLE_SHOWN) return `${names.slice(0, PEOPLE_SHOWN - 1).join(', ')} and ${names.length - (PEOPLE_SHOWN - 1)} more`;
+  return `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`;
 }
 
 /** What a site update says about progress and access, card by card, in the order written. */
