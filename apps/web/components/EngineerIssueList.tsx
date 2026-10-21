@@ -18,7 +18,7 @@ export function EngineerIssueList({issues,projectName,returnTo}:{issues:Issue[];
     const photo=i.events.find(e=>e.photos.length)?.photos[0];
     return <Link href={withViewReturn(`/issues/${i.id}`,returnTo)} className="eng-issue-card" key={i.id}>
       {photo && <div className="eng-issue-thumb"><PhotoImage src={photo.dataUrl} alt=""/></div>}
-      <div className="eng-issue-copy"><span className="lbl">{i.reference}</span><h3>{i.description}</h3><p>{projectName} · {i.location||'Location not recorded'}</p><div className="eng-issue-meta"><span className={`tag ${open(i)?'tag-draft':'tag-sent'}`}>{i.confirmation==='withdrawn'?'Withdrawn':ISSUE_WORK[i.work]}</span><span>{i.affectedTrade??'Trade not recorded'}</span></div><p>Reported by {i.reportedBy??i.events[0]?.actor??'Not recorded'}{i.reporterTrade?` · ${i.reporterTrade}`:''}</p><small>{i.source==='individual'?'Individual defect':'From a site update'} · Open issue →</small></div>
+      <div className="eng-issue-copy"><span className="lbl">{i.reference}</span><h3>{i.description}</h3><p>{projectName} · {i.location||'Location not recorded'}</p><div className="eng-issue-meta"><span className={`tag ${open(i)?'tag-draft':'tag-sent'}`}>{i.confirmation==='withdrawn'?'Withdrawn':ISSUE_WORK[i.work]}</span><span>{i.affectedTrade??'Trade not recorded'}</span></div><p>Reported by {i.reportedBy??i.events[0]?.actor??'Not recorded'}{i.reporterTrade?` · ${i.reporterTrade}`:''}</p><small>{i.source==='individual'?'Defect flagged on its own':'From a site update'} · Open issue →</small></div>
     </Link>;
   }):<p className="eng-help">{filter==='mine'?'You have not reported any issues on this project.':filter==='open'?'No open issues on this project.':'No issues have been raised on this project.'}</p>}</div></>;
 }

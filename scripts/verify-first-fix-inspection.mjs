@@ -103,7 +103,7 @@ try {
     ok(/say where, for the snag list/.test(await page.locator('#report-check .eng-finds').innerText()),`${label}: an action with no Where stops sending`);
     ok(/1 issue raised/.test(await page.locator('.eng-does').innerText()),`${label}: it says sending raises an issue`);
     const sum=await page.locator('.eng-sum').innerText();
-    ok(/Action needed\s*1\s*raise issues/i.test(sum),`${label}: the summary says actions raise issues: ${sum}`);
+    ok(/Action needed\s*1\s*go on the snag list/i.test(sum),`${label}: the summary says actions go on the snag list: ${sum}`);
     // Back to the check to say where.
     await page.locator('.eng-steps button').nth(0).click();
     if(!wide)await rows.nth(0).click();else await rows.nth(0).click();

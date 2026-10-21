@@ -134,7 +134,7 @@ export default function SnagListPage({ searchParams }: { searchParams: Promise<{
             </ol>
           </section>)}
         <footer className="snag-foot">
-          <p>Tick each item as it is put right, then open the issue in RELAY and choose “Submit as complete” so the office can check it. This sheet is a working copy; RELAY keeps the record.</p>
+          <p>Tick each item as it is put right, then open the issue in RELAY and choose “Put forward as fixed” so the office can check it. This sheet is a working copy; RELAY keeps the record.</p>
           <div className="snag-sign"><span>Checked by</span><span>Signature</span><span>Date</span></div>
         </footer>
       </article>}

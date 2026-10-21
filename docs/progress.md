@@ -58,6 +58,93 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Proposed, not built: a Weekly summary link on each "Where each project
   stands" row; put the phone overview's project list above the four action
   counts; a plainer word than "Verify" if managers say so.
+## 2026-10-21 — An engineer's day, in plainer words
+
+- Why: Cal (2026-10-21 07:02) wants RELAY really easy for hands-on
+  engineers. A walk through an engineer's whole day on the simplified RELAY
+  at 390px (after #85, #87 and #88): sign in, today's site update with a
+  photograph and a variation, no signal for part of it, an unfinished report
+  from yesterday, sent reports and what the office did with them, a defect on
+  its own, issues and Help. Not a `docs/tasks.json` task, so no status changed.
+- Found and fixed (engineer screens only, no new features or fields):
+  - The big "Carry on with today's update" button opened a site update left
+    from an earlier day, so today's cards went on yesterday's visit. Decision:
+    the big button is always today's (a correction still carries on there);
+    an earlier day's update waits under "Unfinished reports" with its visit
+    day (`EngineerWorkspace.tsx`, `currentDraft`).
+  - The report the big buttons open was also listed under "Unfinished
+    reports". It is no longer listed twice, unless the list has something to
+    add (held on the phone, refused, signed).
+  - Every sent report on the home screen and the Reports tab carried "PM not
+    notified", which in the pilot is always true and told the engineer nothing.
+    Those rows now show the delivery tag only when it went wrong or the
+    project manager was emailed. The report's own steps still show Delivery.
+  - Plain words in place of IT ones: the Delivery step says "RELAY does not
+    email anyone yet. If it cannot wait, tell the project manager yourself."
+    (was "The pilot holds notification emails in a local outbox"; the office
+    sees the same step, as before); "View the document" is "See the full report";
+    "a correction is sent as a new revision" is "to put something right, make
+    a correction"; on Check & send "is emailed when the mailbox is live" is
+    "is emailed only once RELAY's email is switched on; until then, tell them
+    yourself", and "raise issues/variations" is "go on the issue list", "for
+    the office to price" (inspections: "go on the snag list"); the offline
+    page no longer says "server report" or "sync"; "No connection" is "No
+    signal", as on the rest of the home screen.
+  - A card just added showed a red "no description of what happened" and a
+    red "1" on Check & send before anything was typed. A blank card is left
+    off at Check & send anyway (#87), so it no longer counts as stopping it.
+  - Signing a site update is optional but looked required: the heading says
+    "Sign · optional" and the hint "You do not have to sign a site update:
+    your name is printed on it either way." (was "The client signs the paper
+    copy"). Inspections are unchanged.
+  - Defect on its own: "Individual defect" is "Defect", "Defect received" is
+    "Defect sent to the office", "awaiting confirmation … was not submitted"
+    is "on the project's issue list now … your site update has not been
+    sent"; the file-type line and "Your own trade remains recorded" went.
+  - Issues: "Project scope" is "Show", "Showing issues only for the selected
+    project" is "Issues on this project, from every trade"; on an issue,
+    "Submit as complete" is "Put forward as fixed" (the glossary's words; the
+    office sees the same button, and the printed snag list says it too), and
+    "Site observation"/"Individual defect" are "From a site update"/"Defect
+    flagged on its own". Projects tab: "All projects open to your role" is
+    "Pick the site you are on".
+  - Help: "What's new" line, the Delivery meaning and where an unfinished
+    update waits.
+- Verified: typecheck, `npm test`; new `scripts/verify-engineer-day.mjs`
+  (390px, light and dark, 35 checks); browser checks listed in the PR.
+  Screenshots before and after: project files
+  `ui-review/engineer-day-simplified/`.
+- Not verified: no real phone, no live tenant, no real engineer.
+- Proposals, not built: see the PR ("Bigger ideas").
+
+## 2026-10-21 — Seventh release check (main at 3e470fc, #83 to #88)
+
+- Why: a release check before any deploy, asked for by the coordinator after
+  #85 hid the safety, permits and deliveries records (Cal, 07:02). Not a
+  `docs/tasks.json` task; no code changed.
+- Run on 2243efb, then dad1563 (#86) and 3e470fc (#87, #88) as they merged:
+  `npm run typecheck`, `npm test` (146 + 441), `npm run build`, all 69
+  `scripts/verify-*.mjs` on Node 22. The busy-projects speed check went over
+  its tightest API budgets by 10 to 80 ms on different pages each run, on
+  the #85 and #86 builds alike, and passed alone; the deliveries check read
+  the focus early once and passed three times in a row after.
+- Switch off: seeded a talk, a short delivery, an overdue permit, a sent
+  safety inspection with an open action and a sent tower inspection, then
+  read 30 engineer and office pages (390px and 1440px) and the issue
+  spreadsheet. Nothing of them shows apart from sent safety and tower
+  reports in report lists, Came back from the office, the Inbox and the site
+  diary, as #85 chose. Switch on brings all back; nothing deleted. A safety
+  and a tower inspection held offline still reached the server after the
+  switch was turned off while they were held.
+- A full site update on a 390px phone (progress and photo, defect and photo,
+  variation), seen in Where each project stands, Latest from site, Issues,
+  Variations, its PDF and the phone register; the engineer then saw "Seen
+  by the office". No fault found.
+- Release notes refreshed in the project files
+  (`releases/2026-10-20-release-notes.md`): #83 to #88, where the Admin turns
+  the switch on, rollback with the switch, after-deploy checks.
+- Not verified: a real phone, a screen reader, the live server or tenant,
+  the Docker image build.
 
 ## 2026-10-21 — Seen by the office
 

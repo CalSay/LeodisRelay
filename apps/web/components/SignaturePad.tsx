@@ -33,7 +33,7 @@ export function SignaturePad({
   onChange,
   typed = false,
   onTypedChange,
-  hint = "Your name appears on the report whether or not you sign. The client signs the paper copy.",
+  hint = "You do not have to sign a site update: your name is printed on it either way.",
 }: {
   name: string;
   /** Signed by typing the name and ticking the statement. */

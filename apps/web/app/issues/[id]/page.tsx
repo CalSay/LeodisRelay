@@ -220,7 +220,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         </div>
       </dl>
       <section className="eng-panel">
-        <h2>{issue.source==='individual'?'Individual defect':'Site observation'}</h2>
+        <h2>{issue.source==='individual'?'Defect flagged on its own':'From a site update'}</h2>
         <p>{issue.description}</p>
         <p className="eng-help">{project?.projectName} · {issue.location || 'Location not recorded'}</p>
         <p className="eng-help">Trade affected: {issue.affectedTrade ?? 'Not recorded'}<br/>Reported by {issue.reportedBy ?? issue.events[0]?.actor ?? 'Not recorded'} · {issue.reporterTrade ?? 'Reporting trade not recorded'}</p>
@@ -369,7 +369,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
                 )}
                 {!isClosed && !canClose && (
                   <button onClick={() => run("submit_closure")} disabled={busy}>
-                    Submit as complete
+                    Put forward as fixed
                   </button>
                 )}
                 {manager && canClose && (
