@@ -110,13 +110,13 @@ function pdfFailed(report: Report): boolean {
 
 function pdfStage(report: Report): Stage {
   const base = { key: 'pdf' as const, title: 'PDF' };
-  if (report.delivery === 'pending') return { ...base, label: 'Being prepared', tone: 'draft', detail: 'Relay is making the PDF of the report.' };
+  if (report.delivery === 'pending') return { ...base, label: 'Being prepared', tone: 'draft', detail: 'RELAY is making the PDF of the report.' };
   if (pdfFailed(report)) {
     // Without a recorded stage the failure could also be a notification
     // that never started, so it is not called a PDF failure outright.
     return report.deliveryErrorStage
       ? { ...base, label: 'Could not be prepared', tone: 'alert', detail: report.deliveryError ?? 'The PDF could not be made.' }
-      : { ...base, label: 'Processing needs attention', tone: 'alert', detail: report.deliveryError ?? 'Relay could not finish processing this report.' };
+      : { ...base, label: 'Processing needs attention', tone: 'alert', detail: report.deliveryError ?? 'RELAY could not finish processing this report.' };
   }
   if (report.delivery || report.issued) return { ...base, label: 'Ready', tone: 'sent' };
   return { ...base, label: 'Not started', tone: 'draft' };
@@ -129,7 +129,7 @@ function deliveryStage(report: Report, pdf: Stage): Stage {
   // Projects from SharePoint are filed there; Relay does not email for them.
   if (report.projectSnapshot?.source) {
     return report.delivery === 'filed' || report.sharepoint?.status === 'filed'
-      ? { ...base, label: 'Filed in SharePoint', tone: 'sent', detail: 'The project manager is not emailed from Relay yet.' }
+      ? { ...base, label: 'Filed in SharePoint', tone: 'sent', detail: 'The project manager is not emailed from RELAY yet.' }
       : { ...base, label: 'Waiting to file in SharePoint', tone: 'draft' };
   }
   const issued = report.issued;
@@ -153,7 +153,7 @@ function deliveryStage(report: Report, pdf: Stage): Stage {
 
 export function submissionStages(report: Report): Stage[] {
   if (report.state !== 'submitted') return [];
-  const stages: Stage[] = [{ key: 'received', title: 'Received', label: 'Received', tone: 'sent', detail: 'On file in Relay.', at: report.serverAcknowledgedAt }];
+  const stages: Stage[] = [{ key: 'received', title: 'Received', label: 'Received', tone: 'sent', detail: 'On file in RELAY.', at: report.serverAcknowledgedAt }];
   const review = reviewStatus(report);
   if (review && report.review !== 'not_required') {
     stages.push({ key: 'review', title: 'Review', ...review, ...(report.reviewedBy ? { detail: `By ${report.reviewedBy}` } : {}), at: report.reviewedAt });

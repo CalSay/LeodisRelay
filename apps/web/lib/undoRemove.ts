@@ -75,9 +75,9 @@ export function canUndo(removed: Removed): boolean {
 export function removedLabel(removed: Removed, cardNumber: number, kindLabel: string): { title: string; detail: string } {
   const no = String(cardNumber).padStart(2, '0');
   if (removed.kind === 'photo') {
-    return { title: `Photo ${String(removed.at + 1).padStart(2, '0')} removed`, detail: removed.photo.caption.trim() || `From card ${no}` };
+    return { title: `Photograph ${String(removed.at + 1).padStart(2, '0')} removed`, detail: removed.photo.caption.trim() || `From card ${no}` };
   }
   const { card } = removed;
-  const photos = card.photos.length ? ` · ${card.photos.length} photo${card.photos.length === 1 ? '' : 's'}` : '';
+  const photos = card.photos.length ? ` · ${card.photos.length} photograph${card.photos.length === 1 ? '' : 's'}` : '';
   return { title: `Card ${no} removed`, detail: `${removed.picking ? 'New card' : kindLabel} · ${card.location.trim() || 'no location'}${photos}` };
 }

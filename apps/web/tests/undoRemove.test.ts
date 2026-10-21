@@ -66,10 +66,10 @@ test('removing something that is not there offers no undo', () => {
 
 test('the undo bar says what was removed', () => {
   const cards = [card('a'), card('b', { location: ' Level 2 riser ', photos: [photo('p1'), photo('p2', ' Tray ')] })];
-  assert.deepEqual(removedLabel(removeCard(cards, 'b').removed!, 2, 'Defect'), { title: 'Card 02 removed', detail: 'Defect · Level 2 riser · 2 photos' });
+  assert.deepEqual(removedLabel(removeCard(cards, 'b').removed!, 2, 'Defect'), { title: 'Card 02 removed', detail: 'Defect · Level 2 riser · 2 photographs' });
   assert.deepEqual(removedLabel(removeCard(cards, 'a', true).removed!, 1, 'Progress'), { title: 'Card 01 removed', detail: 'New card · no location' });
-  assert.deepEqual(removedLabel(removePhoto(cards, 'b', 'p2').removed!, 2, ''), { title: 'Photo 02 removed', detail: 'Tray' });
-  assert.deepEqual(removedLabel(removePhoto(cards, 'b', 'p1').removed!, 2, ''), { title: 'Photo 01 removed', detail: 'From card 02' });
+  assert.deepEqual(removedLabel(removePhoto(cards, 'b', 'p2').removed!, 2, ''), { title: 'Photograph 02 removed', detail: 'Tray' });
+  assert.deepEqual(removedLabel(removePhoto(cards, 'b', 'p1').removed!, 2, ''), { title: 'Photograph 01 removed', detail: 'From card 02' });
 });
 
 test('no undo for a photograph stored inline before the upload service', () => {

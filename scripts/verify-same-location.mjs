@@ -75,7 +75,7 @@ try {
     eq(await card.locator('img').count(),0,`${label}: no photograph came across`);
     eq(await card.locator('textarea').first().inputValue(),'',`${label}: the new card has no words`);
     // Open on a phone, the row is only the card's heading; side by side it still summarises.
-    if(wide)ok(/0 photos/.test(await rows.nth(1).innerText())&&/Nothing written yet/.test(await rows.nth(1).innerText()),`${label}: the new card's row has no words and no photos`);
+    if(wide)ok(/0 photographs/.test(await rows.nth(1).innerText())&&/Nothing written yet/.test(await rows.nth(1).innerText()),`${label}: the new card's row has no words and no photos`);
     await shot(page,`same-location-${scheme}-${width}-new`);
     // A second one from the source goes after the first, keeping the order added.
     await open(0);

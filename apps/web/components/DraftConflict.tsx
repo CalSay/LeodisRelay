@@ -1,11 +1,13 @@
 "use client";
+import { dayShort, timeOf } from '@/lib/dates';
 import { useMemo, useState } from 'react';
 import type { Observation, Report } from '@/lib/types';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { answerLabel } from '@/lib/reportTypes';
 import { choicesFor, compareDrafts, defaultChoice, mergeDrafts, mergeSummary, type CardChoice, type CardDiff, type DraftBase } from '@/lib/draftConflict';
 
-const fmtWhen = (iso?: string) => iso ? new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+/** " on Wed 21 Oct at 14:05", inside a sentence. */
+const onWhen = (iso?: string) => dayShort(iso) ? ` on ${dayShort(iso)} at ${timeOf(iso)}` : '';
 const STATUS: Record<CardDiff['status'], string> = {
   same: 'Same in both',
   changed: 'Changed in both',
@@ -35,8 +37,8 @@ const FIELDS: { label: string; value: (o: Observation) => string }[] = [
   { label: 'Where', value: o => o.location.trim() || '—' },
   { label: 'What', value: o => o.whatHappened.trim() || '—' },
   { label: 'Action', value: o => o.actionNeeded.trim() || '—' },
-  { label: 'For', value: o => o.owner.trim() || '—' },
-  { label: 'Photos', value: o => o.photos.length ? o.photos.map((p, i) => p.caption.trim() || `Photo ${i + 1}`).join(' · ') : 'None' },
+  { label: 'Owner', value: o => o.owner.trim() || '—' },
+  { label: 'Photographs', value: o => o.photos.length ? o.photos.map((p, i) => p.caption.trim() || `Photograph ${i + 1}`).join(' · ') : 'None' },
   { label: 'Details', value: o => [o.affectedTrade, o.variationReason, o.workDone === true ? 'already done' : o.workDone === false ? 'not yet done' : '', o.askedBy, o.roughSize, o.partsEstimate !== undefined ? `£${o.partsEstimate}` : '', o.linkedIssueId ? 'linked to an issue' : ''].filter(Boolean).join(' · ') || '—' },
 ];
 
@@ -75,7 +77,7 @@ export function DraftConflict({ here, there, base, saving, unheld, onSave }: {
   return <section className="eng-conflict" aria-labelledby="conflict-title">
     <div className="note note-bad">
       <h2 id="conflict-title">This draft was also changed somewhere else</h2>
-      <p>Another tab or device saved it{there.lastSavedAt ? ` at ${fmtWhen(there.lastSavedAt)}` : ''} while you were working here. Nothing has been lost: both versions are below{base ? ', with what each side changed picked out' : ''}. Choose what to keep, then save.</p>
+      <p>Another tab or device saved it{onWhen(there.lastSavedAt)} while you were working here. Nothing has been lost: both versions are below{base ? ', with what each side changed picked out' : ''}. Choose what to keep, then save.</p>
       {unheld && <p><strong>This device would not keep a copy of this screen’s version. Do not close this page until you have saved.</strong></p>}
     </div>
 

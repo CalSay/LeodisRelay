@@ -73,9 +73,9 @@ export function reportWhere(cards: readonly CardWhere[], offline: boolean, other
   const leftPhotos = photos - cards.reduce((n, c) => n + c.photosOnServer, 0);
   if (!cards.length && !others.removed && !others.signature) return { where: 'server', text: '' };
   if (!left && !leftPhotos && !others.removed && !others.signature) {
-    return { where: 'server', text: `${cards.length === 1 ? `The ${noun}` : cards.length === 2 ? `Both ${noun}s` : `All ${cards.length} ${noun}s`}${photos ? ` and ${photos === 1 ? (cards.length === 1 ? 'its photo' : '1 photo') : `${photos} photos`}` : ''} ${cards.length === 1 && !photos ? 'is' : 'are'} on the server.` };
+    return { where: 'server', text: `${cards.length === 1 ? `The ${noun}` : cards.length === 2 ? `Both ${noun}s` : `All ${cards.length} ${noun}s`}${photos ? ` and ${photos === 1 ? (cards.length === 1 ? 'its photograph' : '1 photograph') : `${photos} photographs`}` : ''} ${cards.length === 1 && !photos ? 'is' : 'are'} on the server.` };
   }
-  const items = [left && plural(left, noun), leftPhotos && plural(leftPhotos, 'photo'),
+  const items = [left && plural(left, noun), leftPhotos && plural(leftPhotos, 'photograph'),
     others.removed && plural(others.removed, `removed ${noun}`), others.signature && 'the signature'].filter((x): x is string => !!x);
   const parts = items.length > 1 ? `${items.slice(0, -1).join(', ')} and ${items.at(-1)}` : items[0]!;
   const sentence = parts.charAt(0).toUpperCase() + parts.slice(1);

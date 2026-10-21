@@ -93,8 +93,18 @@
   const photos = d => d.observations.reduce((n, o) => n + o.photos.length, 0);
   // "4 of 12 checks answered" for an inspection, "3 cards" for a site update.
   const cards = d => inspection(d) ? `${d.observations.filter(o => o.check?.answer).length} of ${plural(d.observations.length, 'check')} answered` : plural(d.observations.length, 'card');
-  const when = iso => { try { return new Date(iso).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }); } catch { return ''; } };
-  const day = iso => { try { return new Date(`${iso}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }); } catch { return iso; } };
+  // Dates as lib/dates.ts writes them, from parts (the browser's en-GB says "Wed, 21 Sept"):
+  // "Wed 21 Oct" for a calendar day, "Wed 21 Oct, 14:05" in UK time for a moment.
+  const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const dayOf = (year, month, date) => `${WEEKDAYS[new Date(Date.UTC(year, month - 1, date)).getUTCDay()]} ${date} ${MONTHS[month - 1]}${year !== new Date().getFullYear() ? ` ${year}` : ''}`;
+  const day = iso => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso || ''); return m ? dayOf(+m[1], +m[2], +m[3]) : iso; };
+  const when = iso => {
+    try {
+      const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(iso)).map(x => [x.type, x.value]));
+      return `${dayOf(+p.year, +p.month, +p.day)}, ${p.hour}:${p.minute}`;
+    } catch { return ''; }
+  };
   const fail = e => { error.textContent = e?.message || 'This phone’s storage is not available. Keep this page open.'; };
   const uuid = () => {
     const b = crypto.getRandomValues(new Uint8Array(16)); b[6] = (b[6] & 15) | 64; b[8] = (b[8] & 63) | 128;
@@ -191,7 +201,7 @@
     const box = element('div', '', parent, 'shot');
     try {
       const blob = await preview(photo);
-      if (blob) { const url = URL.createObjectURL(blob); urls.push(url); const image = element('img', '', box); image.src = url; image.alt = photo.caption || `Photo ${index + 1}`; }
+      if (blob) { const url = URL.createObjectURL(blob); urls.push(url); const image = element('img', '', box); image.src = url; image.alt = photo.caption || `Photograph ${index + 1}`; }
       else element('p', 'On the server, not kept on this phone.', box, 'hint');
     } catch { element('p', 'Not available on this phone.', box, 'hint'); }
     if (locked(selected)) return;
@@ -261,8 +271,13 @@
         if (answer.value !== 'action') { observation.actionNeeded = ''; observation.owner = ''; observation.location = ''; }
         changed(); render();
       };
-      if (raises && check.answer === 'action') field(section, observation, 'location', 'Where (for the snag list)', false);
-      for (const [key, title] of [['whatHappened', 'Notes or what is wrong'], ['actionNeeded', 'What needs doing'], ['owner', 'Who is to do it']]) field(section, observation, key, title, key !== 'owner');
+      // The same questions as the app's check editor: an action says where (when it raises an
+      // issue), what is wrong, what needs doing and who; any other answer takes optional notes.
+      if (raises && check.answer === 'action') field(section, observation, 'location', 'Where', false);
+      const asks = check.answer === 'action' ? [['whatHappened', 'What’s wrong'], ['actionNeeded', 'What needs doing'], ['owner', 'Who is to do it']] : [['whatHappened', 'Notes · optional']];
+      // Not answered yet: words already held for an action (from an older page) stay in view.
+      if (!check.answer) for (const [key, title] of [['location', 'Where'], ['actionNeeded', 'What needs doing'], ['owner', 'Who is to do it']]) if (observation[key]) asks.push([key, title]);
+      for (const [key, title] of asks) field(section, observation, key, title, key !== 'owner' && key !== 'location');
     } else {
       if (!fixed) {
         const label = element('label', 'Kind', section, 'field'); const kind = element('select', '', label);
@@ -281,9 +296,9 @@
     observation.photos.forEach((p, i) => void showPhoto(p, i, observation, shots));
     if (locked(selected)) return;
     const acts = element('div', '', section, 'cardacts');
-    const add = element('label', '', acts, 'btn'); element('span', observation.photos.length ? 'Add another photo' : 'Add a photo', add);
+    const add = element('label', '', acts, 'btn'); element('span', observation.photos.length ? 'Add another photo' : 'Take a photo', add);
     const input = element('input', '', add); input.type = 'file'; input.accept = 'image/jpeg,image/png,image/webp'; input.multiple = true; input.setAttribute('capture', 'environment');
-    input.setAttribute('aria-label', `Add a photo to card ${index + 1}`);
+    input.setAttribute('aria-label', `${observation.photos.length ? 'Add another photo' : 'Take a photo'} for card ${index + 1}`);
     input.onchange = async () => {
       const files = Array.from(input.files || []); input.value = '';
       for (const file of files) {
@@ -444,7 +459,7 @@
     element('p', d.started ? 'Started on this phone' : typeName(d), titles, 'lbl');
     element('h2', label(d), titles).id = 'editor-title';
     element('span', tagFor(d), head, d.signed ? 'tag signed' : 'tag');
-    const counts = `${cards(d)} · ${plural(photos(d), 'photo')}`;
+    const counts = `${cards(d)} · ${plural(photos(d), 'photograph')}`;
     element('p', d.started ? `Visit ${day(d.started.visitDate)} · ${counts} · gets its reference when it reaches the server` : `${d.report?.projectSnapshot?.projectName ? `${d.report.projectSnapshot.projectName} · ` : ''}${counts}`, panel, 'hint');
     // An inspection can be signed here, at the foot, once every check is answered.
     if (signable(d) && !d.signed) element('p', 'Answer every check, then sign at the foot of the page. It goes to the office by itself the next time RELAY opens with signal.', panel, 'hint');
@@ -512,7 +527,7 @@
       if (selected?.key === d.key) b.setAttribute('aria-current', 'true');
       const text = element('span', '', b);
       element('span', label(d), text, 't');
-      element('span', `${d.started ? `Visit ${day(d.started.visitDate)}` : typeName(d)} · ${cards(d)} · ${plural(photos(d), 'photo')} · changed ${when(d.heldAt)}`, text, 's');
+      element('span', `${d.started ? `Visit ${day(d.started.visitDate)}` : typeName(d)} · ${cards(d)} · ${plural(photos(d), 'photograph')} · changed ${when(d.heldAt)}`, text, 's');
       element('span', tagFor(d), b, d.signed ? 'tag signed' : 'tag');
       b.onclick = async () => { const fresh = (await allDrafts()).find(x => x.key === d.key); if (fresh) await show(fresh); };
     }
@@ -583,15 +598,7 @@
     // Opened at /site-notes: that project's notes; otherwise the project last worked on.
     const asked = location.pathname === '/site-notes' ? new URLSearchParams(location.search).get('project') : null;
     let current = null; try { current = localStorage.getItem(`relay-project:${principal}`); } catch {}
-    // "Wed 21 Oct, 14:05" in UK time, written out from parts as lib/dates.ts whenShort does (the browser's en-GB says "Wed, 21 Sept").
-    const stamp = iso => {
-      try {
-        const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(iso)).map(x => [x.type, x.value]));
-        const weekday = new Date(Date.UTC(+p.year, +p.month - 1, +p.day)).getUTCDay();
-        const year = +p.year !== new Date().getFullYear() ? ` ${p.year}` : '';
-        return `${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][weekday]} ${+p.day} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+p.month - 1]}${year}, ${p.hour}:${p.minute}`;
-      } catch { return ''; }
-    };
+    const stamp = when;
     const ages = iso => { const days = Math.floor((Date.now() - Date.parse(iso)) / 86400000); return days < 1 ? '' : days === 1 ? ' (a day ago)' : ` (${days} days ago)`; };
     for (const p of withNotes) {
       const item = element('details', '', box, 'nproj');

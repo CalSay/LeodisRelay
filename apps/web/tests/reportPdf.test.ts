@@ -55,9 +55,9 @@ test('a summary row carries the number of the update it came from, and the card 
 test('signatures say how and when they were made', async () => {
   const signedAt = '2026-10-19T15:32:00Z';
   const drawn = (await pageTexts(await renderReportPdf({ ...base, signature: { name: 'Sam Patel', signedAt, dataUrl: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=' } }))).join(' ');
-  assert.match(drawn, /Drawn signature · 19\/10\/2026, 16:32/);
+  assert.match(drawn, /Drawn signature · 19 Oct 2026, 16:32/);
   const nameOnly = (await pageTexts(await renderReportPdf({ ...base, signature: { name: 'Sam Patel', signedAt } }))).join(' ');
-  assert.match(nameOnly, /Sent without a drawn signature · 19\/10\/2026, 16:32/);
+  assert.match(nameOnly, /Sent without a drawn signature · 19 Oct 2026, 16:32/);
   const unsigned = (await pageTexts(await renderReportPdf({ ...base, approved: false }))).join(' ');
   assert.match(unsigned, /Not signed yet/);
 });
