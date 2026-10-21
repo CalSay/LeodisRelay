@@ -46,6 +46,51 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   updated for the new label and passes. Screenshots in project files
   `ui-review/my-week-counts/`.
 - Not verified: real phones, screen readers.
+## 2026-10-21 — "Last sent" on the Team tab
+
+- Why: walked the office getting a new site reporting on main 88d0589
+  (1440px, local example data, no SharePoint, Entra or email): the new
+  project, a new engineer added on the Team tab, an engineer already on
+  another site moving to it, through to the first update. Projects come from
+  the SharePoint Project Tracker, so RELAY has no "add a project" step; with
+  SharePoint off the new site is an example project ("No visit yet" on the
+  overview). Adding the engineer took 4 clicks and 3 fields, and the welcome
+  message works. The gap was after that: the list's "Now" column said "No
+  session" for almost everyone, so never signed in looked the same as signed
+  in yesterday (one click per person to find out), and nothing said which
+  site anyone was reporting from (scan every project row or the Inbox).
+  Picked and built without asking Cal (his autonomy message; 07:02 ask that
+  the office gets the information it needs easily); coordinator agreed. Not a
+  `docs/tasks.json` task; no status changed.
+- Changed: the Team list (Admin's and Manager's) has "Last sent" instead of
+  "Now": the site of the person's latest sent report and the visit day
+  ("Kirkstall Gate - Phase 2 · Visit today"), linked to that report;
+  "Nothing sent yet" (with when they signed in, while a sign-in is on
+  record); or "Not signed in yet". Drafts do not count, and the latest visit
+  day wins, so a correction to an old report or an update sent days late does
+  not move someone back to an old site. Reports sent under any account id the person signed in
+  with count (`lib/teamActivity.ts`, `/api/office/team` adds `lastSent`).
+  Whether someone is signed in now moved to their own panel ("Signed in now"
+  / "Not signed in now" under Signed in) for the Admin, and to "Signed in
+  now" under "Signed in at" on the Manager's list, so nothing the session
+  showed is lost. Help "What's new" line added.
+- Checks: typecheck, `npm test` (146 + 522 after merging main, 3 new in `teamActivity.test.ts`),
+  build. New `scripts/verify-team-last-sent.mjs` (58 checks; Admin 1440 dark
+  and light, Manager 1440 dark and light, Admin 390 light): not signed in
+  yet, nothing sent yet after signing in with only a draft, then the new site
+  and today for the new engineer and for the engineer who moved; the site
+  opens the report; a late correction to an old site does not move Ray back;
+  signed in now on the panel and the Manager's list; no session words left; axe;
+  no sideways scroll. Also passed: verify-first-day, verify-office-registers,
+  verify-help (second run; the first stopped on its known title race),
+  verify-september-office, verify-role-access, verify-first-time-use.
+  Screenshots: project files `ui-review/new-site-setup/`.
+- Not verified: a live tenant (real sign-ins, real projects from SharePoint),
+  a real phone, a screen reader.
+- Next (proposals from the walk, not built): the welcome message could name
+  the engineer's site and link straight to it (`/engineer?project=`), so a new
+  starter skips "Which site are you on?"; the 16 roster people with "Name
+  needed" crowd the list during setup.
 
 ## 2026-10-21 — Engineer's end of week: "Yours" on the Issues tab
 

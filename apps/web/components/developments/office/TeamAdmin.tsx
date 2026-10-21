@@ -10,6 +10,7 @@ import { fmtWhen } from './model';
 import { welcomeText } from '@/lib/welcomeMessage';
 import { useFeatures } from '@/components/FeaturesContext';
 import { SAFETY_RECORDS_COVERS, SAFETY_RECORDS_NAME } from '@/lib/featureSwitch';
+import { lastSentWords } from '@/lib/teamActivity';
 
 const ROLE_WORDS: Record<string, string> = { Admin: 'Everything, plus the Admin tab', Manager: 'Office, all projects', Engineer: 'Own drafts, submitted reports, issues' };
 const sees = (m: TeamMember) => ROLE_WORDS[m.assignment.split('.')[0] ?? ''] ?? 'Not known until they sign in';
@@ -18,19 +19,35 @@ const sees = (m: TeamMember) => ROLE_WORDS[m.assignment.split('.')[0] ?? ''] ?? 
 const roleWords = (assignment: string) => assignment.split('.').map(w => w === 'PH' ? 'P&H' : w).join(' · ');
 
 /**
+ * "Last sent": the site and day of their latest report, so the office can see
+ * a new site reporting, or who has not got going yet, without opening anyone.
+ * The site links to that report.
+ */
+function LastSentCell({ ctx, m }: { ctx: Ctx; m: TeamMember }) {
+  const project = m.lastSent && ctx.projects.find(p => p.id === m.lastSent!.projectId);
+  const w = lastSentWords(m, () => project?.projectName, ctx.day);
+  return <td data-label="Last sent">
+    {w.waiting ? <span className="fine">{w.title}</span>
+      : project && m.lastSent ? <a className="rowtitle" style={{ fontSize: 13 }} href={`#/projects/${project.id}/report/${m.lastSent.reportId}`} onClick={e => e.stopPropagation()}>{w.title}</a>
+      : <div className="rowtitle" style={{ fontSize: 13 }}>{w.title}</div>}
+    {w.sub && <div className="rowsub">{w.sub}</div>}
+  </td>;
+}
+
+/**
  * The roster reconciled with sessions, in plain words, as a Manager sees it on
  * the Team tab. Read-only: the Admin changes the checklist on the same tab
  * (People), and access still comes from Microsoft.
  */
-function RosterTable({ members }: { members: TeamMember[] | null }) {
+function RosterTable({ ctx, members }: { ctx: Ctx; members: TeamMember[] | null }) {
   const groups: [string, (m: TeamMember) => boolean][] = [['Admin', m => m.assignment === 'Admin'], ['Managers', m => m.assignment === 'Manager'], ['Engineers', m => m.assignment.startsWith('Engineer')], ['Signed in, not on the checklist', m => !m.onChecklist]];
   return <div className="panel"><div className="panel-head"><h3>Who can sign in</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>Roles are set by the Admin</span></div>
-    <table className="reg cards"><thead><tr><th>Person</th><th>Role</th><th>Can see</th><th>Signed in at</th><th>Now</th></tr></thead><tbody>
+    <table className="reg cards"><thead><tr><th>Person</th><th>Role</th><th>Can see</th><th>Signed in at</th><th>Last sent</th></tr></thead><tbody>
       {!members && <tr><td colSpan={5} className="loading" style={{ minHeight: 0, padding: 24 }}>Loading the roster</td></tr>}
       {(members ?? []).length === 0 && members && <tr><td colSpan={5} className="empty">Nobody on the checklist and nobody signed in.</td></tr>}
       {groups.map(([label, pick]) => { const rows = (members ?? []).filter(m => pick(m) && (label !== 'Engineers' || m.onChecklist) && (label === 'Signed in, not on the checklist' || m.onChecklist)); if (!rows.length) return null; return [
         <tr key={`g-${label}`} className="c-group"><td colSpan={5} style={{ background: 'var(--panel-2)', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--text-3)', padding: '6px 16px' }}>{label === 'Signed in, not on the checklist' ? 'Signed in, not on the list' : label} · {rows.length}</td></tr>,
-        ...rows.map(m => <tr key={m.email}><td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{m.name ?? m.email.split('@')[0]}</div><div className="rowsub num">{m.email}</div></td><td data-label="Role">{roleWords(m.assignment)}{m.role && m.assignment.split('.')[0] !== m.role && <div className="rowsub">signed in as {m.role}</div>}</td><td style={{ fontSize: 12 }} data-label="Can see">{sees(m)}</td><td className="due" data-label="Signed in at">{m.lastSignedIn ? fmtWhen(m.lastSignedIn) : <span className="fine">—</span>}</td><td data-label="Now">{m.session === 'active' ? <Tag label="Signed in" cls="tag-ok" /> : m.session === 'expired' ? <Tag label="Signed out" cls="tag-quiet" /> : <Tag label="Not signed in" cls="tag-quiet" />}</td></tr>),
+        ...rows.map(m => <tr key={m.email}><td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{m.name ?? m.email.split('@')[0]}</div><div className="rowsub num">{m.email}</div></td><td data-label="Role">{roleWords(m.assignment)}{m.role && m.assignment.split('.')[0] !== m.role && <div className="rowsub">signed in as {m.role}</div>}</td><td style={{ fontSize: 12 }} data-label="Can see">{sees(m)}</td><td className="due" data-label="Signed in at">{m.lastSignedIn ? fmtWhen(m.lastSignedIn) : <span className="fine">—</span>}{m.session === 'active' && <div className="rowsub">Signed in now</div>}</td><LastSentCell ctx={ctx} m={m} /></tr>),
       ]; })}
     </tbody></table>
     <div className="panel-foot">Everyone who can sign in to RELAY at Leodis Developments, and who is signed in now. RELAY does not keep a history of sign-ins. Ask the Admin to add someone or change a role; it takes effect the next time they sign in.</div></div>;
@@ -41,7 +58,7 @@ export function TeamView({ ctx }: { ctx: Ctx }) {
   return <div className="view">
     <div className="pagehead"><div><h2>Team</h2><p>{team ? `${team.members.length} ${team.members.length === 1 ? 'person' : 'people'} · ${team.members.filter(m => m.session === 'active').length} signed in now` : 'Loading the team'}</p></div></div>
     {/* One list of people: the Admin's has the changes on it, everyone else's is read-only. The server refuses changes from anyone but the Admin. */}
-    {ctx.me.admin ? <People ctx={ctx} /> : <RosterTable members={team?.members ?? null} />}
+    {ctx.me.admin ? <People ctx={ctx} /> : <RosterTable ctx={ctx} members={team?.members ?? null} />}
     <p className="rowsub">Issue owners are names or companies typed on site, not these accounts, so this list is who can sign in rather than who owns work.</p>
   </div>;
 }
@@ -116,13 +133,13 @@ function People({ ctx }: { ctx: Ctx }) {
   const saved = () => { ctx.loadTeam(); void ctx.refresh(); };
   return <div className="two-wide">
     <div className="panel"><div className="panel-head"><h3>Who can sign in</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{unnamed.length ? `${unnamed.length} need${unnamed.length === 1 ? 's' : ''} a name` : 'Names shown across RELAY'}</span><BtnQ className="btn-sm" onClick={() => { setAdding(true); setSel(null); }}>Add person</BtnQ></div>
-      <table className="reg cards"><thead><tr><th>Person</th><th>Role on the checklist</th><th>Now</th></tr></thead><tbody>
+      <table className="reg cards"><thead><tr><th>Person</th><th>Role on the checklist</th><th>Last sent</th></tr></thead><tbody>
         {!members && <tr><td colSpan={3} className="loading" style={{ minHeight: 0, padding: 24 }}>Loading the roster</td></tr>}
         {members && !listed.length && <tr><td colSpan={3} className="empty">Nobody on the checklist and nobody signed in.</td></tr>}
         {listed.map(m => <tr key={m.email} className={`clickable ${selected?.email === m.email ? 'sel' : ''}`} onClick={() => { setSel(m.email.toLowerCase()); setAdding(false); }}>
           <td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{m.name ?? localPart(m.email)}{!m.name && m.onChecklist && <> <Tag label="Name needed" cls="tag-caution" /></>}</div><div className="rowsub num">{m.email}</div></td>
           <td data-label="Role">{m.onChecklist ? roleWords(m.assignment) : <span className="rowsub">Not on the checklist</span>}</td>
-          <td data-label="Now">{m.session === 'active' ? <Tag label="Signed in" cls="tag-ok" /> : m.session === 'expired' ? <Tag label="Session expired" cls="tag-quiet" /> : <span className="fine">No session</span>}</td>
+          <LastSentCell ctx={ctx} m={m} />
         </tr>)}
       </tbody></table>
       <div className="panel-foot">Choose someone to set the name RELAY shows for them on reports, issues and the Inbox. Nothing here grants access: roles come from Microsoft Entra at sign-in, and a change takes effect the next time they sign in.</div></div>
@@ -180,7 +197,7 @@ function PersonPanel({ ctx, m, onSaved }: { ctx: Ctx; m: TeamMember; onSaved: (p
     </form>
     <dl className="tb two" style={{ margin: '0 16px 12px' }}>
       <div><dt>Microsoft name</dt><dd>{m.microsoftName ?? <span className="fine">Known after they sign in</span>}</dd></div>
-      <div><dt>Signed in</dt><dd>{m.lastSignedIn ? fmtWhen(m.lastSignedIn) : <span className="fine">Not yet</span>}</dd></div>
+      <div><dt>Signed in</dt><dd>{m.lastSignedIn ? fmtWhen(m.lastSignedIn) : m.everSignedIn ? 'Before' : <span className="fine">Not yet</span>}{m.everSignedIn && <small>{m.session === 'active' ? 'Signed in now' : 'Not signed in now'}</small>}</dd></div>
     </dl>
     {m.onChecklist && !m.everSignedIn && !m.lastSignedIn && <WelcomeMessage m={m} />}
     <div style={{ padding: '0 16px 16px' }}>
