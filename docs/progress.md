@@ -34,7 +34,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   0.5 s either way, page 7,479 px tall at 1440 (was 6,489) and 11,081 px
   at 390 (was 9,652), printed PDF 8 A4 pages on both. Screenshots and the
   PDF: project files `ui-review/weekly-work-done/`.
-- Checks: `npm run typecheck`, `npm test` (146 + 468, one new unit test),
+- Checks: `npm run typecheck`, `npm test` (146 + 473 on main with #102, one new unit test),
   `npm run build`; browser checks one at a time: verify-weekly-summary (38,
   new: work lines, Show all and Show less, nothing cut, all printed),
   verify-help, verify-office-progress, verify-september-office,
