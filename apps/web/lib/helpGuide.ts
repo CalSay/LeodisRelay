@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'simpler-issue-list', added: '2026-10-21', audience: 'site', title: 'A shorter issues list',
+    text: 'Each issue on the Issues tab now shows what is wrong, where, its status and who is fixing it by when, with a small photo beside it, so a phone screen holds several at once. The trade and who reported it are still on the issue itself, under "History". Checked in a phone-sized browser, not on a real phone.' },
   { id: 'simpler-issue-page', added: '2026-10-21', audience: 'site', title: 'A simpler issue page',
     text: 'Opening an issue now shows what is wrong, where, what needs doing and who is fixing it by when, with "Add photograph" and "Put forward as fixed" straight underneath, near the top of the page. The history and the office\'s detail are folded under "History": tap it to see every update. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'office-simpler-day', added: '2026-10-21', audience: 'office', title: 'A simpler office',
