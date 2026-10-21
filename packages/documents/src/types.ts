@@ -38,6 +38,8 @@ export interface DocReport {
   documentTitle?: string;
   /** A checklist report: results table, then only the checks with something to show. */
   inspection?: boolean;
+  /** What the inspection was of, when it is of one thing: { label: "Tower or podium", value: "T3, level 2" }. */
+  inspected?: { label: string; value: string };
   reference: string;
   projectName: string;
   projectNumber: string;
@@ -46,6 +48,12 @@ export interface DocReport {
   visitDate: string;
   author: string;
   revision: number;
+  /**
+   * Set on a correction: the revision it replaces and why, as the office or
+   * engineer gave it. Printed under the title block so a reader holding two
+   * revisions can tell which stands and what changed.
+   */
+  correction?: { replacesRevision: number; reason: string };
   /** Approved reports are issuable; anything else is stamped as a draft. */
   approved: boolean;
   /** Submission without mandatory office review is not a draft or an approval. */

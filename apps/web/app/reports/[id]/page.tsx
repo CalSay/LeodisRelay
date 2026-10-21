@@ -21,6 +21,7 @@ import { clientId } from '@/lib/clientId';
 import { dropAside, hasUnsent, keep, recover, releaseIfCurrent, setAside } from "@/lib/localDraft";
 import { KindPicker, ObservationEditor } from "@/components/ObservationEditor";
 import { CheckEditor } from "@/components/CheckEditor";
+import { InspectedName } from "@/components/InspectedName";
 import { CHECK_ANSWERS, checkCounts, checkHint, reportTypeOf } from "@/lib/reportTypes";
 import { SignaturePad } from "@/components/SignaturePad";
 import type { Issue as IssueSummary } from "@/lib/types";
@@ -1078,6 +1079,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         <span className={sent ? "tag tag-sent" : "tag tag-draft"}>{sent ? "Sent" : report.corrects ? `Correction draft` : "Draft"}</span>
       </div>
 
+      {type.inspects && <InspectedName report={report} type={type} editable={!sent && mine}
+        onRenamed={name => setReport(current => current ? { ...current, inspected: name } : current)} />}
+
       {/* A correction draft says what it corrects and why, so the sent report is
           never mistaken for something that can be edited. */}
       {!sent && report.corrects && (
@@ -1214,7 +1218,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             <div className="eng-list" style={{ marginTop: 8 }}>
               {type.raisesRecords
                 ? <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} issue${answers.action === 1 ? '' : 's'} raised · not yet reviewed` : 'No issues to raise'}</b><span>{answers.action ? `${report.observations.some(o => o.check?.answer === 'action' && o.linkedIssueId) ? 'Linked ones add a sighting to the existing issue. ' : ''}Each action goes on the snag list with where it is, and is listed at the top of the PDF.` : 'Every check is satisfactory or does not apply: the area is ready to hand over.'}</span></div></div>
-                : <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} action${answers.action === 1 ? '' : 's'} listed on the inspection` : 'No actions to list'}</b><span>Printed at the top of the PDF with who is to do each one. Nothing is added to the issue register.</span></div></div>}
+                : <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} action${answers.action === 1 ? '' : 's'} listed on the inspection` : 'No actions to list'}</b><span>Printed at the top of the PDF with who is to do each one, and followed on Safety actions until a later inspection finds it put right. Nothing is added to the issue register.</span></div></div>}
               <div className="eng-row"><div className="main"><b>Received the moment it lands</b><span>{project?.projectManager ?? 'The project manager'} is emailed when the mailbox is live; the office can read it straight away.</span></div></div>
             </div>
           </div>}

@@ -55,8 +55,26 @@ Font.register({
 });
 
 // Hyphenation off: breaking "containment" across a line reads as a typo in a
-// technical document, and the measure is wide enough not to need it.
-Font.registerHyphenationCallback((word) => [word]);
+// technical document, and the measure is wide enough not to need it. The one
+// exception is a run with no spaces longer than any real word (a circuit
+// reference, a pasted link): unbroken it runs off the edge of the page. Such
+// a run may break every LONG_RUN characters or so. The layout marks each
+// break with a hyphen, as ordinary hyphenation does, so a break is never put
+// next to a hyphen already in the text, where it would read as part of it.
+const LONG_RUN = 24;
+Font.registerHyphenationCallback((word) => {
+  const chars = [...word];
+  if (chars.length <= LONG_RUN) return [word];
+  const parts: string[] = [];
+  let rest = chars;
+  while (rest.length > LONG_RUN) {
+    let cut = LONG_RUN;
+    while (cut > LONG_RUN / 2 && (rest[cut - 1] === "-" || rest[cut] === "-")) cut -= 1;
+    parts.push(rest.slice(0, cut).join(""));
+    rest = rest.slice(cut);
+  }
+  return [...parts, rest.join("")];
+});
 
 const INK = "#16171a";
 const MUTED = "#4e5158";
@@ -152,6 +170,8 @@ const s = StyleSheet.create({
    */
   tb: { flexDirection: "row", marginTop: 14, borderTopWidth: 1, borderColor: RULE, paddingTop: 4 },
   tbGroup: { width: "50%", paddingRight: 18 },
+  /** One thing inspected, across the full width under the title block. */
+  tbWide: { width: "100%", paddingRight: 18 },
   tbRow: { flexDirection: "row", alignItems: "baseline", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: HAIR },
   /* Sized to its own text, not the column, so a short label is a small box. */
   /* Fixed width, so every value in the group starts on the same line. */
@@ -184,6 +204,9 @@ const s = StyleSheet.create({
   resultQuiet: { color: FAINT, fontWeight: 500 },
 
   obs: { flexDirection: "row", marginBottom: 16 },
+  lead: { position: "relative" },
+  /* Hung in the gutter: back across the body's padding, rule and the gutter. */
+  leadNo: { position: "absolute", left: -44, top: 0 },
   gutter: { width: 30 },
   gutterNo: { fontSize: 12, fontWeight: 600, letterSpacing: 0.2 },
   obsBody: { flex: 1, borderLeftWidth: 2, paddingLeft: 12, paddingBottom: 4 },
@@ -258,6 +281,26 @@ const s = StyleSheet.create({
   signTyped: { fontSize: 13, fontWeight: 600, marginBottom: 4 },
   signStatement: { fontSize: 7, color: FAINT, marginTop: 3, lineHeight: 1.35 },
 
+  /* A correction says which revision it replaces and why, under the title block. */
+  correction: {
+    marginTop: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 9,
+    backgroundColor: WASH,
+    borderLeftWidth: 2,
+    borderLeftColor: FLAG,
+  },
+  correctionLabel: { fontSize: 6, letterSpacing: 1.2, color: FLAG, fontWeight: 600, marginBottom: 2 },
+
+  /* The tally above an inspection's results: the answer to "did it pass?" in one line. */
+  tally: { flexDirection: "row", flexWrap: "wrap", marginBottom: 8 },
+  tallyItem: { marginRight: 16, fontSize: 9 },
+  tallyCount: { fontWeight: 600 },
+
+  /* Who is to act, under the action on a card, as in the summary table. */
+  ownerLine: { marginTop: 3, fontSize: 8, color: MUTED },
+  ownerLabel: { fontWeight: 600, color: INK },
+
 });
 
 /**
@@ -302,29 +345,62 @@ function formatVisitDate(iso: string): string {
     : date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
 }
 
-/** A card is titled by where it is; a check by its question, and where, if the action says (a handover inspection's do). */
-/** "20/10/2026, 23:05", UK time: a typed signature is dated to the minute, as it was sent. */
+/** "20/10/2026, 23:05", UK time: a signature is dated to the minute it was sent. */
 const signedWhen = (iso: string): string =>
   new Date(iso).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
 
+/** A lead taller than this (points) may break across pages rather than leave most of one empty. */
+const LEAD_LIMIT = 360;
+
+/**
+ * Roughly how tall a card's title, words and action box are, in points, used
+ * only to decide whether the lead is short enough to keep on one page. Each
+ * typed line counts at least once (a list of flats is many short lines), at
+ * about 95 characters a line at 9pt across the card, 60 for the 11.5pt title.
+ * Errs tall: an estimate too low would keep together a lead longer than a
+ * page, and the end of it would be lost.
+ */
+function leadHeight(o: { whatHappened: string; actionNeeded: string; location: string; check?: { question: string } | undefined }): number {
+  const lines = (text: string, perLine: number) =>
+    text.trim().split("\n").reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / perLine)), 0);
+  const title = 8 + lines(itemTitle(o), 60) * 18;
+  const words = 7 + lines(o.whatHappened || "-", 95) * 14;
+  // Label, the action itself, the owner line and the box's padding.
+  const action = o.actionNeeded.trim() ? 44 + lines(o.actionNeeded, 88) * 14 : 0;
+  return title + words + action;
+}
+
+/** A card is titled by where it is; a check by its question, and where, if the action says (a handover inspection's do). */
 const itemTitle = (o: { location: string; check?: { question: string } | undefined }): string =>
   o.check ? `${o.check.question}${o.location.trim() ? ` · ${o.location.trim()}` : ""}` : o.location || "Location not recorded";
 
 export function ReportDocument({ report }: { report: DocReport }) {
   const inspection = report.inspection === true;
-  const actions = report.observations.filter((o) =>
+  // Numbered by place in the whole report, so an inspection's check keeps the
+  // number it has in the results table when only some are shown in detail,
+  // and a row in the summary carries the number of the update it came from.
+  const numbered = report.observations.map((observation, index) => ({ observation, number: index + 1 }));
+  const actions = numbered.filter(({ observation: o }) =>
     o.check ? o.check.tone === "action" : o.actionNeeded.trim().length > 0 || o.typeLabel.toLowerCase() === "defect",
   );
-  // Numbered by place in the whole report, so an inspection's check keeps the
-  // number it has in the results table when only some are shown in detail.
-  const numbered = report.observations.map((observation, index) => ({ observation, number: index + 1 }));
+  const tally = (["ok", "action", "na", "open"] as const)
+    .map((tone) => ({
+      tone,
+      count: report.observations.filter((o) => (o.check?.tone ?? "open") === tone).length,
+      label: { ok: "satisfactory", action: "action needed", na: "not applicable", open: "not answered" }[tone],
+    }))
+    .filter((t) => t.count > 0);
   const detailed = inspection
     ? numbered.filter(({ observation: o }) => o.check?.tone === "action" || o.whatHappened.trim() || o.photos.length > 0)
     : numbered;
   let figureNumber = 0;
 
   return (
-    <Document title={report.reference} author={BRANDING.companyName} subject={report.projectName}>
+    <Document
+      title={`${report.documentTitle ?? "Site Progress Report"} ${report.reference} · ${report.projectName}`}
+      author={BRANDING.companyName}
+      subject={report.projectName}
+    >
       <Page size="A4" style={s.page}>
         <View style={s.masthead}>
           {/* Sized to the space the real mark will need, so the layout is proven
@@ -350,7 +426,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
 
         <View style={s.titleRow}>
           <View>
-            <Text style={s.docKind}>{(report.documentTitle ?? "Site progress report").toUpperCase()}</Text>
+            <Text style={s.docKind}>{(report.documentTitle ?? "Site Progress Report").toUpperCase()}</Text>
             <Text style={s.docTitle}>{report.projectName}</Text>
           </View>
           <View style={{ alignItems: "flex-end" }}>
@@ -375,8 +451,25 @@ export function ReportDocument({ report }: { report: DocReport }) {
             <Field label="Revision" value={String(report.revision)} code />
           </View>
         </View>
+        {report.inspected && (
+          <View style={s.tbWide}>
+            <Field label={report.inspected.label} value={report.inspected.value} />
+          </View>
+        )}
 
-        <View style={s.h2Row}>
+        {report.correction ? (
+          <View style={s.correction} wrap={false}>
+            <Text style={s.correctionLabel}>
+              {`REVISION ${report.revision} · REPLACES REVISION ${report.correction.replacesRevision}`}
+            </Text>
+            <Text>
+              <Text style={s.ownerLabel}>Reason: </Text>
+              {report.correction.reason}
+            </Text>
+          </View>
+        ) : null}
+
+        <View style={s.h2Row} minPresenceAhead={60}>
           <Text style={s.h2}>{inspection ? "ACTIONS ARISING" : "ACTION AND DECISION SUMMARY"}</Text>
           <View style={s.h2Rule} />
         </View>
@@ -391,9 +484,9 @@ export function ReportDocument({ report }: { report: DocReport }) {
               <Text style={[s.th, s.cAction]}>{inspection ? "ACTION REQUIRED" : "ACTION OR DECISION REQUIRED"}</Text>
               <Text style={[s.th, s.cOwner]}>OWNER</Text>
             </View>
-            {actions.map((observation, index) => (
+            {actions.map(({ observation, number }) => (
               <View key={observation.id} style={s.tr} wrap={false}>
-                <Text style={[s.td, s.cNo]}>{String(index + 1).padStart(2, "0")}</Text>
+                <Text style={[s.td, s.cNo]}>{String(number).padStart(2, "0")}</Text>
                 <Text style={[s.td, s.cItem]}>{itemTitle(observation)}</Text>
                 <Text style={[s.td, s.cAction]}>
                   {observation.actionNeeded.trim() || "To be determined"}
@@ -408,12 +501,25 @@ export function ReportDocument({ report }: { report: DocReport }) {
 
         {inspection ? (
           <>
+            {/* The heading, tally and first rows travel together, and the
+                column heads repeat on each page the table runs onto. */}
+            <View minPresenceAhead={150} />
             <View style={s.h2Row}>
               <Text style={s.h2}>INSPECTION RESULTS</Text>
               <View style={s.h2Rule} />
             </View>
+            <View style={s.tally}>
+              <Text style={s.tallyItem}>
+                <Text style={s.tallyCount}>{report.observations.length}</Text> checks
+              </Text>
+              {tally.map((t) => (
+                <Text key={t.tone} style={[s.tallyItem, t.tone === "action" ? s.resultAction : t.tone === "ok" ? {} : s.resultQuiet]}>
+                  <Text style={s.tallyCount}>{t.count}</Text> {t.label}
+                </Text>
+              ))}
+            </View>
             <View>
-              <View style={s.thead}>
+              <View style={s.thead} fixed>
                 <Text style={[s.th, s.cNo]}>NO</Text>
                 <Text style={[s.th, s.cCheck]}>CHECK</Text>
                 <Text style={[s.th, s.cResult]}>RESULT</Text>
@@ -432,7 +538,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
         ) : null}
 
         {!inspection || detailed.length > 0 ? (
-          <View style={s.h2Row}>
+          <View style={s.h2Row} minPresenceAhead={90}>
             <Text style={s.h2}>{inspection ? "NOTES AND PHOTOGRAPHS" : "UPDATES"}</Text>
             <View style={s.h2Rule} />
           </View>
@@ -444,37 +550,40 @@ export function ReportDocument({ report }: { report: DocReport }) {
           const chip = observation.check ? observation.check.answer : observation.typeLabel;
           return (
             <View key={observation.id} style={s.obs}>
-              <View style={s.gutter}>
-                <Text style={[s.gutterNo, { color: tone.ink }]}>
-                  {String(number).padStart(2, "0")}
-                </Text>
-              </View>
+              <View style={s.gutter} />
 
               <View style={[s.obsBody, { borderLeftColor: tone.rule }]}>
-                <View style={s.obsHead} wrap={false}>
-                  <Text style={s.obsTitle}>{itemTitle(observation)}</Text>
-                  <View
-                    style={[
-                      s.chip,
-                      { borderColor: tone.rule, width: labelWidth(chip, 6, 1.1) },
-                    ]}
-                  >
-                    <Text style={[s.chipText, { color: tone.ink }]}>
-                      {chip.toUpperCase()}
-                    </Text>
+                {/*
+                  The lead (number, title, words and action) is kept on one
+                  page, so an action is never parted from what it is about.
+                  The number hangs in the gutter from inside the lead, so it
+                  moves with its card rather than staying on the page before.
+                  Only a lead too long for one page is allowed to break.
+                */}
+                <View style={s.lead} wrap={leadHeight(observation) > LEAD_LIMIT}>
+                  <Text style={[s.gutterNo, s.leadNo, { color: tone.ink }]}>{String(number).padStart(2, "0")}</Text>
+                  <View style={s.obsHead} wrap={false}>
+                    <Text style={s.obsTitle}>{itemTitle(observation)}</Text>
+                    <View style={[s.chip, { borderColor: tone.rule, width: labelWidth(chip, 6, 1.1) }]}>
+                      <Text style={[s.chipText, { color: tone.ink }]}>{chip.toUpperCase()}</Text>
+                    </View>
                   </View>
+
+                  <Text style={s.narrative}>
+                    {observation.whatHappened || (observation.check ? "No notes recorded." : "No description recorded.")}
+                  </Text>
+
+                  {observation.actionNeeded.trim() ? (
+                    <View style={s.action} wrap={false}>
+                      <Text style={s.actionLabel}>ACTION REQUIRED</Text>
+                      <Text>{observation.actionNeeded}</Text>
+                      <Text style={s.ownerLine}>
+                        <Text style={s.ownerLabel}>Owner: </Text>
+                        {observation.owner.trim() || "Awaiting confirmation"}
+                      </Text>
+                    </View>
+                  ) : null}
                 </View>
-
-                <Text style={s.narrative}>
-                  {observation.whatHappened || (observation.check ? "No notes recorded." : "No description recorded.")}
-                </Text>
-
-                {observation.actionNeeded.trim() ? (
-                  <View style={s.action} wrap={false}>
-                    <Text style={s.actionLabel}>ACTION REQUIRED</Text>
-                    <Text>{observation.actionNeeded}</Text>
-                  </View>
-                ) : null}
 
                 {observation.photos.length > 0 ? (
                   <View style={s.figs}>
@@ -484,13 +593,9 @@ export function ReportDocument({ report }: { report: DocReport }) {
                       return (
                         <View key={photo.id} style={style} wrap={false}>
                           <Image style={single ? s.imgFull : s.img} src={photo.dataUrl} />
-                          <Text style={s.capNo}>
-                            PHOTOGRAPH {String(figureNumber).padStart(2, "0")}
-                          </Text>
+                          <Text style={s.capNo}>PHOTOGRAPH {String(figureNumber).padStart(2, "0")}</Text>
                           <Text style={s.cap}>{photo.caption.trim() || "No caption recorded"}</Text>
-                          <Text style={s.capDate}>
-                            Taken {new Date(photo.capturedAt).toLocaleDateString("en-GB")}
-                          </Text>
+                          <Text style={s.capDate}>Taken {new Date(photo.capturedAt).toLocaleDateString("en-GB")}</Text>
                         </View>
                       );
                     })}
@@ -501,12 +606,14 @@ export function ReportDocument({ report }: { report: DocReport }) {
           );
         })}
 
-        <View style={s.h2Row} wrap={false}>
+        {/* Heading and boxes as one, so "Sign off" never ends a page alone. */}
+        <View wrap={false}>
+        <View style={s.h2Row}>
           <Text style={s.h2}>SIGN OFF</Text>
           <View style={s.h2Rule} />
         </View>
 
-        <View style={s.signRow} wrap={false}>
+        <View style={s.signRow}>
           <View style={s.signCell}>
             <View style={[s.signLabelBox, { width: labelWidth(inspection ? "INSPECTED BY" : "PREPARED BY", 6, 1.2) }]}>
               <Text style={s.signLabel}>{inspection ? "INSPECTED BY" : "PREPARED BY"}</Text>
@@ -523,9 +630,11 @@ export function ReportDocument({ report }: { report: DocReport }) {
             <Text style={s.signMeta}>
               {report.signature?.typed
                 ? `Typed signature · ${signedWhen(report.signature.signedAt)}${report.signature.signedInAs ? ` · signed in as ${report.signature.signedInAs}` : ""}`
+                : report.signature?.dataUrl
+                ? `Drawn signature · ${signedWhen(report.signature.signedAt)}`
                 : report.signature
-                ? `Signed ${new Date(report.signature.signedAt).toLocaleDateString("en-GB")}`
-                : "Not signed"}
+                ? `Sent without a drawn signature · ${signedWhen(report.signature.signedAt)}`
+                : "Not signed yet"}
             </Text>
             {/* What the person ticked, word for word, so a typed signature says what it stands for. */}
             {report.signature?.typed && report.signature.statement ? (
@@ -547,6 +656,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
             <Text style={s.signName}> </Text>
             <Text style={s.signMeta}>Name, company and date</Text>
           </View>
+        </View>
         </View>
 
         {/* The footer is stamped after rendering — see footer.ts. The page's

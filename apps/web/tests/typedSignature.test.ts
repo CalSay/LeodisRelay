@@ -47,7 +47,7 @@ test('signing by typing a name, without a store', async t => {
 
   await t.test('every inspection type can be signed by typing, and says so when the name is missing', () => {
     for (const type of CHECKLIST_TYPES) {
-      const base = { id:'r', projectId:'p', reference:'X', visitDate:'2026-10-20', author:'G', state:'draft', version:1, revision:1, review:'not_required', reportType: type.id, observations: answered(startingCards(type)) } as Report;
+      const base = { id:'r', projectId:'p', reference:'X', visitDate:'2026-10-20', author:'G', state:'draft', version:1, revision:1, review:'not_required', reportType: type.id, ...(type.inspects ? { inspected: 'T3' } : {}), observations: answered(startingCards(type)) } as Report;
       const blocking = (r: Report) => reviewReport(r).filter(f => f.blocking);
       assert.deepEqual(blocking({ ...base, draftSignature: { name: 'G. Stephenson', typed: true } }), [], type.id);
       assert.deepEqual(blocking({ ...base, draftSignature: { name: 'G. Stephenson', dataUrl: drawn } }), [], `${type.id} drawn`);
@@ -75,7 +75,7 @@ test('a typed signature through the store, the office and the PDF', async t => {
   process.env.RELAY_DATA_ROOT = root;
   try {
     for (const type of CHECKLIST_TYPES) await t.test(`a ${type.name.toLowerCase()} sent with a typed signature records what was ticked and who was signed in`, async () => {
-      const draft = createReport('proj-011lme', engineer.name, engineer, type.id);
+      const draft = createReport('proj-011lme', engineer.name, engineer, type.id, undefined, type.inspects ? 'T3' : undefined);
       const saved = ok(saveDraft(draft.id, { ...draft, observations: answered(draft.observations), draftSignature: { name: 'George Stephenson', typed: true } }, draft.version));
       assert.deepEqual(getReport(draft.id)?.draftSignature, { name: 'George Stephenson', typed: true }, 'the tick survives a reload');
       assert.equal((await submitReport(draft.id, { name: 'George Stephenson' }, saved.version, engineer.name)).ok, false, 'a name alone does not sign it');

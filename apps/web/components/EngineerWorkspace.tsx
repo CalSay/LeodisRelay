@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiError, createReport, getReport, listReports, projectIssues, projectVariations } from '@/lib/api';
@@ -20,7 +20,7 @@ import { ISSUE_WORK, acknowledgementStatus, deliveryStatus, reviewStatus, toneCl
 import { fmtMoney, variationValue } from '@/lib/variations';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { withViewReturn } from '@/lib/viewNavigation';
-import { CHECKLIST_TYPES, reportTypeOf, type ReportTypeId } from '@/lib/reportTypes';
+import { CHECKLIST_TYPES, INSPECTED_MAX, inspectedName, reportTypeOf, type ReportTypeDef, type ReportTypeId } from '@/lib/reportTypes';
 import { useWhatsNewCount } from './useWhatsNew';
 import { dateShort, dayShort, whenShort } from '@/lib/dates';
 
@@ -177,11 +177,11 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
     setProjectId(id);setOffset(0);setScope('current');setView('home');
     try{localStorage.setItem(preference,id);}catch{}
   }
-  async function startReport(add?: 'instruction', type: ReportTypeId = 'progress') {
+  async function startReport(add?: 'instruction', type: ReportTypeId = 'progress', inspected?: string) {
     if(!project || creating)return;
     if (currentDraft && add) { router.push(withViewReturn(`/reports/${currentDraft.id}?add=${add}`,engineerReturn(view))); return; }
     setCreating(true);setError('');
-    try {const report = await createReport(project.id,principal?.name ?? '',type);router.push(withViewReturn(`/reports/${report.id}${add ? `?add=${add}` : ''}`,engineerReturn(view)));}
+    try {const report = await createReport(project.id,principal?.name ?? '',type,inspected);router.push(withViewReturn(`/reports/${report.id}${add ? `?add=${add}` : ''}`,engineerReturn(view)));}
     catch(e){setError(e instanceof Error?e.message:'Unable to start a report. Please try again.');setCreating(false);}
   }
 
@@ -209,7 +209,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
             <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo + a short note · sent on its own</small></div></button>
             <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work needing instruction · goes in your site update</small></div></button>
             {inspections.map(({ type, draft }) => draft
-              ? <Link key={type.id} className="eng-tile eng-tile-wide" href={withViewReturn(`/reports/${draft.id}`,engineerReturn())}><span className="kind answer-ok">{type.tag}</span><div><b>{draft.corrects ? `Continue the ${type.name.toLowerCase()} correction` : `Continue the ${type.name.toLowerCase()}`}</b><small>{draft.checks ? `${draft.checks.ok + draft.checks.action + draft.checks.na} of ${draft.observationCount} checks answered` : `${draft.observationCount} checks`} · saved {fmtWhen(draft.lastSavedAt) || 'on server'}</small></div><span className="arrow">→</span></Link>
+              ? <Link key={type.id} className="eng-tile eng-tile-wide" href={withViewReturn(`/reports/${draft.id}`,engineerReturn())}><span className="kind answer-ok">{type.tag}</span><div><b>{draft.corrects ? `Continue the ${type.name.toLowerCase()} correction` : `Continue the ${type.name.toLowerCase()}`}{draft.inspected ? ` of ${draft.inspected}` : ''}</b><small>{draft.checks ? `${draft.checks.ok + draft.checks.action + draft.checks.na} of ${draft.observationCount} checks answered` : `${draft.observationCount} checks`} · saved {fmtWhen(draft.lastSavedAt) || 'on server'}</small></div><span className="arrow">→</span></Link>
+              : type.inspects ? <NameThenStart key={type.id} type={type} creating={creating} onStart={name=>void startReport(undefined,type.id,name)} />
               : <button key={type.id} type="button" className="eng-tile eng-tile-wide" onClick={()=>void startReport(undefined,type.id)} disabled={creating}><span className="kind answer-ok">{type.tag}</span><div><b>Do a {type.name.toLowerCase()}</b><small>{type.blurb} · signed and sent as its own report</small></div><span className="arrow">→</span></button>)}
           </div>
           <p className="eng-help">Defects flagged here are sent on their own. Everything else stays a draft until you sign and send.</p>
@@ -265,4 +266,41 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
       {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues')} returnTo={engineerReturn('issues')}/>}
     </>}
   </main>;
+}
+
+/**
+ * The home screen tile for an inspection of one thing (a tower inspection):
+ * it asks which tower before starting, so the inspection is about that one
+ * from its first save. Free text, as the engineer reads it off the tag.
+ */
+function NameThenStart({ type, creating, onStart }: { type: ReportTypeDef; creating: boolean; onStart: (name: string) => void }) {
+  const [open,setOpen] = useState(false);
+  const [name,setName] = useState('');
+  const [problem,setProblem] = useState('');
+  const input = useRef<HTMLInputElement>(null);
+  const opener = useRef<HTMLButtonElement>(null);
+  // Focus moves into the form when it opens, and back to the tile on Cancel.
+  const moved = useRef(false);
+  const about = type.inspects!;
+  useEffect(() => { if (open) input.current?.focus(); else if (moved.current) opener.current?.focus(); moved.current = true; }, [open]);
+  if (!open) return <button ref={opener} type="button" className="eng-tile eng-tile-wide" onClick={()=>setOpen(true)} disabled={creating} aria-expanded={false}><span className="kind answer-ok">{type.tag}</span><div><b>Do a {type.name.toLowerCase()}</b><small>{type.blurb} · signed and sent as its own report</small></div><span className="arrow">→</span></button>;
+  function start(e: React.FormEvent) {
+    e.preventDefault();
+    const named = inspectedName(type, name);
+    if (!named.ok) { setProblem(named.reason); input.current?.focus(); return; }
+    setProblem(''); onStart(named.value!);
+  }
+  return <form className="eng-tile eng-tile-wide eng-tile-form" onSubmit={start} aria-label={`Start a ${type.name.toLowerCase()}`}>
+    <span className="kind answer-ok">{type.tag}</span>
+    <div>
+      <label htmlFor={`inspects-${type.id}`}><b>Which {about.label.toLowerCase()}?</b></label>
+      <input ref={input} id={`inspects-${type.id}`} type="text" value={name} maxLength={INSPECTED_MAX} autoComplete="off" placeholder={about.placeholder}
+        aria-describedby={`inspects-${type.id}-hint`} aria-invalid={problem ? true : undefined} onChange={e=>{setName(e.target.value);setProblem('');}} />
+      <small id={`inspects-${type.id}-hint`}>{problem ? <span role="alert" className="eng-tile-problem">{problem}</span> : about.hint}</small>
+      <div className="btn-row">
+        <button type="submit" className="btn-primary" disabled={creating}>{creating ? 'Starting…' : `Start the ${type.name.toLowerCase()}`}</button>
+        <button type="button" onClick={()=>{setOpen(false);setName('');setProblem('');}} disabled={creating}>Cancel</button>
+      </div>
+    </div>
+  </form>;
 }

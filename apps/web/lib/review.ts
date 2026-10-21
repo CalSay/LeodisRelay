@@ -84,6 +84,7 @@ function reviewInspection(report: Report): ReviewFinding[] {
   const findings: ReviewFinding[] = [];
   const type = reportTypeOf(report);
   const short = (o: Observation) => o.check?.question ?? 'A check';
+  if (type.inspects && !report.inspected?.trim()) findings.push({ observationId: '', field: 'inspected', message: `Say which ${type.inspects.label.toLowerCase()} this is: tap Rename under the title`, blocking: true });
   for (const o of report.observations) {
     const answer = o.check?.answer;
     if (!answer) {

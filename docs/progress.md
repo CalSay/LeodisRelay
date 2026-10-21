@@ -52,6 +52,141 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Still to align there: the editor's own date formats and the draft-conflict
   and sent-elsewhere panels.
 
+## 2026-10-21 — Report and inspection PDFs
+
+- Why: the PDF is what the office sends a client and keeps as the compliance
+  record, and it had been extended a type at a time (site updates, three
+  inspections, typed signatures, the tower inspection from #59). Asked for by
+  the coordinator under Cal's standing ask for a clear, professional output;
+  the changes below are Claude's decisions. Not a `docs/tasks.json` task, so
+  no status changed there.
+- Looked at: `scripts/render-sample-pdfs.mjs` (new) renders one PDF of every
+  kind from realistic data (site update with 12 photographs and a long
+  unbroken reference, draft, sent without review, correction, safety,
+  handover, first fix and tower inspections, drawn, typed and name-only
+  signatures). Before and after PDFs and side-by-side images:
+  `ui-review/pdfs/` in the project files.
+- Found and fixed (packages/documents, plus `correction` in documentModel):
+  - Pages after the first said nothing about what they belonged to. The
+    footer now reads "Site Progress Report · Tetley Hall Block E ·
+    011LME-SPR-004 · Revision 1 · Approved for issue" (and the tower, on a
+    tower inspection), shortened with an ellipsis before it meets the page
+    number. Characters the footer font lacks (Ł, emoji) fall back to plain
+    letters or are left out instead of stopping the PDF (the reference part
+    of the footer too).
+  - A long reference with no spaces ran off the right edge; runs over 24
+    characters may now break. react-pdf marks every such break with a
+    hyphen, and a break next to a hyphen already in the text can show as
+    "--" (a quirk of its line breaking, seen with a 90-character circuit
+    reference; not fixed).
+  - "Sign off" could end a page with its boxes on the next; they are one
+    block. A card's number, title, words and action are kept on one page
+    (only a card too long for that may break), so an action is not parted
+    from what it is about; photographs can still follow on the next page.
+  - An inspection's results table split with no column heads on the second
+    page; they now repeat, and the results open with a tally of each result
+    (12 checks; 9 satisfactory; 2 action needed; 1 not applicable).
+  - The summary numbered its rows 01, 02… while the updates were 02, 04…;
+    each row now carries its update's or check's number.
+  - The cards never said who was to act; the action box now ends "Owner:
+    …" or "Owner: Awaiting confirmation", as the summary does ("Owner" is
+    the office register's word too).
+  - A correction gave no sign it was one; it now says "Revision 2 · replaces
+    revision 1" and the reason given, under the title block.
+  - Drawn signatures were dated to the day, typed ones to the minute; all now
+    say how they were made and when ("Drawn signature · 19/10/2026, 16:32",
+    "Typed signature …", "Sent without a drawn signature …", "Not signed
+    yet"). The PDF's document title names the kind, reference and project.
+- Decisions: PDFs already made are kept as they are (they are keyed to the
+  sent revision), so only new ones change. Nothing about filing or delivery
+  changed. A two-card report whose sign-off no longer fits on page one now
+  puts the whole sign-off on page two, rather than its heading alone.
+- Verified (Node 22 here; CI runs Node 24): `npm run typecheck`, `npm test`
+  (7 new tests in `apps/web/tests/reportPdf.test.ts`, which read the
+  rendered text back with pdf.js: footer on every page, Ł and emoji, summary
+  numbers and owners, signature wording, tally, a card of 70 short lines
+  kept whole, correction from the stored
+  report), every sample rendered and looked at page by page.
+- Not verified: printed on paper; opened in Acrobat or on a phone's PDF
+  viewer (checked with poppler and pdf.js); a real SharePoint-filed PDF.
+  Real photographs were stand-ins of the same sizes.
+- Proposed: add `render-sample-pdfs.mjs` to the commands in `CLAUDE.md`; a
+  variation card could print who asked and why (not done: some of those
+  fields are pricing notes for the office, not the client).
+
+## 2026-10-20 — Tower inspection (EXP-5, fourth report type)
+
+- Added a fourth checklist type, "Tower inspection" (Tower and Podium
+  Inspection, references `-TPI-`): one mobile tower or podium, inspected after
+  it is put up or moved and at least every seven days while it stays up, as
+  the Work at Height Regulations 2005 expect. 12 checks (tag, built to the
+  instructions, ground, castors and legs, stabilisers, braces, damage,
+  platform, guardrails and toe boards, inside access, surroundings, height
+  and load). Signature required, drawn or typed (#57). The checks are
+  Claude's first draft, and the Help entry says they may change.
+- Why this type: M&E engineers use towers and podiums every day, the
+  inspection record is a legal requirement that today lives on paper tags,
+  and it was the type #55 set aside only because inspections had nowhere to
+  name what was inspected. Chosen by Claude under Cal's standing instruction.
+- What was inspected: a type can now `inspects` one thing. The tower is
+  named on the home tile before the inspection starts (free text, never a
+  list: EXP-4), stored as `Report.inspected`, shown under the title,
+  printed on the PDF under the title block, and named in the office sheet
+  and register, site diary, weekly summary, My week and search. The author
+  can rename it while it is a draft ("Rename", `POST /api/reports/:id`
+  `action: rename`); renaming does not change the draft's version, so an open
+  editor is not told its copy is out of date. Sent, it is fixed. Decided
+  here: naming it at the start rather than as a field saved with the checks,
+  so drafts, held copies on the phone and the offline signature need no
+  change; a rename needs signal.
+- Actions: like the safety inspection, a tower inspection raises no issues (a
+  tower that fails is tagged out of use, not snagged). Each "Action needed"
+  goes on Safety actions under its tower, and is cleared only by a later
+  inspection of the same tower (names matched ignoring case and spacing).
+  Safety actions now lists each tower inspected in the last four weeks with
+  its last inspection, and marks one "another is due" after seven days, with
+  a "Towers due" figure. A tower not inspected for four weeks is taken to be
+  down and no longer listed; its open actions stay. The project's "Last
+  safety inspection" and "Inspections due" still count weekly safety
+  inspections only.
+- No signal: the offline page asks for the tower when a tower inspection is
+  chosen and takes it to the server when it starts the report. Service worker
+  cache `relay-public-v12`.
+- Help: What's new "Tower inspection", a "A tower or podium" guide section,
+  and the Safety actions and "Action needed" wording.
+- Checks: `npm run typecheck`, `npm test` (346, new
+  `tests/towerInspection.test.ts`), `npm run build`, new
+  `scripts/verify-tower-inspection.mjs` (112 checks: tile refuses an empty
+  name, Cancel, rename, answers, PDF words, signed and sent with no issue,
+  rename refused once sent and for anyone but the author, Safety actions with
+  a tower overdue, diary, office sheet, 390px light and 1440px dark),
+  `verify-offline-inspection` (now also starts a tower inspection with no
+  signal), `verify-accessibility` (540, now with the tile form and rename
+  open). Also passed: typed-signature, report-types, safety-actions,
+  first-fix-inspection, offline-sign, help, engineer-layout, role-access,
+  handover-offline, editor-usability, unfinished-reports, before-handover,
+  home-and-sheet, site-diary, search, my-week, weekly-summary.
+- Review: a fresh-context review found no blocking bugs; fixed what it
+  raised: the Full report page now names the tower; a tower is due on the
+  seventh day, not the eighth; a phone still on the old offline page (which
+  offers the tower inspection but not its name) can start one unnamed, and
+  it cannot be sent until named with Rename, rather than failing to go up
+  for ever; Before handover names each tower action's tower and counts
+  tower inspections; held-work messages name the tower; an action names its
+  tower as the tower list does. Left as decided: a rename does not reach an
+  editor already open on another device until it reloads; the PM email
+  subject (mail is not live) and Since your last visit do not name the tower.
+- Seen, not changed: on a phone, tapping "Next check" straight after typing in
+  "Who is to do it" can land on "Check & send" instead, because leaving the
+  field brings the bottom bar back and moves the page. The new browser check
+  leaves the field first. Worth a look in the next editor pass.
+- Not verified: a physical phone; Cal or a site manager reading the checks;
+  whether "every seven days" matches every client's site rules.
+- Proposed (not added to `docs/tasks.json`): starting another tower
+  inspection while one is a draft (one per type at a time today); a "towers
+  due" line on the engineer home; adding `verify-tower-inspection.mjs` to
+  the browser checks in `CLAUDE.md`.
+
 ## 2026-10-20 — Notes for the next visit
 
 - Why: when an engineer covers a site, or the next trade arrives, the word

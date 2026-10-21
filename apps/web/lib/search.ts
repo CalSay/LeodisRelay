@@ -104,7 +104,7 @@ export function search(query: string, sources: SearchSources, principal: Princip
   for (const r of sources.reports) {
     if (!inScope(r.projectId) || !canReadReport(principal, r)) continue;
     const fields: Field[] = [
-      { label: '', text: r.reference }, { label: '', text: reportTypeOf(r).name }, { label: '', text: r.author }, { label: '', text: r.authorTrade ?? '' }, { label: '', text: r.visitDate },
+      { label: '', text: r.reference }, { label: '', text: reportTypeOf(r).name }, { label: '', text: r.inspected ?? '' }, { label: '', text: r.author }, { label: '', text: r.authorTrade ?? '' }, { label: '', text: r.visitDate },
       ...r.observations.flatMap(o => [
         { label: 'Location', text: o.location }, { label: 'Check', text: o.check?.question ?? '' }, { label: 'Note', text: o.whatHappened },
         { label: 'Action', text: o.actionNeeded }, { label: 'Responsible', text: o.owner }, { label: 'Asked by', text: o.askedBy ?? '' },
@@ -118,7 +118,7 @@ export function search(query: string, sources: SearchSources, principal: Princip
       kind: 'report', id: r.id, reference: r.reference, projectId: r.projectId,
       title: r.reference,
       snippet: snippet(found, words),
-      meta: `${r.author}${r.authorTrade ? ` · ${r.authorTrade}` : ''} · visit ${day(r.visitDate)} · ${reportTypeOf(r).checklist ? reportTypeOf(r).name.toLowerCase() : `${cards} card${cards === 1 ? '' : 's'}`}`,
+      meta: `${r.author}${r.authorTrade ? ` · ${r.authorTrade}` : ''} · visit ${day(r.visitDate)} · ${reportTypeOf(r).checklist ? `${reportTypeOf(r).name.toLowerCase()}${r.inspected ? ` of ${r.inspected}` : ''}` : `${cards} card${cards === 1 ? '' : 's'}`}`,
       status: r.state === 'draft' ? (r.corrects ? 'Correction draft' : 'Your draft') : r.revision > 1 ? `Sent · revision ${r.revision}` : 'Sent',
       at: r.serverAcknowledgedAt ?? r.lastSavedAt ?? r.visitDate,
     });
