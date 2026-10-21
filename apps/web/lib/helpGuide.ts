@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'send-on-signal', added: '2026-10-21', audience: 'site', title: 'Send with no signal, and it goes by itself',
+    text: 'Tap "Send to office" with no signal and RELAY now says "Waiting for signal": the report is kept on your phone and goes to the office by itself as soon as there is signal, while RELAY is open, then says it has been sent. If you close RELAY first, the home screen says "Send today\'s update" and opening it with signal sends it. To change something first, go back to the cards or change the signature (it then waits for you to send again), or tap "Don\'t send yet". Checked in a phone-sized browser with its signal switched off, not on a real phone.' },
   { id: 'office-sections', added: '2026-10-21', audience: 'office', title: 'Clearer edges on the office desk',
     text: 'The top bar, the tabs and the column headings now each have their own shade with a clear line between them, so it is easy to see where one ends and the next starts. With a project open, each project in the Projects column is its own card, and the open one has a gold outline.' },
   { id: 'weekly-work-done', added: '2026-10-21', audience: 'all', title: 'The week in the engineers\' words',
@@ -379,7 +381,8 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     { id: 'no-signal', heading: 'No signal', ordered: false, steps: [
       'RELAY still opens. You can start a site update or an inspection, add cards or answer checks, and take photographs; they are marked "Only on this phone".',
       'An inspection can be signed on the phone, drawn or by typing your name, once every check is answered. Signing locks it and marks it "Signed · not sent yet". To change anything before RELAY starts sending it, take your signature back and sign again.',
-      'When you have signal again, open RELAY and the work goes up by itself. A signed inspection goes to the office, and RELAY says when it has gone; if it changed after you signed, it stays a draft for you to sign again. Everything else stays a draft until you sign and send.',
+      'Tapped "Send to office" on the report screen with no signal? It says "Waiting for signal" and goes to the office by itself once there is signal, as long as RELAY stays open. If RELAY was closed, open it again: the home screen says "Send today\'s update", and opening it with signal sends it.',
+      'When you have signal again, open RELAY and the work goes up by itself. A signed inspection goes to the office, and RELAY says when it has gone; if it changed after you signed, it stays a draft for you to sign again. Work from the no-signal page stays a draft until you send it.',
       'Notes for the next visit on your projects show on the no-signal page too, as they were the last time RELAY opened with signal, and say when that was. You can read them there but not leave or mark one until you have signal.',
       'If you share a phone, sign out at the end of the day. Work held on the phone belongs to whoever was last signed in, and signing out takes your notes off it.',
     ] },

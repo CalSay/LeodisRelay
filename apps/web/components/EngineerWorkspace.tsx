@@ -12,6 +12,7 @@ import { unfinishedReports, type UnfinishedReport } from '@/lib/unfinishedReport
 import type { FixtureProject } from '@/lib/fixtures';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import { usePrincipal } from './PrincipalContext';
+import { waitingToSend } from '@/lib/sendOnSignal';
 import { SafetyActionsRow } from './SafetyActionsRow';
 import { ownsReport } from '@/lib/auth/access';
 import { EngineerIssueList } from './EngineerIssueList';
@@ -77,7 +78,8 @@ const VIEW_TITLES: Record<View, string> = { home: 'Site', projects: 'Projects', 
 interface Back { at: string; key: string; href: string; title: string; sub: string; tags: ReactNode; late?: boolean }
 
 /** Where an unfinished report stands, in words an engineer can act on. */
-function UnfinishedTags({r}:{r:UnfinishedReport}) {
+function UnfinishedTags({r,waiting=false}:{r:UnfinishedReport;waiting?:boolean}) {
+  if (waiting && !r.signed && !r.started) return <><span className="tag tag-caution">Not sent yet</span><span>no signal when you tapped Send · open it with signal and it goes to the office</span></>;
   if (r.signed) return <><span className="tag tag-caution">Signed · not sent yet</span><span>{r.problem ? `not sent yet: ${r.problem}` : `signed on this phone ${fmtWhen(r.changedAt)} · goes to the office by itself when RELAY reaches the server`}</span></>;
   if (r.started) return <><span className="tag tag-alert">Only on this phone</span><span>{r.problem ? `not accepted yet: ${r.problem}` : `started without signal ${fmtWhen(r.changedAt)} · goes up when RELAY can reach the server`}</span></>;
   if (r.device === 'only') return <><span className="tag tag-alert">Only on this phone</span><span>changed {fmtWhen(r.changedAt)} · open it with signal to save</span></>;
@@ -107,6 +109,9 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   const [reports,setReports] = useState<ReportSummary[] | null>(null);
   const [issues,setIssues] = useState<Issue[] | null>(null);
   // `failed`: the office could not be asked (no signal), so there are no counts to show, not zero.
+  /** Reports sent with no signal on this phone, still to go (lib/sendOnSignal.ts). Read after the first render, as the server cannot know. */
+  const [waiting,setWaiting] = useState<ReadonlySet<string>>(() => new Set());
+  useEffect(() => { if (principal) setWaiting(new Set(waitingToSend(principal.id))); }, [principal]);
   const [back,setBack] = useState<{ rows: Back[]; open: number; reports: number; failed?: boolean; offline?: boolean } | null>(null);
   const [error,setError] = useState('');
   const [creating,setCreating] = useState(false);
@@ -163,9 +168,10 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   const { count: newToYou, newcomer } = useWhatsNew('site');
   // A draft the big buttons above already open is not listed again, unless
   // the list has something to say about it (held on the phone, refused, signed).
+  // Today's update waiting to send says so on its big button, so is not listed again.
   const onTiles = new Set([currentDraft?.id, ...inspections.map(i => i.draft?.id)].filter(Boolean));
   const unfinished = unfinishedReports(drafts, held.copies, projects, held.deviceOnly)
-    .filter(r => !onTiles.has(r.id) || r.device || r.problem || r.signed);
+    .filter(r => !onTiles.has(r.id) || r.problem || r.signed || (r.device && !(waiting.has(r.id) && r.id === currentDraft?.id)));
 
   useEffect(() => {
     if (!ready || !projectId) return;
@@ -236,7 +242,9 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
           {/* The job: a site update with photographs, issues and variations, sent to the office. One big button, then the two quick ones. */}
           <div className="eng-tiles eng-tiles-main">
             {currentDraft
-              ? <Link className="eng-tile big eng-tile-main" href={withViewReturn(`/reports/${currentDraft.id}`,engineerReturn())}><div><b>{currentDraft.corrects ? 'Carry on with the correction' : 'Carry on with today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'on server'}</small></div><span className="arrow" aria-hidden="true">→</span></Link>
+              ? <Link className="eng-tile big eng-tile-main" href={withViewReturn(`/reports/${currentDraft.id}`,engineerReturn())}><div>{waiting.has(currentDraft.id)
+                ? <><b>{currentDraft.corrects ? 'Send the correction' : 'Send today’s update'}</b><small>Not sent yet: there was no signal when you tapped Send. Open it with signal and it goes to the office.</small></>
+                : <><b>{currentDraft.corrects ? 'Carry on with the correction' : 'Carry on with today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'on server'}</small></>}</div><span className="arrow" aria-hidden="true">→</span></Link>
               : <button type="button" className="eng-tile big eng-tile-main" onClick={()=>void startReport('update')} disabled={creating}><div><b>{creating?'Starting…':'Start today’s site update'}</b><small>Progress, photographs, defects and variations, then sign and send to the office</small></div><span className="arrow" aria-hidden="true">→</span></button>}
             <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo and a short note, sent straight away</small></div></button>
             <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work that needs an instruction</small></div></button>
@@ -245,7 +253,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
           {unfinished.length > 0 && <section aria-labelledby="eng-unfinished-title">
             <div className="eng-section-title"><h2 id="eng-unfinished-title">Unfinished reports</h2><span className="r">{unfinished.length}</span></div>
             <div className="eng-list">
-              {unfinished.map(r => r.started ? <a key={r.id} href="/offline.html" className="eng-row late"><div className="main"><b>New {r.typeName.toLowerCase()} · {r.projectName}</b><span>No reference yet · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></a> : <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : r.typeName} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></Link>)}
+              {unfinished.map(r => r.started ? <a key={r.id} href="/offline.html" className="eng-row late"><div className="main"><b>New {r.typeName.toLowerCase()} · {r.projectName}</b><span>No reference yet · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r} waiting={waiting.has(r.id)}/></div></div><span className="chev">›</span></a> : <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : r.typeName} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r} waiting={waiting.has(r.id)}/></div></div><span className="chev">›</span></Link>)}
             </div>
           </section>}
           <section aria-labelledby="eng-inspections-title" className="eng-inspections">

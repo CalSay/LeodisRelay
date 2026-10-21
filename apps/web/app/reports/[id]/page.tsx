@@ -33,6 +33,7 @@ import { correctReport as requestCorrection } from '@/lib/api';
 import { canManage, ownsReport } from '@/lib/auth/access';
 import { toneClass } from '@/lib/status';
 import { SubmissionStages } from '@/components/SubmissionStages';
+import { clearWaitingToSend, isWaitingToSend, markWaitingToSend } from '@/lib/sendOnSignal';
 import { useMarkSeen } from '@/components/useMarkSeen';
 import { CARD_TYPES, OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
 import { isBlankCard, placesToOffer, withoutBlankCards } from '@/lib/quickCards';
@@ -125,6 +126,15 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [saveState, setSaveState] = useState<SaveState>("clean");
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  /**
+   * "Send to office" was tapped with no signal (lib/sendOnSignal.ts): the page
+   * sends it by itself when there is signal again, and says so meanwhile.
+   */
+  const [waiting, setWaiting] = useState<'signal' | 'server' | null>(null);
+  const waitingRef = useRef(waiting);
+  useEffect(() => { waitingRef.current = waiting; }, [waiting]);
+  /** When it went by itself, for the line above the sent report. */
+  const [sentByItself, setSentByItself] = useState<string | null>(null);
   const [projectIssues, setProjectIssues] = useState<IssueSummary[]>([]);
   const [signerName, setSignerName] = useState("");
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
@@ -446,6 +456,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       return;
     }
     if (!conflictRef.current || conflictRef.current.version < theirs.version) {
+      // Two versions to choose between: whichever is kept is checked and sent by hand.
+      stopWaiting(theirs.id);
       conflictRef.current = theirs;
       conflictBaseRef.current = base;
       setConflictBase(base);
@@ -613,12 +625,17 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     const started = saveCount.current, typed = seq.current;
     let found: Report | undefined;
     try { found = await getReport(current.id); } catch { return; }
+    // A send started meanwhile handles what it finds itself.
+    if (sending.current) return;
     // Sent from elsewhere: sending changes no version, so this is checked first, even mid-choice.
     if (found && found.state !== 'draft' && !sending.current && latest.current?.state === 'draft') { await showConflict(found, latest.current); return; }
     if (conflictRef.current) return;
     // A save from this tab overlapped the check, so its answer may be this tab's own save.
     if (!found || inFlight.current || saveCount.current !== started || found.version <= (serverVersion.current ?? 0)) return;
     if (found.state === 'draft' && pending.current === null && seq.current === typed) {
+      // Newer from another tab or device: not what was checked here, so it does not go by itself.
+      // The same cards (this phone's own save, its answer lost) still go.
+      if (!latest.current || compareDrafts(latest.current, found).differs) stopWaiting(found.id);
       serverVersion.current = found.version;
       adoptSignature(found);
       if (!found.draftSignature) { setSignerName(found.author); setSignatureImage(null); setSignatureTyped(false); }
@@ -686,6 +703,49 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   useEffect(() => onPhotoUploads(() => setUploading(uploadingPhotos())), []);
 
+  // Sent with no signal: try again when the phone says it is back online,
+  // when RELAY comes back into view, and every little while besides, since
+  // many phones never say (and none of this waits on background sync).
+  const sendRef = useRef<(byItself?: boolean) => Promise<void>>(async () => {});
+  const trySendNow = useCallback(() => {
+    const current = latest.current;
+    if (!current || current.state !== 'draft' || sending.current || conflictRef.current || sentAwayRef.current) return;
+    // The same rule as the button: nothing that would stop the send goes by itself.
+    if (reviewReport(current).some(f => f.blocking)) return;
+    void sendRef.current(true);
+  }, []);
+  useEffect(() => {
+    if (!waiting) return;
+    const onVisible = () => { if (document.visibilityState === 'visible') trySendNow(); };
+    const timer = setInterval(trySendNow, RETRY_MS);
+    window.addEventListener('online', trySendNow);
+    window.addEventListener('focus', trySendNow);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => { clearInterval(timer); window.removeEventListener('online', trySendNow); window.removeEventListener('focus', trySendNow); document.removeEventListener('visibilitychange', onVisible); };
+  }, [waiting, trySendNow]);
+
+  // Back to the cards, by the step button or the phone's own Back: it no longer goes by itself.
+  const stepWas = useRef(step);
+  useEffect(() => {
+    if (stepWas.current === 'check' && step === 'cards') stopWaiting(id);
+    stepWas.current = step;
+  }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Opened again (from the home screen, or after the page was closed) while it
+  // waits to go: back on Check & send, and sent at once if there is signal.
+  const resumed = useRef(false);
+  useEffect(() => {
+    if (!report || !principalId) return;
+    if (report.state !== 'draft') { clearWaitingToSend(report.id); setWaiting(null); return; }
+    if (resumed.current) return;
+    resumed.current = true;
+    if (!isWaitingToSend(report.id, principalId)) return;
+    setWaiting(navigator.onLine === false ? 'signal' : 'server');
+    showCheck();
+    // After this render's effects, so the page's latest copy (and send) are this report's.
+    setTimeout(trySendNow, 0);
+  }, [report, principalId]); // eslint-disable-line react-hooks/exhaustive-deps
+
   /** Show the name and drawing saved with the draft, before the pad first appears. */
   function adoptSignature(from: Report) {
     if (from.state !== 'draft' || !from.draftSignature) return;
@@ -698,6 +758,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   function updateSignature(name: string, image: string | null, typed = false) {
     // One way at a time: a typed signature has no drawing, and a drawing is not typed.
     if (image) typed = false;
+    // A signature changed after "Send to office" was not what was checked: it waits for Send again.
+    if (waitingRef.current && (name !== signerName || image !== signatureImage || typed !== signatureTyped)) stopWaiting(id);
     setSignerName(name);
     setSignatureImage(image);
     setSignatureTyped(typed);
@@ -872,7 +934,18 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   // The office opening a sent report (from search, say) counts as seeing it, as in the office reader.
   useMarkSeen(report, (seen) => setReport((r) => (r && r.id === seen.id ? { ...r, acknowledged: seen.acknowledged } : r)));
 
-  async function send() {
+  /** Stop waiting to send by itself: sent, refused, changed, or the engineer said not yet. */
+  function stopWaiting(reportId: string) {
+    clearWaitingToSend(reportId);
+    setWaiting(null);
+  }
+
+  /** `byItself` is a retry once signal is back, not a tap: it sends the page's latest copy. */
+  function send(byItself = false) {
+    return sendReport((byItself ? latest.current : null) ?? report, byItself);
+  }
+
+  async function sendReport(report: Report | null, byItself: boolean) {
     if (!report || sending.current) return;
     sending.current = true;
     setSubmitting(true);
@@ -892,6 +965,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         ? { name: signerName.trim(), typed: true }
         : { ...(signatureImage ? { dataUrl: signatureImage } : {}), name: signerName.trim() || report.author });
       if (principalId) await releaseIfCurrent(report.id, principalId, seq.current);
+      stopWaiting(report.id);
+      if (byItself) setSentByItself(new Date().toISOString());
       announce(sent, 'sent');
       setReport(sent);
       pending.current = null;
@@ -900,6 +975,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       if (error instanceof SaveConflict) {
         // Saved elsewhere since this screen last saved: nothing is sent until the engineer chooses.
         await showConflict(error.current, report);
+        // A save that reached the server with its answer lost comes back as the
+        // same cards: taken quietly, and the next try sends. Anything else is the
+        // engineer's to look at first.
+        if (conflictRef.current || sentAwayRef.current || error.current.state !== 'draft') stopWaiting(report.id);
       } else {
         // Sending failed, so make certain the device is holding the work before
         // telling anyone it is safe.
@@ -917,14 +996,17 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               () => false,
             )
           : false;
-        if (error instanceof ApiError && error.offline) {
-          setSaveState(held ? "phone" : "unheld");
-          setSubmitError(
-            held
-              ? "No connection, so this has not reached the office yet. Your work is held on this phone — try again when you have signal."
-              : "No connection, and this device would not store a copy. Do not close this page: your work only exists on this screen. Move somewhere with signal and send again.",
-          );
+        if (held && error instanceof ApiError && (error.offline || (error.passing && !error.signedOut))) {
+          // Kept on the phone: it goes by itself once the server can be reached.
+          if (error.offline) setSaveState("phone");
+          if (principalId) markWaitingToSend(report.id, principalId);
+          setSubmitError(null);
+          setWaiting(error.offline ? 'signal' : 'server');
+        } else if (error instanceof ApiError && error.offline) {
+          setSaveState("unheld");
+          setSubmitError("No connection, and this device would not store a copy. Do not close this page: your work only exists on this screen. Move somewhere with signal and send again.");
         } else {
+          stopWaiting(report.id);
           if (!held) setSaveState("unheld");
           setSubmitError(sendProblem(error, held, photoId => cardName(report, photoId)));
         }
@@ -934,6 +1016,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       setSubmitting(false);
     }
   }
+  sendRef.current = send;
 
   if (signedOut) {
     return (
@@ -1039,6 +1122,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   function showCards() {
     if (step === 'cards') return;
+    // Going back to change it: it no longer goes by itself. Check & send again sends the new version.
+    if (report) stopWaiting(report.id);
     if (pushedCheck.current) { window.history.back(); return; }
     try { window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`); } catch {}
     setStep('cards');
@@ -1207,6 +1292,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               <strong>Sent back by {report.reviewedBy ?? "the office"}.</strong> {report.reviewNote}
             </p>
           )}
+          {sentByItself && <p style={{ margin: "0 0 8px" }} role="status"><strong>Sent to the office by itself once it could get through ({fmtWhen(sentByItself)}).</strong></p>}
           <p style={{ margin: 0 }}>
             It cannot be changed now; to put something right, make a correction.{" "}
             <Link href={withViewReturn(`/reports/${report.id}/preview`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))} style={{ color: "var(--brass)", textDecoration: "underline", textUnderlineOffset: 3 }}>
@@ -1378,18 +1464,22 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             <button type="button" className="eng-undo-close" onClick={closeUndo} aria-label="Dismiss">&times;</button>
           </div>}
           {/* Why the work is not on the server, where it is seen: above the button, not below the cards. */}
-          {(submitError || saveProblemText) && <div className={`note eng-save-problem ${!submitError && (saveState === 'signedout' || saveState === 'server') ? 'is-waiting' : 'note-bad'}`} role="alert">{submitError ?? saveProblemText}</div>}
+          {waiting && step === 'check' && !submitError && <div className="note eng-save-problem is-waiting eng-send-waiting" role="status">
+            <b>{waiting === 'signal' ? 'Waiting for signal.' : 'Waiting for RELAY’s server.'}</b> It goes to the office by itself as soon as {waiting === 'signal' ? 'this phone has signal' : 'it answers'}, while RELAY is open. It is kept on this phone until then.
+            <div><button type="button" className="btn-quiet btn-sm" onClick={() => stopWaiting(report.id)}>Don’t send yet</button></div>
+          </div>}
+          {(submitError || (saveProblemText && !(waiting && step === 'check'))) && <div className={`note eng-save-problem ${!submitError && (saveState === 'signedout' || saveState === 'server') ? 'is-waiting' : 'note-bad'}`} role="alert">{submitError ?? saveProblemText}</div>}
           <div className="actionbar-inner">
             <span className="savestate" aria-live="polite">
               <span className={SAVE[saveState].dot} />
               {step === 'check' && stop.length > 0
                 ? <span className="actionbar-warning"><b>{stopRows.length} {stopRows.length === 1 ? 'item needs' : 'items need'} attention</b><span>Tap one above to fix it</span></span>
-                : <b>{saveState === 'saving' && slow ? (lastHeld.current ? 'Still saving · kept on this phone' : 'Still saving · keep this page open') : SAVE[saveState].text || (step === 'check' ? 'Ready to send' : checklist ? `${report.observations.length - unanswered.length} of ${report.observations.length} answered` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`)}</b>}
+                : <b>{waiting && step === 'check' && !submitting ? 'Not sent yet · goes by itself' : saveState === 'saving' && slow ? (lastHeld.current ? 'Still saving · kept on this phone' : 'Still saving · keep this page open') : SAVE[saveState].text || (step === 'check' ? 'Ready to send' : checklist ? `${report.observations.length - unanswered.length} of ${report.observations.length} answered` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`)}</b>}
             </span>
             {step === 'cards'
               ? <button className="btn-primary" onClick={() => showCheck()} disabled={submitting}>Check &amp; send &rarr;</button>
-              : <button className="btn-primary" onClick={send} disabled={submitting || stop.length > 0}>
-                  {submitting ? "Sending…" : "Send to office"}
+              : <button className="btn-primary" onClick={() => void send()} disabled={submitting || stop.length > 0}>
+                  {submitting ? "Sending…" : waiting ? "Try now" : "Send to office"}
                 </button>}
           </div>
         </div>

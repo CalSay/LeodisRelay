@@ -444,6 +444,7 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-too-long{margin-top:12px;}
 /* Signed out, or the server not answering: nothing is wrong with the work, so amber and calm, not red. */
 .actionbar .eng-save-problem.is-waiting{border-color:color-mix(in srgb,var(--caution) 40%,transparent);border-left-color:var(--caution);background:var(--caution-wash);color:var(--text);}
+.actionbar .eng-send-waiting div{margin-top:8px;}
 
 /* Simpler home (2026-10-21): one big button for the site update, the project's
    main pages in one list with the rest folded away, and roomy rows to tap. */
