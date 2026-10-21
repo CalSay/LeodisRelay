@@ -4,6 +4,35 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Clearer edges on the office desk
+
+- Why: Cal (2026-10-21 12:59, with a screenshot of the dark office desk, a
+  project open) said the top bar, the tabs and the Projects column "all
+  blend into one". On main they did: top bar and tabs were the same panel
+  colour, and every dividing line (`--line-2`) was 1.3 to 1.6:1 against its
+  surfaces; project cards had no gap or border, only a 1px rule.
+- Change (CSS only, `workspace.css`): two new tokens, `--edge` (a dividing
+  line at least 3:1 against both sides in both themes) and `--chrome` (the
+  top bar's surface: the sunken shade in light, a darker charcoal in dark).
+  Top bar (chrome), tabs (panel) and column headers (panel-3) now each have
+  their own shade with an `--edge` line between them, and the columns are
+  divided by `--edge`. Column headers lose the doubled grey and gold
+  underline for one line. The Projects column sits on the sunken shade with
+  each project as its own card (8px gap, border); the open project has a
+  gold outline and a gold-tinted fill. No content added or removed. Help
+  "What's new": "Clearer edges on the office desk".
+- Measured (new `scripts/verify-office-sections.mjs`, 1440 and 1180px, light
+  and dark, plus 390px): on main 48 of 59 checks failed (no surface change
+  between top bar and tabs, edges 1.32-1.64:1, cards 0px apart); now all
+  63 pass. Screenshots before and after: project files
+  `ui-review/office-sections/`.
+- Checks: typecheck, `npm test` (146 + 472), build; browser checks
+  verify-office-sections, verify-accessibility, verify-office-desk,
+  verify-office-phone, verify-office-landing, verify-office-progress,
+  verify-office-registers, verify-office-actions, verify-september-office,
+  verify-role-access, verify-help.
+- Not verified: Cal's own screen or the live pilot (the pilot runs an
+  older build), a real office monitor.
 ## 2026-10-21 — The week in the engineers' words (Weekly summary)
 
 - Why: Cal's 07:02 direction (get the office the information it needs).
