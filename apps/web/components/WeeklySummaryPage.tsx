@@ -15,7 +15,7 @@ import { failure } from '@/lib/failure';
 
 /**
  * One project's week, for the weekly site or client meeting: who was on site,
- * what they reported, how issues and variations moved, and the toolbox talks,
+ * what work they did in their own words, how issues and variations moved, and the toolbox talks,
  * permits and deliveries recorded. It reads what is
  * already in RELAY and changes nothing.
  */
@@ -32,6 +32,20 @@ function kindLine(kinds: WeekReport['kinds']): string {
 
 function inspectionLine(i: NonNullable<WeekReport['inspection']>): string {
   return `${i.name}: ${plural(i.action, 'action')}, ${i.ok} satisfactory, ${i.na} not applicable`;
+}
+
+/** Updates shown on screen before "Show all"; each in full, so nothing is cut mid-sentence. Print always shows every one. */
+const WORK_SHOWN = 3;
+/** What was done on a visit, in the engineer's words: where, then what. */
+function WorkDone({ r }: { r: WeekReport }) {
+  const [all, setAll] = useState(false);
+  if (!r.work.length) return null;
+  return <div className={`week-work${all ? ' all' : ''}`}>
+    <ul aria-label={`Work done, ${r.reference}`}>{r.work.map((w, n) => <li key={w.id} className={n >= WORK_SHOWN ? 'week-extra' : undefined}>
+      {w.location && <b>{w.location}</b>}{w.location && w.text ? ': ' : ''}{w.text}</li>)}</ul>
+    {r.work.length > WORK_SHOWN && <button type="button" className="week-noprint" aria-expanded={all} onClick={() => setAll(a => !a)}>
+      {all ? 'Show less' : `Show all ${r.work.length} updates`}</button>}
+  </div>;
 }
 
 function IssueRows({ rows, empty, here }: { rows: WeekIssue[]; empty: string; here: string }) {
@@ -116,7 +130,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
       <button type="button" className="btn-primary" onClick={() => window.print()} disabled={!s}>Print or save as PDF</button>
     </div>
 
-    {!project ? <div className="eng-panel week-noprint"><h1>Weekly summary</h1><p className="eng-help">Choose a project to see its week on one page: who was on site, what they reported, and which issues and variations moved. Ready for the weekly site meeting.</p></div>
+    {!project ? <div className="eng-panel week-noprint"><h1>Weekly summary</h1><p className="eng-help">Choose a project to see its week on one page: who was on site, what work they did, and which issues and variations moved. Ready for the weekly site meeting.</p></div>
       : error ? <div className="note note-bad" role="alert">{error} <button type="button" onClick={() => setRetry(n => n + 1)}>Retry</button></div>
       : !s ? <p role="status">Loading the week…</p>
       : <article className="week-sheet" aria-labelledby="week-title">
@@ -147,7 +161,8 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
               {r.review === 'pending' && <span className="tag tag-draft">Awaiting review</span>}{r.review === 'returned' && <span className="tag tag-alert">Returned for changes</span>}</p>
               <p className="week-desc">{r.author}{r.trade ? ` · ${r.trade}` : ''}</p>
               <p className="week-meta">{r.inspection ? inspectionLine(r.inspection) : kindLine(r.kinds)}{r.photos ? ` · ${plural(r.photos, 'photograph')}` : ''}</p>
-              {r.locations.length > 0 && <p className="week-meta">{r.locations.join(' · ')}</p>}</div>
+              {/* Where the work was is in the work lines; the places list stays for a visit with no progress written. */}
+              {r.work.length ? <WorkDone r={r} /> : r.locations.length > 0 && <p className="week-meta">{r.locations.join(' · ')}</p>}</div>
           </li>)}</ul> : <p className="week-none">No site reports were sent for visits this week.</p>}
           {s.reports.length > 0 && <p className="week-total">Across the week: {[s.reports.some(r => !r.inspection) ? kindLine(s.kinds) : '', (() => { const n = s.reports.filter(r => r.inspection).length; return n ? plural(n, 'inspection') : ''; })()].filter(Boolean).join(', ')}.</p>}
         </section>

@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'weekly-work-done', added: '2026-10-21', audience: 'all', title: 'The week in the engineers\' words',
+    text: 'The Weekly summary now shows what was done on each visit, where and in the engineer\'s own words, so you can read the week without opening every report. The first three updates on a visit show; "Show all" opens the rest. A printed copy has every one.',
+    link: { label: 'Open the Weekly summary', href: '/weekly-summary' } },
   { id: 'one-caption-line', added: '2026-10-21', audience: 'all', title: 'A shorter list before sending',
     text: '"Check & send" no longer lists every photograph without a caption on a line of its own. They now share one line at the end, such as "6 photographs have no caption", so the notes that matter to the office (a variation with no photo, nobody named to do an action) are easy to see. Captions are still optional and the caption box is still under each photo. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'simpler-office-screens', added: '2026-10-21', audience: 'office', title: 'One place for each thing in the office',
