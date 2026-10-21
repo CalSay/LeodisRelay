@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { isNewReport, previousWorkingDay, sinceWords } from '@/lib/officeActions';
 import type { ReportSummary } from '@/lib/types';
 import type { Ctx } from './ctx';
@@ -21,11 +21,26 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
   const [chosen, setFilter] = useState<Filter>(linked ?? 'all');
   // The tab itself (no record or filter in the route) starts again from all.
   const bare = !ctx.route.a;
-  useEffect(() => { if (linked) setFilter(linked); else if (bare) setFilter('all'); }, [linked, bare]);
+  const selected = ctx.route.a === 'show' ? null : ctx.route.a;
+  // On a phone the open report has the screen to itself. Where the list was
+  // scrolled to when a report was picked from it, so coming back (by "‹ Inbox"
+  // or the phone's own Back) lands in the same place with the same filters.
+  const listAt = useRef<number | null>(null);
+  const phone = () => window.matchMedia('(max-width:700px)').matches;
+  useEffect(() => {
+    if (linked) setFilter(linked);
+    else if (bare && listAt.current === null) setFilter('all');
+  }, [linked, bare]);
+  useEffect(() => {
+    if (!phone()) return;
+    if (selected) window.scrollTo(0, 0);
+    else if (listAt.current !== null) { window.scrollTo(0, listAt.current); listAt.current = null; }
+  }, [selected]);
+  const open = (id: string) => { if (!selected && phone()) listAt.current = window.scrollY; ctx.go(`#/inbox/${id}`); };
+  const backToList = () => { if (listAt.current !== null) window.history.back(); else ctx.go('#/inbox'); };
   const [project, setProject] = useState('');
   const [trade, setTrade] = useState('');
   const snap = ctx.snap;
-  const selected = ctx.route.a === 'show' ? null : ctx.route.a;
   const since = previousWorkingDay(ctx.day);
   if (!snap) return <div className="view"><div className="loading">Loading office records</div></div>;
   const scoped = (r: ReportSummary) => (!project || r.projectId === project) && (!trade || r.authorTrade === trade);
@@ -43,7 +58,7 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
   const clear = () => { setProject(''); setTrade(''); };
   const name = (id: string) => ctx.projects.find(p => p.id === id)?.projectName ?? id;
   const code = (id: string) => ctx.projects.find(p => p.id === id)?.id ?? '';
-  return <div className="view">
+  return <div className={`view ${selected ? 'inbox-reading' : ''}`}>
     <div className="pagehead"><div><h2>Inbox</h2><p>{snap.reports.length} report{snap.reports.length === 1 ? '' : 's'} received · {snap.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > week).length} this week · {counts.notAck} not seen yet · {snap.drafts.length} draft{snap.drafts.length === 1 ? '' : 's'} in progress on site</p></div></div>
     <div className="filters">
       {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(k)} title={k === 'new' ? `Received ${sinceWords(since, ctx.day)}` : undefined}>{l} · {counts[k]}</button>)}
@@ -57,12 +72,12 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
     </tbody></table><div className="panel-foot">Draft contents are private until submitted. Work held only on an engineer’s device is not visible here.</div></div>
     // With no report open the list has the page to itself; the reader comes in beside it once one is picked.
     : <div className={selected ? 'two-wide' : undefined}>
-      <div className="panel"><table className={`reg cards inbox-list ${selected ? '' : 'wide'}`}><thead><tr><th>Reference</th><th>Project</th><th>Engineer</th><th>Received</th><th className="c-found">Found</th><th>Status</th></tr></thead><tbody>
-        {shown.length ? shown.map(r => <tr key={r.id} className={`clickable ${selected === r.id ? 'sel' : ''}`} onClick={() => ctx.go(`#/inbox/${r.id}`)}>
+      <div className="panel inbox-list-panel"><table className={`reg cards inbox-list ${selected ? '' : 'wide'}`}><thead><tr><th>Reference</th><th>Project</th><th>Engineer</th><th>Received</th><th className="c-found">Found</th><th>Status</th></tr></thead><tbody>
+        {shown.length ? shown.map(r => <tr key={r.id} className={`clickable ${selected === r.id ? 'sel' : ''}`} onClick={() => open(r.id)}>
           <td className="c-ref"><span className="ref">{r.reference}</span>{r.revision > 1 && <div className="rowsub">rev {r.revision}</div>}</td><td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{name(r.projectId)}</div></td><td data-label="Engineer"><span className="who">{r.author}</span><div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due" data-label="Received">{fmtReceived(r.serverAcknowledgedAt, ctx.day)}</td><td className="c-found" data-label="Found"><Found r={r} /></td>
           <td data-label="Status"><div className="found">{r.review === 'pending' || r.review === 'returned' ? <ReviewTag r={r} /> : <DeliveryTag r={r} />}{r.acknowledged && <Tag label="Seen" cls="tag-ok" />}</div></td></tr>) : <tr><td colSpan={6} className="empty">{snap.reports.length === 0 && !narrowed ? FIRST : <>{filter === 'new' ? `No reports received ${sinceWords(since, ctx.day)}` : EMPTY[filter]}{narrowed ? ' for these filters' : ''}.</>}{narrowed && <> <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button></>}</td></tr>}
       </tbody></table><div className="panel-foot">Newest first. Pick a report to read it; opening it marks it seen.{selected ? '' : ' “Found” says what the visit raised.'}</div></div>
-      {selected && <div className="panel"><div className="panel-head"><h3>Reader</h3><a className="more" href={`#/projects/${code(shown.find(r => r.id === selected)?.projectId ?? snap.reports.find(r => r.id === selected)?.projectId ?? '')}/report/${selected}`}>In its project →</a></div>
+      {selected && <div className="panel"><div className="panel-head"><button type="button" className="inbox-back" onClick={backToList}>‹ Inbox</button><h3>Reader</h3><a className="more" href={`#/projects/${code(shown.find(r => r.id === selected)?.projectId ?? snap.reports.find(r => r.id === selected)?.projectId ?? '')}/report/${selected}`}>In its project →</a></div>
         <div style={{ padding: 12 }}><ReportReader ctx={ctx} id={selected} crumbsHome="#/inbox" /></div></div>}
     </div>}
   </div>;

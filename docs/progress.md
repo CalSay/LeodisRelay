@@ -4,6 +4,51 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Inbox report on its own screen on a phone
+
+- Why: a manager's phone walk on main (390px, light and dark; three
+  projects, three engineers, four weeks of reports, 214 in the Inbox) checked
+  who was on site today, what each engineer sent, what came back fixed, and
+  putting one item back. Most of it was fine: who was on site today is on the
+  overview's first screen (#118), fixed items open to Verify or Not finished
+  in one or two taps, a project opens with its four figures (#111). The
+  break was the Inbox: tapping a report only highlighted the row, because the
+  reader opened under the whole list, 41,819px down. Picked and built without
+  asking Cal (his autonomy message; 07:02 ask that the office gets what it
+  needs easily). Not a `docs/tasks.json` task; no status changed.
+- Change (`InboxView.tsx`, `workspace.css`, phone only, 700px and under):
+  with a report open the Inbox heading, filters and list step aside, so the
+  report is at the top of the screen. "‹ Inbox" (44px tall) in the reader's
+  heading, and the phone's own Back, return to the list at the place it was
+  scrolled to, with the same filter (the bare `#/inbox` route used to reset
+  the filter to All; it now keeps it when coming back from a report, and
+  the Inbox tab still opens on All). A report opened by its address has
+  "‹ Inbox" go to the list. Opening still marks it seen (#88). The desk keeps
+  the list and reader side by side (1440 and 1280 checked).
+- Same screen: inspection tags ("Tower inspection · Podium P3, plant room")
+  were cut off at the right edge of phone rows; `.kind` tags now wrap in
+  phone cards like `.tag` does. An empty "Status" label (a report nobody has
+  opened) no longer shows on phone rows.
+- Checks: typecheck, `npm test` (146 + 513), build. New
+  `scripts/verify-inbox-phone.mjs` (50): report at the top, list hidden,
+  Seen by the office, "‹ Inbox" and Back return within 40px of the place,
+  "Not seen yet" kept (count one fewer), Inbox tab opens on All, no tag cut,
+  no sideways scroll, desk side by side at 1440 dark and 1280 light.
+  `verify-office-inbox` now expects the report on its own on a phone (was
+  "the reader is under the list"). Also run and passing: verify-office-inbox
+  (80), verify-seen-by-office, verify-office-phone, verify-help,
+  verify-office-sections, verify-office-links, verify-role-access,
+  verify-accessibility (584), verify-day-walkthrough, verify-first-time-use,
+  verify-office-actions, verify-office-desk, verify-office-registers,
+  verify-review-queue, verify-september-office.
+- Screenshots: project files `ui-review/manager-phone-pass/` (before: a
+  tapped report with nothing visible changing, a cut tag; after: the report
+  open, the list, the desk).
+- Not verified: real phones (iPhone or Android Back gesture), screen readers.
+- Next (proposal, not built): Inbox rows on a phone are up to 221px tall
+  (label column for each field), so 214 reports are about 44,000px; a
+  two-line phone row (who · project · time, then what was found) would
+  roughly halve that.
 ## 2026-10-21 — Tenth release check: main ready at 0d56773
 
 - Why: about ten merges since the ninth check (#110 to #118), several on the
