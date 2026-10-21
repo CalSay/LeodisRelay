@@ -38,6 +38,59 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   is squashed when no report is open (project names wrap to 3 or 4 lines);
   "Not seen yet" lists oldest first so today's arrive at the bottom; the
   Inbox has no "Today" filter.
+## 2026-10-21 — The office's answers first on the engineer's home
+
+- Why: walked one engineer's whole visit at 390px on main a3bbb55 (open
+  RELAY, pick the site, a two-card site update with three photos, a quick
+  defect, fix an issue the office sent back, send, leave): 26 taps, with no
+  wasted screens left after #105-#115. The weak spot was the home screen:
+  "Came back from the office" started at 1,012px, below the first screen
+  (775px above the bottom bar), under the two inspection tiles, and the
+  office's question was the third of four rows, behind the engineer's own new
+  defect and a report the office had only received. Cal (07:02) wants an easy
+  system that gets the office the information it needs; an answer the
+  engineer does not see is not acted on. Coordinator agreed the pick; decided
+  without asking Cal, per his autonomy message. Not a `docs/tasks.json` task;
+  no status changed.
+- Change (`EngineerWorkspace.tsx`, `lib/cameBack.ts`): "Came back from the
+  office" now sits under "Flag a defect" and "Request a variation" (and under
+  "Unfinished reports" when there are any), above Inspections, in the page order (so screen readers and the keyboard
+  meet it there too). Rows the office wrote on, or sent back, come first,
+  newest first; the rest follow newest first (`waitingOnYouFirst`). Sent back
+  means a returned report not yet corrected, an issue disputed from a returned
+  report, or an issue the office reopened ("Not finished", note or not) that
+  the engineer has not added to since (`issueReopened`). The line under the tiles ("A
+  defect goes to the office as soon as you send it. Your site update stays a
+  draft until you sign and send it.") is gone: the tiles already say both, it
+  said nothing about no signal, and signing a site update is optional now. On
+  a desktop the section moves from the top of the right-hand column to under
+  the buttons on the left (still on the first screen, 631px); Since your last
+  visit now heads the right-hand column. Help "What's new" line and the
+  "After you send" guide updated. Taps unchanged; what changes is scrolling
+  and reading past rows.
+- Checks: typecheck, `npm test` (new unit tests for the order and for
+  `issueReopened`), build. New `scripts/verify-came-back-first.mjs`
+  (29 checks, 390px light and dark, 1440px dark, where the office reopens
+  without a note; `RELAY_MEASURE_ONLY=1` gives
+  main's numbers): before Inspections in page order; the answered issue is
+  the first row, its title and the office's words on the first screen (words
+  end 740px, screen ends 775px; on main the row was 1,012-1,110px and third);
+  the rest newest first; no help line; rows 48px+; no sideways scroll; tapping
+  it opens the issue ready to update. Reran, all passing: office-words,
+  came-back-to-update, simpler-home, engineer-layout, home-and-sheet (its
+  section order updated to the new one), help, accessibility, first-time-use,
+  since-last-visit, seen-by-office, first-day, role-access,
+  unfinished-reports, engineer-nav. `verify-day-walkthrough` fails at saving
+  a permit to work (`.pt-permit` never shows), the same on main a3bbb55, so
+  not this change; left for the next release check. Screenshots before and after: project files
+  `ui-review/site-visit-pass/`.
+- The first-screen measurement is with no unfinished reports; with some, the
+  section starts lower.
+- Not changed: `/api/came-back` still sends the engineer's six newest issues
+  and variations, so an office question on an older issue, behind six newer
+  ones of theirs, still does not show (as before). An assignment's note is
+  still not shown as the office writing (by design since #110).
+- Not verified: a real phone, a screen reader.
 
 ## 2026-10-21 — Defects send by themselves when signal returns
 

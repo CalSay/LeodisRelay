@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { issueWord, reportWord, variationWord } from '../lib/cameBack';
+import { issueReopened, issueWord, reportWord, variationWord, waitingOnYouFirst } from '../lib/cameBack';
 
 const latestWord = issueWord;
 
@@ -97,4 +97,26 @@ test('a note the office typed with a price or an instruction shows; RELAY’s ow
 
 test('review notes from before #58 (no source) are not shown as someone writing', () => {
   assert.equal(latestWord([ev('raised', 'Sam Sparks', 'x', 'entra:sam'), ev('confirmation', 'Olive Office', 'Source report returned for correction — needs triage.', 'entra:olive')], sam), undefined);
+});
+
+test('rows the office wrote on or sent back come first, then the rest, each newest first', () => {
+  const word = { by: 'Olive Office', at: '2026-10-20T10:00:00Z', note: 'Still a gap at the top' };
+  const rows = [
+    { key: 'own new defect', at: '2026-10-21T12:00:00Z' },
+    { key: 'question', at: '2026-10-20T10:00:00Z', word },
+    { key: 'received report', at: '2026-10-21T11:00:00Z' },
+    { key: 'returned report', at: '2026-10-19T09:00:00Z', sentBack: true },
+    { key: 'older received', at: '2026-10-18T09:00:00Z' },
+  ];
+  assert.deepEqual([...rows].sort(waitingOnYouFirst).map(r => r.key), ['question', 'returned report', 'own new defect', 'received report', 'older received']);
+});
+
+test('an issue the office reopened counts as sent back, with or without a note, until the engineer adds something', () => {
+  const raised = ev('raised', 'Sam Sparks', 'Fire stopping missing', 'entra:sam');
+  const fixed = ev('closure_submitted', 'Sam Sparks', 'Done', 'entra:sam');
+  assert.equal(issueReopened([raised, fixed, ev('reopened', 'Olive Office', '', 'entra:olive')], sam), true);
+  assert.equal(issueReopened([raised, fixed, ev('reopened', 'Olive Office', 'Gap at the top', 'entra:olive'), ev('assigned', 'Olive Office', '', 'entra:olive')], sam), true);
+  assert.equal(issueReopened([raised, fixed, ev('reopened', 'Olive Office', '', 'entra:olive'), ev('progress', 'Sam Sparks', 'On it', 'entra:sam')], sam), false);
+  assert.equal(issueReopened([raised, ev('assigned', 'Olive Office', '', 'entra:olive')], sam), false);
+  assert.equal(issueReopened([raised, fixed, ev('reopened', 'Olive Office', '', 'entra:olive'), ev('closure_submitted', 'Priya Pipe', 'Done', 'entra:priya'), ev('verified', 'Olive Office', '', 'entra:olive')], sam), false);
 });

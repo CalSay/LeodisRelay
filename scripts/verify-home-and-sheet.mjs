@@ -62,9 +62,9 @@ try {
     const inspections=await page.getByRole('region',{name:'Inspections'}).locator('.eng-tile b').allInnerTexts();
     check(inspections.join('|')===(on?'Do a safety inspection|Do a handover inspection|Do a first fix inspection|Do a tower inspection':'Do a handover inspection|Do a first fix inspection'),`${at}: inspections (${inspections.join('|')})`);
     check(await page.getByRole('heading',{name:'Unfinished reports'}).count()===0,`${at}: no empty Unfinished reports section`);
-    // The right-hand column reads: what came back, what changed, the project's pages, then you.
-    const order=await page.locator('.eng-home-grid > div:last-child h2').allInnerTexts();
-    check(order.join('|')==='Came back from the office|Since your last visit|This project|Your week and help',`${at}: home sections in order (${order.join('|')})`);
+    // The page reads: what came back (under the main buttons, since 2026-10-21), inspections; then what changed, the project's pages, then you.
+    const order=await page.locator('.eng-home-grid > div > section > .eng-section-title h2').allInnerTexts();
+    check(order.join('|')==='Came back from the office|Inspections|Since your last visit|This project|Your week and help',`${at}: home sections in order (${order.join('|')})`);
     const project=page.getByRole('region',{name:'This project'});
     check((await names(project.locator(':scope > .eng-list'))).join('|')==='Site issues|Reports|Notes for the next visit|Photographs',`${at}: the four pages used most (${await names(project.locator(':scope > .eng-list'))})`);
     const more=project.locator('details.eng-more-pages');
