@@ -16,16 +16,19 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   without asking Cal, per his autonomy message. Not a `docs/tasks.json` task;
   no status changed.
 - Changed: `projectStanding` now returns `lastDayPeople` (everyone who sent a
-  visit on the last visit day, latest first, once each; a correction stands
+  visit on the last visit day, once each by sign-in, in Site coverage's
+  order; a correction stands
   in for what it corrects, an inspection is a visit, as before), and
   `peopleWords` says it: one person with their trade, two or three by name,
   past three "A, B and N more". The overview's Last visit cell and the
   project sheet's Last visit figure (desk and phone) use it. The day stays as
   it was ("Today", "Yesterday" or the date), so an earlier visit never reads
-  as today. Row height at 1440px is unchanged. Help "What's new" line added.
+  as today. On the overview a quiet site still shows how long it has gone
+  quiet there instead; the project column line and Site coverage still
+  name one visit (left as they were). The names stay on one line at 1440px. Help "What's new" line added.
 - Checked: typecheck, `npm test` (146 + 511, 2 new in
   `tests/projectStanding.test.ts`), build. `verify-office-progress` (84, new:
-  everyone named on the overview and sheet, the row no taller, a quiet site's
+  everyone named on the overview and sheet, the names on one line at 1440px, a quiet site's
   earlier day names its people and never says today), office-links (65),
   home-and-sheet (254), office-sections (63), office-desk (73), help (36),
   office-phone (99), office-landing (19), role-access (95). Screenshots

@@ -86,8 +86,9 @@ try {
     check(Object.keys(tetley).join('|')==='Last visit|This week|Open issues|Variations waiting|Needs action',`${label}: the five questions, in order: ${Object.keys(tetley)}`);
     check(/^Today /.test(tetley['Last visit'].text)&&!tetley['Last visit'].late,`${label}: Tetley Hall last visited today: ${tetley['Last visit'].text}`);
     check(tetley['Last visit'].text==='Today Sam Spark and Hana Duct',`${label}: everyone on site today is named, once each, not only the last to send: ${tetley['Last visit'].text}`);
-    const lastCell=await rows.filter({hasText:'011LME'}).locator('.glance-cells > div').first().boundingBox(),openCell=await rows.filter({hasText:'011LME'}).locator('.glance-cells > div').nth(2).boundingBox();
-    check(lastCell.height<=openCell.height+1,`${label}: naming everyone does not make the row taller (${Math.round(lastCell.height)}px against ${Math.round(openCell.height)}px)`);
+    // Measured on the words, not the cell (grid cells stretch to the row): the names stay on one line on the desk, two at most on a phone.
+    const whoLines=await rows.filter({hasText:'011LME'}).locator('.glance-cells > div').first().locator('dd small').evaluate(e=>Math.round(e.getBoundingClientRect().height/parseFloat(getComputedStyle(e).lineHeight)));
+    check(whoLines<=(phone?2:1),`${label}: naming everyone keeps the row tidy (${whoLines} lines)`);
     check(tetley['This week'].text==='3 visits Electrical, HVAC',`${label}: the correction counts once, the inspection counts as a visit, trades named: ${tetley['This week'].text}`);
     check(tetley['Open issues'].text==='2 1 overdue'&&tetley['Open issues'].late,`${label}: open issues and the overdue one: ${tetley['Open issues'].text}`);
     check(tetley['Variations waiting'].text==='1 1 done, not instructed'&&tetley['Variations waiting'].late,`${label}: the variation done without an instruction: ${tetley['Variations waiting'].text}`);

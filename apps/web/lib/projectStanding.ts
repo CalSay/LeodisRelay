@@ -23,7 +23,7 @@ export const LATEST_DAYS = 14;
 export interface ProjectStanding {
   /** The latest visit on or before today. */
   last?: { reportId: string; visitDate: string; author: string; trade?: string };
-  /** Everyone who sent a visit on the last visit day, latest first, once each: who was on site that day. */
+  /** Everyone who sent a visit on the last visit day, once each, in Site coverage's order (the same order as `last`): who was on site that day. */
   lastDayPeople: { author: string; trade?: string }[];
   /** Full working days since the last visit (today is still going, so it is not counted). */
   workingDaysSince?: number;
@@ -46,9 +46,14 @@ export function projectStanding(project: { status: string }, reports: ReportSumm
   const visits = sent.filter(r => !superseded.has(r.id) && DAY.test(r.visitDate) && r.visitDate <= today).sort(newest);
   const latestVisit = visits[0];
   const lastDayPeople: ProjectStanding['lastDayPeople'] = [];
+  // One entry a person: by their sign-in where the report has it, else by name.
+  const seen = new Set<string>();
   for (const r of visits) {
     if (r.visitDate !== latestVisit!.visitDate) break;
-    if (!lastDayPeople.some(p => p.author === r.author)) lastDayPeople.push({ author: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}) });
+    const author = r.author.trim(), key = r.authorId ?? author;
+    if (!author || seen.has(key)) continue;
+    seen.add(key);
+    lastDayPeople.push({ author, ...(r.authorTrade ? { trade: r.authorTrade } : {}) });
   }
   const workingDaysSince = latestVisit ? workingDaysBetween(latestVisit.visitDate, today) : -1;
   const monday = weekStart(today, today);

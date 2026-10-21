@@ -90,7 +90,7 @@ test('the last visit names everyone who sent from site that day, once each, late
     sent({ id: 's1', reference: '011LME-SPR-020' }),
     sent({ id: 'h1', reference: '011LME-SPR-021', author: 'Hana Duct', authorTrade: 'HVAC' }),
     sent({ id: 's2', reference: '011LME-SPR-022' }),
-    sent({ id: 's2c', reference: '011LME-SPR-023', corrects: 's2', revision: 2, author: 'Sam Spark' }),
+    sent({ id: 's2c', reference: '011LME-SPR-022', corrects: 's2', revision: 2 }), // a correction keeps its reference
     sent({ id: 'p1', reference: '011LME-SPR-019', author: 'Pat Pipe', authorTrade: 'P&H', reportType: 'safety-inspection' }),
     sent({ id: 'y', visitDate: '2026-10-20', author: 'Yesterday Only', authorTrade: 'HVAC' }),
     sent({ id: 'd', state: 'draft', author: 'Drafting Dan' }),
@@ -101,6 +101,8 @@ test('the last visit names everyone who sent from site that day, once each, late
   const earlier = projectStanding(ACTIVE, [sent({ visitDate: '2026-10-16' }), sent({ visitDate: '2026-10-16', author: 'Hana Duct', authorTrade: 'HVAC' }), sent({ visitDate: '2026-10-15', author: 'Pat Pipe' })], TODAY);
   assert.deepEqual(earlier.lastDayPeople.map(p => p.author).sort(), ['Hana Duct', 'Sam Spark'], 'a last visit before today names that day\'s people');
   assert.deepEqual(projectStanding(ACTIVE, [], TODAY).lastDayPeople, []);
+  const ids = projectStanding(ACTIVE, [sent({ authorId: 'a', author: 'Sam Spark' }), sent({ authorId: 'b', author: 'Sam Spark', authorTrade: 'HVAC' }), sent({ authorId: 'a', author: 'Sam Spark' }), sent({ author: ' ' })], TODAY);
+  assert.equal(ids.lastDayPeople.length, 2, 'two people with one name are two people; one person is one; a blank name is left out');
 });
 
 test('who was on site in words: one with their trade, a few by name, then "and N more"', () => {
