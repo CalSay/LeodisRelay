@@ -269,7 +269,8 @@ try {
     }
     // The PDF: RELAY's own header and a named tab.
     await p.goto(`${base}/reports/${safety.id}/pdf`);
-    await p.getByText(/Page 1 of \d/).waitFor({timeout:30000});checks++;
+    // The viewer's own page count; the PDF's footer has the same words once its text layer draws.
+    await p.getByText(/^Page 1 of \d+$/).waitFor({timeout:30000});checks++;
     await p.waitForFunction(()=>document.title==='Report PDF · RELAY');checks++;
     ok(!(await p.getByRole('link',{name:'Companies',exact:true}).isVisible()),`${label}: the PDF page has the shared header, not the old Home / Companies bar`);
     ok(await p.getByRole('link',{name:'← Back to report'}).isVisible(),`${label}: the PDF page says where Back goes`);

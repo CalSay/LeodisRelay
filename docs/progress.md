@@ -4,6 +4,42 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Fourth release check on main
+
+- Why: an integration and release check across #57 to #65 (typed
+  signatures, notes for the next visit and reading them with no signal,
+  tower inspection, PDFs, the two wording passes, speed on busy projects,
+  the day walkthrough), as the checks in #29, #44 and on 20 Oct at 11a1572
+  did. Asked for by the coordinator under Cal's standing ask. Not a
+  `docs/tasks.json` task, so no status changed there.
+- Checked: main at 232c451 (#2 to #27, #29 to #65). `npm ci`,
+  `npm run typecheck`, `npm test` (145 + 371 pass), `npm run build`, and
+  all 56 `scripts/verify-*.mjs` one after another (Node 22 here; CI runs
+  Node 24). All pass, including busy-projects (38 timings within budget),
+  accessibility (551) and pdf-navigation, which now passes in this
+  container's Chromium 141 (fixed in #65).
+- Fixed: `verify-day-walkthrough.mjs` failed once in four runs with a
+  strict-mode clash: `getByText(/Page 1 of \d/)` also matched the PDF's
+  own text layer, which carries the footer page count added in #60, when
+  it drew before the wait ended. It now matches the viewer's label exactly
+  (`/^Page 1 of \d+$/`); three runs in a row passed. No change to RELAY.
+- Looked across the features for clashes; none found. The tower inspection
+  is data-driven everywhere (no list of type ids left out), raises no
+  issues, and SharePoint filing does not read the report type. No new
+  environment variables, packages, record tables or SharePoint columns since
+  #56; new data is new optional report fields and the `site-notes` record
+  kind. `deploy/upgrade-pilot.sh` still covers the deploy.
+- Compression (proposed in #62): `encode zstd gzip` in `deploy/Caddyfile` is
+  safe (Caddy skips responses that already have Content-Encoding, and RELAY
+  sends no event streams) but gains little, since Next and
+  `lib/jsonResponse.ts` already compress pages and large answers. The
+  upgrade script restarts only web and worker, so it would also need
+  `docker compose -f deploy/compose.yaml restart caddy`. Not made.
+- Release notes for Cal brought up to date to #65 in the project files
+  (`releases/2026-10-20-release-notes.md`), keeping the caveats.
+- Not verified: a physical phone, a real screen reader, a live tenant,
+  building the Docker image, printing or Acrobat.
+
 ## 2026-10-21 — A day on site, end to end
 
 - Why: every feature was tested on its own; nobody had walked a whole day
