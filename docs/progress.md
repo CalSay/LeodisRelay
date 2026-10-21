@@ -32,11 +32,21 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Measured on the seeded data: Photographs link 10,928px → 539px down a
   project at 390px (on the first screen); the four figures on the first
   screen; page height about the same (11,303px → 11,493px).
-- Checks: typecheck, `npm test` (146 + 480), build.
+- Checks: typecheck, `npm test` (146 + 493 after rebasing on #110), build.
   `verify-office-progress` (77; now expects the figures first, the project
-  pages before Latest from site and on the first screen, listed once) and
+  pages before Latest from site and on the first screen, listed once),
   `verify-office-links` (65; the four figures' links now checked on the
-  phone too). Other browser checks, one at a time: see the PR.
+  phone too) and `verify-home-and-sheet` (254; phone links now before Latest
+  from site and the register). Then one at a time: verify-september-office
+  (43), verify-accessibility (584), verify-office-phone (91),
+  verify-first-time-use (366), verify-help (36; failed once on its known
+  tab-title race, passed twice on rerun), and before the rebase
+  verify-office-sections, -desk, -landing, -registers, -actions,
+  role-access, day-walkthrough, before-handover, issue-trend, site-notes,
+  seen-by-office, error-messages, simpler-home, photo-library, issue-assign,
+  review-queue, submission-stages, unfinished-reports. A fresh-context
+  review found two points, both fixed: #108's Help line still described the
+  removed last-visit link, and a phone CSS rule was left unused.
   Screenshots: project files `ui-review/project-on-phone/`.
 - Not verified: a real phone, a screen reader, the live server.
 - Runner-up, not built: the phone's register heading cuts the project name
