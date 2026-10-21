@@ -68,7 +68,7 @@ try {
 
     // 2. The first check needs action, with words and a photograph.
     const card=()=>page.locator(wide?'#card-editor .eng-card:visible':'.eng-slot.open .eng-card');
-    if(!wide)await rows.nth(0).click();
+    // The first check opens by itself, on a phone too (2026-10-21).
     await card().getByRole('heading',{name:SAFETY_CHECKLIST[0].question}).waitFor();checks++;
     await card().getByRole('button',{name:'Action needed'}).click();
     await card().getByLabel('What’s wrong',{exact:true}).fill('Extension lead with a cut sheath by the riser');
@@ -82,15 +82,14 @@ try {
 
     // 3. Each next check is a tap away; the rest are satisfactory but one.
     for(let i=1;i<N;i++){
-      await page.locator('.eng-next-check:visible').click();
+      {const next=page.locator('.eng-next-check:visible');if(await next.count())await next.click();}
       await card().getByRole('heading',{name:SAFETY_CHECKLIST[i].question}).waitFor();
+      if(i===1)ok(/action/i.test(await rows.nth(0).locator('.kind').innerText()),`${label}: the first row says it needs action`);
       await card().getByRole('button',{name:i===5?'Not applicable':'Satisfactory'}).click();
     }
     checks++;
+    await page.locator('#report-check').waitFor();checks++; // the last answer opens Check & sign by itself
     ok(/12\/12/.test(await page.locator('.eng-steps').innerText()),`${label}: every check answered`);
-    ok(/action/i.test(await rows.nth(0).locator('.kind').innerText()),`${label}: the first row says it needs action`);
-    const allDone=page.locator('.eng-review-link:visible').filter({hasText:'All answered'});
-    eq(await allDone.count(),1,`${label}: the last check offers check and sign`);
 
     // 4. The draft PDF reads as an inspection (rendered on the server from what it holds).
     if(n===1){
@@ -109,8 +108,6 @@ try {
     }
 
     // 5. Check and sign: the drawing is required.
-    await allDone.click();
-    await page.locator('#report-check').waitFor();
     ok(/inspector’s signature/.test(await page.locator('#report-check .eng-finds').innerText()),`${label}: a missing drawing stops sending`);
     const send=page.getByRole('button',{name:'Send to office'});
     eq(await send.isDisabled(),true,`${label}: Send waits for the signature`);

@@ -136,7 +136,7 @@ try {
     await page.goto(home);
     await page.getByRole('button',{name:tile}).click();
     if(tower){await page.getByLabel('Which tower or podium?').fill(tower);await page.getByRole('button',{name:'Start the tower inspection'}).click();}
-    await page.waitForURL(/\/reports\/rep-/);await page.locator('.eng-checkrow').first().click();
+    await page.waitForURL(/\/reports\/rep-/);await page.locator('.eng-checkrow').first().waitFor();
     await card().getByRole('heading',{name:list[0].question}).waitFor();
     await card().getByRole('button',{name:'Action needed'}).click();
     if(await card().getByLabel('Where',{exact:true}).count())await card().getByLabel('Where',{exact:true}).fill('Level 2 riser');
@@ -145,11 +145,11 @@ try {
     await card().getByLabel('Who is to do it',{exact:true}).fill('Main contractor');
     await card().getByLabel('Who is to do it',{exact:true}).blur();await sleep(300);
     for(let i=1;i<list.length;i++){
-      await page.locator('.eng-next-check:visible').click();
+      {const next=page.locator('.eng-next-check:visible');if(await next.count())await next.click();}
       await card().getByRole('heading',{name:list[i].question}).waitFor({timeout:5000});
       await card().getByRole('button',{name:list[i].item==='stabilisers'?'Not applicable':'Satisfactory'}).click();
     }
-    await page.locator('.eng-review-link:visible').filter({hasText:'All answered'}).click();await page.locator('#report-check').waitFor();
+    await page.locator('#report-check').waitFor(); // the last answer opens Check & sign by itself
     if(typed){
       await page.getByRole('radio',{name:'Type my name instead'}).click();
       await page.getByRole('textbox',{name:'Your full name'}).fill(engineer.name);

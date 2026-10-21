@@ -933,19 +933,22 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   // On the phone cards open folded, but a last card with nothing on it yet (the
   // one "Start today's site update" made, opened again from "Carry on") opens
-  // ready to type: folded, it only cost a tap. Once, as the draft opens.
+  // ready to type: folded, it only cost a tap. An inspection opens at its first
+  // check still to answer, as it does on a wide screen. Once, as the draft opens.
   const openedBlank = useRef('');
   useEffect(() => {
-    if (!report || wide || step !== 'cards' || report.state !== 'draft' || openedBlank.current === report.id || reportTypeOf(report).checklist) return;
+    if (!report || wide || step !== 'cards' || report.state !== 'draft' || openedBlank.current === report.id) return;
     openedBlank.current = report.id;
     // A link that adds a card ("?add=") picks the card itself.
     if (addedFromLink.current) return;
-    const last = report.observations.at(-1);
-    if (selectedSection !== null || !last || !isBlankCard(last)) return;
-    setSelectedSection(last.id);
+    const first = reportTypeOf(report).checklist
+      ? report.observations.find(o => o.check && !o.check.answer)
+      : report.observations.at(-1);
+    if (selectedSection !== null || !first || (!first.check && !isBlankCard(first))) return;
+    setSelectedSection(first.id);
     // Further down a long draft, bring it up into sight, as tapping its row would.
     requestAnimationFrame(() => {
-      const slot = document.getElementById(`slot-${last.id}`);
+      const slot = document.getElementById(`slot-${first.id}`);
       if (slot && slot.getBoundingClientRect().top > window.innerHeight * 0.6) slot.scrollIntoView({ block: 'start' });
     });
   }, [report?.id, wide, step]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -1187,7 +1190,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     return <button type="button" key={`row-${o.id}`} className={`eng-row eng-cardrow eng-checkrow ${isOpen ? 'on' : ''} ${stopped && answer ? 'late' : ''}`} aria-expanded={wide ? undefined : isOpen} aria-current={wide && isOpen ? 'true' : undefined} onClick={() => { if (!wide && isOpen) setSelectedSection(''); else openCard(o.id); }}>
       <span className="no">{String(i + 1).padStart(2, '0')}</span>
       <div className="main">
-        <span className="top"><span className={`kind answer-${answer?.tone ?? 'open'}`}>{answer?.short ?? 'To do'}</span><b>{o.check?.question}</b></span>
+        <span className="top"><span className={`kind answer-${answer?.tone ?? 'open'}`}>{answer?.label ?? 'To do'}</span><b>{o.check?.question}</b></span>
         {isOpen && !wide && stopped && answer && <span className="meta"><em>{stopped.message.slice((o.check?.question ?? '').length + 2)}</em></span>}
         {!(isOpen && !wide) && (text || o.photos.length > 0 || (stopped && answer)) && <span className="meta">{text ? text : ''}{text && o.photos.length ? ' · ' : ''}{o.photos.length ? photographs(o.photos.length) : ''}{stopped && answer ? <em>{text || o.photos.length ? ' · ' : ''}{stopped.message.slice((o.check?.question ?? '').length + 2)}</em> : null}</span>}
         {(answer || o.photos.length > 0) && <CardWhereLine where={whereOf.get(o.id)} />}
@@ -1207,11 +1210,21 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         hint={checkHint(type, observation.check?.item ?? '')}
         raises={type.raisesRecords}
         actionPrompt={type.actionPrompt ?? 'What has to happen'}
-        locations={suggestions.locations}
+        locations={placesToOffer(report.observations, observation.id, suggestions.locations)}
         companies={suggestions.companies}
         photoWhere={(photoId) => { const w = whereOf.get(observation.id); const at = observation.photos.findIndex(p => p.id === photoId); return w && at >= 0 ? w.each[at] : undefined; }}
         // Held open by choice once touched: the default (first one unanswered) moves on as soon as it is answered.
-        onChange={(changed) => { setSelectedSection(changed.id); update({ ...report, observations: report.observations.map((o) => (o.id === changed.id ? changed : o)) }); }}
+        // A first answer of Satisfactory or Not applicable needs nothing more, so the next check still to answer
+        // opens by itself, or Check & sign once there are none; the folded row says the answer, and tapping it
+        // brings the check back to change it or add a note or photograph. Action needed stays open to fill in.
+        onChange={(changed) => {
+          update({ ...report, observations: report.observations.map((o) => (o.id === changed.id ? changed : o)) });
+          const answered = !observation.check?.answer ? changed.check?.answer : undefined;
+          if (answered && answered !== 'action') {
+            const after = nextUnanswered(index);
+            if (after) openCard(after.id); else { setSelectedSection(changed.id); showCheck(); }
+          } else setSelectedSection(changed.id);
+        }}
         onRemovePhoto={(photoId) => removePhotoNow(observation.id, photoId)}
       />
       {observation.check?.answer && <div className="eng-card-actions">
