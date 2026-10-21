@@ -37,6 +37,54 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: printed on paper, Acrobat or a phone's PDF viewer (poppler
   and pdf.js only), a real SharePoint-filed PDF.
 
+## 2026-10-21 — Report editor on tablets and desktops
+
+- Why: the editor was designed and checked phone first. Some engineers use a
+  tablet on site, and the office may write or correct reports at a desk.
+  Asked for by the coordinator under Cal's ask for a clear, professional UI;
+  what to change is Claude's decision. Not a `docs/tasks.json` task.
+- Walked a site update and a safety inspection (plus the first check of the
+  handover, first fix and tower inspections) at 390, 768 and 1024 (touch) and
+  1366 and 1920 (mouse), light and dark. Found and fixed:
+  - From 601px up the editor's own padding replaced the room left for the
+    fixed bottom bar, so "+ Add a card" and the signature's Clear and hint
+    sat under the bar. The editor now keeps 140px clear below.
+  - The bar's contents were 900px wide under a 1,072px page, so the save
+    state and the main button did not line up with anything. They now line up
+    with the page edges at every width.
+  - The check step was one column the width of the page: at 1920 the
+    signature box was 1,040 by 150px. From 1000px signing sits in its own
+    column beside what is being sent (340 to 440px wide), and from 601px the
+    box is 180px tall.
+  - With 12 checks the list beside the open check ran far below the screen.
+    From 900px it scrolls in its own column, and "Next check" keeps the open
+    one in sight there. From 1280px the list is 300px wide, not 260px.
+  - The sent screen's "2 cards · 3 photographs" was 18px capitals (a heading
+    rule beat the label style); it is now the small label it was meant to be.
+  - "Signature" was the only field label in plain text; it now matches.
+  - On a phone or portrait tablet "What needs doing" and "Who is to do it"
+    ran together with no rule between them; they are now separated like
+    every other field.
+- Also fixed, from the day-on-site walkthrough (#65), which left the editor alone:
+  - The check step counts a defect linked to an issue already raised apart
+    from new ones: "1 issue raised · 1 added to an issue already raised".
+  - Linking a defect to an issue takes that issue's trade.
+  - While changes are still saving it says "being saved to the server", not
+    "not yet on the server" (`reportWhere`'s new `saving` option, unit-tested).
+  - #65's other two points (tab title, sent-screen date comma) were fixed by #64.
+- Check: `scripts/verify-editor-wide.mjs` (new, 274 checks) walks all of the
+  above at the five widths in both themes, by touch on tablets and mouse on
+  desktops. Screenshots before (main at 232c451) and after are in the project
+  files under `ui-review/editor-wide/`.
+- Not verified: a real tablet, pen or touchscreen laptop. In Chromium's touch
+  emulation the first tap after a drawn signature gives no click (a second tap
+  works, a mouse is not affected); the check taps the page once first. Worth
+  trying on a real tablet.
+- Left as they are: on a site update the check step lists each photograph
+  without a caption as its own line (three lines for three photographs); the
+  editor's heading and steps take about a third of a 768px-tall landscape
+  tablet screen.
+
 ## 2026-10-21 — Assign from the issue page
 
 - Why: the day walkthrough (#65) left four bigger ideas; #67 built the
