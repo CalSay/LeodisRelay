@@ -397,6 +397,12 @@ export async function variationCommand(id: string, body: {
 }): Promise<Variation> {
   return parse<Variation>(await request(`/api/variations/${id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }));
 }
+/** A variation raised by the office. `requestId` is fixed per dialog, so sending twice never raises two. */
+export async function raiseVariation(body: {
+  requestId: string; projectId: string; description: string; location?: string; trade?: string; reason?: string; workDone?: boolean; askedBy?: string; note?: string;
+}): Promise<Variation> {
+  return parse<Variation>(await request('/api/variations', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }));
+}
 export type { Variation } from './types';
 
 /* -------------------------------------------------------------- corrections */

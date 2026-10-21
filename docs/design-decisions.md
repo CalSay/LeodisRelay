@@ -216,3 +216,28 @@ engineer views drafted for review.
 - Not exercised: the Playwright engineer-layout script (Playwright is not
   installed in this checkout), live Microsoft sign-in, and the worker sending
   a notification, which the pilot does not do.
+
+21 September 2026 — The office can add a variation to the register directly.
+
+- Until now a variation could only be raised from a "Variation required"
+  update in an engineer's report. One the office hears about first (a client
+  email, a meeting, a phone call) had nowhere to go. "Add variation" now sits
+  in the Variations tab's filter bar and in a project's register toolbar
+  (where the project is already chosen).
+- It asks for what the engineer's card asks for, less the site-only parts:
+  project, description, location, trade, reason, who asked, already carried
+  out, and a note on how the office heard. It deliberately does not take
+  figures: the variation lands pending and unpriced in "Needs a quote", and
+  Price and Record instruction stay the acts they already are, each with its
+  own event.
+- The record is `source: 'office'`, raised by whoever is signed in, with no
+  source report, and takes the project's next `-VO-nnn` number. The number now
+  follows the highest reference used on the project rather than the count, so
+  a row removed in SharePoint cannot cause a reference to be reused. The
+  project number for a reference now comes from the connected project list
+  (the fixtures when SharePoint is off), not the fixtures alone.
+- `POST /api/variations` is a Manager and Admin act, enforced on the route.
+  Each opened dialog carries one request identity, so a double press or a
+  retry returns the same variation rather than a second reference. It goes to
+  the Variation Register through the same pending-then-synced job as every
+  other variation write; no list column changed.

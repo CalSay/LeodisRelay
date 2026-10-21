@@ -5,8 +5,8 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import type {Principal} from '@relay/platform';
 import {correctReport,createReport,saveDraft,submitReport} from '../lib/serverStore';
-import {applyVariationCommand,listVariations} from '../lib/variationStore';
-import {canVariationCommand} from '../lib/auth/access';
+import {applyVariationCommand,listVariations,raiseOfficeVariation} from '../lib/variationStore';
+import {canRaiseVariation,canVariationCommand} from '../lib/auth/access';
 import {database} from '../lib/storage';
 import {INSTRUCTION_CHOICE,INSTRUCTION_LABEL,estimatedMargin,expectedCost,instructionFromChoice,isCharged,marginPct,readCosting,suggestedQuote,variationValue} from '../lib/variations';
 import type {Observation,Report,Variation} from '../lib/types';
@@ -174,6 +174,40 @@ test('variations are raised at submission and worked by the office in step with 
       assert.equal(v.labourHours,4,'half a day starts the office at four hours');
       assert.equal(v.partsCost,85);
       assert.match(v.events[0]!.note,/already carried out on a say-so · asked for on site by R\. Ellison · about half a day · parts about £85/);
+    });
+
+    await t.test('the office raises a variation directly: pending, unpriced, attributed to the session, next number on the project, once per request',async () => {
+      const before = listVariations('proj-011lme').length;
+      const input = {requestId:'33333333-3333-4333-8333-333333333333',projectId:'proj-011lme',description:'  Client wants two extra data points in reception  ',location:'Ground floor reception',trade:'Electrical',reason:'Client instruction',askedBy:'G. Marshall',note:'Email of 18 Sep'};
+      const v = ok(await raiseOfficeVariation(manager,input));
+      assert.equal(v.reference,'011LME-VO-002','follows the variation raised from the report');
+      assert.equal(v.source,'office');
+      assert.equal(v.instruction,'pending');
+      assert.equal(v.description,'Client wants two extra data points in reception');
+      assert.equal(v.raisedBy,manager.name);
+      assert.equal(v.raisedById,manager.id);
+      assert.equal(v.raisedByReport,undefined);
+      assert.equal(v.quotedValue,undefined,'pricing stays its own act');
+      assert.equal(v.workDone,false);
+      assert.equal(v.events.length,1);
+      assert.equal(v.events[0]?.kind,'raised');
+      assert.match(v.events[0]!.note,/Email of 18 Sep\n\nasked for by G\. Marshall\.$/);
+
+      const again = ok(await raiseOfficeVariation(manager,{...input,description:'Sent twice'}));
+      assert.equal(again.id,v.id,'the same request is the same variation');
+      assert.equal(listVariations('proj-011lme').length,before + 1);
+
+      ok(applyVariationCommand(v.id,{kind:'price',actor:manager.name,actorId:manager.id,note:'',costing:{quotedValue:450}}));
+      const done = ok(await raiseOfficeVariation(manager,{requestId:'44444444-4444-4444-8444-444444444444',projectId:'proj-011lme',description:'Relocated isolator',workDone:true}));
+      assert.equal(done.reference,'011LME-VO-003');
+      assert.equal(done.workDone,true);
+
+      for (const bad of [{description:'   '},{trade:'Plumbing'},{reason:'Because'},{projectId:'proj-nowhere'},{requestId:'x'}]) {
+        assert.equal((await raiseOfficeVariation(manager,{...input,requestId:'55555555-5555-4555-8555-555555555555',...bad})).ok,false,JSON.stringify(bad));
+      }
+      assert.equal(listVariations('proj-011lme').length,before + 2);
+      assert.equal(canRaiseVariation(engineer),false);
+      assert.equal(canRaiseVariation(manager),true);
     });
 
     await t.test('engineers may add a note; pricing, instructing, declining, reopening and editing are office acts',() => {
