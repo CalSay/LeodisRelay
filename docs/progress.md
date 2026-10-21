@@ -4,6 +4,45 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Assign from the issue page
+
+- Why: the day walkthrough (#65) left four bigger ideas; #67 built the
+  first. Of the other three, Claude chose "the office issue page shows Not
+  yet assigned with no way to assign there". Issues reach the office from
+  search, reports, Issues by company, Before handover and the snag list, all
+  of which open the issue page, and giving an issue an owner is the office's
+  most common act on one; it meant going back to the desk and finding the
+  issue again. The inspection PDF's action list leaving out what was wrong,
+  and open safety actions in the overview's Needs attention, stay proposals.
+  Not a `docs/tasks.json` task, so no status changed there. Checked against
+  the backlog: not EXP-2 (no decision is requested or routed; it is the
+  desk's existing Assign, which only records an owner), not FE-2 (no
+  photographs), not EXP-4 (no locations). No editor change.
+- Changed:
+  - Managers and admins see "Who puts it right" on an open, assigned or in
+    progress issue, with Assign or Reassign, Responsible (the companies
+    already named on the project suggested, free text as everywhere), Target
+    date and Instruction. It sends the same `assign` command as the desk.
+    Not shown on an issue fixed and waiting to be checked, closed or
+    withdrawn, as the server refuses those; engineers never see it.
+  - The issue's title block shows its target date for everyone.
+  - Assignments now record who they went to and the date on the history
+    event (`to`, `targetDate`), so the history reads "To Northbank
+    Electrical, by 28 Oct 2026" from the desk and the issue page alike.
+    Older assignments have neither and show as before.
+  - The server refuses an assignment that names nobody (it used to clear the
+    owner while marking the issue assigned), and trims the owner.
+- Help: What's new "Assign from the issue itself"; the office day guide
+  mentions Assign on the issue.
+- Check: `scripts/verify-issue-assign.mjs` (46 checks): manager at 390px
+  light and 1440px dark assigns, sees owner, target date and history update
+  in place, Reassign starts from the current values, an empty owner is
+  refused, axe finds nothing in the open form; no Assign on an issue fixed
+  and waiting to be checked; an engineer sees the owner but no Assign and
+  the API refuses them. Unit test for the event fields and the empty owner.
+- Not verified: a physical phone, a live tenant (the owner reaches
+  SharePoint by the existing issue sync, not changed here), screen readers.
+
 ## 2026-10-21 — Start the inspection that is due from Safety actions
 
 - Why: the day walkthrough (#65) left four bigger ideas as proposals. Claude

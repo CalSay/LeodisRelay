@@ -311,6 +311,8 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
       break;
 
     case "assign": {
+      // An assignment with nobody named would mark the issue assigned and clear its owner.
+      if (command.owner !== undefined && !command.owner.trim()) return { ok: false, status: 422, reason: "Name who is responsible." };
       // Reassigning, or giving an already-assigned issue a target date, is
       // not a state change and the state graph rightly refuses one. Only an
       // open issue moves; the rest keep their work status and gain an event.
@@ -326,8 +328,11 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
         return { ok: false, status: 422, reason: `An issue that is ${issue.work.replaceAll('_', ' ')} cannot be reassigned. Reopen it first.` };
       }
       next.owner = command.owner ?? issue.owner;
+      next.owner = next.owner.trim();
       next.targetDate = command.targetDate ?? issue.targetDate;
       event.kind = "assigned";
+      event.to = next.owner;
+      if (next.targetDate) event.targetDate = next.targetDate;
       break;
     }
 
