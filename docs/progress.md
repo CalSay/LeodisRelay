@@ -19,11 +19,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   without asking Cal, per his autonomy message. Not a `docs/tasks.json` task;
   no status changed.
 - Change (`EngineerWorkspace.tsx`, `lib/cameBack.ts`): "Came back from the
-  office" now sits straight under "Flag a defect" and "Request a variation",
-  above Inspections, in the page order (so screen readers and the keyboard
-  meet it there too). Rows the office wrote on, or sent back (a returned
-  report, an issue not accepted as fixed), come first, newest first; the rest
-  follow newest first (`waitingOnYouFirst`). The line under the tiles ("A
+  office" now sits under "Flag a defect" and "Request a variation" (and under
+  "Unfinished reports" when there are any), above Inspections, in the page order (so screen readers and the keyboard
+  meet it there too). Rows the office wrote on, or sent back, come first,
+  newest first; the rest follow newest first (`waitingOnYouFirst`). Sent back
+  means a returned report not yet corrected, an issue disputed from a returned
+  report, or an issue the office reopened ("Not finished", note or not) that
+  the engineer has not added to since (`issueReopened`). The line under the tiles ("A
   defect goes to the office as soon as you send it. Your site update stays a
   draft until you sign and send it.") is gone: the tiles already say both, it
   said nothing about no signal, and signing a site update is optional now. On
@@ -32,8 +34,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   visit now heads the right-hand column. Help "What's new" line and the
   "After you send" guide updated. Taps unchanged; what changes is scrolling
   and reading past rows.
-- Checks: typecheck, `npm test`, build. New `scripts/verify-came-back-first.mjs`
-  (30 checks, 390px light and dark, 1440px dark; `RELAY_MEASURE_ONLY=1` gives
+- Checks: typecheck, `npm test` (new unit tests for the order and for
+  `issueReopened`), build. New `scripts/verify-came-back-first.mjs`
+  (29 checks, 390px light and dark, 1440px dark, where the office reopens
+  without a note; `RELAY_MEASURE_ONLY=1` gives
   main's numbers): before Inspections in page order; the answered issue is
   the first row, its title and the office's words on the first screen (words
   end 740px, screen ends 775px; on main the row was 1,012-1,110px and third);
@@ -41,6 +45,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   it opens the issue ready to update. Reran the home and came-back checks
   (listed in the PR). Screenshots before and after: project files
   `ui-review/site-visit-pass/`.
+- The first-screen measurement is with no unfinished reports; with some, the
+  section starts lower.
 - Not changed: `/api/came-back` still sends the engineer's six newest issues
   and variations, so an office question on an older issue, behind six newer
   ones of theirs, still does not show (as before). An assignment's note is
@@ -91,7 +97,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   phone" still show in words. 287px to 179px a tile, four photos 586px to
   369px at 390px. Display only: no new photo features (FE-2 stays out). Help
   "What's new" line.
-- Checks: typecheck, `npm test`, build. New `scripts/verify-quicker-update.mjs`
+- Checks: typecheck, `npm test` (new unit tests for the order and for
+  `issueReopened`), build. New `scripts/verify-quicker-update.mjs`
   (109 checks, 390px light and dark, 1440px dark): empty card opens ready to
   type from "Carry on" and saves typing; once written it opens folded; only
   the empty third card opens on a three-card draft; tile height, two to a

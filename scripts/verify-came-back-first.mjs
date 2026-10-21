@@ -8,7 +8,8 @@
 // Checks, light and dark at 390px and dark at 1440px: the section comes before
 // Inspections on the page and for a screen reader; the issue the office answered is
 // its first row, whole on the first screen above the bottom bar on a phone, with
-// what the office wrote; then the rest newest first; tapping it opens the issue
+// what the office wrote (at 1440px the office reopens it without a word, and it
+// still comes first); then the rest newest first; tapping it opens the issue
 // ready to update; no sideways scroll, 48px rows, no page errors.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 // RELAY_SCREENSHOT_DIR=<dir> saves screenshots (RELAY_SHOT_PREFIX names them, default "after").
@@ -54,7 +55,8 @@ const seed=async n=>{
   await send(engineer,[ob('update','Level 2 corridor','Containment to grid C'),ob('defect','Level 2 riser',riser,{actionNeeded:'Fire stop the riser',owner:'Leodis',affectedTrade:'Electrical',photos:photo})]);
   const issue=listIssues(P).find(i=>i.description===riser&&i.reportedById===engineer.id);
   assert.ok(applyCommand(issue.id,{kind:'submit_closure',actor:engineer.name,actorId:engineer.id,note:'Done'}).ok);
-  assert.ok(applyCommand(issue.id,{kind:'reopen',actor:manager.name,actorId:manager.id,note:QUESTION}).ok);
+  // On the desktop run the office taps "Not finished" without a word: still sent back, still first.
+  assert.ok(applyCommand(issue.id,{kind:'reopen',actor:manager.name,actorId:manager.id,note:n==='dark-1440'?'':QUESTION}).ok);
   await new Promise(r=>setTimeout(r,20));
   await send(engineer,[ob('update','Flat 3.02','Second fix sockets done'),ob('defect','Flat 2.04','Socket faceplate cracked',{actionNeeded:'Replace',owner:'Leodis',affectedTrade:'Electrical',photos:photo})]);
   return {engineer,riser,issueId:issue.id};
@@ -102,7 +104,7 @@ try {
     ok(m.before&&m.backTop<m.inspTop,`${label}: Came back from the office comes before Inspections, on the page and in reading order`);
     ok(first===0,`${label}: the issue the office sent back is the first row (row ${first+1}: ${titles.join(' | ')})`);
     ok(m.said<=m.foot,`${label}: the first row, down to what the office wrote, is on the first screen (${m.said}px, screen ends ${m.foot}px)`);
-    ok((await rows.first().innerText()).includes(QUESTION),`${label}: the first row shows what the office wrote`);
+    if(!wide)ok((await rows.first().innerText()).includes(QUESTION),`${label}: the first row shows what the office wrote`);
     // Then the rest, newest first: today's report and defect before yesterday's report.
     const rest=titles.slice(1);
     const refs=rest.map(t=>Number(/SPR-(\d+)/.exec(t)?.[1]??NaN));

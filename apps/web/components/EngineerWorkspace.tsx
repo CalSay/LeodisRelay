@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiError, cameBack, createReport, getReport, listReports, projectIssues } from '@/lib/api';
-import { CAME_BACK_ROWS, issueWord, raisedIssue, reportWord, variationWord, waitingOnYouFirst, type OfficeWord } from '@/lib/cameBack';
+import { CAME_BACK_ROWS, issueWord, raisedIssue, reportWord, variationWord, waitingOnYouFirst, issueReopened, type OfficeWord } from '@/lib/cameBack';
 import { listHeld, type HeldDraft } from '@/lib/localDraft';
 import { offlineProjectsKey } from '@/lib/offlineStart';
 import { keepNotesOnDevice } from '@/lib/offlineNotes';
@@ -214,8 +214,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
         if(cancelled)return;
         const rows:Back[] = [];
         const returnTo = engineerReturn();
-        for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) rows.push({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:withViewReturn(`/reports/${r.id}`,returnTo), title:`${reportTypeOf(r).name} ${r.reference.split("-").slice(1).join("-")}`, sub:`Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned', sentBack:r.review === 'returned', word:reportWord(r,page.reports.some(c => c.corrects === r.id)) });
-        for (const i of all) if (raisedIssue(i,principal.id)) rows.push({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}?update=1`,returnTo), title:i.description, sub:`${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'} · you raised it ${fmtDay(i.raisedAt)}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed', sentBack:i.confirmation === 'disputed', word:issueWord(i.events,principal) });
+        for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) { const corrected = page.reports.some(c => c.corrects === r.id); rows.push({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:withViewReturn(`/reports/${r.id}`,returnTo), title:`${reportTypeOf(r).name} ${r.reference.split("-").slice(1).join("-")}`, sub:`Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned', sentBack:r.review === 'returned' && !corrected, word:reportWord(r,corrected) }); }
+        for (const i of all) if (raisedIssue(i,principal.id)) rows.push({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}?update=1`,returnTo), title:i.description, sub:`${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'} · you raised it ${fmtDay(i.raisedAt)}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed', sentBack:i.confirmation === 'disputed' || issueReopened(i.events,principal), word:issueWord(i.events,principal) });
         for (const v of variations) if (v.raisedById === principal.id) rows.push({ at:v.events.at(-1)?.at ?? v.raisedAt, key:v.id, href:withViewReturn(`/variations/${v.id}`,returnTo), title:v.description, sub:`${v.reference.split('-').slice(1).join('-')} · ${v.location || 'no location'} · you raised it ${fmtDay(v.raisedAt)}`, tags:<VariationTags v={v}/>, late:v.workDone && v.instruction === 'pending', word:variationWord(v.events,principal) });
         rows.sort(waitingOnYouFirst);
         setBack({ rows:rows.slice(0,CAME_BACK_ROWS), open, reports:page.reports.filter(r => r.state === 'submitted').length });

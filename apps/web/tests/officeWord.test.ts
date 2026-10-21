@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { issueWord, reportWord, variationWord, waitingOnYouFirst } from '../lib/cameBack';
+import { issueReopened, issueWord, reportWord, variationWord, waitingOnYouFirst } from '../lib/cameBack';
 
 const latestWord = issueWord;
 
@@ -109,4 +109,14 @@ test('rows the office wrote on or sent back come first, then the rest, each newe
     { key: 'older received', at: '2026-10-18T09:00:00Z' },
   ];
   assert.deepEqual([...rows].sort(waitingOnYouFirst).map(r => r.key), ['question', 'returned report', 'own new defect', 'received report', 'older received']);
+});
+
+test('an issue the office reopened counts as sent back, with or without a note, until the engineer adds something', () => {
+  const raised = ev('raised', 'Sam Sparks', 'Fire stopping missing', 'entra:sam');
+  const fixed = ev('closure_submitted', 'Sam Sparks', 'Done', 'entra:sam');
+  assert.equal(issueReopened([raised, fixed, ev('reopened', 'Olive Office', '', 'entra:olive')], sam), true);
+  assert.equal(issueReopened([raised, fixed, ev('reopened', 'Olive Office', 'Gap at the top', 'entra:olive'), ev('assigned', 'Olive Office', '', 'entra:olive')], sam), true);
+  assert.equal(issueReopened([raised, fixed, ev('reopened', 'Olive Office', '', 'entra:olive'), ev('progress', 'Sam Sparks', 'On it', 'entra:sam')], sam), false);
+  assert.equal(issueReopened([raised, ev('assigned', 'Olive Office', '', 'entra:olive')], sam), false);
+  assert.equal(issueReopened([raised, fixed, ev('reopened', 'Olive Office', '', 'entra:olive'), ev('closure_submitted', 'Priya Pipe', 'Done', 'entra:priya'), ev('verified', 'Olive Office', '', 'entra:olive')], sam), false);
 });

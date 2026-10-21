@@ -30,7 +30,7 @@ export interface WhatsNew {
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'came-back-first', added: '2026-10-21', audience: 'site', title: 'The office\'s answers first',
-    text: '"Came back from the office" now sits straight under "Flag a defect" and "Request a variation" on the home screen, above Inspections, so on a phone you see it without scrolling. Anything the office wrote on, or sent back to you, is at the top of it; your new defects and reports the office has only received come after. Checked in a phone-sized browser, not on a real phone.',
+    text: '"Came back from the office" now sits under "Flag a defect" and "Request a variation" on the home screen (and under any unfinished reports), above Inspections, so on a phone you usually see it without scrolling. Anything the office wrote on, or sent back to you (an issue marked not finished, a report returned to correct), is at the top of it; your new defects and reports the office has only received come after. Checked in a phone-sized browser, not on a real phone.',
     link: { label: 'Open your home screen', href: '/engineer' } },
   { id: 'long-project-names-phone', added: '2026-10-21', audience: 'office', title: 'Whole project names on a phone',
     text: 'On a phone, the heading at the top of a project in the office now shows the whole project name, on a second line if it needs one, under "‹ Projects" and the counts. Before, a long name was cut off, such as "Register · Tetley Ha…".',

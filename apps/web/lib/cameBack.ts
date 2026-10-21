@@ -6,9 +6,10 @@ import type { Issue, Variation } from './types';
  * project's issues are open. Worked out on the server, so a phone fetches a
  * dozen records rather than every issue and variation on a busy project.
  *
- * The home merges these with the engineer's own sent reports, newest first,
- * and shows the first `CAME_BACK_ROWS`. Each list here is cut to that many in
- * the same order, so the merged rows are the ones the full lists would give.
+ * The home merges these with the engineer's own sent reports, the ones the
+ * office wrote on or sent back first (`waitingOnYouFirst`), and shows the first
+ * `CAME_BACK_ROWS`. Each list here is cut to that many, newest first, so an
+ * answer on an older record, behind that many newer ones, is not fetched.
  */
 export const CAME_BACK_ROWS = 6;
 
@@ -32,13 +33,28 @@ export function cameBack(issues: readonly Issue[], variations: readonly Variatio
 
 /**
  * The order of the home's rows: anything the office wrote on, or sent back
- * (a returned report, an issue not accepted as fixed), comes first, newest
+ * (a returned report not yet corrected, an issue reopened or disputed), comes first, newest
  * first; then the rest, newest first. So the engineer's own new defect or a
  * report the office has only received never pushes an answer down the list.
  */
 export function waitingOnYouFirst(a: { at: string; word?: unknown; sentBack?: boolean }, b: { at: string; word?: unknown; sentBack?: boolean }): number {
   const waits = (row: typeof a) => (row.word || row.sentBack ? 1 : 0);
   return waits(b) - waits(a) || b.at.localeCompare(a.at);
+}
+
+/**
+ * The office reopened the issue ("Not finished"), with or without a note, and
+ * the engineer has not added anything since. Read back from the newest event:
+ * the engineer's own event, or the office checking it, ends the search.
+ */
+export function issueReopened(events: readonly Written[], principal: { id: string; name: string }): boolean {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i]!;
+    if (e.actorId ? e.actorId === principal.id : e.actor === principal.name) return false;
+    if (e.kind === 'reopened') return true;
+    if (e.kind === 'verified') return false;
+  }
+  return false;
 }
 
 /** Who wrote to the engineer on a record they raised, when, and what. */
