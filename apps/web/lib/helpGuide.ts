@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'simpler-issue-list', added: '2026-10-21', audience: 'site', title: 'A shorter issues list',
+    text: 'Each issue on the Issues tab now shows what is wrong, where, its status and who is fixing it by when, with a small photo beside it, so a phone screen holds several at once. The trade and who reported it are still on the issue itself, under "History". Checked in a phone-sized browser, not on a real phone.' },
   { id: 'sent-report-two-steps', added: '2026-10-21', audience: 'site', title: 'A sent report, at a glance',
     text: 'A report you have sent now shows that RELAY received it and whether the office has seen it (and its review, where the project has one). The PDF and delivery steps, which matter more to the office, are folded under "PDF and delivery"; tap it to see them. If either one goes wrong it shows straight away. The office still sees every step. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'simpler-issue-page', added: '2026-10-21', audience: 'site', title: 'A simpler issue page',

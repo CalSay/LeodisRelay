@@ -4,6 +4,28 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Shorter issues list for engineers
+
+- Why: Cal (2026-10-21 07:02): engineers are hands-on people and want a
+  simple system. PR #92 proposed this: each card on the engineer's Issues tab
+  repeated the project name (already the list's heading), the trade, who
+  reported it and where it came from, while not saying who is fixing it. Not a
+  `docs/tasks.json` task; no status changed.
+- Changed (`components/EngineerIssueList.tsx`, `app/engineer.css`): each card
+  shows the reference and status, what is wrong, where, and (while open) "Who
+  is fixing it: <owner>, by <date>" or "Nobody yet", the same words as the
+  issue page. Trade, reporter and source lines are gone from the card; they
+  stay on the issue page under History. On a phone the photo is a 72px square
+  beside the words instead of a full-width 140px band. Filters ("Reported by
+  me" still uses who reported it) and links unchanged. Office lists unchanged.
+- Measured (new `scripts/verify-simpler-issue-list.mjs`, 390px): three open
+  issue cards took 1,131px on main 5107b78 and take 450px now.
+- Verified: typecheck, `npm test` (146 + 441), verify-simpler-issue-list (49
+  checks, 390px light and dark, 1440px dark, office issue page). Other
+  browser checks listed in the PR. Screenshots before and after: project files
+  `ui-review/simpler-issue-list/`.
+- Not verified: a real phone, a real engineer, the live server or tenant.
+
 ## 2026-10-21 — A sent report, at a glance (engineer)
 
 - Why: the first "bigger idea" in PR #90. Cal (2026-10-21 07:02) wants
