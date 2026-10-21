@@ -78,6 +78,59 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   on their own, so a week of defects raised from site updates reads as none;
   My week shows "Put forward as fixed" for an issue the office has since sent
   back or closed. Both are small My week wording jobs.
+## 2026-10-21 — Last week's summary from the office overview
+
+- Why: walked an office manager's Monday look back at last week on main
+  88d0589 at the desk (1440, dark and light; three projects, three engineers,
+  six weeks of seeded reports, issues and variations). The Weekly summary
+  answers the questions well (who came on which day, the work in their
+  words, issues raised and closed, what is still open, print to PDF).
+  Reaching last week was the hard part: the overview speaks only of this
+  week ("0 visits, nobody yet" on every project on a Monday morning); the
+  Weekly summary link is the first of six under "Latest from site" on the
+  project sheet, about 1,220px down a 900px window; and it opens on this
+  week, so Previous week is another click. Three projects took 7 clicks and
+  a scroll. Coordinator approved the pick; decided without asking Cal (his
+  autonomy message, and the 07:02 ask that the office gets what it needs
+  easily). Not a `docs/tasks.json` task; no status changed.
+- Changed (`ProjectsView.tsx`, `workspace.css`, `WeeklySummaryPage.tsx`):
+  each row of "Where each project stands" has "Last week's summary" under
+  the project's reference (spoken as "Last week's summary for <project>").
+  It opens that project's Weekly summary on last Monday to Sunday, and Back
+  returns to the overview. The project box at the top of the summary keeps
+  the week, so the next project is one pick away. The row still opens the
+  project: the project name is now the row's link, stretched over the row,
+  with the summary link above it (a link cannot sit inside a link). The
+  focus ring still goes round the whole row. Desk rows keep their height
+  (79px at 1440, 93px at 1280, as before); on a phone the link shares the
+  reference line and is 44px tall (rows 25px taller). The summary's
+  heading now says "· last week" after the dates (as it says "· this week
+  so far"), on screen and on paper. Help "What's new" line and the office
+  guide's "For the site meeting" updated.
+- Result: three projects' last week in 5 clicks with no scrolling (was 7
+  and a scroll), straight from the overview.
+- Checks: typecheck, `npm test` (146 + 514), build. New
+  `scripts/verify-office-weekly-review.mjs` (53; 1440 dark and light, 1280,
+  390): a link a row named for its project, its address (project, last
+  Monday, back to the overview), tap size, name column no taller than the
+  figures, the link on top of the row, axe on the project list, Tab from
+  project to its summary with a ring, the rest of the row still opens the
+  project, the summary shows last week only and says "last week", another
+  project keeps the week, the printed heading, two weeks back is dates only,
+  this week still "so far", Back to the overview. `verify-accessibility`:
+  the project name link is allowed under 44px on a phone (its row is the
+  target) and a ring drawn by `::after` counts. Also passed:
+  verify-accessibility (584), verify-office-progress, verify-office-phone,
+  verify-office-landing, verify-weekly-summary, verify-help,
+  verify-office-sections, verify-seen-by-office, verify-site-diary,
+  verify-photo-library, verify-office-links, verify-role-access,
+  verify-first-time-use, verify-day-walkthrough.
+- Screenshots: project files `ui-review/office-weekly-review/`.
+- Not verified: a real phone, a screen reader.
+- Seen on the walk, not built: the overview's "This week" counts
+  inspections as visits while the summary's "Site reports" does not, so
+  the two numbers differ; the summary's "On site" is long for a busy week
+  (3,500px for seven reports).
 
 ## 2026-10-21 — Quicker inspections on a phone
 
