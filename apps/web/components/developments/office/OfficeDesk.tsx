@@ -147,7 +147,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
         <ThemeToggle />
         <button type="button" className="tbtn tbtn-help" onClick={() => setDialog({ kind: 'help' })}>Help{!newcomer && newToYou > 0 && <i className="tbtn-new" aria-label={`${newToYou} new`}>{newToYou}</i>}</button>
         <Link className="tbtn" href="/engineer">Engineer view</Link>
-        <Link className="tbtn" href="/">Companies</Link>
+        <Link className="tbtn" href="/">Switch company</Link>
       </div>
       {attnOpen && <div className="attn-pop">
         <div className="panel-head"><h2 style={{ color: attn.length ? 'var(--alert)' : 'var(--ok)' }}>Needs attention</h2><a className="more" href="#/issues">Issues →</a></div>

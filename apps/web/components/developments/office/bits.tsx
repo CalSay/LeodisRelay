@@ -15,8 +15,13 @@ export const ConfirmTag = ({ i, reviewOn }: { i: Issue; reviewOn: boolean }) => 
 export const InstructionTag = ({ v }: { v: Variation }) => <Tag {...instructionTag(v)} />;
 /** A sum of money, set in mono so figures align down a column; a dash when there is none. */
 export const Money = ({ n, className }: { n: number | undefined; className?: string }) => <span className={`money ${n === undefined ? 'fine' : ''} ${className ?? ''}`}>{fmtMoney(n)}</span>;
+/**
+ * The PDF, filing or notification only when it went wrong: a list of reports
+ * does not say "PM not notified" on every row while the pilot has no mail
+ * server. The report itself still shows each step (SubmissionStages).
+ */
 export function DeliveryTag({ r }: { r: ReportSummary }) {
-  const s = deliveryStatus(r); if (!s) return null;
+  const s = deliveryStatus(r); if (!s || s.tone !== 'alert') return null;
   return <Tag label={s.label} cls={toneTag(s.tone)} />;
 }
 export function ReviewTag({ r, quiet }: { r: ReportSummary; quiet?: boolean }) {

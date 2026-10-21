@@ -13,26 +13,33 @@ import { SAFETY_RECORDS_COVERS, SAFETY_RECORDS_NAME } from '@/lib/featureSwitch'
 const ROLE_WORDS: Record<string, string> = { Admin: 'Everything, plus the Admin tab', Manager: 'Office, all projects', Engineer: 'Own drafts, submitted reports, issues' };
 const sees = (m: TeamMember) => ROLE_WORDS[m.assignment.split('.')[0] ?? ''] ?? 'Not known until they sign in';
 
-/** The roster reconciled with sessions. Read-only: roles are set in Microsoft. */
-function RosterTable({ members, note }: { members: TeamMember[] | null; note?: string }) {
+/** "Engineer.Electrical" → "Engineer · Electrical"; "Engineer.PH" → "Engineer · P&H". */
+const roleWords = (assignment: string) => assignment.split('.').map(w => w === 'PH' ? 'P&H' : w).join(' · ');
+
+/**
+ * The roster reconciled with sessions. Read-only: roles are set in Microsoft.
+ * The Team tab shows it in plain words; Admin's Roles & access keeps the
+ * Microsoft app role names, which are what an Admin types into Entra.
+ */
+function RosterTable({ members, note, plain }: { members: TeamMember[] | null; note?: string; plain?: boolean }) {
   const groups: [string, (m: TeamMember) => boolean][] = [['Admin', m => m.assignment === 'Admin'], ['Managers', m => m.assignment === 'Manager'], ['Engineers', m => m.assignment.startsWith('Engineer')], ['Signed in, not on the checklist', m => !m.onChecklist]];
-  return <div className="panel"><div className="panel-head"><h3>Team assignment checklist</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{note ?? 'Set in Microsoft; the app only reads the role at sign-in'}</span></div>
-    <table className="reg cards"><thead><tr><th>Account</th><th>Microsoft app role</th><th>Sees</th><th>Signed in since</th><th>Session</th></tr></thead><tbody>
+  return <div className="panel"><div className="panel-head"><h3>{plain ? 'Who can sign in' : 'Team assignment checklist'}</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{note ?? (plain ? 'Roles are set by the Admin' : 'Set in Microsoft; the app only reads the role at sign-in')}</span></div>
+    <table className="reg cards"><thead><tr><th>{plain ? 'Person' : 'Account'}</th><th>{plain ? 'Role' : 'Microsoft app role'}</th><th>{plain ? 'Can see' : 'Sees'}</th><th>{plain ? 'Signed in at' : 'Signed in since'}</th><th>{plain ? 'Now' : 'Session'}</th></tr></thead><tbody>
       {!members && <tr><td colSpan={5} className="loading" style={{ minHeight: 0, padding: 24 }}>Loading the roster</td></tr>}
       {(members ?? []).length === 0 && members && <tr><td colSpan={5} className="empty">Nobody on the checklist and nobody signed in.</td></tr>}
       {groups.map(([label, pick]) => { const rows = (members ?? []).filter(m => pick(m) && (label !== 'Engineers' || m.onChecklist) && (label === 'Signed in, not on the checklist' || m.onChecklist)); if (!rows.length) return null; return [
-        <tr key={`g-${label}`} className="c-group"><td colSpan={5} style={{ background: 'var(--panel-2)', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--text-3)', padding: '6px 16px' }}>{label} · {rows.length}</td></tr>,
-        ...rows.map(m => <tr key={m.email}><td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{m.name ?? m.email.split('@')[0]}</div><div className="rowsub num">{m.email}</div></td><td data-label="App role">{m.assignment}{m.role && m.assignment.split('.')[0] !== m.role && <div className="rowsub">signed in as {m.role}</div>}</td><td style={{ fontSize: 12 }} data-label="Sees">{sees(m)}</td><td className="due" data-label="Signed in">{m.lastSignedIn ? fmtWhen(m.lastSignedIn) : <span className="fine">—</span>}</td><td data-label="Session">{m.session === 'active' ? <Tag label="Signed in" cls="tag-ok" /> : m.session === 'expired' ? <Tag label="Expired" cls="tag-quiet" /> : <Tag label="No session" cls="tag-quiet" />}</td></tr>),
+        <tr key={`g-${label}`} className="c-group"><td colSpan={5} style={{ background: 'var(--panel-2)', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--text-3)', padding: '6px 16px' }}>{plain && label === 'Signed in, not on the checklist' ? 'Signed in, not on the list' : label} · {rows.length}</td></tr>,
+        ...rows.map(m => <tr key={m.email}><td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{m.name ?? m.email.split('@')[0]}</div><div className="rowsub num">{m.email}</div></td><td data-label={plain ? 'Role' : 'App role'}>{plain ? roleWords(m.assignment) : m.assignment}{m.role && m.assignment.split('.')[0] !== m.role && <div className="rowsub">signed in as {m.role}</div>}</td><td style={{ fontSize: 12 }} data-label={plain ? 'Can see' : 'Sees'}>{sees(m)}</td><td className="due" data-label={plain ? 'Signed in at' : 'Signed in'}>{m.lastSignedIn ? fmtWhen(m.lastSignedIn) : <span className="fine">—</span>}</td><td data-label={plain ? 'Now' : 'Session'}>{m.session === 'active' ? <Tag label="Signed in" cls="tag-ok" /> : m.session === 'expired' ? <Tag label={plain ? 'Signed out' : 'Expired'} cls="tag-quiet" /> : <Tag label={plain ? 'Not signed in' : 'No session'} cls="tag-quiet" />}</td></tr>),
       ]; })}
     </tbody></table>
-    <div className="panel-foot">This is the assignment checklist against current sessions; it is not the Microsoft directory and it does not keep sign-in history, so "no session" means nobody is signed in on that account now. A role change takes effect at the next sign-in, within 12 hours. Nothing on this screen grants access.</div></div>;
+    <div className="panel-foot">{plain ? 'Everyone who can sign in to RELAY at Leodis Developments, and who is signed in now. RELAY does not keep a history of sign-ins. Ask the Admin to add someone or change a role; it takes effect the next time they sign in.' : <>This is the assignment checklist against current sessions; it is not the Microsoft directory and it does not keep sign-in history, so "no session" means nobody is signed in on that account now. A role change takes effect at the next sign-in, within 12 hours. Nothing on this screen grants access.</>}</div></div>;
 }
 
 export function TeamView({ ctx }: { ctx: Ctx }) {
   const team = ctx.team;
   return <div className="view">
-    <div className="pagehead"><div><h2>Team</h2><p>{team ? `${team.members.length} accounts · ${team.members.filter(m => m.session === 'active').length} signed in now · ${team.members.filter(m => m.session !== 'active').length} without a current session` : 'Loading the roster'}</p></div></div>
-    <RosterTable members={team?.members ?? null} />
+    <div className="pagehead"><div><h2>Team</h2><p>{team ? `${team.members.length} ${team.members.length === 1 ? 'person' : 'people'} · ${team.members.filter(m => m.session === 'active').length} signed in now` : 'Loading the team'}</p></div></div>
+    <RosterTable members={team?.members ?? null} plain />
     <p className="rowsub">Issue owners are names or companies typed on site, not these accounts, so this list is who can sign in rather than who owns work.</p>
   </div>;
 }
@@ -53,7 +60,6 @@ export function AdminView({ ctx }: { ctx: Ctx }) {
       <a className={`chip ${processing?.outbox.some(o => o.delivery === 'failed') ? 'warn' : ''} ${section === 'delivery' ? 'on' : ''}`} href="#/admin/delivery">Notifications &amp; processing</a>
       <a className={`chip ${section === 'features' ? 'on' : ''}`} href="#/admin/features">Site records</a>
       <a className={`chip ${section === 'help' ? 'on' : ''}`} href="#/admin/help">Install &amp; help</a>
-      <span className="chip" style={{ cursor: 'default' }}>Projects &amp; review <Tag label="Planned" cls="tag-quiet" /></span>
     </div>
     {section === 'roles' && <RosterTable members={team?.members ?? null} />}
     {section === 'drafts' && <LegacyDrafts ctx={ctx} />}

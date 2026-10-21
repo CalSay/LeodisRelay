@@ -4,6 +4,61 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Manager's day, simplified
+
+- Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information
+  it needs about site progress, simply. A working day as an office manager on
+  /office after #85, #86 and #88 (1440px and 390px, light and dark, on a
+  seeded month of three trades): where each project stands, unseen reports,
+  issues and variations, a project's sheet, the weekly summary, site coverage,
+  issues by company, a report and its PDF page, Team and Admin. Not a
+  `docs/tasks.json` task, so no status changed there.
+- Changed (office screens only, nothing added):
+  - Report lists (Inbox, New reports on the overview, a project's register)
+    no longer tag every row "PM not notified" (or "PDF ready"): the pilot has
+    no mail server, so it was on every report and meant nothing to a manager.
+    A row now carries a delivery tag only when something went wrong. The
+    report itself still shows every step (received, PDF, delivery, seen), so
+    the events stay distinct. The Inbox's "PM not notified" filter went; an
+    Admin still sees the waiting notifications under Admin > Notifications &
+    processing.
+  - A project's sheet no longer repeats "Needs attention" and "Latest
+    reports": the register column right beside it (shown above 700px; a
+    phone shows the register instead of the sheet) has the same lines under
+    Needs action and Reports. The sheet is now where it stands, Latest from
+    site, the project's pages and its details.
+  - Team tab in plain words: "Who can sign in", Person / Role / Can see /
+    Signed in at / Now, roles as "Engineer · Electrical" not
+    "Engineer.Electrical", "Not signed in" not "No session", and a shorter
+    note. Admin > Roles & access keeps the Microsoft app role names, which
+    the Admin needs for Entra.
+  - Top bar "Companies" (it goes to the Developments / Compliance chooser,
+    and sat next to "Issues by company") is now "Switch company".
+  - Admin's "Projects & review · Planned" chip, which did nothing, is gone.
+  - The overview's closing paragraph about the server, filing and the PM
+    email is one line: opening a report marks it seen.
+  - Help "What's new": "A simpler office".
+- Looked at and left (decisions): the desk's left project list beside "Where
+  each project stands" (it is the navigation once a project is open);
+  "Verify" stays the word for checking a fix (managers use it, and the group
+  above it says "Fixed, to check"); sent safety and tower reports from before
+  the switch still list in the Inbox, as #85 decided; the weekly summary,
+  site coverage and issues by company read clearly and were not changed.
+- Checks: `npm run typecheck`, `npm test`. Browser checks, all passing:
+  office-progress, home-and-sheet, office-landing, office-phone,
+  office-actions, office-desk, seen-by-office, help, role-access,
+  navigation, first-time-use, review-queue, submission-stages,
+  office-registers, accessibility, day-walkthrough, search,
+  engineer-layout, signature-reload.
+  verify-day-walkthrough now finds the safety lines in the project's
+  register, and verify-home-and-sheet expects the project links after
+  Latest from site. Screenshots, before and after: project files
+  `ui-review/manager-day-simplified/`.
+- Not verified: no live tenant, no real phone or tablet, no live mail.
+- Proposed, not built: a Weekly summary link on each "Where each project
+  stands" row; put the phone overview's project list above the four action
+  counts; a plainer word than "Verify" if managers say so.
+
 ## 2026-10-21 — Seen by the office
 
 - Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information it

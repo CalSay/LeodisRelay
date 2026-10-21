@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-simpler-day', added: '2026-10-21', audience: 'office', title: 'A simpler office',
+    text: 'Report lists in the office no longer say "PM not notified" on every row: there is no delivery tag unless there is a problem with it, and each report still shows every step when you open it. A project\'s sheet no longer repeats the Needs action list and the reports that sit in the column beside it. The Team tab is in plain words (who can sign in, their role and whether they are signed in now), the top bar\'s "Companies" is now "Switch company", and Admin no longer shows a "Planned" button that did nothing.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'seen-by-office', added: '2026-10-21', audience: 'all', title: 'Seen by the office',
     text: 'When someone in the office opens a report you sent, it now says "Seen by the office" on your report, so you know it landed. Nobody in the office has to press anything: opening it is enough, and the "Acknowledge" button has gone. In the office, "Where each project stands" says how many of each project\'s reports nobody has opened yet, and "Not seen yet" lists them.' },
   { id: 'fewer-taps-site-update', added: '2026-10-21', audience: 'site', title: 'Fewer taps for a site update',

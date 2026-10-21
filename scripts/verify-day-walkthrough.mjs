@@ -7,7 +7,7 @@
 // in) and a progress card added with no signal, closes the permit, then checks
 // the home screen, My week and Safety actions (starting the podium's inspection
 // from there), and the home screen with no signal. The office, on a phone and a
-// desktop, reads the overview and Needs attention, the project's register, the
+// desktop, reads the overview and Needs attention, the project's register (and its Needs action), the
 // Inbox and the report, the new issue, Safety actions, Before handover and the
 // snag list, the Weekly summary, logs a chase, sorts the short delivery, downloads
 // the issue, permit and delivery spreadsheets and opens the PDF. Counts are
@@ -370,11 +370,11 @@ try {
       await p.goto(`${base}/permits?project=${P}`);await p.locator('.pt-permit').first().waitFor();
       const [pf]=await Promise.all([p.waitForEvent('download'),p.getByRole('link',{name:'Download spreadsheet'}).click()]);
       ok(/HW-0142/.test(readFileSync(await pf.path(),'utf8'))&&/Fire watch by Jo/.test(readFileSync(await pf.path(),'utf8')),`${label}: the permits spreadsheet has the permit and its closing note`);
-      // The project's own sheet: the same two lines under its Needs attention.
+      // The project's register: the same two lines under its Needs action (the sheet beside it no longer repeats them).
       await p.goto('about:blank');await p.goto(`${base}/office#/projects/${P}`);
-      const sheetAttn=p.locator('.sheet > .rmenu').first();
+      const sheetAttn=p.locator('.col',{has:p.locator('.grp',{hasText:'Safety, permits and deliveries'})});
       await sheetAttn.getByText('2 safety actions open').waitFor();checks++;
-      ok(await sheetAttn.getByText('Podium P1, plant room: tower inspection due').count()===1,`${label}: the project sheet's Needs attention has the podium due`);
+      ok(await sheetAttn.getByText('Podium P1, plant room: tower inspection due').count()===1,`${label}: the project register's Needs action has the podium due`);
     }
     await noSideways(p,`${label} overview`);
     await shot(p,`office-overview-${scheme}-${width}`);
