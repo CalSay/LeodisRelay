@@ -392,6 +392,13 @@ body:has(.ws){overflow:hidden auto}
 /* With the reader open beside it, the list leaves "Found" to the reader (it
    says the same for the open report), so names keep the room they need. */
 @media (min-width:701px){.ws table.inbox-list:not(.wide) .c-found{display:none}}
+/* On a phone a report picked in the Inbox has the screen to itself, rather
+   than opening under the whole list; "‹ Inbox" goes back to the same place. */
+.ws .inbox-back{display:none}
+@media (max-width:700px){
+  .ws .view.inbox-reading>.pagehead,.ws .view.inbox-reading>.filters,.ws .view.inbox-reading .inbox-list-panel{display:none}
+  .ws .inbox-back{display:inline-flex;align-items:center;min-height:44px;margin:-10px 0;padding:0 var(--s2) 0 0;background:none;border:0;font-family:var(--mono);font-size:12px;color:var(--acc);letter-spacing:.04em;cursor:pointer;white-space:nowrap}
+}
 @media (max-width:700px){
   .ws table.reg.cards{display:block;min-width:0}
   .ws table.reg.cards thead{display:none}
@@ -402,14 +409,14 @@ body:has(.ws){overflow:hidden auto}
   .ws table.reg.cards tr.clickable::after{content:'›';position:absolute;right:var(--s3);top:var(--s3);font-size:20px;line-height:1;color:var(--text-3)}
   .ws table.reg.cards tr.clickable:active{background:var(--acc-wash)}
   .ws table.reg.cards td{display:block;flex:1 1 100%;min-width:0;padding:0;border:0;font-size:13px;overflow-wrap:anywhere}
-  .ws table.reg.cards td:empty{display:none}
+  .ws table.reg.cards td:empty,.ws table.reg.cards td:has(> .found:empty){display:none}
   .ws table.reg.cards td.c-ref{flex:0 1 auto}
   .ws table.reg.cards td.c-title .rowtitle{font-size:15px!important;line-height:1.35}
   .ws table.reg.cards td[data-label]{position:relative;padding-left:calc(6.25rem + var(--s3))}
   .ws table.reg.cards td[data-label]::before{content:attr(data-label);position:absolute;left:0;top:.2em;width:6.25rem;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3)}
   .ws table.reg.cards td.money{text-align:left}
   .ws table.reg.cards td.due{white-space:normal}
-  .ws table.reg.cards .tag{white-space:normal;max-width:100%}
+  .ws table.reg.cards :is(.tag,.kind){white-space:normal;max-width:100%}
   .ws table.reg.cards td.empty{padding:var(--s4) 0;text-align:center}
   .ws table.reg.cards td.c-actions{padding-top:var(--s2)}
   .ws table.reg.cards td.c-actions:not(:has(.btn,.btn-q)){display:none}
