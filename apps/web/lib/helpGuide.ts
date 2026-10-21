@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'permits-to-work', added: '2026-10-21', audience: 'all', title: 'Permits to work',
+    text: 'Record each hot works, isolation, roof or confined space permit when it is issued: the work and where, who issued it, who holds it and when it runs until. It stays under "Open now" until someone on the project closes it, ticking the closing check for its kind (for hot works, that the fire watch was kept for at least 60 minutes). A permit still open past its end time is marked red on your home screen and appears in the office\'s Needs attention. "Start from a recent one" fills in yesterday\'s permit again. The closing checks are a first draft, not yet read over by a site manager. RELAY does not issue permits and sends nothing to anyone; the spreadsheet download has every permit for an audit.',
+    link: { label: 'Open Permits to work', href: '/permits' } },
   { id: 'first-day-pages', added: '2026-10-21', audience: 'all', title: 'Clearer on your first day',
     text: 'Pages with nothing on them yet now say so plainly and say what fills them. Issues over time no longer draws an empty chart and twelve weeks of noughts, Site coverage no longer calls every site "gone quiet" before any has sent a report, and the office overview says "Nothing has come in from site yet" and "No reports received yet" rather than "Every report has been read"; the Inbox, Issues and Variations say where their records will come from. If you have never opened Help, it now opens with How it works, nothing is marked new, and on site the link to it says "Start here". A draft with nothing on it says so in its preview and PDF.' },
   { id: 'toolbox-talks', added: '2026-10-21', audience: 'all', title: 'Toolbox talks',
@@ -164,6 +167,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Issues over time', href: '/issue-trend', audience: 'all', text: 'Whether a project\'s issue list is getting shorter, week by week.' },
   { label: 'Notes for the next visit', href: '/site-notes', audience: 'all', text: 'Word left on a project for whoever is on site next.' },
   { label: 'Toolbox talks', href: '/toolbox-talks', audience: 'all', text: 'Safety briefings given on a project and who attended, ready for an audit.' },
+  { label: 'Permits to work', href: '/permits', audience: 'all', text: 'Hot works and isolation permits open on a project, until they are closed.' },
   { label: 'My week', href: '/my-week', audience: 'all', text: 'Your own week across every project.' },
   { label: 'Site coverage', href: '/coverage', audience: 'office', text: 'Which live projects have gone quiet.' },
   { label: 'Issues by company', href: '/companies', audience: 'office', text: 'Who to chase, for what, and what they promised last time.' },

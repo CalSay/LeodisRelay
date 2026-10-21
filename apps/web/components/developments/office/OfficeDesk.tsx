@@ -6,7 +6,7 @@ import { PageTitle } from '@/components/PageTitle';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { useWhatsNew } from '@/components/useWhatsNew';
 import { Toasts, parseHash, useHashRoute } from '@/components/workspace/hooks';
-import { allIssues, allVariations, listProjects, officeAll, officeTeam, safetyActionsAll, type OfficeTeam } from '@/lib/api';
+import { allIssues, allVariations, listProjects, officeAll, officeTeam, permitsAll, safetyActionsAll, type OfficeTeam } from '@/lib/api';
 import { canAccessProject, isAdmin } from '@/lib/auth/access';
 import { useProjects } from '@/components/ProjectContext';
 import type { FixtureProject } from '@/lib/fixtures';
@@ -53,17 +53,19 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const refresh = useCallback(async () => {
     const g = ++generation.current;
     try {
-      const [{ reports, drafts }, issues, variations, currentProjects, safety] = await Promise.all([
+      const [{ reports, drafts }, issues, variations, currentProjects, safety, permits] = await Promise.all([
         officeAll(),
         allIssues(),
         allVariations(),
         listProjects(),
         // Safety actions failing to load must not stop the desk: it keeps the last answer it had.
         safetyActionsAll().catch(() => undefined),
+        // The same for permits to work.
+        permitsAll().catch(() => undefined),
       ]);
       if (g !== generation.current) return;
       setProjectData(currentProjects);
-      setSnap(prev => ({ reports, drafts, issues, variations, loadedAt: new Date().toISOString(), safety: safety ?? prev?.safety ?? null }));
+      setSnap(prev => ({ reports, drafts, issues, variations, loadedAt: new Date().toISOString(), safety: safety ?? prev?.safety ?? null, permits: permits ?? prev?.permits ?? null }));
       setError('');
     } catch (e) {
       if (g === generation.current) setError(e instanceof Error ? e.message : 'Unable to refresh office records.');
@@ -88,7 +90,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const stats = useMemo(() => snap ? projects.map(p => projectStats(p, snap, day)) : [], [snap, projects, day]);
   const statOf = useCallback((code: string) => stats.find(s => s.code === code), [stats]);
   const here = `/office#/${[route.tab, route.a, route.b, route.c].filter(Boolean).join('/')}`;
-  const attn = useMemo(() => attention(stats, day, snap?.safety, here), [stats, day, snap?.safety, here]);
+  const attn = useMemo(() => attention(stats, day, snap?.safety, here, snap?.permits), [stats, day, snap?.safety, here, snap?.permits]);
   const me = { id: principal?.id ?? '', name: principal?.name ?? '', role: principal?.role ?? '', admin: principal ? isAdmin(principal) : false };
   const reviewOn = stats.some(s => s.reviewOn);
   const ctx: Ctx = { snap, day, projects, stats, reviewOn, statOf, route, go, setDialog, refresh, me, team, loadTeam };

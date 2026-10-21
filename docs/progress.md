@@ -4,6 +4,81 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Permits to work
+
+- Why: a new feature chosen by Claude for site and office (Cal's go-ahead to
+  add features). Hot works and isolation permits are issued most weeks on an
+  M&E job, and the weekly safety inspection already asks "Hot works under
+  permit" and "Isolations locked off", but RELAY had nowhere to see which
+  permits are open. A hot works permit left open overnight means nobody can
+  show the fire watch was kept. Not a `docs/tasks.json` task, so no status
+  changed there. Checked against the backlog: not EXP-2 (RELAY does not
+  issue, approve or route permits; it records the paper one the principal
+  contractor issued, and nothing is sent), not EXP-4 (where the work is stays
+  free text in "The work and where"), not FE-2 (no photographs). No report
+  editor change.
+- What: `/permits?project=…` for every role on a project. Record a permit:
+  kind (hot works, electrical isolation, pipework isolation, roof or work at
+  height, confined space, other), the work and where, issued by, held by
+  (starts as the signed-in person), issued on (today or up to 7 days back),
+  runs until (UK date and time, up to 7 days after issue; 17:00 today is
+  filled in before 17:00), optional permit number and notes. "Start from a
+  recent one" fills in the kind, work and names of the last three different
+  permits. A permit stays under "Open now" until someone on the project
+  closes it, ticking the closing check for its kind (hot works: "a fire watch
+  was kept for at least 60 minutes after") with an optional note. One still
+  open after its end time is marked "Past its end time" and listed first.
+  Withdraw with a reason (whoever recorded it, or the office), as toolbox
+  talks. Download spreadsheet has every permit. Local store kind `permits`;
+  nothing is sent or written to SharePoint. Closed projects take no new ones.
+- Where: a "Permits to work" row under Issues and safety on the engineer
+  home ("1 open · 1 past its end time", red edge while any is past its end
+  time), a link in the office project sheet's Issues and safety group, and
+  one line per project in the office's Attention list and Needs attention
+  ("Hot works permit still open past its end time"), straight after open
+  safety actions and ahead of a weekly inspection due. The desk reads
+  `GET /api/permits` (no project) with its other records; if that fails it
+  keeps the last answer and claims nothing new.
+- Decisions (Claude's): anyone on the project may close a permit, because
+  the holder may have gone home and the office closes it once site has
+  said; the closing check makes that a statement, not a tap. One Needs
+  attention line per project, not per permit, as safety actions do. No
+  "permit due" warnings: only a permit already recorded can be late. The
+  closing checks are Claude's first draft, and the page and Help say a site
+  manager has not read them over yet. A permit whose end has already passed
+  can still be recorded (the paper one found in a van): the form says it has
+  ended and to close it after saving, rather than refusing the record. The
+  page's clock moves on every 30 seconds, so a permit turns "Past its end
+  time" without a reload. "Closed, last 4 weeks" counts by the day closed.
+- Known quirk, left alone: the store's generic `state` column takes
+  `row.work` when a record has no `state`, so a permit's work text lands
+  there. Nothing reads that column for permits.
+- Help: What's new "Permits to work", and a Where to find things entry.
+- Check: `npm run typecheck`, `npm test` (398 app tests, new
+  `tests/permits.test.ts`). New `scripts/verify-permits.mjs` (85 checks):
+  refused saves (signed out, no work, unknown kind, future, too old, too
+  long, ends before issue, malformed, missing and complete projects, closing
+  unticked), the home row and its red edge, recording from a recent one,
+  closing with the check, reload, a retry kept once, withdrawing and who may,
+  the spreadsheet, the office Attention list and Needs attention and the line
+  leaving once closed, the project sheet link, no connection keeps the form,
+  an empty project, axe at 390px light and 1440px dark, 44px controls, no
+  sideways scroll. `verify-home-and-sheet.mjs` expects the new row and link;
+  `verify-first-time-use.mjs` (from #75) now checks the empty Permits page too.
+  Also run and passing against this branch's build: home-and-sheet, help,
+  day-walkthrough, accessibility (551), office-desk, role-access (95),
+  first-time-use (336, after merging #75), toolbox-talks, navigation, office-landing, engineer-layout, safety-actions.
+  In one batch run straight after a build, verify-permits and
+  verify-toolbox-talks each failed once; both passed on every rerun
+  (permits five times). The one fixed wait in verify-permits was replaced by
+  waiting for the desk's answer.
+- Not verified: a physical phone, screen readers, a live tenant (none
+  needed: nothing leaves RELAY). With no signal a permit cannot be recorded
+  or closed; what was typed stays in the form.
+- Proposed, not built: record and close permits with no signal; show open
+  permits in the site diary and weekly summary; have a site manager read
+  over the closing checks.
+
 ## 2026-10-21 — First-time use and empty pages
 
 - Why: a cross-app quality pass (coordinator, under Cal's ask for a clear,
