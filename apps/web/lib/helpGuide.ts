@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'photos-by-day', added: '2026-10-21', audience: 'all', title: 'Photographs from one day',
+    text: 'Photographs now has a Day choice: pick a day, such as "Tue 13 Oct 2026", to see only that day\'s photographs, with how many each day has. Photographs from a report are under its visit day; those added to an issue or variation later are under the day they were added. "Newer day" and "Older day" step one day with photographs at a time, and "Every day" goes back to the full list. Choosing another project goes back to every day. The day stays in the page\'s link, so you can send someone straight to it.',
+    link: { label: 'Open Photographs', href: '/photos' } },
   { id: 'send-on-signal', added: '2026-10-21', audience: 'site', title: 'Send with no signal, and it goes by itself',
     text: 'Tap "Send to office" with no signal and RELAY now says "Waiting for signal": the report is kept on your phone and goes to the office by itself as soon as there is signal, while RELAY is open, then says it has been sent. If you close RELAY first, the home screen says "Send today\'s update" and opening it with signal sends it. To change something first, go back to the cards or change the signature (it then waits for you to send again), or tap "Don\'t send yet". Checked in a phone-sized browser with its signal switched off, not on a real phone.' },
   { id: 'office-sections', added: '2026-10-21', audience: 'office', title: 'Clearer edges on the office desk',
@@ -214,7 +217,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Office', href: '/office', audience: 'office', text: 'The office position first, then Inbox, Issues, Variations and Team.' },
   { label: 'Search', href: '/search', audience: 'all', text: 'The words in every report, issue and variation.' },
   { label: 'Site diary', href: '/diary', audience: 'all', text: 'Each project day by day, from the reports sent.' },
-  { label: 'Photographs', href: '/photos', audience: 'all', text: 'Every photograph on a project, by location.' },
+  { label: 'Photographs', href: '/photos', audience: 'all', text: 'Every photograph on a project, newest first; pick a day or find a place.' },
   { label: 'Weekly summary', href: '/weekly-summary', audience: 'all', text: 'A project\'s week on one page, for the site meeting.' },
   { label: 'Snag list', href: '/issues/snag-list', audience: 'all', text: 'Open issues for one company or trade, to print.' },
   { label: 'Safety actions', href: '/safety-actions', audience: 'all', safetyRecords: true, text: 'What the safety and tower inspections found, until it is put right, and which towers are due.' },

@@ -8,14 +8,16 @@ import { PhotoImage } from './PhotoImage';
 import { canManage } from '@/lib/auth/access';
 import { mediaId } from '@/lib/media';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
-import { matchesPhoto, PHOTO_GROUPS, type LibraryPhoto, type PhotoGroup, type PhotoLibrary } from '@/lib/photoLibrary';
+import { isPhotoDay, matchesPhoto, photoDays, PHOTO_GROUPS, type LibraryPhoto, type PhotoGroup, type PhotoLibrary } from '@/lib/photoLibrary';
 import { dayShort } from '@/lib/dates';
 import { failure } from '@/lib/failure';
 
 /**
  * Every photograph on a project, newest first and grouped by day, so "what
  * did it look like before it was boarded?" is one page, not a dozen reports.
- * It reads what is already in RELAY and changes nothing.
+ * It reads what is already in RELAY and changes nothing. A Day choice opens
+ * one day ("show me Tuesday's photographs") without paging back through
+ * every photograph since.
  */
 
 const PAGE = 60;
@@ -27,12 +29,13 @@ const large = (src: string) => mediaId(src) ? `${src}?variant=pdf` : src;
 const recordHref = (p: LibraryPhoto) => `/${p.source.kind === 'report' ? 'reports' : p.source.kind === 'issue' ? 'issues' : 'variations'}/${p.source.id}`;
 const recordWord = { report: 'report', issue: 'issue', variation: 'variation' } as const;
 
-export function PhotoLibraryPage({ initialProject, initialFind, initialShow, returnTo }: { initialProject: string; initialFind: string; initialShow: string; returnTo?: string | undefined }) {
+export function PhotoLibraryPage({ initialProject, initialFind, initialShow, initialDay, returnTo }: { initialProject: string; initialFind: string; initialShow: string; initialDay: string; returnTo?: string | undefined }) {
   const projects = useProjects();
   const principal = usePrincipal();
   const [projectId, setProjectId] = useState(projects.some(p => p.id === initialProject) ? initialProject : projects.length === 1 ? projects[0]!.id : '');
   const [find, setFind] = useState(initialFind);
   const [show, setShow] = useState<PhotoGroup | ''>(isGroup(initialShow) ? initialShow : '');
+  const [day, setDay] = useState(isPhotoDay(initialDay) ? initialDay : '');
   const [library, setLibrary] = useState<PhotoLibrary | null>(null);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -59,19 +62,26 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ret
   }, [projectId, retry]);
 
   // The address carries the choices, so a record opened from here comes back
-  // to the same project, words and filter. Replaced in place: typing must not
+  // to the same project, day, words and filter. Replaced in place: typing must not
   // fill the phone's history or reload the page.
   const q = new URLSearchParams();
   if (projectId) q.set('project', projectId);
   if (find.trim()) q.set('q', find.trim());
   if (show) q.set('show', show);
+  if (day) q.set('day', day);
   if (returnTo) q.set('returnTo', returnTo);
   const here = `/photos${q.size ? `?${q}` : ''}`;
   useEffect(() => { window.history.replaceState(window.history.state, '', here); }, [here]);
-  useEffect(() => { setLimit(PAGE); }, [projectId, find, show]);
+  useEffect(() => { setLimit(PAGE); }, [projectId, find, show, day]);
 
   const all = library?.projectId === projectId ? library.photos : null;
-  const shown = useMemo(() => all?.filter(p => matchesPhoto(p, find, show)) ?? [], [all, find, show]);
+  const matched = useMemo(() => all?.filter(p => matchesPhoto(p, find, show)) ?? [], [all, find, show]);
+  // The Day choices count what the find box and filter leave, so a day reads the same number it opens on.
+  const dayChoices = useMemo(() => photoDays(matched, day), [matched, day]);
+  const shown = useMemo(() => day ? matched.filter(p => p.day === day) : matched, [matched, day]);
+  const withPhotos = dayChoices.filter(d => d.count > 0);
+  const newerDay = day ? withPhotos.filter(d => d.day > day).at(-1)?.day : undefined;
+  const olderDay = day ? withPhotos.find(d => d.day < day)?.day : undefined;
   const days = useMemo(() => {
     const out: { day: string; photos: { p: LibraryPhoto; n: number }[] }[] = [];
     shown.slice(0, limit).forEach((p, n) => { const last = out.at(-1); if (last?.day === p.day) last.photos.push({ p, n }); else out.push({ day: p.day, photos: [{ p, n }] }); });
@@ -90,11 +100,15 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ret
   return <main className="eng-page photos-page">
     <Link href={back} className="back">&larr; {backLabel(back)}</Link>
     <div className="eng-heading"><h1>Photographs{project ? ` · ${project.projectName}` : ''}</h1>
-      <p>Every photograph sent from site on this project, newest first. Find a room, a riser or a reference to see how it looked on each visit.</p></div>
+      <p>Every photograph sent from site on this project, newest first. Pick a day, or find a room, a riser or a reference to see how it looked on each visit.</p></div>
     <div className="photos-controls">
-      <label>Project<select value={projectId} onChange={e => setProjectId(e.target.value)}>
+      <label>Project<select value={projectId} onChange={e => { setProjectId(e.target.value); setDay(''); }}>
         <option value="">Choose a project</option>
         {projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} {p.projectName}</option>)}
+      </select></label>
+      <label>Day<select value={day} onChange={e => setDay(e.target.value)}>
+        <option value="">Every day</option>
+        {dayChoices.map(d => <option key={d.day} value={d.day}>{fmtDay(d.day)} · {plural(d.count, 'photograph')}</option>)}
       </select></label>
       <label>Find<input type="text" inputMode="search" value={find} onChange={e => setFind(e.target.value)} placeholder="Location, words or reference" enterKeyHint="search" autoComplete="off" /></label>
       <div className="photos-show" role="group" aria-label="Show">
@@ -108,9 +122,16 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ret
       : !all ? <p role="status">Loading photographs…</p>
       : !all.length ? <div className="eng-panel photos-empty"><h2>No photographs yet</h2><p className="eng-help">Photographs on reports sent to the office, and those added to issues and variations, will appear here.</p></div>
       : <>
-        <p className="photos-count" role="status">{shown.length === all.length ? plural(all.length, 'photograph') : `${shown.length} of ${plural(all.length, 'photograph')}`}</p>
-        {!shown.length ? <div className="eng-panel photos-empty"><p className="eng-help">No photographs match. Try fewer words, or show all kinds.</p>
-          <button type="button" onClick={() => { setFind(''); setShow(''); }}>Clear the find box and filter</button></div>
+        <p className="photos-count" role="status">{shown.length === all.length ? plural(all.length, 'photograph') : `${shown.length} of ${plural(all.length, 'photograph')}`}{day ? ` on ${fmtDay(day)}` : ''}</p>
+        {day && <nav className="photos-day-step" aria-label="Move by a day">
+          <button type="button" disabled={!newerDay} onClick={() => newerDay && setDay(newerDay)} aria-label={newerDay ? `Newer day, ${fmtDay(newerDay)}` : 'Newer day'}>&larr; Newer day{newerDay && <small>{fmtDay(newerDay)}</small>}</button>
+          <button type="button" onClick={() => setDay('')}>Every day</button>
+          <button type="button" disabled={!olderDay} onClick={() => olderDay && setDay(olderDay)} aria-label={olderDay ? `Older day, ${fmtDay(olderDay)}` : 'Older day'}>Older day &rarr;{olderDay && <small>{fmtDay(olderDay)}</small>}</button>
+        </nav>}
+        {!shown.length ? <div className="eng-panel photos-empty">{find.trim() || show
+            ? <><p className="eng-help">No photographs match{day ? ` on ${fmtDay(day)}` : ''}. Try fewer words, or show all kinds.</p>
+              <button type="button" onClick={() => { setFind(''); setShow(''); }}>Clear the find box and filter</button></>
+            : <p className="eng-help">No photographs were sent on {fmtDay(day)}. Choose another day, or every day.</p>}</div>
           : days.map(d => <section key={d.day} className="photos-day" aria-label={fmtDay(d.day)}>
             <h2>{fmtDay(d.day)}<span>{plural(shown.filter(p => p.day === d.day).length, 'photograph')}</span></h2>
             <ul className="photos-grid">{d.photos.map(({ p, n }) => <li key={p.src}>
