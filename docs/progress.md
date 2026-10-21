@@ -4,6 +4,64 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Defects send by themselves when signal returns
+
+- Why: Cal's 07:02 direction (engineers are hands-on people). After #113 a
+  defect flagged with no signal stayed on the phone as "Defect not sent yet"
+  until the engineer came back and tapped "Try again"; a site update has gone
+  by itself since #105. Engineers should not have to remember. Decided
+  without asking Cal, per his autonomy message. Not a `docs/tasks.json` task;
+  no status changed.
+- What changed:
+  - New `lib/heldDefect.ts`: the one way a frozen defect is sent, by a tap or
+    by itself. It reads the defect the phone already holds
+    (`relay-defect:<person>:<project>`), so only a defect the engineer tapped
+    Send on goes, as they wrote it.
+  - New `components/DefectsOnSignal.tsx` in the root layout: on every RELAY
+    page (the report editor too) it sends held defects when the phone says it
+    is online, when RELAY comes back into view, and every 15 s, like #105. No
+    background sync, so a closed RELAY sends when it is next opened. Away from
+    the defect screen it says "Defect sent to the office by itself once there
+    was signal: <ref>" with "Open it".
+  - The defect screen says "Waiting for signal" (or "Waiting for RELAY's
+    server") and that it goes by itself, keeps "Try again", and once sent says
+    "Sent by itself once there was signal."
+- Only once:
+  - The server already keeps one issue per person and request id.
+  - On the phone, sends from one page share one upload. Tabs take turns with
+    a Web Lock, and a tab only sends by itself while the phone still holds
+    that request.
+  - A receipt left on the phone (`relay-defect-receipt:<person>:<project>`)
+    lets another tab show it went without uploading again.
+- A refusal (403, 409, a missing photo) is not retried by itself until RELAY
+  is reopened or "Try again" is tapped; it says "RELAY did not take it". A 422 or
+  413 unfreezes it to change, as before. Signed out (401), a server fault, or
+  the route's own 400 "retry the same submission" keep waiting.
+- Fresh-context review found 5 points, all fixed: after a refusal, "Try
+  again" with no signal said it would go by itself but would not; a normal
+  send could be labelled "sent by itself"; a tab left open by someone who
+  signed out on a shared phone could send their defect in the new person's
+  name (it now checks the person last signed in on the phone first); Help
+  said "any page", but the "No signal" page sends nothing; the refusal note's
+  "Open it" did not change the engineer home, and it had no Dismiss.
+- Checked: typecheck, `npm test` (146 + 509, 12 new in
+  `tests/heldDefect.test.ts`), build. New
+  `scripts/verify-defect-send-on-signal.mjs` (96 checks: 390px light and
+  dark, 1440px dark). It covers: sent by itself on the defect screen, from the
+  Site page, and when RELAY opens again; two tabs at once (one issue, one
+  upload); "Try again" as it goes by itself (one upload); a lost answer then a
+  flicker of signal (one issue); a defect not sent is never sent by itself; a
+  refusal not retried. Passed 5 runs in a row on the final build.
+  `verify-defect-recent-places` now keeps uploads cut off until its "Try
+  again" taps, because the defect would otherwise go by itself first (87
+  checks, passed 3 runs in a row). Also passed: send-on-signal,
+  engineer-layout, offline-capture, help, accessibility (584), role-access,
+  engineer-day.
+- Not verified: a real phone, real weak signal, a locked phone that pauses
+  the page, browsers without Web Locks (the server still keeps one issue).
+- Next: the home screen could show a defect still waiting to go, as it does
+  for a site update.
+
 ## 2026-10-21 — Whole project names on a phone
 
 - Why: after #111 a project opened in the office on a phone headed its
