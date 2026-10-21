@@ -9,10 +9,10 @@ export function PwaRegistration() {
     const signout = (event:Event) => {
       const form=event.target;
       if(form instanceof HTMLFormElement && new URL(form.action).pathname === '/api/auth/signout') {
-        // Signed out: the offline page no longer knows who to show work for, or which projects to offer.
+        // Signed out: the offline page no longer knows who to show work for, which projects to offer, or their notes.
         try {
           sessionStorage.removeItem('relay-offline-principal');
-          for (const key of Object.keys(localStorage)) if (key === OFFLINE_PERSON_KEY || key.startsWith('relay-offline-projects:')) localStorage.removeItem(key);
+          for (const key of Object.keys(localStorage)) if (key === OFFLINE_PERSON_KEY || key.startsWith('relay-offline-projects:') || key.startsWith('relay-offline-notes:')) localStorage.removeItem(key);
         } catch {}
       }
     };
