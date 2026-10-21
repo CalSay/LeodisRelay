@@ -10,6 +10,7 @@ import { clientId } from '@/lib/clientId';
 import { DONE_DAYS, NOTE_MAX, type ProjectNotes, type SiteNote } from '@/lib/siteNotes';
 import { keepProjectNotesOnDevice } from '@/lib/offlineNotes';
 import { safeViewReturn, backLabel } from '@/lib/viewNavigation';
+import { whenShort } from '@/lib/dates';
 
 /**
  * Notes for the next visit: word left on a project for whoever is on site
@@ -22,11 +23,6 @@ import { safeViewReturn, backLabel } from '@/lib/viewNavigation';
 type Loaded = ProjectNotes & { live: boolean };
 
 const LONDON = { timeZone: 'Europe/London' } as const;
-function fmtWhen(iso: string): string {
-  const d = new Date(iso);
-  const sameYear = d.getFullYear() === new Date().getFullYear();
-  return d.toLocaleString('en-GB', { ...LONDON, weekday: 'short', day: 'numeric', month: 'short', ...(sameYear ? {} : { year: 'numeric' }), hour: '2-digit', minute: '2-digit' });
-}
 /** "today", "yesterday", "3 days ago", so a reader can tell an old note at a glance. */
 function age(iso: string): string {
   const day = (at: Date) => at.toLocaleDateString('en-CA', LONDON);
@@ -164,7 +160,7 @@ export function SiteNotesPage({ initialProject, returnTo }: { initialProject: st
           <h2 id="sn-open-title">Open notes <span className="sn-count">{data.open.length}</span></h2>
           {data.open.length ? <ul className="sn-list">{data.open.map(n => <li key={n.id} className="sn-note">
             <p className="sn-text">{n.text}</p>
-            <p className="sn-meta">{who(n)} · {fmtWhen(n.at)} <span className="sn-age">({age(n.at)})</span></p>
+            <p className="sn-meta">{who(n)} · {whenShort(n.at)} <span className="sn-age">({age(n.at)})</span></p>
             <button type="button" className="btn-quiet sn-done" onClick={() => void mark(n, true)} disabled={!!busy} aria-label={`Mark done with: ${n.text.slice(0, 60)}`}>{busy === n.id ? 'Saving…' : 'Done with'}</button>
           </li>)}</ul>
             : <p className="sn-none">No notes on this project. Anything the next person on site should know?</p>}
@@ -174,8 +170,8 @@ export function SiteNotesPage({ initialProject, returnTo }: { initialProject: st
           <summary>Marked done with in the last {DONE_DAYS / 7} weeks ({data.done.length})</summary>
           <ul className="sn-list">{data.done.map(n => <li key={n.id} className="sn-note sn-note-done">
             <p className="sn-text">{n.text}</p>
-            <p className="sn-meta">{who(n)} · {fmtWhen(n.at)}</p>
-            <p className="sn-meta">Marked done with by {n.done!.by} · {fmtWhen(n.done!.at)}</p>
+            <p className="sn-meta">{who(n)} · {whenShort(n.at)}</p>
+            <p className="sn-meta">Marked done with by {n.done!.by} · {whenShort(n.done!.at)}</p>
             {data.live && <button type="button" className="btn-quiet sn-done" onClick={() => void mark(n, false)} disabled={!!busy} aria-label={`Put back: ${n.text.slice(0, 60)}`}>{busy === n.id ? 'Saving…' : 'Put back'}</button>}
           </li>)}</ul>
         </details>}

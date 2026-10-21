@@ -11,9 +11,9 @@ import { VERIFICATION, VERIFICATION_LABEL, issueQueryParams, type IssuePage, typ
 
 type Filter = Exclude<IssueView, 'all'> | 'all';
 type SortState = { key: IssueSort; direction: SortDirection } | null;
-const FILTERS: [Filter, string, boolean][] = [['open', 'Open', false], ['overdue', 'Overdue', true], ['verify', 'To verify', false], ['unassigned', 'Unassigned', false], ['notReviewed', 'Not reviewed', false], ['disputed', 'Disputed', true], ['closed', 'Closed', false], ['all', 'All', false]];
+const FILTERS: [Filter, string, boolean][] = [['open', 'Open', false], ['overdue', 'Overdue', true], ['verify', 'Fixed, to check', false], ['unassigned', 'Unassigned', false], ['notReviewed', 'Not reviewed', false], ['disputed', 'Disputed', true], ['closed', 'Closed', false], ['all', 'All', false]];
 // What an empty list means, in words, for each filter.
-const EMPTY: Record<Filter, string> = { open: 'No open issues', overdue: 'Nothing is past its target date', verify: 'Nothing is waiting to be verified', unassigned: 'Every open issue has an owner', notReviewed: 'Every issue has been reviewed', disputed: 'No issue is disputed', closed: 'No issues have been closed', all: 'No issues have been raised' };
+const EMPTY: Record<Filter, string> = { open: 'No open issues', overdue: 'Nothing is past its target date', verify: 'Nothing is waiting to be checked', unassigned: 'Every open issue has an owner', notReviewed: 'Every issue has been reviewed', disputed: 'No issue is disputed', closed: 'No issues have been closed', all: 'No issues have been raised' };
 const TRADES = ['Electrical', 'HVAC', 'P&H', 'Other / non-Leodis'];
 const SORT_NAME: Record<IssueSort, string> = { reference: 'reference', issue: 'issue', project: 'project', raised: 'date raised', owner: 'owner', target: 'target date', work: 'work', confirmation: 'confirmation' };
 // On a phone the column headings are hidden, so the orders people use most are offered as one list.
@@ -96,7 +96,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const downloadHref = `/api/issues/export?${issueQueryParams({ view: filter, projectId: project, trade, location, company, verification: verification || undefined, sort: sort ?? undefined })}`;
   const clear = () => { setProject(''); setTrade(''); setLocationText(''); setCompanyText(''); setVerification(''); };
   return <div className="view">
-    <div className="pagehead"><div><h2>Issues</h2><p>{counts.open} open{narrowed ? ' in this search' : ` across ${ctx.projects.length} projects`} · {counts.overdue ? <span className="late">{counts.overdue} overdue</span> : 'none overdue'} · {counts.verify} awaiting verification · {counts.unassigned} unassigned · {reviewOn && <>{counts.notReviewed} not reviewed · </>}{counts.disputed} disputed</p></div>
+    <div className="pagehead"><div><h2>Issues</h2><p>{counts.open} open{narrowed ? ' in this search' : ` across ${ctx.projects.length} projects`} · {counts.overdue ? <span className="late">{counts.overdue} overdue</span> : 'none overdue'} · {counts.verify} fixed, to check · {counts.unassigned} unassigned · {reviewOn && <>{counts.notReviewed} not reviewed · </>}{counts.disputed} disputed</p></div>
       <div className="actions"><a className="btn btn-q" href={`/companies?${new URLSearchParams({ returnTo: '/office#/issues' })}`}>Issues by company</a><a className="btn btn-q" href={snagHref}>Snag list</a>{result.total > 0 && <a className="btn btn-q" href={downloadHref} download aria-label={`Download ${result.total} ${result.total === 1 ? 'issue' : 'issues'} as a spreadsheet (CSV)`}>Download spreadsheet</a>}{oldestToVerify && <Btn onClick={() => ctx.setDialog({ kind: 'verify', issue: oldestToVerify })}>Verify the oldest</Btn>}</div></div>
     <div className="filters">
       {filters.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
@@ -124,7 +124,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
         <td data-label="Project">{name(i.projectId)}</td>
         <td className="due" data-label="Raised">{fmtDay(i.raisedAt)}{source(i) && <div className="rowsub">{source(i)}</div>}</td>
         <td data-label="Owner">{i.owner.trim() || <span className="late">Unassigned</span>}</td>
-        <td className="due" data-label="Target">{i.targetDate ? <><b className={late ? 'late' : ''}>{i.targetDate}</b>{late && ` · ${daysLate(i.targetDate, day)}d late`}</> : <span className="fine">—</span>}</td>
+        <td className="due" data-label="Target">{i.targetDate ? <><b className={late ? 'late' : ''}>{fmtDay(i.targetDate)}</b>{late && ` · ${daysLate(i.targetDate, day)}d late`}</> : <span className="fine">—</span>}</td>
         <td data-label="Work"><WorkTag i={i} day={day} /></td><td data-label="Confirmation"><ConfirmTag i={i} reviewOn={!!ctx.statOf(i.projectId)?.reviewOn} /></td>
         <td className="c-actions" onClick={e => e.stopPropagation()}><div className="actions">
           {active && i.work === 'awaiting_verification' && !closureMine(i) && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i })}>Verify</Btn>}
@@ -141,6 +141,6 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
       <span>Page {result.page} of {result.pages}</span>
       <BtnQ className="btn-sm" disabled={result.page >= result.pages} onClick={() => setPage(result.page + 1)}>Next →</BtnQ></>}
     </nav>}
-    <div className="panel-foot">{sort ? `Sorted by ${SORT_NAME[sort.key]}, ${sort.direction}.` : 'Priority order: overdue first, then disputed, ready to verify and unassigned; earliest targets come first.'} Work and confirmation are two columns because they are two facts: an issue can be repaired and still disputed. Verifying needs someone other than whoever submitted the closure, so that button is hidden for them. Owners are names or companies, not accounts. Download spreadsheet saves every issue in this search, on all pages, as a CSV file that opens in Excel.</div></div>
+    <div className="panel-foot">{sort ? `Sorted by ${SORT_NAME[sort.key]}, ${sort.direction}.` : 'Priority order: overdue first, then disputed, fixed and waiting to be checked, and unassigned; earliest targets come first.'} Work and confirmation are two columns because they are two facts: an issue can be repaired and still disputed. Verifying needs someone other than whoever submitted the closure, so that button is hidden for them. Owners are names or companies, not accounts. Download spreadsheet saves every issue in this search, on all pages, as a CSV file that opens in Excel.</div></div>
   </div>;
 }

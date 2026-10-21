@@ -9,6 +9,7 @@ import { canManage } from '@/lib/auth/access';
 import { mediaId } from '@/lib/media';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { matchesPhoto, PHOTO_GROUPS, type LibraryPhoto, type PhotoGroup, type PhotoLibrary } from '@/lib/photoLibrary';
+import { dayShort } from '@/lib/dates';
 
 /**
  * Every photograph on a project, newest first and grouped by day, so "what
@@ -17,7 +18,7 @@ import { matchesPhoto, PHOTO_GROUPS, type LibraryPhoto, type PhotoGroup, type Ph
  */
 
 const PAGE = 60;
-const fmtDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const fmtDay = (ymd: string) => dayShort(ymd, true);
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const isGroup = (v: string): v is PhotoGroup => PHOTO_GROUPS.some(g => g.value === v);
 /** The PDF-sized copy for the viewer: sharp on a phone, far lighter than the original. */
@@ -92,7 +93,7 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ret
     <div className="photos-controls">
       <label>Project<select value={projectId} onChange={e => setProjectId(e.target.value)}>
         <option value="">Choose a project</option>
-        {projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}
+        {projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} {p.projectName}</option>)}
       </select></label>
       <label>Find<input type="text" inputMode="search" value={find} onChange={e => setFind(e.target.value)} placeholder="Location, words or reference" enterKeyHint="search" autoComplete="off" /></label>
       <div className="photos-show" role="group" aria-label="Show">

@@ -105,10 +105,10 @@ try {
     await page.getByRole('button',{name:'Clear filters'}).first().click();
     await showing(page,seeded.length);
     assert.equal(await page.getByLabel('Location').inputValue(),'',`${label}: filters cleared`);checks++;
-    // Overdue / To verify links from the office position still open on their filter.
+    // Overdue / Fixed, to check links from the office position still open on their filter.
     await page.goto(`${base}/office#/issues/show/verify`);
     await showing(page,want(i=>i.work==='awaiting_verification'));
-    assert.match(await page.locator('.filters .chip.on').first().textContent(),/^To verify/,`${label}: linked filter`);checks++;
+    assert.match(await page.locator('.filters .chip.on').first().textContent(),/^Fixed, to check/,`${label}: linked filter`);checks++;
     assert.ok(await overflow(page)<=0,`${label}: no sideways scroll`);checks++;
     if(shot)await page.screenshot({path:join(shot,`register-verify-${colorScheme}-${width}.png`)});
     await desk.close();

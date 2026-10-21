@@ -583,8 +583,15 @@
     // Opened at /site-notes: that project's notes; otherwise the project last worked on.
     const asked = location.pathname === '/site-notes' ? new URLSearchParams(location.search).get('project') : null;
     let current = null; try { current = localStorage.getItem(`relay-project:${principal}`); } catch {}
-    // "Wed 21 Oct, 14:05", as the rest of RELAY writes a day and time.
-    const stamp = iso => { try { const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(iso)).map(x => [x.type, x.value])); return `${parts.weekday} ${parts.day} ${parts.month}, ${parts.hour}:${parts.minute}`; } catch { return ''; } };
+    // "Wed 21 Oct, 14:05" in UK time, written out from parts as lib/dates.ts whenShort does (the browser's en-GB says "Wed, 21 Sept").
+    const stamp = iso => {
+      try {
+        const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(iso)).map(x => [x.type, x.value]));
+        const weekday = new Date(Date.UTC(+p.year, +p.month - 1, +p.day)).getUTCDay();
+        const year = +p.year !== new Date().getFullYear() ? ` ${p.year}` : '';
+        return `${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][weekday]} ${+p.day} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+p.month - 1]}${year}, ${p.hour}:${p.minute}`;
+      } catch { return ''; }
+    };
     const ages = iso => { const days = Math.floor((Date.now() - Date.parse(iso)) / 86400000); return days < 1 ? '' : days === 1 ? ' (a day ago)' : ` (${days} days ago)`; };
     for (const p of withNotes) {
       const item = element('details', '', box, 'nproj');

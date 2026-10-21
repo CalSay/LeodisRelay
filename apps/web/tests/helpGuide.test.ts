@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { GLOSSARY, GUIDE, GUIDE_LINKS, WHATS_NEW, addedLabel, canOpen, defaultTab, linksFor, markSeen, readSeen, readTab, unseen, whatsNewFor, type WhatsNew } from '../lib/helpGuide';
 import { CHECK_ANSWERS } from '../lib/reportTypes';
 import { backLabel, safeViewReturn } from '../lib/viewNavigation';
+import { ISSUE_WORK } from '../lib/status';
 
 // Compiled to .test-build/tests, so the app's routes are two levels up.
 const APP = join(__dirname, '..', '..', 'app');
@@ -77,7 +78,7 @@ test('a damaged stored list reads as nothing seen, never as an error', () => {
 
 test('the words Help explains are the words the screens use', () => {
   const words = new Set(GLOSSARY.flatMap(g => g.terms.map(t => t.term)));
-  for (const label of ['Open', 'Assigned', 'In progress', 'Ready for verification', 'Closed']) assert.ok(words.has(label), `issue status "${label}" is explained`);
+  for (const label of Object.values(ISSUE_WORK)) assert.ok(words.has(label), `issue status "${label}" is explained`);
   for (const a of CHECK_ANSWERS) assert.ok(words.has(a.label), `check answer "${a.label}" is explained`);
   for (const w of ['Received', 'Read', 'Awaiting instruction', 'Instructed', 'Declined', 'As reported']) assert.ok(words.has(w), w);
 });

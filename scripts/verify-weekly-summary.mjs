@@ -81,7 +81,7 @@ try {
     check((await page.locator('.week-section').filter({hasText:'Checked and closed'}).innerText()).includes(closed.reference),'engineer: issue closed this week is listed');
     check(/Open now: 2 · 1 past target/.test(await page.locator('.week-total').nth(1).innerText()),'engineer: open now with past target');
     const vo=(await rows(page,'Variations').allInnerTexts()).join('\n');
-    check(vo.includes(variation.reference)&&/done before instruction/i.test(vo)&&!/£/.test(text),'engineer: variation raised, flagged as done before instruction, no prices');
+    check(vo.includes(variation.reference)&&/done, not instructed/i.test(vo)&&!/£/.test(text),'engineer: variation raised, flagged as done, not instructed, no prices');
     const width=await page.evaluate(()=>document.documentElement.scrollWidth);
     check(width<=390,`engineer: no sideways scroll at 390px (${width})`);
     if(screenshot)await page.screenshot({path:join(screenshot,'week-light-390.png'),fullPage:true});

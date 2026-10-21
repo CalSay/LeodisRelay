@@ -9,7 +9,8 @@ import type { Variation } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
 import { VariationTags } from '@/components/EngineerWorkspace';
 import { fmtMoney, variationValue } from '@/lib/variations';
-import { backLabel, safeViewReturn, viewName } from '@/lib/viewNavigation';
+import { backLabel, safeViewReturn } from '@/lib/viewNavigation';
+import { dayShort } from '@/lib/dates';
 
 /**
  * A variation the engineer raised, after sending: the office's answer at the
@@ -20,8 +21,7 @@ import { backLabel, safeViewReturn, viewName } from '@/lib/viewNavigation';
  * in the office's own words, so the engineer does not have to ring and ask.
  */
 const EVENT: Record<string, string> = { raised: 'Raised', details: 'Details', priced: 'Priced', instructed: 'Instructed', declined: 'Declined', reopened: 'Reopened', note: 'Note' };
-const LONDON = { timeZone: 'Europe/London' } as const;
-const fmtDay = (iso?: string) => iso ? new Date(iso).toLocaleDateString('en-GB', { ...LONDON, weekday: 'short', day: 'numeric', month: 'short' }) : '';
+const fmtDay = (iso?: string) => dayShort(iso);
 
 export default function VariationPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
   const { id } = use(params);
@@ -43,9 +43,10 @@ export default function VariationPage({ params, searchParams }: { params: Promis
     finally { setBusy(false); }
   }
 
-  if (missing) return <main className="wrap"><div className="empty">That variation could not be found.</div></main>;
-  if (!v) return <main className="wrap"><div className="empty" style={{ marginTop: 32 }}>Loading</div></main>;
+  if (missing) return <main className="wrap eng-page"><div className="empty">That variation could not be found.</div></main>;
+  if (!v) return <main className="wrap eng-page"><div className="empty" style={{ marginTop: 32 }}>Loading</div></main>;
   const project = getProject(v.projectId);
+  const back = safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(v.projectId)}`);
   const evidence = v.events.find(e => e.kind === 'raised')?.photos ?? [];
   const value = variationValue(v);
   const declinedWhy = v.instruction === 'declined' ? v.events.slice().reverse().find(e => e.kind === 'declined')?.note : undefined;
@@ -63,9 +64,9 @@ export default function VariationPage({ params, searchParams }: { params: Promis
 
   return <main className="wrap eng-page">
     <PageTitle title={`${v.reference} · Variation`} />
-    <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(v.projectId)}`)} className="back">&larr; {returnTo && viewName(safeViewReturn(returnTo, '')) ? backLabel(safeViewReturn(returnTo, '')) : project?.projectName ?? 'Project'}</Link>
+    <Link href={back} className="back">&larr; {backLabel(back, 'Site')}</Link>
     <div className="pagehead">
-      <div><h1 className="ref" style={{ fontSize: 22 }}>{v.reference}</h1><p className="sub">{v.location || 'Location not recorded'} · raised {fmtDay(v.raisedAt)} by {v.raisedBy}</p></div>
+      <div><h1 className="ref" style={{ fontSize: 22 }}>{v.reference}</h1><p className="sub">{project ? `${project.projectName} · ` : ''}{v.location || 'Location not recorded'} · raised {fmtDay(v.raisedAt)} by {v.raisedBy}</p></div>
       <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', fontSize: 12, color: 'var(--text-3)' }}><VariationTags v={v} /></span>
     </div>
 

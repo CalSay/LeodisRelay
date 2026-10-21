@@ -2,6 +2,8 @@ import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import type { Issue, Report, Variation } from './types';
 import { reportTypeOf } from './reportTypes';
+import { ISSUE_WORK as WORK } from './status';
+import { dateShort } from './dates';
 
 /**
  * Find a report, issue or variation by what someone remembers about it.
@@ -45,7 +47,6 @@ export const SEARCH_LIMIT = 25;
 export const MIN_QUERY = 2;
 const MAX_WORDS = 8;
 
-const WORK: Record<Issue['work'], string> = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Ready for verification', closed: 'Closed' };
 const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'With the office', instructed: 'Instructed', declined: 'Declined' };
 
 /** Lower case, no accents, and dashes read as spaces, so "Level-3" finds "level 3" and "VO 004" finds "VO-004". */
@@ -84,7 +85,7 @@ function group(hits: SearchHit[], phrase: string): SearchGroup {
   hits.sort((a, b) => rank(b, phrase) - rank(a, phrase) || b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
   return { hits: hits.slice(0, SEARCH_LIMIT), total: hits.length };
 }
-const day = (iso: string) => iso ? new Date(iso).toLocaleDateString('en-GB', { timeZone: 'Europe/London', day: 'numeric', month: 'short', year: 'numeric' }) : '';
+const day = (iso: string) => dateShort(iso);
 const history = (events: { note: string }[]) => events.map(e => e.note).filter(Boolean).join('\n');
 
 export function search(query: string, sources: SearchSources, principal: Principal, projectId?: string): SearchResults {

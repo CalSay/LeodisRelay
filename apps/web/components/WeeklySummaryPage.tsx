@@ -9,6 +9,7 @@ import { canManage } from '@/lib/auth/access';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { londonDay, shiftWeek, weekStart, type WeekIssue, type WeekReport, type WeekVariation, type WeeklySummary } from '@/lib/weeklySummary';
+import { dayShort } from '@/lib/dates';
 
 /**
  * One project's week, for the weekly site or client meeting: who was on site,
@@ -16,8 +17,7 @@ import { londonDay, shiftWeek, weekStart, type WeekIssue, type WeekReport, type 
  * already in RELAY and changes nothing.
  */
 
-const LONDON = { timeZone: 'Europe/London' } as const;
-const fmtDay = (ymd: string, year = false) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', { ...LONDON, weekday: 'short', day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}) });
+const fmtDay = (ymd: string, year = false) => dayShort(ymd, year);
 const fmtAt = (at: string) => fmtDay(londonDay(at));
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const KIND_WORD: Record<string, [string, string]> = { update: ['progress update', 'progress updates'], defect: ['defect', 'defects'], instruction: ['variation required', 'variations required'], access: ['access problem', 'access problems'] };
@@ -46,7 +46,7 @@ function VariationRows({ rows, empty, here }: { rows: WeekVariation[]; empty: st
   return <ul className="week-rows">{rows.map(v => <li key={v.id}>
     <span className="week-when">{fmtAt(v.at)}</span>
     <div><p><Link className="ref" href={withViewReturn(`/variations/${v.id}`, here)}>{v.reference}</Link> <span className={`tag ${v.status === 'Instructed' ? 'tag-sent' : 'tag-draft'}`}>{v.status}</span>
-      {v.workDone && v.status !== 'Instructed' && <span className="tag tag-alert">Done before instruction</span>}</p>
+      {v.workDone && v.status !== 'Instructed' && <span className="tag tag-alert">Done, not instructed</span>}</p>
       <p className="week-desc">{v.description}</p>
       {v.location && <p className="week-meta">{v.location}</p>}</div>
   </li>)}</ul>;
@@ -100,7 +100,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
     <div className="week-controls week-noprint">
       <label>Project<select value={projectId} onChange={e => setProjectId(e.target.value)}>
         <option value="">Choose a project</option>
-        {projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}
+        {projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} {p.projectName}</option>)}
       </select></label>
       <div className="week-step" role="group" aria-label="Choose the week">
         <button type="button" onClick={() => setWeek(w => shiftWeek(w, -1))}>&larr; Previous week</button>
