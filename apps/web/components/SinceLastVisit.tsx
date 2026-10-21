@@ -5,10 +5,10 @@ import Link from 'next/link';
 import { sinceLastVisit } from '@/lib/api';
 import { FIRST_LOOK_DAYS, type CatchUpIssue, type CatchUpVariation, type SinceLastVisit as CatchUp } from '@/lib/sinceLastVisit';
 import { withViewReturn } from '@/lib/viewNavigation';
+import { dayShort, whenShort } from '@/lib/dates';
 
-const LONDON = { timeZone: 'Europe/London' } as const;
-const fmtDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', { ...LONDON, weekday: 'short', day: 'numeric', month: 'short' });
-const fmtWhen = (iso: string) => new Date(iso).toLocaleString('en-GB', { ...LONDON, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const fmtDay = (ymd: string) => dayShort(ymd);
+const fmtWhen = (iso: string) => whenShort(iso);
 const short = (reference: string) => reference.split('-').slice(1).join('-');
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 /** Rows shown per group before "Show n more". */

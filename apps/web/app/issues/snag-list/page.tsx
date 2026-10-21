@@ -12,6 +12,7 @@ import { mediaId } from '@/lib/media';
 import { raisedPhoto, snagList, snagOwners } from '@/lib/snagList';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import './snag.css';
+import { dateShort } from '@/lib/dates';
 
 /**
  * A snag list for one project: the open issues a company or trade has to put
@@ -23,7 +24,7 @@ import './snag.css';
 const TRADES = ['Electrical', 'HVAC', 'P&H', 'Other / non-Leodis'] as const;
 const LONDON = { timeZone: 'Europe/London' } as const;
 const today = () => new Date().toLocaleDateString('en-CA', LONDON);
-const fmtDate = (ymd: string) => /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', { ...LONDON, day: 'numeric', month: 'short', year: 'numeric' }) : ymd;
+const fmtDate = (ymd: string) => dateShort(ymd) || ymd;
 
 /** Loaded eagerly, unlike the list thumbnails, so every photograph is there when the page prints. */
 function Thumb({ src, alt }: { src: string; alt: string }) {
@@ -80,7 +81,7 @@ export default function SnagListPage({ searchParams }: { searchParams: Promise<{
     <div className="snag-controls snag-noprint" role="group" aria-label="Choose what the snag list shows">
       <label>Project<select value={projectId} onChange={e => { setProjectId(e.target.value); setOwner(''); }}>
         <option value="">Choose a project</option>
-        {projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}
+        {projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} {p.projectName}</option>)}
       </select></label>
       <label>Company or person<select value={owner} onChange={e => setOwner(e.target.value)} disabled={!issues}>
         <option value="">Everyone</option>

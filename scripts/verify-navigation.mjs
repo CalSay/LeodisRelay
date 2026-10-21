@@ -95,9 +95,9 @@ try {
     // An issue opened from the engineer view keeps the name of where it came from.
     await page.locator('a').filter({hasText:'Cable tray lid missing'}).first().click();await page.waitForURL(/\/issues\//);
     check(await back(page).innerText()==='← Back to Issues',`${at}: an issue from Issues says Back to Issues`);
-    // Opened with no return path it names the project, as before.
+    // Opened with no return path it goes to the project's issues, and says so.
     await page.goto(`${base}/issues/${issue.id}`);await back(page).waitFor();
-    check(await back(page).innerText()==='← Tetley Hall - Block E',`${at}: with no return path the issue names its project`);
+    check(await back(page).innerText()==='← Back to Issues',`${at}: with no return path the issue says Back to Issues`);
     assert.deepEqual(errors,[],`${at}: page errors`);
     await context.close();
   }

@@ -1,4 +1,4 @@
-import type { ReportSummary } from "./types";
+import type { Issue, ReportSummary } from "./types";
 type Report = Omit<ReportSummary,'observationCount' | 'photoCount' | 'defectCount'>;
 
 /**
@@ -169,3 +169,18 @@ export function submissionStages(report: Report): Stage[] {
 export function toneClass(tone: Tone): string {
   return tone === "sent" ? "tag tag-sent" : tone === "alert" ? "tag tag-alert" : "tag tag-draft";
 }
+
+/**
+ * An issue's work status in the same words on every page and for every role.
+ * "Fixed, to check" is the one name for work put forward as complete that
+ * nobody else has checked yet (it was also "Ready for verification",
+ * "Awaiting verification" and "Verify" on different pages). Checking it is
+ * still called verifying, on the office's buttons.
+ */
+export const ISSUE_WORK: Record<Issue["work"], string> = {
+  open: "Open",
+  assigned: "Assigned",
+  in_progress: "In progress",
+  awaiting_verification: "Fixed, to check",
+  closed: "Closed",
+};

@@ -53,7 +53,7 @@ test('issue rows use the register\'s words, with work and confirmation as two fa
   assert.equal(column(rows, 'Last change'), '2026-10-12', 'the newest event, not the day raised');
   assert.equal(column(rows, 'Verification'), 'Not put forward as fixed');
   assert.equal(column(rows, 'Days past target', 2), undefined, 'a target of today is not late');
-  assert.equal(column(rows, 'Work', 2), 'Fixed, waiting for verification');
+  assert.equal(column(rows, 'Work', 2), 'Fixed, to check');
   assert.equal(column(rows, 'Confirmation', 2), 'Disputed');
   assert.equal(column(rows, 'Responsible company', 3), 'Unassigned');
   assert.equal(column(rows, 'Verification', 3), 'Verified and closed');

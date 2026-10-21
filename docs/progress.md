@@ -76,6 +76,54 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   everything else too (pages are already gzipped by Next); it needs a deploy.
   Add `verify-busy-projects.mjs` to the browser checks listed in `CLAUDE.md`.
 
+## 2026-10-21 — The same words on every page
+
+- Why: pages built separately over the day read like different products. A
+  cross-app pass under Cal's standing ask for a clear, professional UI, after
+  the navigation (#40), accessibility (#48, #53), office desk (#51) and home
+  screen (#54) passes. Every engineer page was read at 390px light and every
+  office page at 390px light and 1440px dark (text dump and screenshots of 32
+  pages), looking for one thing called by different names.
+- Decisions (Claude's):
+  - An issue put forward as fixed is "Fixed, to check" on every page and for
+    every role (`ISSUE_WORK` in lib/status.ts). It was also "Ready for
+    verification", "Awaiting verification", "Verify", "To verify", "Ready to
+    verify" and "Waiting for verification". The office's buttons keep the verb
+    "Verify", since that is what the office does. SharePoint's Work Status
+    column keeps "Awaiting verification" (a stored value, not screen words).
+  - Dates read one way, from lib/dates.ts: "Wed 21 Oct", "Wednesday 21
+    October 2026", "21 Oct 2026", "Wed 21 Oct, 14:05", UK time. They are
+    written from parts because Chromium and Node do not agree on en-GB
+    ("Wed, 21 Oct" against "Wed 21 Oct", "Sept" against "Sep"), so the same
+    date read differently from page to page. Gone: "11/10/2026" on an issue,
+    "2026-10-17" target dates on the office desk and engineer home, "Visit
+    2026-10-20" on the project page, "05 Oct" with a leading zero.
+  - Issue, variation and project pages share the header the rest of RELAY
+    has (the old Home / Companies / Projects bar is gone there), and their
+    Back link always says "Back to …"; without a return path it says "Back
+    to Issues" or "Back to Site", matching where it goes. The variation page
+    names its project in the line under the reference, which the Back link
+    used to do. Buttons on these pages no longer touch.
+  - A variation done before instruction is "Done, not instructed" on the
+    weekly summary too. Search keeps "With the office" for a waiting
+    variation, so it matches the variation page it opens.
+  - The issue spreadsheet's Work column says "Fixed, to check" like its
+    Verification column, and the office's attention lists tag such issues
+    "Fixed, to check" (their buttons still say "Verify").
+  - The project page says "Start a site update", "cards" and "Received", as
+    the engineer home does; the office says "cards", not "sections". Plurals
+    fixed: "1 reports", "Needs action hides 1 reports, 1 issues".
+  - Project lists on Snag list, Weekly summary, Photographs, Site diary and
+    Search name each project by number and name, as the other pages did.
+  - "Open issues by company" is "Issues by company", as its link, tab title
+    and Back link already said.
+- Help: the glossary term is now "Fixed, to check"; the office day and
+  closing-an-issue steps say so; What's new "The same words on every page".
+  The Help test now checks every status in `ISSUE_WORK` is explained.
+- Kept out of the report editor (another thread is adding a report type).
+  Still to align there: the editor's own date formats and the draft-conflict
+  and sent-elsewhere panels.
+
 ## 2026-10-21 — Report and inspection PDFs
 
 - Why: the PDF is what the office sends a client and keeps as the compliance

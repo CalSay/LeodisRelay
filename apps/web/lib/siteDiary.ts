@@ -4,6 +4,7 @@ import { canReadReport } from './auth/access';
 import type { ObservationType } from './fixtures';
 import type { CheckAnswer, Issue, Report, Variation } from './types';
 import { answerLabel, checkCounts, raisesIssue, reportName, reportTypeOf } from './reportTypes';
+import { ISSUE_WORK as WORK } from './status';
 
 /**
  * The living site diary (EXP-1): a project's story, day by day, made only from
@@ -87,7 +88,6 @@ export interface DiaryOptions { kind?: ObservationType | ''; words?: string; bef
 export interface DiarySources { reports: Report[]; issues: Issue[]; variations: Variation[] }
 
 const tidy = (text: string | undefined) => (text ?? '').trim().replace(/\s+/g, ' ');
-const WORK: Record<Issue['work'], string> = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Fixed, to check', closed: 'Closed' };
 const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined' };
 const issueStatus = (i: Issue) => i.confirmation === 'withdrawn' ? 'Withdrawn' : WORK[i.work];
 
