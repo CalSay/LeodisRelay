@@ -22,7 +22,8 @@ export function DeliveriesRow({ projectId, href }: { projectId: string; href: st
       .catch(() => {});
     return () => { cancelled = true; };
   }, [projectId]);
-  return <Link className="eng-row" href={href}><div className="main">
+  // Marked like a late row while a delivery is still to sort, as it is in the office's Needs attention.
+  return <Link className={`eng-row ${summary?.toSort ? 'late' : ''}`} href={href}><div className="main">
     <b>Deliveries</b>
     <span>{summary ? deliveryRowWords(summary) : 'Materials taken in, and any short or damaged'}</span>
   </div><span className="chev">›</span></Link>;

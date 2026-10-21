@@ -10,10 +10,13 @@ import { refreshIssues } from '@/lib/sharepoint/issues';
 import { refreshVariations } from '@/lib/sharepoint/variations';
 import { sharePointMode } from '@/lib/sharepoint/config';
 import { londonDay, weekStart, weeklySummary } from '@/lib/weeklySummary';
+import { talksFor } from '@/lib/toolboxTalkStore';
+import { permitsFor } from '@/lib/permitStore';
+import { deliveriesFor } from '@/lib/deliveryStore';
 
 export const dynamic = 'force-dynamic';
 
-/** One project's week: sent reports, issue and variation movements. Every role on the project may read it. */
+/** One project's week: sent reports, issue and variation movements, toolbox talks, permits and deliveries. Every role on the project may read it. */
 export async function GET(request: Request) {
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
@@ -27,5 +30,6 @@ export async function GET(request: Request) {
   if (!project) return NextResponse.json({ reason:'This project is not open to you.' },{ status:404 });
   const today = londonDay(new Date());
   const monday = weekStart(url.searchParams.get('week') ?? undefined, today);
-  return jsonResponse(request, weeklySummary({ reports:listReports(projectId), issues:listIssues(projectId), variations:listVariations(projectId) }, guard.principal, projectId, monday, today));
+  return jsonResponse(request, weeklySummary({ reports:listReports(projectId), issues:listIssues(projectId), variations:listVariations(projectId),
+    talks:talksFor(projectId).talks, permits:permitsFor(projectId).permits, deliveries:deliveriesFor(projectId).deliveries }, guard.principal, projectId, monday, today));
 }

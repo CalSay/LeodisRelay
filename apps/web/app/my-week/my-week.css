@@ -29,6 +29,7 @@
 .mw-rows p{margin:0;}
 .mw-rows p:first-child{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12.5px;margin-bottom:3px;}
 .mw-rows a.ref{color:var(--brass);text-decoration:underline;text-underline-offset:3px;}
+.mw-rows a.mw-rec{color:var(--brass);font-size:14.5px;font-weight:600;text-decoration:underline;text-underline-offset:3px;}
 .mw-time{font:500 11.5px var(--mono);color:var(--text-3);}
 .mw-desc{font-size:15px;font-weight:500;line-height:1.4;}
 .mw-meta{font-size:13px;color:var(--text-2);margin-top:2px !important;overflow-wrap:anywhere;}
@@ -45,5 +46,5 @@
   html,body{background:#fff !important;color:#111;color-scheme:light;}
   .appbar,.mw-noprint,.install-help{display:none !important;}
   .eng-page.mw-page{padding:0;max-width:none;}
-  .mw-rows a.ref{color:#111;text-decoration:none;}
+  .mw-rows a.ref,.mw-rows a.mw-rec{color:#111;text-decoration:none;}
 }

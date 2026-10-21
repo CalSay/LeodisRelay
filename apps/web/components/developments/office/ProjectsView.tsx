@@ -92,6 +92,8 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   const attnReports = [...s.failed, ...s.pendingReview, ...s.returned];
   const attnIssues = [...new Map([...s.overdue, ...s.disputed, ...s.verify, ...s.unassigned].map(i => [i.id, i])).values()];
   const attnVariations = [...new Map([...s.exposedVariations, ...s.unpricedVariations].map(v => [v.id, v])).values()];
+  // Safety, permits and deliveries for this project, the same lines as the sheet's Needs attention, so a phone (which shows this column, not the sheet) sees them too.
+  const onSite = siteItems(ctx, s);
   const closed = s.issues.filter(i => !isActive(i));
   const settled = s.variations.filter(v => v.instruction !== 'pending');
   return <div className="col">
@@ -99,9 +101,10 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
     {/* A phone shows this column in place of the project sheet, so the project's pages come with it. */}
     <div className="phone-only"><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /></div>
     <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
-      {([['action', `Needs action · ${s.needsAction}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
+      {([['action', `Needs action · ${s.needsAction + onSite.length}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
     </div>
     {filter === 'action' && <>
+      {onSite.length > 0 && <><div className="grp">Safety, permits and deliveries<i>{onSite.length}</i></div>{onSite.map(i => <Link key={i.key} className="arow" href={i.go}><span className="ref">{i.projectNumber}</span><span className="nm">{i.title}<small>{i.sub}</small></span><Tag {...i.tag} /></Link>)}</>}
       <div className="grp">Reports needing attention<i>{attnReports.length}</i></div>
       {attnReports.length ? attnReports.map(reportRow) : <div className="empty" style={{ padding: 14 }}>{s.reviewOn ? 'Nothing waits for review or correction.' : 'No report needs attention.'}</div>}
       <div className="grp">Issues needing action<i>{attnIssues.length} of {s.active.length}</i></div>
@@ -123,7 +126,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
       {settled.length ? settled.map(variationRow) : <div className="empty" style={{ padding: 14 }}>No variations instructed or declined yet.</div>}
     </>}
     {filter === 'drafts' && (s.drafts.length ? s.drafts.map(draftRow) : <div className="empty">No drafts saved to the server on this project.</div>)}
-    <div className="colpad sticky-foot"><div className="rowsub">{filter === 'action' ? `Needs action hides ${count(s.reports.length - attnReports.length, 'report')}, ${count(s.issues.length - attnIssues.length, 'issue')} and ${count(s.variations.length - attnVariations.length, 'variation')} that need nobody.` : ''} Reports, issues and variations share one column because the office reads them as one stream. Work held only on an engineer’s device is not visible here.</div></div>
+    <div className="colpad sticky-foot"><div className="rowsub">{filter === 'action' ? `${onSite.length ? 'Safety, permit and delivery lines each open their own page. ' : ''}Needs action hides ${count(s.reports.length - attnReports.length, 'report')}, ${count(s.issues.length - attnIssues.length, 'issue')} and ${count(s.variations.length - attnVariations.length, 'variation')} that need nobody.` : ''} Reports, issues and variations share one column because the office reads them as one stream. Work held only on an engineer’s device is not visible here.</div></div>
   </div>;
 }
 
@@ -176,6 +179,12 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
     <LatestReports ctx={ctx} reports={latest} showProject /></div>
     <p className="rowsub" style={{ marginTop: 16 }}>A report is <b>received</b> when the server has it and on file from then on. The email to the project manager is a notification that it came in, and <b>read</b> means someone in the office acknowledged it. Choose a project to drill in.</p>
   </div>;
+}
+
+/** A project's safety, permit and delivery lines for Needs attention, in the order model.ts `attention` gives them. */
+function siteItems(ctx: Ctx, s: ProjectStats) {
+  const safety = safetyItems([s], ctx.snap?.safety, officeReturn(ctx));
+  return [...safety.filter(i => i.kind !== 'inspection'), ...permitItems([s], ctx.snap?.permits, officeReturn(ctx)), ...safety.filter(i => i.kind === 'inspection'), ...deliveryItems([s], ctx.snap?.deliveries, officeReturn(ctx))];
 }
 
 function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectStats; limit: number; skipActions?: boolean }) {

@@ -37,7 +37,7 @@ test('places only my sent reports on their visit day, across projects, never any
   assert.equal(tue.projects[1]!.reports[0]!.photos, 1);
   assert.deepEqual(tue.projects[1]!.reports[0]!.locations, ['Level 3 riser']);
   assert.equal(w.days[2]!.projects.length, 0, 'another engineer\'s report is not mine');
-  assert.deepEqual(w.totals, { days:1, projects:2, reports:2, flagged:0, issueUpdates:0, drafts:0 });
+  assert.deepEqual(w.totals, { days:1, projects:2, reports:2, flagged:0, issueUpdates:0, drafts:0, records:0 });
   assert.equal(w.current, false);
 });
 
@@ -58,7 +58,7 @@ test('my drafts for the week are listed apart and do not make a day with records
   ] }, engineer, MONDAY, TODAY);
   assert.deepEqual(w.days[3]!.projects[0]!.drafts, [{ id:'draft', reference:'011LME-SPR-001', cards:2, correction:false, typeName:'Site update' }]);
   assert.equal(w.days[4]!.projects[0]!.drafts[0]!.correction, true);
-  assert.deepEqual(w.totals, { days:0, projects:0, reports:0, flagged:0, issueUpdates:0, drafts:2 });
+  assert.deepEqual(w.totals, { days:0, projects:0, reports:0, flagged:0, issueUpdates:0, drafts:2, records:0 });
 });
 
 test('defects I flagged and updates I made on an issue count, by UK day; report sightings and office decisions do not', () => {
@@ -72,7 +72,7 @@ test('defects I flagged and updates I made on an issue count, by UK day; report 
   ] }, engineer, MONDAY, TODAY);
   const kinds = w.days.map(d => d.projects.flatMap(p => p.issues.map(i => `${i.id}:${i.kind}`)));
   assert.deepEqual(kinds, [[], [], ['flagged:flagged'], ['worked:progress'], ['worked:fixed'], [], []]);
-  assert.deepEqual(w.totals, { days:3, projects:1, reports:0, flagged:1, issueUpdates:2, drafts:0 });
+  assert.deepEqual(w.totals, { days:3, projects:1, reports:0, flagged:1, issueUpdates:2, drafts:0, records:0 });
 });
 
 test('the timesheet text names every weekday up to today, weekends only with records, and leaves drafts out', () => {
@@ -102,4 +102,34 @@ test('days are spelt out the same way on the server and in the browser', () => {
   assert.equal(dayLabel('2026-10-12'), 'Mon 12 Oct');
   assert.equal(dayLabel('2026-10-18', true), 'Sunday 18 October');
   assert.equal(dayLabel('2026-03-29', true), 'Sunday 29 March', 'the clocks going forward');
+});
+
+test('lists the toolbox talks, permits and deliveries I recorded, closed or sorted, never withdrawn ones or anyone else\'s', () => {
+  const sign = (p: Principal, at: string) => ({ by:p.name, byId:p.id, at });
+  const w = myWeek(projects, { ...none,
+    talks:[
+      { id:'t1', projectId:'p1', day:'2026-10-13', topic:'Safe isolation', givenBy:'Sam Spark', attendees:['Jo', 'Ali'], ...sign(engineer, '2026-10-13T06:30:00Z') },
+      { id:'t2', projectId:'p1', day:'2026-10-13', topic:'Mistake', givenBy:'Sam Spark', attendees:['Jo'], ...sign(engineer, '2026-10-13T06:40:00Z'), withdrawn:{ ...sign(engineer, '2026-10-13T06:45:00Z'), reason:'typo' } },
+      { id:'t3', projectId:'p1', day:'2026-10-14', topic:'Theirs', givenBy:'Pat Pipe', attendees:['Jo'], ...sign(other, '2026-10-14T06:30:00Z') },
+    ],
+    permits:[
+      // Recorded by someone else, closed by me the next day (UK time: 23:30 BST is still the 14th).
+      { id:'p1', projectId:'p1', kind:'hot-works', reference:'HW-1', work:'Brazing  riser', issuedBy:'Dana', heldBy:'Pat Pipe', day:'2026-10-13', ends:'2026-10-13T17:00', ...sign(other, '2026-10-13T07:00:00Z'), closed:sign(engineer, '2026-10-14T22:30:00Z') },
+      { id:'p2', projectId:'p1', kind:'electrical-isolation', work:'DB-3', issuedBy:'Dana', heldBy:'Sam Spark', day:'2026-10-13', ends:'2026-10-13T23:59', ...sign(engineer, '2026-10-13T07:30:00Z') },
+    ],
+    deliveries:[
+      { id:'d1', projectId:'p2', supplier:'Edmundson Electrical', items:'6 reels', day:'2026-10-15', receivedBy:'Sam Spark', condition:'short', problem:'2 short', ...sign(engineer, '2026-10-15T09:00:00Z'), sorted:{ ...sign(engineer, '2026-10-15T15:00:00Z'), note:'Rest came at 3' } },
+    ],
+  }, engineer, MONDAY, TODAY);
+  const tue = w.days[1]!.projects[0]!, wed = w.days[2]!.projects[0]!, thu = w.days[3]!.projects[0]!;
+  assert.deepEqual(tue.records.map(r => [r.kind, r.title]), [['talk', 'Toolbox talk: Safe isolation'], ['permit', 'Permit recorded: Electrical isolation']]);
+  assert.equal(tue.records[0]!.detail, '2 attended');
+  assert.deepEqual(wed.records.map(r => [r.kind, r.title, r.detail]), [['permit-closed', 'Permit closed: Hot works HW-1', 'Brazing riser']]);
+  assert.equal(thu.projectId, 'p2');
+  assert.deepEqual(thu.records.map(r => r.kind), ['delivery', 'delivery-sorted']);
+  assert.equal(thu.records[0]!.detail, 'Short · 6 reels');
+  assert.deepEqual(w.totals, { days:3, projects:2, reports:0, flagged:0, issueUpdates:0, drafts:0, records:4 });
+  const text = myWeekText(w, 'Sam Spark', TODAY);
+  assert.match(text, /Tue 13 Oct: 011LME Tetley Hall \(1 toolbox talk, 1 permit\)/);
+  assert.match(text, /Thu 15 Oct: 009LME Aire Court \(1 delivery\)/, 'recorded and sorted the same day is one delivery');
 });
