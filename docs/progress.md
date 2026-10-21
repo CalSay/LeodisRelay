@@ -27,7 +27,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (7,126px at 390px); three weeks back took 6 presses and 19,567px. Now one
   choice, under 0.2 s, the day starting 519px down (773px at 390px). The Day
   list has 403 entries; page load unchanged (no API change).
-- Checks: typecheck, `npm test` (146 + 475, two new unit tests), build;
+- Checks: typecheck, `npm test` (146 + 480 after rebasing on #105, two new unit tests), build;
   browser checks one at a time: verify-photo-library (51, 13 new for the day),
   verify-help, verify-accessibility, verify-first-time-use,
   verify-home-and-sheet, verify-navigation, verify-snag-list,
