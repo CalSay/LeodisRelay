@@ -37,7 +37,7 @@ function statusLabel(issue: Issue): string {
   if (issue.confirmation === "withdrawn") return "Withdrawn";
   switch (issue.work) {
     case "awaiting_verification":
-      return "Verify";
+      return "Fixed, to check";
     case "in_progress":
       return "In progress";
     case "assigned":
@@ -88,7 +88,7 @@ export function IssueRegister({ issues, returnTo }: { issues: Issue[] | null; re
       <div className="sec-controls">
         <span className="lbl">
           Issues
-          {toVerify > 0 ? ` · ${toVerify} awaiting verification` : ""}
+          {toVerify > 0 ? ` · ${toVerify} fixed, to check` : ""}
         </span>
         <div className="segs" role="group" aria-label="Filter issues">
           {FILTERS.map((option) => (

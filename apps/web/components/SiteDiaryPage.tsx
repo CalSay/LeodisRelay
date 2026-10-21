@@ -10,6 +10,7 @@ import { canManage } from '@/lib/auth/access';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { DIARY_KINDS, isDiaryKind, type DiaryCard, type DiaryEntry, type SiteDiary } from '@/lib/siteDiary';
 import type { ObservationType } from '@/lib/fixtures';
+import { dateShort, dayLong, whenShort } from '@/lib/dates';
 
 /**
  * A project's living site diary: every visit, day by day, made from the
@@ -17,10 +18,9 @@ import type { ObservationType } from '@/lib/fixtures';
  * line links back to the report revision it came from.
  */
 
-const LONDON = { timeZone: 'Europe/London' } as const;
-const fmtDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', { ...LONDON, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-const fmtShort = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', { ...LONDON, day: 'numeric', month: 'short', year: 'numeric' });
-const fmtSent = (at: string) => { const d = new Date(at); return Number.isNaN(d.getTime()) ? '' : `${d.toLocaleDateString('en-GB', { ...LONDON, day: 'numeric', month: 'short' })}, ${d.toLocaleTimeString('en-GB', { ...LONDON, hour: '2-digit', minute: '2-digit' })}`; };
+const fmtDay = (ymd: string) => dayLong(ymd);
+const fmtShort = (ymd: string) => dateShort(ymd);
+const fmtSent = (at: string) => whenShort(at);
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const KIND: Record<ObservationType, [string, string]> = { update: ['Progress', 'progress'], defect: ['Defect', 'defect'], access: ['Access problem', 'access'], instruction: ['Variation required', 'variation'], check: ['Check', 'progress'] };
 const PHOTOS_SHOWN = 4;
@@ -144,7 +144,7 @@ export function SiteDiaryPage({ initialProject, initialFind, initialShow, return
     <div className="diary-controls">
       <label>Project<select value={projectId} onChange={e => setProjectId(e.target.value)}>
         <option value="">Choose a project</option>
-        {projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}
+        {projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} {p.projectName}</option>)}
       </select></label>
       <label>Find<input type="text" inputMode="search" value={find} onChange={e => setFind(e.target.value)} placeholder="Location, words, name or reference" enterKeyHint="search" autoComplete="off" /></label>
       <div className="diary-show" role="group" aria-label="Show">

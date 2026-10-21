@@ -50,7 +50,7 @@ try {
       const page=await desk.newPage();page.on('pageerror',e=>errors.push(e.message));
       await page.goto(`${base}/office#/projects`);await group(page,'verify').waitFor();
       const label=`${colorScheme} ${width}px`;
-      assert.deepEqual(await page.locator('.act h4').allTextContents(),['New reports','Not yet read','Unassigned issues','Ready to verify'],`${label}: four groups in order`);checks++;
+      assert.deepEqual(await page.locator('.act h4').allTextContents(),['New reports','Not yet read','Unassigned issues','Fixed, to check'],`${label}: four groups in order`);checks++;
       assert.deepEqual([await count(page,'new'),await count(page,'notAck'),await count(page,'unassigned'),await count(page,'verify')],[2,2,1,1],`${label}: each group's count`);checks++;
       assert.equal(await group(page,'notAck').locator('.rmenu > div').first().locator('b').textContent().then(t=>t.includes('Site Engineer')),true,`${label}: unread rows name the engineer`);checks++;
       assert.equal(await group(page,'unassigned').getByText('Missing fire stopping').count(),1,`${label}: the unassigned issue is listed`);checks++;
@@ -78,7 +78,7 @@ try {
   await open('unassigned');await page.getByRole('heading',{name:'Issues'}).waitFor();
   assert.match(await onChip(page),/^Unassigned · 1$/,'unassigned opens Issues on Unassigned');checks++;
   await open('verify');await page.getByRole('heading',{name:'Issues'}).waitFor();
-  assert.match(await onChip(page),/^To verify · 1$/,'ready to verify opens Issues on To verify');checks++;
+  assert.match(await onChip(page),/^Fixed, to check · 1$/,'fixed, to check opens Issues on Fixed, to check');checks++;
   // Acknowledging from the group takes the report out of it.
   await page.goto(`${base}/office#/projects`);await group(page,'notAck').waitFor();
   await group(page,'notAck').getByRole('button',{name:'Acknowledge'}).first().click();

@@ -94,8 +94,8 @@ try {
 
     // Issues: an empty filter says what it means.
     await page.goto(`${base}/office#/issues`);await page.locator('table.reg tbody tr.clickable').first().waitFor();
-    await page.locator('.filters .chip',{hasText:/^To verify ·/}).click();
-    await page.locator('table.reg td.empty',{hasText:'Nothing is waiting to be verified.'}).waitFor();checks++;
+    await page.locator('.filters .chip',{hasText:/^Fixed, to check ·/}).click();
+    await page.locator('table.reg td.empty',{hasText:'Nothing is waiting to be checked.'}).waitFor();checks++;
     await save(page,'issues',width,colorScheme);
 
     // Search opened on its own: Back goes to the office.

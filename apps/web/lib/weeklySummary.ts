@@ -3,6 +3,7 @@ import { canReadReport } from './auth/access';
 import type { ObservationType } from './fixtures';
 import type { Issue, Report, Variation } from './types';
 import { checkCounts, reportName, reportTypeOf } from './reportTypes';
+import { ISSUE_WORK as WORK } from './status';
 
 /**
  * A project's week on one page: who was on site, what they reported, which
@@ -73,7 +74,6 @@ export interface WeeklySummary {
   variationsInstructed: WeekVariation[];
 }
 
-const WORK: Record<Issue['work'], string> = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Fixed, to check', closed: 'Closed' };
 const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined' };
 const emptyKinds = (): Record<ObservationType, number> => ({ update: 0, defect: 0, instruction: 0, access: 0, check: 0 });
 const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');

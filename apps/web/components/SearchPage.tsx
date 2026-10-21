@@ -83,7 +83,7 @@ export function SearchPage({ initialQuery, initialProject, returnTo }: { initial
       <label htmlFor="search-project">Project
         <select id="search-project" value={project} onChange={e => setProject(e.target.value)}>
           <option value="">All projects</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}
+          {projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} {p.projectName}</option>)}
         </select>
       </label>
     </form>

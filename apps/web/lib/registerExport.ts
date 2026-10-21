@@ -52,7 +52,7 @@ export interface ExportContext {
 const dayOf = (iso: string | undefined): string | undefined => iso && /^\d{4}-\d{2}-\d{2}/.test(iso) ? iso.slice(0, 10) : undefined;
 const daysBetween = (from: string, to: string): number => Math.round((Date.parse(to) - Date.parse(from)) / 86400000);
 
-const WORK: Record<Issue['work'], string> = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Fixed, waiting for verification', closed: 'Closed' };
+const WORK: Record<Issue['work'], string> = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Fixed, to check', closed: 'Closed' };
 
 export const ISSUE_COLUMNS = ['Reference', 'Project number', 'Project', 'Issue', 'Action needed', 'Location', 'Trade', 'Raised on', 'Raised from', 'Raised by', 'Responsible company', 'Target date', 'Days past target', 'Work', 'Verification', 'Confirmation', 'Last change'] as const;
 

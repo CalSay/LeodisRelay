@@ -11,9 +11,11 @@ import { PhotoImage } from '@/components/PhotoImage';
 import { uploadPhotos } from '@/lib/localMedia';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { canManage } from '@/lib/auth/access';
-import { backLabel, safeViewReturn, viewName } from '@/lib/viewNavigation';
+import { backLabel, safeViewReturn } from '@/lib/viewNavigation';
 import { confirmationLabel } from '@/lib/issueConfirmation';
 import { eventProvenance } from '@/lib/issueProvenance';
+import { ISSUE_WORK } from '@/lib/status';
+import { dateShort } from '@/lib/dates';
 
 /**
  * One issue, across every visit that touched it.
@@ -27,13 +29,7 @@ import { eventProvenance } from '@/lib/issueProvenance';
  * tracker starts lying.
  */
 
-const WORK_LABEL: Record<Issue["work"], string> = {
-  open: "Open",
-  assigned: "Assigned",
-  in_progress: "In progress",
-  awaiting_verification: "Awaiting verification",
-  closed: "Closed",
-};
+const WORK_LABEL = ISSUE_WORK;
 
 // Provisional reads by whether review is in use (the API says); see confirmationLabel.
 const CONFIRM_LABEL: Record<Exclude<Issue["confirmation"], "provisional">, string> = {
@@ -109,30 +105,29 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
 
   if (missing) {
     return (
-      <main className="wrap">
+      <main className="wrap eng-page">
         <div className="empty">That issue could not be found.</div>
       </main>
     );
   }
   if (!issue) {
     return (
-      <main className="wrap">
+      <main className="wrap eng-page">
         <div className="empty" style={{ marginTop: 32 }}>Loading</div>
       </main>
     );
   }
 
   const project = getProject(issue.projectId);
+  const back = safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(issue.projectId)}&view=issues`);
   const canClose = issue.work === "awaiting_verification";
   const isClosed = issue.work === "closed";
   const isWithdrawn = issue.confirmation === "withdrawn";
 
   return (
-    <main className="wrap">
+    <main className="wrap eng-page">
       <PageTitle title={`${issue.reference} · Issue`} />
-      <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(issue.projectId)}&view=issues`)} className="back">
-        &larr; {returnTo && viewName(safeViewReturn(returnTo, '')) ? backLabel(safeViewReturn(returnTo, '')) : project?.projectName ?? "Project"}
-      </Link>
+      <Link href={back} className="back">&larr; {backLabel(back, 'Issues')}</Link>
 
       <IssueSyncStatus issue={issue} />
       <div className="pagehead">
@@ -159,7 +154,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         </div>
         <div className="tb-cell">
           <dt>Raised</dt>
-          <dd className="ref">{new Date(issue.raisedAt).toLocaleDateString("en-GB")}</dd>
+          <dd className="ref">{dateShort(issue.raisedAt)}</dd>
         </div>
       </dl>
       <section className="eng-panel">
@@ -206,7 +201,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
             </span>
             <span className="row-end">
               <span className="row-time">
-                {new Date(event.at).toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+                {dateShort(event.at, "auto")}
               </span>
             </span>
           </div>

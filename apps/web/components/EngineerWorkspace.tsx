@@ -16,12 +16,13 @@ import { IndividualDefect } from './IndividualDefect';
 import { SinceLastVisit } from './SinceLastVisit';
 import { SiteNotesRow } from './SiteNotesRow';
 import { PageTitle } from './PageTitle';
-import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
+import { ISSUE_WORK, acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
 import { fmtMoney, variationValue } from '@/lib/variations';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { withViewReturn } from '@/lib/viewNavigation';
 import { CHECKLIST_TYPES, INSPECTED_MAX, inspectedName, reportTypeOf, type ReportTypeDef, type ReportTypeId } from '@/lib/reportTypes';
 import { useWhatsNewCount } from './useWhatsNew';
+import { dateShort, dayShort, whenShort } from '@/lib/dates';
 
 /**
  * The same words the office uses. A report is received when the server has
@@ -38,11 +39,10 @@ function ReportTags({r}:{r:ReportSummary}) {
     {delivery && <span className={toneClass(delivery.tone)}>{delivery.label}</span>}
   </>;
 }
-const WORK: Record<Issue['work'], string> = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Ready for verification', closed: 'Closed' };
 function IssueTags({i}:{i:Issue}) {
   if (i.confirmation === 'withdrawn') return <span className="tag tag-draft">Withdrawn</span>;
   if (i.work === 'closed') return <span className="tag tag-sent">Closed</span>;
-  return <><span className={`tag ${i.confirmation === 'disputed' ? 'tag-alert' : 'tag-draft'}`}>{WORK[i.work]}</span>{i.owner.trim() ? <span>{i.owner}{i.targetDate ? ` · target ${i.targetDate}` : ''}</span> : <span>not yet assigned</span>}</>;
+  return <><span className={`tag ${i.confirmation === 'disputed' ? 'tag-alert' : 'tag-draft'}`}>{ISSUE_WORK[i.work]}</span>{i.owner.trim() ? <span>{i.owner}{i.targetDate ? ` · target ${dateShort(i.targetDate, 'auto') || i.targetDate}` : ''}</span> : <span>not yet assigned</span>}</>;
 }
 /** The office's answer on a variation the engineer raised. */
 export function VariationTags({v}:{v:Variation}) {
@@ -53,11 +53,10 @@ export function VariationTags({v}:{v:Variation}) {
   return <><span className="tag tag-draft">With the office</span><span>not yet priced</span></>;
 }
 
-const LONDON = { timeZone: 'Europe/London' } as const;
-const fmtWhen = (iso?: string) => iso ? new Date(iso).toLocaleString('en-GB', { ...LONDON, weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+const fmtWhen = (iso?: string) => whenShort(iso);
 /** A visit day, with its year when it is not this year, since the list pages back through older reports. */
-const fmtVisit = (day: string) => { const d = new Date(`${day}T12:00:00Z`); return Number.isNaN(d.getTime()) ? day : d.toLocaleDateString('en-GB', { ...LONDON, weekday: 'short', day: 'numeric', month: 'short', ...(day.slice(0, 4) === new Date().toISOString().slice(0, 4) ? {} : { year: 'numeric' }) }); };
-const fmtDay = (iso?: string) => iso ? new Date(iso).toLocaleDateString('en-GB', { ...LONDON, weekday: 'short', day: 'numeric', month: 'short' }) : '';
+const fmtVisit = (day: string) => dayShort(day) || day;
+const fmtDay = (iso?: string) => dayShort(iso);
 
 type View = 'home' | 'projects' | 'issues' | 'reports' | 'defect';
 const viewOf = (value?:string):View => ['projects','issues','reports','defect'].includes(value ?? '') ? value as View : 'home';
