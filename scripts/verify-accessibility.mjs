@@ -60,6 +60,7 @@ const smallAllowed=[
   'label.choice input[type="radio"]', // the no-signal page's report types: the whole label is the target
   '.sigway-options input[type="radio"]', // draw or type a signature: the whole label is the target
   'label.btn input[type="file"]', // the no-signal page's hidden file inputs; the label around them is the button
+  '.glance-open',               // the office overview's project name: it stretches over its whole row, which is the target
 ];
 const port=4344,base=`http://127.0.0.1:${port}`;let output='';
 const server=spawn(process.execPath,[resolve('node_modules/next/dist/bin/next'),'start','-p',String(port),'-H','127.0.0.1'],{cwd:resolve('apps/web'),windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,NODE_ENV:'production',ENTRA_TENANT_ID:'00000000-0000-0000-0000-000000000001',ENTRA_CLIENT_ID:'00000000-0000-0000-0000-000000000002',ENTRA_CLIENT_SECRET:'synthetic-a11y-check',ENTRA_REDIRECT_URI:`${base}/api/auth/callback`}});
@@ -89,7 +90,8 @@ async function audit(page,label,{phone,ring,desk}){
     // Tab through the page: every stop shows a ring.
     await page.evaluate(()=>{document.activeElement?.blur();window.scrollTo(0,0);});const bare=[];
     for(let k=0;k<30;k++){await page.keyboard.press('Tab');const f=await page.evaluate(()=>{const e=document.activeElement;if(!e||e===document.body)return null;if(!e.matches(':focus'))return {ring:true}; // in a part the browser draws, such as a date's calendar button
-const shows=el=>{const cs=getComputedStyle(el);return (cs.outlineStyle!=='none'&&parseFloat(cs.outlineWidth)>0)||cs.boxShadow!=='none';};const around=e.closest('label');return {ring:shows(e)||(!!around&&shows(around)),name:`${e.tagName.toLowerCase()}${e.type?`[${e.type}]`:''} "${(e.getAttribute('aria-label')||e.textContent||'').trim().slice(0,30)}"`};});if(!f)break;if(!f.ring)bare.push(f.name);}
+const shows=(el,part)=>{const cs=getComputedStyle(el,part);return (cs.outlineStyle!=='none'&&parseFloat(cs.outlineWidth)>0)||cs.boxShadow!=='none';};const around=e.closest('label');return {ring:shows(e)||shows(e,'::after')||(!!around&&shows(around)), // ::after: a link stretched over its row draws the ring round the row
+name:`${e.tagName.toLowerCase()}${e.type?`[${e.type}]`:''} "${(e.getAttribute('aria-label')||e.textContent||'').trim().slice(0,30)}"`};});if(!f)break;if(!f.ring)bare.push(f.name);}
     check(!bare.length,`${label}: a visible focus ring at every stop (${bare.join(', ')})`);
     await page.evaluate(()=>document.activeElement?.blur());
   }

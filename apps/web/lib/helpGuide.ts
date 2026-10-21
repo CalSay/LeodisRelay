@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-last-week-summary', added: '2026-10-21', audience: 'office', title: 'Last week\'s summary from the office overview',
+    text: 'Each project in "Where each project stands" now has "Last week\'s summary" under its name. It opens that project\'s Weekly summary on last Monday to Sunday, ready for a Monday look back or to print for the client. Pick another project at the top of the summary and it keeps the same week; Back returns to the overview. The summary\'s heading says "last week" beside the dates, so it is not mistaken for this week.',
+    link: { label: 'Open the office overview', href: '/office' } },
   { id: 'quicker-inspections', added: '2026-10-21', audience: 'site', title: 'Quicker inspections',
     text: 'On a phone an inspection now opens at the first check still to answer. Tap Satisfactory or Not applicable and the next check opens by itself, with no "Next check" to tap; after the last one you go straight to Check & sign. The check you answered folds to one line that says your answer: tap it to change the answer or add a note or photo. Action needed stays open for you to fill in, and its recent places are now a row of small buttons, with places already used on this inspection first. A 12-check handover inspection with three actions took 33 taps instead of 43. Checked in a phone-sized browser, not on a real phone.',
     link: { label: 'Open your home screen', href: '/engineer' } },
@@ -459,7 +462,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'Where review is off, issues read "As reported" and stand until someone confirms or withdraws them.',
     ] },
     { id: 'meetings', heading: 'For the site meeting', ordered: false, steps: [
-      'Weekly summary puts a project\'s week on one page. Snag lists print the open issues for one company or trade. Site diary reads back every visit.',
+      'Weekly summary puts a project\'s week on one page. "Last week\'s summary" under each project on the office overview opens last week\'s straight away. Snag lists print the open issues for one company or trade. Site diary reads back every visit.',
       'Issues by company is the chase list; Site coverage shows which live projects have gone quiet.',
       'A project\'s own pages (Weekly summary, Site diary, Photographs, Notes for the next visit, Issues over time, Before handover) are on its project sheet, under its reports. On a phone they come after the project\'s register.',
     ], safetySteps: [
