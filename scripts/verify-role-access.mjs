@@ -145,6 +145,34 @@ try {
   assert.equal(health.status,200,'Health probe should answer unauthenticated'); checks++;
   assert.deepEqual(await health.json(),{status:'ok'},'Health probe should disclose nothing else'); checks++;
 
+  // Security review (2026-10-21). A change posted from another site is refused
+  // before the route runs, even with a signed-in cookie; the same change from
+  // RELAY's own address still works.
+  await status('/api/issues/issue-http','Manager',403,{...post({kind:'confirm',note:'Cross-site'}),headers:{'content-type':'application/json',origin:'https://evil.example','sec-fetch-site':'cross-site'}});
+  await status('/api/issues/issue-http','Manager',403,{...post({kind:'confirm',note:'Cross-site'}),headers:{'content-type':'text/plain',origin:'https://evil.example'}});
+  await status('/api/auth/signout','Engineer',403,{method:'POST',headers:{origin:'https://evil.example'}});
+  await status('/api/issues/issue-http','Engineer',200,{...post({kind:'progress',note:'Same site'}),headers:{'content-type':'application/json',origin:base,'sec-fetch-site':'same-origin'}});
+  // Every answer says it may not be framed, sniffed or sent with its address to other sites.
+  for (const [path,role] of [['/signin','forged'],['/engineer','Engineer'],['/api/reports','Engineer'],[`/api/media/${submittedPhoto}`,'Engineer']]) {
+    const headers = (await call(path,role)).headers;
+    assert.match(headers.get('content-security-policy') ?? '',/frame-ancestors 'none'/,path); checks++;
+    assert.equal(headers.get('x-frame-options'),'DENY',path); checks++;
+    assert.equal(headers.get('x-content-type-options'),'nosniff',path); checks++;
+    assert.equal(headers.get('referrer-policy'),'strict-origin-when-cross-origin',path); checks++;
+    assert.equal(headers.get('x-powered-by'),null,path); checks++;
+  }
+  // A sign-in link cannot carry its own words onto the sign-in screen.
+  const phishing = await (await status(`/signin?error=${encodeURIComponent('Your account is locked. Ring 0113 000 0000.')}`,'forged',200)).text();
+  // (Next's own routing data repeats the address; what matters is the words shown.)
+  assert.equal(/role="alert"[^>]*>([^<]*)</.exec(phishing)?.[1],'Sign-in could not be completed. Please try again.','Sign-in screen showed text from the address'); checks++;
+  const microsoft = await (await status('/api/auth/callback?error=access_denied&error_description=Ring+0113+000+0000','forged',307)).headers.get('location');
+  assert.equal(microsoft,'/signin?error=microsoft'); checks++;
+  // Signed in, a return path that a browser would turn into another site's address stays on RELAY.
+  for (const sneaky of ['/%09/evil.example','/%0a/evil.example','/%5Cevil.example']) {
+    const r = await status(`/signin?returnTo=${sneaky}`,'Engineer',307);
+    assert.equal(r.headers.get('location'),'/',sneaky); checks++;
+  }
+
   console.log(`Passed ${checks} production HTTP permission checks and role landing-page assertions.`);
 } finally {
   child.kill();

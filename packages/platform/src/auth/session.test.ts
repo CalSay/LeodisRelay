@@ -83,6 +83,15 @@ describe("return destination", () => {
     assert.equal(safeReturnTo("/\\evil.example"), "/");
   });
 
+  test("a tab, line break or backslash that a browser would drop or turn into a slash is refused", () => {
+    for (const sneaky of ["/\t/evil.example", "/\n/evil.example", "/\r\n/evil.example", "/\u0000/evil.example", "/reports\\..\\..\\evil"]) {
+      assert.equal(safeReturnTo(sneaky), "/", JSON.stringify(sneaky));
+    }
+    // Why: this is what a browser makes of the first one.
+    assert.equal(new URL("/\t/evil.example", "https://app.example").host, "evil.example");
+    assert.equal(safeReturnTo("/office?tab=issues#open"), "/office?tab=issues#open");
+  });
+
   test("nothing supplied falls back", () => {
     assert.equal(safeReturnTo(null), "/");
     assert.equal(safeReturnTo(undefined, "/office"), "/office");

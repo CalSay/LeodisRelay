@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 import { fileURLToPath } from "node:url";
+import { SECURITY_HEADERS } from "./security-headers.mjs";
 
 const nextConfig = {
   transpilePackages: ["@relay/contracts", "@relay/platform"],
@@ -17,5 +18,10 @@ const nextConfig = {
   // machines. Pin tracing here so production images contain this project, not
   // whichever parent directory Next happens to discover first.
   outputFileTracingRoot: fileURLToPath(new URL("../../", import.meta.url)),
+  poweredByHeader: false,
+  // Sent with every page and API answer (security-headers.mjs says why).
+  async headers() {
+    return [{ source: "/:path*", headers: SECURITY_HEADERS }];
+  },
 };
 export default nextConfig;

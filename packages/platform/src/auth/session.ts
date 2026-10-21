@@ -68,10 +68,14 @@ export function stateMatches(expected: string | undefined, actual: string | unde
  */
 export function safeReturnTo(candidate: string | null | undefined, fallback = "/"): string {
   if (!candidate) return fallback;
+  // Browsers drop tabs and line breaks from a URL and read a backslash as a
+  // slash, so "/<tab>/host" becomes "//host" and leaves the site. A path never
+  // needs any of them.
+  if (/[\u0000-\u001f\u007f\\]/.test(candidate)) return fallback;
   // Must be a single-slash-rooted path. "//host" and "https://host" are both
-  // absolute, and "\\host" is treated as absolute by some browsers.
+  // absolute.
   if (!candidate.startsWith("/")) return fallback;
-  if (candidate.startsWith("//") || candidate.startsWith("/\\")) return fallback;
+  if (candidate.startsWith("//")) return fallback;
   if (candidate.includes("://")) return fallback;
   return candidate;
 }

@@ -4,6 +4,42 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Security and permissions review before the first deploy
+
+- Why: 70 PRs merged and none deployed; asked for by the coordinator as a
+  quality pass before go-live. Not a `docs/tasks.json` task, so no status
+  changed there. Full notes: `docs/security-review-2026-10-21.md`.
+- Found nothing that lets a role see or change what it should not: all 35 API
+  routes resolve the session, office and Admin acts are checked, drafts stay
+  their author's, ids from the browser are checked against the person and
+  project. Spreadsheet formula injection and upload checks were already sound.
+- Fixed (Claude's decisions, each small):
+  - Sign-in open redirect: `safeReturnTo` let `/%09/evil.example` through,
+    which browsers read as another site. It now refuses control characters
+    and backslashes.
+  - The sign-in screen showed any text in `?error=`; it now takes a code and
+    shows RELAY's own words (Microsoft's AADSTS number kept).
+  - Changes (POST/PUT) posted from another site are refused in middleware
+    (`lib/crossSite.ts`), a second lock behind the SameSite cookie.
+  - Security headers on every answer (`apps/web/security-headers.mjs`), no
+    `X-Powered-By`. No full script CSP (Next.js runs inline scripts).
+  - A variation's signed copy is a link only when it is https (SharePoint
+    edits bypass RELAY's own check).
+  - Length limits on card text boxes (10,000) and issue action notes.
+  - Next.js 15.5.25 → 15.5.28 and sharp 0.35.4 → 0.35.5 (patch releases with
+    advisories). PostCSS stays flagged: Next pins it and it runs only at build
+    time on RELAY's own CSS.
+- Help: no "What's new" line. Nothing people use changes, except that a
+  sign-in error reads slightly differently.
+- Check: `npm run typecheck`, `npm test` (new `apps/web/tests/security.test.ts`
+  and `safeReturnTo` tests); `scripts/verify-role-access.mjs` now also checks
+  the cross-site refusal, the headers, the sign-in wording and the return
+  address. The other browser checks were run against the change.
+- Deploy: nothing needs Entra or SharePoint. Optional Caddy request size limit
+  described in the review notes. After deploying, send one test report to
+  confirm the cross-site check accepts RELAY's own address through Caddy.
+- Not verified: a live tenant, the live server behind Caddy, a real phone.
+
 ## 2026-10-21 — Safety in the office's Needs attention
 
 - Why: the last of the day walkthrough's (#65) bigger ideas still open

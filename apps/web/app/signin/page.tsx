@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { resolveProvider } from "@/lib/auth/provider";
 import { currentPrincipal } from "@/lib/auth/session";
+import { signInErrorMessage } from "@/lib/auth/signInErrors";
 import { safeReturnTo } from '@relay/platform';
 import { EntryFrame } from '@/components/EntryFrame';
 import { InstallRelay } from '@/components/InstallRelay';
@@ -22,9 +23,10 @@ export const dynamic = "force-dynamic";
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; returnTo?: string }>;
+  searchParams: Promise<{ error?: string; ref?: string; returnTo?: string }>;
 }) {
-  const { error, returnTo } = await searchParams;
+  const { error: code, ref, returnTo } = await searchParams;
+  const error = signInErrorMessage(code, ref);
   const destination = safeReturnTo(returnTo);
   if (await currentPrincipal()) redirect(destination);
 

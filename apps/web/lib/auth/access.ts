@@ -1,4 +1,5 @@
 import type { Principal } from '@relay/platform';
+import { SignInRefused } from './signInErrors';
 
 export const APP_ROLES = {
   Admin: { role: 'Admin' },
@@ -12,7 +13,7 @@ export const APP_ROLES = {
 export function accessFromRoles(roles: unknown): Pick<Principal, 'role' | 'trade'> {
   if (!Array.isArray(roles) || roles.length !== 1 || typeof roles[0] !== 'string' ||
       !Object.prototype.hasOwnProperty.call(APP_ROLES, roles[0])) {
-    throw new Error('Ask your administrator to assign exactly one RELAY role in Microsoft, then sign in again.');
+    throw new SignInRefused('role');
   }
   return APP_ROLES[roles[0] as keyof typeof APP_ROLES];
 }

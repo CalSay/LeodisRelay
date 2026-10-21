@@ -75,3 +75,13 @@ export const LABEL: Record<keyof Costing, string> = {
   labourHours: 'Expected labour (hours)', labourRate: 'Labour rate', partsCost: 'Expected parts cost',
   plantSubcontract: 'Plant and subcontract', upliftPct: 'Uplift %', quotedValue: 'Quoted value', instructedValue: 'Instructed value',
 };
+
+/**
+ * The signed copy's link, only when it is an https address. RELAY refuses
+ * anything else when the office records it, but the register can also be
+ * edited in SharePoint, and a link is opened by whoever presses it.
+ */
+export function signedCopyLink(v: Pick<Variation, 'signedInstruction'>): string | undefined {
+  const link = v.signedInstruction?.trim();
+  return link && /^https:\/\/[^\s]+$/i.test(link) ? link : undefined;
+}
