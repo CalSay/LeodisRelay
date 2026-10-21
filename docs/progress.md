@@ -46,6 +46,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   updated for the new label and passes. Screenshots in project files
   `ui-review/my-week-counts/`.
 - Not verified: real phones, screen readers.
+
 ## 2026-10-21 — "Last sent" on the Team tab
 
 - Why: walked the office getting a new site reporting on main 88d0589
