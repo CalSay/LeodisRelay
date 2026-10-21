@@ -127,3 +127,34 @@ test('a draft with nothing on it yet says so, not that the visit raised nothing'
   const quiet = (await pageTexts(await renderReportPdf({ ...base, observations: [card('1')] }))).join(' ');
   assert.match(quiet, /No actions or decisions arise from this visit\./);
 });
+
+test('boxes at the 10,000-character limit are printed in full, and the summary points to the card', async () => {
+  const words = (n: number, end: string) => `${'Fire stopping missing around the soil pipes in riser 2. '.repeat(Math.ceil(n / 56)).slice(0, n - end.length - 1)} ${end}`;
+  const observations = [card('1', { typeLabel: 'Defect', tone: 'defect', whatHappened: words(10_000, 'notes end.'), actionNeeded: words(10_000, 'action end.'), owner: words(10_000, 'owner end.') })];
+  const warnings: string[] = [];
+  const warn = console.warn;
+  console.warn = (...args: unknown[]) => { warnings.push(args.join(' ')); };
+  let pages: string[];
+  try { pages = await pageTexts(await renderReportPdf({ ...base, correction: { replacesRevision: 1, reason: words(10_000, 'reason end.') }, observations })); }
+  finally { console.warn = warn; }
+  // A block kept on one page but taller than one is drawn under the footer and off the paper.
+  assert.deepEqual(warnings.filter(w => /can't wrap/.test(w)), []);
+  const all = pages.join(' ');
+  for (const end of ['notes end.', 'action end.', 'owner end.', 'reason end.']) assert.match(all, new RegExp(end));
+  const summary = all.slice(0, all.search(/U P D A T E S/));
+  assert.equal(summary.match(/… \(see 01 below\)/g)?.length, 2);
+  assert.doesNotMatch(summary, /action end\.|owner end\./);
+});
+
+test('a long project name wraps beside the reference instead of running off the page', async () => {
+  const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
+  const fonts = join(dirname(createRequire(__filename).resolve('pdfjs-dist/package.json')), 'standard_fonts') + '/';
+  const bytes = await renderReportPdf({ ...base, projectName: 'Tetley Hall Block E – Residential Conversion, Phase 2 (Café Façade & Courtyard Apartments)' });
+  const page = await (await pdfjs.getDocument({ data: new Uint8Array(bytes), useSystemFonts: false, standardFontDataUrl: fonts }).promise).getPage(1);
+  const items = (await page.getTextContent()).items.filter(item => 'str' in item && item.str.trim()) as { str: string; width: number; transform: number[] }[];
+  const reference = items.find(item => item.str === '011LME-SPR-004')!;
+  assert.ok(reference.transform[4]! + reference.width <= 595.28 - 42 + 0.5, 'the reference stays inside the margin');
+  const title = items.filter(item => Math.abs(item.transform[3]! - 21) < 0.1).map(item => item.transform[5]!).sort((a, b) => b - a);
+  assert.ok(title.length >= 2, 'the name wraps');
+  for (let i = 1; i < title.length; i += 1) assert.ok(title[i - 1]! - title[i]! >= 21, 'its lines are not drawn over each other');
+});

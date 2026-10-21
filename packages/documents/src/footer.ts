@@ -29,7 +29,7 @@ export const FOOTER_HEIGHT = 70;
 const MARGIN = 42;
 
 const INK = rgb(0.306, 0.318, 0.345);
-const FAINT = rgb(0.514, 0.525, 0.549);
+const FAINT = rgb(0.424, 0.435, 0.459); // #6c6f75, as the document's labels
 const RULE = rgb(0.851, 0.851, 0.831);
 const BOX = rgb(0.761, 0.761, 0.733);
 const WASH = rgb(0.965, 0.961, 0.945);
