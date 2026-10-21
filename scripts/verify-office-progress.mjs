@@ -4,7 +4,8 @@
 // quiet active site, a site in defects liability never visited, the project
 // sheet's Last visit and Latest from site (each trade's newest site update,
 // never an inspection, a correction in place of what it corrects), the phone
-// register standing in for the sheet, a report that will not load, axe, tap
+// register standing in for the sheet (its figures, then the project's pages on
+// the first screen, then Latest from site), a report that will not load, axe, tap
 // sizes and no sideways scroll. Built only from records engineers already send.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 // RELAY_SCREENSHOT_DIR=<dir> saves the overview, sheet and phone register at 390px light and 1440px dark.
@@ -115,9 +116,13 @@ try {
     const chip=await page.locator('.filters .chip').first().innerText();
     check(chip===`Needs action · ${needs[1]}`,`${label}: the row's count is the register's (${chip})`);
     if(phone){
-      check(/^last visit today · /i.test(await scope.locator(".meta").innerText()),`${label}: the register starts with the last visit`);
+      const last=scope.locator('dl.tb > div').first();
+      check(/^last visit\s*today/i.test(await last.innerText())&&/3 visits this week/.test(await last.innerText()),`${label}: the register starts with the sheet's figures, last visit first`);
       const filters=await page.locator('.filters').boundingBox(),standing=await scope.boundingBox();check(standing.y<filters.y,`${label}: where it stands comes before the register's lists`);
-      const links=page.locator('.phone-only .sheet-links');check(await links.isVisible()&&(await links.boundingBox()).y>filters.y,`${label}: the project's other pages come after its records`);
+      const links=scope.locator('.sheet-links'),fromSite=await visits.first().boundingBox();
+      check(await links.isVisible()&&(await links.boundingBox()).y<fromSite.y,`${label}: the project's other pages come before Latest from site and the register`);
+      const photos=links.getByRole('link',{name:'Photographs',exact:true});check((await photos.boundingBox()).y+(await photos.boundingBox()).height<=844,`${label}: Photographs is on the first screen`);
+      check(await page.locator('.sheet-links:visible').count()===1,`${label}: the project's pages are listed once`);
     } else {
       const last=page.locator('.col-main dl.tb > div').first();
       check(/^last visit\s*today/i.test(await last.innerText()),`${label}: the sheet's first figure is the last visit`);
