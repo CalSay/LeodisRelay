@@ -6,6 +6,7 @@ import { canManage, isAdmin } from '@/lib/auth/access';
 import { peopleChecklist, type PersonLogEntry } from '@/lib/people';
 import { database, getRecord, records } from '@/lib/storage';
 import { listReports } from '@/lib/serverStore';
+import { latestOf, latestSentByAuthor, type LastSent } from '@/lib/teamActivity';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,8 @@ export interface TeamMember {
   /** Stable principal ID, present once the account has signed in. */
   id?: string;
   onChecklist: boolean;
+  /** Their latest sent report: the site and day the Team tab shows. */
+  lastSent?: LastSent;
 }
 
 /**
@@ -59,6 +62,8 @@ export async function GET() {
   const admin = isAdmin(guard.principal);
   // Stored sessions and identities keep the Microsoft name; the Relay name is layered on here.
   const identities = records<{ id: string; email?: string; name?: string; microsoftName?: string }>('identities');
+  const reports = listReports();
+  const sentBy = latestSentByAuthor(reports);
   const describe = (email: string, assignment: string, onChecklist: boolean, person?: { relayName?: string; log?: PersonLogEntry[] }, addedByRelay?: boolean): TeamMember => {
     const own = (byEmail.get(email.toLowerCase()) ?? []).sort((a, b) => b.issuedAt.localeCompare(a.issuedAt));
     const latest = own[0];
@@ -66,6 +71,9 @@ export async function GET() {
     const microsoftName = identity?.microsoftName ?? identity?.name ?? latest?.principal.name;
     const relayName = person?.relayName;
     const name = relayName ?? microsoftName;
+    // Every account id this email has signed in with, so a report sent under an older id still counts.
+    const ids = new Set([...own.map(s => s.principal.id as string), ...identities.filter(i => i.email?.toLowerCase() === email.toLowerCase()).map(i => i.id)]);
+    const lastSent = latestOf(sentBy, ids);
     return {
       email, assignment, onChecklist,
       ...(name ? { name } : {}),
@@ -75,6 +83,7 @@ export async function GET() {
       ...(addedByRelay ? { addedByRelay: true } : {}),
       // Sessions are deleted when they expire or on signing out; identities are kept, so this stays true.
       everSignedIn: !!latest || !!identity,
+      ...(lastSent ? { lastSent } : {}),
       ...(latest ? {
         id: latest.principal.id,
         ...(latest.principal.role ? { role: latest.principal.role } : {}),
@@ -100,9 +109,9 @@ export async function GET() {
 
   if (!admin) return NextResponse.json({ members });
 
-  const legacyDrafts = listReports().filter(r => r.state === 'draft' && !r.authorId).map(r => ({ id: r.id, reference: r.reference, author: r.author, lastSavedAt: r.lastSavedAt }));
+  const legacyDrafts = reports.filter(r => r.state === 'draft' && !r.authorId).map(r => ({ id: r.id, reference: r.reference, author: r.author, lastSavedAt: r.lastSavedAt }));
   const jobs = database().prepare('SELECT kind, status, count(*) AS n FROM jobs GROUP BY kind, status').all() as { kind: string; status: string; n: number }[];
-  const outbox = listReports().filter(r => r.state === 'submitted' && (r.delivery === 'outbox' || r.delivery === 'failed' || r.issued?.transport === 'outbox'));
+  const outbox = reports.filter(r => r.state === 'submitted' && (r.delivery === 'outbox' || r.delivery === 'failed' || r.issued?.transport === 'outbox'));
   return NextResponse.json({
     members, legacyDrafts,
     processing: {
