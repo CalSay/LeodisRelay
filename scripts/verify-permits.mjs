@@ -93,7 +93,7 @@ try {
 
     // Record a permit: empty first, then from the recent one, changed to an isolation.
     await page.getByRole('button',{name:'Record a permit'}).click();
-    check(await page.evaluate(()=>document.activeElement?.name==='pt-kind'),'engineer: the form opens on the kind');
+    check(await page.waitForFunction(()=>document.activeElement?.name==='pt-kind',null,{timeout:2000}).then(()=>true,()=>false),'engineer: the form opens on the kind');
     check(await page.getByLabel('Held by').inputValue()==='Sam Spark','engineer: held by starts as the signed-in engineer');
     check(await page.getByLabel('Issued on').inputValue()===daysBack(0),'engineer: issued on starts as today');
     await page.getByRole('button',{name:'Save permit'}).click();
@@ -113,7 +113,7 @@ try {
     await page.getByRole('button',{name:'Save permit'}).click();
     await page.waitForFunction(()=>document.querySelectorAll('.pt-permit').length===2);
     check(!(await page.locator('.pt-form').count()),'engineer: the form closes after saving');
-    check(await page.evaluate(()=>document.activeElement?.textContent==='Record a permit'),'engineer: focus returns to Record a permit');
+    check(await page.waitForFunction(()=>document.activeElement?.textContent==='Record a permit',null,{timeout:2000}).then(()=>true,()=>false),'engineer: focus returns to Record a permit');
     check(/Permit recorded: Electrical isolation, open until 23:59/.test(await page.locator('.eng-sr[role="status"]').innerText()),'engineer: a screen reader hears it was saved');
     const kept=records('permits').find(p=>p.kind==='electrical-isolation');
     recordedId=kept?.id;
@@ -132,7 +132,7 @@ try {
 
     // Close the plumber's permit: the check must be ticked.
     await late.getByRole('button',{name:/^Close permit: Hot works/}).click();
-    check(await page.evaluate(()=>document.activeElement?.type==='checkbox'),'engineer: focus moves to the closing check');
+    check(await page.waitForFunction(()=>document.activeElement?.type==='checkbox',null,{timeout:2000}).then(()=>true,()=>false),'engineer: focus moves to the closing check');
     check(/fire watch was kept for at least 60 minutes/.test(await late.locator('.pt-check').innerText()),`engineer: hot works asks for the fire watch: ${await late.locator('.pt-check').innerText()}`);
     await late.getByRole('button',{name:'Close permit',exact:true}).click();
     check(/Confirm the closing check/.test(await late.locator('[role="alert"]').innerText()),'engineer: closing needs the check');

@@ -83,7 +83,7 @@ try {
 
     // Record a talk: empty first, then a starter topic and the same people as last time.
     await page.getByRole('button',{name:'Record a toolbox talk'}).click();
-    check(await page.evaluate(()=>document.activeElement?.id==='tt-topic'),'engineer: the form opens on the topic');
+    check(await page.waitForFunction(()=>document.activeElement?.id==='tt-topic',null,{timeout:2000}).then(()=>true,()=>false),'engineer: the form opens on the topic');
     check(await page.getByLabel('Given by').inputValue()==='Sam Spark','engineer: given by starts as the signed-in engineer');
     check(await page.getByLabel('Given on').inputValue()===daysBack(0),'engineer: the day starts as today');
     await page.getByRole('button',{name:'Save toolbox talk'}).click();
@@ -106,7 +106,7 @@ try {
     await page.getByRole('button',{name:'Save toolbox talk'}).click();
     await page.waitForFunction(()=>document.querySelectorAll('.tt-talk').length===2);
     check(!(await page.locator('.tt-form').count()),'engineer: the form closes after saving');
-    check(await page.evaluate(()=>document.activeElement?.textContent==='Record a toolbox talk'),'engineer: focus returns to Record a toolbox talk');
+    check(await page.waitForFunction(()=>document.activeElement?.textContent==='Record a toolbox talk',null,{timeout:2000}).then(()=>true,()=>false),'engineer: focus returns to Record a toolbox talk');
     check(/Toolbox talk recorded: Working at height, 4 people attending/.test(await page.locator('.eng-sr[role="status"]').innerText()),'engineer: a screen reader hears it was saved');
     const first=talks(page).first();
     check((await first.locator('.tt-topic-text').innerText()).trim()==='Working at height','engineer: the new talk is at the top');
@@ -133,7 +133,7 @@ try {
     check((await page.locator('.tt-talk',{hasText:'Hot works'}).getByRole('button',{name:/^Withdraw/}).count())===0,'engineer: no Withdraw on a talk someone else recorded');
     const retry=page.locator('.tt-talk',{hasText:'Retry talk'});
     await retry.getByRole('button',{name:/^Withdraw: Retry talk/}).click();
-    check(await page.evaluate(()=>document.activeElement?.id?.startsWith('tt-reason-')),'engineer: focus moves to the reason');
+    check(await page.waitForFunction(()=>document.activeElement?.id?.startsWith('tt-reason-'),null,{timeout:2000}).then(()=>true,()=>false),'engineer: focus moves to the reason');
     await retry.getByRole('button',{name:'Withdraw record'}).click();
     check(/Say why/.test(await retry.locator('[role="alert"]').innerText()),'engineer: a withdrawal needs a reason');
     await retry.getByLabel('Why withdraw it?').fill('Recorded by mistake while testing');

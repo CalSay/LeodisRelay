@@ -93,14 +93,14 @@ try {
 
     // Record a delivery: empty first, then a recent supplier, short.
     await page.getByRole('button',{name:'Record a delivery'}).click();
-    check(await page.evaluate(()=>document.activeElement?.id==='dl-supplier'),'engineer: the form opens on the supplier');
+    check(await page.waitForFunction(()=>document.activeElement?.id==='dl-supplier',null,{timeout:2000}).then(()=>true,()=>false),'engineer: the form opens on the supplier');
     check(await page.getByLabel('Taken in by').inputValue()==='Sam Spark','engineer: taken in by starts as the signed-in engineer');
     check(await page.getByLabel('Arrived on').inputValue()===daysBack(0),'engineer: arrived on starts as today');
     await page.getByRole('button',{name:'Save delivery'}).click();
     check(/supplier/.test(await page.locator('.dl-form [role="alert"]').innerText()),'engineer: an empty delivery says what to do');
     await page.getByRole('group',{name:'Recent suppliers'}).getByRole('button',{name:'City Plumbing, Leeds'}).click();
     check(await page.getByLabel('Supplier',{exact:true}).inputValue()==='City Plumbing, Leeds','engineer: a recent supplier fills the supplier');
-    check(await page.evaluate(()=>document.activeElement?.id==='dl-items'),'engineer: and moves on to what arrived');
+    check(await page.waitForFunction(()=>document.activeElement?.id==='dl-items',null,{timeout:2000}).then(()=>true,()=>false),'engineer: and moves on to what arrived');
     await page.getByLabel('Supplier',{exact:true}).fill('Edmundson Electrical');
     await page.getByLabel('What arrived').fill('6 x 100m reels 2.5mm T&E, 200 back boxes');
     check(!(await page.locator('#dl-problem').count()),'engineer: no "what was wrong" box until a problem is chosen');
@@ -108,7 +108,7 @@ try {
     check(await page.getByRole('radio',{name:'Short or part delivery'}).isChecked(),'engineer: tapping a condition chooses it');
     await page.getByRole('button',{name:'Save delivery'}).click();
     check(/short, damaged or wrong/.test(await page.locator('.dl-form [role="alert"]').innerText()),'engineer: a short delivery asks what was short');
-    check(await page.evaluate(()=>document.activeElement?.id==='dl-problem'),'engineer: focus goes to what was short');
+    check(await page.waitForFunction(()=>document.activeElement?.id==='dl-problem',null,{timeout:2000}).then(()=>true,()=>false),'engineer: focus goes to what was short');
     await page.getByLabel('What was short?').fill('2 reels short, rest promised Thursday');
     await page.getByLabel(/^Where it was put/).fill('Site cabin');
     await page.getByLabel(/^Delivery note number/).fill('DN 448120');
@@ -119,7 +119,7 @@ try {
     await page.getByRole('button',{name:'Save delivery'}).click();
     await page.waitForFunction(()=>document.querySelectorAll('.dl-delivery').length===2);
     check(!(await page.locator('.dl-form').count()),'engineer: the form closes after saving');
-    check(await page.evaluate(()=>document.activeElement?.textContent==='Record a delivery'),'engineer: focus returns to Record a delivery');
+    check(await page.waitForFunction(()=>document.activeElement?.textContent==='Record a delivery',null,{timeout:2000}).then(()=>true,()=>false),'engineer: focus returns to Record a delivery');
     check(/Delivery recorded: Edmundson Electrical, short\. It stays under To sort/.test(await page.locator('.eng-sr[role="status"]').innerText()),'engineer: a screen reader hears it was saved');
     const kept=records('deliveries').find(d=>d.supplier==='Edmundson Electrical');
     recordedId=kept?.id;
@@ -198,7 +198,7 @@ try {
     // Marking it sorted needs a note, and takes the line off Needs attention.
     const edm=page.locator('.dl-delivery',{hasText:'Edmundson'}).first();
     await edm.getByRole('button',{name:/^Mark sorted/}).click();
-    check(await page.evaluate(()=>document.activeElement?.id?.startsWith('dl-sorted-')),'office: focus moves to how it was sorted');
+    check(await page.waitForFunction(()=>document.activeElement?.id?.startsWith('dl-sorted-'),null,{timeout:2000}).then(()=>true,()=>false),'office: focus moves to how it was sorted');
     await edm.getByRole('button',{name:'Mark sorted',exact:true}).click();
     check(/how it was sorted/.test(await edm.locator('[role="alert"]').innerText()),'office: marking sorted needs a note');
     await edm.getByLabel('How was it sorted?').fill('Supplier sent the 2 reels on Thursday');

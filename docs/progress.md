@@ -18,6 +18,14 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   which would have broken the same way once newer entries push theirs down
   (the toolbox one also read the page without waiting), and the deliveries
   check from #80, merged during this check. Each passed three runs in a row.
+- Second full run on main at 04334f5 (after #80 and #81): typecheck,
+  `npm test` (146 + 425), build and all 64 browser checks; 63 passed.
+  `verify-toolbox-talks` failed once reading where the keyboard focus was
+  a split second before the page moved it (the same race #74 fixed for the
+  withdrawn talk, on the other three focus checks). Those checks, and the
+  same eight in the permits and deliveries checks copied from it, now wait
+  up to 2 s for the focus. Each of the three checks passed three runs in a
+  row.
 - Found and fixed separately in #79: SharePoint date-only fields read a day
   early in summer, and a report started online just after midnight BST.
 - Deploy needs nothing new since #73: permits are a new kind of record in the
