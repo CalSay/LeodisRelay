@@ -956,9 +956,11 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   const project = report.projectSnapshot ?? getProject(report.projectId);
   // A card added and not used yet is left off when the engineer goes to check
-  // and send (withoutBlankCards), so it is not "stopping" anything: no red
-  // warning on a card that has only just been opened.
-  const blank = new Set(report.observations.filter(isBlankCard).map(o => o.id));
+  // and send (withoutBlankCards), so while writing cards it is not "stopping"
+  // anything: no red warning on a card that has only just been opened. On the
+  // check step (reached by the address too, without that tidy) it still
+  // stops sending, as the server would refuse it.
+  const blank = new Set(step === 'check' ? [] : report.observations.filter(isBlankCard).map(o => o.id));
   const findings = reviewReport(report).filter(f => !blank.has(f.observationId));
   const stop = findings.filter((f) => f.blocking);
   // An inspection just started has every check unanswered: one line for them
