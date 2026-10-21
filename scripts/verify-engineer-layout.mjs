@@ -103,7 +103,7 @@ try {
   if(screenshot)await page.screenshot({path:join(screenshot,'editor-landscape.png'),fullPage:true});
   await page.locator('.actionbar').getByRole('button',{name:'Check & send →',exact:true}).click();
   await page.getByRole('button',{name:'Send to office',exact:true}).click();
-  await page.getByText(/Received by RELAY/).waitFor();
+  await page.locator('ol.stages li[data-stage="received"] .tag').waitFor();
   const saved=await context.request.get(base+`/api/reports/${own.id}`).then(r=>r.json());
   assert.equal(saved.state,'submitted');assert.equal(saved.observations.length,2);
   assert.equal(saved.observations[1].whatHappened,'Tablet section survives rotation');

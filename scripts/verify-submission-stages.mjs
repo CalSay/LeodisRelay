@@ -1,6 +1,7 @@
 // Browser check for FE-6a: a sent report shows received, PDF, delivery and
 // seen as separate steps, each with its own state, in the office reader and
 // on the engineer's report page; a local outbox file is never shown as email.
+// The engineer's page folds the PDF and delivery steps unless one went wrong.
 // The engineer's pages go first: the office opening a report marks it seen,
 // and the engineer then sees "Seen by the office" on it.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
@@ -55,12 +56,26 @@ try {
     const ctx=await browser.newContext({viewport:{width:view.width,height:900},colorScheme});await ctx.addCookies([{name:'relay_session',value:sessions[view.who],url:base}]);
     const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
     for(const [name,c] of Object.entries(cases)){
-      await page.goto(view.url(c.id));await page.locator('ol.stages').waitFor();
+      await page.goto(view.url(c.id));await page.locator('ol.stages').first().waitFor();
       const label=`${view.who} ${view.width}px ${colorScheme}, ${name}`;
       // The office opening it is what marks it seen.
       const expected=view.who==='office'?{...c.steps,Seen:'Seen by the office'}:c.steps;
       if(view.who==='office')await page.locator('ol.stages li[data-stage="read"]').getByText('Seen by the office').waitFor();
       assert.deepEqual(await steps(page),expected,`${label}: each step and its state`);checks++;
+      // The engineer sees received, review and seen; the PDF and delivery fold
+      // away under "PDF and delivery" unless one went wrong. The office sees every step.
+      const open=await page.locator('ol.stages > li').evaluateAll(els=>els.filter(li=>!li.closest('details')).map(li=>li.dataset.stage));
+      const alerts=['pdf','delivery'].filter(k=>(name==='pdfFailed'&&k==='pdf')||(name==='mailFailed'&&k==='delivery'));
+      const keys=Object.keys(expected).map(t=>({Received:'received',Review:'review',PDF:'pdf',Delivery:'delivery',Seen:'read'})[t]);
+      assert.deepEqual(open,view.who==='office'?keys:keys.filter(k=>!['pdf','delivery'].includes(k)||alerts.includes(k)),`${label}: steps shown without opening More`);checks++;
+      if(view.who==='engineer'){
+        const more=page.locator('details.stages-more');
+        assert.equal(await more.count(),alerts.length===2?0:1,`${label}: PDF and delivery folded`);checks++;
+        assert.equal(await more.evaluate(d=>d.open),false,`${label}: folded until opened`);checks++;
+        if(name==='outbox'){assert.equal((await more.locator('summary').textContent()).trim(),'PDF and delivery PDF ready · Delivery not emailed',`${label}: the fold says how each stands`);checks++;}
+        await more.locator('summary').click();
+        assert.ok(await more.locator('li[data-stage]').first().isVisible(),`${label}: opening it shows the folded steps`);checks++;
+      }
       if(view.who==='office'){assert.match(await page.locator('ol.stages li[data-stage="read"] small').textContent(),/Opened by Office Manager/,`${label}: says who opened it`);checks++;}
       if(name==='outbox'){
         assert.equal(await page.locator('ol.stages').getByText(/emailed to/i).count(),0,`${label}: a local outbox file is not shown as an email`);checks++;
@@ -77,7 +92,7 @@ try {
   const back=await browser.newContext({viewport:{width:390,height:900}});await back.addCookies([{name:'relay_session',value:sessions.engineer,url:base}]);
   const engineerPage=await back.newPage();engineerPage.on('pageerror',e=>errors.push(e.message));
   for(const [name,c] of Object.entries(cases)){
-    await engineerPage.goto(`${base}/reports/${c.id}`);await engineerPage.locator('ol.stages').waitFor();
+    await engineerPage.goto(`${base}/reports/${c.id}`);await engineerPage.locator('ol.stages').first().waitFor();
     assert.equal((await steps(engineerPage)).Seen,'Seen by the office',`engineer after the office opened ${name}: seen by the office`);checks++;
   }
   await back.close();
