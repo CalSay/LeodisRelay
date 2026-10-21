@@ -31,6 +31,9 @@ export interface WhatsNew {
 export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'fewer-taps-site-update', added: '2026-10-21', audience: 'site', title: 'Fewer taps for a site update',
     text: 'A new site update now opens on its first card, a progress card, ready for where, what happened and a photograph; tap Defect, Variation or Access on the card to change it. Under the cards there is a button for each kind ("+ Defect", "+ Variation" and so on), so a new card is one tap instead of two. Places already used on today\'s update are the first ones offered under "Where". The questions the office can do without, such as who should respond to a defect or a variation\'s rough size, are folded under "More for the office", and open by themselves once anything is in them. A card you added and never used is left off when you go to check and send, rather than stopping it. Buttons in the report are bigger, for gloved hands. Sending a site update with a progress card, a defect and a variation took 16 taps on our test phone screen and now takes 14. Tried in a phone-sized browser, not yet on a real phone on site.' },
+  { id: 'office-project-progress', added: '2026-10-21', audience: 'office', title: 'Where each project stands',
+    text: 'The office position now opens with one list of every project: when someone was last on site and who, how many visits this week and from which trades, open issues and how many are overdue, variations waiting, and how much needs the office. A live site with no report for three working days is marked. Open a project for "Latest from site": each trade\'s newest site update from the last fortnight, line by line in the engineer\'s words, with the defects and variations it raised counted. On a phone the list replaces the second project list that sat under everything else, and a project\'s register starts with its last visit and latest updates. The totals block and latest reports table have gone from the overview; the Inbox lists every report. Nothing new is asked of site: it is all read from the reports engineers already send. Tested in a desktop browser and a phone-sized window, not on a real phone.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'simpler-for-engineers', added: '2026-10-21', audience: 'all', title: 'A simpler RELAY, built round the site report',
     text: 'The Site page now opens on the job: start or carry on today\'s site update, flag a defect or request a variation, with big buttons at the top. Handover and first fix inspections sit together under them, and the project\'s pages are down to the four used most (issues, reports, notes for the next visit and photographs), with the rest under "More on this project". Toolbox talks, permits to work, deliveries, the weekly safety and tower inspections and Safety actions are now off unless the office turns them on from the Admin tab. While they are off they do not appear on the Site page, the office desk, My week, the weekly summary, Before handover or this Help page, and nothing recorded is deleted.' },
   { id: 'pdfs-hold-long-reports', added: '2026-10-21', audience: 'all', title: 'PDFs that hold a long report',
@@ -318,8 +321,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
   site: [
     { id: 'first-update', heading: 'Your first site update', ordered: true, steps: [
       'On your home screen, check the current project. "Change" picks another.',
-      'Tap "Start today’s site update". It opens on a progress card: say where, what happened, and take a photograph. Tap Defect, Variation or Access at the top of the card to make it one of those instead.',
-      'For the next thing, tap "+ Progress", "+ Defect", "+ Variation" or "+ Access" under the cards. A place you have already used is one tap under "Where".',
+      'Tap "Start today’s site update". It opens on a progress card: say where, what happened, and take a photograph. Tap Defect, Variation or Access at the top of the card to make it one of those instead. For the next thing, tap "+ Progress", "+ Defect", "+ Variation" or "+ Access" under the cards; a place you have already used is one tap under "Where".',
       'It saves as you go, on the server and on your phone. Leave it whenever you like; it waits under "Unfinished reports".',
       'When you are done, tap "Check & send", then "Send to office". It is then on file and cannot be changed, only corrected.',
     ] },
@@ -362,7 +364,8 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
   ],
   office: [
     { id: 'office-day', heading: 'Your day in the office', ordered: true, steps: [
-      'Office opens on the office position: new reports, reports not yet read, unassigned issues and issues fixed and waiting to be checked, across every project.',
+      'Office opens on the office position. "Where each project stands" gives every project\'s last visit, its visits this week and by which trades, its open and overdue issues, its variations waiting and how much needs the office; a site with no report for three working days is marked. Under it: new reports, reports not yet read, unassigned issues and issues fixed and waiting to be checked.',
+      'Open a project to read "Latest from site": each trade\'s newest site update from the last fortnight, in the engineer\'s own words, with what else it raised.',
       'Open a report and "Acknowledge" it once you have read it. That is the only thing that marks it read; receipt and delivery do not.',
       'A report\'s signature line says whether it was drawn or typed. A typed signature shows the statement the person ticked and who was signed in when it was sent.',
       'Give each new issue an owner and a target date, from the desk or with "Assign" on the issue itself. Overdue issues and work done without an instruction are listed under "Also needs attention".',
@@ -381,7 +384,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     { id: 'meetings', heading: 'For the site meeting', ordered: false, steps: [
       'Weekly summary puts a project\'s week on one page. Snag lists print the open issues for one company or trade. Site diary reads back every visit.',
       'Issues by company is the chase list; Site coverage shows which live projects have gone quiet.',
-      'A project\'s own pages (Weekly summary, Site diary, Photographs, Notes for the next visit, Issues over time, Before handover) are on its project sheet, under its figures. On a phone they are at the top of the project\'s register.',
+      'A project\'s own pages (Weekly summary, Site diary, Photographs, Notes for the next visit, Issues over time, Before handover) are on its project sheet, under its reports. On a phone they come after the project\'s register.',
     ], safetySteps: [
       'Safety actions, Toolbox talks, Permits to work and Deliveries are on the project sheet too, in their own group, and the weekly summary has a section for the week\'s talks, permits and deliveries.',
     ] },

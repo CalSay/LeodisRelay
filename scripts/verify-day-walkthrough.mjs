@@ -317,9 +317,10 @@ try {
     await p.goto(`${base}/office`);
     const safetyButton=p.getByRole('link',{name:/^Safety actions · \d+ open$/});await safetyButton.waitFor();
     ok((await safetyButton.innerText())==='Safety actions · 2 open',`${label}: the overview counts open safety actions`);
-    const week=await p.locator('dl.tb').filter({hasText:'Received this week'}).locator('dd').first().innerText();
-    const [received,pending]=[Number(week.match(/^\d+/)[0]),Number(week.match(/(\d+) PM notification/)?.[1]??0)];
-    ok(pending<=received,`${label}: no more notifications pending than reports received this week: ${JSON.stringify(week)}`);
+    // Where each project stands: the day's visits show on the project's row.
+    const row=p.locator('.glance-row').filter({hasText:'011LME'});
+    ok(/^Today/.test(await row.locator('dd').first().innerText()),`${label}: the project's last visit is today`);
+    ok(Number((await row.locator('dd').nth(1).innerText()).match(/^(\d+) visit/)?.[1])>=1,`${label}: this week counts the day's visit`);
     // Needs attention: the podium due and the two open actions, one line for the project, ahead of overdue issues.
     const also=p.locator('.sheet > .rmenu').last();
     await also.getByText('2 safety actions open').waitFor();checks++;

@@ -10,6 +10,7 @@ import { dateShort, dayLong, whenShort } from '@/lib/dates';
 import { safetyAttention, type SafetyActions } from '@/lib/safetyActions';
 import { permitAttention, type PermitsAll } from '@/lib/permits';
 import { deliveryAttention, type DeliveriesAll } from '@/lib/deliveries';
+import { projectStanding, type ProjectStanding } from '@/lib/projectStanding';
 
 export { isUnassigned, isVerify, notAcknowledged };
 
@@ -91,6 +92,8 @@ export interface ProjectStats {
   instructedValue: number;
   rollup: Rollup;
   needsAction: number;
+  /** Last visit, this week's visits and each trade's latest site update (lib/projectStanding.ts). */
+  standing: ProjectStanding;
 }
 export function projectStats(project: FixtureProject, snap: Snapshot, day: string): ProjectStats {
   const issues = snap.issues.filter(i => i.projectId === project.id);
@@ -119,6 +122,7 @@ export function projectStats(project: FixtureProject, snap: Snapshot, day: strin
     instructedValue: variations.filter(v => v.instruction === 'instructed').reduce((n, v) => n + (v.instructedValue ?? v.quotedValue ?? 0), 0),
     rollup: rollup(issues, day),
     needsAction: 0,
+    standing: projectStanding(project, reports, day),
   };
   s.needsAction = new Set([...s.overdue, ...s.verify, ...s.unassigned, ...s.disputed].map(i => i.id)).size + s.failed.length + s.pendingReview.length
     + new Set([...s.unpricedVariations, ...s.exposedVariations].map(v => v.id)).size;
