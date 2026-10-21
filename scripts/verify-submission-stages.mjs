@@ -72,7 +72,7 @@ try {
         const more=page.locator('details.stages-more');
         assert.equal(await more.count(),alerts.length===2?0:1,`${label}: PDF and delivery folded`);checks++;
         assert.equal(await more.evaluate(d=>d.open),false,`${label}: folded until opened`);checks++;
-        if(name==='outbox'){assert.equal((await more.locator('summary').textContent()).trim(),'PDF and deliveryPDF ready · Delivery not emailed',`${label}: the fold says how each stands`);checks++;}
+        if(name==='outbox'){assert.equal((await more.locator('summary').textContent()).trim(),'PDF and delivery PDF ready · Delivery not emailed',`${label}: the fold says how each stands`);checks++;}
         await more.locator('summary').click();
         assert.ok(await more.locator('li[data-stage]').first().isVisible(),`${label}: opening it shows the folded steps`);checks++;
       }

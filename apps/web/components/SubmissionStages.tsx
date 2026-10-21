@@ -3,6 +3,9 @@ import type { ReportSummary } from '@/lib/types';
 
 type StageReport = Omit<ReportSummary, 'observationCount' | 'photoCount' | 'defectCount'>;
 
+/** "Ready" reads "ready" after the step's name; "SharePoint …" keeps its capital. */
+const lowerFirst = (label: string) => /^[A-Z][a-z]/.test(label) ? label.charAt(0).toLowerCase() + label.slice(1) : label;
+
 /** The steps that matter to the office more than to the engineer who sent it. */
 const OFFICE_STEPS: StageKey[] = ['pdf', 'delivery'];
 
@@ -28,7 +31,7 @@ export function SubmissionStages({ report, tagClass, when, fold = false }: { rep
   return <>
     <ol className="stages" aria-label="Where this report has got to">{shown.map(row)}</ol>
     {folded.length > 0 && <details className="eng-more-detail stages-more">
-      <summary>{foldName}<small>{folded.map(s => `${s.title} ${s.label.charAt(0).toLowerCase()}${s.label.slice(1)}`).join(' · ')}</small></summary>
+      <summary>{foldName} <small>{folded.map(s => `${s.title} ${lowerFirst(s.label)}`).join(' · ')}</small></summary>
       <div><ol className="stages" aria-label={foldName}>{folded.map(row)}</ol></div>
     </details>}
   </>;
