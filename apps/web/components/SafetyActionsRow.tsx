@@ -21,7 +21,9 @@ export function SafetyActionsRow({ projectId, href }: { projectId: string; href:
       .catch(() => {});
     return () => { cancelled = true; };
   }, [projectId]);
-  return <Link className="eng-row" href={href}><div className="main">
+  // Marked like a late row when something is open or due, so it stands out among the project's pages.
+  const needs = !!totals && (totals.open > 0 || totals.towersDue > 0 || totals.due > 0);
+  return <Link className={`eng-row ${needs ? 'late' : ''}`} href={href}><div className="main">
     <b>Safety actions</b>
     <span>{totals ? safetySummary(totals) : 'What the safety inspections found, open until put right'}</span>
   </div><span className="chev">›</span></Link>;

@@ -6,7 +6,7 @@ import { PageTitle } from '@/components/PageTitle';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { useWhatsNewCount } from '@/components/useWhatsNew';
 import { Toasts, parseHash, useHashRoute } from '@/components/workspace/hooks';
-import { allIssues, allVariations, listProjects, officeAll, officeTeam, type OfficeTeam } from '@/lib/api';
+import { allIssues, allVariations, listProjects, officeAll, officeTeam, safetyActionsAll, type OfficeTeam } from '@/lib/api';
 import { canAccessProject, isAdmin } from '@/lib/auth/access';
 import { useProjects } from '@/components/ProjectContext';
 import type { FixtureProject } from '@/lib/fixtures';
@@ -53,15 +53,17 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const refresh = useCallback(async () => {
     const g = ++generation.current;
     try {
-      const [{ reports, drafts }, issues, variations, currentProjects] = await Promise.all([
+      const [{ reports, drafts }, issues, variations, currentProjects, safety] = await Promise.all([
         officeAll(),
         allIssues(),
         allVariations(),
         listProjects(),
+        // Safety actions failing to load must not stop the desk: it keeps the last answer it had.
+        safetyActionsAll().catch(() => undefined),
       ]);
       if (g !== generation.current) return;
       setProjectData(currentProjects);
-      setSnap({ reports, drafts, issues, variations, loadedAt: new Date().toISOString() });
+      setSnap(prev => ({ reports, drafts, issues, variations, loadedAt: new Date().toISOString(), safety: safety ?? prev?.safety ?? null }));
       setError('');
     } catch (e) {
       if (g === generation.current) setError(e instanceof Error ? e.message : 'Unable to refresh office records.');
@@ -85,7 +87,8 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const projects = useMemo(() => projectData.filter(p => principal && canAccessProject(principal, p.id) && REPORTABLE.includes(p.status)), [principal, projectData]);
   const stats = useMemo(() => snap ? projects.map(p => projectStats(p, snap, day)) : [], [snap, projects, day]);
   const statOf = useCallback((code: string) => stats.find(s => s.code === code), [stats]);
-  const attn = useMemo(() => attention(stats, day), [stats, day]);
+  const here = `/office#/${[route.tab, route.a, route.b, route.c].filter(Boolean).join('/')}`;
+  const attn = useMemo(() => attention(stats, day, snap?.safety, here), [stats, day, snap?.safety, here]);
   const me = { id: principal?.id ?? '', name: principal?.name ?? '', role: principal?.role ?? '', admin: principal ? isAdmin(principal) : false };
   const reviewOn = stats.some(s => s.reviewOn);
   const ctx: Ctx = { snap, day, projects, stats, reviewOn, statOf, route, go, setDialog, refresh, me, team, loadTeam };
@@ -129,7 +132,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
         <kbd>/</kbd>
         {q.trim() !== '' && <div className="results">{results.length ? results.map(r => <a key={r.key} href={r.go}><span className="ref">{r.ref}</span><span>{r.t}</span><span className="k">{r.k}</span></a>) : <div className="none">Nothing matches “{q}” by reference, name or title.</div>}
           {/* The quick list matches references, names and titles; the search page also reads what every card says. */}
-          {q.trim().length >= 2 && <Link className="results-all" href={`/search?${new URLSearchParams({ q: q.trim(), returnTo: `/office#/${[route.tab, route.a, route.b, route.c].filter(Boolean).join('/')}` })}`}>Search the words in every report, issue and variation →</Link>}</div>}
+          {q.trim().length >= 2 && <Link className="results-all" href={`/search?${new URLSearchParams({ q: q.trim(), returnTo: here })}`}>Search the words in every report, issue and variation →</Link>}</div>}
       </div>
       <div className="topbar-right">
         <button type="button" className={`bell ${attn.length ? '' : 'quiet'}`} onClick={() => setAttnOpen(o => !o)} aria-expanded={attnOpen}>Attention <b>{attn.length}</b></button>

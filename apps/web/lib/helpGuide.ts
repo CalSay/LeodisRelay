@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'safety-in-needs-attention', added: '2026-10-21', audience: 'all', title: 'Safety in Needs attention',
+    text: 'In the office, Attention and the Needs attention lists now include safety: a tower or podium due its inspection, the safety actions still open on a project (one line per project, with how many and the oldest), and a weekly safety inspection that is due. They come straight after a report that could not be processed, ahead of overdue issues, and each opens that project\'s Safety actions. On site, the Safety actions row on the home screen has a red edge while anything is open or due.',
+    link: { label: 'Open Safety actions', href: '/safety-actions' } },
   { id: 'inspection-pdf-found', added: '2026-10-21', audience: 'all', title: 'Inspection PDFs say what was wrong',
     text: 'In an inspection PDF, each row under "Actions arising" now says what was found ("Found: open edge with only a strap across it") above the action, so a client or contractor reading the first page knows what to put right without turning to the notes. Long notes are shortened there and point to the full notes further on. PDFs already made stay as they were.' },
   { id: 'editor-wide-screens', added: '2026-10-21', audience: 'all', title: 'Reports and inspections on a tablet or computer',

@@ -17,6 +17,7 @@ import type { SinceLastVisit } from './sinceLastVisit';
 import type { CameBack } from './cameBack';
 import type { ReportTypeId } from './reportTypes';
 import type { ProjectSuggestions } from './suggestions';
+import type { SafetyActions } from './safetyActions';
 
 const REPORTABLE_STATUSES = ["4. Active", "5. Defects Liability"];
 
@@ -239,6 +240,11 @@ export async function officeAll(): Promise<{ reports: ReportSummary[]; drafts: R
 export async function allIssues(): Promise<Issue[]> {
   const data = await parse<{ issues: Issue[] }>(await request('/api/issues?view=desk', { cache: 'no-store' }));
   return data.issues;
+}
+
+/** Safety actions on every project open to the person, as the Safety actions page reads them. */
+export async function safetyActionsAll(): Promise<SafetyActions> {
+  return parse<SafetyActions>(await request('/api/safety-actions', { cache: 'no-store' }));
 }
 
 /** One page of the issue register, filtered, counted and ordered on the server. */
