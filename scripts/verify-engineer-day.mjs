@@ -136,7 +136,7 @@ try {
     // Issues and an issue.
     await goHome();await page.getByRole('button',{name:'Issues',exact:true}).first().click();await page.locator('#eng-issue-scope').waitFor();
     ok(!/Project scope|Showing issues only/.test(await main()),`${scheme} issues: no "Project scope"`);
-    await page.locator('a',{hasText:'Open issue'}).first().click();await page.waitForURL(/\/issues\/iss-/);
+    await page.locator('a.eng-issue-card').first().click();await page.waitForURL(/\/issues\/iss-/);
     await page.getByRole('button',{name:'Put forward as fixed'}).waitFor();
     ok(/From a site update/.test(await page.locator('main').textContent()),`${scheme} issue: "Put forward as fixed" and "From a site update"`);
     await shot('issue');
