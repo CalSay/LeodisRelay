@@ -33,7 +33,8 @@ import { correctReport as requestCorrection } from '@/lib/api';
 import { canManage, ownsReport } from '@/lib/auth/access';
 import { toneClass } from '@/lib/status';
 import { SubmissionStages } from '@/components/SubmissionStages';
-import { clearWaitingToSend, isWaitingToSend, markWaitingToSend } from '@/lib/sendOnSignal';
+import { checkedCopy, clearWaitingToSend, isWaitingToSend, markWaitingToSend, SEND_ON_SIGNAL_KEY } from '@/lib/sendOnSignal';
+import { updateSendSettled, updateSending, withUpdateLock } from '@/lib/heldUpdate';
 import { useMarkSeen } from '@/components/useMarkSeen';
 import { CARD_TYPES, OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
 import { isBlankCard, placesToOffer, withoutBlankCards } from '@/lib/quickCards';
@@ -132,6 +133,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
    */
   const [waiting, setWaiting] = useState<'signal' | 'server' | null>(null);
   const waitingRef = useRef(waiting);
+  /** Whether the phone kept this report's waiting line, so its going away means another tab took it. */
+  const lineWritten = useRef(false);
   useEffect(() => { waitingRef.current = waiting; }, [waiting]);
   /** When it went by itself, for the line above the sent report. */
   const [sentByItself, setSentByItself] = useState<string | null>(null);
@@ -291,8 +294,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     (async () => {
       // This report's work from the offline page may be going up as it opens
       // (HeldWork.tsx): wait for a save in flight, or take over one only queued.
-      setWaitingForHeld(heldSendBusy(id));
-      await heldSendSettled(id);
+      // So may this report itself, sent with no signal and going by itself from
+      // the page left (SendOnSignal.tsx): wait for that answer too.
+      setWaitingForHeld(heldSendBusy(id) || updateSending(id));
+      await Promise.all([heldSendSettled(id), updateSendSettled(id)]);
       if (cancelled) return;
       setWaitingForHeld(false);
       let found;
@@ -717,11 +722,15 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   useEffect(() => {
     if (!waiting) return;
     const onVisible = () => { if (document.visibilityState === 'visible') trySendNow(); };
+    // Sent from another tab meanwhile: that tab took this report's line away, so look now rather than in 15 s.
+    // Only then: another tab marking its own line again after a failed try must not set this one trying at once.
+    const onStorage = (e: StorageEvent) => { if (e.key === SEND_ON_SIGNAL_KEY && !(e.newValue ?? '').includes(JSON.stringify(id))) trySendNow(); };
     const timer = setInterval(trySendNow, RETRY_MS);
     window.addEventListener('online', trySendNow);
     window.addEventListener('focus', trySendNow);
+    window.addEventListener('storage', onStorage);
     document.addEventListener('visibilitychange', onVisible);
-    return () => { clearInterval(timer); window.removeEventListener('online', trySendNow); window.removeEventListener('focus', trySendNow); document.removeEventListener('visibilitychange', onVisible); };
+    return () => { clearInterval(timer); window.removeEventListener('online', trySendNow); window.removeEventListener('focus', trySendNow); window.removeEventListener('storage', onStorage); document.removeEventListener('visibilitychange', onVisible); };
   }, [waiting, trySendNow]);
 
   // Back to the cards, by the step button or the phone's own Back: it no longer goes by itself.
@@ -740,6 +749,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     if (resumed.current) return;
     resumed.current = true;
     if (!isWaitingToSend(report.id, principalId)) return;
+    lineWritten.current = true;
     setWaiting(navigator.onLine === false ? 'signal' : 'server');
     showCheck();
     // After this render's effects, so the page's latest copy (and send) are this report's.
@@ -974,7 +984,29 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     sending.current = true;
     setSubmitting(true);
     setSubmitError(null);
+    // One send of a report at a time across tabs: a page elsewhere may be sending it by itself (SendOnSignal.tsx).
+    await withUpdateLock(report.id, () => sendLocked(report, byItself)).catch(() => { sending.current = false; setSubmitting(false); });
+  }
+
+  async function sendLocked(report: Report, byItself: boolean) {
     try {
+      // It was waiting here, and the waiting line has gone: another tab sent it meanwhile. Show what went.
+      if (waitingRef.current && lineWritten.current && principalId && !isWaitingToSend(report.id, principalId)) {
+        const now = await getReport(report.id).catch(() => undefined);
+        if (now && now.state !== 'draft') {
+          await releaseIfCurrent(report.id, principalId, seq.current);
+          stopWaiting(report.id);
+          setSentByItself(new Date().toISOString());
+          announce(now, 'sent');
+          serverVersion.current = now.version;
+          setReport(now);
+          pending.current = null;
+          setSaveState("clean");
+          return;
+        }
+        // Still a draft: another tab stopped it going by itself (a refusal, or a change). A tap still sends it.
+        if (byItself && now?.state === 'draft') { stopWaiting(report.id); return; }
+      }
       if (saveTimer.current) clearTimeout(saveTimer.current);
       // Wait for any save already running, so what is submitted is the version
       // the engineer just reviewed rather than whatever lands last.
@@ -1023,7 +1055,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         if (held && error instanceof ApiError && (error.offline || (error.passing && !error.signedOut))) {
           // Kept on the phone: it goes by itself once the server can be reached.
           if (error.offline) setSaveState("phone");
-          if (principalId) markWaitingToSend(report.id, principalId);
+          // With what was checked, so a page elsewhere sends this and nothing else (lib/heldUpdate.ts).
+          if (principalId) markWaitingToSend(report.id, principalId, undefined, undefined, { checked: checkedCopy(report.observations, report.draftSignature), what: reportTypeOf(report).name.toLowerCase() });
+          // The phone may refuse to keep the line (storage full or blocked): then only this page sends it, and its absence means nothing.
+          lineWritten.current = !!principalId && isWaitingToSend(report.id, principalId);
           setSubmitError(null);
           setWaiting(error.offline ? 'signal' : 'server');
         } else if (error instanceof ApiError && error.offline) {

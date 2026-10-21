@@ -12,7 +12,7 @@ import { unfinishedReports, type UnfinishedReport } from '@/lib/unfinishedReport
 import type { FixtureProject } from '@/lib/fixtures';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import { usePrincipal } from './PrincipalContext';
-import { waitingToSend } from '@/lib/sendOnSignal';
+import { SEND_ON_SIGNAL_EVENT, SEND_ON_SIGNAL_KEY, waitingToSend } from '@/lib/sendOnSignal';
 import { SafetyActionsRow } from './SafetyActionsRow';
 import { ownsReport } from '@/lib/auth/access';
 import { EngineerIssueList, WordLine, isOpen } from './EngineerIssueList';
@@ -88,7 +88,7 @@ interface Back { at: string; key: string; href: string; title: string; sub: stri
 
 /** Where an unfinished report stands, in words an engineer can act on. */
 function UnfinishedTags({r,waiting=false}:{r:UnfinishedReport;waiting?:boolean}) {
-  if (waiting && !r.signed && !r.started) return <><span className="tag tag-caution">Not sent yet</span><span>no signal when you tapped Send · open it with signal and it goes to the office</span></>;
+  if (waiting && !r.signed && !r.started) return <><span className="tag tag-caution">Not sent yet</span><span>no signal when you tapped Send · goes to the office by itself once there is signal</span></>;
   if (r.signed) return <><span className="tag tag-caution">Signed · not sent yet</span><span>{r.problem ? `not sent yet: ${r.problem}` : `signed on this phone ${fmtWhen(r.changedAt)} · goes to the office by itself when RELAY reaches the server`}</span></>;
   if (r.started) return <><span className="tag tag-alert">Only on this phone</span><span>{r.problem ? `not accepted yet: ${r.problem}` : `started without signal ${fmtWhen(r.changedAt)} · goes up when RELAY can reach the server`}</span></>;
   if (r.device === 'only') return <><span className="tag tag-alert">Only on this phone</span><span>changed {fmtWhen(r.changedAt)} · open it with signal to save</span></>;
@@ -124,7 +124,16 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
   // `failed`: the office could not be asked (no signal), so there are no counts to show, not zero.
   /** Reports sent with no signal on this phone, still to go (lib/sendOnSignal.ts). Read after the first render, as the server cannot know. */
   const [waiting,setWaiting] = useState<ReadonlySet<string>>(() => new Set());
-  useEffect(() => { if (principal) setWaiting(new Set(waitingToSend(principal.id))); }, [principal]);
+  // Kept up as it goes by itself from this page or another tab (SendOnSignal.tsx).
+  useEffect(() => {
+    if (!principal) return;
+    const read = () => setWaiting(new Set(waitingToSend(principal.id)));
+    const onStorage = (e: StorageEvent) => { if (e.key === null || e.key === SEND_ON_SIGNAL_KEY) read(); };
+    read();
+    window.addEventListener(SEND_ON_SIGNAL_EVENT, read);
+    window.addEventListener('storage', onStorage);
+    return () => { window.removeEventListener(SEND_ON_SIGNAL_EVENT, read); window.removeEventListener('storage', onStorage); };
+  }, [principal]);
   const [back,setBack] = useState<{ rows: Back[]; open: number; reports: number; failed?: boolean; offline?: boolean } | null>(null);
   const [error,setError] = useState('');
   const [creating,setCreating] = useState(false);
@@ -278,7 +287,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
           <div className="eng-tiles eng-tiles-main">
             {currentDraft
               ? <Link className="eng-tile big eng-tile-main" href={withViewReturn(`/reports/${currentDraft.id}`,engineerReturn())}><div>{waiting.has(currentDraft.id)
-                ? <><b>{currentDraft.corrects ? 'Send the correction' : 'Send today’s update'}</b><small>Not sent yet: there was no signal when you tapped Send. Open it with signal and it goes to the office.</small></>
+                ? <><b>{currentDraft.corrects ? 'Send the correction' : 'Send today’s update'}</b><small>Not sent yet: there was no signal when you tapped Send. It goes to the office by itself once there is signal, while RELAY is open.</small></>
                 : <><b>{currentDraft.corrects ? 'Carry on with the correction' : 'Carry on with today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'on server'}</small></>}</div><span className="arrow" aria-hidden="true">→</span></Link>
               : <button type="button" className="eng-tile big eng-tile-main" onClick={()=>void startReport('update')} disabled={creating}><div><b>{creating?'Starting…':'Start today’s site update'}</b><small>Progress, photographs, defects and variations, then sign and send to the office</small></div><span className="arrow" aria-hidden="true">→</span></button>}
             <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo and a short note, sent straight away</small></div></button>

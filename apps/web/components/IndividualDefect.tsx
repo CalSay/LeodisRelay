@@ -13,6 +13,7 @@ import type {Issue} from '@/lib/types';
 import {withViewReturn} from '@/lib/viewNavigation';
 import {projectSuggestions} from '@/lib/api';
 import {Suggestions} from './ObservationEditor';
+import {useShownHere} from '@/lib/shownHere';
 type Draft=HeldDefect;
 export function IndividualDefect({project,onIssues,returnTo}:{project:FixtureProject;onIssues:()=>void;returnTo:string}){
   const principal=usePrincipal(),key=defectKey(String(principal?.id),project.id);
@@ -20,7 +21,7 @@ export function IndividualDefect({project,onIssues,returnTo}:{project:FixturePro
   // The same recent places a site update card offers (2026-10-21): free text, never a list to pick from.
   const [places,setPlaces]=useState<string[]>([]);
   const [error,setError]=useState(''),[retention,setRetention]=useState(''),[receipt,setReceipt]=useState<Pick<Issue,'id'|'reference'>|null>(null);
-  /** Sent with no signal and gone by itself once RELAY got through (lib/heldDefect.ts, DefectsOnSignal). */
+  /** Sent with no signal and gone by itself once RELAY got through (lib/heldDefect.ts, SendOnSignal). */
   const [byItself,setByItself]=useState(false);
   /** Refused as it is (not a lost signal): it does not go by itself, so the words do not say it will. */
   const [refused,setRefused]=useState(false);
@@ -54,7 +55,7 @@ export function IndividualDefect({project,onIssues,returnTo}:{project:FixturePro
     setError(result.reason);setRefused(result.kind==='refused');
     if(result.kind==='refused'&&result.editable)setDraft(d=>d&&{...d,pending:false});
   }
-  // Sent by itself from this page (DefectsOnSignal) while it is on screen: shown here, not as a note at the top.
+  // Sent by itself from this page (SendOnSignal) while it is on screen: shown here, not as a note at the top.
   // Sent from another tab: that tab leaves its receipt on the phone, so this one says so without sending again.
   useEffect(()=>{
     const onResult=(e:Event)=>{const {detail}=e as CustomEvent<DefectResult>;if(detail.key!==key||detail.requestId!==current.current?.requestId)return;e.preventDefault();settle(detail.result,true);};
@@ -62,6 +63,8 @@ export function IndividualDefect({project,onIssues,returnTo}:{project:FixturePro
     window.addEventListener(DEFECT_RESULT_EVENT,onResult);window.addEventListener('storage',onStorage);
     return()=>{window.removeEventListener(DEFECT_RESULT_EVENT,onResult);window.removeEventListener('storage',onStorage);};
   },[key,project.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Its own "Waiting for signal" is on this screen, so the line at the top of the page leaves it out.
+  useShownHere(draft?.pending&&!receipt?key:null);
   if(!draft)return <p role="status">Opening defect draft…</p>;
   if(receipt)return <section className="eng-panel eng-defect-receipt" role="status"><span className="tag tag-sent">Received by RELAY</span><h1>Defect sent to the office</h1>{byItself && <p><strong>Sent by itself once there was signal.</strong></p>}<p>{receipt.reference} · {project.projectName}</p><p>It is on the project’s issue list now. It went on its own: your site update has not been sent.</p><div className="btn-row"><Link className="eng-primary" href={withViewReturn(`/issues/${receipt.id}`,returnTo)}>Open issue →</Link><button onClick={onIssues}>View project issues</button></div></section>;
   // Sent from the form (2026-10-21): the check screen only repeated what was on it. A send

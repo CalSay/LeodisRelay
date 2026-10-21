@@ -1,8 +1,8 @@
 /**
  * Site updates the engineer tapped "Send to office" on with no signal
- * (2026-10-21). The report's editor sends one by itself when the phone has
- * signal again, as long as RELAY is open; if the page is closed first, the
- * home screen says it is still to go, and opening it sends it.
+ * (2026-10-21). One goes by itself when the phone has signal again, from
+ * whichever RELAY page is open (lib/heldUpdate.ts, components/SendOnSignal.tsx),
+ * and when RELAY is next opened; meanwhile the home screen says it is still to go.
  *
  * Kept per device in localStorage as report and person only: the work itself
  * is the copy the editor already holds on the phone (localDraft.ts), so
@@ -14,7 +14,27 @@
  */
 export const SEND_ON_SIGNAL_KEY = 'relay-send-on-signal';
 
-export interface WaitingToSend { reportId: string; principalId: string; at: string }
+/**
+ * `checked` is what the engineer checked and sent (checkedCopy), so only a
+ * held copy still saying exactly that goes by itself away from its page;
+ * `what` names it for the words ("site update"). Both are missing from lines
+ * written before 2026-10-21's second change: those go only from the report's
+ * own page, as before.
+ */
+export interface WaitingToSend { reportId: string; principalId: string; at: string; checked?: string; what?: string }
+
+/**
+ * A short fingerprint of a draft's cards and signature, to tell whether the
+ * copy on the phone is still the one checked when Send was tapped. By
+ * content, not edit number: the report page renews the number when it saves
+ * the same work again.
+ */
+export function checkedCopy(observations: readonly unknown[], signature: unknown): string {
+  const text = JSON.stringify([observations, signature ?? null]);
+  let a = 5381, b = 52711;
+  for (let i = 0; i < text.length; i++) { const c = text.charCodeAt(i); a = (a * 33) ^ c; b = (b * 31) ^ c; }
+  return `${text.length.toString(36)}-${(a >>> 0).toString(36)}-${(b >>> 0).toString(36)}`;
+}
 
 type Store = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 const store = (given?: Store): Store | undefined => {
@@ -26,27 +46,37 @@ function read(s: Store | undefined): WaitingToSend[] {
   if (!s) return [];
   try {
     const list: unknown = JSON.parse(s.getItem(SEND_ON_SIGNAL_KEY) ?? '[]');
-    return Array.isArray(list) ? list.filter((w): w is WaitingToSend => !!w && typeof w.reportId === 'string' && typeof w.principalId === 'string' && typeof w.at === 'string') : [];
+    return Array.isArray(list) ? list.filter((w): w is WaitingToSend => !!w && typeof w.reportId === 'string' && typeof w.principalId === 'string' && typeof w.at === 'string'
+      && (w.checked === undefined || typeof w.checked === 'string') && (w.what === undefined || typeof w.what === 'string')) : [];
   } catch { return []; }
 }
+
+/** Said on this page when the list changes (other tabs hear a storage event), so the home screen's words keep up. */
+export const SEND_ON_SIGNAL_EVENT = 'relay-send-on-signal';
 
 function write(s: Store | undefined, list: WaitingToSend[]): void {
   if (!s) return;
   try { if (list.length) s.setItem(SEND_ON_SIGNAL_KEY, JSON.stringify(list)); else s.removeItem(SEND_ON_SIGNAL_KEY); }
   catch { /* Storage blocked or full: the editor still sends while it is open. */ }
+  if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') window.dispatchEvent(new Event(SEND_ON_SIGNAL_EVENT));
 }
 
 /** Reports `principalId` is waiting to send from this device. */
 export const waitingToSend = (principalId: string, given?: Store): string[] =>
-  read(store(given)).filter(w => w.principalId === principalId).map(w => w.reportId);
+  waitingLines(principalId, given).map(w => w.reportId);
+
+/** The same, with what each line holds. */
+export const waitingLines = (principalId: string, given?: Store): WaitingToSend[] =>
+  read(store(given)).filter(w => w.principalId === principalId);
 
 export const isWaitingToSend = (reportId: string, principalId: string, given?: Store): boolean =>
   waitingToSend(principalId, given).includes(reportId);
 
 /** The engineer tapped Send with no signal: send it as soon as there is some. */
-export function markWaitingToSend(reportId: string, principalId: string, at = new Date().toISOString(), given?: Store): void {
+export function markWaitingToSend(reportId: string, principalId: string, at = new Date().toISOString(), given?: Store, held: Pick<WaitingToSend, 'checked' | 'what'> = {}): void {
   const s = store(given);
-  write(s, [...read(s).filter(w => !(w.reportId === reportId && w.principalId === principalId)), { reportId, principalId, at }]);
+  write(s, [...read(s).filter(w => !(w.reportId === reportId && w.principalId === principalId)), { reportId, principalId, at,
+    ...(held.checked ? { checked: held.checked } : {}), ...(held.what ? { what: held.what } : {}) }]);
 }
 
 /** Sent, changed, refused or taken back: no longer waiting, for anyone on this device. */

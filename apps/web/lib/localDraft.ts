@@ -340,3 +340,6 @@ export async function adoptStarted(startedKey:string,report:Report):Promise<stri
     tx.onabort = () => {db.close();reject(tx.error ?? new Error('Device storage failed.'));};
   });
 }
+
+/** The key of the ordinary held copy of one report for one person (not a set-aside one). */
+export const heldKey = (reportId: string, principalId: string): string => keyFor(reportId, principalId);

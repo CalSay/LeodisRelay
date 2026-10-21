@@ -15,7 +15,7 @@ import { canManage, isAdmin } from '@/lib/auth/access';
 import { PrincipalContext } from '@/components/PrincipalContext';
 import { InstallRelay } from '@/components/InstallRelay';
 import { HeldWork } from '@/components/HeldWork';
-import { DefectsOnSignal } from '@/components/DefectsOnSignal';
+import { SendOnSignal } from '@/components/SendOnSignal';
 import { SignedOutPrompt } from '@/components/SignedOutPrompt';
 import { ProjectContext } from '@/components/ProjectContext';
 import { refreshProjects, reportableProject, type ConnectedProject } from '@/lib/projects';
@@ -129,7 +129,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
         <InstallRelay /></WorkspaceChrome>
         <SignedOutPrompt />
-        <FeaturesContext features={{ safetyRecords: safetyRecordsOn() }}><PrincipalContext principal={principal}><HeldWork /><DefectsOnSignal /><ProjectContext projects={projects} error={projectError}>{children}</ProjectContext></PrincipalContext></FeaturesContext>
+        <FeaturesContext features={{ safetyRecords: safetyRecordsOn() }}><PrincipalContext principal={principal}><HeldWork /><SendOnSignal /><ProjectContext projects={projects} error={projectError}>{children}</ProjectContext></PrincipalContext></FeaturesContext>
       </body>
     </html>
   );

@@ -415,6 +415,8 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .held-send .note-bad strong{color:inherit;}
 .held-send a{color:var(--brass);font-weight:600;min-height:48px;display:inline-flex;align-items:center;}
 .held-send-close{margin-left:auto;min-height:48px;}
+/* Something tapped Send with no signal is still to go (SendOnSignal.tsx). */
+.held-send .held-send-waiting{display:block;border-color:color-mix(in srgb,var(--caution) 40%,transparent);border-left-color:var(--caution);background:var(--caution-wash);color:var(--text);}
 
 /* Usability pass (2026-10-20): on the phone an open card's row is its heading,
    so the card does not repeat the answer and the question above its buttons.
