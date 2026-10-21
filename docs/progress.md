@@ -32,7 +32,16 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   lands 93px down with the photograph button and what and where in view;
   "Put forward as fixed" is 175px below (was 467px), because scrolling
   further would hide what is wrong.
-- Checks: see the PR. Screenshots before and after: project files
+- Checks: `npm run typecheck`, `npm test` (146 + 441), `npm run build`.
+  Browser checks passing: came-back-to-update (36: 390px light and dark,
+  short, long and very long descriptions, Issues list and office start at
+  the top), simpler-issue-page, simpler-issue-list, help, engineer-day,
+  simpler-home, seen-by-office, home-and-sheet, role-access,
+  engineer-layout, accessibility (584), issue-provenance, issue-assign,
+  day-walkthrough, first-time-use, fewest-taps, since-last-visit,
+  signature-reload, search, navigation, error-messages. Fresh-context
+  review: Help line overclaimed for very long issues (softened) and one
+  weak assertion (tightened). Screenshots before and after: project files
   `ui-review/came-back-to-update/`.
 - Not verified: no real phone, no real engineer, no live tenant.
 
