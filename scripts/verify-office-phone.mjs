@@ -1,6 +1,6 @@
 // Browser check: on a phone the office desk opens on the office position, so
 // a project manager away from a desk sees the four action groups (new
-// reports, not yet read, unassigned issues, ready to verify) with their counts
+// reports, not seen yet, unassigned issues, ready to verify) with their counts
 // and buttons, with "Where each project stands" between their counts and the
 // groups standing in for the project list. The desk at 1440px keeps its
 // layout: the project column on the left, two groups to a row.
@@ -72,7 +72,7 @@ try {
       assert.equal(await page.locator('.act-strip').getAttribute('role'),'group',`${label}: the tiles are announced as one group`);checks++;
       // Rows and buttons are full-size touch targets; nothing is cut off sideways.
       const heights=await page.locator('.act .rmenu .btn').evaluateAll(b=>b.map(e=>e.getBoundingClientRect().height));
-      assert.ok(heights.length>=3&&heights.every(h=>h>=40),`${label}: action buttons are at least 40px (${heights})`);checks++;
+      assert.ok(heights.length>=2&&heights.every(h=>h>=40),`${label}: action buttons are at least 40px (${heights})`);checks++;
       const links=await page.locator('.act .act-all').evaluateAll(b=>b.map(e=>e.getBoundingClientRect().height));
       assert.ok(links.every(h=>h>=44),`${label}: "Show all" links are at least 44px (${links})`);checks++;
       const long=group(page,'unassigned').locator('a.rt b').first();
@@ -108,20 +108,19 @@ try {
     assert.ok(await overflow(page)<=0,`${label}: no horizontal scroll`);checks++;
     await desk.close();
   }
-  // Acknowledge from a phone: the dialog fits the screen and the counts follow.
+  // Open a report from a phone: that marks it seen, and the counts follow.
   const phone=await browser.newContext({viewport:{width:390,height:844},isMobile:true,hasTouch:true});await phone.addCookies([{name:'relay_session',value:session,url:base}]);
   const page=await phone.newPage();page.on('pageerror',e=>errors.push(e.message));
   await page.goto(`${base}/office#/projects`);await group(page,'notAck').waitFor();
-  await group(page,'notAck').getByRole('button',{name:'Acknowledge'}).first().tap();
-  const dialog=page.locator('.ws-dialog');await dialog.waitFor();
-  const box=await dialog.boundingBox();
-  assert.ok(box.x>=0&&box.x+box.width<=390,'phone: the acknowledge dialog fits the screen');checks++;
-  await dialog.getByRole('button',{name:'Acknowledge'}).tap();
+  assert.equal(await group(page,'notAck').getByRole('button').count(),0,'phone: nothing to press to mark a report seen');checks++;
+  await group(page,'notAck').locator('a.rt').first().tap();
+  await page.locator('.stages [data-stage="read"]').getByText('Seen by the office').waitFor();
+  await page.goto(`${base}/office#/projects`);await group(page,'notAck').waitFor();
   await page.waitForFunction(()=>document.querySelector('.act[data-group="notAck"] .act-n')?.textContent==='1');
   assert.equal(await page.locator('.act-strip button[data-group="notAck"] b').textContent(),'1','phone: the count tile follows');checks++;
   await phone.close();
   assert.deepEqual(errors,[]);checks++;
-  console.log(`Passed ${checks} office phone checks (320px and 390px phones, 1440px desk, light and dark; reading order; acknowledge on a phone).`);
+  console.log(`Passed ${checks} office phone checks (320px and 390px phones, 1440px desk, light and dark; reading order; opening a report on a phone marks it seen).`);
 } finally {
   await browser?.close();
   server.kill();if(server.exitCode===null)await once(server,'exit');

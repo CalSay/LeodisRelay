@@ -251,13 +251,18 @@ export function correctReport(id: string, reason: string): StoreOutcome<Report> 
   });
 }
 
-/** The office has read it. Recorded once; a second acknowledgement returns the first. */
+/**
+ * The office has seen it: a Manager or Admin opened it. Recorded once; a
+ * second acknowledgement returns the first. The author opening their own
+ * report is not the office seeing it.
+ */
 export function acknowledgeReport(id: string, principal: Principal, note: string): StoreOutcome<Report> {
   return atomic(() => {
     const report = getReport(id);
     if (!report) return reject('No such report.',404);
     if (report.state !== 'submitted') return reject('Only a submitted report can be acknowledged.');
     if (report.acknowledged) return { ok: true, value: report };
+    if (report.authorId && report.authorId === principal.id) return reject('Opening your own report does not count as the office seeing it.');
     const acknowledged: Report = { ...report, acknowledged: { by: principal.name, byId: principal.id, at: new Date().toISOString(), ...(note.trim() ? { note: note.trim() } : {}) } };
     putRecord('reports',acknowledged);
     return { ok: true, value: acknowledged };

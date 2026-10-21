@@ -1,6 +1,8 @@
 // Browser check for FE-6a: a sent report shows received, PDF, delivery and
-// read as separate steps, each with its own state, in the office reader and
+// seen as separate steps, each with its own state, in the office reader and
 // on the engineer's report page; a local outbox file is never shown as email.
+// The engineer's pages go first: the office opening a report marks it seen,
+// and the engineer then sees "Seen by the office" on it.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 // RELAY_SCREENSHOT_DIR=<dir> saves the office reader at 1440px and the engineer page at 390px, light and dark.
 import assert from 'node:assert/strict';
@@ -27,12 +29,12 @@ const record=(failure)=>({revisionId:'x',revision:1,method:'email',recipient:{na
 const sent=(over)=>{const r=createReport('proj-011lme',engineer.name,engineer);const row={...r,state:'submitted',review:'not_required',serverAcknowledgedAt:now,observations:obs(),...over};putRecord('reports',row);putRecord('snapshots',row);return r.id;};
 // What each seeded report should show, step by step.
 const cases={
-  queued:{id:sent({delivery:'pending'}),steps:{Received:'Received',PDF:'Being prepared',Delivery:'Waiting for the PDF',Read:'Not yet read'}},
-  outbox:{id:sent({delivery:'outbox',issued:{records:[record()],unaddressed:[],transport:'outbox',location:'/outbox/x.eml'},acknowledged:{by:'Office Manager',byId:manager.id,at:now}}),steps:{Received:'Received',PDF:'Ready',Delivery:'Not emailed',Read:'Read by Office Manager'}},
-  emailed:{id:sent({delivery:'sent',issued:{records:[record()],unaddressed:[],transport:'graph'}}),steps:{Received:'Received',PDF:'Ready',Delivery:'Emailed to Tom PM',Read:'Not yet read'}},
-  pdfFailed:{id:sent({delivery:'failed',deliveryError:'Renderer crashed',deliveryErrorStage:'pdf'}),steps:{Received:'Received',PDF:'Could not be prepared',Delivery:'Waiting for the PDF',Read:'Not yet read'}},
-  mailFailed:{id:sent({delivery:'failed',deliveryErrorStage:'delivery',deliveryError:'Mailbox refused',issued:{records:[record('Mailbox refused')],unaddressed:[],transport:'graph'}}),steps:{Received:'Received',PDF:'Ready',Delivery:'Email failed',Read:'Not yet read'}},
-  reviewed:{id:sent({delivery:'rendered',review:'pending'}),steps:{Received:'Received',Review:'Awaiting review',PDF:'Ready',Delivery:'Waiting to send',Read:'Not yet read'}},
+  queued:{id:sent({delivery:'pending'}),steps:{Received:'Received',PDF:'Being prepared',Delivery:'Waiting for the PDF',Seen:'Not seen yet'}},
+  outbox:{id:sent({delivery:'outbox',issued:{records:[record()],unaddressed:[],transport:'outbox',location:'/outbox/x.eml'},acknowledged:{by:'Office Manager',byId:manager.id,at:now}}),steps:{Received:'Received',PDF:'Ready',Delivery:'Not emailed',Seen:'Seen by the office'}},
+  emailed:{id:sent({delivery:'sent',issued:{records:[record()],unaddressed:[],transport:'graph'}}),steps:{Received:'Received',PDF:'Ready',Delivery:'Emailed to Tom PM',Seen:'Not seen yet'}},
+  pdfFailed:{id:sent({delivery:'failed',deliveryError:'Renderer crashed',deliveryErrorStage:'pdf'}),steps:{Received:'Received',PDF:'Could not be prepared',Delivery:'Waiting for the PDF',Seen:'Not seen yet'}},
+  mailFailed:{id:sent({delivery:'failed',deliveryErrorStage:'delivery',deliveryError:'Mailbox refused',issued:{records:[record('Mailbox refused')],unaddressed:[],transport:'graph'}}),steps:{Received:'Received',PDF:'Ready',Delivery:'Email failed',Seen:'Not seen yet'}},
+  reviewed:{id:sent({delivery:'rendered',review:'pending'}),steps:{Received:'Received',Review:'Awaiting review',PDF:'Ready',Delivery:'Waiting to send',Seen:'Not seen yet'}},
 };
 const port=4337,base=`http://127.0.0.1:${port}`;let output='';
 const server=spawn(process.execPath,[resolve('node_modules/next/dist/bin/next'),'start','-p',String(port),'-H','127.0.0.1'],{cwd:resolve('apps/web'),windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,NODE_ENV:'production',ENTRA_TENANT_ID:'00000000-0000-0000-0000-000000000001',ENTRA_CLIENT_ID:'00000000-0000-0000-0000-000000000002',ENTRA_CLIENT_SECRET:'synthetic-stages-check',ENTRA_REDIRECT_URI:`${base}/api/auth/callback`}});
@@ -46,8 +48,8 @@ try {
   browser=await chromium.launch({headless:true,...(process.env.RELAY_BROWSER_PATH?{executablePath:process.env.RELAY_BROWSER_PATH}:{})});
   const errors=[];
   const views=[
-    {who:'office',width:1440,url:id=>`${base}/office#/projects/proj-011lme/report/${id}`},
     {who:'engineer',width:390,url:id=>`${base}/reports/${id}`},
+    {who:'office',width:1440,url:id=>`${base}/office#/projects/proj-011lme/report/${id}`},
   ];
   for(const view of views)for(const colorScheme of ['light','dark']){
     const ctx=await browser.newContext({viewport:{width:view.width,height:900},colorScheme});await ctx.addCookies([{name:'relay_session',value:sessions[view.who],url:base}]);
@@ -55,7 +57,11 @@ try {
     for(const [name,c] of Object.entries(cases)){
       await page.goto(view.url(c.id));await page.locator('ol.stages').waitFor();
       const label=`${view.who} ${view.width}px ${colorScheme}, ${name}`;
-      assert.deepEqual(await steps(page),c.steps,`${label}: each step and its state`);checks++;
+      // The office opening it is what marks it seen.
+      const expected=view.who==='office'?{...c.steps,Seen:'Seen by the office'}:c.steps;
+      if(view.who==='office')await page.locator('ol.stages li[data-stage="read"]').getByText('Seen by the office').waitFor();
+      assert.deepEqual(await steps(page),expected,`${label}: each step and its state`);checks++;
+      if(view.who==='office'){assert.match(await page.locator('ol.stages li[data-stage="read"] small').textContent(),/Opened by Office Manager/,`${label}: says who opened it`);checks++;}
       if(name==='outbox'){
         assert.equal(await page.locator('ol.stages').getByText(/emailed to/i).count(),0,`${label}: a local outbox file is not shown as an email`);checks++;
         assert.match(await page.locator('ol.stages li[data-stage="delivery"]').textContent(),/Nothing has been sent/,`${label}: says nothing was sent`);checks++;
@@ -67,8 +73,16 @@ try {
     }
     await ctx.close();
   }
+  // Back on the engineer's phone, every report the office opened now says so.
+  const back=await browser.newContext({viewport:{width:390,height:900}});await back.addCookies([{name:'relay_session',value:sessions.engineer,url:base}]);
+  const engineerPage=await back.newPage();engineerPage.on('pageerror',e=>errors.push(e.message));
+  for(const [name,c] of Object.entries(cases)){
+    await engineerPage.goto(`${base}/reports/${c.id}`);await engineerPage.locator('ol.stages').waitFor();
+    assert.equal((await steps(engineerPage)).Seen,'Seen by the office',`engineer after the office opened ${name}: seen by the office`);checks++;
+  }
+  await back.close();
   assert.deepEqual(errors,[]);checks++;
-  console.log(`Passed ${checks} submission stage checks (office 1440px and engineer 390px, light and dark).`);
+  console.log(`Passed ${checks} submission stage checks (engineer 390px and office 1440px, light and dark; opening in the office marks seen).`);
 } finally {
   await browser?.close();
   server.kill();if(server.exitCode===null)await once(server,'exit');

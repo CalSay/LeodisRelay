@@ -86,8 +86,8 @@ try {
     check(tetley['This week'].text==='3 visits Electrical, HVAC',`${label}: the correction counts once, the inspection counts as a visit, trades named: ${tetley['This week'].text}`);
     check(tetley['Open issues'].text==='2 1 overdue'&&tetley['Open issues'].late,`${label}: open issues and the overdue one: ${tetley['Open issues'].text}`);
     check(tetley['Variations waiting'].text==='1 1 done, not instructed'&&tetley['Variations waiting'].late,`${label}: the variation done without an instruction: ${tetley['Variations waiting'].text}`);
-    const needs=tetley['Needs action'].text.match(/^(\d+) for the office · \d+ reports not read$/);
-    check(needs,`${label}: the office's count, with the reports not read: ${tetley['Needs action'].text}`);
+    const needs=tetley['Needs action'].text.match(/^(\d+) for the office · \d+ reports not seen yet$/);
+    check(needs,`${label}: the office's count, with the reports not seen yet: ${tetley['Needs action'].text}`);
     const kirkstall=await cells(rows.filter({hasText:'014LME'}));
     check(kirkstall['Last visit'].late&&kirkstall['Last visit'].text.endsWith(`No report for ${quietDays} working days`),`${label}: Kirkstall Gate has gone quiet: ${kirkstall['Last visit'].text}`);
     check(kirkstall['This week'].text==='0 visits nobody yet',`${label}: nobody this week: ${kirkstall['This week'].text}`);

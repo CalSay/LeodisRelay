@@ -1,7 +1,7 @@
 'use client';
 import { useState, type FormEvent, type ReactNode } from 'react';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
-import { acknowledgeReport, issueCommand, reviewReportDecision, variationCommand } from '@/lib/api';
+import { issueCommand, reviewReportDecision, variationCommand } from '@/lib/api';
 import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, expectedCost, fmtMoney, fmtPct, marginPct, readCosting, suggestedQuote, type Costing } from '@/lib/variations';
 import { Modal, formValues, toast } from '@/components/workspace/hooks';
 import { InstallRelay } from '@/components/InstallRelay';
@@ -15,7 +15,6 @@ export type Dialog =
   | { kind: 'confirm'; issue: Issue }
   | { kind: 'withdraw'; issue: Issue }
   | { kind: 'triage'; issue: Issue }
-  | { kind: 'acknowledge'; report: ReportSummary }
   | { kind: 'review'; report: ReportSummary }
   | { kind: 'variation-price'; variation: Variation }
   | { kind: 'variation-instruct'; variation: Variation }
@@ -87,15 +86,6 @@ export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done
     });
     return <Modal className="ws-dialog" onClose={close}><TriageForm d={d} busy={busy} shell={shell} close={close} decide={decide} />
     </Modal>;
-  }
-  if (d.kind === 'acknowledge') {
-    const r = d.report;
-    return <Modal className="ws-dialog" onClose={close}><form onSubmit={submit(async v => { await acknowledgeReport(r.id, v.note ?? ''); return `${r.reference} acknowledged. The engineer will see it was read.`; })}>
-      {shell('Acknowledge', `${r.reference} · ${r.author}`, <>
-        <div className="note info" style={{ margin: 0 }}><span>Records that the office has read this report, with your name and the time. It sends nothing and changes nothing else.</span></div>
-        <div className="f"><label>Note · optional</label><textarea name="note" placeholder="Seen, chasing the main contractor" autoFocus /></div>
-      </>, <Foot label="Acknowledge" />)}
-    </form></Modal>;
   }
   if (d.kind === 'review') {
     const r = d.report;

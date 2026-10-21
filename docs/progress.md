@@ -4,6 +4,43 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Seen by the office
+
+- Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information it
+  needs while staying easy for engineers. FE-4 (approved) asks for PM
+  acknowledgement. It already existed as an "Acknowledge" button with a note,
+  so few reports were ever marked read and the engineer rarely knew a report
+  had landed. Decision: make that same record automatic rather than build a
+  second one. Opening a sent report is the acknowledgement.
+- Changed:
+  - A Manager or Admin opening a sent report in the office reader, the full
+    report or the report page (from search, say) records it as seen, with
+    their name and the time (`components/useMarkSeen.ts`, rule `opensAsSeen`
+    in `lib/officeActions.ts`). Opening your own report does not count, and
+    the server refuses it too (`acknowledgeReport`). Engineers cannot mark
+    anything seen (403, unchanged).
+  - The "Acknowledge" buttons and dialog are gone. The API still takes an
+    optional note and older notes still show ("Opened by Tom: Chasing").
+  - Words: "Read" is now "Seen" everywhere. The engineer sees "Seen by the
+    office" on the report's steps and on its row under "Came back from the
+    office". The office desk group is "Not seen yet" (each row a link, nothing
+    to press); the Inbox filter is "Not seen yet"; "Where each project stands"
+    says "N reports not seen yet" per project. Help glossary, office guide
+    and "What's new" updated.
+  - Phone: the "Not seen yet" rows are 44px tall now they have no button.
+- Verified: typecheck, `npm test` (new tests for `opensAsSeen`, the author
+  rule and the stage words). Browser checks: new
+  `scripts/verify-seen-by-office.mjs` (390px and 1440px, light and dark:
+  counts before and after, author and engineer do not mark it, engineer
+  home and report say "Seen by the office"); updated verify-office-actions,
+  verify-office-phone, verify-submission-stages (engineer first, then the
+  office opening marks it seen), verify-office-progress and verify-help.
+  Screenshots: project files `ui-review/seen-by-office/`.
+- Not verified: no live tenant, no real phone. Reports already on the server
+  stay "Not seen yet" until someone in the office opens them.
+- Not a `docs/tasks.json` status change: FE-4c stays done; its notes say
+  what changed.
+
 ## 2026-10-21 — Fewer taps for a site update
 
 - Why: Cal (2026-10-21 07:02) wants RELAY really easy for hands-on engineers,

@@ -11,6 +11,13 @@ export const isActiveIssue = (i: Issue): boolean => i.work !== 'closed' && i.con
 export const isUnassigned = (i: Issue): boolean => isActiveIssue(i) && i.owner.trim() === '';
 export const isVerify = (i: Issue): boolean => isActiveIssue(i) && i.work === 'awaiting_verification';
 export const notAcknowledged = (r: ReportSummary): boolean => r.state === 'submitted' && !r.acknowledged;
+/**
+ * Whether this person opening the report marks it seen by the office: a sent
+ * report nobody in the office has opened, opened by a Manager or Admin who is
+ * not its author. Reading it on the engineer's own page does not count.
+ */
+export const opensAsSeen = (r: Pick<ReportSummary, 'state' | 'acknowledged' | 'authorId'>, viewer: { id: string; role?: string }): boolean =>
+  r.state === 'submitted' && !r.acknowledged && (viewer.role === 'Admin' || viewer.role === 'Manager') && r.authorId !== viewer.id;
 
 /**
  * An issue as the office desk's registers and totals use it: every field, and

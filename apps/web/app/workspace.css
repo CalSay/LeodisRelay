@@ -357,7 +357,7 @@ body:has(.ws){overflow:hidden auto}
   .ws .act-h{padding:var(--s3) var(--s3) 0}
   .ws .act-sub{padding:0 var(--s3) var(--s2)}
   .ws .act .rmenu>div{min-height:var(--touch);padding:var(--s2) var(--s3)}
-  .ws .act .rmenu a.rt{align-self:stretch;display:flex;flex-direction:column;justify-content:center}
+  .ws .act .rmenu a.rt{align-self:stretch;min-height:var(--touch);display:flex;flex-direction:column;justify-content:center}
   .ws .act .rmenu .rt b{white-space:normal;overflow-wrap:anywhere}
   .ws .act .rmenu>div>.btn,.ws .act .rmenu>div>.btn-q,.ws .act .rmenu>div>.tag{flex:none}
   .ws .act-all{display:flex;align-items:center;min-height:44px;padding:0 var(--s3)}

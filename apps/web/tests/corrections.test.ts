@@ -83,7 +83,7 @@ test('corrections, acknowledgement and the draft allowlist marry the engineer si
       assert.equal(acknowledgeReport(draft.id,manager,'').ok,false,'a draft cannot be acknowledged');
       const report = await sent(draft);
       assert.equal(report.acknowledged,undefined,'sending does not wait for, or imply, acknowledgement');
-      assert.equal(acknowledgementStatus(report)?.label,'Not yet read by the office');
+      assert.equal(acknowledgementStatus(report)?.label,'Not seen by the office yet');
       const issueBefore = listIssues('proj-014lme').find(i => i.raisedByReport === report.id)!;
 
       const before = Date.now();
@@ -112,13 +112,18 @@ test('corrections, acknowledgement and the draft allowlist marry the engineer si
       assert.equal(issueAfter.events.length,issueBefore.events.length);
 
       // Each fact keeps its own words.
-      assert.equal(acknowledgementStatus(stored)?.label,'Read by Tom');
+      assert.equal(acknowledgementStatus(stored)?.label,'Seen by the office');
       assert.equal(receiptStatus(stored).label,'Received');
       assert.equal(reviewStatus(stored)?.label,'No review required');
       assert.equal(deliveryStatus(stored)?.label,'PDF queued');
 
       const second = acknowledgeReport(report.id,{...manager,id:'entra:other' as never,name:'Someone else'},'Another note');
       assert.deepEqual((second as {ok:true;value:Report}).value.acknowledged,value.acknowledged,'the first acknowledgement stands');
+
+      const own = await sent(createReport('proj-014lme',manager.name,manager));
+      assert.equal(acknowledgeReport(own.id,manager,'').ok,false,'the author opening their own report is not the office seeing it');
+      assert.equal(getReport(own.id)?.acknowledged,undefined);
+      assert.equal(acknowledgeReport(own.id,{...manager,id:'entra:other' as never,name:'Ada'},'').ok,true,'somebody else in the office can');
 
       const plain = acknowledgeReport((await sent(createReport('proj-014lme',engineer.name,engineer))).id,manager,'   ');
       assert.equal('note' in (plain as {ok:true;value:Report}).value.acknowledged!,false,'the note is optional; a blank one is not stored');
@@ -132,7 +137,7 @@ test('corrections, acknowledgement and the draft allowlist marry the engineer si
       assert.equal(approved.ok,true,approved.ok ? '' : approved.reason);
       assert.equal(getReport(report.id)?.review,'approved');
       assert.equal(getReport(report.id)?.acknowledged,undefined,'approved is not read');
-      assert.equal(acknowledgementStatus(getReport(report.id)!)?.label,'Not yet read by the office');
+      assert.equal(acknowledgementStatus(getReport(report.id)!)?.label,'Not seen by the office yet');
 
       const issue = listIssues('proj-014lme').find(i => i.raisedByReport === report.id)!;
       assert.equal(applyCommand(issue.id,{kind:'submit_closure',actor:engineer.name,actorId:engineer.id,note:'Cover replaced'}).ok,true);

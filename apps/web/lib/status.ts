@@ -64,12 +64,12 @@ export function deliveryStatus(report: Report): StatusLine | null {
   return { label: "PM notified", tone: "sent" };
 }
 
-/** Whether a person in the office has said they read it. Only meaningful once submitted. */
+/** Whether somebody in the office has opened it. Only meaningful once submitted. */
 export function acknowledgementStatus(report: Report): StatusLine | null {
   if (report.state !== "submitted") return null;
   return report.acknowledged
-    ? { label: `Read by ${report.acknowledged.by}`, tone: "sent" }
-    : { label: "Not yet read by the office", tone: "draft" };
+    ? { label: "Seen by the office", tone: "sent" }
+    : { label: "Not seen by the office yet", tone: "draft" };
 }
 
 /** A returned report is the engineer's to act on; a correction supersedes it. */
@@ -163,8 +163,8 @@ export function submissionStages(report: Report): Stage[] {
   const pdf = pdfStage(report);
   stages.push(pdf, deliveryStage(report, pdf));
   stages.push(report.acknowledged
-    ? { key: 'read', title: 'Read', label: `Read by ${report.acknowledged.by}`, tone: 'sent', at: report.acknowledged.at, ...(report.acknowledged.note ? { detail: report.acknowledged.note } : {}) }
-    : { key: 'read', title: 'Read', label: 'Not yet read', tone: 'draft', detail: 'Nobody in the office has marked it as read.' });
+    ? { key: 'read', title: 'Seen', label: 'Seen by the office', tone: 'sent', at: report.acknowledged.at, detail: `Opened by ${report.acknowledged.by}${report.acknowledged.note ? `: ${report.acknowledged.note}` : ''}` }
+    : { key: 'read', title: 'Seen', label: 'Not seen yet', tone: 'draft', detail: 'Nobody in the office has opened it yet.' });
   return stages;
 }
 

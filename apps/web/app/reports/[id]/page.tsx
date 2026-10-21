@@ -33,6 +33,7 @@ import { correctReport as requestCorrection } from '@/lib/api';
 import { ownsReport } from '@/lib/auth/access';
 import { toneClass } from '@/lib/status';
 import { SubmissionStages } from '@/components/SubmissionStages';
+import { useMarkSeen } from '@/components/useMarkSeen';
 import { CARD_TYPES, OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
 import { placesToOffer, withoutBlankCards } from '@/lib/quickCards';
 import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
@@ -860,6 +861,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     addCard(add as ObservationType);
     try { const url = new URL(window.location.href); url.searchParams.delete('add'); window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`); } catch {}
   }, [report?.id, report?.state, addCard]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // The office opening a sent report (from search, say) counts as seeing it, as in the office reader.
+  useMarkSeen(report, (seen) => setReport((r) => (r && r.id === seen.id ? { ...r, acknowledged: seen.acknowledged } : r)));
 
   async function send() {
     if (!report || sending.current) return;
