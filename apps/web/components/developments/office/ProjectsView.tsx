@@ -10,7 +10,7 @@ import { SubmissionStages } from '@/components/SubmissionStages';
 import { useMarkSeen } from '@/components/useMarkSeen';
 import { useFeatures } from '@/components/FeaturesContext';
 import { projectStatusGroups } from '@/lib/projectGroups';
-import { officeActions, sinceWords } from '@/lib/officeActions';
+import { officeActions } from '@/lib/officeActions';
 import { withViewReturn } from '@/lib/viewNavigation';
 import { confirmationNote } from '@/lib/issueConfirmation';
 import type { Correction, CorrectionAction, Issue, Observation, Report, ReportSummary, Variation } from '@/lib/types';
@@ -19,7 +19,7 @@ import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, f
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
-import { WORK_LABEL, notAcknowledged, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
+import { WORK_LABEL, notAcknowledged, daysLate, daysSince, attention, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
 import { signatureMethod } from '@/lib/signature';
 import { LATEST_DAYS, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
 import { OUR_CONTRACT, canCorrect, duplicateOf, isWithinContract, modesFor, pickPool, pickTag, priorOwner, type Target } from './corrections';
@@ -33,7 +33,7 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
   const depth = !s ? 1 : !kind ? 2 : 3;
   // A phone shows one stacked page, so a new record starts at its top, not where the last one was scrolled to.
   useEffect(() => { if (window.matchMedia('(max-width:700px)').matches) window.scrollTo(0, 0); }, [depth, s?.code, id]);
-  const projects = <ProjectsCol key="projects" ctx={ctx} current={s} />;
+  const projects = s && <ProjectsCol key="projects" ctx={ctx} current={s} />;
   const main = <div key="main" className="col col-main">
       <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h2>{s ? 'Details' : 'Overview'}</h2><i>{s ? s.project.projectNumber : 'Office'}</i></div>
       <div className="colpad">
@@ -44,9 +44,11 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
           : s ? <ProjectSheet ctx={ctx} s={s} /> : <OfficeSheet ctx={ctx} />}
       </div>
     </div>;
-  // With no project chosen the office position comes first in reading order, as it does on a phone; the desk still places it on the right.
+  // With no project chosen the office position stands alone: its "Where each project stands" list is the
+  // project list, so a second list of the same projects beside it only repeated it. The column comes back
+  // once a project is open, to move between projects.
   return <div className="cols" data-depth={depth}>
-    {!s ? [main, projects] : [projects, <RegisterCol key="register" ctx={ctx} s={s} kind={kind} id={id} />, main]}
+    {!s ? main : [projects, <RegisterCol key="register" ctx={ctx} s={s} kind={kind} id={id} />, main]}
   </div>;
 }
 
@@ -173,8 +175,6 @@ function foundWords(r: ReportSummary): string {
 /* ---------------------------------------------------------------- sheets */
 function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const snap = ctx.snap!;
-  const pendingVariations = ctx.stats.flatMap(s => s.pendingVariations);
-  const openIssues = snap.issues.filter(isActive).length;
   const groups = actionGroups(ctx);
   // Read with the rest of the desk, so the button, the bell and Needs attention count from one answer.
   const safety = snap.safety?.totals;
@@ -182,9 +182,9 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const { safetyRecords } = useFeatures();
   // Where each project stands comes first: it is the question the office opens RELAY to answer.
   // The totals, overdue count and latest reports that used to sit here are in that list, the
-  // action groups and the Inbox, so they are no longer repeated.
+  // action groups and the Inbox, so they are no longer repeated; nor are the tab counts above it.
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h3>Office position</h3><div className="rowsub">{ctx.projects.length} reportable project{ctx.projects.length === 1 ? '' : 's'} · {snap.reports.length} report{snap.reports.length === 1 ? '' : 's'} received · {openIssues} open issue{openIssues === 1 ? '' : 's'} · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
+    <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h3>Office position</h3><div className="rowsub">Updated {fmtWhen(snap.loadedAt)}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link>{safetyRecords && <Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions{safety ? ` · ${safety.open} open` : ''}</Link>}</div></div>
     {!snap.reports.length && !snap.issues.length && !snap.variations.length && <div className="note info office-first" role="status"><span>
       <b>Nothing has come in from site yet.</b> Reports arrive in the Inbox as engineers send them, and their defects and variations fill the Issues and Variations registers. Choose a project to see its sheet, or open Help for how RELAY works.
@@ -193,7 +193,7 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
     <ProjectGlance ctx={ctx} />
     <ActionGroups groups={groups} />
     <SecH right={<a href="#/issues">All →</a>}>Also needs attention</SecH>
-    <AttentionList ctx={ctx} limit={6} skipActions />
+    <AttentionList ctx={ctx} limit={6} />
     <p className="rowsub" style={{ marginTop: 16 }}>Opening a report marks it seen by the office. Choose a project to see where it stands.</p>
   </div>;
 }
@@ -219,7 +219,8 @@ function lastVisitWords(st: ProjectStanding, day: string): { when: string; who: 
 function ProjectGlance({ ctx }: { ctx: Ctx }) {
   const day = ctx.day;
   return <section className="glance" aria-labelledby="glance-h">
-    <SecH right={<Link href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Day by day →</Link>}><span id="glance-h">Where each project stands</span></SecH>
+    {/* Site coverage, day by day, is the button at the top of the office position. */}
+    <SecH><span id="glance-h">Where each project stands</span></SecH>
     {projectStatusGroups(ctx.projects).filter(g => g.projects.length).map(group => <div key={group.status} className="glance-group">
       <div className="grp">{group.label}<i>{group.projects.length}</i></div>
       <ul className="glance-list">{group.projects.map(p => {
@@ -250,32 +251,23 @@ function siteItems(ctx: Ctx, s: ProjectStats) {
   return [...safety.filter(i => i.kind !== 'inspection'), ...permitItems([s], ctx.snap?.permits, officeReturn(ctx)), ...safety.filter(i => i.kind === 'inspection'), ...deliveryItems([s], ctx.snap?.deliveries, officeReturn(ctx))];
 }
 
-function AttentionList({ ctx, limit, skipActions }: { ctx: Ctx; limit: number; skipActions?: boolean }) {
-  const scope = ctx.stats;
-  const failed = scope.flatMap(st => st.failed.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Report could not be processed', sub: `${st.project.projectName} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${st.code}/report/${r.id}` })));
-  // Safety lines go straight after a failed report, as in the Attention list (model.ts `attention`).
-  // Permits past their end time come after open safety actions, as in model.ts `attention`.
-  const safetyLines = safetyItems(scope, ctx.snap?.safety, officeReturn(ctx));
-  const safety = [...safetyLines.filter(i => i.kind !== 'inspection'), ...permitItems(scope, ctx.snap?.permits, officeReturn(ctx)), ...safetyLines.filter(i => i.kind === 'inspection')]
-    .map(i => ({ key: i.key, ref: i.projectNumber, b: i.title, sub: i.sub, tag: i.tag, go: i.go }));
-  // Deliveries still to sort come after work done with no instruction, as in model.ts `attention`.
-  const deliveries = deliveryItems(scope, ctx.snap?.deliveries, officeReturn(ctx)).map(i => ({ key: i.key, ref: i.projectNumber, b: i.title, sub: i.sub, tag: i.tag, go: i.go }));
-  const items = [...failed, ...safety, ...scope.flatMap(st => [
-    ...st.pendingReview.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Awaiting review', sub: `${st.project.projectName} · ${r.author}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${st.code}/report/${r.id}` })),
-    ...st.overdue.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · ${i.owner || 'unassigned'} · target ${fmtDay(i.targetDate)}`, tag: { label: `${daysLate(i.targetDate, ctx.day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
-    ...st.exposedVariations.map(v => ({ key: v.id, ref: shortRef(v.reference), b: v.description, sub: `${st.project.projectName} · work done, no written instruction`, tag: { label: 'Not instructed', cls: 'tag-alert' }, go: `#/projects/${st.code}/variation/${v.id}` })),
-    ...deliveries.filter(d => d.key === `dl-${st.code}`),
-    ...st.disputed.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · disputed at review`, tag: { label: 'Triage', cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
-    // The office position lists verification and unassigned issues in their own groups above.
-    ...(skipActions ? [] : st.verify).map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · closure by ${i.closureSubmittedBy ?? 'unknown'}`, tag: { label: 'Fixed, to check', cls: 'tag-caution' }, go: `#/projects/${st.code}/issue/${i.id}` })),
-    ...(skipActions ? [] : st.unassigned).map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · nobody owns it · raised ${fmtDay(i.raisedAt)}`, tag: { label: 'Unassigned', cls: 'tag-caution' }, go: `#/projects/${st.code}/issue/${i.id}` })),
-    ...st.unpricedVariations.filter(v => !v.workDone).map(v => ({ key: v.id, ref: shortRef(v.reference), b: v.description, sub: `${st.project.projectName} · variation, no quote yet · raised ${fmtDay(v.raisedAt)}`, tag: { label: 'Needs a quote', cls: 'tag-caution' }, go: `#/projects/${st.code}/variation/${v.id}` })),
-  ])];
-  const shown = [...new Map(items.map(i => [i.key, i])).values()].slice(0, limit);
-  return <div className="rmenu">{shown.length ? shown.map(i => <a key={i.key} href={i.go}><span className="ref">{i.ref}</span><div className="rt"><b>{i.b}</b><span>{i.sub}</span></div><Tag {...i.tag} /></a>) : <div className="empty" style={{ padding: 14 }}>Nothing needs attention.</div>}</div>;
+/**
+ * The rest of what needs the office, from the same list as the Attention bell
+ * (model.ts `attention`), so the two always agree. Unassigned and fixed, to
+ * check have their own groups above, so they are left out here.
+ */
+function AttentionList({ ctx, limit }: { ctx: Ctx; limit: number }) {
+  const snap = ctx.snap;
+  const shown = attention(ctx.stats, ctx.day, snap?.safety, officeReturn(ctx), snap?.permits, snap?.deliveries)
+    .filter(i => !i.key.startsWith('vf-') && !i.key.startsWith('ua-'))
+    // One line a record: a report that failed and waits for review, or an overdue issue that is also disputed, is listed once, under its first reason.
+    .filter((i, n, all) => all.findIndex(o => o.key.slice(3) === i.key.slice(3)) === n).slice(0, limit);
+  return <div className="rmenu">{shown.length ? shown.map(i => i.go.startsWith('#')
+    ? <a key={i.key} href={i.go}><div className="rt"><b>{i.title}</b><span>{i.sub}</span></div><Tag {...i.tag} /></a>
+    : <Link key={i.key} href={i.go}><div className="rt"><b>{i.title}</b><span>{i.sub}</span></div><Tag {...i.tag} /></Link>) : <div className="empty" style={{ padding: 14 }}>Nothing needs attention.</div>}</div>;
 }
 
-/** New, not seen yet, unassigned and fixed, to check: what a project manager acts on, each with its count. */
+/** Not seen yet, unassigned and fixed, to check: what a project manager acts on, each with its count. */
 interface ActionGroup { key: string; title: string; sub: string; n: number; tone: string; all: string; empty: string; rows: ReactNode[] }
 function actionGroups(ctx: Ctx): ActionGroup[] {
   const reports = ctx.stats.flatMap(s => s.reports), issues = ctx.stats.flatMap(s => s.issues);
@@ -287,8 +279,6 @@ function actionGroups(ctx: Ctx): ActionGroup[] {
   const reportRow = (r: ReportSummary, action?: ReactNode) => <div key={r.id}><a className="rt" href={`#/projects/${r.projectId}/report/${r.id}`}><b>{project(r.projectId)} · {r.author}</b><span>{shortRef(r.reference)} · received {fmtWhen(r.serverAcknowledgedAt)}</span></a>{action}</div>;
   const issueRow = (i: Issue, sub: string, action?: ReactNode) => <div key={i.id}><a className="rt" href={`#/projects/${i.projectId}/issue/${i.id}`}><b>{i.description}</b><span>{project(i.projectId)} · {sub}</span></a>{action}</div>;
   return [
-    { key: 'new', title: 'New reports', sub: `Received ${sinceWords(a.since, ctx.day)}`, n: a.newReports.length, tone: '', all: '#/inbox/show/new', empty: `No reports received ${sinceWords(a.since, ctx.day)}.`,
-      rows: a.newReports.slice(0, 4).map(r => reportRow(r, r.acknowledged ? <Tag label="Seen" cls="tag-ok" /> : <DeliveryTag r={r} />)) },
     // Opening a report marks it seen, so each row is a link and nothing more.
     { key: 'notAck', title: 'Not seen yet', sub: 'Received, nobody in the office has opened it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: anyReports ? 'Every report has been seen.' : 'No reports received yet.',
       rows: a.notRead.slice(0, 4).map(r => reportRow(r)) },

@@ -140,7 +140,7 @@ try {
   // Office, desktop, dark: from the project's actions.
   {
     const {context,page,errors}=await open('Manager','dark',1440);
-    await page.goto(`${base}/office#/projects`);await page.locator('.cols .item').filter({hasText:'011LME'}).first().click();
+    await page.goto(`${base}/office#/projects`);await page.locator('.glance-row').filter({hasText:'011LME'}).first().click();
     await page.getByRole('link',{name:'Photographs'}).click();await page.waitForURL(/\/photos\?/);await tiles(page).first().waitFor();
     check(new URL(page.url()).searchParams.get('project')==='proj-011lme','office: opens on the chosen project');
     check((await tiles(page).count())===4,'office: the same four photographs, no drafts');

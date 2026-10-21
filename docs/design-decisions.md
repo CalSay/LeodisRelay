@@ -86,7 +86,9 @@ approved Portfolio desk concept.
   only. `/admin` opens the same desk on the Admin tab, so the hub's Admin
   destination and older links keep working. Hash routes carry the position:
   `#/projects/011LME/report/<id>`, `#/projects/011LME/issue/<id>`,
-  `#/inbox/<id>`, `#/issues`, `#/team`, `#/admin/roles|drafts|delivery|help`.
+  `#/inbox/<id>`, `#/issues`, `#/team`, `#/admin/delivery|drafts|features|help`.
+  (21 Oct 2026: People moved from Admin to the Team tab; `#/admin/roles` now
+  opens Team, and Admin opens on Notifications & processing.)
 - Below 700px the tab strip is a bottom bar, the column browser shows one
   level at a time with a back link, and tables scroll inside their panel. The
   phone lists drawn in the concept were not rebuilt as cards in this pass.

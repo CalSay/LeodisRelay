@@ -50,15 +50,15 @@ try {
       const page=await desk.newPage();page.on('pageerror',e=>errors.push(e.message));
       await page.goto(`${base}/office#/projects`);await group(page,'verify').waitFor();
       const label=`${colorScheme} ${width}px`;
-      assert.deepEqual(await page.locator('.act h4').allTextContents(),['New reports','Not seen yet','Unassigned issues','Fixed, to check'],`${label}: four groups in order`);checks++;
-      assert.deepEqual([await count(page,'new'),await count(page,'notAck'),await count(page,'unassigned'),await count(page,'verify')],[2,2,1,1],`${label}: each group's count`);checks++;
+      // "New reports" was folded into "Not seen yet" (simpler office screens); the Inbox keeps its New filter.
+      assert.deepEqual(await page.locator('.act h4').allTextContents(),['Not seen yet','Unassigned issues','Fixed, to check'],`${label}: three groups in order`);checks++;
+      assert.deepEqual([await count(page,'notAck'),await count(page,'unassigned'),await count(page,'verify')],[2,1,1],`${label}: each group's count`);checks++;
       assert.equal(await group(page,'notAck').locator('.rmenu > div').first().locator('b').textContent().then(t=>t.includes('Site Engineer')),true,`${label}: unread rows name the engineer`);checks++;
       assert.equal(await group(page,'unassigned').getByText('Missing fire stopping').count(),1,`${label}: the unassigned issue is listed`);checks++;
       assert.equal(await group(page,'verify').getByRole('button',{name:'Verify'}).count(),1,`${label}: verify has its button`);checks++;
       assert.equal(await page.locator('.rmenu').filter({hasText:'Label the board'}).count(),0,`${label}: an issue that needs nobody is not listed`);checks++;
-      const cols=2;
       const tops=await page.locator('.act').evaluateAll(els=>els.map(e=>Math.round(e.getBoundingClientRect().top)));
-      assert.equal(new Set(tops).size,4/cols,`${label}: two groups to a row`);checks++;
+      assert.equal(new Set(tops).size,1,`${label}: the three groups on one row`);checks++;
       assert.ok(await overflow(page)<=0,`${label}: no horizontal scroll`);checks++;
       if(shot)await page.screenshot({path:join(shot,`office-actions-${width}-${colorScheme}.png`),fullPage:true});
       await desk.close();
@@ -68,8 +68,9 @@ try {
   const ctx=await browser.newContext({viewport:{width:1440,height:900}});await ctx.addCookies([{name:'relay_session',value:session,url:base}]);
   const page=await ctx.newPage();page.on('pageerror',e=>errors.push(e.message));
   const open=async key=>{await page.goto(`${base}/office#/projects`);await group(page,key).locator('.act-all').click();};
-  await open('new');await page.getByRole('heading',{name:'Inbox'}).waitFor();
-  assert.match(await onChip(page),/^New · 2$/,'new reports open the Inbox on New');checks++;
+  // The Inbox's own New filter still lists the new reports.
+  await page.goto(`${base}/office#/inbox/show/new`);await page.getByRole('heading',{name:'Inbox'}).waitFor();
+  assert.match(await onChip(page),/^New · 2$/,'the Inbox opens on New');checks++;
   assert.equal(await page.locator('table.reg tbody tr.clickable').count(),2,'the Inbox lists the two new reports');checks++;
   await open('notAck');await page.getByRole('heading',{name:'Inbox'}).waitFor();
   assert.match(await onChip(page),/^Not seen yet · 2$/,'not seen yet opens the Inbox on Not seen yet');checks++;
@@ -94,7 +95,9 @@ try {
   await page.goto(`${base}/office#/projects`);await group(page,'notAck').waitFor();
   await page.waitForFunction(()=>document.querySelector('.act[data-group="notAck"] .act-n')?.textContent==='0');
   assert.equal(await count(page,'notAck'),0,'opening it takes the report out of Not seen yet');checks++;
-  assert.equal(await count(page,'new'),2,'it stays among the new reports');checks++;
+  await page.goto(`${base}/office#/inbox/show/new`);await page.getByRole('heading',{name:'Inbox'}).waitFor();
+  await page.waitForFunction(()=>/^New · 2$/.test(document.querySelector('.filters .chip.on')?.textContent??''),null,{timeout:20000}).catch(()=>{});
+  assert.match(await onChip(page),/^New · 2$/,'it stays among the Inbox\'s new reports');checks++;
   await ctx.close();
   assert.deepEqual(errors,[]);checks++;
   console.log(`Passed ${checks} office action checks (1440px and 1200px, light and dark; filtered lists; opening marks seen).`);

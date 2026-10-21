@@ -60,11 +60,35 @@ try {
   eq((await api('Engineer','/api/corrections',{method:'POST',body:JSON.stringify({reportId:report.id,observationId:saved.value.observations[0].id,action:'note',targetType:'observation',note:'x'})})).status,403,'an engineer cannot record a correction');
   eq((await api('Engineer','/api/variations',{method:'POST',body:JSON.stringify({requestId:randomUUID(),projectId:'proj-011lme',description:'x'})})).status,403,'an engineer cannot add a variation');
 
-  // The Admin names the engineer under People.
+  // Only the Admin changes people: the server refuses a Manager, whatever the screen shows.
+  eq((await api('Manager','/api/admin/people',{method:'POST',body:JSON.stringify({action:'rename',email:engineer.email,name:'Not Allowed'})})).status,403,'a manager cannot rename someone');
+  eq((await api('Manager','/api/admin/people',{method:'POST',body:JSON.stringify({action:'add',email:'someone.new@leodisme.com',name:'Some One',assignment:'Manager'})})).status,403,'a manager cannot add someone');
+
+  // A Manager reads the same Team tab, with nothing to change.
+  {
+    const {context,page,errors}=await open('Manager','light',1440);
+    await page.goto(`${base}/office#/team`);
+    await page.getByRole('heading',{name:'Who can sign in'}).waitFor();
+    eq(await page.getByRole('button',{name:'Add person'}).count(),0,'a manager has no Add person button on Team');
+    eq(await page.locator('a[href="#/admin"]').count(),0,'a manager has no Admin tab');
+    eq(errors.join('\n'),'','no page errors on the manager\'s Team tab');
+    await context.close();
+  }
+
+  // The Admin names the engineer under People, on the Team tab. An old link to Admin > People opens it.
   {
     const {context,page,errors}=await open('Admin','light',1440);
     await page.goto(`${base}/office#/admin/roles`);
-    const panel=page.locator('.panel',{has:page.getByRole('heading',{name:'Team assignment checklist'})});
+    await page.getByRole('heading',{name:'Team',exact:true}).waitFor();
+    eq(await page.locator('.hnav a.on').innerText().then(t=>t.startsWith('Team')),true,'an old Admin > People link opens the Team tab');
+    await page.goto(`${base}/office#/team`);
+    const panel=page.locator('.panel',{has:page.getByRole('heading',{name:'Who can sign in'})});
+    await panel.waitFor();
+    eq(await page.getByRole('heading',{name:'Who can sign in'}).count(),1,'one list of people on Team');
+    await page.goto(`${base}/office#/admin`);
+    await page.getByRole('heading',{name:'Notifications waiting'}).waitFor();
+    eq(await page.locator('.filters a.chip',{hasText:'People'}).count(),0,'Admin no longer repeats People');
+    await page.goto(`${base}/office#/team`);
     await panel.waitFor();
     await page.getByRole('button',{name:'Add person'}).first().click();
     await page.getByLabel('Work email').fill(engineer.email);

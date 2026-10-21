@@ -98,14 +98,11 @@ try {
     check(await page.getByRole('heading',{name:'Latest reports'}).count()===0,`${label}: no latest reports table on the overview`);
     check(await overflow(page)<=0,`${label}: no sideways scroll on the overview`);
     const box=await rows.first().boundingBox();check(box.height>=44,`${label}: a project row is big enough to tap`);
+    // The overview's own list is the project list, on a phone and a desk alike (simpler office screens).
+    check(await page.locator('.col-projects').count()===0,`${label}: no second project list beside or under the overview`);
     if(phone){
-      check(await page.locator('.col-projects').isVisible()===false,`${label}: no second project list under the overview`);
-      const strip=await page.locator('.act-strip').boundingBox();check(strip.y<box.y,`${label}: the four counts stay above the project list`);
+      const strip=await page.locator('.act-strip').boundingBox();check(strip.y<box.y,`${label}: the counts stay above the project list`);
       check(box.y<1100,`${label}: the first project is near the top of the phone (${Math.round(box.y)}px)`);
-    } else {
-      const item=page.locator('.col-projects a.item').filter({hasText:'014LME'});
-      check(/no report for \d+ working days/i.test(await item.innerText()),`${label}: the project column says a site has gone quiet`);
-      check(/last visit today · /i.test(await page.locator('.col-projects a.item').filter({hasText:'011LME'}).innerText()),`${label}: the project column gives the last visit`);
     }
     await axe(page,`${label}, overview`);
     if(shot)await page.screenshot({path:join(shot,`office-progress-overview-${scheme}-${width}.png`),fullPage:true});
@@ -125,6 +122,10 @@ try {
       const last=page.locator('.col-main dl.tb > div').first();
       check(/^last visit\s*today/i.test(await last.innerText()),`${label}: the sheet's first figure is the last visit`);
       check(/3 visits this week/.test(await last.innerText()),`${label}: with this week's visits`);
+      // With a project open, the project column is back to move between projects, and says how each stands.
+      const item=page.locator('.col-projects a.item').filter({hasText:'014LME'});
+      check(/no report for \d+ working days/i.test(await item.innerText()),`${label}: the project column says a site has gone quiet`);
+      check(/last visit today · /i.test(await page.locator('.col-projects a.item').filter({hasText:'011LME'}).innerText()),`${label}: the project column gives the last visit`);
     }
     check(await visits.count()===2,`${label}: one site update for each trade, no inspection`);
     const trades=await visits.locator('.from-site-h b').allInnerTexts();

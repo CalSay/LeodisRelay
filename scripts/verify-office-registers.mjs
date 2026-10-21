@@ -48,7 +48,7 @@ const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth-docu
 const spills=page=>page.locator('table.reg').evaluateAll(ts=>ts.filter(t=>t.offsetParent).flatMap(t=>{const p=t.parentElement,out=[];if(p.scrollWidth>p.clientWidth+1)out.push(`panel ${p.scrollWidth}>${p.clientWidth}`);
   for(const el of t.querySelectorAll('td,td *')){const r=el.getBoundingClientRect(),pr=p.getBoundingClientRect();if(r.width&&(r.right>pr.right+1||r.left<pr.left-1))out.push(`${el.tagName}.${el.className} ${Math.round(r.left)}–${Math.round(r.right)}`);}return out;}));
 const refs=page=>page.locator('table.reg tbody .ref').allTextContents();
-const views=[['#/issues','issues'],['#/variations','variations'],['#/inbox','inbox'],['#/inbox/show/drafts','drafts'],['#/team','team'],['#/admin/roles','admin roles'],['#/admin/delivery','admin delivery'],['#/admin/drafts','admin older drafts']];
+const views=[['#/issues','issues'],['#/variations','variations'],['#/inbox','inbox'],['#/inbox/show/drafts','drafts'],['#/team','team'],['#/admin/delivery','admin delivery'],['#/admin/drafts','admin older drafts']];
 try {
   let ready=false;for(let n=0;n<60;n++){if(server.exitCode!==null)throw Error(output);try{if((await fetch(base+'/signin')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready,output);
   browser=await chromium.launch({headless:true,...(process.env.RELAY_BROWSER_PATH?{executablePath:process.env.RELAY_BROWSER_PATH}:{})});

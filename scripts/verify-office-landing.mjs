@@ -43,17 +43,18 @@ try {
     await page.goto(`${base}/office#/projects`);await page.getByRole('heading',{name:'Office position'}).waitFor();
     if(shot)await page.screenshot({path:join(shot,`office-landing-1440-${colorScheme}.png`)});
     const landing=await visibleCols(page);
-    assert.equal(landing.length,2,`${colorScheme}: landing shows projects and the office position only`);checks++;
-    assert.ok(landing[1].width>1000,`${colorScheme}: office position takes the rest of the width (${Math.round(landing[1].width)}px)`);checks++;
+    // "Where each project stands" is the project list, so the office position stands alone (simpler office screens).
+    assert.deepEqual(landing.map(c=>c.head),['Overview'],`${colorScheme}: landing shows the office position only`);checks++;
+    assert.ok(landing[0].width>1400,`${colorScheme}: office position takes the full width (${Math.round(landing[0].width)}px)`);checks++;
     assert.equal(await page.getByText('Select a project to see its reports').count(),0,`${colorScheme}: no empty register column`);checks++;
     assert.ok(await overflow(page)<=0,`${colorScheme}: no horizontal scroll on the desk`);checks++;
-    await page.locator('.cols .item').filter({hasText:'011LME'}).first().click();await page.getByText('Reports needing attention').waitFor();
+    await page.locator('.glance-row').filter({hasText:'011LME'}).first().click();await page.getByText('Reports needing attention').waitFor();
     const project=await visibleCols(page);
     assert.equal(project.length,3,`${colorScheme}: a chosen project shows its register`);checks++;
     assert.match(project[1].head,/^Register/,`${colorScheme}: middle column is the register`);checks++;
     if(shot)await page.screenshot({path:join(shot,`office-project-1440-${colorScheme}.png`)});
     await page.goto(`${base}/office#/projects`);await page.getByRole('heading',{name:'Office position'}).waitFor();
-    assert.equal((await visibleCols(page)).length,2,`${colorScheme}: back to all projects drops the register`);checks++;
+    assert.equal((await visibleCols(page)).length,1,`${colorScheme}: back to all projects drops the register and the project column`);checks++;
     await desk.close();
 
     const phone=await browser.newContext({viewport:{width:390,height:844},colorScheme,isMobile:true,hasTouch:true});await phone.addCookies([{name:'relay_session',value:session,url:base}]);

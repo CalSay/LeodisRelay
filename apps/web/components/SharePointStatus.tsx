@@ -32,13 +32,13 @@ export function SharePointStatus() {
     catch(e){setCheckError(e instanceof Error?e.message:'The connection check could not run.');}finally{setChecking(false);}
   }
   const passed = check ? check.checks.filter(c=>c.ok).length : 0;
-  return <div className="panel"><div className="panel-head"><h4>SharePoint connection</h4><button type="button" onClick={()=>void refresh()}>Refresh</button></div><div style={{padding:16}}>
+  return <div className="panel"><div className="panel-head"><h4>SharePoint connection</h4><button type="button" className="btn btn-q btn-sm" style={{marginLeft:'auto'}} onClick={()=>void refresh()}>Refresh</button></div><div style={{padding:16}}>
     <p>{status ? ({off:'Not enabled',read:'Read-only connection',write:'Test project connection enabled'}[status.mode] ?? 'Unknown') : 'Loading connection status…'}</p>
     {error && <p role="alert">{error}</p>}
     {notice && <p role="status">{notice}</p>}
     {status?.issues.map(i=><p key={i.id}><a href={`/issues/${i.id}`}>{i.reference}</a> · {i.sync?.status}{i.sync?.error ? ` · ${i.sync.error}` : ''}</p>)}
     {status?.variations?.map(v=><p key={v.id}><a href={`/variations/${v.id}`}>{v.reference}</a> · {v.sync?.status}{v.sync?.error ? ` · ${v.sync.error}` : ''}</p>)}
-    {status?.jobs.map(j=><div key={j.id} style={{marginTop:12}}><span>{j.kind} · {j.status} · attempt {j.attempts}</span>{j.error && <p>{j.error}</p>}{j.status==='failed' && <button type="button" disabled={busy || status.mode!=='write'} onClick={()=>void retry(j.id)}>Retry</button>}</div>)}
+    {status?.jobs.map(j=><div key={j.id} style={{marginTop:12}}><span>{j.kind} · {j.status} · attempt {j.attempts}</span>{j.error && <p>{j.error}</p>}{j.status==='failed' && <button type="button" className="btn btn-q btn-sm" disabled={busy || status.mode!=='write'} onClick={()=>void retry(j.id)}>Retry</button>}</div>)}
     {status && !status.jobs.length && <p>No outstanding SharePoint jobs.</p>}
     <div style={{marginTop:12}}><button type="button" className="btn btn-q btn-sm" disabled={checking} onClick={()=>void runCheck()}>{checking ? 'Checking the connection…' : 'Check the connection'}</button></div>
     {checkError && <p role="alert">{checkError}</p>}

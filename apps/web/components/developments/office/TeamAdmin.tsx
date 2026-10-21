@@ -17,53 +17,50 @@ const sees = (m: TeamMember) => ROLE_WORDS[m.assignment.split('.')[0] ?? ''] ?? 
 const roleWords = (assignment: string) => assignment.split('.').map(w => w === 'PH' ? 'P&H' : w).join(' · ');
 
 /**
- * The roster reconciled with sessions. Read-only: roles are set in Microsoft.
- * The Team tab shows it in plain words (`plain`); without it, the Microsoft
- * app role names are kept, which are what an Admin types into Entra. The
- * Admin changes the checklist itself under People.
+ * The roster reconciled with sessions, in plain words, as a Manager sees it on
+ * the Team tab. Read-only: the Admin changes the checklist on the same tab
+ * (People), and access still comes from Microsoft.
  */
-function RosterTable({ members, note, plain }: { members: TeamMember[] | null; note?: string; plain?: boolean }) {
+function RosterTable({ members }: { members: TeamMember[] | null }) {
   const groups: [string, (m: TeamMember) => boolean][] = [['Admin', m => m.assignment === 'Admin'], ['Managers', m => m.assignment === 'Manager'], ['Engineers', m => m.assignment.startsWith('Engineer')], ['Signed in, not on the checklist', m => !m.onChecklist]];
-  return <div className="panel"><div className="panel-head"><h3>{plain ? 'Who can sign in' : 'Team assignment checklist'}</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{note ?? (plain ? 'Roles are set by the Admin' : 'Set in Microsoft; the app only reads the role at sign-in')}</span></div>
-    <table className="reg cards"><thead><tr><th>{plain ? 'Person' : 'Account'}</th><th>{plain ? 'Role' : 'Microsoft app role'}</th><th>{plain ? 'Can see' : 'Sees'}</th><th>{plain ? 'Signed in at' : 'Signed in since'}</th><th>{plain ? 'Now' : 'Session'}</th></tr></thead><tbody>
+  return <div className="panel"><div className="panel-head"><h3>Who can sign in</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>Roles are set by the Admin</span></div>
+    <table className="reg cards"><thead><tr><th>Person</th><th>Role</th><th>Can see</th><th>Signed in at</th><th>Now</th></tr></thead><tbody>
       {!members && <tr><td colSpan={5} className="loading" style={{ minHeight: 0, padding: 24 }}>Loading the roster</td></tr>}
       {(members ?? []).length === 0 && members && <tr><td colSpan={5} className="empty">Nobody on the checklist and nobody signed in.</td></tr>}
       {groups.map(([label, pick]) => { const rows = (members ?? []).filter(m => pick(m) && (label !== 'Engineers' || m.onChecklist) && (label === 'Signed in, not on the checklist' || m.onChecklist)); if (!rows.length) return null; return [
-        <tr key={`g-${label}`} className="c-group"><td colSpan={5} style={{ background: 'var(--panel-2)', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--text-3)', padding: '6px 16px' }}>{plain && label === 'Signed in, not on the checklist' ? 'Signed in, not on the list' : label} · {rows.length}</td></tr>,
-        ...rows.map(m => <tr key={m.email}><td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{m.name ?? m.email.split('@')[0]}</div><div className="rowsub num">{m.email}</div></td><td data-label={plain ? 'Role' : 'App role'}>{plain ? roleWords(m.assignment) : m.assignment}{m.role && m.assignment.split('.')[0] !== m.role && <div className="rowsub">signed in as {m.role}</div>}</td><td style={{ fontSize: 12 }} data-label={plain ? 'Can see' : 'Sees'}>{sees(m)}</td><td className="due" data-label={plain ? 'Signed in at' : 'Signed in'}>{m.lastSignedIn ? fmtWhen(m.lastSignedIn) : <span className="fine">—</span>}</td><td data-label={plain ? 'Now' : 'Session'}>{m.session === 'active' ? <Tag label="Signed in" cls="tag-ok" /> : m.session === 'expired' ? <Tag label={plain ? 'Signed out' : 'Expired'} cls="tag-quiet" /> : <Tag label={plain ? 'Not signed in' : 'No session'} cls="tag-quiet" />}</td></tr>),
+        <tr key={`g-${label}`} className="c-group"><td colSpan={5} style={{ background: 'var(--panel-2)', fontFamily: 'var(--mono)', fontSize: 10, letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--text-3)', padding: '6px 16px' }}>{label === 'Signed in, not on the checklist' ? 'Signed in, not on the list' : label} · {rows.length}</td></tr>,
+        ...rows.map(m => <tr key={m.email}><td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{m.name ?? m.email.split('@')[0]}</div><div className="rowsub num">{m.email}</div></td><td data-label="Role">{roleWords(m.assignment)}{m.role && m.assignment.split('.')[0] !== m.role && <div className="rowsub">signed in as {m.role}</div>}</td><td style={{ fontSize: 12 }} data-label="Can see">{sees(m)}</td><td className="due" data-label="Signed in at">{m.lastSignedIn ? fmtWhen(m.lastSignedIn) : <span className="fine">—</span>}</td><td data-label="Now">{m.session === 'active' ? <Tag label="Signed in" cls="tag-ok" /> : m.session === 'expired' ? <Tag label="Signed out" cls="tag-quiet" /> : <Tag label="Not signed in" cls="tag-quiet" />}</td></tr>),
       ]; })}
     </tbody></table>
-    <div className="panel-foot">{plain ? 'Everyone who can sign in to RELAY at Leodis Developments, and who is signed in now. RELAY does not keep a history of sign-ins. Ask the Admin to add someone or change a role; it takes effect the next time they sign in.' : <>This is the assignment checklist against current sessions; it is not the Microsoft directory and it does not keep sign-in history, so "no session" means nobody is signed in on that account now. A role change takes effect at the next sign-in, within 12 hours. Nothing on this screen grants access.</>}</div></div>;
+    <div className="panel-foot">Everyone who can sign in to RELAY at Leodis Developments, and who is signed in now. RELAY does not keep a history of sign-ins. Ask the Admin to add someone or change a role; it takes effect the next time they sign in.</div></div>;
 }
 
 export function TeamView({ ctx }: { ctx: Ctx }) {
   const team = ctx.team;
   return <div className="view">
     <div className="pagehead"><div><h2>Team</h2><p>{team ? `${team.members.length} ${team.members.length === 1 ? 'person' : 'people'} · ${team.members.filter(m => m.session === 'active').length} signed in now` : 'Loading the team'}</p></div></div>
-    <RosterTable members={team?.members ?? null} plain />
+    {/* One list of people: the Admin's has the changes on it, everyone else's is read-only. The server refuses changes from anyone but the Admin. */}
+    {ctx.me.admin ? <People ctx={ctx} /> : <RosterTable members={team?.members ?? null} />}
     <p className="rowsub">Issue owners are names or companies typed on site, not these accounts, so this list is who can sign in rather than who owns work.</p>
   </div>;
 }
 
-type Section = 'roles' | 'drafts' | 'delivery' | 'features' | 'help';
+type Section = 'drafts' | 'delivery' | 'features' | 'help';
 export function AdminView({ ctx }: { ctx: Ctx }) {
-  const section: Section = (['roles', 'drafts', 'delivery', 'features', 'help'] as Section[]).includes(ctx.route.a as Section) ? ctx.route.a as Section : 'roles';
+  const section: Section = (['drafts', 'delivery', 'features', 'help'] as Section[]).includes(ctx.route.a as Section) ? ctx.route.a as Section : 'delivery';
   const team = ctx.team;
   if (!ctx.me.admin) return <div className="view"><div className="pagehead"><div><h2>Administration</h2><p>Admin role only</p></div></div><div className="empty">Administration is for the Admin role. Managers see the Team tab.</div></div>;
   const legacy = team?.legacyDrafts ?? [];
   const processing = team?.processing;
-  const unnamed = (team?.members ?? []).filter(m => m.onChecklist && !m.name).length;
   return <div className="view">
-    <div className="pagehead"><div><h2>Administration</h2><p>Access, older drafts and processing for Leodis Developments · signed in through Microsoft{team ? ` · ${team.members.length} accounts on the checklist` : ''}</p></div>
+    <div className="pagehead"><div><h2>Administration</h2><p>Processing, older drafts and settings for Leodis Developments · signed in through Microsoft · people are on the Team tab</p></div>
       <div className="actions"><a className="btn btn-q" href="https://entra.microsoft.com" target="_blank" rel="noreferrer">Open Microsoft Entra ↗</a></div></div>
     <div className="filters">
-      <a className={`chip ${unnamed ? 'warn' : ''} ${section === 'roles' ? 'on' : ''}`} href="#/admin/roles">People{team ? ` · ${team.members.filter(m => m.onChecklist).length}` : ''}</a>
-      <a className={`chip ${legacy.length ? 'warn' : ''} ${section === 'drafts' ? 'on' : ''}`} href="#/admin/drafts">Older drafts · {legacy.length}</a>
       <a className={`chip ${processing?.outbox.some(o => o.delivery === 'failed') ? 'warn' : ''} ${section === 'delivery' ? 'on' : ''}`} href="#/admin/delivery">Notifications &amp; processing</a>
+      <a className={`chip ${legacy.length ? 'warn' : ''} ${section === 'drafts' ? 'on' : ''}`} href="#/admin/drafts">Older drafts · {legacy.length}</a>
       <a className={`chip ${section === 'features' ? 'on' : ''}`} href="#/admin/features">Site records</a>
       <a className={`chip ${section === 'help' ? 'on' : ''}`} href="#/admin/help">Install &amp; help</a>
     </div>
-    {section === 'roles' && <People ctx={ctx} />}
     {section === 'drafts' && <LegacyDrafts ctx={ctx} />}
     {section === 'features' && <SiteRecords />}
     {section === 'delivery' && <div className="adm-grid">
@@ -104,7 +101,7 @@ function logWords(e: PersonLogEntry): string {
 }
 
 /**
- * Admin > People: the name RELAY shows for each person and the role they are
+ * People on the Team tab, for the Admin: the name RELAY shows for each person and the role they are
  * listed against. Neither grants access; the app role in Microsoft Entra does.
  * Every change is logged on the person.
  */
@@ -117,7 +114,7 @@ function People({ ctx }: { ctx: Ctx }) {
   const unnamed = listed.filter(m => m.onChecklist && !m.name);
   const saved = () => { ctx.loadTeam(); void ctx.refresh(); };
   return <div className="two-wide">
-    <div className="panel"><div className="panel-head"><h3>Team assignment checklist</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{unnamed.length ? `${unnamed.length} need${unnamed.length === 1 ? 's' : ''} a name` : 'Names shown across RELAY'}</span><BtnQ className="btn-sm" onClick={() => { setAdding(true); setSel(null); }}>Add person</BtnQ></div>
+    <div className="panel"><div className="panel-head"><h3>Who can sign in</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{unnamed.length ? `${unnamed.length} need${unnamed.length === 1 ? 's' : ''} a name` : 'Names shown across RELAY'}</span><BtnQ className="btn-sm" onClick={() => { setAdding(true); setSel(null); }}>Add person</BtnQ></div>
       <table className="reg cards"><thead><tr><th>Person</th><th>Role on the checklist</th><th>Now</th></tr></thead><tbody>
         {!members && <tr><td colSpan={3} className="loading" style={{ minHeight: 0, padding: 24 }}>Loading the roster</td></tr>}
         {members && !listed.length && <tr><td colSpan={3} className="empty">Nobody on the checklist and nobody signed in.</td></tr>}
