@@ -4,6 +4,87 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Inspection PDFs say what was found wrong
+
+- Why: the last open idea from the day walkthrough (#65). An inspection
+  PDF's first section, "Actions arising", listed the check, the action and
+  who is to do it, but not what was found: "Fit a proper edge barrier"
+  without "open edge with only a strap across it". A client or contractor
+  reading page one had to turn to the notes further on to know what the
+  action was about. Not a `docs/tasks.json` task, so no status changed
+  there. Checked against the backlog: not FE-2 (no photographs), not EXP-2
+  (nothing routed or sent), not EXP-4 (no locations).
+- Changed (packages/documents only): on an inspection, each Actions arising
+  row with notes now reads "Found: …" above the action, in smaller, quieter
+  type. Site updates' summary is unchanged.
+- Decisions (Claude's): the finding goes in the action cell, not a new
+  column, as five columns would squeeze the check and owner on A4. Notes
+  over 180 characters are cut at a word with "… (see 03 below)", because the
+  row is kept on one page and every action check is also shown in full in
+  Notes and photographs. A check with no notes shows only its action;
+  nothing is made up. PDFs already made do not change: sent PDFs are stored
+  by revision and served from the store, so only newly made PDFs (and draft
+  previews) show the line.
+- Help: What's new "Inspection PDFs say what was wrong".
+- Verified: `npm run typecheck`, `npm test` (2 new tests in
+  `apps/web/tests/reportPdf.test.ts`: the Found line, no line without notes,
+  long notes cut with a pointer and kept in full below, no Found line on a
+  site update). `scripts/render-sample-pdfs.mjs` before and after: safety,
+  handover and tower inspections gain the line with the same page count;
+  first fix and the site update PDFs have the same text as before. Before
+  and after PDFs and page images: `ui-review/pdfs/found-wrong/` in the
+  project files.
+- Not verified: printed on paper, Acrobat or a phone's PDF viewer (poppler
+  and pdf.js only), a real SharePoint-filed PDF.
+
+## 2026-10-21 — Report editor on tablets and desktops
+
+- Why: the editor was designed and checked phone first. Some engineers use a
+  tablet on site, and the office may write or correct reports at a desk.
+  Asked for by the coordinator under Cal's ask for a clear, professional UI;
+  what to change is Claude's decision. Not a `docs/tasks.json` task.
+- Walked a site update and a safety inspection (plus the first check of the
+  handover, first fix and tower inspections) at 390, 768 and 1024 (touch) and
+  1366 and 1920 (mouse), light and dark. Found and fixed:
+  - From 601px up the editor's own padding replaced the room left for the
+    fixed bottom bar, so "+ Add a card" and the signature's Clear and hint
+    sat under the bar. The editor now keeps 140px clear below.
+  - The bar's contents were 900px wide under a 1,072px page, so the save
+    state and the main button did not line up with anything. They now line up
+    with the page edges at every width.
+  - The check step was one column the width of the page: at 1920 the
+    signature box was 1,040 by 150px. From 1000px signing sits in its own
+    column beside what is being sent (340 to 440px wide), and from 601px the
+    box is 180px tall.
+  - With 12 checks the list beside the open check ran far below the screen.
+    From 900px it scrolls in its own column, and "Next check" keeps the open
+    one in sight there. From 1280px the list is 300px wide, not 260px.
+  - The sent screen's "2 cards · 3 photographs" was 18px capitals (a heading
+    rule beat the label style); it is now the small label it was meant to be.
+  - "Signature" was the only field label in plain text; it now matches.
+  - On a phone or portrait tablet "What needs doing" and "Who is to do it"
+    ran together with no rule between them; they are now separated like
+    every other field.
+- Also fixed, from the day-on-site walkthrough (#65), which left the editor alone:
+  - The check step counts a defect linked to an issue already raised apart
+    from new ones: "1 issue raised · 1 added to an issue already raised".
+  - Linking a defect to an issue takes that issue's trade.
+  - While changes are still saving it says "being saved to the server", not
+    "not yet on the server" (`reportWhere`'s new `saving` option, unit-tested).
+  - #65's other two points (tab title, sent-screen date comma) were fixed by #64.
+- Check: `scripts/verify-editor-wide.mjs` (new, 274 checks) walks all of the
+  above at the five widths in both themes, by touch on tablets and mouse on
+  desktops. Screenshots before (main at 232c451) and after are in the project
+  files under `ui-review/editor-wide/`.
+- Not verified: a real tablet, pen or touchscreen laptop. In Chromium's touch
+  emulation the first tap after a drawn signature gives no click (a second tap
+  works, a mouse is not affected); the check taps the page once first. Worth
+  trying on a real tablet.
+- Left as they are: on a site update the check step lists each photograph
+  without a caption as its own line (three lines for three photographs); the
+  editor's heading and steps take about a third of a 768px-tall landscape
+  tablet screen.
+
 ## 2026-10-21 — Assign from the issue page
 
 - Why: the day walkthrough (#65) left four bigger ideas; #67 built the

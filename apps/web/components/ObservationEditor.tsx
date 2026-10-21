@@ -96,6 +96,13 @@ export function ObservationEditor({
     onChange(copy);
   }
 
+  /** Linking a defect to an issue already raised takes that issue's trade, which is whose work it is. */
+  function linkIssue(issueId: string | undefined) {
+    if (!issueId) { unset('linkedIssueId'); return; }
+    const trade = openIssues.find(i => i.id === issueId)?.affectedTrade;
+    onChange({ ...observation, linkedIssueId: issueId, ...(kind === 'defect' && trade ? { affectedTrade: trade } : {}) });
+  }
+
   const where = <div className="field">
     <label htmlFor={`loc-${id}`}>Where</label>
     <input id={`loc-${id}`} type="text" value={observation.location} onChange={(e) => set("location", e.target.value)} placeholder="Level 2 — Riser" autoComplete="off" />
@@ -105,7 +112,7 @@ export function ObservationEditor({
 
   const alreadyRaised = raisesIssue && openIssues.length > 0 && <div className="field">
     <label id={`link-${id}`}>Is this something already raised?</label>
-    <IssueLinkPicker labelledBy={`link-${id}`} issues={openIssues} location={observation.location} linkedId={observation.linkedIssueId} onPick={(issueId) => issueId ? set('linkedIssueId', issueId) : unset('linkedIssueId')}
+    <IssueLinkPicker labelledBy={`link-${id}`} issues={openIssues} location={observation.location} linkedId={observation.linkedIssueId} onPick={linkIssue}
       none={['No — this is new', 'Sending raises a new issue for the office to assign.']} />
     <p className="hint">{observation.linkedIssueId ? "This will be added to that issue's history rather than raising a new one." : "Linking avoids raising a second issue for the same defect."}</p>
   </div>;

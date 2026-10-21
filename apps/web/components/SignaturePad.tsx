@@ -213,7 +213,7 @@ export function SignaturePad({
       </div>}
 
       <div hidden={typing}>
-      <label id="sign-pad-label" style={{ marginTop: 16 }}>Signature</label>
+      <label id="sign-pad-label" className="lbl sigpad-label">Signature</label>
       <div className="sigwrap">
         <canvas
           ref={canvasRef}
