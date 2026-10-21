@@ -35,6 +35,9 @@ export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'long-project-names-phone', added: '2026-10-21', audience: 'office', title: 'Whole project names on a phone',
     text: 'On a phone, the heading at the top of a project in the office now shows the whole project name, on a second line if it needs one, under "‹ Projects" and the counts. Before, a long name was cut off, such as "Register · Tetley Ha…".',
     link: { label: 'Open the office', href: '/office' } },
+  { id: 'everyone-on-site', added: '2026-10-21', audience: 'office', title: 'Everyone who was on site, at a glance',
+    text: 'In the office, "Where each project stands" now names everyone who sent a report from each site on its last visit day, not only the last person to send, such as "Today: Sam Spark, Hana Duct and Pat Pipe". One person still shows with their trade; past three names it ends "and N more". A project\'s Last visit figure says the same. So at the end of the day you can see who was on every site without opening each project. Checked in a desktop browser, light and dark.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'quicker-update-cards', added: '2026-10-21', audience: 'site', title: 'Straight back to typing, and smaller photos',
     text: 'If you leave today\'s site update with an empty card, "Carry on with today’s update" now opens that card ready to type, instead of folded. Photos on a card are now small tiles, two to a row on a phone, with the caption box under each and Remove in the corner of the picture, so a few photos no longer push the next card far down. A green dot on a photo means it is on the server; one that is not there yet still says so in words. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'defect-recent-places', added: '2026-10-21', audience: 'site', title: 'Flag a defect: recent places, one less step',
@@ -426,7 +429,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
   ],
   office: [
     { id: 'office-day', heading: 'Your day in the office', ordered: true, steps: [
-      'Office opens on the office position. "Where each project stands" gives every project\'s last visit, its visits this week and by which trades, its open and overdue issues, its variations waiting and how much needs the office; a site with no report for three working days is marked. Under it: new reports, reports nobody in the office has opened yet, unassigned issues and issues fixed and waiting to be checked.',
+      'Office opens on the office position. "Where each project stands" gives every project\'s last visit and everyone on site that day, its visits this week and by which trades, its open and overdue issues, its variations waiting and how much needs the office; a site with no report for three working days is marked. Under it: new reports, reports nobody in the office has opened yet, unassigned issues and issues fixed and waiting to be checked.',
       'Open a project to read "Latest from site": each trade\'s newest site update from the last fortnight, in the engineer\'s own words, with what else it raised.',
       'Opening a report marks it "Seen" with your name and the time, and the engineer sees "Seen by the office" on it. There is nothing to press. Receipt and delivery do not count, and nor does opening a report you wrote yourself.',
       'A report\'s signature line says whether it was drawn or typed. A typed signature shows the statement the person ticked and who was signed in when it was sent.',

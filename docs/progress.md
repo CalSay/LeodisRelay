@@ -4,6 +4,38 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Everyone who was on site, on the office overview
+
+- Why: walked an office manager's end-of-day check at the desk (1440px, dark
+  and light, 42 days of seeded reports from three engineers on three sites).
+  "Who was on each site today?" comes first, but "Where each project stands"
+  named only the last person to send: Tetley Hall said "Sam Spark,
+  Electrical" when Hana Duct and Pat Pipe had sent from there too. Finding
+  everyone took a click per project and reading Latest from site; Site
+  coverage gives trades, not names. Coordinator approved the pick; decided
+  without asking Cal, per his autonomy message. Not a `docs/tasks.json` task;
+  no status changed.
+- Changed: `projectStanding` now returns `lastDayPeople` (everyone who sent a
+  visit on the last visit day, latest first, once each; a correction stands
+  in for what it corrects, an inspection is a visit, as before), and
+  `peopleWords` says it: one person with their trade, two or three by name,
+  past three "A, B and N more". The overview's Last visit cell and the
+  project sheet's Last visit figure (desk and phone) use it. The day stays as
+  it was ("Today", "Yesterday" or the date), so an earlier visit never reads
+  as today. Row height at 1440px is unchanged. Help "What's new" line added.
+- Checked: typecheck, `npm test` (146 + 511, 2 new in
+  `tests/projectStanding.test.ts`), build. `verify-office-progress` (84, new:
+  everyone named on the overview and sheet, the row no taller, a quiet site's
+  earlier day names its people and never says today), office-links (65),
+  home-and-sheet (254), office-sections (63), office-desk (73), help (36),
+  office-phone (99), office-landing (19), role-access (95). Screenshots
+  before/after in project files `ui-review/office-progress-pass/`.
+- Not verified: a real phone or tablet, a screen reader.
+- Noticed on the walk, not built (queued by the coordinator): the Inbox table
+  is squashed when no report is open (project names wrap to 3 or 4 lines);
+  "Not seen yet" lists oldest first so today's arrive at the bottom; the
+  Inbox has no "Today" filter.
+
 ## 2026-10-21 — Defects send by themselves when signal returns
 
 - Why: Cal's 07:02 direction (engineers are hands-on people). After #113 a

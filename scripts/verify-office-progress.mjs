@@ -54,6 +54,7 @@ putRecord('variations',{id:randomUUID(),reference:'DEMO-011LME-VO-201',projectId
 // Kirkstall Gate (014LME): last visit sixteen days ago, so it has gone quiet and has no site update in the fortnight.
 const quietDay=addDays(today,-16);
 sent('proj-014lme',hana,quietDay,[card('update','Stair core B','Ductwork to level 2')]);
+sent('proj-014lme',sam,quietDay,[card('update','Stair core B','Containment to level 2')]); // two people on that last day
 const quietDays=workingDaysBetween(quietDay,today);
 // Hunslet Depot (009LCP) is in defects liability and has no reports at all.
 
@@ -84,6 +85,9 @@ try {
     const tetley=await cells(rows.filter({hasText:'011LME'}));
     check(Object.keys(tetley).join('|')==='Last visit|This week|Open issues|Variations waiting|Needs action',`${label}: the five questions, in order: ${Object.keys(tetley)}`);
     check(/^Today /.test(tetley['Last visit'].text)&&!tetley['Last visit'].late,`${label}: Tetley Hall last visited today: ${tetley['Last visit'].text}`);
+    check(tetley['Last visit'].text==='Today Sam Spark and Hana Duct',`${label}: everyone on site today is named, once each, not only the last to send: ${tetley['Last visit'].text}`);
+    const lastCell=await rows.filter({hasText:'011LME'}).locator('.glance-cells > div').first().boundingBox(),openCell=await rows.filter({hasText:'011LME'}).locator('.glance-cells > div').nth(2).boundingBox();
+    check(lastCell.height<=openCell.height+1,`${label}: naming everyone does not make the row taller (${Math.round(lastCell.height)}px against ${Math.round(openCell.height)}px)`);
     check(tetley['This week'].text==='3 visits Electrical, HVAC',`${label}: the correction counts once, the inspection counts as a visit, trades named: ${tetley['This week'].text}`);
     check(tetley['Open issues'].text==='2 1 overdue'&&tetley['Open issues'].late,`${label}: open issues and the overdue one: ${tetley['Open issues'].text}`);
     check(tetley['Variations waiting'].text==='1 1 done, not instructed'&&tetley['Variations waiting'].late,`${label}: the variation done without an instruction: ${tetley['Variations waiting'].text}`);
@@ -127,6 +131,7 @@ try {
       const last=page.locator('.col-main dl.tb > div').first();
       check(/^last visit\s*today/i.test(await last.innerText()),`${label}: the sheet's first figure is the last visit`);
       check(/3 visits this week/.test(await last.innerText()),`${label}: with this week's visits`);
+      check(/Sam Spark and Hana Duct · 3 visits this week/.test(await last.innerText()),`${label}: the sheet names everyone on site that day too: ${await last.innerText()}`);
       // With a project open, the project column is back to move between projects, and says how each stands.
       const item=page.locator('.col-projects a.item').filter({hasText:'014LME'});
       check(/no report for \d+ working days/i.test(await item.innerText()),`${label}: the project column says a site has gone quiet`);
@@ -158,6 +163,8 @@ try {
     // A project with no site update in the fortnight says so.
     await page.goto(`${base}/office#/projects/proj-014lme`);
     await (phone?page.locator('.register-standing'):page.locator('.col-main .sheet')).getByText('No site update in the last 14 days.').waitFor();check(true,`${label}: a quiet project says it has no recent site update`);
+    const quietLast=await (phone?page.locator('.register-standing'):page.locator('.col-main .sheet')).locator('dl.tb > div').first().innerText();
+    check(new RegExp(`No report for ${quietDays} working days · Sam Spark and Hana Duct · 0 visits this week`).test(quietLast.replace(/\s+/g,' '))&&!/today/i.test(quietLast),`${label}: an earlier last visit names that day's people under its date, never "today": ${quietLast}`);
     await context.close();
   }
   check(errors.length===0,`no page errors: ${errors}`);

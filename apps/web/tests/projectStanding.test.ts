@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LATEST_DAYS, progressLines, projectStanding, recentDay } from '../lib/projectStanding';
+import { LATEST_DAYS, PEOPLE_SHOWN, peopleWords, progressLines, projectStanding, recentDay } from '../lib/projectStanding';
 import type { Report, ReportSummary } from '../lib/types';
 
 const TODAY = '2026-10-21'; // a Wednesday
@@ -83,4 +83,31 @@ test('recent days are named; older ones are left to the date', () => {
   assert.equal(recentDay('2026-10-20', TODAY), 'yesterday');
   assert.equal(recentDay('2026-10-19', TODAY), null);
   assert.equal(recentDay('2026-03-31', '2026-04-01'), 'yesterday', 'across a month end');
+});
+
+test('the last visit names everyone who sent from site that day, once each, latest first', () => {
+  const st = projectStanding(ACTIVE, [
+    sent({ id: 's1', reference: '011LME-SPR-020' }),
+    sent({ id: 'h1', reference: '011LME-SPR-021', author: 'Hana Duct', authorTrade: 'HVAC' }),
+    sent({ id: 's2', reference: '011LME-SPR-022' }),
+    sent({ id: 's2c', reference: '011LME-SPR-023', corrects: 's2', revision: 2, author: 'Sam Spark' }),
+    sent({ id: 'p1', reference: '011LME-SPR-019', author: 'Pat Pipe', authorTrade: 'P&H', reportType: 'safety-inspection' }),
+    sent({ id: 'y', visitDate: '2026-10-20', author: 'Yesterday Only', authorTrade: 'HVAC' }),
+    sent({ id: 'd', state: 'draft', author: 'Drafting Dan' }),
+  ], TODAY);
+  assert.deepEqual(st.lastDayPeople, [{ author: 'Sam Spark', trade: 'Electrical' }, { author: 'Hana Duct', trade: 'HVAC' }, { author: 'Pat Pipe', trade: 'P&H' }],
+    'an inspection is a visit; yesterday and a draft are not');
+  assert.equal(peopleWords(st.lastDayPeople), 'Sam Spark, Hana Duct and Pat Pipe');
+  const earlier = projectStanding(ACTIVE, [sent({ visitDate: '2026-10-16' }), sent({ visitDate: '2026-10-16', author: 'Hana Duct', authorTrade: 'HVAC' }), sent({ visitDate: '2026-10-15', author: 'Pat Pipe' })], TODAY);
+  assert.deepEqual(earlier.lastDayPeople.map(p => p.author).sort(), ['Hana Duct', 'Sam Spark'], 'a last visit before today names that day\'s people');
+  assert.deepEqual(projectStanding(ACTIVE, [], TODAY).lastDayPeople, []);
+});
+
+test('who was on site in words: one with their trade, a few by name, then "and N more"', () => {
+  assert.equal(peopleWords([]), '');
+  assert.equal(peopleWords([{ author: 'Sam Spark', trade: 'Electrical' }]), 'Sam Spark, Electrical');
+  assert.equal(peopleWords([{ author: 'Sam Spark' }]), 'Sam Spark');
+  assert.equal(peopleWords([{ author: 'Sam Spark', trade: 'Electrical' }, { author: 'Hana Duct', trade: 'HVAC' }]), 'Sam Spark and Hana Duct');
+  assert.equal(PEOPLE_SHOWN, 3);
+  assert.equal(peopleWords(['A', 'B', 'C', 'D', 'E'].map(author => ({ author }))), 'A, B and 3 more');
 });
