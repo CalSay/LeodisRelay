@@ -2,10 +2,10 @@
 import { IssueSyncStatus } from '@/components/SharePointStatus';
 import { useProjectLookup } from "@/components/ProjectContext";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useState, type FormEvent } from "react";
 import { PageTitle } from '@/components/PageTitle';
 import Link from "next/link";
-import { readPhoto } from "@/lib/api";
+import { projectSuggestions, readPhoto } from "@/lib/api";
 import type { Issue, Photo } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
 import { uploadPhotos } from '@/lib/localMedia';
@@ -30,6 +30,9 @@ import { dateShort } from '@/lib/dates';
  */
 
 const WORK_LABEL = ISSUE_WORK;
+
+/** Today in London, for the date picker's earliest day. */
+const todayInLondon = (): string => new Date().toLocaleDateString("en-CA", { timeZone: "Europe/London" });
 
 // Provisional reads by whether review is in use (the API says); see confirmationLabel.
 const CONFIRM_LABEL: Record<Exclude<Issue["confirmation"], "provisional">, string> = {
@@ -61,6 +64,13 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   const [photos, setPhotos] = useState<Photo[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Assigning, for the office: the same command as the desk's Assign, without leaving the issue.
+  const [assigning, setAssigning] = useState(false);
+  const [owner, setOwner] = useState("");
+  const [target, setTarget] = useState("");
+  const [instruction, setInstruction] = useState("");
+  const [owners, setOwners] = useState<string[]>([]);
+  const [assignError, setAssignError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`/api/issues/${id}`, { cache: "no-store" })
@@ -94,10 +104,52 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         return;
       }
       setIssue(body);
+      setAssigning(false);
       setNote("");
       setPhotos([]);
     } catch {
       setError("No connection. Nothing was recorded.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function startAssigning() {
+    if (!issue) return;
+    setOwner(issue.owner.trim());
+    setTarget(issue.targetDate || "");
+    setInstruction("");
+    setAssignError(null);
+    setAssigning(true);
+    // Companies already named on the project, as the report editor suggests them. A suggestion, never a list to pick from.
+    projectSuggestions(issue.projectId).then((s) => setOwners(s.companies)).catch(() => setOwners([]));
+  }
+
+  async function assign(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!issue) return;
+    const named = owner.trim();
+    if (!named) {
+      setAssignError("Name who is responsible.");
+      return;
+    }
+    setBusy(true);
+    setAssignError(null);
+    try {
+      const response = await fetch(`/api/issues/${issue.id}`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ expectedEtag: issue.sync?.etag, kind: "assign", owner: named, targetDate: target, note: instruction.trim() }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setAssignError(body.reason ?? "That could not be recorded.");
+        return;
+      }
+      setIssue(body);
+      setAssigning(false);
+    } catch {
+      setAssignError("No connection. Nothing was recorded.");
     } finally {
       setBusy(false);
     }
@@ -123,6 +175,9 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   const canClose = issue.work === "awaiting_verification";
   const isClosed = issue.work === "closed";
   const isWithdrawn = issue.confirmation === "withdrawn";
+  // The server's rule: only open, assigned or in-progress work can be given an owner. A withdrawn issue is left alone too, as on the rest of this page.
+  const canAssign = manager && !isWithdrawn && (issue.work === "open" || issue.work === "assigned" || issue.work === "in_progress");
+  const assignLabel = issue.owner.trim() ? "Reassign" : "Assign";
 
   return (
     <main className="wrap eng-page">
@@ -153,6 +208,10 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
           <dd>{issue.owner.trim() || "Not yet assigned"}</dd>
         </div>
         <div className="tb-cell">
+          <dt>Target date</dt>
+          <dd className={issue.targetDate ? "ref" : ""}>{issue.targetDate ? dateShort(issue.targetDate) : "No target date"}</dd>
+        </div>
+        <div className="tb-cell">
           <dt>Raised</dt>
           <dd className="ref">{dateShort(issue.raisedAt)}</dd>
         </div>
@@ -163,6 +222,46 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         <p className="eng-help">{project?.projectName} · {issue.location || 'Location not recorded'}</p>
         <p className="eng-help">Trade affected: {issue.affectedTrade ?? 'Not recorded'}<br/>Reported by {issue.reportedBy ?? issue.events[0]?.actor ?? 'Not recorded'} · {issue.reporterTrade ?? 'Reporting trade not recorded'}</p>
       </section>
+
+      {canAssign && (
+        <section className="panel issue-assign" aria-labelledby="assign-heading">
+          <div className="panel-body">
+            <h2 id="assign-heading" className="issue-assign-title">Who puts it right</h2>
+            {!assigning ? (
+              <div className="issue-assign-row">
+                <p className="eng-help" style={{ margin: 0 }}>
+                  {issue.owner.trim() ? <>{issue.owner.trim()}{issue.targetDate ? `, by ${dateShort(issue.targetDate)}` : ", no target date"}</> : "Nobody is down to put this right yet."}
+                </p>
+                <button type="button" className={issue.owner.trim() ? "" : "btn-primary"} onClick={startAssigning} disabled={busy}>
+                  {assignLabel}
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={assign} noValidate>
+                <div className="field">
+                  <label htmlFor="assign-owner">Responsible</label>
+                  <input id="assign-owner" type="text" value={owner} onChange={(e) => { setOwner(e.target.value); setAssignError(null); }} list="assign-owners" placeholder="Person or company" autoComplete="off" autoFocus />
+                  <datalist id="assign-owners">{owners.map((o) => <option key={o} value={o} />)}</datalist>
+                </div>
+                <div className="field">
+                  <label htmlFor="assign-target">Target date</label>
+                  <input id="assign-target" type="date" value={target} min={issue.targetDate && issue.targetDate < todayInLondon() ? issue.targetDate : todayInLondon()} onChange={(e) => setTarget(e.target.value)} />
+                </div>
+                <div className="field">
+                  <label htmlFor="assign-note">Instruction</label>
+                  <textarea id="assign-note" value={instruction} onChange={(e) => setInstruction(e.target.value)} placeholder="What is expected, access arrangements, who to call on site" />
+                </div>
+                <p className="eng-help" style={{ marginTop: 0 }}>Leave the date empty for no target date. Owners are names or companies, not accounts. The engineer who reported it is not changed.</p>
+                {assignError && <div className="note note-bad" role="alert">{assignError}</div>}
+                <div className="btn-row">
+                  <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Recording…" : assignLabel}</button>
+                  <button type="button" onClick={() => setAssigning(false)} disabled={busy}>Cancel</button>
+                </div>
+              </form>
+            )}
+          </div>
+        </section>
+      )}
 
       {issue.confirmation === "disputed" && (
         <div className="note note-bad" style={{ marginTop: 16 }}>
@@ -180,7 +279,8 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
           <div key={i} className="row row-static" style={{ alignItems: "flex-start" }}>
             <span className="row-code">{EVENT_LABEL[event.kind] ?? event.kind}</span>
             <span className="row-main">
-              <p className="row-title" style={{ fontSize: 14.5, fontWeight: 400 }}>{event.note}</p>
+              {event.kind === "assigned" && event.to && <p className="row-title" style={{ fontSize: 14.5 }}>To {event.to}{event.targetDate ? `, by ${dateShort(event.targetDate)}` : ""}</p>}
+              {event.note && <p className="row-title" style={{ fontSize: 14.5, fontWeight: 400 }}>{event.note}</p>}
               <p className="row-meta">{event.actor}</p>
               {from && <p className="row-meta issue-event-source"><Link href={`/reports/${from.reportId}`}>{from.label}</Link></p>}
               {event.photos.length > 0 && (
