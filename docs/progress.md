@@ -4,6 +4,77 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Fewer taps for a site update
+
+- Why: Cal (2026-10-21 07:02) wants RELAY really easy for hands-on engineers,
+  getting the office the progress information it needs. A fewest-taps pass on
+  writing and sending a site update on a 390px phone, asked for by the
+  coordinator. Not a `docs/tasks.json` task, so no status changed there.
+- Measured with the new `scripts/verify-fewest-taps.mjs`: open RELAY, send a
+  site update with a progress card and a photograph, a defect with a
+  photograph at the same place, and a variation somewhere else, marked not
+  done yet. Tapping into a box counts, typing does not; "Take a photo" counts
+  once (the phone's shutter is not counted). The cheapest way RELAY offers is
+  taken each time ("+ Another card here" on main, a recent place now).
+  - Main (after #85): **16 taps**; the open defect card was 1,598px tall and
+    the variation card 1,784px; 29 buttons on the way were under 48px (44px).
+  - Now: **14 taps**; defect card 1,541px (most of it is the photograph), the
+    variation card 1,182px; no button on the way under 48px.
+  - Screenshots, before and after: project files `ui-review/fewest-taps/`.
+- Changed:
+  - "Start today's site update" (and "Start another site update") opens the
+    new update on a progress card, ready for where, what and a photograph,
+    instead of a "What kind of update is this?" picker. The kind row on the
+    card changes it in one tap, the same as the picker was.
+  - "+ Add a card" then a kind is now one button per kind under the cards
+    ("+ Progress", "+ Defect", "+ Variation", "+ Access"), on the phone and in
+    the wide editor's rail. The wide editor's "+ Add another card" in the card
+    went, since the rail has the same buttons.
+  - "Where" offers the places already on this update first (latest first),
+    then the project's recent places, so a second card in the same room is one
+    tap even before the first card has saved (`lib/quickCards.ts`).
+  - A card's optional questions fold under "More for the office · optional":
+    on a defect or access card, what needs doing and who should respond; on a
+    variation, the reason, who asked, rough size, parts and a linked issue.
+    "Has the work already been done?" stays on the card, and "Who asked" comes
+    out of the fold when it has been (the office needs it for sign-off). The
+    fold opens by itself when anything in it has an answer, so nothing written
+    is hidden.
+  - A card with nothing in it (no place, words, photo, link or answer) is left
+    off when the engineer taps "Check & send", so the progress card an update
+    opens on never stops a defect-only update. Nothing in it can be lost.
+  - Every tap target in the engineer pages that was 44px is now 48px (kind
+    buttons, trades, chips, yes/no, caption boxes, Undo, "Change").
+  - Found and fixed on the way: a card added from the home screen
+    ("Request a variation", and now the first progress card) was not saved
+    until the next edit, because `addCard` called an `update` made before the
+    sign-in was known. It now saves straight away.
+- Decisions (Claude's): kept the two-step "Check & send" then "Send to
+  office": sending cannot be undone and the check step is where the engineer
+  sees what will be raised. Kept "+ Another card here". Did not pre-fill a new
+  card's place from the last card: a wrong place on a defect costs the office
+  more than one tap costs the engineer. Variations' "already done" is not
+  defaulted, for the same reason.
+- Offline: drafts are kept exactly as before (the same `update` path). The
+  check writes a defect with no signal, leaves the blank card off, reloads,
+  and finds the defect still there and the blank card not back, then saved
+  once signal returns.
+- Checks: `npm run typecheck`, `npm test` (146 + 434; four new in
+  `apps/web/tests/quickCards.test.ts`). Browser checks, all passing:
+  verify-fewest-taps (new), accessibility, day-walkthrough, editor-usability,
+  editor-wide, engineer-layout, error-messages, issue-link, offline-capture,
+  report-editor, same-location, sent-elsewhere, suggestions, undo-remove,
+  signature-reload, typed-signature, draft-conflict, offline-drafts,
+  photo-uploads, report-types, home-and-sheet, simpler-home, role-access,
+  search, first-time-use, help. Eight were updated for the new buttons and
+  the fold.
+- Not verified: no real phone, no gloves, no real poor signal (the browser's
+  offline switch only). Help's guide and "What's new" are updated and say so.
+- Next (proposed, not built): measure the same round trip on a real phone on
+  site; photo first ("Take a photo" above "Where") if engineers say they
+  shoot first; the offline page's own editor (`offline.html`) still asks for
+  the kind first.
+
 ## 2026-10-21 — Office view of project progress
 
 - Why: Cal, 07:02 today: RELAY is for site auditing of project progress and

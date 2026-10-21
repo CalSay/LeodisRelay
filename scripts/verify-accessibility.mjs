@@ -107,9 +107,8 @@ async function editorStates(scheme,width,phone){
   const checkStep=async()=>{await page.locator('.actionbar').getByRole('button',{name:/Check & send/}).click();await page.locator('#report-check').waitFor();};
   // A site update: the cards, an open card with a photo, the check step, sent.
   await page.goto(`${base}/engineer?project=${P}`);await page.getByText('Start today’s site update').click();
-  await page.waitForURL(/\/reports\//);await page.locator('.eng-tile').first().waitFor();
+  await page.waitForURL(/\/reports\//);await open().getByLabel('Where',{exact:true}).waitFor();
   await state('update-new');
-  await page.locator('.eng-tile').first().click();await open().getByLabel('Where',{exact:true}).waitFor();
   await open().getByLabel('Where',{exact:true}).fill('Level 2 corridor');
   await open().locator('textarea').first().fill('Containment run complete');
   await open().locator('input[type=file]').setInputFiles({name:'a.jpg',mimeType:'image/jpeg',buffer:jpeg});

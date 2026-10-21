@@ -51,9 +51,9 @@ try {
     try {
     // A site update: progress with two photographs, then a defect.
     await page.goto(`${base}/engineer`);await tap(page.getByText('Start today’s site update'));
-    await page.waitForURL(/\/reports\//);await page.locator('.eng-tile').first().waitFor();
+    // A new update opens on its first card, a progress card.
+    await page.waitForURL(/\/reports\//);await openBody().getByLabel('Where',{exact:true}).waitFor();
     await shot('update-new');
-    await tap(page.locator('.eng-tile').first());
     let card=openBody();
     await card.getByLabel('Where',{exact:true}).fill('Level 2 corridor');
     await card.locator('textarea').first().fill('Containment run complete to the riser; second fix lighting started in 2.04.');
@@ -62,13 +62,12 @@ try {
     eq(await overflow(),false,`${label}: no sideways scroll with a card open`);
     await shot('update-card');
     await page.evaluate(()=>document.activeElement?.blur());
-    await clearOfBar('.eng-add','"+ Add a card"');
+    await clearOfBar('.eng-add-kinds','"Add a card"');
     if(width>600){
       const line=await page.evaluate(()=>{const head=document.querySelector('.pagehead').getBoundingClientRect(),bar=document.querySelector('.actionbar-inner'),b=bar.getBoundingClientRect(),button=bar.querySelector('.btn-primary').getBoundingClientRect(),save=bar.querySelector('.savestate').getBoundingClientRect();return {left:Math.abs(save.left-head.left),right:Math.abs(button.right-head.right),inner:b.width};});
       ok(line.left<=2&&line.right<=2,`${label}: the bottom bar lines up with the page (${JSON.stringify(line)})`);
     }
-    await tap(page.locator('.eng-add').first());
-    await tap(page.locator('.eng-tile.defect').first());
+    await tap(page.locator('.eng-add-kinds').getByRole('button',{name:'+ Defect'}));
     card=openBody();
     await card.getByLabel('Where',{exact:true}).fill('Riser 2, level 3');
     await card.locator('textarea').first().fill('Fire stopping missing around the cable tray.');

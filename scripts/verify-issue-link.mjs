@@ -79,7 +79,9 @@ try {
     }
     // Variation card: the same picture list replaces the old drop-down.
     await open(1);
-    const varGroup=page.getByRole('group',{name:'Is this on an issue already? · optional'});
+    const varGroup=page.getByRole('group',{name:'Is this on an issue already?'});
+    // On a variation it is one of the questions folded under "More for the office".
+    if(!await varGroup.isVisible())await page.locator('.eng-card:visible').getByText('More for the office').click();
     await varGroup.waitFor();
     eq(await page.locator('.eng-card:visible select').count(),0,`${tag}: no plain drop-down on the variation card`);
     const varRows=varGroup.locator('.eng-linkrow');
@@ -110,6 +112,10 @@ try {
       eq(await varGroup.getByRole('button',{name:/^No/}).getAttribute('aria-pressed'),'true',`${tag}: "No" unlinks the variation`);
       await page.waitForTimeout(1200);await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached'});
       await page.reload();await open(1);
+      // With nothing answered under "More for the office" it is folded again after a reload.
+      await page.locator('.eng-card:visible .eng-more-detail').waitFor();
+      ok(!await varGroup.isVisible(),`${tag}: with no link the optional questions are folded again`);
+      await page.locator('.eng-card:visible').getByText('More for the office').click();
       eq(await varGroup.getByRole('button',{name:/^No/}).getAttribute('aria-pressed'),'true',`${tag}: the unlink is saved too`);
     }
     eq(await overflow(),false,`${tag}: no sideways scroll on the variation card`);

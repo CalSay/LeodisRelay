@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { PhotoImage } from './PhotoImage';
 import { WHERE, type Where } from '@/lib/uploadStatus';
 import { CameraIcon } from './CameraIcon';
@@ -21,7 +21,9 @@ import { usePrincipal } from './PrincipalContext';
  * defect asks what needs doing, who, and which trade. A variation asks the
  * register's questions in site words: why it is extra, whether it has already
  * been done on a say-so, who asked, and a rough size. Nothing beyond the words
- * is required; the checks before sending say what is worth adding.
+ * is required; the checks before sending say what is worth adding. The
+ * optional questions are folded under "More for the office" (2026-10-21), so a
+ * card on a phone is what the office must have, and the rest is one tap away.
  */
 const TRADES = ['Electrical', 'HVAC', 'P&H', 'Other / non-Leodis'] as const;
 const SIZES: [RoughSize, string][] = [['half-day', '½ day'], ['day', '1 day'], ['two-days', '2 days'], ['more', 'More']];
@@ -164,7 +166,8 @@ export function ObservationEditor({
         {alreadyRaised}
       </>}
 
-      {raisesIssue && <div className="two">
+      {raisesIssue && <MoreDetail filled={!!(observation.actionNeeded.trim() || observation.owner.trim())} hint="What needs doing, and who should respond. Leave them and the office assigns it.">
+        <div className="two">
         <div className="field">
           <label htmlFor={`action-${id}`}>What needs doing</label>
           <textarea id={`action-${id}`} value={observation.actionNeeded} onChange={(e) => set("actionNeeded", e.target.value)} placeholder="What has to happen to put this right" />
@@ -175,45 +178,51 @@ export function ObservationEditor({
           <Suggestions title="Recent companies" fewer="Show fewer companies" values={companies} current={observation.owner} onPick={c => set("owner", c)} />
           <p className="hint">{companies.length ? 'Choose one or type any name. ' : ''}Leave blank if you do not know; the office assigns it rather than guessing.</p>
         </div>
-      </div>}
+        </div>
+      </MoreDetail>}
 
       {kind === 'instruction' && <>
         <div className="field">
           <label htmlFor={`what-${id}`}>What extra work, and why</label>
           <textarea id={`what-${id}`} value={observation.whatHappened} onChange={(e) => set("whatHappened", e.target.value)} placeholder="What is needed beyond the drawings, and what made it necessary" />
         </div>
+        {/* Already done on a say-so is what the office must chase for sign-off, so it is always asked. */}
+        <div className="field">
+          <label id={`done-${id}`}>Has the work already been done?</label>
+          <div className="eng-seg ynq" role="group" aria-labelledby={`done-${id}`}><button type="button" className="yes" aria-pressed={observation.workDone === true} onClick={() => set('workDone', true)}>Yes, on a say-so</button><button type="button" className="no" aria-pressed={observation.workDone === false} onClick={() => set('workDone', false)}>Not yet</button></div>
+          {observation.workDone && <p className="hint eng-hint-late">The office gets the client to sign for it as chargeable before it is invoiced. Name who asked.</p>}
+        </div>
+        {observation.workDone && <div className="field">
+          <label htmlFor={`asked-${id}`}>Who asked for it on site · optional</label>
+          <input id={`asked-${id}`} type="text" value={observation.askedBy ?? ''} onChange={(e) => e.target.value ? set('askedBy', e.target.value) : unset('askedBy')} placeholder="Name and company" maxLength={200} />
+        </div>}
+        <MoreDetail filled={observation.variationReason !== undefined || (!observation.workDone && !!observation.askedBy?.trim()) || observation.roughSize !== undefined || observation.partsEstimate !== undefined || !!observation.linkedIssueId} hint="Why it is extra, who asked, rough size, parts, an issue it is on">
         <div className="field">
           <label id={`reason-${id}`}>Reason</label>
           <div className="eng-chips" style={{ marginTop: 0 }} role="group" aria-labelledby={`reason-${id}`}>{VARIATION_REASONS.map(r => <button key={r} type="button" className="eng-chip" aria-pressed={observation.variationReason === r} onClick={() => observation.variationReason === r ? unset('variationReason') : set('variationReason', r)}>{r}</button>)}</div>
         </div>
+        {!observation.workDone && <div className="field">
+          <label htmlFor={`asked-${id}`}>Who asked for it on site</label>
+          <input id={`asked-${id}`} type="text" value={observation.askedBy ?? ''} onChange={(e) => e.target.value ? set('askedBy', e.target.value) : unset('askedBy')} placeholder="Name and company" maxLength={200} />
+        </div>}
         <div className="two">
           <div className="field">
-            <label id={`done-${id}`}>Has the work already been done?</label>
-            <div className="eng-seg ynq" role="group" aria-labelledby={`done-${id}`}><button type="button" className="yes" aria-pressed={observation.workDone === true} onClick={() => set('workDone', true)}>Yes, on a say-so</button><button type="button" className="no" aria-pressed={observation.workDone === false} onClick={() => set('workDone', false)}>Not yet</button></div>
-            {observation.workDone && <p className="hint eng-hint-late">The office gets the client to sign for it as chargeable before it is invoiced. Name who asked.</p>}
-          </div>
-          <div className="field">
-            <label htmlFor={`asked-${id}`}>Who asked for it on site · optional</label>
-            <input id={`asked-${id}`} type="text" value={observation.askedBy ?? ''} onChange={(e) => e.target.value ? set('askedBy', e.target.value) : unset('askedBy')} placeholder="Name and company" maxLength={200} />
-          </div>
-        </div>
-        <div className="two">
-          <div className="field">
-            <label id={`size-${id}`}>Rough size · optional</label>
+            <label id={`size-${id}`}>Rough size</label>
             <div className="eng-chips" style={{ marginTop: 0 }} role="group" aria-labelledby={`size-${id}`}>{SIZES.map(([value, label]) => <button key={value} type="button" className="eng-chip" aria-pressed={observation.roughSize === value} onClick={() => observation.roughSize === value ? unset('roughSize') : set('roughSize', value)}>{label}</button>)}</div>
           </div>
           <div className="field">
-            <label htmlFor={`parts-${id}`}>Cost of parts, if you know them · optional</label>
+            <label htmlFor={`parts-${id}`}>Cost of parts, if you know them</label>
             <div className="eng-money"><input id={`parts-${id}`} type="number" inputMode="decimal" min="0" step="1" value={observation.partsEstimate ?? ''} onChange={(e) => { const n = Number(e.target.value); e.target.value === '' || !Number.isFinite(n) || n < 0 ? unset('partsEstimate') : set('partsEstimate', Math.round(n * 100) / 100); }} placeholder="0" /></div>
             <p className="hint">A guess is fine; the office prices it.</p>
           </div>
         </div>
         {openIssues.length > 0 && <div className="field">
-          <label id={`link-${id}`}>Is this on an issue already? · optional</label>
+          <label id={`link-${id}`}>Is this on an issue already?</label>
           <IssueLinkPicker labelledBy={`link-${id}`} issues={openIssues} location={observation.location} linkedId={observation.linkedIssueId} onPick={(issueId) => issueId ? set('linkedIssueId', issueId) : unset('linkedIssueId')}
             none={['No', 'Not tied to an issue already raised here.']} />
           <p className="hint">A defect that turns out to be someone else’s damage becomes a chargeable variation on that issue.</p>
         </div>}
+        </MoreDetail>
       </>}
 
       <TooLong observation={observation} />
@@ -221,6 +230,20 @@ export function ObservationEditor({
       {folded && <button type="button" className="btn-quiet btn-sm eng-remove-card" onClick={onRemove} aria-label={`Remove card ${index + 1}`}>Remove card {index + 1}</button>}
     </section>
   );
+}
+
+/**
+ * A card's optional questions, folded under one line so the card on a phone is
+ * what the office must have. Opens by itself when any of them has an answer,
+ * so nothing written is ever hidden.
+ */
+function MoreDetail({ filled, hint, children }: { filled: boolean; hint: string; children: ReactNode }) {
+  const [open, setOpen] = useState(filled);
+  useEffect(() => { if (filled) setOpen(true); }, [filled]);
+  return <details className="eng-more-detail" open={open} onToggle={e => setOpen(e.currentTarget.open)}>
+    <summary>More for the office · optional<small>{hint}</small></summary>
+    <div>{children}</div>
+  </details>;
 }
 
 /**
