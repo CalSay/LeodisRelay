@@ -17,6 +17,8 @@ import { eventProvenance } from '@/lib/issueProvenance';
 import { ISSUE_WORK } from '@/lib/status';
 import { dateShort } from '@/lib/dates';
 import { failure } from "@/lib/failure";
+import { issueWord, raisedIssue } from "@/lib/cameBack";
+import { OfficeWordBox } from "@/components/OfficeWordBox";
 
 /**
  * One issue, across every visit that touched it.
@@ -284,6 +286,8 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
     // it, then the photograph and the two buttons, all on the first screen of a
     // phone. The history and the office's detail are folded, not removed.
     const owner = issue.owner.trim();
+    // What the office asked or said last on an issue this engineer raised, while it waits on them: shown, not left in History.
+    const word = principal && raisedIssue(issue, principal.id) ? issueWord(issue.events, principal) : undefined;
     return (
       <main className="wrap eng-page issue-eng">
         <PageTitle title={`${issue.reference} · Issue`} />
@@ -301,6 +305,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
           <div><dt>Who is fixing it</dt><dd>{owner ? `${owner}${issue.targetDate ? `, by ${dateShort(issue.targetDate)}` : ""}` : "Nobody yet. The office will say who."}</dd></div>
         </dl>
 
+        {word && <OfficeWordBox key={`${word.at}${word.note}`} word={word} />}
         {issue.confirmation === "disputed" && <p className="note note-bad" role="status">The office is checking whether this needs fixing. Open History for why.</p>}
         {canClose && !isWithdrawn && <p className="note" role="status">Put forward as fixed. It is waiting for the office to check it.</p>}
         {isClosed && !isWithdrawn && <p className="note" role="status">The office checked the work and closed this issue.</p>}

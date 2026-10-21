@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-words-came-back', added: '2026-10-21', audience: 'site', title: 'What the office wrote, where you look',
+    text: 'When the office sends back an issue you put forward as fixed, with a question, or writes on a variation you raised, "Came back from the office" on the home screen now shows who wrote, when, and the first line or two of what they said. So does a note the office leaves on a report you sent. Opening the issue shows it at the top, above "Put forward as fixed", instead of folded away in History (a long note shows its first lines, with "Show all of it"); a variation shows it under the office\'s answer. Once you add anything to it, it counts as answered and stays in the history. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'counts-lead-somewhere', added: '2026-10-21', audience: 'office', title: 'Figures that open what they count',
     text: 'On a project sheet, each figure at the top now opens what it counts: Last visit opens that report, Overdue actions and Fixed, to check open the Issues register on that project and filter, and Variations opens the Variations register on that project. In Latest from site, "And N more in the report" opens the report. In the Weekly summary, a visit\'s "N photographs" opens Photographs on that day with that report\'s photographs, and "fixed and waiting to be checked" opens the Issues register on that project. On a phone, the last visit line above a project\'s register opens that report.',
     link: { label: 'Open the office', href: '/office' } },

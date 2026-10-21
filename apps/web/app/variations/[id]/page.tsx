@@ -11,6 +11,9 @@ import { VariationTags } from '@/components/EngineerWorkspace';
 import { fmtMoney, signedCopyLink, variationValue } from '@/lib/variations';
 import { backLabel, safeViewReturn } from '@/lib/viewNavigation';
 import { dayShort } from '@/lib/dates';
+import { variationWord } from '@/lib/cameBack';
+import { usePrincipal } from '@/components/PrincipalContext';
+import { OfficeWordBox } from '@/components/OfficeWordBox';
 
 /**
  * A variation the engineer raised, after sending: the office's answer at the
@@ -27,6 +30,7 @@ export default function VariationPage({ params, searchParams }: { params: Promis
   const { id } = use(params);
   const returnTo = use(searchParams).returnTo;
   const getProject = useProjectLookup();
+  const principal = usePrincipal();
   const [v, setV] = useState<Variation | null>(null);
   const [missing, setMissing] = useState(false);
   const [note, setNote] = useState('');
@@ -62,6 +66,8 @@ export default function VariationPage({ params, searchParams }: { params: Promis
     : v.workDone ? 'The office is getting the client’s sign-off for it as a chargeable variation before it is invoiced.'
     : v.quotedValue !== undefined ? 'Put to the client; waiting on their instruction.'
     : 'Not yet priced. The office prices it from what you recorded, then puts it to the client.';
+  // What the office wrote last, while it waits on this engineer; a decline's reason is already the band's words.
+  const word = principal && principal.id === v.raisedById ? variationWord(v.events, principal) : undefined;
   const meta = [v.reason, v.workDone && 'already carried out when raised', v.askedBy && `asked for by ${v.askedBy}`, v.labourHours !== undefined && `about ${v.labourHours} hours`, v.partsCost !== undefined && `parts about ${fmtMoney(v.partsCost)}`].filter(Boolean).join(' · ');
 
   return <main className="wrap eng-page">
@@ -78,6 +84,7 @@ export default function VariationPage({ params, searchParams }: { params: Promis
       <p>{detail}</p>
       {v.instruction === 'instructed' && signedCopyLink(v) && <div className="row"><a href={signedCopyLink(v)} target="_blank" rel="noreferrer">Open the signed copy ↗</a></div>}
     </section>
+    {word && word.note !== declinedWhy?.trim() && <OfficeWordBox key={`${word.at}${word.note}`} word={word} />}
 
     <section className="eng-panel">
       <div className="eng-section-title" style={{ margin: '0 0 8px' }}><h2>{v.location || 'No location'}</h2><span className="kind tone-variation">Variation</span></div>

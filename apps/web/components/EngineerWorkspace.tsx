@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiError, cameBack, createReport, getReport, listReports, projectIssues } from '@/lib/api';
-import { CAME_BACK_ROWS, raisedIssue } from '@/lib/cameBack';
+import { CAME_BACK_ROWS, issueWord, raisedIssue, reportWord, variationWord, type OfficeWord } from '@/lib/cameBack';
 import { listHeld, type HeldDraft } from '@/lib/localDraft';
 import { offlineProjectsKey } from '@/lib/offlineStart';
 import { keepNotesOnDevice } from '@/lib/offlineNotes';
@@ -75,7 +75,11 @@ const fmtDay = (iso?: string) => dayShort(iso);
 type View = 'home' | 'projects' | 'issues' | 'reports' | 'defect';
 const viewOf = (value?:string):View => ['projects','issues','reports','defect'].includes(value ?? '') ? value as View : 'home';
 const VIEW_TITLES: Record<View, string> = { home: 'Site', projects: 'Projects', issues: 'Issues', reports: 'Reports', defect: 'Flag a defect' };
-interface Back { at: string; key: string; href: string; title: string; sub: string; tags: ReactNode; late?: boolean }
+interface Back { at: string; key: string; href: string; title: string; sub: string; tags: ReactNode; late?: boolean; word?: OfficeWord }
+/** What someone wrote back, who and when, in a line or two; the record's own page has the rest. */
+export function WordLine({word}:{word:OfficeWord}) {
+  return <p className="eng-word"><span>{word.by}{word.at ? ` wrote on ${fmtDay(word.at)}` : ' wrote'}:</span> {word.note}</p>;
+}
 
 /** Where an unfinished report stands, in words an engineer can act on. */
 function UnfinishedTags({r,waiting=false}:{r:UnfinishedReport;waiting?:boolean}) {
@@ -198,9 +202,9 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
         if(cancelled)return;
         const rows:Back[] = [];
         const returnTo = engineerReturn();
-        for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) rows.push({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:withViewReturn(`/reports/${r.id}`,returnTo), title:`${reportTypeOf(r).name} ${r.reference.split("-").slice(1).join("-")}`, sub:`Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned' });
-        for (const i of all) if (raisedIssue(i,principal.id)) rows.push({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}?update=1`,returnTo), title:i.description, sub:`${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'} · you raised it ${fmtDay(i.raisedAt)}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed' });
-        for (const v of variations) if (v.raisedById === principal.id) rows.push({ at:v.events.at(-1)?.at ?? v.raisedAt, key:v.id, href:withViewReturn(`/variations/${v.id}`,returnTo), title:v.description, sub:`${v.reference.split('-').slice(1).join('-')} · ${v.location || 'no location'} · you raised it ${fmtDay(v.raisedAt)}`, tags:<VariationTags v={v}/>, late:v.workDone && v.instruction === 'pending' });
+        for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) rows.push({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:withViewReturn(`/reports/${r.id}`,returnTo), title:`${reportTypeOf(r).name} ${r.reference.split("-").slice(1).join("-")}`, sub:`Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned', word:reportWord(r,page.reports.some(c => c.corrects === r.id)) });
+        for (const i of all) if (raisedIssue(i,principal.id)) rows.push({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}?update=1`,returnTo), title:i.description, sub:`${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'} · you raised it ${fmtDay(i.raisedAt)}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed', word:issueWord(i.events,principal) });
+        for (const v of variations) if (v.raisedById === principal.id) rows.push({ at:v.events.at(-1)?.at ?? v.raisedAt, key:v.id, href:withViewReturn(`/variations/${v.id}`,returnTo), title:v.description, sub:`${v.reference.split('-').slice(1).join('-')} · ${v.location || 'no location'} · you raised it ${fmtDay(v.raisedAt)}`, tags:<VariationTags v={v}/>, late:v.workDone && v.instruction === 'pending', word:variationWord(v.events,principal) });
         rows.sort((a,b) => b.at.localeCompare(a.at));
         setBack({ rows:rows.slice(0,CAME_BACK_ROWS), open, reports:page.reports.filter(r => r.state === 'submitted').length });
       }).catch(e => { if(!cancelled) setBack({ rows:[], open:0, reports:0, failed:true, offline:e instanceof ApiError && e.offline }); });
@@ -271,7 +275,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
           <div className="eng-list">
             {!back ? <div className="eng-empty">Checking with the office…</div>
               : back.failed ? <div className="eng-empty">{back.offline ? 'No signal, so RELAY cannot check with the office just now.' : 'RELAY could not check with the office just now.'} <button type="button" onClick={()=>setRetry(n=>n+1)}>Try again</button></div>
-              : back.rows.length ? back.rows.map(row => <Link key={row.key} href={row.href} className={`eng-row ${row.late ? 'late' : ''}`}><div className="main"><b>{row.title}</b><span>{row.sub}</span><div className="stat">{row.tags}</div></div><span className="chev">›</span></Link>)
+              : back.rows.length ? back.rows.map(row => <Link key={row.key} href={row.href} className={`eng-row ${row.late ? 'late' : ''}`}><div className="main"><b>{row.title}</b><span>{row.sub}</span>{row.word && <WordLine word={row.word}/>}<div className="stat">{row.tags}</div></div><span className="chev">›</span></Link>)
               : <div className="eng-empty">Nothing on this project yet. Reports you send, defects you flag and variations you request show here with the office’s answer.</div>}
           </div>
           <SinceLastVisit key={project.id} projectId={project.id} returnTo={engineerReturn()}/>

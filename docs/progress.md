@@ -4,6 +4,58 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — What the office wrote, where the engineer looks
+
+- Why: Cal's 07:02 direction (simple for hands-on engineers, the office gets
+  what it needs). Walking an engineer's day at 390px on main 4f08eb5 (site
+  gate, a site update with three photos, a defect, a variation, an issue the
+  office queried, the next morning), the worst moment left was the queried
+  issue: the office sent a fix back with "Still a gap at the top of the
+  riser. Can you send a photo of the top?", but the home row said only "In
+  progress" and the issue page hid the question in folded History (a
+  disputed one even said "Open History for why"). The engineer could not see
+  what was asked without digging, so would ring the office or not answer.
+  Runners-up noted below. Decided without asking Cal, per his autonomy
+  message. Not a `docs/tasks.json` task; no status changed.
+- Change: `lib/cameBack.ts` gains `issueWord`, `variationWord` and
+  `reportWord`: the latest note a person (not RELAY) wrote on a record the
+  engineer raised, while it still waits on them. Came back rows show "Olive
+  Office wrote on Wed 21 Oct: …" in two lines at most; the issue page shows
+  it above "Update this issue" and a variation under the office's answer, in
+  `components/OfficeWordBox.tsx` (cut at three lines with "Show all of it",
+  48px). A returned report's reason, or a note left on opening it, shows on
+  its row until the engineer sends a correction. No office screen, API or
+  stored data changed; events stay as they were. Help "What's new" line.
+- Decisions (Claude's): only words a person typed count. RELAY's own notes
+  ("needs triage", "Confirmed at report review", "Quoted £…", a correction's
+  links) never show as someone writing. Anything the engineer adds answers
+  it. A later decision without a note (checked, withdrawn, priced, a
+  correction) moves past an older note. Other engineers' updates are not the
+  office's answer, and assignment notes are left to "Who is fixing it" (they
+  are for the fixer, and showing them pushed the buttons down on very long
+  issues). Limit: an office "Record an update" on an issue is a `progress`
+  event like an engineer's, so it does not show; the office's "Not
+  finished"/reopen does.
+- Checks: typecheck, `npm test` (146 + 493; new `officeWord.test.ts`),
+  build. New `scripts/verify-office-words.mjs` (67 checks, 390px light and
+  dark, 1440px dark): who, when and what on the rows; "Put forward as fixed"
+  on the first screen with a short note and with a long one under a dispute
+  line; "Show all of it"; RELAY's dispute note not shown; answered notes
+  leave the top; office view unchanged. Also passing, one at a time:
+  came-back-to-update, engineer-day, offline-capture, send-on-signal,
+  simpler-issue-page, simpler-home, help, accessibility (584). Two
+  fresh-context review passes found 14 points (RELAY's own notes shown as
+  someone writing, old notes after a decision, other engineers' updates, the
+  page not checking who raised it, a corrected report), all fixed or
+  recorded above. Screenshots before and after: project files
+  `ui-review/office-words/`.
+- Not verified: a real phone, a screen reader.
+- Ideas for later (not built): an empty card opened from "Carry on" is
+  folded, one more tap; each photo tile on a card says "On the server" and is
+  about 290px tall, so several photos push the next card far down; the quick
+  defect's "Where on site?" has no recent places; the office has no plain
+  "write to the engineer" on an issue.
+
 ## 2026-10-21 — Ninth release check: main ready at 616a06d
 
 - Why: a release check of everything merged since 03188ee (the eighth
