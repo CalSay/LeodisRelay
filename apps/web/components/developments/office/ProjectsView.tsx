@@ -12,6 +12,7 @@ import { useFeatures } from '@/components/FeaturesContext';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { officeActions } from '@/lib/officeActions';
 import { withViewReturn } from '@/lib/viewNavigation';
+import { shiftWeek, weekStart } from '@/lib/weeklySummary';
 import { confirmationNote } from '@/lib/issueConfirmation';
 import type { Correction, CorrectionAction, Issue, Observation, Report, ReportSummary, Variation } from '@/lib/types';
 import { revisionsBefore, sectionOf } from '@/lib/sectionMatch';
@@ -215,7 +216,7 @@ function lastVisitWords(st: ProjectStanding, day: string): { when: string; who: 
  * the office. Built from the records the desk already holds.
  */
 function ProjectGlance({ ctx }: { ctx: Ctx }) {
-  const day = ctx.day;
+  const day = ctx.day, lastWeek = shiftWeek(weekStart(day, day), -1);
   return <section className="glance" aria-labelledby="glance-h">
     {/* Site coverage, day by day, is the button at the top of the office position. */}
     <SecH><span id="glance-h">Where each project stands</span></SecH>
@@ -227,8 +228,10 @@ function ProjectGlance({ ctx }: { ctx: Ctx }) {
         const exposed = s.exposedVariations.length, unpriced = s.unpricedVariations.length;
         // The same count as the project register's Needs action chip; reports nobody in the office has opened are said beside it.
         const action = s.needsAction + siteItems(ctx, s).length, unseen = s.reports.filter(notAcknowledged).length;
-        return <li key={p.id}><a className="glance-row" href={`#/projects/${p.id}`}>
-          <span className="glance-name"><b>{p.projectName}</b><span className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager}</span></span>
+        // The row opens the project (its name is the link, stretched over the row); last week's summary is its own link on top, for the Monday look back.
+        return <li key={p.id}><div className="glance-row">
+          <span className="glance-name"><a className="glance-open" href={`#/projects/${p.id}`}><b>{p.projectName}</b></a><span className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager}</span>
+            <Link className="glance-week" href={withViewReturn(`/weekly-summary?${new URLSearchParams({ project: p.id, week: lastWeek })}`, officeReturn(ctx))} aria-label={`Last week's summary for ${p.projectName}`}>Last week&rsquo;s summary</Link></span>
           <dl className="glance-cells">
             <div><dt>Last visit</dt><dd className={v.quiet ? 'late' : ''}>{v.when}<small>{v.quiet ?? v.who}</small></dd></div>
             <div><dt>This week</dt><dd>{count(s.standing.thisWeek, 'visit')}<small>{s.standing.tradesThisWeek.join(', ') || 'nobody yet'}</small></dd></div>
@@ -237,7 +240,7 @@ function ProjectGlance({ ctx }: { ctx: Ctx }) {
             <div><dt>Needs action</dt><dd className={action ? 'soon' : ''}>{action}<small>{action ? 'for the office' : 'nothing for the office'}{unseen ? ` · ${count(unseen, 'report')} not seen yet` : ''}</small></dd></div>
           </dl>
           <span className="arrow" aria-hidden="true">›</span>
-        </a></li>;
+        </div></li>;
       })}</ul>
     </div>)}
   </section>;
