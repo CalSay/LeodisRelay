@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { crossSiteChange } from "./lib/crossSite";
+import { COMPANY_COOKIE } from "./lib/company";
 
 /**
  * Require a session for everything except sign-in itself.
@@ -22,7 +23,18 @@ export function middleware(request: NextRequest) {
   if (['/sw.js', '/offline.html', '/offline.js', '/manifest.webmanifest', '/icon', '/icon-192', '/apple-icon'].includes(pathname)) return NextResponse.next();
   if (PUBLIC.some((p) => pathname.startsWith(p))) return NextResponse.next();
 
-  if (request.cookies.get("relay_session")) return NextResponse.next();
+  if (request.cookies.get("relay_session")) {
+    // The company picked on the hub, so RELAY's home screen icon (start_url
+    // "/?open=app", app/manifest.ts) opens it next time without asking again.
+    // Navigation only: each workspace still checks who the person is. A link
+    // prefetching the page is not a pick.
+    if ((pathname === '/developments' || pathname === '/compliance') && !request.headers.has('next-router-prefetch')) {
+      const response = NextResponse.next();
+      response.cookies.set(COMPANY_COOKIE, pathname.slice(1), { path: '/', sameSite: 'lax', httpOnly: true, secure: request.nextUrl.protocol === 'https:', maxAge: 60 * 60 * 24 * 400 });
+      return response;
+    }
+    return NextResponse.next();
+  }
 
   // An API call gets a status it can act on; a page gets sent to sign in.
   if (pathname.startsWith("/api/")) {

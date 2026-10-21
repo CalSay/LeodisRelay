@@ -261,7 +261,7 @@ body:has(.ws){overflow:hidden auto}
 .ws .install-help{max-width:none;margin:0;padding:0}
 .ws .install-help summary{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);padding:var(--s3) var(--s4);min-height:0}
 .ws .install-help-body{border:0;border-top:1px solid var(--line);border-radius:0;background:none;font-size:13px}
-.ws .install-help-body h3{font-size:14px;margin:16px 0 6px}
+.ws .install-help-body h2{font-size:14px;margin:16px 0 6px}
 
 /* ------------------------------------------------------------------ phone */
 @media (max-width:700px){

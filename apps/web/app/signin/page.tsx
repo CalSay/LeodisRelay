@@ -20,6 +20,15 @@ export const dynamic = "force-dynamic";
  * did not — so when Entra is not configured, this page says so and names the
  * settings that are missing rather than looking like a working sign-in.
  */
+/** One line on where signing in leads, so a first sign-in from the office's link is not a surprise. */
+function afterSignIn(destination: string, isEntra: boolean): string {
+  const account = isEntra ? 'Use the same Microsoft account as your work email. ' : '';
+  if (destination === '/') return `${account}Then choose your company.`;
+  if (destination === '/?open=app') return `${account}RELAY then opens.`;
+  if (destination === '/developments') return `${account}RELAY then opens Leodis Developments.`;
+  return `${account}RELAY then opens the page you were going to.`;
+}
+
 export default async function SignInPage({
   searchParams,
 }: {
@@ -46,7 +55,7 @@ export default async function SignInPage({
           {isEntra && <span className="entry-ms" aria-hidden="true"><b /><b /><b /><b /></span>}
           {isEntra ? 'Sign in with Microsoft' : 'Continue with local sign-in'}
         </a>
-        <p className="entry-fine">{destination === '/' ? 'Choose Developments or Compliance after signing in.' : 'After signing in, return to the page you requested.'}</p>
+        <p className="entry-fine">{afterSignIn(destination, isEntra)}</p>
         {!isEntra && <div className="entry-notice"><strong>Development only — identity is not checked.</strong><br />Microsoft sign-in is not configured.<details><summary>Setup details</summary>Missing: {missing.join(', ')}.</details></div>}
         <InstallRelay />
       </div>
