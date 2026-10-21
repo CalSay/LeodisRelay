@@ -4,6 +4,7 @@ import {use, useEffect, useRef, useState} from 'react';
 import Link from 'next/link';
 import type {PDFDocumentProxy, RenderTask} from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {safeViewReturn, withViewReturn} from '@/lib/viewNavigation';
+import {PageTitle} from '@/components/PageTitle';
 
 /** Render locally: never navigate the installed app into the device PDF viewer. */
 export default function PdfPage({params,searchParams}: {params:Promise<{id:string}>;searchParams:Promise<{returnTo?:string}>}) {
@@ -91,6 +92,7 @@ export default function PdfPage({params,searchParams}: {params:Promise<{id:strin
     return () => {active=false;render?.cancel();};
   },[doc,page,width,zoom]);
   return <main className="wrap eng-chrome">
+    <PageTitle title="Report PDF" />
     <Link href={withViewReturn(`/reports/${id}`,returnTo)} replace className="back">← Back to report</Link>
     <div className="pagehead"><div><h1>Report PDF</h1><p className="sub">View the document without leaving RELAY</p></div></div>
     <div className="btn-row" style={{flexWrap:'wrap'}}>

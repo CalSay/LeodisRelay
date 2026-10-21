@@ -17,6 +17,8 @@ export async function GET(request: Request) {
   try { projects = await refreshProjects(); }
   catch { return NextResponse.json({ reason:'SharePoint could not be reached, so the project list might be out of date. Please retry.' },{ status:503 }); }
   // The same project rule as site coverage: inspections are of live sites, active or in defects liability.
-  const open = projects.filter(p => reportableProject(p) && canAccessProject(guard.principal, p.id));
+  // `?project=` narrows it to one project, for the counts on a project's own screens (engineer home).
+  const only = new URL(request.url).searchParams.get('project');
+  const open = projects.filter(p => reportableProject(p) && canAccessProject(guard.principal, p.id) && (!only || p.id === only));
   return jsonResponse(request, safetyActions(open, open.flatMap(p => listReports(p.id)), guard.principal, londonDay(new Date())));
 }

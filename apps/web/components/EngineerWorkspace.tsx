@@ -12,6 +12,7 @@ import { unfinishedReports, type UnfinishedReport } from '@/lib/unfinishedReport
 import type { FixtureProject } from '@/lib/fixtures';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import { usePrincipal } from './PrincipalContext';
+import { SafetyActionsRow } from './SafetyActionsRow';
 import { ownsReport } from '@/lib/auth/access';
 import { EngineerIssueList } from './EngineerIssueList';
 import { IndividualDefect } from './IndividualDefect';
@@ -95,7 +96,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   const [scope,setScope] = useState('current');
   const [reports,setReports] = useState<ReportSummary[] | null>(null);
   const [issues,setIssues] = useState<Issue[] | null>(null);
-  const [back,setBack] = useState<{ rows: Back[]; open: number; reports: number } | null>(null);
+  // `failed`: the office could not be asked (no signal), so there are no counts to show, not zero.
+  const [back,setBack] = useState<{ rows: Back[]; open: number; reports: number; failed?: boolean; offline?: boolean } | null>(null);
   const [error,setError] = useState('');
   const [creating,setCreating] = useState(false);
   const [offset,setOffset] = useState(0);
@@ -172,7 +174,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
         for (const v of variations) if (v.raisedById === principal.id) rows.push({ at:v.events.at(-1)?.at ?? v.raisedAt, key:v.id, href:withViewReturn(`/variations/${v.id}`,returnTo), title:v.description, sub:`${v.reference.split('-').slice(1).join('-')} · ${v.location || 'no location'} · you raised it ${fmtDay(v.raisedAt)}`, tags:<VariationTags v={v}/>, late:v.workDone && v.instruction === 'pending' });
         rows.sort((a,b) => b.at.localeCompare(a.at));
         setBack({ rows:rows.slice(0,CAME_BACK_ROWS), open, reports:page.reports.filter(r => r.state === 'submitted').length });
-      }).catch(() => { if(!cancelled) setBack({ rows:[], open:0, reports:0 }); });
+      }).catch(e => { if(!cancelled) setBack({ rows:[], open:0, reports:0, failed:true, offline:e instanceof ApiError && e.offline }); });
     }
     return () => {cancelled=true;};
   },[view,projectId,scope,offset,retry,ready,projects,principal]);
@@ -228,19 +230,20 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
           </section>
         </div><div>
           <SinceLastVisit key={project.id} projectId={project.id} returnTo={engineerReturn()}/>
-          <div className="eng-section-title"><h2>Came back from the office</h2><span className="r">{back ? back.rows.length : '…'}</span></div>
+          <div className="eng-section-title"><h2>Came back from the office</h2><span className="r">{back && !back.failed ? back.rows.length : back ? '' : '…'}</span></div>
           <div className="eng-list">
             {!back ? <div className="eng-empty">Checking with the office…</div>
+              : back.failed ? <div className="eng-empty">{back.offline ? 'No signal, so RELAY cannot check with the office just now.' : 'RELAY could not check with the office just now.'} <button type="button" onClick={()=>setRetry(n=>n+1)}>Try again</button></div>
               : back.rows.length ? back.rows.map(row => <Link key={row.key} href={row.href} className={`eng-row ${row.late ? 'late' : ''}`}><div className="main"><b>{row.title}</b><span>{row.sub}</span><div className="stat">{row.tags}</div></div><span className="chev">›</span></Link>)
               : <div className="eng-empty">Nothing on this project yet. Reports you send, defects you flag and variations you request show here with the office’s answer.</div>}
           </div>
           <section aria-labelledby="eng-project-title">
-            <div className="eng-section-title"><h2 id="eng-project-title">This project</h2><span className="r">{back ? `${back.open} open issue${back.open===1?'':'s'}` : ''}</span></div>
+            <div className="eng-section-title"><h2 id="eng-project-title">This project</h2><span className="r">{back && !back.failed ? `${back.open} open issue${back.open===1?'':'s'}` : ''}</span></div>
             <div role="group" aria-labelledby="eng-project-issues">
               <h3 id="eng-project-issues" className="eng-group-title">Issues and safety</h3>
               <div className="eng-list">
-                <button type="button" className="eng-row" onClick={()=>navigate('issues')}><div className="main"><b>Site issues</b><span>{back ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
-                {projectPage('/safety-actions','Safety actions','What the safety inspections found, open until put right')}
+                <button type="button" className="eng-row" onClick={()=>navigate('issues')}><div className="main"><b>Site issues</b><span>{back && !back.failed ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
+                <SafetyActionsRow key={projectId} projectId={projectId} href={`/safety-actions?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
                 {projectPage('/issue-trend','Issues over time','Raised, closed and still open, week by week')}
                 {projectPage('/handover','Before handover','Everything still open, on one page')}
               </div>
@@ -248,7 +251,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
             <div role="group" aria-labelledby="eng-project-records">
               <h3 id="eng-project-records" className="eng-group-title">Reports and records</h3>
               <div className="eng-list">
-                <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back ? `${back.reports} on file · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
+                <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back && !back.failed ? `${back.reports} on file · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
                 <SiteNotesRow key={projectId} projectId={projectId} href={`/site-notes?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
                 {projectPage('/diary','Site diary','Every visit, day by day')}
                 {projectPage('/weekly-summary','Weekly summary','The week on one page, for the site meeting')}
@@ -267,7 +270,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
       </>}
       {view==='projects' && <><div className="eng-heading"><h1>Choose your project</h1><p>All projects open to your role. Existing drafts stay with their original project.</p></div><div className="eng-project-groups">{projectStatusGroups(projects).map(group=><section key={group.status} className={`eng-project-group eng-project-group-${group.tone}`}><div className="eng-section-title"><h2>{group.label}</h2><span className="r">{group.projects.length}</span></div><div className="eng-project-list">{group.projects.map(p=><button key={p.id} className="eng-panel" onClick={()=>selectProject(p.id)} aria-pressed={p.id===projectId}><strong>{p.projectName}</strong><small>{p.projectNumber} · {p.projectManager}</small><span>{p.id===projectId?'Current project':'Select project →'}</span></button>)}</div></section>)}</div></>}
       {view==='reports' && <><div className="eng-heading"><h1>Reports</h1><p>Your drafts and the reports every trade has sent on this project.</p></div><div className="eng-actions"><button onClick={()=>void startReport()} disabled={creating}>{creating?'Starting…':'Start another site update'}</button></div><nav className="eng-more" aria-label="More from these reports"><span className="lbl">Also on this project</span><div><Link className="eng-link-button" href={`/diary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Site diary</Link><Link className="eng-link-button" href={`/weekly-summary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Weekly summary</Link><Link className="eng-link-button" href={`/photos?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Photographs</Link><Link className="eng-link-button" href={`/safety-actions?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Safety actions</Link><Link className="eng-link-button" href={`/my-week?${new URLSearchParams({ returnTo: engineerReturn('reports') })}`}>My week</Link></div></nav>{reports===null ? !error && <p role="status">Loading reports…</p> : <section className="eng-panel">{reports.length ? reports.map(r=><Link className="eng-report-link" href={withViewReturn(`/reports/${r.id}`,engineerReturn('reports'))} key={r.id}><span><strong>{r.reference}</strong><small>{r.author} · {r.authorTrade ?? 'Trade not recorded'} · visit {fmtVisit(r.visitDate)}</small></span><span style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}><ReportTags r={r}/></span></Link>) : <p className="eng-empty">{offset ? 'No reports on this page.' : 'No reports yet on this project. Reports you and other trades send show here.'}</p>}</section>}<div className="btn-row">{offset>0 && <button onClick={()=>setOffset(Math.max(0,offset-50))}>Newer reports</button>}{next!==null && <button onClick={()=>setOffset(next)}>Older reports</button>}</div></>}
-      {view==='issues' && <><div className="eng-heading"><h1>Issues{scope==='all'?' · All projects':''}</h1><p>{scope==='all'?'Each issue group names its project.':'Showing issues only for the selected project.'}</p><div className="eng-actions"><button onClick={()=>navigate('defect')}>Flag a defect</button><Link className="eng-link-button" href={`/issues/snag-list?${new URLSearchParams({ project: projectId, ...(principal?.trade ? { trade: principal.trade } : {}), returnTo: engineerReturn('issues') })}`}>Snag list{principal?.trade ? ` · ${principal.trade}` : ''}</Link></div></div><div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Project scope<select id="eng-issue-scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="current">{project.projectName}</option><option value="all">All projects</option></select></label><div><button disabled aria-describedby="eng-assignment-unavailable">Assigned to me · Coming soon</button><p id="eng-assignment-unavailable" className="eng-help">Issue owners are currently names or companies, not linked user accounts.</p></div></div>{issues===null ? !error && <p role="status">Loading issues…</p> : (scope==='all'?projects: [project]).map(p=><section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList issues={issues.filter(i=>i.projectId===p.id)} projectName={p.projectName} returnTo={engineerReturn('issues')}/></section>)}</>}
+      {view==='issues' && <><div className="eng-heading"><h1>Issues{scope==='all'?' · All projects':''}</h1><p>{scope==='all'?'Each issue group names its project.':'Showing issues only for the selected project.'}</p><div className="eng-actions"><button onClick={()=>navigate('defect')}>Flag a defect</button><Link className="eng-link-button" href={`/issues/snag-list?${new URLSearchParams({ project: projectId, ...(principal?.trade ? { trade: principal.trade } : {}), returnTo: engineerReturn('issues') })}`}>Snag list{principal?.trade ? ` · ${principal.trade}` : ''}</Link></div></div><div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Project scope<select id="eng-issue-scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="current">{project.projectName}</option><option value="all">All projects</option></select></label></div>{issues===null ? !error && <p role="status">Loading issues…</p> : (scope==='all'?projects: [project]).map(p=><section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList issues={issues.filter(i=>i.projectId===p.id)} projectName={p.projectName} returnTo={engineerReturn('issues')}/></section>)}</>}
       {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues')} returnTo={engineerReturn('issues')}/>}
     </>}
   </main>;

@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'day-walkthrough', added: '2026-10-21', audience: 'all', title: 'Smoother from one page to the next',
+    text: 'The site home and the office overview now say how many safety actions are open, and on site whether a tower or the weekly safety inspection is due. With no signal the site home no longer shows "0 open issues": it says it cannot check with the office, and Notes for the next visit shows the copy kept on your phone. The office\'s "Received this week" keeps this week\'s notifications still to go apart from older ones, and the unfinished "Assigned to me" button has gone from Issues.',
+    link: { label: 'Open Safety actions', href: '/safety-actions' } },
   { id: 'same-words-reports', added: '2026-10-21', audience: 'all', title: 'The same words in reports and inspections',
     text: 'The report screen and the no-signal page now write dates the way the rest of RELAY does ("Wed 21 Oct, 14:05", no stray commas), count photographs as "photographs", and say "Back to …" naming where Back goes. On the no-signal page an inspection check asks the same questions as in RELAY: "What’s wrong", "What needs doing" and "Who is to do it" for an action, otherwise "Notes". In the PDF, photographs are dated "21 Oct 2026", signatures "21 Oct 2026, 14:05", and the visit date names the day.' },
   { id: 'busy-projects-faster', added: '2026-10-21', audience: 'all', title: 'Quicker on busy projects',
