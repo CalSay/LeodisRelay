@@ -157,7 +157,7 @@ export function IssueTrendPage({ initialProject, returnTo }: { initialProject: s
         <p className="it-links"><Link href={`/issues/snag-list?${new URLSearchParams({ project: projectId, returnTo: here })}`}>Open issues on the snag list</Link><Link href={`/handover?${new URLSearchParams({ project: projectId, returnTo: here })}`}>Before handover</Link></p>
 
         <footer className="it-foot">
-          <p>Counted from the issue register as it stands today. An issue counts as closed on the day the office checked it; one closed, reopened and still open counts as open throughout. Put forward as fixed is still open until it is checked. Past target uses each issue&rsquo;s target date as it is now. Withdrawn issues are left out{d.closedUndated ? `, and ${plural(d.closedUndated, 'closed issue')} with no record of when it was closed ${d.closedUndated === 1 ? 'counts' : 'count'} as raised but never as open or closed` : ''}. Weeks run Monday to Sunday.</p>
+          <p>Counted from the issue register as it stands today. An issue counts as closed on the day the office checked it; one closed, reopened and still open counts as open throughout. Put forward as fixed is still open until it is checked, but not past target: it is waiting for the office. Past target uses each issue&rsquo;s target date as it is now. Withdrawn issues are left out{d.closedUndated ? `, and ${plural(d.closedUndated, 'closed issue')} with no record of when it was closed ${d.closedUndated === 1 ? 'counts' : 'count'} as raised but never as open or closed` : ''}. Weeks run Monday to Sunday.</p>
         </footer>
       </article>}
   </main>;

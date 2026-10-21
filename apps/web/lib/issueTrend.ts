@@ -1,5 +1,6 @@
 import { naturalOrder } from './naturalOrder';
 import type { Issue } from './types';
+import { isOverdueIssue } from './officeActions';
 import { londonDay, shiftWeek, weekEnd, weekStart } from './weeklySummary';
 
 /**
@@ -63,6 +64,13 @@ function closedOn(issue: Issue): string {
   return verified ? londonDay(verified.at) : '';
 }
 
+/** Put forward as fixed at the end of `day`: its latest fix, send-back or check by then was a fix. */
+function putForwardOn(issue: Issue, day: string): boolean {
+  if (issue.work === 'awaiting_verification' && !issue.events.some(e => e.kind === 'closure_submitted')) return true; // no history: as it stands now
+  const last = issue.events.filter(e => (e.kind === 'closure_submitted' || e.kind === 'reopened' || e.kind === 'verified') && londonDay(e.at) <= day).at(-1);
+  return last?.kind === 'closure_submitted';
+}
+
 /** `today` is YYYY-MM-DD in the office calendar. Issues from other projects are ignored. */
 export function issueTrend(issues: Issue[], projectId: string, today: string): IssueTrend {
   const thisWeek = weekStart(today, today);
@@ -75,7 +83,10 @@ export function issueTrend(issues: Issue[], projectId: string, today: string): I
 
   // Open at the end of `day`: raised by then and not closed by then. An undated closure is never open.
   const openOn = (day: string) => rows.filter(r => r.raised <= day && !r.undated && !(r.closed && r.closed <= day));
-  const lateOn = (day: string) => openOn(day).filter(r => isDay(r.issue.targetDate) && r.issue.targetDate < day).length;
+  // Past target as the office counts it (lib/officeActions.ts `isOverdueIssue`): an issue put forward as fixed by the end of `day`, and not
+  // sent back or checked since, is waiting on the office, not late. Today this is the same count as the project sheet's Overdue actions.
+  // Today uses the register's rule itself, so the figure always matches the sheet.
+  const lateOn = (day: string) => openOn(day).filter(r => day === today ? isOverdueIssue(r.issue, today) : isDay(r.issue.targetDate) && r.issue.targetDate < day && !putForwardOn(r.issue, day)).length;
 
   const weeks: TrendWeek[] = mondays.map(monday => {
     const end = monday === thisWeek ? today : weekEnd(monday);

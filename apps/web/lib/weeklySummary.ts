@@ -5,6 +5,7 @@ import type { ObservationType } from './fixtures';
 import type { Issue, Report, Variation } from './types';
 import { checkCounts, reportName, reportTypeOf } from './reportTypes';
 import { ISSUE_WORK as WORK } from './status';
+import { issueFigures } from './officeActions';
 import type { ToolboxTalk } from './toolboxTalks';
 import { kindLabel, type Permit } from './permits';
 import { conditionShort, type Delivery } from './deliveries';
@@ -154,12 +155,9 @@ export function weeklySummary(sources: WeekSources, principal: Principal, projec
   const issuesFixed = issues.flatMap(i => { const at = lastIn(i, 'closure_submitted'); return at ? [weekIssue(i, at)] : []; });
   // Closed this week and still closed: one that was verified and then reopened is not shown as closed.
   const issuesClosed = issues.flatMap(i => { const at = lastIn(i, 'verified'); return at && i.work === 'closed' ? [weekIssue(i, at)] : []; });
-  const live = issues.filter(i => i.work !== 'closed' && i.confirmation !== 'withdrawn');
-  const openNow = {
-    total: live.length,
-    pastTarget: live.filter(i => i.work !== 'awaiting_verification' && DAY.test(i.targetDate) && i.targetDate < today).length,
-    toCheck: live.filter(i => i.work === 'awaiting_verification').length,
-  };
+  // The office's figures (lib/officeActions.ts), so this agrees with the project sheet.
+  const figures = issueFigures(issues, today);
+  const openNow = { total: figures.open, pastTarget: figures.overdue, toCheck: figures.toCheck };
 
   const variations = sources.variations.filter(v => v.projectId === projectId);
   const variationsRaised = variations.filter(v => inWeek(londonDay(v.raisedAt))).map(v => weekVariation(v, v.raisedAt));

@@ -4,8 +4,8 @@ import type { Tone } from '@/lib/status';
 import { INSTRUCTION_LABEL } from '@/lib/variations';
 import { reviewInUse } from '@/lib/reviewQueue';
 import { confirmationLabel } from '@/lib/issueConfirmation';
-import { isActiveIssue, isUnassigned, isVerify, londonDay, notAcknowledged } from '@/lib/officeActions';
-import { isDisputedIssue, isNotReviewedIssue, isOverdueIssue } from '@/lib/issueQuery';
+import { isActiveIssue, isOverdueIssue, isUnassigned, isVerify, issueFigures, londonDay, notAcknowledged } from '@/lib/officeActions';
+import { isDisputedIssue, isNotReviewedIssue } from '@/lib/issueQuery';
 import { dateShort, dayLong, timeOf, whenShort } from '@/lib/dates';
 import { safetyAttention, type SafetyActions } from '@/lib/safetyActions';
 import { permitAttention, type PermitsAll } from '@/lib/permits';
@@ -53,14 +53,17 @@ export const processingFailed = (r: ReportSummary): boolean => r.state === 'subm
 export const awaitingReview = (r: ReportSummary): boolean => r.state === 'submitted' && r.review === 'pending';
 export const returned = (r: ReportSummary): boolean => r.state === 'submitted' && r.review === 'returned';
 
-/** Closed, awaiting verification, overdue, and the rest of the open ones. Four counts, one bar. */
+/**
+ * One bar: closed, fixed to check, overdue, and the open ones not late. The
+ * first three never overlap (lib/officeActions.ts `issueFigures`); `open` is
+ * every open issue, the same figure as the sheet and the overview, so the bar's
+ * last part is `open - verify - overdue`.
+ */
 export interface Rollup { total: number; closed: number; verify: number; overdue: number; open: number }
 export function rollup(issues: Issue[], day: string): Rollup {
   const live = issues.filter(i => i.confirmation !== 'withdrawn');
-  const closed = live.filter(isClosed).length;
-  const overdue = live.filter(i => isOverdue(i, day)).length;
-  const verify = live.filter(i => isVerify(i) && !isOverdue(i, day)).length;
-  return { total: live.length, closed, verify, overdue, open: live.length - closed - overdue - verify };
+  const f = issueFigures(live, day);
+  return { total: live.length, closed: live.filter(isClosed).length, verify: f.toCheck, overdue: f.overdue, open: f.open };
 }
 
 export interface ProjectStats {

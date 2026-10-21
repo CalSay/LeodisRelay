@@ -40,12 +40,15 @@ export function Found({ r }: { r: ReportSummary }) {
 export function Bar({ c }: { c: Rollup }) {
   if (!c.total) return <div className="cbar" />;
   const p = (n: number) => `${(100 * n / c.total).toFixed(1)}%`;
-  return <div className="cbar"><i className="ok" style={{ width: p(c.closed) }} /><i className="soon" style={{ width: p(c.verify) }} /><i className="late" style={{ width: p(c.overdue) }} /><i className="none" style={{ width: p(c.open) }} /></div>;
+  return <div className="cbar"><i className="ok" style={{ width: p(c.closed) }} /><i className="soon" style={{ width: p(c.verify) }} /><i className="late" style={{ width: p(c.overdue) }} /><i className="none" style={{ width: p(c.open - c.verify - c.overdue) }} /></div>;
 }
+/** The same three figures, with the same words, as the project sheet and the overview: open, overdue, fixed to check. */
 export function Meta({ c }: { c: Rollup }) {
-  return <div className="meta"><span>{c.total} {c.total === 1 ? "issue" : "issues"}</span>{c.overdue > 0 && <span className="late">{c.overdue} overdue</span>}{c.verify > 0 && <span className="soon">{c.verify} to check</span>}{c.open > 0 && <span>{c.open} open</span>}{c.total > 0 && !c.overdue && !c.verify && !c.open && <span>all closed</span>}</div>;
+  if (!c.total) return <div className="meta"><span>No issues</span></div>;
+  if (!c.open) return <div className="meta"><span>All {c.total} {c.total === 1 ? 'issue' : 'issues'} closed</span></div>;
+  return <div className="meta"><span>{c.open} open</span>{c.overdue > 0 && <span className="late">{c.overdue} overdue</span>}{c.verify > 0 && <span className="soon">{c.verify} to check</span>}</div>;
 }
-export const BarKey = () => <div className="cbar-key"><span className="k-ok">closed</span><span className="k-soon">fixed, to check</span><span className="k-late">overdue</span><span className="k-none">open</span></div>;
+export const BarKey = () => <div className="cbar-key"><span className="k-ok">closed</span><span className="k-soon">fixed, to check</span><span className="k-late">overdue</span><span className="k-none">open, not late</span></div>;
 export const SecH = ({ children, right }: { children: ReactNode; right?: ReactNode }) => <div className="sec-h">{children}{right}</div>;
 export const Btn = (p: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button type="button" {...p} className={`btn ${p.className ?? ''}`} />;
 export const BtnQ = (p: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button type="button" {...p} className={`btn btn-q ${p.className ?? ''}`} />;

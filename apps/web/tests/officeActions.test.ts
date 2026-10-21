@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isNewReport, officeActions, opensAsSeen, previousWorkingDay, sinceWords } from '../lib/officeActions';
+import { isNewReport, isOverdueIssue, issueFigures, officeActions, opensAsSeen, previousWorkingDay, sinceWords } from '../lib/officeActions';
 import type { Issue, ReportSummary } from '../lib/types';
 
 const report = (id: string, over: Partial<ReportSummary>): ReportSummary => ({ id, state: 'submitted', projectId: 'proj-a', reference: `A-SPR-${id}`, author: 'Sam', serverAcknowledgedAt: '2026-10-20T09:00:00Z', ...over }) as ReportSummary;
@@ -65,4 +65,20 @@ test('opening a sent report marks it seen only for the office, never for its aut
   assert.equal(opensAsSeen(sent, { id: 'sam', role: 'Manager' }), false, 'nor is the author, even in the office');
   assert.equal(opensAsSeen(report('2', { state: 'draft' }), manager), false, 'a draft is never seen');
   assert.equal(opensAsSeen(report('3', { acknowledged: { by: 'Pat', at: '2026-10-20T10:00:00Z' } }), admin), false, 'once is enough');
+});
+
+test('one meaning for each issue figure: fixed, to check is never overdue, and open counts both', () => {
+  const day = '2026-10-21';
+  const list = [
+    issue('late', { work: 'assigned', owner: 'Sparks', targetDate: '2026-10-19' }),
+    issue('due-today', { work: 'assigned', owner: 'Sparks', targetDate: '2026-10-21' }),
+    issue('no-target', { work: 'in_progress', owner: 'Sparks' }),
+    issue('fixed-late', { work: 'awaiting_verification', owner: 'Sparks', targetDate: '2026-09-01' }),
+    issue('fixed', { work: 'awaiting_verification', owner: 'Sparks', targetDate: '2026-11-01' }),
+    issue('closed-late', { work: 'closed', targetDate: '2026-09-01' }),
+    issue('withdrawn-late', { confirmation: 'withdrawn', targetDate: '2026-09-01' }),
+    issue('bad-date', { work: 'assigned', targetDate: 'soon' }),
+  ];
+  assert.deepEqual(list.filter(i => isOverdueIssue(i, day)).map(i => i.id), ['late']);
+  assert.deepEqual(issueFigures(list, day), { open: 6, overdue: 1, toCheck: 2 });
 });

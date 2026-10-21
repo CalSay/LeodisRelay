@@ -43,8 +43,8 @@ test('flags past-target and fixed work, and puts fixed work last within a locati
     issue('3', { targetDate: '2026-10-19' }),
     issue('4', { targetDate: '2026-10-20' }),
   ], { projectId: 'p1' }, DAY);
-  assert.deepEqual(list.groups[0]!.rows.map(r => [r.issue.id, r.overdue, r.fixed]), [['3', true, false], ['4', false, false], ['2', false, false], ['1', true, true]]);
-  assert.equal(list.overdue, 2);
+  assert.deepEqual(list.groups[0]!.rows.map(r => [r.issue.id, r.overdue, r.fixed]), [['3', true, false], ['4', false, false], ['2', false, false], ['1', false, true]], 'fixed work waits on the office, so it is not past target');
+  assert.equal(list.overdue, 1);
   assert.equal(list.fixed, 1);
 });
 
