@@ -486,4 +486,4 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 /* "Change kind" sits with Remove; the four kind buttons come out only after it is tapped (2026-10-21). */
 .eng-card-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
 .eng-card-foot .eng-remove-card{margin-top:0;}
-.eng-card-foot .btn-sm,.eng-card .head .eng-change-kind{min-height:48px;}
+.eng-card-foot .btn-sm,.eng-card .head .btn-sm{min-height:48px;}

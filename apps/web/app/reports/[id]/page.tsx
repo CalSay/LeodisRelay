@@ -1130,7 +1130,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           locations={placesToOffer(report.observations, observation.id, suggestions.locations)}
           companies={suggestions.companies}
           photoWhere={(photoId) => { const w = whereOf.get(observation.id); const at = observation.photos.findIndex(p => p.id === photoId); return w && at >= 0 ? w.each[at] : undefined; }}
-          onChange={(next) => update({ ...report, observations: report.observations.map((o) => (o.id === next.id ? next : o)) })}
+          // From the latest report, not this render's: a photograph read in the background must not undo a card added or changed meanwhile.
+          onChange={(next) => { const current = latest.current ?? report; update({ ...current, observations: current.observations.map((o) => (o.id === next.id ? next : o)) }); }}
           onRemove={() => removeCardNow(observation.id)}
           onRemovePhoto={(photoId) => removePhotoNow(observation.id, photoId)}
         />

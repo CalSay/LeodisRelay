@@ -323,6 +323,9 @@ export function PhotoField({ observation, note, photoWhere, onChange, onRemovePh
 }) {
   const [photoError, setPhotoError] = useState<string | null>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  /** The card as it is now: reading a photograph takes a moment, and the card may change kind meanwhile ("+ Defect" on a blank card). */
+  const latest = useRef(observation);
+  latest.current = observation;
 
   async function addPhotos(files: FileList | null) {
     if (!files || files.length === 0) return;
@@ -337,7 +340,7 @@ export function PhotoField({ observation, note, photoWhere, onChange, onRemovePh
           : { name: file.name || 'A photograph', why: 'could not be added', advice: 'Try adding it again.' });
       }
     }
-    if (added.length) onChange({ ...observation, photos: [...observation.photos, ...added] });
+    if (added.length) onChange({ ...latest.current, photos: [...latest.current.photos, ...added] });
     if (refused.length) setPhotoError(notAdded(added.length, refused));
     if (fileInput.current) fileInput.current.value = "";
   }

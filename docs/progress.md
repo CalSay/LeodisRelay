@@ -69,6 +69,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Checks: `npm run typecheck`, `npm test`, `npm run build`, browser checks
   listed in the PR. verify-fewest-taps, verify-engineer-layout and
   verify-day-walkthrough changed where they used the Kind buttons.
+- Review: a fresh-context review found one broken check line (fixed) and
+  that a photograph still being read could put a just-retyped card back to
+  progress, because the photo and the card's change used the card and report
+  as they were when the photo started. Both now write onto the latest card
+  and report. The wide card's "Remove" is now 48px tall too.
 - Not verified: no real phone, no real engineer, no live server or tenant.
 
 ## 2026-10-21 — No-signal check brought up to date
