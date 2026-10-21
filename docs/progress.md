@@ -63,10 +63,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the spreadsheet, the office Attention list and Needs attention and the line
   leaving once closed, the project sheet link, no connection keeps the form,
   an empty project, axe at 390px light and 1440px dark, 44px controls, no
-  sideways scroll. `verify-home-and-sheet.mjs` expects the new row and link.
+  sideways scroll. `verify-home-and-sheet.mjs` expects the new row and link;
+  `verify-first-time-use.mjs` (from #75) now checks the empty Permits page too.
   Also run and passing against this branch's build: home-and-sheet, help,
   day-walkthrough, accessibility (551), office-desk, role-access (95),
-  toolbox-talks, navigation, office-landing, engineer-layout, safety-actions.
+  first-time-use (336, after merging #75), toolbox-talks, navigation, office-landing, engineer-layout, safety-actions.
   In one batch run straight after a build, verify-permits and
   verify-toolbox-talks each failed once; both passed on every rerun
   (permits five times). The one fixed wait in verify-permits was replaced by
