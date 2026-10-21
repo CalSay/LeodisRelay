@@ -38,7 +38,8 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const initialProjects = useProjects();
   const [projectData, setProjectData] = useState<FixtureProject[]>(initialProjects);
   const { hash, go } = useHashRoute(fallback);
-  const parts = parseHash(hash);
+  // People moved from Admin to the Team tab (one list of people), so older #/admin/roles links open Team.
+  const parts = hash === '#/admin/roles' ? ['team'] : parseHash(hash);
   const route: Route = { tab: parts[0] ?? 'projects', a: parts[1] ?? null, b: parts[2] ?? null, c: parts[3] ?? null };
 
   const [snap, setSnap] = useState<Snapshot | null>(null);

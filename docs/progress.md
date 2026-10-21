@@ -4,6 +4,48 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Simpler office screens: one place for each thing
+
+- Why: Cal's 07:02 direction (RELAY gets the office the information it
+  needs, simply). With #86/#88/#91 and the September work (#97) both on the
+  office, some things were shown or built twice. Decided without asking Cal,
+  per his autonomy message; reasons below.
+- Overview on a desk: the left Projects column is gone at the top level.
+  "Where each project stands" already listed every project with the same
+  last visit and variations, as a phone already did. The column returns
+  once a project is open, to move between projects.
+- Office position: the "New reports" group is removed (it mostly repeated
+  "Not seen yet"; already-opened new reports are on the Inbox's New
+  filter). Three groups remain: Not seen yet, Unassigned issues, Fixed, to
+  check (one row on a desk, three tiles on a phone). The subtitle counts
+  that repeated the tab counts became "Updated <time>"; the "Day by day →"
+  link that repeated the Site coverage button is gone.
+- "Also needs attention" is now built from model.ts `attention()`, the
+  Attention bell's list, less unassigned and fixed-to-check (own groups),
+  one line per record. Before, a second hand-built list could disagree.
+- People: editing (names, roles, add person, take off/put back, change log)
+  moved from Admin > People to the Team tab for the Admin; Managers keep
+  the read-only "Who can sign in". `#/admin/roles` opens Team; Admin opens
+  on Notifications & processing. The server still refuses non-Admins
+  (`/api/admin/people` 403; now checked in verify-september-office).
+  SharePoint connection's Refresh and Retry buttons got app styling (they
+  were browser-default and under 44px, caught once Admin opened there).
+- Kept: every September feature, #88's automatic Seen (no Acknowledge
+  button), the Safety, permits and deliveries switch, off by default.
+- Checks: typecheck, `npm test` (146 + 467), build. All 75 browser checks
+  run one at a time on this branch: 72 passed first time; verify-help (tab
+  title race) and verify-company-chases (axe target size on /companies,
+  untouched here) passed on rerun; verify-busy-projects missed only
+  engineer-side speed budgets, by 9 to 400 ms and a different one each run
+  over four runs, office budgets met every time. Updated checks:
+  office-actions, office-phone, office-landing, office-progress,
+  office-registers, role-access, september-office, and the three that
+  opened a project from the old column (photo-library, site-diary,
+  weekly-summary). Screenshots: project files ui-review/simpler-office/.
+- Not verified: real phone, real tablet, live tenant.
+- Next (proposals, not built): the reader's "Actions and decisions" summary
+  repeats cards shown below it; worth trying without it on short reports.
+
 ## 2026-10-21 — Eighth release check
 
 - Checked main at 03188ee (#2 to #27, #29 to #99, including #97, the

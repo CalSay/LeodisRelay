@@ -56,16 +56,16 @@ try {
       if(shot){await page.screenshot({path:join(shot,`office-phone-${width}-${colorScheme}.png`)});await page.screenshot({path:join(shot,`office-phone-${width}-${colorScheme}-full.png`),fullPage:true});}
       const cols=await visibleCols(page);
       assert.deepEqual(cols.map(c=>c.head),['Overview'],`${label}: the office position alone, its project list standing in for the column`);checks++;
-      assert.ok(await group(page,'new').isVisible(),`${label}: the action groups are on screen`);checks++;
-      assert.deepEqual([await count(page,'new'),await count(page,'notAck'),await count(page,'unassigned'),await count(page,'verify')],[2,2,1,1],`${label}: each group's count`);checks++;
-      // The four counts sit together at the top, each a tap away from its group.
+      assert.ok(await group(page,'notAck').isVisible(),`${label}: the action groups are on screen`);checks++;
+      assert.deepEqual([await count(page,'notAck'),await count(page,'unassigned'),await count(page,'verify')],[2,1,1],`${label}: each group's count`);checks++;
+      // The three counts sit together at the top, each a tap away from its group ("New reports" is folded into "Not seen yet").
       const tiles=page.locator('.act-strip button');
-      assert.equal(await tiles.count(),4,`${label}: four count tiles`);checks++;
-      assert.deepEqual(await tiles.locator('b').allTextContents(),['2','2','1','1'],`${label}: tiles carry the counts`);checks++;
+      assert.equal(await tiles.count(),3,`${label}: three count tiles`);checks++;
+      assert.deepEqual(await tiles.locator('b').allTextContents(),['2','1','1'],`${label}: tiles carry the counts`);checks++;
       const tileBox=await tiles.first().boundingBox();
       assert.ok(tileBox.y+tileBox.height<=844,`${label}: the counts show without scrolling`);checks++;
       assert.ok(tileBox.height>=44,`${label}: tiles are big enough to tap (${tileBox.height}px)`);checks++;
-      await tiles.nth(3).tap();
+      await tiles.nth(2).tap();
       await page.waitForFunction(()=>{const r=document.querySelector('.act[data-group="verify"]').getBoundingClientRect();return r.top>=0&&r.top<innerHeight/2;});
       assert.equal(new URL(page.url()).hash,'#/projects',`${label}: a tile scrolls, it does not change the route`);checks++;
       assert.equal(await page.evaluate(()=>document.activeElement?.getAttribute('data-group')),'verify',`${label}: a tile moves focus to its group`);checks++;
@@ -82,7 +82,7 @@ try {
       // A project is one tap away, straight under the counts.
       await page.evaluate(()=>scrollTo(0,0));
       const item=page.locator('.glance-row').first();
-      const itemBox=await item.boundingBox(),stripBox=await page.locator('.act-strip').boundingBox(),groupBox=await group(page,'new').boundingBox();
+      const itemBox=await item.boundingBox(),stripBox=await page.locator('.act-strip').boundingBox(),groupBox=await group(page,'notAck').boundingBox();
       assert.ok(stripBox.y<itemBox.y&&itemBox.y<groupBox.y,`${label}: the project list sits between the counts and the groups`);checks++;
       assert.ok(itemBox.height>=44,`${label}: a project row is big enough to tap`);checks++;
       await item.tap();
@@ -99,11 +99,12 @@ try {
     if(shot)await page.screenshot({path:join(shot,`office-desk-1440-${colorScheme}.png`),fullPage:true});
     const label=`${colorScheme} 1440px`;
     const cols=await visibleCols(page);
-    assert.deepEqual(cols.map(c=>c.head),['Projects','Overview'],`${label}: project column and office position side by side`);checks++;
-    assert.ok(cols[0].left<cols[1].left&&cols[0].top===cols[1].top,`${label}: the project column stays on the left`);checks++;
+    // "Where each project stands" is the project list, so the desk no longer repeats it in a column beside it.
+    assert.deepEqual(cols.map(c=>c.head),['Overview'],`${label}: the office position alone, full width`);checks++;
+    assert.ok(cols[0].left===0,`${label}: the office position starts at the left edge`);checks++;
     assert.equal(await page.locator('.act-strip').isVisible(),false,`${label}: no count tiles on the desk`);checks++;
     const tops=await page.locator('.act').evaluateAll(els=>els.map(e=>Math.round(e.getBoundingClientRect().top)));
-    assert.equal(new Set(tops).size,2,`${label}: two groups to a row`);checks++;
+    assert.equal(new Set(tops).size,1,`${label}: the three groups on one row`);checks++;
     assert.ok(await page.locator('.glance-row').first().isVisible(),`${label}: where each project stands is shown on the desk too`);checks++;
     assert.ok(await overflow(page)<=0,`${label}: no horizontal scroll`);checks++;
     await desk.close();

@@ -56,7 +56,7 @@ try {
   await status('/api/reports?view=office','Manager',200);
   await status('/admin','Engineer',307);
   await status('/admin','Manager',307);
-  const admin = await status('/admin','Admin',200); assert.match(await admin.text(),/Team assignment checklist/);
+  const admin = await status('/admin','Admin',200); assert.match(await admin.text(),/Notifications waiting/);
   await status('/office','Engineer',307);
   await status('/office','Manager',200);
   // `/` is company selection for every signed-in role; `/developments` routes by role (design decision, 8 Sep 2026).

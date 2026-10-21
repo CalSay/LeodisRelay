@@ -143,7 +143,7 @@ try {
   // Office, desktop, dark: from the project's actions.
   {
     const {context,page,errors}=await open('Manager','dark',1440);
-    await page.goto(`${base}/office#/projects`);await page.locator('.cols .item').filter({hasText:'011LME'}).first().click();
+    await page.goto(`${base}/office#/projects`);await page.locator('.glance-row').filter({hasText:'011LME'}).first().click();
     await page.getByRole('link',{name:'Site diary'}).click();await page.waitForURL(/\/diary\?/);await page.locator('.diary-entry').first().waitFor();
     check(new URL(page.url()).searchParams.get('project')==='proj-011lme','office: opens on the chosen project');
     check(/13 site days · 14 reports/.test(await page.locator('.diary-count').innerText()),'office: same diary as the engineer, no drafts');

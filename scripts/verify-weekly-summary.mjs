@@ -104,7 +104,7 @@ try {
   // Office, desktop, dark: the project's actions link to the summary, which prints on white.
   {
     const {context,page,errors}=await open('Manager','dark',1440);
-    await page.goto(`${base}/office#/projects`);await page.locator('.cols .item').filter({hasText:'011LME'}).first().click();
+    await page.goto(`${base}/office#/projects`);await page.locator('.glance-row').filter({hasText:'011LME'}).first().click();
     await page.getByRole('link',{name:'Weekly summary'}).click();await page.waitForURL(/\/weekly-summary\?/);await page.locator('.week-sheet').waitFor();
     check(new URL(page.url()).searchParams.get('project')==='proj-011lme','office: opens on the chosen project');
     check((await rows(page,'On site').count())===2,'office: same two reports as the engineer, no drafts');
