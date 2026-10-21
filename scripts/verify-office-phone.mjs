@@ -1,6 +1,6 @@
 // Browser check: on a phone the office desk opens on the office position, so
 // a project manager away from a desk sees the four action groups (new
-// reports, not yet read, unassigned issues, ready to verify) with their counts
+// reports, not seen yet, unassigned issues, ready to verify) with their counts
 // and buttons, with "Where each project stands" between their counts and the
 // groups standing in for the project list. The desk at 1440px keeps its
 // layout: the project column on the left, two groups to a row.

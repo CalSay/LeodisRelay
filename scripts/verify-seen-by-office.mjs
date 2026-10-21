@@ -55,7 +55,7 @@ async function needsAction(page){
 async function homeTags(page,report){
   await page.goto(`${base}/engineer?project=${P}`);await page.getByRole('heading',{name:'Came back from the office'}).waitFor();
   const row=page.locator(`.eng-list a[href*="/reports/${report.id}"]`);await row.waitFor();
-  return (await row.locator('.stat').innerText()).replace(/\s+/g,' ');
+  return (await row.locator('.stat').textContent()).replace(/\s+/g,' ');
 }
 const name=([scheme,width])=>`${scheme}-${width}`;
 try {
@@ -76,7 +76,7 @@ try {
     check(!/Seen by the office/.test(await homeTags(epage,first)),`${label}: engineer home, nothing claims the office has seen it yet`);
     if(shot&&view[1]===390)await epage.screenshot({path:join(shot,`before-engineer-home-${name(view)}.png`),fullPage:true});
     await epage.goto(`${base}/reports/${first.id}`);await epage.locator('ol.stages').waitFor();
-    check((await epage.locator('ol.stages li[data-stage="read"] .tag').innerText())==='Not seen yet',`${label}: engineer report, "Not seen yet"`);
+    check((await epage.locator('ol.stages li[data-stage="read"] .tag').textContent())==='Not seen yet',`${label}: engineer report, "Not seen yet"`);
     await eng.close();
   }
   check(getRecord('reports',first.id).acknowledged===undefined,'the engineer reading their own report does not mark it seen');
@@ -89,7 +89,7 @@ try {
   {
     const office=await contextFor('office',VIEWS[2]);const page=await office.newPage();page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`${base}/office#/projects/${P}/report/${own.id}`);await page.locator('ol.stages').waitFor();await page.waitForTimeout(1500);
-    check((await page.locator('ol.stages li[data-stage="read"] .tag').innerText())==='Not seen yet','the author opening their own report leaves it not seen');
+    check((await page.locator('ol.stages li[data-stage="read"] .tag').textContent())==='Not seen yet','the author opening their own report leaves it not seen');
     check(getRecord('reports',own.id).acknowledged===undefined,'nothing recorded against the author');
     await page.goto(`${base}/office#/projects/${P}/report/${first.id}`);await page.locator('ol.stages').waitFor();
     check(await page.getByRole('button',{name:/Acknowledge/}).count()===0,'there is no Acknowledge button');
@@ -115,7 +115,7 @@ try {
     check(await overflow(epage)<=0,`${label}: engineer home, no horizontal scroll`);
     if(shot&&view[1]===390)await epage.screenshot({path:join(shot,`after-engineer-home-${name(view)}.png`),fullPage:true});
     await epage.goto(`${base}/reports/${first.id}`);await epage.locator('ol.stages').waitFor();
-    check((await epage.locator('ol.stages li[data-stage="read"] .tag').innerText())==='Seen by the office',`${label}: engineer report, "Seen by the office"`);
+    check((await epage.locator('ol.stages li[data-stage="read"] .tag').textContent())==='Seen by the office',`${label}: engineer report, "Seen by the office"`);
     if(shot&&view[1]===390)await epage.locator('ol.stages').screenshot({path:join(shot,`after-engineer-report-stages-${name(view)}.png`)});
     await eng.close();
   }

@@ -271,7 +271,7 @@ function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectSt
   return <div className="rmenu">{shown.length ? shown.map(i => <a key={i.key} href={i.go}><span className="ref">{i.ref}</span><div className="rt"><b>{i.b}</b><span>{i.sub}</span></div><Tag {...i.tag} /></a>) : <div className="empty" style={{ padding: 14 }}>Nothing needs attention.</div>}</div>;
 }
 
-/** New, not yet read, unassigned and fixed, to check: what a project manager acts on, each with its count. */
+/** New, not seen yet, unassigned and fixed, to check: what a project manager acts on, each with its count. */
 interface ActionGroup { key: string; title: string; sub: string; n: number; tone: string; all: string; empty: string; rows: ReactNode[] }
 function actionGroups(ctx: Ctx): ActionGroup[] {
   const reports = ctx.stats.flatMap(s => s.reports), issues = ctx.stats.flatMap(s => s.issues);

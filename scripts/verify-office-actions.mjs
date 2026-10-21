@@ -1,5 +1,5 @@
 // Browser check for FE-4b: the office position shows the four groups a project
-// manager acts on (new reports, not yet read, unassigned issues, ready to
+// manager acts on (new reports, not seen yet, unassigned issues, ready to
 // verify), each with its count, and each group opens its filtered list.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 // RELAY_SCREENSHOT_DIR=<dir> saves the office position at 1440px and 1200px, light and dark.
