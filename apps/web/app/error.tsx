@@ -15,7 +15,7 @@ export default function PageError({ error, reset }: { error: Error & { digest?: 
   return <main className="wrap eng-page problem-page">
     <p className="problem-kicker">SOMETHING WENT WRONG</p>
     <h1>RELAY could not show this page.</h1>
-    <p>Anything you have saved is safe, and a report or inspection you were writing is kept on this device. Trying again usually works.</p>
+    <p>Anything already saved is safe. A report or inspection you were writing is normally kept on this device as you type: open it again to check. Trying again usually works.</p>
     <div className="problem-actions">
       <button type="button" className="problem-go" disabled={busy} onClick={() => start(() => { router.refresh(); reset(); })}>Try again</button>
       <Link href="/">Go to your home page</Link>

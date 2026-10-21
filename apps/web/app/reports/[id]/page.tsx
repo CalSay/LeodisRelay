@@ -80,7 +80,7 @@ const CHANNEL = 'relay-drafts';
 const RETRY_MS = 15_000;
 /** A save taking longer than this says so, and says where the work is meanwhile. */
 const SLOW_MS = 8_000;
-const NO_CONNECTION = 'No connection, so this report could not be opened, and this phone holds no copy of it. Open it again when there is signal.';
+const NO_CONNECTION = 'RELAY could not be reached, so this report could not be opened. Work kept on this phone is safe and listed on the page below. Open it again when there is signal.';
 
 /** The card a photograph is on, by its place or its check, to find it by. */
 function cardName(report: Report, photoId: string): string | undefined {
@@ -298,7 +298,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           setOnServer({ cards: {} });
           setReport({...held.report,observations:held.observations,version:held.baseVersion ?? 0});
           setSaveState('phone');
-        } else if (!cancelled) setMissing(failed instanceof ApiError && !failed.offline ? failed.message : NO_CONNECTION);
+        } else if (!cancelled) setMissing(failed instanceof ApiError && !failed.offline ? failed.message : 'No connection, and this phone holds no copy of this report. Open it again when there is signal.');
         return;
       }
       if (cancelled) return;

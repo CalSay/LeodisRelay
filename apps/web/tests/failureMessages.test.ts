@@ -40,10 +40,10 @@ test('"No such issue." is the server talking to itself; a fuller reason is kept'
   assert.equal(failureMessage(404, 'No company or person by that name has issues on your projects.', 'x'), 'No company or person by that name has issues on your projects.');
 });
 
-test('signed out, the server at fault and the cross-site check pass; a refusal does not', () => {
+test('signed out and the server at fault pass; a refusal, the cross-site one included, does not', () => {
   assert.equal(passingFailure(401), true);
   assert.equal(passingFailure(503), true);
-  assert.equal(passingFailure(403, 'cross-site'), true);
+  assert.equal(passingFailure(403, 'cross-site'), false, 'refused the same way every time, so not retried by itself');
   assert.equal(passingFailure(403), false);
   assert.equal(passingFailure(422), false);
   assert.equal(passingFailure(undefined), false);
@@ -64,6 +64,12 @@ test('the report editor says where the work is for each kind of failed save', ()
   // Without a copy on the device it never says the work is kept.
   assert.match(saveProblem(new ApiError('x', false, 503), false, card).message, /would not keep a copy, so do not close this page/);
   assert.doesNotMatch(saveProblem(new ApiError('x', false, 503), false, card).message, /kept on this phone/);
+  // The cross-site refusal is not retried by itself and is not called the server's fault.
+  const crossSite = new ApiError(failureMessage(403, 'This change did not come from RELAY, so it was not made.', 'That did not go through.', undefined, 'cross-site'), false, 403, 'cross-site');
+  const refusedHere = saveProblem(crossSite, true, card);
+  assert.equal(refusedHere.state, 'error');
+  assert.match(refusedHere.message, /could not tell it came from its own page.*Reload the page.*kept on this phone/);
+  assert.equal(crossSite.refused, true);
   assert.match(sendProblem(new ApiError('x', false, 401), true, card), /signed out, so this has not been sent\. Your work is kept on this phone\. Sign in again, then send it\./);
   assert.match(sendProblem(new PhotoRefused('p1', ''), true, card), /was not accepted, so this has not been sent: the server would not take it/);
 });

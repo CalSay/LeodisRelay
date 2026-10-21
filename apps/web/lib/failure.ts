@@ -25,11 +25,15 @@ export function failureKind(status: number, code?: string): FailureKind {
   return 'refused';
 }
 
-/** A failure the server or the network will likely clear by itself: worth trying again without asking. */
+/**
+ * A failure the server or signing in will likely clear by itself: worth
+ * trying again without asking. The cross-site refusal is not one: the same
+ * request is refused every time, so it is said, and the page reloaded.
+ */
 export function passingFailure(status: number | undefined, code?: string): boolean {
   if (status === undefined) return false;
   const kind = failureKind(status, code);
-  return kind === 'server' || kind === 'signed-out' || kind === 'cross-site';
+  return kind === 'server' || kind === 'signed-out';
 }
 
 const join = (...parts: (string | undefined)[]) => parts.filter(Boolean).join(' ');

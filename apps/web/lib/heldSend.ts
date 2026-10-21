@@ -1,4 +1,5 @@
 import { ApiError, sendHeldSave, sendHeldSigned, startHeldReport } from './api';
+import { CROSS_SITE_CODE } from './failure';
 import { clientId } from './clientId';
 import { adoptStarted, listHeld, update, type HeldDraft } from './localDraft';
 import { heldSignature, planHeldSend, signedAsIs, startedTitle } from './offlineStart';
@@ -78,7 +79,7 @@ async function sendAll(principalId: string): Promise<HeldSendResult> {
     try { report = await startHeldReport(started.projectId, started.clientKey, started.visitDate, started.reportType, started.inspected); }
     catch (error) {
       if (error instanceof ApiError && error.offline) return result;
-      if (error instanceof ApiError && error.passing) { await noteWaiting(held, error, result, startedTitle(started)); return result; }
+      if (error instanceof ApiError && waits(error)) { await noteWaiting(held, error, result, startedTitle(started)); return result; }
       await noteProblem(held, error, result, startedTitle(started), true);
       continue;
     }
@@ -130,7 +131,7 @@ async function sendOne(held: HeldDraft, result: HeldSendResult, startedReports: 
     if (error instanceof ApiError && error.offline) return 'offline';
     // Signed out, or the server at fault: nothing is wrong with the work, so
     // it is kept exactly as it is (its signature too) and goes next time.
-    if (error instanceof ApiError && error.passing) { await noteWaiting(claimed, error, result, claimed.report?.reference ?? 'A report on this phone'); return 'offline'; }
+    if (error instanceof ApiError && waits(error)) { await noteWaiting(claimed, error, result, claimed.report?.reference ?? 'A report on this phone'); return 'offline'; }
     await noteProblem(claimed, error, result, claimed.report?.reference ?? 'A report on this phone', false);
     return;
   }
@@ -192,11 +193,12 @@ async function submitSigned(held: HeldDraft, version: number, result: HeldSendRe
   catch (error) {
     if (error instanceof ApiError && error.offline) return 'offline';
     const reason = error instanceof ApiError && error.signedOut ? 'You have been signed out, so it has not gone to the office yet.'
+      : error instanceof ApiError && error.code === CROSS_SITE_CODE ? 'RELAY could not tell it came from its own page, so it has not gone to the office yet. Reload RELAY.'
       : error instanceof ApiError && error.passing ? 'RELAY’s server is not answering, so it has not gone to the office yet.'
       : error instanceof Error ? error.message : 'The server would not send it.';
     // A fault on the server's side (a 5xx), or signed out: kept as it is,
     // signed and saved, and tried again next time. Named once. A refusal (4xx) is final.
-    if (!(error instanceof ApiError) || error.status === undefined || error.passing) {
+    if (!(error instanceof ApiError) || error.status === undefined || waits(error)) {
       const kept = await update(held.key, h => h.signed?.savedVersion === version ? { ...h, problem: reason } : undefined).catch(() => null);
       if (kept && held.problem !== reason) result.problems.push({ reportId: held.reportId, title: held.report?.reference ?? 'A signed inspection', reason: `${reason} It is signed and saved, and RELAY tries again next time it opens.`, headline: 'not sent to the office yet.' });
       return;
@@ -218,13 +220,22 @@ async function submitSigned(held: HeldDraft, version: number, result: HeldSendRe
 }
 
 /**
- * Signed out, or RELAY's server not answering: the held copy stays exactly as
+ * Nothing wrong with the work itself: signed out, the server at fault, or the
+ * cross-site check (a proxy or browser not saying where the request came
+ * from). Kept as it is, signature and all, rather than handed to the editor.
+ */
+const waits = (error: ApiError) => error.passing || error.code === CROSS_SITE_CODE;
+
+/**
+ * Signed out, RELAY's server not answering, or the cross-site check: the held copy stays exactly as
  * it is, signature and all, and goes by itself next time. Named once.
  */
 async function noteWaiting(held: HeldDraft, error: ApiError, result: HeldSendResult, title: string): Promise<void> {
   const reason = error.signedOut
     ? 'You have been signed out, so it has not gone yet. It is kept on this phone as it is, and goes by itself once you sign in again.'
-    : 'RELAY’s server is not answering, so it has not gone yet. It is kept on this phone as it is, and goes by itself when the server answers.';
+    : error.code === CROSS_SITE_CODE
+      ? 'RELAY could not tell it came from its own page, so it has not gone yet. It is kept on this phone as it is. Reload RELAY and it tries again.'
+      : 'RELAY’s server is not answering, so it has not gone yet. It is kept on this phone as it is, and goes by itself when the server answers.';
   if (held.problem === reason) return;
   await update(held.key, h => ({ ...h, problem: reason })).catch(() => null);
   result.problems.push({ ...(held.started ? {} : { reportId: held.reportId }), title, reason, headline: 'not sent yet.' });

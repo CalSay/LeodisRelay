@@ -12,7 +12,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
       <main className="wrap eng-page problem-page">
         <p className="problem-kicker">RELAY · SOMETHING WENT WRONG</p>
         <h1>RELAY could not open this page.</h1>
-        <p>Anything you have saved is safe, and a report or inspection you were writing is kept on this device.</p>
+        <p>Anything already saved is safe. A report or inspection you were writing is normally kept on this device as you type: open it again to check.</p>
         <div className="problem-actions">
           <button type="button" className="problem-go" onClick={() => reset()}>Try again</button>
           <a href="/">Go to your home page</a>

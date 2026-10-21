@@ -1,7 +1,7 @@
 import type { Photo } from './types';
 import { clientId } from './clientId';
 import { MEDIA_LIMIT, mediaId, mediaUrl } from './media';
-import { failure, passingFailure } from './failure';
+import { failure } from './failure';
 
 /**
  * The server would not take a photograph (not one it can read, say). Every
@@ -119,7 +119,9 @@ export async function uploadPhotos(photos: readonly Photo[], scope: { reportId: 
         });
         if (!response.ok) {
           const body = await response.json().catch(() => ({}));
-          if (passingFailure(response.status, body.code)) throw failure(response.status, body, 'A photograph could not be sent.');
+          // Only a refusal of the photograph itself (unreadable, too big) asks for it to be taken again;
+          // anything else (signed out, the report sent elsewhere) is not the photograph's fault.
+          if (response.status !== 422 && response.status !== 413) throw failure(response.status, body, 'A photograph could not be sent.');
           throw new PhotoRefused(id, typeof body.reason === 'string' ? body.reason : '');
         }
         // Keep local evidence for offline viewing. A small acknowledgement avoids retransmission.

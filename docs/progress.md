@@ -67,6 +67,18 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the page-not-found and signed-in pages. Every `scripts/verify-*.mjs` was
   run against this branch's production build (results in the PR).
   Before and after screenshots: project files `ui-review/errors/`.
+- Fresh-context review found 4 things, all fixed: a report that could not
+  be opened claimed the phone held no copy without checking; the cross-site
+  refusal was called a server fault and retried for ever (it is now said in
+  its own words, not retried, and held work waits for a reload); a photo
+  upload refused for another reason (report sent elsewhere) asked for a good
+  photograph to be deleted (only a refusal of the photograph itself does);
+  the error pages promised work was kept, which is not certain (they now say
+  open it again to check).
+- Browser checks: all 61 `scripts/verify-*.mjs` passed against the first
+  build, `verify-pdf-navigation` included; the 12 touched by the review fixes
+  (error messages, offline ×5, photo uploads, report editor, sent elsewhere,
+  issue link, accessibility, PDF) passed again on the final build.
 - Not verified: a real phone, a live tenant or SharePoint, the live server
   behind Caddy (its own 502 page is simulated in the check), a real screen
   reader.

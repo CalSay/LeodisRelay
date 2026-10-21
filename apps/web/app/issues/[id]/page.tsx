@@ -8,7 +8,7 @@ import Link from "next/link";
 import { projectSuggestions, readPhoto } from "@/lib/api";
 import type { Issue, Photo } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
-import { uploadPhotos } from '@/lib/localMedia';
+import { PhotoRefused, uploadPhotos } from '@/lib/localMedia';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { backLabel, safeViewReturn } from '@/lib/viewNavigation';
@@ -110,7 +110,8 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
       setPhotos([]);
     } catch (e) {
       // A photograph the server would not take says so; anything else here is the connection.
-      setError(e instanceof Error && !(e instanceof TypeError) ? e.message : "No connection, so nothing was recorded. Your note is still here: try again when there is signal.");
+      setError(e instanceof PhotoRefused ? `A photograph was not accepted: ${e.reason ? e.reason[0]!.toLowerCase() + e.reason.slice(1) : 'the server would not take it.'} Remove it and add it again. Your note is still here.`
+        : e instanceof Error && !(e instanceof TypeError) ? e.message : "No connection, so nothing was recorded. Your note is still here: try again when there is signal.");
     } finally {
       setBusy(false);
     }
