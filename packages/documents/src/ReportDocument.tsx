@@ -518,7 +518,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
         </View>
 
         {actions.length === 0 ? (
-          <Text style={s.narrative}>{inspection ? "No actions arise from this inspection." : "No actions or decisions arise from this visit."}</Text>
+          <Text style={s.narrative}>{report.observations.length === 0 ? "Nothing recorded yet. Cards added to the report show here." : inspection ? "No actions arise from this inspection." : "No actions or decisions arise from this visit."}</Text>
         ) : (
           <View>
             <View style={s.thead}>
@@ -590,7 +590,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
           </>
         ) : null}
 
-        {!inspection || detailed.length > 0 ? (
+        {detailed.length > 0 ? (
           <View style={s.h2Row} minPresenceAhead={90}>
             <Text style={s.h2}>{inspection ? "NOTES AND PHOTOGRAPHS" : "UPDATES"}</Text>
             <View style={s.h2Rule} />

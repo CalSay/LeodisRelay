@@ -26,7 +26,7 @@ import { fmtMoney, variationValue } from '@/lib/variations';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { withViewReturn } from '@/lib/viewNavigation';
 import { CHECKLIST_TYPES, INSPECTED_MAX, inspectedName, reportTypeOf, type ReportTypeDef, type ReportTypeId } from '@/lib/reportTypes';
-import { useWhatsNewCount } from './useWhatsNew';
+import { useWhatsNew } from './useWhatsNew';
 import { dateShort, dayShort, whenShort } from '@/lib/dates';
 
 /**
@@ -143,7 +143,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
     });
     return () => {cancelled=true;};
   },[principal,drafts]);
-  const newToYou = useWhatsNewCount('site');
+  const { count: newToYou, newcomer } = useWhatsNew('site');
   const unfinished = unfinishedReports(drafts, held.copies, projects, held.deviceOnly);
 
   useEffect(() => {
@@ -267,7 +267,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
             <div className="eng-section-title"><h2 id="eng-you-title">Your week and help</h2></div>
             <div className="eng-list">
               <Link className="eng-row" href={`/my-week?${new URLSearchParams({ returnTo: engineerReturn() })}`}><div className="main"><b>My week</b><span>Your days on every project, ready for a timesheet</span></div><span className="chev">›</span></Link>
-              <Link className="eng-row" href={`/help?${new URLSearchParams({ for: 'site', returnTo: engineerReturn() })}`}><div className="main"><b>How RELAY works and what’s new</b><span>What to tap, and what happens after you send</span>{newToYou > 0 && <div className="stat"><span className="tag tag-draft">{newToYou} new to you</span></div>}</div><span className="chev">›</span></Link>
+              <Link className="eng-row" href={`/help?${new URLSearchParams({ for: 'site', returnTo: engineerReturn() })}`}><div className="main"><b>How RELAY works and what’s new</b><span>What to tap, and what happens after you send</span>{newcomer ? <div className="stat"><span className="tag tag-draft">Start here</span></div> : newToYou > 0 && <div className="stat"><span className="tag tag-draft">{newToYou} new to you</span></div>}</div><span className="chev">›</span></Link>
             </div>
           </section>
         </div></div>
