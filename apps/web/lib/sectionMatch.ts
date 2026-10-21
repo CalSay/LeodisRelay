@@ -12,11 +12,21 @@ export interface ReportSections { id: string; corrects?: string; observations: {
 
 const same = (a: string | undefined, b: string | undefined) => (a ?? '').trim().replace(/\s+/g, ' ') === (b ?? '').trim().replace(/\s+/g, ' ');
 
-export function sectionOf(record: RaisedRecord, report: ReportSections): string | undefined {
-  // Section ids are unique and a correction keeps them, so a stored id still on this report decides it, however many revisions on.
-  if (record.raisedByObservation && report.observations.some(o => o.id === record.raisedByObservation)) return record.raisedByObservation;
-  if (!record.raisedByReport || (record.raisedByReport !== report.id && record.raisedByReport !== report.corrects)) return undefined;
+/**
+ * `earlier` lists the revisions before the one this report corrects, so a
+ * record raised on revision 1 still matches revision 3. Checklist section ids
+ * repeat across inspections, so the report chain is always checked.
+ */
+export function sectionOf(record: RaisedRecord, report: ReportSections, earlier: readonly string[] = []): string | undefined {
+  if (!record.raisedByReport || (record.raisedByReport !== report.id && record.raisedByReport !== report.corrects && !earlier.includes(record.raisedByReport))) return undefined;
   if (record.raisedByObservation) return record.raisedByObservation;
   const matches = report.observations.filter(o => same(o.whatHappened, record.description) && same(o.location, record.location));
   return matches.length === 1 ? matches[0]!.id : undefined;
+}
+
+/** The ids of every revision a report corrects, nearest first, from a lookup of `corrects` links. */
+export function revisionsBefore(report: Pick<ReportSections, 'corrects'>, correctsOf: (id: string) => string | undefined): string[] {
+  const ids: string[] = [];
+  for (let at = report.corrects; at && !ids.includes(at); at = correctsOf(at)) ids.push(at);
+  return ids;
 }

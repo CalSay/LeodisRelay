@@ -42,6 +42,24 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   contract, add a variation, axe, 390px light and 1440px dark).
 - Not verified: no live tenant, no real phone; the live data's existing
   corrections and names were not opened in this build.
+
+## 2026-10-21 — Report's actions readable on an office phone
+
+- Found by the eighth release check (walkthrough on main 0e56592): on a
+  390px phone, the office report reader's "Actions and decisions" rows put
+  the words, the reference and the tag side by side, so a variation's words
+  ran one or two to a line ("Variation / to / instruct / · Plant / room").
+  Not a `docs/tasks.json` task; no status changed.
+- Changed (`app/workspace.css`, phone widths only): those rows wrap, so the
+  words take the full width and the reference and tag sit underneath, as
+  Needs attention already does. Desktop unchanged. A layout fix, not a new
+  feature, so no Help "What's new" line.
+- Checks: `npm run typecheck`, `npm test`, `npm run build`; a phone report
+  with a photo, a defect and a variation, read in the office at 390px light
+  and 1440px dark (26 checks, screenshots before and after); verify-office-phone,
+  verify-office-desk, verify-seen-by-office, verify-office-progress.
+- Not verified: a real phone.
+
 ## 2026-10-21 — Came back from the office, straight to the update
 
 - Why: the second idea in PR #92. Cal (2026-10-21 07:02) wants RELAY easy
@@ -82,6 +100,37 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   weak assertion (tightened). Screenshots before and after: project files
   `ui-review/came-back-to-update/`.
 - Not verified: no real phone, no real engineer, no live tenant.
+
+## 2026-10-21 — A shorter card in the site update
+
+- Why: Cal (2026-10-21 07:02) wants RELAY simple for engineers. Every open
+  card in a site update began with four big Kind buttons (Progress, Defect,
+  Variation, Access), though the kind was already chosen by "Start today's
+  site update" or "+ Defect" and the like, and the card's heading says it.
+  Picked over FE-1 (Undo, another card at the same place and recent places
+  are already built) and the small wording ideas left in #90 to #96. Not a
+  `docs/tasks.json` task; no status changed.
+- Changed (`components/ObservationEditor.tsx`, `app/reports/[id]/page.tsx`,
+  `app/engineer.css`): the Kind buttons come out only after "Change kind",
+  which sits with "Remove card" at the foot of the card on a phone and beside
+  "Remove" in the card's heading on a wide screen. Picking a kind folds them
+  away again and puts focus back on "Change kind". "+ Defect" (or any kind)
+  while the last card is still blank turns that card into the kind asked for
+  instead of adding a second card under an empty one, so starting the day
+  with a defect is still one tap. Help: "What's new" line "A shorter card",
+  and the site-update step no longer says to tap Defect at the top of a card.
+- Measured (new `scripts/verify-lighter-card.mjs`, 390px): from the top of a
+  new progress card to "Take a photo", 732px on main 3cde9ab, 572px now; the
+  open card is 712px tall instead of 872px.
+- Checks: `npm run typecheck`, `npm test`, `npm run build`, browser checks
+  listed in the PR. verify-fewest-taps, verify-engineer-layout and
+  verify-day-walkthrough changed where they used the Kind buttons.
+- Review: a fresh-context review found one broken check line (fixed) and
+  that a photograph still being read could put a just-retyped card back to
+  progress, because the photo and the card's change used the card and report
+  as they were when the photo started. Both now write onto the latest card
+  and report. The wide card's "Remove" is now 48px tall too.
+- Not verified: no real phone, no real engineer, no live server or tenant.
 
 ## 2026-10-21 — No-signal check brought up to date
 

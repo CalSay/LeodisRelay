@@ -14,7 +14,7 @@ import { officeActions, sinceWords } from '@/lib/officeActions';
 import { withViewReturn } from '@/lib/viewNavigation';
 import { confirmationNote } from '@/lib/issueConfirmation';
 import type { Correction, CorrectionAction, Issue, Observation, Report, ReportSummary, Variation } from '@/lib/types';
-import { sectionOf } from '@/lib/sectionMatch';
+import { revisionsBefore, sectionOf } from '@/lib/sectionMatch';
 import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, signedCopyLink, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
@@ -446,7 +446,8 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
   const summary = ctx.snap?.reports.find(r => r.id === report.id);
   const superseded = ctx.snap?.reports.find(r => r.corrects === report.id);
   const raised = ctx.snap?.issues.filter(i => i.raisedByReport === report.id) ?? [];
-  const variationOf = (observationId: string) => ctx.snap?.variations.find(v => sectionOf(v, report) === observationId);
+  const earlier = revisionsBefore(report, rid => ctx.snap?.reports.find(r => r.id === rid)?.corrects);
+  const variationOf = (observationId: string) => ctx.snap?.variations.find(v => sectionOf(v, report, earlier) === observationId);
   const decisions = report.observations.filter(o => o.type === 'instruction' || o.actionNeeded.trim());
   const canReview = report.review === 'pending' && report.authorId !== ctx.me.id;
   const corrections = correcting && fixes?.reportId === report.id ? fixes.list : [];

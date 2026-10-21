@@ -1,4 +1,4 @@
-import { sectionOf, type RaisedRecord } from './sectionMatch';
+import { revisionsBefore, sectionOf, type RaisedRecord } from './sectionMatch';
 import { randomUUID } from 'node:crypto';
 import type { Correction, CorrectionAction, Issue, Report, Variation } from './types';
 import { atomic, database, putRecord } from './storage';
@@ -81,9 +81,9 @@ function visitDay(report: Report): string {
   return m && month ? `${Number(m[3])} ${month} ${m[1]}` : report.visitDate || 'date not recorded';
 }
 
-/** The record must have come from this report (or the report it corrects) and this section of it. */
+/** The record must have come from this report (or a revision it corrects) and this section of it. */
 function raisedHere(record: RaisedRecord & { projectId: string }, report: Report, observationId: string): boolean {
-  return record.projectId === report.projectId && sectionOf(record, report) === observationId;
+  return record.projectId === report.projectId && sectionOf(record, report, revisionsBefore(report, id => getReport(id)?.corrects)) === observationId;
 }
 
 function done<T>(outcome: IssueOutcome | VariationOutcome): T {
