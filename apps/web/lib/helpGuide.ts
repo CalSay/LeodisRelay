@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'site-notes-offline', added: '2026-10-21', audience: 'site', title: 'Read notes for the next visit with no signal',
+    text: 'Notes for the next visit on your projects are now kept on your phone each time you open RELAY with signal, so you can read them in a basement or riser with none. The no-signal page shows them under each project, with when they were last updated. With no signal you can read them but not leave one or mark one done with; do that once you have signal again. Signing out takes them off the phone.' },
   { id: 'same-words', added: '2026-10-21', audience: 'all', title: 'The same words on every page',
     text: 'Pages built at different times now use the same words. An issue put forward as fixed reads "Fixed, to check" everywhere, where it was also "Ready for verification", "Awaiting verification" or "Verify". Dates read one way, such as "Wed 21 Oct", with a time where it matters. Project lists name each project by its number and name, issue and project pages have the same header as the rest of RELAY, and every Back link says where it goes.' },
   { id: 'tidier-pdfs', added: '2026-10-21', audience: 'all', title: 'Tidier report and inspection PDFs',
@@ -280,11 +282,13 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'RELAY still opens. You can start a site update or an inspection, add cards or answer checks, and take photographs; they are marked "Only on this phone".',
       'An inspection can be signed on the phone, drawn or by typing your name, once every check is answered. Signing locks it and marks it "Signed · not sent yet". To change anything before RELAY starts sending it, take your signature back and sign again.',
       'When you have signal again, open RELAY and the work goes up by itself. A signed inspection goes to the office, and RELAY says when it has gone; if it changed after you signed, it stays a draft for you to sign again. Everything else stays a draft until you sign and send.',
-      'If you share a phone, sign out at the end of the day. Work held on the phone belongs to whoever was last signed in.',
+      'Notes for the next visit on your projects show on the no-signal page too, as they were the last time RELAY opened with signal, and say when that was. You can read them there but not leave or mark one until you have signal.',
+      'If you share a phone, sign out at the end of the day. Work held on the phone belongs to whoever was last signed in, and signing out takes your notes off it.',
     ] },
     { id: 'next-visit', heading: 'Passing word on', ordered: false, steps: [
       'Under "This project" on your home screen, "Notes for the next visit" shows what the last person left for you: a key, a locked area, what is coming up. Read it before you start.',
       'Leave a note there for whoever comes next. When a note no longer applies, tap "Done with"; it is kept for two weeks in case it is needed back.',
+      'Your phone keeps a copy of the open notes each time RELAY opens with signal, so you can still read them in a basement or riser with none. Leaving a note or marking one done with needs signal.',
       'A note is not part of a report and goes to nobody. Anything the client or project manager needs to know still goes in a site update.',
     ] },
     { id: 'wrong', heading: 'Got something wrong', ordered: false, steps: [

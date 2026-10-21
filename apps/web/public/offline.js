@@ -10,6 +10,10 @@
  * `heldOffline`, and a report started here carries `started`; the app sends
  * both by itself the next time it opens with signal (lib/heldSend.ts).
  *
+ * Notes for the next visit on the engineer's projects are shown read only, as
+ * the app last kept them on this phone (lib/offlineNotes.ts), with when each
+ * project's copy was taken.
+ *
  * An inspection can be signed here once every check is answered. Signing
  * locks it on this phone and records what was signed (`signedContent`); the
  * app then sends it to the office by itself, but only if it is still exactly
@@ -567,6 +571,50 @@
       try { await put(record); $('start-inspected').value = ''; await show(record); status.textContent = type ? 'Started on this phone. Answer the first check.' : 'Started on this phone. Add your first card.'; } catch (e) { fail(e); }
     };
   }
+  // Notes for the next visit as the app last kept them (lib/offlineNotes.ts offlineNotesKey). Read only.
+  function notes() {
+    let copy = null;
+    try { copy = JSON.parse(localStorage.getItem(`relay-offline-notes:${principal}`) || 'null'); } catch {}
+    const valid = n => n && typeof n.text === 'string' && typeof n.by === 'string' && typeof n.at === 'string';
+    const projects = Array.isArray(copy?.projects) ? copy.projects.filter(p => p && typeof p.projectName === 'string' && typeof p.savedAt === 'string' && Array.isArray(p.open) && p.open.every(valid)) : [];
+    if (!projects.length) return;
+    const box = $('notes-list');
+    const withNotes = projects.filter(p => p.open.length);
+    // Opened at /site-notes: that project's notes; otherwise the project last worked on.
+    const asked = location.pathname === '/site-notes' ? new URLSearchParams(location.search).get('project') : null;
+    let current = null; try { current = localStorage.getItem(`relay-project:${principal}`); } catch {}
+    // "Wed 21 Oct, 14:05" in UK time, written out from parts as lib/dates.ts whenShort does (the browser's en-GB says "Wed, 21 Sept").
+    const stamp = iso => {
+      try {
+        const p = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(iso)).map(x => [x.type, x.value]));
+        const weekday = new Date(Date.UTC(+p.year, +p.month - 1, +p.day)).getUTCDay();
+        const year = +p.year !== new Date().getFullYear() ? ` ${p.year}` : '';
+        return `${['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][weekday]} ${+p.day} ${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+p.month - 1]}${year}, ${p.hour}:${p.minute}`;
+      } catch { return ''; }
+    };
+    const ages = iso => { const days = Math.floor((Date.now() - Date.parse(iso)) / 86400000); return days < 1 ? '' : days === 1 ? ' (a day ago)' : ` (${days} days ago)`; };
+    for (const p of withNotes) {
+      const item = element('details', '', box, 'nproj');
+      item.open = withNotes.length === 1 || p.projectId === (asked || current);
+      const summary = element('summary', p.projectName, item);
+      element('span', `${p.projectNumber ? `${p.projectNumber} · ` : ''}${plural(p.open.length, 'note')}`, summary, 's');
+      // A copy over a week old is likely missing notes, so it says so plainly.
+      const old = Date.now() - Date.parse(p.savedAt) > 7 * 86400000;
+      element('p', `Last updated ${stamp(p.savedAt)}${ages(p.savedAt)}.${old ? ' This may be out of date.' : ''}`, item, `nsaved${old ? ' old' : ''}`);
+      const list = element('ul', '', item, 'nlist');
+      for (const n of p.open) {
+        const li = element('li', '', list);
+        element('p', n.text, li);
+        element('p', `${n.by}${n.byTrade ? ` · ${n.byTrade}` : ''} · ${stamp(n.at)}`, li, 'meta');
+      }
+    }
+    if (!withNotes.length) {
+      const latest = projects.map(p => p.savedAt).sort().pop();
+      element('p', `No open notes on your projects. Last updated ${stamp(latest)}${ages(latest)}.`, box, 'empty');
+    }
+    $('notes').hidden = false;
+    if (asked) $('notes').scrollIntoView({ block: 'start' });
+  }
   // Is the server there? `navigator.onLine` says only that a network exists.
   async function probe() {
     let up = false;
@@ -581,6 +629,7 @@
   window.addEventListener('beforeunload', event => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
   if (!principal) { status.textContent = 'Sign in to RELAY once with signal and this phone can keep your work when there is none. Nobody is signed in on this phone.'; return; }
   if (person?.name && person.id === principal) status.textContent = `Signed in on this phone as ${person.name}.`;
+  notes();
   startForm();
   list().then(drafts => {
     if (!drafts.length && $('start').hidden) status.textContent = 'Nothing is waiting on this phone. Open RELAY with signal once to start reports from here.';

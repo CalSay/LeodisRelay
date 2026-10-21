@@ -4,6 +4,53 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Notes for the next visit with no signal
+
+- Why: notes for the next visit (#58) are most needed in a basement, riser or
+  plant room, where there is often no signal, and #58 could not show them
+  offline. Asked for by the coordinator under Cal's standing ask; the choices
+  below are Claude's. Not a `docs/tasks.json` task, so no status changed.
+- What: the engineer home now leaves the open notes on every project the
+  engineer reports on on the phone (`lib/offlineNotes.ts`, key
+  `relay-offline-notes:<person>`, from new `GET /api/site-notes/mine`), next
+  to the person and projects the offline page already used (#41). The notes
+  page refreshes its project's copy whenever it reads or changes notes. The
+  copy holds each note's words, who left it, their trade and when; no ids of
+  people and nothing done with. Signing out removes it.
+- The no-signal page (`public/offline.js`) shows "Notes for the next visit"
+  above "Start a report": one fold per project with notes, the project being
+  worked on (or the one in a `/site-notes?project=` address) open, newest
+  first, each with who and when, and "Last updated Wed 21 Oct, 14:05" per
+  project; a copy over a week old adds "This may be out of date." Opening
+  `/site-notes` with no signal lands on it. Service worker cache bumped to
+  `relay-public-v13` with the digest in `tests/serviceWorker.test.ts`.
+- Decision: read only with no signal. Notes are short and mostly read on
+  arrival; leaving or folding one offline would need a queue that replays
+  against the 20-note limit and against someone else having folded or put
+  back the same note in the meantime, and a note written underground can wait
+  for the walk back up. The page says plainly that leaving a note or marking
+  one done with needs signal. Revisit if engineers ask for it.
+- Notes are still never sent anywhere and never on a report or PDF; the copy
+  stays on the phone and the offline page makes no requests about notes (a
+  unit test checks it has no `/api/site-notes` call).
+- Also: the notes page now writes dates with `whenShort` from #61 ("Wed 21
+  Oct, 14:05") instead of the browser's own pattern.
+- Help: a What's new entry, and a line each under "No signal" and "Passing
+  word on".
+- Verified (Node 22 here; CI runs Node 24): `npm run typecheck`, `npm test`
+  (new `tests/offlineNotes.test.ts`), `npm run build`, new
+  `scripts/verify-site-notes-offline.mjs` (36 checks at 390px light and
+  1440px dark: copy kept with signal, open notes only, no person ids, same
+  projects as the offline page, notes page turns into the no-signal page
+  when signal goes, cold start shows notes newest first with who and when,
+  read only, last updated time, old copy warning, axe clean, sign-out
+  removes it), and the existing `verify-offline-capture`,
+  `verify-offline-inspection`, `verify-offline-sign`, `verify-site-notes`,
+  `verify-help`, `verify-role-access`, `verify-engineer-layout`.
+- Not verified: a physical phone in a real no-signal spot (stopping the
+  server stands in for it); a phone that has not opened the engineer home
+  since this change has no copy until it does.
+
 ## 2026-10-21 — The same words on every page
 
 - Why: pages built separately over the day read like different products. A
