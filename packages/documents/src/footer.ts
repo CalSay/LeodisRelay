@@ -37,6 +37,21 @@ const WASH = rgb(0.965, 0.961, 0.945);
 export interface FooterText {
   /** Left-hand line: reference, revision and issue state. */
   left: string;
+  /**
+   * What the document is and which project, ahead of `left`: "Site Progress
+   * Report · Tetley Hall Block E". Every page then says what it belongs to,
+   * so a page printed or forwarded on its own is still identifiable.
+   * Shortened with an ellipsis if it would run into the page number.
+   */
+  title?: string;
+}
+
+/** `text` cut to fit `width` at `size`, ending in an ellipsis when cut. */
+function fitText(text: string, width: number, measure: (t: string) => number): string {
+  if (measure(text) <= width) return text;
+  let cut = text;
+  while (cut.length > 1 && measure(`${cut}…`) > width) cut = cut.slice(0, -1);
+  return `${cut.trimEnd()}…`;
 }
 
 export async function stampFooter(pdf: Uint8Array, text: FooterText): Promise<Uint8Array> {
@@ -52,6 +67,17 @@ export async function stampFooter(pdf: Uint8Array, text: FooterText): Promise<Ui
    */
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const medium = await doc.embedFont(StandardFonts.HelveticaBold);
+
+  // Standard Helvetica only has the WinAnsi characters; a project name with
+  // anything else (a Polish street name, an emoji) would stop the stamp, so
+  // those characters fall back to their plain letter or a question mark.
+  const supported = new Set(regular.getCharacterSet());
+  const encodable = (t: string): string =>
+    [...t.normalize("NFC")].map((ch) => {
+      if (supported.has(ch.codePointAt(0)!)) return ch;
+      const plain = ch.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      return plain && [...plain].every((c) => supported.has(c.codePointAt(0)!)) ? plain : "?";
+    }).join("");
 
   const pages = doc.getPages();
   const total = pages.length;
@@ -97,9 +123,13 @@ export async function stampFooter(pdf: Uint8Array, text: FooterText): Promise<Ui
       color: RULE,
     });
 
-    page.drawText(text.left, { x: MARGIN, y: 20, size: 7, font: regular, color: INK });
-
     const pageLabel = `Page ${index + 1} of ${total}`;
+    const measure = (t: string) => regular.widthOfTextAtSize(t, 7);
+    const separator = " · ";
+    const room = right - MARGIN - measure(pageLabel) - 18 - measure(text.left) - measure(separator);
+    const line = text.title && room > 40 ? `${fitText(encodable(text.title), room, measure)}${separator}${text.left}` : text.left;
+    page.drawText(line, { x: MARGIN, y: 20, size: 7, font: regular, color: INK });
+
     page.drawText(pageLabel, {
       x: right - regular.widthOfTextAtSize(pageLabel, 7),
       y: 20,

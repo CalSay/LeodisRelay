@@ -24,6 +24,7 @@ export async function renderReportPdf(report: DocReport): Promise<Uint8Array> {
   );
 
   return stampFooter(new Uint8Array(rendered), {
+    title: `${report.documentTitle ?? "Site Progress Report"} · ${report.projectName}`,
     left:
       `${report.reference} · Revision ${report.revision} · ` +
       (report.approved ? "Approved for issue" : report.submittedWithoutReview ? "Submitted — review not required" : "Draft — not issued"),

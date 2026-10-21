@@ -24,7 +24,8 @@ export async function documentModel(report: Report): Promise<DocReport> {
     reference: report.reference, projectName: project?.projectName ?? report.projectId,
     projectNumber: project?.projectNumber ?? '', clientName: project?.clientName ?? '',
     clientAccountNumber: project?.clientAccountNumber ?? '', visitDate: report.visitDate,
-    author: report.author, revision: report.revision, approved: report.review === 'approved',
+    author: report.author, revision: report.revision,
+    ...(report.corrects && report.correctionReason?.trim() ? { correction: { replacesRevision: report.revision - 1, reason: report.correctionReason.trim() } } : {}), approved: report.review === 'approved',
     submittedWithoutReview: report.state === 'submitted' && report.review === 'not_required',
     observations, ...(report.signature ? { signature: report.signature } : {}),
   };
