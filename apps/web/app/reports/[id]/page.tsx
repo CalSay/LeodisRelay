@@ -174,7 +174,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     const r = row.getBoundingClientRect(), b = rail.getBoundingClientRect();
     // To the middle, which leaves room for the row to grow as the check is answered.
     if (r.top < b.top || r.bottom > b.bottom) rail.scrollTop += r.top - b.top - (b.height - r.height) / 2;
-  }, [wide, selectedSection, step]);
+  }, [wide, selectedSection, step, report === null]);
   /** The card or photograph just removed, offered back with Undo. One at a time: a second removal replaces it. */
   const [removed,setRemoved] = useState<{ item: Removed; title: string; detail: string } | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);

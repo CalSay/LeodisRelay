@@ -405,12 +405,12 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
    last button clears the bottom bar, the bar lines up with the page, the check
    step puts signing beside what is being sent, and a long list of checks
    scrolls within its own column. */
-.eng-report-editor{padding-bottom:140px;}
 .eng-report-editor .actionbar-inner{max-width:1072px;}
 .eng-page h2.lbl{font-size:10px;margin:0;}
 .sigpad-label{display:block;margin:16px 0 6px;}
 .eng-card .two>.field+.field{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);}
 @media(min-width:601px){
+  .eng-report-editor{padding-bottom:140px;}
   .eng-report-editor .actionbar{padding-inline:24px;}
   .eng-report-editor .sigwrap{height:180px;}
 }
