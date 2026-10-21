@@ -257,8 +257,16 @@ try {
   {
     const {context,page}=await open(engineer,'light',390);
     await page.goto(`${base}/help?for=site`);
-    await page.getByRole('heading',{name:'Deliveries'}).first().waitFor();
-    check(true,'help: What\'s new lists Deliveries');
+    // Help shows the latest few entries and the rest under "Show all" (a first visit marks none as new),
+    // so open the full list, again if the first click came before the page was ready.
+    const whatsNew=page.locator('#help-new'),entry=whatsNew.getByRole('heading',{name:'Deliveries',exact:true}),more=whatsNew.getByRole('button',{name:/^Show all/});
+    let listed=false;
+    for(const until=Date.now()+8000;!listed&&Date.now()<until;){
+      if(await entry.count()){listed=true;break;}
+      if(await more.count())await more.click().catch(()=>{});
+      await page.waitForTimeout(200);
+    }
+    check(listed,'help: What\'s new lists Deliveries');
     await context.close();
   }
   console.log(`Deliveries check passed (${checks} checks): refused saves, engineer home row, recording from a recent supplier, a short delivery kept to sort, marking it sorted, reload, retries, withdrawing and who may, spreadsheet, office Needs attention and project sheet, no connection, empty and complete projects, axe, 390px light and 1440px dark.`);
