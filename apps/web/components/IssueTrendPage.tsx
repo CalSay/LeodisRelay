@@ -9,6 +9,7 @@ import { canManage } from '@/lib/auth/access';
 import { dayLabel } from '@/lib/myWeek';
 import type { IssueTrend, TrendWeek } from '@/lib/issueTrend';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
+import { failure } from '@/lib/failure';
 
 /**
  * Issues over time: whether a project's issue list is getting shorter, week
@@ -89,7 +90,7 @@ export function IssueTrendPage({ initialProject, returnTo }: { initialProject: s
     fetch(`/api/issue-trend?${new URLSearchParams({ projectId })}`, { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as IssueTrend & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `The figures could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'The figures could not be loaded.');
         if (!cancelled) setData(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'The figures could not be loaded.'); });

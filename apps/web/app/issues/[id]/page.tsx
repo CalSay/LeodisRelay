@@ -8,7 +8,7 @@ import Link from "next/link";
 import { projectSuggestions, readPhoto } from "@/lib/api";
 import type { Issue, Photo } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
-import { uploadPhotos } from '@/lib/localMedia';
+import { PhotoRefused, uploadPhotos } from '@/lib/localMedia';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { backLabel, safeViewReturn } from '@/lib/viewNavigation';
@@ -16,6 +16,7 @@ import { confirmationLabel } from '@/lib/issueConfirmation';
 import { eventProvenance } from '@/lib/issueProvenance';
 import { ISSUE_WORK } from '@/lib/status';
 import { dateShort } from '@/lib/dates';
+import { failure } from "@/lib/failure";
 
 /**
  * One issue, across every visit that touched it.
@@ -58,7 +59,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   const { id } = use(params);
   const returnTo = use(searchParams).returnTo;
   const [issue, setIssue] = useState<Issue | null>(null);
-  const [missing, setMissing] = useState(false);
+  const [missing, setMissing] = useState<string | null>(null);
   const [reviewOn, setReviewOn] = useState(false);
   const [note, setNote] = useState("");
   const [photos, setPhotos] = useState<Photo[]>([]);
@@ -74,9 +75,9 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
 
   useEffect(() => {
     fetch(`/api/issues/${id}`, { cache: "no-store" })
-      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then(async (r) => { const body = await r.json().catch(() => ({})); if (!r.ok) throw failure(r.status, body, "This issue could not be opened."); return body; })
       .then(({ reviewOn, ...found }: Issue & { reviewOn?: boolean }) => { setIssue(found); setReviewOn(!!reviewOn); })
-      .catch(() => setMissing(true));
+      .catch((e) => setMissing(e instanceof TypeError || !(e instanceof Error) ? "No connection, so this issue could not be opened. Try again when there is signal." : e.message));
   }, [id]);
 
   async function run(kind: string) {
@@ -98,17 +99,19 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ expectedEtag: issue.sync?.etag, kind, note: note.trim(), photos }),
       });
-      const body = await response.json();
+      const body = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(body.reason ?? "That could not be recorded.");
+        setError(failure(response.status, body, "That was not recorded.", "Your note is still here.").message);
         return;
       }
       setIssue(body);
       setAssigning(false);
       setNote("");
       setPhotos([]);
-    } catch {
-      setError("No connection. Nothing was recorded.");
+    } catch (e) {
+      // A photograph the server would not take says so; anything else here is the connection.
+      setError(e instanceof PhotoRefused ? `A photograph was not accepted: ${e.reason ? e.reason[0]!.toLowerCase() + e.reason.slice(1) : 'the server would not take it.'} Remove it and add it again. Your note is still here.`
+        : e instanceof Error && !(e instanceof TypeError) ? e.message : "No connection, so nothing was recorded. Your note is still here: try again when there is signal.");
     } finally {
       setBusy(false);
     }
@@ -143,13 +146,13 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
       });
       const body = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setAssignError(body.reason ?? "That could not be recorded.");
+        setAssignError(failure(response.status, body, "The issue was not assigned.", "What you typed is still here.").message);
         return;
       }
       setIssue(body);
       setAssigning(false);
     } catch {
-      setAssignError("No connection. Nothing was recorded.");
+      setAssignError("No connection, so the issue was not assigned. What you typed is still here: try again when there is signal.");
     } finally {
       setBusy(false);
     }
@@ -158,7 +161,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   if (missing) {
     return (
       <main className="wrap eng-page">
-        <div className="empty">That issue could not be found.</div>
+        <div className="empty" role="alert">{missing}</div>
       </main>
     );
   }

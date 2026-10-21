@@ -12,6 +12,7 @@ import type { InspectionDraft } from '@/lib/types';
 import { dayLabel } from '@/lib/myWeek';
 import { CLEARED_DAYS, INSPECTION_DUE_DAYS, TOWER_DUE_DAYS, type SafetyAction, type SafetyActions, type SafetyProject } from '@/lib/safetyActions';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
+import { failure } from '@/lib/failure';
 
 /**
  * Safety actions: what the weekly safety inspections and tower inspections
@@ -49,7 +50,7 @@ export function SafetyActionsPage({ initialProject, returnTo }: { initialProject
     fetch('/api/safety-actions', { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as SafetyActions & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `Safety actions could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'Safety actions could not be loaded.');
         if (!cancelled) setData(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'Safety actions could not be loaded.'); });

@@ -11,6 +11,8 @@ import { ATTENDEES_MAX, NOTES_MAX, RECENT_DAYS, TOPIC_MAX, NAME_MAX, BACKDATE_DA
 import { safeViewReturn, backLabel } from '@/lib/viewNavigation';
 import { dayShort, whenShort } from '@/lib/dates';
 import { londonDay } from '@/lib/weeklySummary';
+import { failure } from '@/lib/failure';
+import { DownloadLink } from '@/components/DownloadLink';
 
 /**
  * Toolbox talks: the safety briefings given on a project and who attended,
@@ -66,7 +68,7 @@ export function ToolboxTalksPage({ initialProject, returnTo }: { initialProject:
     fetch(`/api/toolbox-talks?${new URLSearchParams({ project: projectId })}`, { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as Loaded & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `The toolbox talks could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'The toolbox talks could not be loaded.');
         if (!cancelled) setData(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'The toolbox talks could not be loaded.'); });
@@ -114,7 +116,7 @@ export function ToolboxTalksPage({ initialProject, returnTo }: { initialProject:
         setRequestId(clientId());
         throw new Error('An earlier try was saved with different details. Save again to keep these as a new talk, or reload to see it.');
       }
-      if (!response.ok) throw new Error(body.reason ?? `The talk could not be saved (${response.status}).`);
+      if (!response.ok) throw failure(response.status, body, 'The talk could not be saved.', 'What you typed is still here.');
       replace(body);
       setSaid(`Toolbox talk recorded: ${body.topic}, ${people(body.attendees.length)} attending.`);
       closeForm();
@@ -130,7 +132,7 @@ export function ToolboxTalksPage({ initialProject, returnTo }: { initialProject:
     try {
       const response = await fetch(`/api/toolbox-talks/${encodeURIComponent(talk.id)}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ reason }) });
       const body = await response.json().catch(() => ({})) as ToolboxTalk & { reason?: string };
-      if (!response.ok) throw new Error(body.reason ?? `The talk could not be withdrawn (${response.status}).`);
+      if (!response.ok) throw failure(response.status, body, 'The talk could not be withdrawn.');
       replace(body);
       setWithdrawing(''); setReason('');
       setSaid('Toolbox talk withdrawn. It stays listed, marked withdrawn, and is left out of the counts.');
@@ -205,10 +207,10 @@ export function ToolboxTalksPage({ initialProject, returnTo }: { initialProject:
         </form>
           : <div className="tt-actions">
             <button type="button" ref={opener} className="btn-primary" onClick={() => { setFormOpen(true); setSaid(''); }}>Record a toolbox talk</button>
-            {data.talks.length > 0 && <a className="eng-link-button" href={`/api/toolbox-talks?${new URLSearchParams({ project: projectId, format: 'csv' })}`} download>Download spreadsheet</a>}
+            {data.talks.length > 0 && <DownloadLink className="eng-link-button" href={`/api/toolbox-talks?${new URLSearchParams({ project: projectId, format: 'csv' })}`} what="spreadsheet">Download spreadsheet</DownloadLink>}
           </div>)
           : <div className="eng-panel"><p>This project is not active or in defects liability, so it takes no new toolbox talks.</p>
-            {data.talks.length > 0 && <a className="eng-link-button" href={`/api/toolbox-talks?${new URLSearchParams({ project: projectId, format: 'csv' })}`} download>Download spreadsheet</a>}</div>}
+            {data.talks.length > 0 && <DownloadLink className="eng-link-button" href={`/api/toolbox-talks?${new URLSearchParams({ project: projectId, format: 'csv' })}`} what="spreadsheet">Download spreadsheet</DownloadLink>}</div>}
 
         <section aria-labelledby="tt-list-title" className="tt-section">
           <h2 id="tt-list-title">Talks given <span className="tt-count">{data.talks.filter(t => !t.withdrawn).length}</span></h2>

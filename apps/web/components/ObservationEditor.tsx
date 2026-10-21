@@ -5,6 +5,8 @@ import { PhotoImage } from './PhotoImage';
 import { WHERE, type Where } from '@/lib/uploadStatus';
 import { CameraIcon } from './CameraIcon';
 import { readPhoto, type Observation, type Photo } from "@/lib/api";
+import { notAdded, PhotoNotAdded } from '@/lib/localMedia';
+import { overLimit, TEXT_MAX } from '@/lib/textLimits';
 import type { Issue, RoughSize } from "@/lib/types";
 import { CARD_TYPES, OBSERVATION_TYPES, type ObservationType } from "@/lib/fixtures";
 import { VARIATION_REASONS } from "@/lib/variations";
@@ -214,6 +216,7 @@ export function ObservationEditor({
         </div>}
       </>}
 
+      <TooLong observation={observation} />
       {photos}
       {folded && <button type="button" className="btn-quiet btn-sm eng-remove-card" onClick={onRemove} aria-label={`Remove card ${index + 1}`}>Remove card {index + 1}</button>}
     </section>
@@ -251,6 +254,15 @@ function IssueLinkPicker({ labelledBy, issues, location, linkedId, onPick, none 
  * is and its caption. Shared by every kind of card, including an inspection's
  * checks, so a photograph behaves the same whatever it is evidence of.
  */
+/** Said on the card before the server refuses it: nothing is cut off, the engineer shortens it. */
+export function TooLong({ observation }: { observation: Observation }) {
+  const longest = overLimit(observation);
+  if (longest === null) return null;
+  return <p className="note note-bad eng-too-long" role="alert">
+    One box on this card is over {TEXT_MAX.toLocaleString('en-GB')} characters (it has {longest.toLocaleString('en-GB')}), so the card cannot be saved to the server. Shorten it; nothing has been cut off.
+  </p>;
+}
+
 export function PhotoField({ observation, note, photoWhere, onChange, onRemovePhoto }: {
   observation: Observation;
   /** Added to the label, such as " · at least one". */
@@ -265,15 +277,19 @@ export function PhotoField({ observation, note, photoWhere, onChange, onRemovePh
   async function addPhotos(files: FileList | null) {
     if (!files || files.length === 0) return;
     setPhotoError(null);
-    try {
-      const added: Photo[] = [];
-      for (const file of Array.from(files)) added.push(await readPhoto(file));
-      onChange({ ...observation, photos: [...observation.photos, ...added] });
-    } catch (error) {
-      setPhotoError(error instanceof Error ? error.message : "That photograph could not be added.");
-    } finally {
-      if (fileInput.current) fileInput.current.value = "";
+    // Each file on its own: one of the wrong type never costs the others chosen with it.
+    const added: Photo[] = [];
+    const refused: { name: string; why: string; advice: string }[] = [];
+    for (const file of Array.from(files)) {
+      try { added.push(await readPhoto(file)); }
+      catch (error) {
+        refused.push(error instanceof PhotoNotAdded ? { name: error.fileName, why: error.why, advice: error.advice }
+          : { name: file.name || 'A photograph', why: 'could not be added', advice: 'Try adding it again.' });
+      }
     }
+    if (added.length) onChange({ ...observation, photos: [...observation.photos, ...added] });
+    if (refused.length) setPhotoError(notAdded(added.length, refused));
+    if (fileInput.current) fileInput.current.value = "";
   }
 
   return <div className="field">

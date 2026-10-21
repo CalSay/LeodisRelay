@@ -22,6 +22,9 @@ export class SaveConflict extends Error {
   readonly current:Report;
   constructor(message:string,current:Report) { super(message); this.current = current; }
 }
+/** An error that is the server's definite "no" (marked `refused`), as opposed to no answer, or one that may change. */
+const refused = (error: unknown) => typeof error === 'object' && error !== null && (error as { refused?: unknown }).refused === true;
+
 /** Replay an uncertain request before sending later edits. Never change its payload. */
 export async function saveWithJournal(
   report:Report,expectedVersion:number,journal:SaveJournal,
@@ -37,9 +40,11 @@ export async function saveWithJournal(
     try { saved = await send(request); }
     catch (error) {
       // A conflict is a definite answer, not a lost receipt: replaying the same
-      // request would only be refused again. The edits themselves stay on screen
+      // request would only be refused again. So is any other refusal (a box too
+      // long, a photograph the server cannot read): replayed, it would hold back
+      // every later save, even once the engineer has put it right. The edits themselves stay on screen
       // and in the device's held copy until the person chooses what to keep.
-      if (error instanceof SaveConflict && journal.discard) {
+      if ((error instanceof SaveConflict || refused(error)) && journal.discard) {
         await journal.discard(request.requestId);
         // An older request left from before a reload was refused: the work on
         // screen supersedes it, so ask about that instead.

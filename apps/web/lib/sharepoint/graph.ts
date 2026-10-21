@@ -1,8 +1,20 @@
 import { OPERATIONS, sharePointMode } from './config';
 
+/**
+ * Microsoft's refusal, in words the office can act on. These reach the office
+ * desk and the Admin page, so they say what happened and who can fix it; the
+ * status stays in brackets at the end for whoever looks into it.
+ */
+export function graphFailureWords(status: number): string {
+  if (status === 412) return 'SharePoint changed this record. Refresh and reconcile before retrying.';
+  if (status === 401 || status === 403) return `SharePoint refused RELAY’s access. An Admin needs to check the SharePoint connection (Microsoft answered ${status}).`;
+  if (status === 404) return `SharePoint could not find the list or folder this goes to. An Admin needs to check the SharePoint set-up (Microsoft answered 404).`;
+  if (status === 429 || status >= 500) return `SharePoint was busy or not answering (Microsoft answered ${status}).`;
+  return `SharePoint did not accept this (Microsoft answered ${status}).`;
+}
 export class GraphError extends Error {
   constructor(readonly status: number, readonly retryAfterMs = 0) {
-    super(status === 412 ? 'SharePoint changed this record. Refresh and reconcile before retrying.' : `Microsoft Graph request failed (HTTP ${status}).`);
+    super(graphFailureWords(status));
   }
 }
 export function retryAfter(value: string | null, now = Date.now()): number {
