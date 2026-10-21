@@ -51,6 +51,8 @@ const EVENT_LABEL: Record<string, string> = {
   confirmation: "Confirmation",
   assigned: "Assigned",
 };
+// The engineer's history uses the words on the engineer's buttons.
+const ENGINEER_EVENT_LABEL: Record<string, string> = { ...EVENT_LABEL, closure_submitted: "Put forward as fixed", verified: "Checked and closed" };
 
 export default function IssuePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
   const getProject = useProjectLookup();
@@ -181,6 +183,151 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   // The server's rule: only open, assigned or in-progress work can be given an owner. A withdrawn issue is left alone too, as on the rest of this page.
   const canAssign = manager && !isWithdrawn && (issue.work === "open" || issue.work === "assigned" || issue.work === "in_progress");
   const assignLabel = issue.owner.trim() ? "Reassign" : "Assign";
+  const confirmation = issue.confirmation === "provisional" ? confirmationLabel("provisional", reviewOn) : CONFIRM_LABEL[issue.confirmation];
+  const reportedBy = issue.reportedBy ?? issue.events[0]?.actor ?? 'Not recorded';
+
+  async function addPhotos(files: FileList | null) {
+    if (!files) return;
+    const added: Photo[] = [];
+    for (const file of Array.from(files)) added.push(await readPhoto(file));
+    setPhotos((current) => [...current, ...added]);
+  }
+
+  const cameraButton = (
+    <label className="camera">
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        capture="environment"
+        multiple
+        onChange={async (e) => { await addPhotos(e.target.files); e.target.value = ""; }}
+      />
+      Add photograph
+    </label>
+  );
+  const newPhotos = photos.length > 0 && (
+    <div className="shots">
+      {photos.map((photo, i) => (
+        <figure key={photo.id} className="shot" style={{ margin: 0 }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <PhotoImage src={photo.dataUrl} alt={`New evidence ${i + 1}`} />
+        </figure>
+      ))}
+    </div>
+  );
+
+  const disputedNote = issue.confirmation === "disputed" && (
+    <div className="note note-bad" style={{ marginTop: 16 }}>
+      The report that raised this was returned for correction. Any work already done stands —
+      this needs a decision on whether the observation was right.
+    </div>
+  );
+
+  const history = (
+    <div className="reg">
+      {issue.events.map((event, i) => {
+        const from = eventProvenance(issue, event, i);
+        return (
+        <div key={i} className="row row-static" style={{ alignItems: "flex-start" }}>
+          <span className="row-code">{(manager ? EVENT_LABEL : ENGINEER_EVENT_LABEL)[event.kind] ?? event.kind}</span>
+          <span className="row-main">
+            {event.kind === "assigned" && event.to && <p className="row-title" style={{ fontSize: 14.5 }}>To {event.to}{event.targetDate ? `, by ${dateShort(event.targetDate)}` : ""}</p>}
+            {event.note && <p className="row-title" style={{ fontSize: 14.5, fontWeight: 400 }}>{event.note}</p>}
+            <p className="row-meta">{event.actor}</p>
+            {from && <p className="row-meta issue-event-source"><Link href={`/reports/${from.reportId}`}>{from.label}</Link></p>}
+            {event.photos.length > 0 && (
+              <div className="shots" style={{ marginTop: 10 }}>
+                {event.photos.map((photo, pi) => (
+                  <figure key={photo.id} className="shot" style={{ margin: 0 }}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <PhotoImage src={photo.dataUrl} alt={photo.caption || `Photograph ${pi + 1}`} />
+                    {photo.caption && (
+                      <div className="shot-body">
+                        <span className="shot-no">{photo.caption}</span>
+                      </div>
+                    )}
+                  </figure>
+                ))}
+              </div>
+            )}
+          </span>
+          <span className="row-end">
+            <span className="row-time">
+              {dateShort(event.at, "auto")}
+            </span>
+          </span>
+        </div>
+        );
+      })}
+    </div>
+  );
+
+  if (!manager) {
+    // The engineer's view: what is wrong, where, what needs doing and who is on
+    // it, then the photograph and the two buttons, all on the first screen of a
+    // phone. The history and the office's detail are folded, not removed.
+    const owner = issue.owner.trim();
+    return (
+      <main className="wrap eng-page issue-eng">
+        <PageTitle title={`${issue.reference} · Issue`} />
+        <Link href={back} className="back">&larr; {backLabel(back, 'Issues')}</Link>
+
+        <IssueSyncStatus issue={issue} />
+        <div className="issue-eng-head">
+          <span className="lbl">{issue.reference}</span>
+          <span className={isClosed ? "tag tag-sent" : issue.confirmation === "disputed" ? "tag tag-alert" : "tag tag-draft"}>{isWithdrawn ? "Withdrawn" : WORK_LABEL[issue.work]}</span>
+        </div>
+        <h1 className="issue-eng-title">{issue.description}</h1>
+        <dl className="issue-eng-facts">
+          <div><dt>Where</dt><dd>{issue.location || "Location not recorded"}</dd></div>
+          {issue.actionNeeded.trim() && <div><dt>What needs doing</dt><dd>{issue.actionNeeded.trim()}</dd></div>}
+          <div><dt>Who is fixing it</dt><dd>{owner ? `${owner}${issue.targetDate ? `, by ${dateShort(issue.targetDate)}` : ""}` : "Nobody yet. The office will say who."}</dd></div>
+        </dl>
+
+        {issue.confirmation === "disputed" && <p className="note note-bad" role="status">The office is checking whether this needs fixing. Open History for why.</p>}
+        {canClose && !isWithdrawn && <p className="note" role="status">Put forward as fixed. It is waiting for the office to check it.</p>}
+        {isClosed && !isWithdrawn && <p className="note" role="status">The office checked the work and closed this issue.</p>}
+
+        {!isWithdrawn && !isClosed && (
+          <section className="eng-panel issue-eng-update" aria-labelledby="issue-update-title">
+            <h2 id="issue-update-title">Update this issue</h2>
+            {cameraButton}
+            {newPhotos}
+            <div className="field">
+              <label htmlFor="note">What has happened · optional</label>
+              <textarea id="note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="What you did or found" />
+            </div>
+            {error && <div className="note note-bad" role="alert">{error}</div>}
+            <div className="btn-row">
+              {!canClose && (
+                <button className="btn-primary" onClick={() => run("submit_closure")} disabled={busy}>
+                  Put forward as fixed
+                </button>
+              )}
+              <button onClick={() => run("progress")} disabled={busy}>
+                Record an update
+              </button>
+            </div>
+          </section>
+        )}
+
+        <details className="eng-more-detail issue-more">
+          <summary>History · {issue.events.length}<small>Every update, and the detail the office keeps</small></summary>
+          <div>
+            <dl className="issue-eng-facts">
+              <div><dt>Project</dt><dd>{project?.projectName ?? issue.projectId}</dd></div>
+              <div><dt>Confirmation</dt><dd>{confirmation}</dd></div>
+              <div><dt>Raised</dt><dd>{dateShort(issue.raisedAt)} · {issue.source==='individual'?'Defect flagged on its own':'From a site update'}</dd></div>
+              <div><dt>Trade affected</dt><dd>{issue.affectedTrade ?? 'Not recorded'}</dd></div>
+              <div><dt>Reported by</dt><dd>{reportedBy} · {issue.reporterTrade ?? 'Reporting trade not recorded'}</dd></div>
+            </dl>
+            {disputedNote}
+            {history}
+          </div>
+        </details>
+      </main>
+    );
+  }
 
   return (
     <main className="wrap eng-page">
@@ -205,7 +352,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
       {/* Two axes, stated separately and never merged into one status. */}
       <dl className="titleblock" style={{ marginTop: 24 }}>
         <div className="tb-cell"><dt>Work status</dt><dd>{WORK_LABEL[issue.work]}</dd></div>
-        <div className="tb-cell"><dt>Confirmation</dt><dd>{issue.confirmation === "provisional" ? confirmationLabel("provisional", reviewOn) : CONFIRM_LABEL[issue.confirmation]}</dd></div>
+        <div className="tb-cell"><dt>Confirmation</dt><dd>{confirmation}</dd></div>
         <div className="tb-cell">
           <dt>Owner</dt>
           <dd>{issue.owner.trim() || "Not yet assigned"}</dd>
@@ -223,7 +370,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         <h2>{issue.source==='individual'?'Defect flagged on its own':'From a site update'}</h2>
         <p>{issue.description}</p>
         <p className="eng-help">{project?.projectName} · {issue.location || 'Location not recorded'}</p>
-        <p className="eng-help">Trade affected: {issue.affectedTrade ?? 'Not recorded'}<br/>Reported by {issue.reportedBy ?? issue.events[0]?.actor ?? 'Not recorded'} · {issue.reporterTrade ?? 'Reporting trade not recorded'}</p>
+        <p className="eng-help">Trade affected: {issue.affectedTrade ?? 'Not recorded'}<br/>Reported by {reportedBy} · {issue.reporterTrade ?? 'Reporting trade not recorded'}</p>
       </section>
 
       {canAssign && (
@@ -266,51 +413,11 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         </section>
       )}
 
-      {issue.confirmation === "disputed" && (
-        <div className="note note-bad" style={{ marginTop: 16 }}>
-          The report that raised this was returned for correction. Any work already done stands —
-          this needs a decision on whether the observation was right.
-        </div>
-      )}
+      {disputedNote}
 
       <div className="sec"><span className="lbl">History</span></div>
 
-      <div className="reg">
-        {issue.events.map((event, i) => {
-          const from = eventProvenance(issue, event, i);
-          return (
-          <div key={i} className="row row-static" style={{ alignItems: "flex-start" }}>
-            <span className="row-code">{EVENT_LABEL[event.kind] ?? event.kind}</span>
-            <span className="row-main">
-              {event.kind === "assigned" && event.to && <p className="row-title" style={{ fontSize: 14.5 }}>To {event.to}{event.targetDate ? `, by ${dateShort(event.targetDate)}` : ""}</p>}
-              {event.note && <p className="row-title" style={{ fontSize: 14.5, fontWeight: 400 }}>{event.note}</p>}
-              <p className="row-meta">{event.actor}</p>
-              {from && <p className="row-meta issue-event-source"><Link href={`/reports/${from.reportId}`}>{from.label}</Link></p>}
-              {event.photos.length > 0 && (
-                <div className="shots" style={{ marginTop: 10 }}>
-                  {event.photos.map((photo, pi) => (
-                    <figure key={photo.id} className="shot" style={{ margin: 0 }}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <PhotoImage src={photo.dataUrl} alt={photo.caption || `Photograph ${pi + 1}`} />
-                      {photo.caption && (
-                        <div className="shot-body">
-                          <span className="shot-no">{photo.caption}</span>
-                        </div>
-                      )}
-                    </figure>
-                  ))}
-                </div>
-              )}
-            </span>
-            <span className="row-end">
-              <span className="row-time">
-                {dateShort(event.at, "auto")}
-              </span>
-            </span>
-          </div>
-          );
-        })}
-      </div>
+      {history}
 
       {!isWithdrawn && (
         <>
@@ -330,33 +437,8 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
 
               <div className="field">
                 <label>Evidence{photos.length > 0 ? ` · ${photos.length}` : ""}</label>
-                <label className="camera">
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    capture="environment"
-                    multiple
-                    onChange={async (e) => {
-                      const files = e.target.files;
-                      if (!files) return;
-                      const added: Photo[] = [];
-                      for (const file of Array.from(files)) added.push(await readPhoto(file));
-                      setPhotos((current) => [...current, ...added]);
-                      e.target.value = "";
-                    }}
-                  />
-                  Add photograph
-                </label>
-                {photos.length > 0 && (
-                  <div className="shots">
-                    {photos.map((photo, i) => (
-                      <figure key={photo.id} className="shot" style={{ margin: 0 }}>
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <PhotoImage src={photo.dataUrl} alt={`New evidence ${i + 1}`} />
-                      </figure>
-                    ))}
-                  </div>
-                )}
+                {cameraButton}
+                {newPhotos}
               </div>
 
               {error && <div className="note note-bad">{error}</div>}

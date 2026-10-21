@@ -4,6 +4,51 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Simpler issue page for engineers
+
+- Why: Cal (2026-10-21 07:02): engineers are hands-on people, not IT people.
+  PR #90 named the issue page as the next thing to slim: on a 390px phone it
+  opened on an office grid (Work status, Confirmation, Owner, Target date,
+  Raised) and the history, with the photograph button and "Put forward as
+  fixed" at the bottom. Not a `docs/tasks.json` task; no status changed.
+- Changed (engineer view only, `app/issues/[id]/page.tsx`; Manager and Admin
+  see the page exactly as before):
+  - First screen: the issue reference and status, what is wrong as the
+    heading, then Where, What needs doing (the update's own words, which the
+    engineer's page never showed before) and Who is fixing it, by when.
+  - "Update this issue" straight under it: Add photograph, an optional note,
+    "Put forward as fixed" (now the main button) and "Record an update".
+    Once put forward it says it is waiting for the office to check it; a
+    closed issue says so and has no form (it used to show a note box with no
+    button to press).
+  - Folded under "History · N": project, confirmation, raised date and
+    source, trade affected, who reported it, the disputed note and the full
+    history with its report links. History says "Put forward as fixed" and
+    "Checked and closed" for the engineer.
+  - A disputed issue keeps its red tag and says in one line that the office
+    is checking whether it needs fixing; the full note is in History. A
+    withdrawn issue says nothing about the office checking it.
+  - The first-screen measurement uses a one-line description; a long
+    description or "What needs doing" can push the buttons a little lower.
+- Measured (new `scripts/verify-simpler-issue-page.mjs`, 390x844): taps from
+  the Site page to put an issue forward as fixed with a photograph and a note
+  stay at 5 (Issues, the issue, photograph, note, the button; the note is
+  optional, so 4 without it). Decision: no tap could be cut without dropping
+  the photograph or the choice of button, so the gain is scrolling: on
+  opening, "Put forward as fixed" was 833px below the first screen and is now
+  on it; the photograph button was 713px down and is now on it.
+- Verified: typecheck, `npm test` (146 + 441). Browser checks:
+  simpler-issue-page (76, 390px light and dark, office 390px light and
+  1440px dark), issue-provenance, issue-assign, engineer-day (updated: the
+  engineer's history is folded), review-queue, accessibility (584),
+  role-access, engineer-layout, day-walkthrough (114), photo-library,
+  snag-list, fewest-taps, help, issue-register, company-issues,
+  since-last-visit, error-messages, first-time-use, navigation,
+  before-handover, register-downloads, register-export, issue-trend,
+  site-diary, search, signature-reload. Screenshots: project files
+  `ui-review/simpler-issue-page/` (before and after).
+- Not verified: a real phone, a real engineer, the live server or tenant.
+
 ## 2026-10-21 — Manager's day, simplified
 
 - Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information

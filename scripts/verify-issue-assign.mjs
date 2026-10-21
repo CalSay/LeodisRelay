@@ -111,9 +111,11 @@ try {
   {
     const {context,page,errors}=await open('Engineer','light',390);
     await page.goto(`${base}/issues/${first.id}`);
-    await page.locator('.reg .row').first().waitFor();
+    // The engineer's page says who is fixing it on the first screen and folds the history (2026-10-21).
+    const who=page.locator('.issue-eng-facts div').filter({hasText:'Who is fixing it'}).locator('dd');await who.waitFor();
     eq(await page.getByRole('region',{name:'Who puts it right'}).count(),0,'engineer: no Assign');
-    eq(await cell(page,'Owner').innerText(),'Northbank Electrical','engineer: sees the owner');
+    ok((await who.innerText()).startsWith('Northbank Electrical'),'engineer: sees the owner');
+    await page.locator('details.issue-more summary').click();await page.locator('.reg .row').first().waitFor();
     ok((await page.locator('.reg .row').last().innerText()).includes('To Northbank Electrical'),'engineer: and who it went to in the history');
     const refused=await page.evaluate(async([id])=>(await fetch(`/api/issues/${id}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({kind:'assign',owner:'Someone',note:''})})).status,[first.id]);
     eq(refused,403,'engineer: the server refuses an assignment');
