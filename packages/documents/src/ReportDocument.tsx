@@ -396,7 +396,6 @@ function leadHeight(o: { whatHappened: string; actionNeeded: string; location: s
   return title + words + action;
 }
 
-/** A card is titled by where it is; a check by its question, and where, if the action says (a handover inspection's do). */
 const FOUND_LIMIT = 180;
 /**
  * What was found wrong, for an inspection's Actions arising row: the notes
@@ -404,13 +403,17 @@ const FOUND_LIMIT = 180;
  * when they would make the row (which is kept on one page) too long.
  */
 function foundLine(notes: string, number: number): string {
-  const text = notes.trim().replace(/\s+/g, " ");
-  if (text.length <= FOUND_LIMIT) return text;
-  const cut = text.slice(0, FOUND_LIMIT);
+  // By character, so an emoji is never split in two.
+  const chars = Array.from(notes.trim().replace(/\s+/g, " "));
+  if (chars.length <= FOUND_LIMIT) return chars.join("");
+  let cut = chars.slice(0, FOUND_LIMIT).join("");
+  // End on a whole word: drop a part word, unless the cut fell between words.
   const space = cut.lastIndexOf(" ");
-  return `${(space > FOUND_LIMIT / 2 ? cut.slice(0, space) : cut).replace(/[\s.,;:–—-]+$/, "")}… (see ${String(number).padStart(2, "0")} below)`;
+  if (chars[FOUND_LIMIT] !== " " && space > cut.length / 2) cut = cut.slice(0, space);
+  return `${cut.replace(/[\s.,;:–—(\[{"'‘“…-]+$/, "")}… (see ${String(number).padStart(2, "0")} below)`;
 }
 
+/** A card is titled by where it is; a check by its question, and where, if the action says (a handover inspection's do). */
 const itemTitle = (o: { location: string; check?: { question: string } | undefined }): string =>
   o.check ? `${o.check.question}${o.location.trim() ? ` · ${o.location.trim()}` : ""}` : o.location || "Location not recorded";
 

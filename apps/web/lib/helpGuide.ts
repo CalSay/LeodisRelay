@@ -28,7 +28,7 @@ export interface WhatsNew {
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'inspection-pdf-found', added: '2026-10-21', audience: 'all', title: 'Inspection PDFs say what was wrong',
-    text: 'In an inspection PDF, each row under "Actions arising" now says what was found ("Found: open edge with only a strap across it") above the action and who is to do it, so a client or contractor reading the first page knows what to put right without turning to the notes. Long notes are shortened there and point to the full notes further on. PDFs already made stay as they were.' },
+    text: 'In an inspection PDF, each row under "Actions arising" now says what was found ("Found: open edge with only a strap across it") above the action, so a client or contractor reading the first page knows what to put right without turning to the notes. Long notes are shortened there and point to the full notes further on. PDFs already made stay as they were.' },
   { id: 'assign-on-issue', added: '2026-10-21', audience: 'office', title: 'Assign from the issue itself',
     text: 'An issue opened from a search, a report or Issues by company now has "Who puts it right", with Assign or Reassign, a target date and an instruction, so you no longer go back to the desk to give it an owner. The companies already named on the project are suggested as you type. The issue now shows its target date, and its history says who each assignment went to and by when.' },
   { id: 'start-from-safety-actions', added: '2026-10-21', audience: 'site', title: 'Start the inspection that is due from Safety actions',
