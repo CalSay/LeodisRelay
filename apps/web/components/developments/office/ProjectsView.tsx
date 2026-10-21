@@ -517,10 +517,10 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
                 ? <> · raised <a className="ref" href={`#/projects/${code}/variation/${vo.id}`}>{shortRef(vo.reference)}</a> · <s>Awaiting instruction</s> Within contract · not charged</>
                 : <> · raised <a className="ref" href={`#/projects/${code}/variation/${vo.id}`}>{shortRef(vo.reference)}</a> · <InstructionTag v={vo} /></>)}</div>
           {o.photos.length > 0 && <div className="photos">{o.photos.map(ph => <figure key={ph.id}><PhotoImage src={ph.dataUrl} alt={ph.caption || 'Site photograph'} /><figcaption>{ph.caption}</figcaption></figure>)}</div>}
-          {open && <QuickActions ctx={ctx} report={report} observation={o} target={target} engineer={engineer}
+          {open && <QuickActions ctx={ctx} report={report} observation={o} target={target}
             onCancel={() => toggleActing(o.id)}
             onDone={() => { setActing(null); setReloadFixes(n => n + 1); void ctx.refresh(); }} />}
-          {correcting && cs.length > 0 && <ChangeLog ctx={ctx} list={cs} engineer={engineer} />}
+          {correcting && cs.length > 0 && <ChangeLog ctx={ctx} list={cs} />}
         </div></div>;
     }) : <div className="empty">No updates were recorded on this visit.</div>}
     <SecH>Signature</SecH>
@@ -540,8 +540,8 @@ function raisedRef(observationId: string, raised: Issue[], code: string, report:
 const MODE_LABEL: Record<CorrectionAction, string> = { within_contract: 'Falls under our contract', already_raised: 'Already raised', note: 'Add a note' };
 
 /** One section's quick actions: pick a mode, see what it will do, confirm. The report and its PDF stay as sent. */
-function QuickActions({ ctx, report, observation, target, engineer, onCancel, onDone }: {
-  ctx: Ctx; report: Report; observation: Observation; target: Target; engineer: string; onCancel: () => void; onDone: () => void;
+function QuickActions({ ctx, report, observation, target, onCancel, onDone }: {
+  ctx: Ctx; report: Report; observation: Observation; target: Target; onCancel: () => void; onDone: () => void;
 }) {
   const rules = modesFor(target);
   const modes = (Object.keys(MODE_LABEL) as CorrectionAction[]).filter(m => rules[m]);
@@ -551,7 +551,6 @@ function QuickActions({ ctx, report, observation, target, engineer, onCancel, on
   const [pick, setPick] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const first = engineer.split(' ')[0] || 'the engineer';
   const code = target.type === 'observation' ? '' : shortRef(target.record.reference);
   const pool = target.type === 'observation' ? [] : pickPool(target, ctx.snap?.issues ?? [], ctx.snap?.variations ?? []);
   const q = query.trim().toLowerCase();
@@ -570,9 +569,9 @@ function QuickActions({ ctx, report, observation, target, engineer, onCancel, on
         relatedId: mode === 'already_raised' ? pick ?? undefined : undefined, note: note.trim(),
       });
       toast(mode === 'within_contract'
-        ? target.type === 'variation' ? `${code} marked within contract. ${first} will see this.` : `${code} moved to ${OUR_CONTRACT}. ${first} will see this.`
-        : mode === 'already_raised' ? `${code} linked to ${picked ? shortRef(picked.reference) : 'the existing record'}. ${first} will see this.`
-          : `Note saved. ${first} will see this.`);
+        ? target.type === 'variation' ? `${code} marked within contract.` : `${code} moved to ${OUR_CONTRACT}.`
+        : mode === 'already_raised' ? `${code} linked to ${picked ? shortRef(picked.reference) : 'the existing record'}.`
+          : 'Note saved.');
       onDone();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'That correction did not go through.');
@@ -593,7 +592,7 @@ function QuickActions({ ctx, report, observation, target, engineer, onCancel, on
       <p className="ro-qa-what">{target.type === 'issue'
         ? <>Responsibility for <b>{code}</b> moves from <b>{owner}</b> to <b>{OUR_CONTRACT}</b>. It won&rsquo;t be chased with another company.</>
         : <><b>{code}</b> will be marked <b>within contract</b>. It won&rsquo;t be priced or charged.</>}</p>
-      {noteField(`Why? (kept in the change log and recorded for ${first})`, 'e.g. On the M&E spec, rev C')}
+      {noteField(`Why? (kept in the change log)`, 'e.g. On the M&E spec, rev C')}
       {buttons('Confirm change', false)}
     </>;
   } else if (mode === 'already_raised' && target.type !== 'observation') {
@@ -615,7 +614,7 @@ function QuickActions({ ctx, report, observation, target, engineer, onCancel, on
     </>;
   } else if (mode === 'note') {
     body = <>
-      {noteField(`Note (kept in the change log and recorded for ${first})`, 'e.g. Good photos, but add the room number next time', 3)}
+      {noteField(`Note (kept in the change log)`, 'e.g. Good photos, but add the room number next time', 3)}
       {buttons('Save note', !note.trim())}
     </>;
   } else {
@@ -633,12 +632,12 @@ function QuickActions({ ctx, report, observation, target, engineer, onCancel, on
 }
 
 /** What the office changed on one section, oldest first. */
-function ChangeLog({ ctx, list, engineer }: { ctx: Ctx; list: Correction[]; engineer: string }) {
+function ChangeLog({ ctx, list }: { ctx: Ctx; list: Correction[] }) {
   return <div className="ro-qa-clog"><h6>Change log · {list.length}</h6>
     {list.map(c => <div key={c.id} className="ro-qa-centry">
       <span className="ro-qa-cwhen">{fmtWhen(c.at)}</span>
       <span className="ro-qa-cbody"><b>{c.title}</b>{c.detail && <span>{c.detail}</span>}{c.note && <q>{c.note}</q>}
-        <small>{ctx.nameOf(c.actorId, c.actor)} · {c.engineerId || c.engineer ? ctx.nameOf(c.engineerId, c.engineer ?? engineer) : engineer} will see this</small></span>
+        <small>{ctx.nameOf(c.actorId, c.actor)}</small></span>
     </div>)}
   </div>;
 }

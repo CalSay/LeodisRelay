@@ -13,6 +13,8 @@ export interface ReportSections { id: string; corrects?: string; observations: {
 const same = (a: string | undefined, b: string | undefined) => (a ?? '').trim().replace(/\s+/g, ' ') === (b ?? '').trim().replace(/\s+/g, ' ');
 
 export function sectionOf(record: RaisedRecord, report: ReportSections): string | undefined {
+  // Section ids are unique and a correction keeps them, so a stored id still on this report decides it, however many revisions on.
+  if (record.raisedByObservation && report.observations.some(o => o.id === record.raisedByObservation)) return record.raisedByObservation;
   if (!record.raisedByReport || (record.raisedByReport !== report.id && record.raisedByReport !== report.corrects)) return undefined;
   if (record.raisedByObservation) return record.raisedByObservation;
   const matches = report.observations.filter(o => same(o.whatHappened, record.description) && same(o.location, record.location));

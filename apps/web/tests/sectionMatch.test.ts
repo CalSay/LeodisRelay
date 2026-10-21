@@ -21,3 +21,10 @@ test('ambiguous, missing or other-report matches are not guessed', () => {
   assert.equal(sectionOf({ raisedByReport: 'rep-1', description: 'Nothing like it', location: '' }, report), undefined);
   assert.equal(sectionOf({ raisedByReport: 'rep-2', description: 'Pump leaking.', location: 'Plant Room' }, report), undefined);
 });
+
+test('a stored section id still on the report is found however many corrections on', () => {
+  // Rev 3 corrects rev 2, which corrected rev 1 where the record was raised; the section keeps its id.
+  const rev3 = { ...report, id: 'rep-3', corrects: 'rep-2' };
+  assert.equal(sectionOf({ raisedByReport: 'rep-1', raisedByObservation: 'o2', description: 'x', location: 'y' }, rev3), 'o2');
+  assert.equal(sectionOf({ raisedByReport: 'rep-1', raisedByObservation: 'o9', description: 'x', location: 'y' }, rev3), undefined);
+});
