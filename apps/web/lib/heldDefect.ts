@@ -155,6 +155,9 @@ async function post(key: string, defect: HeldDefect, onlyIfHeld: boolean, deps: 
   return refuse(data.reason ?? 'RELAY could not take this defect.', response.status === 422 || response.status === 413);
 }
 
+/** Refused on this page and not tried again by itself, so it is not said to be waiting. */
+export const refusedNow = (requestId: string): boolean => refusedHere.has(requestId);
+
 /** Whether this page is sending `requestId` now (a tap, say), so sending by itself leaves it to that send. */
 export const sendingNow = (requestId: string): boolean => inFlight.has(requestId);
 

@@ -33,7 +33,8 @@ import { correctReport as requestCorrection } from '@/lib/api';
 import { canManage, ownsReport } from '@/lib/auth/access';
 import { toneClass } from '@/lib/status';
 import { SubmissionStages } from '@/components/SubmissionStages';
-import { clearWaitingToSend, isWaitingToSend, markWaitingToSend } from '@/lib/sendOnSignal';
+import { clearWaitingToSend, isWaitingToSend, markWaitingToSend, SEND_ON_SIGNAL_KEY } from '@/lib/sendOnSignal';
+import { updateSendSettled, updateSending, withUpdateLock } from '@/lib/heldUpdate';
 import { useMarkSeen } from '@/components/useMarkSeen';
 import { CARD_TYPES, OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
 import { isBlankCard, placesToOffer, withoutBlankCards } from '@/lib/quickCards';
@@ -291,8 +292,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     (async () => {
       // This report's work from the offline page may be going up as it opens
       // (HeldWork.tsx): wait for a save in flight, or take over one only queued.
-      setWaitingForHeld(heldSendBusy(id));
-      await heldSendSettled(id);
+      // So may this report itself, sent with no signal and going by itself from
+      // the page left (SendOnSignal.tsx): wait for that answer too.
+      setWaitingForHeld(heldSendBusy(id) || updateSending(id));
+      await Promise.all([heldSendSettled(id), updateSendSettled(id)]);
       if (cancelled) return;
       setWaitingForHeld(false);
       let found;
@@ -717,11 +720,14 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   useEffect(() => {
     if (!waiting) return;
     const onVisible = () => { if (document.visibilityState === 'visible') trySendNow(); };
+    // Sent from another tab meanwhile: that tab took the waiting line away, so look now rather than in 15 s.
+    const onStorage = (e: StorageEvent) => { if (e.key === SEND_ON_SIGNAL_KEY) trySendNow(); };
     const timer = setInterval(trySendNow, RETRY_MS);
     window.addEventListener('online', trySendNow);
     window.addEventListener('focus', trySendNow);
+    window.addEventListener('storage', onStorage);
     document.addEventListener('visibilitychange', onVisible);
-    return () => { clearInterval(timer); window.removeEventListener('online', trySendNow); window.removeEventListener('focus', trySendNow); document.removeEventListener('visibilitychange', onVisible); };
+    return () => { clearInterval(timer); window.removeEventListener('online', trySendNow); window.removeEventListener('focus', trySendNow); window.removeEventListener('storage', onStorage); document.removeEventListener('visibilitychange', onVisible); };
   }, [waiting, trySendNow]);
 
   // Back to the cards, by the step button or the phone's own Back: it no longer goes by itself.
@@ -974,7 +980,27 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     sending.current = true;
     setSubmitting(true);
     setSubmitError(null);
+    // One send of a report at a time across tabs: a page elsewhere may be sending it by itself (SendOnSignal.tsx).
+    await withUpdateLock(report.id, () => sendLocked(report, byItself)).catch(() => { sending.current = false; setSubmitting(false); });
+  }
+
+  async function sendLocked(report: Report, byItself: boolean) {
     try {
+      // It was waiting here, and the waiting line has gone: another tab sent it meanwhile. Show what went.
+      if (waitingRef.current && principalId && !isWaitingToSend(report.id, principalId)) {
+        const now = await getReport(report.id).catch(() => undefined);
+        if (now && now.state !== 'draft') {
+          await releaseIfCurrent(report.id, principalId, seq.current);
+          stopWaiting(report.id);
+          setSentByItself(new Date().toISOString());
+          announce(now, 'sent');
+          serverVersion.current = now.version;
+          setReport(now);
+          pending.current = null;
+          setSaveState("clean");
+          return;
+        }
+      }
       if (saveTimer.current) clearTimeout(saveTimer.current);
       // Wait for any save already running, so what is submitted is the version
       // the engineer just reviewed rather than whatever lands last.
@@ -1023,7 +1049,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         if (held && error instanceof ApiError && (error.offline || (error.passing && !error.signedOut))) {
           // Kept on the phone: it goes by itself once the server can be reached.
           if (error.offline) setSaveState("phone");
-          if (principalId) markWaitingToSend(report.id, principalId);
+          // With the copy's number, so a page elsewhere sends this copy and no other (lib/heldUpdate.ts).
+          if (principalId) markWaitingToSend(report.id, principalId, undefined, undefined, { seq: seq.current, what: reportTypeOf(report).name.toLowerCase() });
           setSubmitError(null);
           setWaiting(error.offline ? 'signal' : 'server');
         } else if (error instanceof ApiError && error.offline) {

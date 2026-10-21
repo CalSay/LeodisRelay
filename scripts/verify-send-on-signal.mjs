@@ -2,7 +2,8 @@
 // the phone's signal off says "Waiting for signal" and keeps the report on the
 // phone; once signal is back it goes to the office by itself, exactly once
 // (one sent report, one issue, one variation). Closed before signal came back,
-// the home screen says "Send today's update" and opening it sends it at once.
+// the home screen says "Send today's update" until RELAY answers, then it goes
+// from there by itself (verify-update-send-anywhere.mjs covers other pages).
 // Going back to the cards (step button or the phone's Back), changing the
 // signature or "Don't send yet" stops it going by itself. A send whose
 // answer was lost on the way back makes one report, not two. 390px light and
@@ -123,6 +124,9 @@ try {
       await sendButton(page).click();
       await waitingNote(page).waitFor({timeout:10000});
       await page.close();
+      // RELAY opens with no answer for this report yet, so the home screen can be read first.
+      const cutOff=`**/api/reports/${id}`,noAnswer=r=>r.request().method()==='GET'?r.continue():r.abort('internetdisconnected');
+      await context.route(cutOff,noAnswer);
       await context.setOffline(false);
       const home=await context.newPage();home.on('pageerror',e=>errors.push(e.message));
       await home.goto(`${base}/engineer?project=${P}`);
@@ -133,10 +137,12 @@ try {
       ok(getRecord('reports',id).state==='draft',`${label} closed: nothing went while RELAY was closed`);
       ok(await home.locator('section[aria-labelledby="eng-unfinished-title"] .eng-row',{hasText:/SPR-/}).count()===0,`${label} closed: not listed again under Unfinished reports`);
       if(shots)await home.screenshot({path:join(shots,`${prefix}-home-not-sent-${scheme}-${width}.png`),fullPage:false});
-      await tile.click();await home.waitForURL(new RegExp(id));
-      // Well inside the 15 s retry: opening it sends it at once.
-      await home.locator('.tag-sent').filter({hasText:'Sent'}).waitFor({timeout:8000});
-      ok(/Sent to the office by itself/.test(await home.locator('main').innerText()),`${label} closed: opening it sent it at once, one tap from home`);
+      ok(/goes to the office by itself once there is signal/.test(words),`${label} closed: home says it goes by itself (${words})`);
+      // RELAY answers again: it goes from the home screen by itself (2026-10-21), no tap needed.
+      await context.unroute(cutOff,noAnswer);
+      await home.evaluate(()=>window.dispatchEvent(new Event('online')));
+      await home.locator('.held-send .note-ok').filter({hasText:/Site update sent to the office by itself/}).waitFor({timeout:8000});
+      ok(true,`${label} closed: once RELAY answered it went from home by itself, and said so`);
       const mine=reportsBy(who);
       ok(mine.length===1&&mine[0].state==='submitted'&&issuesFrom(id).length===1&&variationsFrom(id).length===1,`${label} closed: one report, one issue, one variation`);
       await home.goto(`${base}/engineer?project=${P}`);await home.getByRole('button',{name:/Start today’s site update/}).waitFor();
@@ -238,7 +244,7 @@ try {
       await context.close();
     }
   }
-  console.log(`Send on signal check passed (${checks} checks): waits with no signal and sends by itself once, from the open page and from home after closing; Don’t send yet, going back to the cards (button or phone Back) and changing the signature stop it; a lost answer (to the send or to its save) makes one report; 390px light and dark, 1440px dark.`);
+  console.log(`Send on signal check passed (${checks} checks): waits with no signal and sends by itself once, from the open page and from home after closing (by itself); Don’t send yet, going back to the cards (button or phone Back) and changing the signature stop it; a lost answer (to the send or to its save) makes one report; 390px light and dark, 1440px dark.`);
 } catch (error) { console.error(output.slice(-3000)); throw error; }
 finally {
   await browser?.close();
