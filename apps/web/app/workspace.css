@@ -294,8 +294,12 @@ body:has(.ws){overflow:hidden auto}
   .ws .cols{display:block;padding-bottom:88px}
   .ws .col{display:none;border-right:0;overflow:visible}
   .ws .cols[data-depth="1"] .col:nth-child(1),.ws .cols[data-depth="2"] .col:nth-child(2),.ws .cols[data-depth="3"] .col:nth-child(3){display:flex}
-  .ws .col-head{position:static}
-  .ws .col-head .col-back{display:inline-flex;font-family:var(--mono);font-size:11px;color:var(--acc);letter-spacing:.04em;margin-right:var(--s2)}
+  .ws .col-head{position:static;flex-wrap:wrap;row-gap:var(--s2)}
+  .ws .col-head .col-back{display:inline-flex;font-family:var(--mono);font-size:11px;color:var(--acc);letter-spacing:.04em;margin-right:var(--s2);white-space:nowrap}
+  /* A long project name wraps instead of being cut off. Where there is a back
+     link, it and the counts share the top line and the heading has the next. */
+  .ws .col-head :is(h2,h4){white-space:normal;overflow:visible;overflow-wrap:anywhere;min-width:0;line-height:1.5}
+  .ws .col-head:has(.col-back) :is(h2,h4){order:1;flex-basis:100%}
   .ws .colpad{padding:12px}
   .ws .colpad.sticky-foot{margin-top:0}
   .ws .sheet{padding:12px}
