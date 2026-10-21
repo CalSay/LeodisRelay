@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Principal } from '@relay/platform';
-import { CLEARED_DAYS, daysBetween, safetyActions } from '../lib/safetyActions';
+import { CLEARED_DAYS, daysBetween, safetyActions, safetyAttention } from '../lib/safetyActions';
 import type { CheckAnswer, Observation, Report } from '../lib/types';
 
 const engineer: Principal = { id:'entra:eng' as never, oid:'eng', name:'Sam Spark', email:'s@example.test', role:'Engineer', trade:'Electrical' };
@@ -107,4 +107,32 @@ test('two inspections on one day are read in reference order', () => {
   const p1 = safetyActions(projects, [later, earlier], engineer, TODAY).projects.find(p => p.projectId === 'p1')!;
   assert.deepEqual(p1.open, []);
   assert.equal(p1.cleared[0]!.days, 0);
+});
+
+test('Needs attention has one line per project with actions open, one per tower due and one per weekly inspection due, safety first', () => {
+  n = 0;
+  const p1 = inspection('2026-10-08', [check('fire', 'action', { whatHappened:'Fire exit blocked' }), check('ppe', 'action')]);
+  const p2 = inspection('2026-10-18', [check('ppe', 'action')], { projectId:'p2', reference:'009LME-SSI-001' });
+  const tower = inspection('2026-10-12', [check('guard', 'action')], { reportType:'tower-inspection', inspected:'Podium  P1', reference:'011LME-TWR-001' });
+  const recent = inspection('2026-10-19', [check('guard', 'ok')], { reportType:'tower-inspection', inspected:'T3', reference:'011LME-TWR-002' });
+  const s = safetyActions(projects, [p1, p2, tower, recent], engineer, TODAY);
+  const lines = safetyAttention(s);
+  assert.deepEqual(lines.map(l => l.kind), ['tower', 'actions', 'actions', 'inspection']);
+  assert.equal(lines[0]!.title, 'Podium P1: tower inspection due');
+  assert.match(lines[0]!.sub, /^Tetley Hall · last inspected 8 days ago · 1 action open$/);
+  assert.equal(lines[1]!.title, '3 safety actions open', 'the project with the oldest open action comes first, its tower action counted with the rest');
+  assert.match(lines[1]!.sub, /oldest found 12 days ago: Fire exit blocked$/);
+  assert.equal(lines[2]!.title, '1 safety action open');
+  assert.equal(lines[2]!.sub, 'Aire Court · oldest found 2 days ago: Question ppe', 'the question when nothing was written');
+  assert.equal(lines[3]!.projectId, 'p1');
+  assert.equal(lines.filter(l => l.kind === 'actions').reduce((n, l) => n + Number(l.title.split(' ')[0]), 0), s.totals.open, 'the lines add up to the page total');
+  assert.equal(lines.filter(l => l.kind === 'tower').length, s.totals.towersDue);
+  assert.equal(lines.filter(l => l.kind === 'inspection').length, s.totals.due);
+  assert.equal(new Set(lines.map(l => l.key)).size, lines.length);
+});
+
+test('a project never inspected, or inspected this week with nothing open, needs no attention', () => {
+  n = 0;
+  const s = safetyActions(projects, [inspection('2026-10-19', [check('fire', 'ok')])], engineer, TODAY);
+  assert.deepEqual(safetyAttention(s), []);
 });
