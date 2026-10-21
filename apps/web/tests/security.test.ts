@@ -48,7 +48,9 @@ test('a refusal at sign-in carries a code the screen can name', () => {
 
 test('a signed copy opens only from an https address', () => {
   assert.equal(signedCopyLink({ signedInstruction: 'https://leodis.sharepoint.com/sites/Operations/VO-001.pdf' }), 'https://leodis.sharepoint.com/sites/Operations/VO-001.pdf');
-  for (const bad of ['javascript:alert(1)', 'JavaScript:alert(1)', 'data:text/html,<script>1</script>', 'http://example.com/a.pdf', '//evil.example', 'https://a b', '']) {
+  // SharePoint's "Copy path" gives spaces; RELAY accepts those when the office records them.
+  assert.equal(signedCopyLink({ signedInstruction: 'https://leodis.sharepoint.com/sites/Ops/Shared Documents/VO-001.pdf' }), 'https://leodis.sharepoint.com/sites/Ops/Shared%20Documents/VO-001.pdf');
+  for (const bad of ['javascript:alert(1)', 'JavaScript:alert(1)', 'data:text/html,<script>1</script>', 'http://example.com/a.pdf', '//evil.example', 'https://', '']) {
     assert.equal(signedCopyLink({ signedInstruction: bad }), undefined, bad);
   }
   assert.equal(signedCopyLink({}), undefined);

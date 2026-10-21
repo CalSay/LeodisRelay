@@ -83,5 +83,8 @@ export const LABEL: Record<keyof Costing, string> = {
  */
 export function signedCopyLink(v: Pick<Variation, 'signedInstruction'>): string | undefined {
   const link = v.signedInstruction?.trim();
-  return link && /^https:\/\/[^\s]+$/i.test(link) ? link : undefined;
+  if (!link) return undefined;
+  // Parsed, so a SharePoint path with spaces still opens (as %20).
+  try { const url = new URL(link); return url.protocol === 'https:' && url.host ? url.href : undefined; }
+  catch { return undefined; }
 }
