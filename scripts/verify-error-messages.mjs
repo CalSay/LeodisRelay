@@ -222,7 +222,7 @@ try {
     await step(`${label}: PDF fails`,async()=>{
       await desk.route('**/api/reports/*/pdf**',r=>r.fulfill({status:500,contentType:'text/html',body:'Internal Server Error'}));
       await desk.goto(`${base}/reports/${filed.id}/pdf`);
-      await desk.locator('[role=alert]').first().waitFor({timeout:T(15000)});
+      await desk.locator('.note-bad[role=alert]').first().waitFor({timeout:T(15000)});
       await oshot('pdf-failed');
       const said=await deskText();
       ok(/PDF could not be opened/i.test(said)&&/Try again/.test(said)&&!RAW.test(said),`${label}: a PDF that will not come says so: ${said.slice(0,200)}`);
@@ -230,7 +230,7 @@ try {
       // Bytes this browser cannot draw: say so and offer the download instead.
       await desk.route('**/api/reports/*/pdf',r=>r.fulfill({status:200,contentType:'application/pdf',body:'%PDF-1.7 not really a PDF'}));
       await desk.goto(`${base}/reports/${filed.id}/pdf`);
-      await desk.locator('[role=alert]').first().waitFor({timeout:T(15000)});
+      await desk.locator('.note-bad[role=alert]').first().waitFor({timeout:T(15000)});
       await oshot('pdf-cannot-show');
       const shown=await deskText();
       ok(/could not be shown here/i.test(shown)&&!RAW.test(shown),`${label}: a PDF that cannot be drawn says so in plain words: ${shown.slice(0,200)}`);

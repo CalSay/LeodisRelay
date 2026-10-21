@@ -8,6 +8,7 @@ import { isActiveIssue, isUnassigned, isVerify, notAcknowledged } from '@/lib/of
 import { isDisputedIssue, isNotReviewedIssue, isOverdueIssue } from '@/lib/issueQuery';
 import { dateShort, dayLong, whenShort } from '@/lib/dates';
 import { safetyAttention, type SafetyActions } from '@/lib/safetyActions';
+import { permitAttention, type PermitsAll } from '@/lib/permits';
 
 export { isUnassigned, isVerify, notAcknowledged };
 
@@ -21,6 +22,8 @@ export interface Snapshot {
   reports: ReportSummary[]; drafts: ReportSummary[]; issues: Issue[]; variations: Variation[]; loadedAt: string;
   /** Safety actions on the same projects; null when it could not be read, so no safety line is claimed either way. */
   safety: SafetyActions | null;
+  /** Open permits past their end time on the same projects; null when it could not be read, so no permit line is claimed either way. */
+  permits: PermitsAll | null;
 }
 
 /** Today in the office's calendar, as YYYY-MM-DD, so target dates compare as strings. */
@@ -189,8 +192,8 @@ export const shortRef = (reference: string): string => reference.split('-').slic
 
 /** Everything that needs a person, across the portfolio, most urgent first. */
 export interface AttentionItem { key: string; title: string; sub: string; tag: { label: string; cls: string }; go: string; action?: { label: string; primary?: boolean; kind: 'retry' | 'verify' | 'assign' | 'triage' | 'review' | 'chase' | 'confirm' | 'price' | 'instruct'; issue?: Issue; report?: ReportSummary; variation?: Variation } }
-export function attention(stats: ProjectStats[], day: string, safety?: SafetyActions | null, returnTo = '/office'): AttentionItem[] {
-  const out: AttentionItem[] = safetyItems(stats, safety, returnTo).map(s => ({ key: s.key, title: s.title, sub: s.sub, tag: s.tag, go: s.go }));
+export function attention(stats: ProjectStats[], day: string, safety?: SafetyActions | null, returnTo = '/office', permits?: PermitsAll | null): AttentionItem[] {
+  const out: AttentionItem[] = [...safetyItems(stats, safety, returnTo), ...permitItems(stats, permits, returnTo)].map(s => ({ key: s.key, title: s.title, sub: s.sub, tag: s.tag, go: s.go }));
   for (const s of stats) {
     for (const r of s.failed) out.push({ key: `ne-${r.id}`, title: 'Report could not be processed', sub: `${r.reference} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}. ${r.deliveryError ?? 'The worker gave up on it.'}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${s.code}/report/${r.id}` });
     for (const r of s.pendingReview) out.push({ key: `rv-${r.id}`, title: 'Report awaiting review', sub: `${r.reference} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${s.code}/report/${r.id}`, action: { label: 'Review', kind: 'review', report: r } });
@@ -204,7 +207,8 @@ export function attention(stats: ProjectStats[], day: string, safety?: SafetyAct
   }
   // Safety comes straight after a report the worker gave up on: a tower due its inspection or a
   // safety action open is a risk to people on site today, where an overdue issue is late work.
-  const order = ['ne', 'tw', 'sa', 'si', 'od', 'vx', 'rv', 'dp', 'vf', 'ua'];
+  // A permit left open past its end time comes with them: nobody has said the fire watch was kept.
+  const order = ['ne', 'tw', 'sa', 'pw', 'si', 'od', 'vx', 'rv', 'dp', 'vf', 'ua'];
   const rank = (t: AttentionItem) => { const n = order.indexOf(t.key.slice(0, 2)); return n < 0 ? order.length : n; };
   return out.sort((a, b) => rank(a) - rank(b));
 }
@@ -219,6 +223,18 @@ export function safetyItems(stats: ProjectStats[], safety: SafetyActions | null 
   const shown = new Set(stats.map(s => s.code));
   return safetyAttention(safety).filter(s => shown.has(s.projectId))
     .map(s => ({ ...s, go: `/safety-actions?${new URLSearchParams({ project: s.projectId, returnTo })}` }));
+}
+
+/**
+ * Permits to work's lines for Needs attention, on the projects in view: one
+ * per project with permits open past their end time, each linking to that
+ * project's Permits to work page (lib/permits.ts `permitAttention`).
+ */
+export function permitItems(stats: ProjectStats[], permits: PermitsAll | null | undefined, returnTo: string) {
+  if (!permits) return [];
+  const shown = new Set(stats.map(s => s.code));
+  return permitAttention(permits, d => fmtDay(d)).filter(p => shown.has(p.projectId))
+    .map(p => ({ ...p, go: `/permits?${new URLSearchParams({ project: p.projectId, returnTo })}` }));
 }
 
 /** Owners already used on a project, for the assignment dialog's suggestions. */

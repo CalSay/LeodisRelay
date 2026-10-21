@@ -77,11 +77,13 @@ export function SiteCoveragePage({ initialStart, returnTo }: { initialStart: str
   }, [s]);
   const active = s?.projects.filter(p => p.active) ?? [];
   const dlp = s?.projects.filter(p => !p.active) ?? [];
-  const quiet = active.filter(p => p.quiet);
+  // Before any site has sent a report through RELAY, no site has gone quiet: none has started.
+  const started = s?.projects.some(p => p.last) ?? false;
+  const quiet = started ? active.filter(p => p.quiet) : [];
   const reportedToday = active.filter(p => p.last?.visitDate === s?.today).length;
   const weekOf = (p: CoverageProject, day: string) => `/weekly-summary?${new URLSearchParams({ project: p.projectId, week: day, returnTo: here })}`;
 
-  const row = (p: CoverageProject) => <tr key={p.projectId} className={p.quiet ? 'cov-quiet' : ''}>
+  const row = (p: CoverageProject) => <tr key={p.projectId} className={p.quiet && started ? 'cov-quiet' : ''}>
     <th scope="row">
       <Link className="cov-project" href={weekOf(p, s!.days[7]! <= s!.today ? s!.days[7]! : s!.start)}>{p.projectName}</Link>
       <span className="cov-sub"><span className="ref">{p.projectNumber}</span>{p.projectManager ? ` · ${p.projectManager}` : ''}</span>
@@ -95,7 +97,7 @@ export function SiteCoveragePage({ initialStart, returnTo }: { initialStart: str
       {p.last ? <Link href={withViewReturn(`/reports/${p.last.reportId}`, here)}>{fmtDay(p.last.visitDate)}</Link> : <span className="cov-none">None</span>}
       {p.last && <span className="cov-sub">{who(p.last)}</span>}
       <span className="cov-sub">{sinceWords(p, s!.today)}</span>
-      <QuietTag p={p} />
+      {started && <QuietTag p={p} />}
     </td>
   </tr>;
 
@@ -119,8 +121,10 @@ export function SiteCoveragePage({ initialStart, returnTo }: { initialStart: str
         <dl className="cov-stats">
           <div><dt>Active sites</dt><dd>{active.length}<small>{dlp.length ? `and ${plural(dlp.length, 'site')} in defects liability` : 'none in defects liability'}</small></dd></div>
           <div><dt>Reported today</dt><dd>{reportedToday}<small>{active.length ? `of ${plural(active.length, 'active site')}` : 'no active sites'}</small></dd></div>
-          <div><dt>Gone quiet</dt><dd className={quiet.length ? 'late' : ''}>{quiet.length}<small>{quiet.length ? `no report for ${QUIET_WORKING_DAYS}+ working days` : 'every active site reported recently'}</small></dd></div>
+          <div><dt>Gone quiet</dt><dd className={quiet.length ? 'late' : ''}>{quiet.length}<small>{quiet.length ? `no report for ${QUIET_WORKING_DAYS}+ working days` : started ? 'every active site reported recently' : 'no reports sent yet'}</small></dd></div>
         </dl>
+
+        {!started && active.length > 0 && <div className="eng-panel cov-empty" role="status"><p>No site has sent a report through RELAY yet. Each day fills in here as reports come in, and an active site with none for {QUIET_WORKING_DAYS} working days is marked as gone quiet.</p></div>}
 
         {quiet.length > 0 && <section className="cov-panel" aria-labelledby="cov-quiet-title">
           <h2 id="cov-quiet-title">Gone quiet</h2>

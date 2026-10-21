@@ -19,6 +19,7 @@ import type { CameBack } from './cameBack';
 import type { ReportTypeId } from './reportTypes';
 import type { ProjectSuggestions } from './suggestions';
 import type { SafetyActions } from './safetyActions';
+import type { PermitsAll } from './permits';
 
 const REPORTABLE_STATUSES = ["4. Active", "5. Defects Liability"];
 
@@ -256,6 +257,11 @@ export async function allIssues(): Promise<Issue[]> {
 /** Safety actions on every project open to the person, as the Safety actions page reads them. */
 export async function safetyActionsAll(): Promise<SafetyActions> {
   return parse<SafetyActions>(await request('/api/safety-actions', { cache: 'no-store' }));
+}
+
+/** Open permits to work past their end time on every live project open to the person, for Needs attention. */
+export async function permitsAll(): Promise<PermitsAll> {
+  return parse<PermitsAll>(await request('/api/permits', { cache: 'no-store' }));
 }
 
 /** One page of the issue register, filtered, counted and ordered on the server. */

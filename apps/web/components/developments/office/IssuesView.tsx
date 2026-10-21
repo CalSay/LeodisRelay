@@ -14,6 +14,8 @@ type Filter = Exclude<IssueView, 'all'> | 'all';
 type SortState = { key: IssueSort; direction: SortDirection } | null;
 const FILTERS: [Filter, string, boolean][] = [['open', 'Open', false], ['overdue', 'Overdue', true], ['verify', 'Fixed, to check', false], ['unassigned', 'Unassigned', false], ['notReviewed', 'Not reviewed', false], ['disputed', 'Disputed', true], ['closed', 'Closed', false], ['all', 'All', false]];
 // What an empty list means, in words, for each filter.
+/** Before anything has been raised: where issues come from. */
+const FIRST = 'No issues have been raised yet. Defect and access cards in site updates, defects flagged on their own and actions on handover and first fix inspections arrive here as issues.';
 const EMPTY: Record<Filter, string> = { open: 'No open issues', overdue: 'Nothing is past its target date', verify: 'Nothing is waiting to be checked', unassigned: 'Every open issue has an owner', notReviewed: 'Every issue has been reviewed', disputed: 'No issue is disputed', closed: 'No issues have been closed', all: 'No issues have been raised' };
 const TRADES = ['Electrical', 'HVAC', 'P&H', 'Other / non-Leodis'];
 const SORT_NAME: Record<IssueSort, string> = { reference: 'reference', issue: 'issue', project: 'project', raised: 'date raised', owner: 'owner', target: 'target date', work: 'work', confirmation: 'confirmation' };
@@ -134,7 +136,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
           {active && i.confirmation === 'disputed' && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'triage', issue: i })}>Triage</Btn>}
           {active && i.confirmation === 'provisional' && <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'confirm', issue: i })}>Confirm</BtnQ>}
           {!active && i.confirmation !== 'withdrawn' && <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'reopen', issue: i })}>Reopen</BtnQ>}
-        </div></td></tr>; }) : <tr><td colSpan={9} className="empty">{EMPTY[filter]}{narrowed ? ' for these filters' : ''}.{narrowed && <> <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button></>}</td></tr>}
+        </div></td></tr>; }) : <tr><td colSpan={9} className="empty">{counts.all === 0 && !narrowed ? FIRST : <>{EMPTY[filter]}{narrowed ? ' for these filters' : ''}.</>}{narrowed && <> <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button></>}</td></tr>}
     </tbody></table>
     {result.total > 0 && <nav className="pager" aria-label="Pages of the issue register">
       <span>Showing {first}–{last} of {result.total}</span>

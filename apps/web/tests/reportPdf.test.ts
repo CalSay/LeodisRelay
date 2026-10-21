@@ -119,3 +119,11 @@ test('a site update summary is unchanged: no Found line', async () => {
   const text = (await pageTexts(await renderReportPdf({ ...base, observations: [card('1', { actionNeeded: 'Make good.', typeLabel: 'Defect', tone: 'defect' })] }))).join(' ');
   assert.doesNotMatch(text, /Found:/);
 });
+
+test('a draft with nothing on it yet says so, not that the visit raised nothing', async () => {
+  const empty = (await pageTexts(await renderReportPdf({ ...base, approved: false }))).join(' ');
+  assert.match(empty, /Nothing recorded yet\. Cards added to the report show here\./);
+  assert.doesNotMatch(empty, /No actions or decisions arise/);
+  const quiet = (await pageTexts(await renderReportPdf({ ...base, observations: [card('1')] }))).join(' ');
+  assert.match(quiet, /No actions or decisions arise from this visit\./);
+});

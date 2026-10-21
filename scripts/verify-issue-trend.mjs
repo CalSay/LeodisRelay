@@ -102,7 +102,8 @@ try {
     check(true,'engineer: back returns to the home screen');
     // A project with no issues says so.
     await page.goto(`${base}/issue-trend?project=proj-009lcp`);await page.locator('.it-sheet').waitFor();
-    check(/No open issues, now or four weeks ago\./.test(await page.locator('.it-verdict').innerText()),'engineer: a project with no issues says so');
+    check(/No issues in the last 12 weeks\./.test(await page.locator('.it-verdict').innerText())&&/Nothing to chart yet\./.test(await page.locator('.it-empty').innerText()),'engineer: a project with no issues says so');
+    check(!(await page.locator('.it-chart,.it-table').count()),'engineer: no empty chart or table of noughts');
     assert.deepEqual(errors,[],'engineer: page errors');
     await context.close();
   }

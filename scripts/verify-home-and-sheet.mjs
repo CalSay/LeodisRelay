@@ -30,7 +30,7 @@ server.stdout.on('data',d=>output+=d);server.stderr.on('data',d=>output+=d);
 // RELAY_SHOTS_ONLY=1 takes the screenshots without the checks (for "before" pictures of older code).
 const shotsOnly=process.env.RELAY_SHOTS_ONLY==='1';
 let browser,checks=0;const check=(ok,message)=>{if(shotsOnly)return;assert.ok(ok,message);checks++;};
-const pages=['/weekly-summary','/photos','/diary','/safety-actions','/handover','/issue-trend','/site-notes'];
+const pages=['/weekly-summary','/photos','/diary','/safety-actions','/handover','/issue-trend','/site-notes','/permits'];
 try {
   let ready=false;for(let k=0;k<60;k++){if(server.exitCode!==null)throw Error(output);try{if((await fetch(base+'/signin')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready,output);
   browser=await chromium.launch({headless:true,...(process.env.RELAY_BROWSER_PATH?{executablePath:process.env.RELAY_BROWSER_PATH}:{})});
@@ -55,7 +55,7 @@ try {
     const project=page.getByRole('region',{name:'This project'});
     const issues=project.getByRole('group',{name:'Issues and safety'}),records=project.getByRole('group',{name:'Reports and records'});
     check((await project.locator('h3').allTextContents()).join('|')==='Issues and safety|Reports and records',`${at}: This project has two groups`);
-    check((await names(issues.locator('.eng-list'))).join('|')==='Site issues|Safety actions|Toolbox talks|Issues over time|Before handover',`${at}: issues and safety, daily first (${await names(issues.locator('.eng-list'))})`);
+    check((await names(issues.locator('.eng-list'))).join('|')==='Site issues|Safety actions|Toolbox talks|Permits to work|Issues over time|Before handover',`${at}: issues and safety, daily first (${await names(issues.locator('.eng-list'))})`);
     check((await names(records.locator('.eng-list'))).join('|')==='Reports|Notes for the next visit|Site diary|Weekly summary|Photographs',`${at}: reports and records, daily first (${await names(records.locator('.eng-list'))})`);
     check((await names(page.getByRole('region',{name:'Your week and help'}).locator('.eng-list'))).join('|')==='My week|How RELAY works and what’s new',`${at}: your week and help`);
     for(const path of pages){const href=await page.locator(`.eng-home-grid a[href^="${path}?"]`).getAttribute('href');check(href&&new URLSearchParams(href.split('?')[1]).get('project')==='proj-011lme',`${at}: home links to ${path} for the project`);}
@@ -88,7 +88,7 @@ try {
     check(await more.count()===1,`${at}: one set of project links on screen`);
     check((await more.locator(':is(h3,h4)').allTextContents()).join('|')==='Issues and safety|Reports and records',`${at}: two groups`);
     const group=n=>more.locator('.sheet-links-group').nth(n).locator('a').allInnerTexts();
-    check((await group(0)).join('|')==='Safety actions|Toolbox talks|Issues over time|Before handover',`${at}: issues and safety (${await group(0)})`);
+    check((await group(0)).join('|')==='Safety actions|Toolbox talks|Permits to work|Issues over time|Before handover',`${at}: issues and safety (${await group(0)})`);
     check((await group(1)).join('|')===(phone?'Site diary|Weekly summary|Photographs|Notes for the next visit|Project page':'Site diary|Weekly summary|Photographs|Notes for the next visit'),`${at}: reports and records (${await group(1)})`);
     for(const path of pages){const href=await more.locator(`a[href^="${path}?"]`).getAttribute('href');check(href&&new URLSearchParams(href.split('?')[1]).get('project')==='proj-011lme',`${at}: the project links go to ${path} for the project`);}
     if(phone)check(await page.evaluate(()=>{const nav=[...document.querySelectorAll('.sheet-links')].find(e=>e.offsetParent),chips=[...document.querySelectorAll('.filters')].find(e=>e.offsetParent);return !!nav&&!!chips&&!!(nav.compareDocumentPosition(chips)&Node.DOCUMENT_POSITION_FOLLOWING);}),`${at}: the links come above the register`);

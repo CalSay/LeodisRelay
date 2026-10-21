@@ -999,7 +999,7 @@ button:disabled {
   font-family: var(--mono);
   font-size: 11px;
   letter-spacing: 0.28em;
-  color: #96762a;
+  color: #765a1d;
   font-weight: 500;
 }
 
@@ -1029,7 +1029,7 @@ button:disabled {
   font-size: 9px;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #77776f;
+  color: #66665f;
   margin-bottom: 2px;
 }
 
@@ -1044,7 +1044,7 @@ button:disabled {
   font-size: 10.5px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #96762a;
+  color: #765a1d;
   border-bottom: 1px solid #ddddd8;
   padding-bottom: 6px;
   margin: var(--s6) 0 var(--s4);
@@ -1066,7 +1066,7 @@ button:disabled {
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #77776f;
+  color: #66665f;
   border: 1px solid #ddddd8;
   padding: 2px 7px;
   border-radius: 2px;
@@ -1109,7 +1109,7 @@ button:disabled {
   font-size: 9px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: #77776f;
+  color: #66665f;
   background: #f1f1ec;
   border-bottom: 1px solid #ddddd8;
   white-space: nowrap;
@@ -1146,7 +1146,7 @@ button:disabled {
 }
 
 .doc-fig-date {
-  color: #82827a;
+  color: #66665f;
   font-size: 11px;
   font-family: var(--mono);
 }
@@ -1158,7 +1158,7 @@ button:disabled {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.06em;
-  color: #77776f;
+  color: #66665f;
   line-height: 1.7;
 }
 

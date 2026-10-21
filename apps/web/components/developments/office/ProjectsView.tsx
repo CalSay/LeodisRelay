@@ -15,7 +15,7 @@ import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, f
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, Found, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
-import { WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
+import { WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
 import { signatureMethod } from '@/lib/signature';
 
 /* --------------------------------------------------------------- columns */
@@ -164,8 +164,11 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h3>Office position</h3><div className="rowsub">{ctx.projects.length} reportable project{ctx.projects.length === 1 ? '' : 's'} · {snap.reports.length} report{snap.reports.length === 1 ? '' : 's'} received · {openIssues} open issue{openIssues === 1 ? '' : 's'} · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link><Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions{safety ? ` · ${safety.open} open` : ''}</Link></div></div>
+    {!snap.reports.length && !snap.issues.length && !snap.variations.length && <div className="note info office-first" role="status"><span>
+      <b>Nothing has come in from site yet.</b> Reports arrive in the Inbox as engineers send them, and their defects and variations fill the Issues and Variations registers. Choose a project to see its sheet, or open Help for how RELAY works.
+    </span></div>}
     <OfficeActionGroups ctx={ctx} />
-    <dl className="tb three"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{notNotifiedWords(pendingThisWeek.length, notNotified.length - pendingThisWeek.length, thisWeek.length)}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Variations pending</dt><dd className={`big ${exposed.length ? 'late' : pendingVariations.length ? 'soon' : ''}`}>{pendingVariations.length}<small>{exposed.length ? `${exposed.length} done without an instruction` : pendingVariations.some(v => v.quotedValue === undefined) ? `${pendingVariations.filter(v => v.quotedValue === undefined).length} still to price` : 'all priced, awaiting the client'}</small></dd></div></dl>
+    <dl className="tb three"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{notNotifiedWords(pendingThisWeek.length, notNotified.length - pendingThisWeek.length, thisWeek.length)}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Variations pending</dt><dd className={`big ${exposed.length ? 'late' : pendingVariations.length ? 'soon' : ''}`}>{pendingVariations.length}<small>{exposed.length ? `${exposed.length} done without an instruction` : pendingVariations.some(v => v.quotedValue === undefined) ? `${pendingVariations.filter(v => v.quotedValue === undefined).length} still to price` : pendingVariations.length ? 'all priced, awaiting the client' : 'none awaiting instruction'}</small></dd></div></dl>
     <SecH right={<a href="#/issues">All →</a>}>Also needs attention</SecH>
     <AttentionList ctx={ctx} limit={6} skipActions />
     {/* A phone leaves the wide table to the Inbox; New reports above already lists the latest. */}
@@ -179,7 +182,10 @@ function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectSt
   const scope = s ? [s] : ctx.stats;
   const failed = scope.flatMap(st => st.failed.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Report could not be processed', sub: `${st.project.projectName} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${st.code}/report/${r.id}` })));
   // Safety lines go straight after a failed report, as in the Attention list (model.ts `attention`).
-  const safety = safetyItems(scope, ctx.snap?.safety, officeReturn(ctx)).map(i => ({ key: i.key, ref: i.projectNumber, b: i.title, sub: i.sub, tag: i.tag, go: i.go }));
+  // Permits past their end time come after open safety actions, as in model.ts `attention`.
+  const safetyLines = safetyItems(scope, ctx.snap?.safety, officeReturn(ctx));
+  const safety = [...safetyLines.filter(i => i.kind !== 'inspection'), ...permitItems(scope, ctx.snap?.permits, officeReturn(ctx)), ...safetyLines.filter(i => i.kind === 'inspection')]
+    .map(i => ({ key: i.key, ref: i.projectNumber, b: i.title, sub: i.sub, tag: i.tag, go: i.go }));
   const items = [...failed, ...safety, ...scope.flatMap(st => [
     ...st.pendingReview.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Awaiting review', sub: `${st.project.projectName} · ${r.author}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${st.code}/report/${r.id}` })),
     ...st.overdue.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · ${i.owner || 'unassigned'} · target ${fmtDay(i.targetDate)}`, tag: { label: `${daysLate(i.targetDate, ctx.day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
@@ -196,7 +202,10 @@ function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectSt
 
 /** New, not yet read, unassigned and fixed, to check: what a project manager acts on, each with its count. */
 function OfficeActionGroups({ ctx }: { ctx: Ctx }) {
-  const a = officeActions(ctx.stats.flatMap(s => s.reports), ctx.stats.flatMap(s => s.issues), ctx.day);
+  const reports = ctx.stats.flatMap(s => s.reports), issues = ctx.stats.flatMap(s => s.issues);
+  const a = officeActions(reports, issues, ctx.day);
+  // "Every report has been read" with none received reads as if some had been.
+  const anyReports = reports.length > 0, anyOpen = issues.some(isActive);
   const project = (id: string) => ctx.statOf(id)?.project.projectName ?? id;
   const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
   const reportRow = (r: ReportSummary, action?: ReactNode) => <div key={r.id}><a className="rt" href={`#/projects/${r.projectId}/report/${r.id}`}><b>{project(r.projectId)} · {r.author}</b><span>{shortRef(r.reference)} · received {fmtWhen(r.serverAcknowledgedAt)}</span></a>{action}</div>;
@@ -204,9 +213,9 @@ function OfficeActionGroups({ ctx }: { ctx: Ctx }) {
   const groups: { key: string; title: string; sub: string; n: number; tone: string; all: string; empty: string; rows: ReactNode[] }[] = [
     { key: 'new', title: 'New reports', sub: `Received ${sinceWords(a.since, ctx.day)}`, n: a.newReports.length, tone: '', all: '#/inbox/show/new', empty: `No reports received ${sinceWords(a.since, ctx.day)}.`,
       rows: a.newReports.slice(0, 4).map(r => reportRow(r, r.acknowledged ? <Tag label="Read" cls="tag-ok" /> : <DeliveryTag r={r} />)) },
-    { key: 'notAck', title: 'Not yet read', sub: 'Received, nobody has acknowledged it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: 'Every report has been read.',
+    { key: 'notAck', title: 'Not yet read', sub: 'Received, nobody has acknowledged it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: anyReports ? 'Every report has been read.' : 'No reports received yet.',
       rows: a.notRead.slice(0, 4).map(r => reportRow(r, <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'acknowledge', report: r })}>Acknowledge</BtnQ>)) },
-    { key: 'unassigned', title: 'Unassigned issues', sub: 'Open, nobody owns the action', n: a.unassigned.length, tone: 'soon', all: '#/issues/show/unassigned', empty: 'Every open issue has an owner.',
+    { key: 'unassigned', title: 'Unassigned issues', sub: 'Open, nobody owns the action', n: a.unassigned.length, tone: 'soon', all: '#/issues/show/unassigned', empty: anyOpen ? 'Every open issue has an owner.' : 'No open issues.',
       rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)) },
     { key: 'verify', title: 'Fixed, to check', sub: 'Put forward as fixed; someone else checks it', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be checked.',
       rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · waiting ${daysSince(i.events.at(-1)?.at)} days`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i })}>Verify</Btn>)) },
@@ -237,7 +246,7 @@ function LatestReports({ ctx, reports, showProject }: { ctx: Ctx; reports: Repor
 
 /** The project's own pages, grouped as on the engineer's home screen. */
 const PROJECT_LINKS: { title: string; links: [string, string][] }[] = [
-  { title: 'Issues and safety', links: [['/safety-actions', 'Safety actions'], ['/toolbox-talks', 'Toolbox talks'], ['/issue-trend', 'Issues over time'], ['/handover', 'Before handover']] },
+  { title: 'Issues and safety', links: [['/safety-actions', 'Safety actions'], ['/toolbox-talks', 'Toolbox talks'], ['/permits', 'Permits to work'], ['/issue-trend', 'Issues over time'], ['/handover', 'Before handover']] },
   { title: 'Reports and records', links: [['/diary', 'Site diary'], ['/weekly-summary', 'Weekly summary'], ['/photos', 'Photographs'], ['/site-notes', 'Notes for the next visit']] },
 ];
 function ProjectLinks({ ctx, projectId, heading: H = 'h4', projectPage }: { ctx: Ctx; projectId: string; heading?: 'h3' | 'h4'; projectPage?: boolean }) {

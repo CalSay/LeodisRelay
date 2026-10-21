@@ -21,7 +21,11 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 /** "12 Oct": short enough to sit under a bar on a phone. */
 const shortDay = (ymd: string) => dayLabel(ymd).slice(4);
 
+/** Nothing raised, closed or open in any week shown: no chart or table to read. */
+const blank = (t: IssueTrend) => t.weeks.every(w => !w.raised && !w.closed && !w.open);
+
 function headline(t: IssueTrend): string {
+  if (blank(t)) return 'No issues in the last 12 weeks.';
   if (t.direction === 'fewer') return `Getting shorter: ${plural(t.openNow, 'issue')} open, down from ${t.openBefore} four weeks ago.`;
   if (t.direction === 'more') return `Getting longer: ${plural(t.openNow, 'issue')} open, up from ${t.openBefore} four weeks ago.`;
   return t.openNow ? `No change: ${plural(t.openNow, 'issue')} open, the same as four weeks ago.` : 'No open issues, now or four weeks ago.';
@@ -123,6 +127,9 @@ export function IssueTrendPage({ initialProject, returnTo }: { initialProject: s
           <p className={`it-verdict ${tone}`} role="status">{headline(d)}</p>
         </header>
 
+        {blank(d) ? <div className="eng-panel it-empty">
+          <p>Nothing to chart yet. Defect and access cards in site updates, defects flagged on their own, and actions on handover and first fix inspections become issues; each week fills in here as they are raised and closed.</p>
+        </div> : <>
         <div className="it-stats">
           <div className={`it-stat ${d.lateNow ? 'it-stat-alert' : ''}`}><span className="it-stat-label">Open now</span><span className="it-stat-n">{d.openNow}</span><small>{d.lateNow ? `${d.lateNow} past target` : 'none past target'}</small></div>
           <div className="it-stat"><span className="it-stat-label">Last four weeks</span><span className="it-stat-n">{d.recent.raised}<span className="it-stat-of"> raised</span></span><small>{d.recent.closed} closed</small></div>
@@ -145,6 +152,7 @@ export function IssueTrendPage({ initialProject, returnTo }: { initialProject: s
             </table>
           </div>
         </section>
+        </>}
 
         <p className="it-links"><Link href={`/issues/snag-list?${new URLSearchParams({ project: projectId, returnTo: here })}`}>Open issues on the snag list</Link><Link href={`/handover?${new URLSearchParams({ project: projectId, returnTo: here })}`}>Before handover</Link></p>
 
