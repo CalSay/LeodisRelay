@@ -11,7 +11,7 @@
 export const SIGN_IN_ERRORS = {
   expired: 'That sign-in link has expired. Please try again.',
   'no-code': 'Microsoft did not return a sign-in code. Please try again.',
-  role: 'Ask your administrator to assign exactly one RELAY role in Microsoft, then sign in again.',
+  role: 'Your account does not have the right RELAY access yet. Ask the office to sort it, then sign in again.',
   tenant: 'This account is not in the Leodis tenant. Sign in with your Leodis work account.',
   account: 'Microsoft did not return an account identifier. Please try again.',
   microsoft: 'Microsoft could not complete the sign-in. Please try again.',

@@ -62,10 +62,9 @@ try {
   if(screenshot)await page.screenshot({path:join(screenshot,'defect-phone.png'),fullPage:true});
   await page.setViewportSize({width:1180,height:820});
   if(screenshot)await page.screenshot({path:join(screenshot,'defect-landscape.png'),fullPage:true});
-  await page.getByRole('button',{name:'Check defect →',exact:true}).click();
   await page.route('**/api/issues',async route=>{if(route.request().method()==='POST'){await route.fetch();await route.abort();}else await route.continue();},{times:1});
-  await page.getByRole('button',{name:'Send defect',exact:true}).click();
-  await page.getByRole('button',{name:'Retry submission',exact:true}).click();
+  await page.getByRole('button',{name:'Send defect to Tetley Hall - Block E',exact:true}).click();
+  await page.getByRole('button',{name:'Try again',exact:true}).click();
   await page.getByRole('heading',{name:'Defect sent to the office',exact:true}).waitFor();
   const received=await context.request.get(base+'/api/issues?projectId=proj-011lme').then(r=>r.json());
   const individual=received.issues.filter(i=>i.description==='Missing HVAC support');

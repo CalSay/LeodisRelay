@@ -931,6 +931,25 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     try { const url = new URL(window.location.href); url.searchParams.delete('add'); window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`); } catch {}
   }, [report?.id, report?.state, addCard]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // On the phone cards open folded, but a last card with nothing on it yet (the
+  // one "Start today's site update" made, opened again from "Carry on") opens
+  // ready to type: folded, it only cost a tap. Once, as the draft opens.
+  const openedBlank = useRef('');
+  useEffect(() => {
+    if (!report || wide || step !== 'cards' || report.state !== 'draft' || openedBlank.current === report.id || reportTypeOf(report).checklist) return;
+    openedBlank.current = report.id;
+    // A link that adds a card ("?add=") picks the card itself.
+    if (addedFromLink.current) return;
+    const last = report.observations.at(-1);
+    if (selectedSection !== null || !last || !isBlankCard(last)) return;
+    setSelectedSection(last.id);
+    // Further down a long draft, bring it up into sight, as tapping its row would.
+    requestAnimationFrame(() => {
+      const slot = document.getElementById(`slot-${last.id}`);
+      if (slot && slot.getBoundingClientRect().top > window.innerHeight * 0.6) slot.scrollIntoView({ block: 'start' });
+    });
+  }, [report?.id, wide, step]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // The office opening a sent report (from search, say) counts as seeing it, as in the office reader.
   useMarkSeen(report, (seen) => setReport((r) => (r && r.id === seen.id ? { ...r, acknowledged: seen.acknowledged } : r)));
 

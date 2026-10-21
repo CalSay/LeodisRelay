@@ -29,6 +29,132 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   main at 320px light, passes with the change).
 - Not verified: a real phone, a screen reader, the live server.
 
+## 2026-10-21 — Quicker site update writing
+
+- Why: Cal's 07:02 direction (simple for hands-on engineers). The #110
+  walk-through found two slow spots in the site update editor at 390px: an
+  empty card opened from "Carry on" was folded (one more tap before typing),
+  and each photo tile was 287px tall with "On the server" on it, so four
+  photos took 586px and pushed the next card far down. Decided without asking
+  Cal, per his autonomy message. Not a `docs/tasks.json` task; no status changed.
+- Change: on a phone, a draft whose last card is still empty (`isBlankCard`)
+  opens that card ready to type, once as it opens (not with `?add=`, not
+  inspections, not wide screens, which already open the last card). Cards
+  with anything on them stay folded. Photo tiles (`PhotoField`, used by update
+  cards and inspection checks) are now the picture with the caption box under
+  it: photo number top left, Remove top right (48px, away from the caption),
+  and where it is bottom left. "On the server" shows as a green dot and is
+  still read out to screen readers; "Not yet on the server" and "Only on this
+  phone" still show in words. 287px to 179px a tile, four photos 586px to
+  369px at 390px. Display only: no new photo features (FE-2 stays out). Help
+  "What's new" line.
+- Checks: typecheck, `npm test`, build. New `scripts/verify-quicker-update.mjs`
+  (109 checks, 390px light and dark, 1440px dark): empty card opens ready to
+  type from "Carry on" and saves typing; once written it opens folded; only
+  the empty third card opens on a three-card draft; tile height, two to a
+  row, Remove 48px on the picture and clear of the caption, "On the server"
+  read out but a dot, a photo added with no signal says so in words, a
+  caption saves, Remove works, no sideways scroll. Also rerun, one at a time
+  all passing: one-caption-line, send-on-signal, recent-places,
+  fewest-taps, lighter-card, offline-capture, photo-uploads, undo-remove,
+  editor-wide, engineer-layout, help, report-types, accessibility (its
+  first run caught Remove's focus ring drawn on the label, not the button;
+  fixed). A fresh-context review passed; its one note (the `?add=` guard
+  never fired) is fixed.
+  Screenshots before and after: project files `ui-review/quicker-update/`.
+- Not verified: a real phone, a screen reader.
+
+## 2026-10-21 — Quick defect: recent places, no check screen
+
+- Why: Cal's 07:02 direction (simple for hands-on engineers). The #110
+  walk-through found "Flag a defect" had no recent places, so the engineer
+  typed a place already used on the job; and its "Check defect" screen only
+  repeated the form before "Send defect". Decided without asking Cal, per his
+  autonomy message. Not a `docs/tasks.json` task; no status changed.
+- Change (`components/IndividualDefect.tsx`): "Where on site?" shows #107's
+  compact Recent places chips (`Suggestions compact`, unchanged), from the
+  same `projectSuggestions` list a site update card uses. Free text stays; no
+  list of places. The form's button sends straight away and names the site
+  ("Send defect to Tetley Hall - Block E"), as the coordinator asked after
+  #112's wrong-site fix. The check screen is gone; its useful parts stay: the
+  site name is on the button and above the form, the sharing note is a line
+  under the button, photos still block the button while they are prepared.
+  A send with no receipt shows "Defect not sent yet" with what was written
+  and "Try again" (same request id, so it only goes once); "Failed to fetch"
+  became "No signal, or no answer from RELAY. Your defect is kept on this
+  phone." A reason it can't send is scrolled into view, since the button is
+  at the bottom. Help "What's new" line.
+- Taps from the Site page to a sent defect with a photo: tile, photo,
+  Check defect, Send defect (4) plus typing the place; now tile, photo, a
+  place chip, send (4) with nothing to type for the place, or 3 when the place
+  is typed.
+- Limit, unchanged from before: a defect with no signal does not go by
+  itself when signal returns (site updates do since #105); the engineer taps
+  "Try again". Possible later task.
+- Checks: typecheck, `npm test` (146 + 493), build. New
+  `scripts/verify-defect-recent-places.mjs` (87 checks, 390px light and dark,
+  1440px dark): chips under Where from yesterday's update, a tap fills and is
+  held on the device, the place in the box not offered, free text kept, none
+  on an empty project, one tap sends with the chip's place on the issue,
+  nothing sent without a description (reason in view, again on a second tap),
+  no signal held through
+  a reload and sent once with "Try again", a lost receipt still one issue,
+  48px, no sideways scroll. `verify-engineer-layout` updated for the new
+  buttons. Also passing: recent-places (site update cards unchanged, 109),
+  help, engineer-day, home-and-sheet, accessibility (584), role-access.
+  Screenshots: project files `ui-review/defect-recent-places/`.
+- Review: a fresh-context review found one point (a repeated reason was not
+  scrolled back into view), fixed and checked.
+- Not verified: a real phone, real weak signal, a screen reader.
+
+## 2026-10-21 — An engineer's first day
+
+- Why: Cal's 07:02 direction (engineers are hands-on people, not IT people).
+  If the first ten minutes confuse them, they won't use RELAY. Walked a new
+  engineer's path on main at 390px, light and dark: the office adds them, then
+  sign-in, home screen icon, finding the site, first update. Decided without
+  asking Cal, per his autonomy message. Not a `docs/tasks.json` task; no status
+  changed.
+- Worst problem found: a new engineer was put on the first project in the
+  list without being asked. Their first update could go to the wrong site
+  unless they spotted "Change ›". Now, with more than one site and nothing
+  started, RELAY asks "Which site are you on?" once (one tap) and remembers
+  the answer. It does not ask with one site, with a draft, with a project in
+  the link, with work waiting to send, or when RELAY was used on that phone
+  before (it keeps the sites for no signal).
+- Also changed:
+  - The Admin's Team tab gives a copy-only welcome message for someone who has
+    never signed in (checked against identities, which are kept, not sessions):
+    the link straight to `/developments`, putting RELAY on the home screen,
+    signing in with their work email, and finding their site. RELAY sends
+    nothing.
+  - The home screen icon opens `/?open=app`, which goes to the company picked
+    last time (an httpOnly `relay-company` cookie set by middleware when
+    `/developments` or `/compliance` is opened, not on prefetch). The hub at
+    `/` still asks.
+  - Sign-in says which account to use and where it leads. A missing RELAY
+    role reads "Ask the office to sort it", not Entra words. The home screen
+    steps are plainer, and the out-of-date line saying offline working was not
+    possible is gone. It now matches what RELAY does today (start with no
+    signal; send by itself when signal returns, #105).
+  - Help "What's new" line and the first Help step.
+- Checked: typecheck, `npm test` (146 + 497), build. New
+  `scripts/verify-first-day.mjs` (94 checks: 390px light and dark, office at
+  1440px dark and 390px light). On the final build, one at a time: help,
+  first-time-use, engineer-day, offline-capture, accessibility,
+  came-back-to-update, simpler-home, engineer-layout, office-registers,
+  september-office, navigation, role-access, day-walkthrough. Also
+  editor-usability, editor-wide, fewest-taps and lighter-card: these opened
+  bare `/engineer` as brand-new engineers, and now set a saved site first.
+  handover-offline, offline-inspection, offline-sign, site-notes-offline,
+  typed-signature, signature-reload and search passed on the build before the
+  review fixes, which only make the question rarer.
+  Screenshots: project files `ui-review/first-day/`.
+- Not verified: real phones (whether iPhone honours the manifest
+  `start_url`, and the separate sign-in an iPhone home screen app needs), the
+  live tenant, a real Microsoft sign-in. No Entra or SharePoint setting was
+  changed. `docs/phone-installation-checks.md` lists the steps to try on a
+  phone.
 ## 2026-10-21 — A project at a glance on a phone
 
 - Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information

@@ -7,6 +7,7 @@ import { toast } from '@/components/workspace/hooks';
 import type { Ctx } from './ctx';
 import { Btn, BtnQ, Tag } from './bits';
 import { fmtWhen } from './model';
+import { welcomeText } from '@/lib/welcomeMessage';
 import { useFeatures } from '@/components/FeaturesContext';
 import { SAFETY_RECORDS_COVERS, SAFETY_RECORDS_NAME } from '@/lib/featureSwitch';
 
@@ -181,6 +182,7 @@ function PersonPanel({ ctx, m, onSaved }: { ctx: Ctx; m: TeamMember; onSaved: (p
       <div><dt>Microsoft name</dt><dd>{m.microsoftName ?? <span className="fine">Known after they sign in</span>}</dd></div>
       <div><dt>Signed in</dt><dd>{m.lastSignedIn ? fmtWhen(m.lastSignedIn) : <span className="fine">Not yet</span>}</dd></div>
     </dl>
+    {m.onChecklist && !m.everSignedIn && !m.lastSignedIn && <WelcomeMessage m={m} />}
     <div style={{ padding: '0 16px 16px' }}>
       <p className="rowsub">PDFs already made keep the name they were made with. Everything else in RELAY shows the current name.</p>
       <h4 style={{ margin: '12px 0 4px', fontSize: 13 }}>Changes</h4>
@@ -190,6 +192,23 @@ function PersonPanel({ ctx, m, onSaved }: { ctx: Ctx; m: TeamMember; onSaved: (p
         : <BtnQ className="btn-sm" onClick={() => setConfirmRemove(true)}>Take off the checklist</BtnQ>}</div>
         : m.log?.some(e => e.action === 'removed') && <div style={{ marginTop: 12 }}><BtnQ className="btn-sm" disabled={busy} onClick={() => void change('restore')}>Put back on the checklist</BtnQ></div>}
     </div></div>;
+}
+
+function WelcomeMessage({ m }: { m: TeamMember }) {
+  const [origin, setOrigin] = useState('');
+  const [copied, setCopied] = useState('');
+  useEffect(() => { setOrigin(window.location.origin); }, []);
+  const text = welcomeText(m, origin);
+  async function copy() {
+    try { await navigator.clipboard.writeText(text); setCopied('Copied. Paste it into a text, Teams or an email.'); }
+    catch { setCopied('Could not copy. Select the words above and copy them.'); }
+  }
+  return <div style={{ padding: '0 16px 16px' }}>
+    <h4 style={{ margin: '0 0 4px', fontSize: 13 }}>Welcome message</h4>
+    <p className="rowsub" style={{ margin: '0 0 8px' }}>{m.name ?? localPart(m.email)} has not signed in yet. Send them this by text, Teams or email: RELAY does not send it. They need their app role in Microsoft Entra first.</p>
+    <textarea readOnly aria-label={`Welcome message for ${m.name ?? m.email}`} value={text} rows={14} style={{ width: '100%', fontSize: 13 }} onFocus={e => e.currentTarget.select()} />
+    <div className="actions" style={{ marginTop: 8 }}><BtnQ className="btn-sm" onClick={() => void copy()}>Copy welcome message</BtnQ><span className="rowsub" role="status" aria-live="polite">{copied}</span></div>
+  </div>;
 }
 
 function AddPerson({ members, onCancel, onSaved }: { members: TeamMember[]; onCancel: () => void; onSaved: (p: RelayPerson) => void }) {
@@ -207,7 +226,7 @@ function AddPerson({ members, onCancel, onSaved }: { members: TeamMember[]; onCa
     try {
       const person = await adminPeople({ action: 'add', email: typed, name: cleanName(name), assignment });
       onSaved(person);
-      toast(`${person.relayName ?? typed} added. Give them the ${roleWords(assignment)} app role in Microsoft Entra so they can sign in.`);
+      toast(`${person.relayName ?? typed} added. Give them the ${roleWords(assignment)} app role in Microsoft Entra, then send them the welcome message.`);
     } catch (e) { setError(e instanceof Error ? e.message : 'They were not added.'); }
     finally { setBusy(false); }
   }
