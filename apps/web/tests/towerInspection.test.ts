@@ -67,6 +67,7 @@ test('the tower inspection and its rules, without a store', async t => {
     const blocking = (r: Report) => reviewReport(r).filter(f => f.blocking).map(f => f.field);
     assert.deepEqual(blocking({ ...base, observations: walked(startingCards(tower)) }), [], 'the tower is where');
     assert.ok(blocking({ ...base, observations: startingCards(tower) }).length > 0, 'an unanswered check stops sending');
+    assert.deepEqual(blocking({ ...base, inspected: '', observations: walked(startingCards(tower)) }), ['inspected'], 'an unnamed tower (started on an old offline page) cannot be sent');
     const offline = offlineTypes().find(t => t.id === 'tower-inspection')!;
     assert.equal(offline.raisesIssues, false);
     assert.deepEqual(offline.inspects, tower.inspects);
@@ -153,7 +154,7 @@ test('Safety actions follow each tower on its own, and say when one is due', () 
     ['t3, Level 2', 'guardrails', 2, 'Still missing'],
     ['site', 'guardrails', 1, 'Site guardrail'],
   ], 'T4 being fine clears nothing on T3; the weekly inspection keeps its own guardrail action; a tower long gone keeps its open action');
-  assert.deepEqual(p1.cleared.map(a => [a.tower, a.item, a.cleared?.id]), [['T3, level 2', 'base', 'tpi-3']]);
+  assert.deepEqual(p1.cleared.map(a => [a.tower, a.item, a.cleared?.id]), [['t3, Level 2', 'base', 'tpi-3']], 'named as the tower was last inspected');
   assert.ok(p1.open.every(a => a.key.startsWith('p1:')));
   assert.notEqual(p1.open[1]!.key, p1.open[2]!.key);
   assert.deepEqual(p1.towers.map(t => [t.name, t.sinceLast, t.due, t.open]), [
@@ -161,6 +162,10 @@ test('Safety actions follow each tower on its own, and say when one is due', () 
     ['t3, Level 2', 5, false, 1],
   ], `due after ${TOWER_DUE_DAYS} days; not listed after ${TOWER_SHOWN_DAYS}; drafts left out`);
   assert.equal(s.totals.towersDue, 1);
+  const seventh = safetyActions(projects, [towerCheck('2026-10-13', 'T8', [check('tag', 'ok')])], engineer, '2026-10-20').projects[0]!.towers[0]!;
+  assert.deepEqual([seventh.sinceLast, seventh.due], [7, true], 'due on the seventh day, not the eighth');
+  const sixth = safetyActions(projects, [towerCheck('2026-10-14', 'T8', [check('tag', 'ok')])], engineer, '2026-10-20').projects[0]!.towers[0]!;
+  assert.equal(sixth.due, false);
   assert.equal(s.totals.open, 3);
   const unnamed = safetyActions(projects, [towerCheck('2026-10-18', '', [check('tag', 'action')])], engineer, '2026-10-20');
   assert.equal(unnamed.projects[0]!.open.length, 0, 'a tower inspection with no tower is not followed');

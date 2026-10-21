@@ -20,6 +20,7 @@ const root=mkdtempSync(join(tmpdir(),'relay-tower-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,getRecord,records,database}=require('../apps/web/.test-build/lib/storage.js');
 const {TOWER_CHECKLIST,startingCards,REPORT_TYPES}=require('../apps/web/.test-build/lib/reportTypes.js');
+const {reviewReport}=require('../apps/web/.test-build/lib/review.js');
 const engineer={id:'entra:tower-engineer',oid:'tower-engineer',name:'Toni Tower',email:'toni@example.test',role:'Engineer',trade:'Electrical'};
 const manager={id:'entra:tower-manager',oid:'tower-manager',name:'Morgan Office',email:'morgan@example.test',role:'Manager'};
 const sessions={};
@@ -210,6 +211,12 @@ try {
     eq(none,422,'the API refuses a tower inspection with no tower');
     const extra=await page.evaluate(async()=>(await fetch('/api/reports',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({projectId:'proj-011lme',reportType:'safety-inspection',inspected:'T9'})})).status);
     eq(extra,422,'the API refuses a tower on a safety inspection');
+    // A phone whose offline page predates the tower's name field starts one unnamed: it starts, and cannot be sent until named.
+    const today=new Date().toISOString().slice(0,10);
+    const held=await page.evaluate(async d=>{const r=await fetch('/api/reports',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({projectId:'proj-011lme',reportType:'tower-inspection',clientKey:crypto.randomUUID(),visitDate:d})});return {status:r.status,body:await r.json()};},today);
+    eq(held.status,201,'a held start with no tower still starts');
+    eq(held.body.inspected,undefined,'unnamed');
+    eq(reviewReport(getRecord('reports',held.body.id)).filter(f=>f.blocking&&f.field==='inspected').length,1,'and cannot be sent until it is named');
     await context.close();
     const office=await contextFor(manager,'light',1440,900);
     const other=await office.newPage();

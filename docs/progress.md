@@ -56,6 +56,16 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   first-fix-inspection, offline-sign, help, engineer-layout, role-access,
   handover-offline, editor-usability, unfinished-reports, before-handover,
   home-and-sheet, site-diary, search, my-week, weekly-summary.
+- Review: a fresh-context review found no blocking bugs; fixed what it
+  raised: the Full report page now names the tower; a tower is due on the
+  seventh day, not the eighth; a phone still on the old offline page (which
+  offers the tower inspection but not its name) can start one unnamed, and
+  it cannot be sent until named with Rename, rather than failing to go up
+  for ever; Before handover names each tower action's tower and counts
+  tower inspections; held-work messages name the tower; an action names its
+  tower as the tower list does. Left as decided: a rename does not reach an
+  editor already open on another device until it reloads; the PM email
+  subject (mail is not live) and Since your last visit do not name the tower.
 - Seen, not changed: on a phone, tapping "Next check" straight after typing in
   "Who is to do it" can land on "Check & send" instead, because leaving the
   field brings the bottom bar back and moves the page. The new browser check

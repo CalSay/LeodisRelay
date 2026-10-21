@@ -42,7 +42,11 @@ export async function POST(request: Request) {
   }
   if (body.reportType !== undefined && !isReportType(body.reportType)) return NextResponse.json({ reason: 'Unknown report type.' }, { status: 422 });
   // A tower inspection names its tower from the start, so every save and signature is about that one.
-  const inspected = inspectedName(reportTypeOf({ reportType: body.reportType as ReportTypeId | undefined }), body.inspected);
+  // A report started on a phone may come without one (an offline page from before tower
+  // inspections offered the type but not the name): it starts unnamed, is named with
+  // Rename, and cannot be sent until it is (review.ts).
+  const startType = reportTypeOf({ reportType: body.reportType as ReportTypeId | undefined });
+  const inspected = startType.inspects && body.clientKey !== undefined && body.inspected === undefined ? { ok: true as const, value: undefined } : inspectedName(startType, body.inspected);
   if (!inspected.ok) return NextResponse.json({ reason: inspected.reason }, { status: 422 });
   // A report started on a phone with no connection carries its own key and
   // visit date. Both or neither: a date alone would let any start backdate.

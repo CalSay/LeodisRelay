@@ -58,8 +58,8 @@ export const offlineTypes = (): OfflineType[] => CHECKLIST_TYPES.map(t => ({
 }));
 
 /** "New site update · Tetley Hall", "New safety inspection · Tetley Hall": a report with no reference yet. */
-export const startedTitle = (started: Pick<StartedOffline, 'reportType' | 'projectName'>): string =>
-  `New ${reportTypeOf(started).name.toLowerCase()} · ${started.projectName}`;
+export const startedTitle = (started: Pick<StartedOffline, 'reportType' | 'projectName' | 'inspected'>): string =>
+  `New ${reportTypeOf(started).name.toLowerCase()}${started.inspected ? ` of ${started.inspected}` : ''} · ${started.projectName}`;
 
 /**
  * The checks a report started offline takes to the server, fitted onto the

@@ -100,7 +100,7 @@ export interface SafetyProjectSource { id: string; projectNumber: string; projec
 export const INSPECTION_DUE_DAYS = 7;
 /** How far back cleared actions are listed: long enough to see last month's put right. */
 export const CLEARED_DAYS = 28;
-/** Towers are inspected at least every seven days while they stay up. */
+/** Towers are inspected at least every seven days while they stay up: due on the seventh day. */
 export const TOWER_DUE_DAYS = 7;
 /**
  * A tower not inspected for this long has most likely been taken down, so it
@@ -160,10 +160,13 @@ export function safetyActions(projects: SafetyProjectSource[], reports: Report[]
     }
     const last = mine.length ? ref(mine[mine.length - 1]!) : undefined;
     const sinceLast = last ? daysBetween(last.visitDate, today) : undefined;
-    const openActions = [...open.values()];
+    // An action names its tower as the tower list does: as it was last inspected.
+    const named = (a: SafetyAction): SafetyAction => a.tower ? { ...a, tower: towers.get(inspectedKey(a.tower))?.name ?? a.tower } : a;
+    const openActions = [...open.values()].map(named);
+    cleared.splice(0, cleared.length, ...cleared.map(named));
     const towerList: TowerState[] = [...towers.entries()].map(([key, t]) => {
       const sinceLast = daysBetween(t.last.visitDate, today);
-      return { name: t.name, last: t.last, sinceLast, due: sinceLast > TOWER_DUE_DAYS, open: openActions.filter(a => a.tower && inspectedKey(a.tower) === key).length };
+      return { name: t.name, last: t.last, sinceLast, due: sinceLast >= TOWER_DUE_DAYS, open: openActions.filter(a => a.tower && inspectedKey(a.tower) === key).length };
     }).filter(t => t.sinceLast <= TOWER_SHOWN_DAYS)
       .sort((a, b) => b.sinceLast - a.sinceLast || a.name.localeCompare(b.name, 'en', { numeric: true }));
     const project: SafetyProject = {

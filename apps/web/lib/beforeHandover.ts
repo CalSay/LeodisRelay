@@ -165,7 +165,7 @@ export function beforeHandover(project: HandoverProject, sources: HandoverSource
   const oursCount = ours.reduce((n, g) => n + g.issues.length, 0);
   return {
     projectId: project.id, today, ours, toCheck, others, inspections, variations, safety,
-    safetyInspected: (safetyProject?.inspections ?? 0) > 0,
+    safetyInspected: (safetyProject?.inspections ?? 0) > 0 || (safetyProject?.towers.length ?? 0) > 0 || (safetyProject?.open.length ?? 0) > 0,
     totals: {
       ours: oursCount, toCheck: toCheck.length, others: others.length,
       variations: variations.length, workDone: variations.filter(v => v.workDone).length, safety: safety.length,

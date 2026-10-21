@@ -89,6 +89,10 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
               <dt>Project</dt>
               <dd>{project?.projectName ?? report.projectId}</dd>
             </div>
+            {type.inspects && report.inspected && <div>
+              <dt>{type.inspects.label}</dt>
+              <dd>{report.inspected}</dd>
+            </div>}
             <div>
               <dt>Client</dt>
               <dd>{project?.clientName ?? "Not recorded"}</dd>
