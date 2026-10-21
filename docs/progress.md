@@ -4,6 +4,34 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Ninth release check: main ready at 616a06d
+
+- Why: a release check of everything merged since 03188ee (the eighth
+  check's ready commit, prepared for the live deploy but not yet run):
+  #100 to #108, with most attention on #105 (sending with no signal).
+  Not a `docs/tasks.json` task; no status changed.
+- Checked: typecheck, `npm test` (146 + 480) and build at a69a9fe, 4f08eb5
+  and 616a06d. Every browser check one at a time: 77 of 77 at a69a9fe, all
+  78 at 4f08eb5 (#107 changed the report editor), then the 25 office,
+  accessibility and sending checks at 616a06d (incl. new verify-office-links).
+  verify-busy-projects: over on two phone pages once; reruns passed one in
+  full on the new build while 03188ee failed both of its runs, so it is the
+  machine. A scratch phone-sized day (17 checks, not committed): offline
+  send waits through a retry, then exactly one report, issue and variation
+  with both photographs; the office reads it (Seen), Weekly summary shows
+  the work, Photographs offers and shows that day; the engineer opens the
+  issue and sees "Seen by the office"; closed while waiting and reopened
+  with signal sends once. Production Docker image built from a clean copy
+  of 616a06d and started healthy. Release notes updated (project files
+  `releases/2026-10-20-release-notes.md`); screenshots in
+  `ui-review/ninth-release-check/`.
+- Deploy needs nothing new since 03188ee: no settings, packages, database,
+  SharePoint or deploy script change; offline store still `relay-public-v14`.
+- Faults: none found.
+- Not verified: real phones, real weak signal, a locked phone while waiting
+  to send, printers, screen readers, tablets, the live server or tenant.
+- Next: deploy 616a06d in place of 03188ee, with Cal's go-ahead.
+
 ## 2026-10-21 — Recent places take less room on a new card
 
 - Why: Cal's 07:02 direction (simple for hands-on engineers). Two
