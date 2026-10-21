@@ -14,6 +14,7 @@ import { ownsReport } from '@/lib/auth/access';
 import { EngineerIssueList } from './EngineerIssueList';
 import { IndividualDefect } from './IndividualDefect';
 import { SinceLastVisit } from './SinceLastVisit';
+import { SiteNotesRow } from './SiteNotesRow';
 import { PageTitle } from './PageTitle';
 import { acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
 import { fmtMoney, variationValue } from '@/lib/variations';
@@ -244,6 +245,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
               <h3 id="eng-project-records" className="eng-group-title">Reports and records</h3>
               <div className="eng-list">
                 <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back ? `${back.reports} on file · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
+                <SiteNotesRow key={projectId} projectId={projectId} href={`/site-notes?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
                 {projectPage('/diary','Site diary','Every visit, day by day')}
                 {projectPage('/weekly-summary','Weekly summary','The week on one page, for the site meeting')}
                 {projectPage('/photos','Photographs','Every photograph, by location')}

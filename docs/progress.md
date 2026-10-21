@@ -67,6 +67,59 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   due" line on the engineer home; adding `verify-tower-inspection.mjs` to
   the browser checks in `CLAUDE.md`.
 
+## 2026-10-20 — Notes for the next visit
+
+- Why: when an engineer covers a site, or the next trade arrives, the word
+  that matters on the day (where the riser key is, which floor is locked off,
+  what goes up on Tuesday) is passed by phone or not at all. Reports are the
+  formal record for the client and project manager, so it does not belong in
+  them, and Site information (PR #28, unmerged) is the office's standing
+  facts about a site, not word passed between visits. Chosen by Claude under
+  Cal's standing freedom to add features; it stays out of the report editor
+  another thread is in.
+- What: new page `/site-notes?project=…`, "Notes for the next visit". Anyone
+  on a live project (every engineer trade, Managers, Admins) can leave a note
+  of up to 500 characters; each shows who left it, their trade (or Office),
+  when and how long ago. "Done with" folds a note away under "Marked done with
+  in the last 2 weeks", saying who and when, and "Put back" returns it. The
+  engineer home shows a "Notes for the next visit" row first under Reports and
+  records with the start of the latest note, who left it and how many are
+  open; the office project sheet has it in the same group (both from #54).
+- Decisions: a note is RELAY's own record (`site-notes` in the local store);
+  it is not part of any report, PDF, issue or variation, writes nothing to
+  SharePoint and sends nothing, so events stay distinct. It asks nobody to
+  decide anything and routes nothing (not EXP-2, "Do not introduce a
+  mandatory request, routing or approval step"), and it is free text with no
+  locations (not EXP-4). Notes are never removed (removing data needs Cal's
+  go-ahead); "Done with" is reversible and attributed. Anyone on the project
+  can mark any note done with, since the note is for the site, not its
+  writer. At most 20 open notes per project so the list stays readable.
+  Saves carry the form's own id, so a retry after a lost reply is not kept
+  twice. Complete or tender projects take no new notes (the API refuses with
+  409; the page only offers live projects, as every other page does).
+- Rules in `lib/siteNotes.ts`, store `lib/siteNoteStore.ts`, API
+  `GET/POST /api/site-notes` and `POST /api/site-notes/[id]` (`{ done }`).
+  Help: What's new `site-notes`, Where to find things, a "Passing word on"
+  section for site, and a step in "Your day in the office".
+- Verified (Node 22 here; CI runs Node 24): `npm run typecheck`, `npm test`
+  (3 new tests), `npm run build`, new `scripts/verify-site-notes.mjs`
+  (45 checks: signed-out and malformed saves refused, missing and complete
+  projects refused, engineer home row, leaving a note, kept after reload,
+  retries, done with and put back by the office, office reaches it from the
+  project sheet, another project starts empty, no connection keeps the words,
+  axe at 390px light and 1440px dark, 44px buttons, no sideways scroll; run
+  6 times in a row green). Also passed: `verify-home-and-sheet` (updated for
+  the new row and link), `verify-accessibility` (now includes the page),
+  `verify-help`, `verify-role-access`, `verify-engineer-layout`.
+  Screenshots: `ui-review/site-notes/` in the project files.
+- Not verified: a physical phone, Safari and Firefox, a real screen reader,
+  SharePoint mode. With no signal the page cannot be opened afresh (notes
+  are not kept on the phone yet); the home row then says nothing is waiting.
+- Proposed (not added to `docs/tasks.json`): NEW-9 notes for the next visit,
+  with the acceptance steps in the PR; add `verify-site-notes.mjs` to the
+  browser checks in `CLAUDE.md`. Later: keep the open notes on the phone for
+  the no-signal page, as Site information (#28) does.
+
 ## 2026-10-20 — Signing an inspection without drawing
 
 - Why: an inspection could only be signed by drawing, so someone using only a

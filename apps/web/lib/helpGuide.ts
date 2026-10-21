@@ -30,6 +30,9 @@ export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'tower-inspection', added: '2026-10-20', audience: 'all', title: 'Tower inspection',
     text: 'Inspect a mobile tower or podium after it is put up or moved, and at least every seven days while it stays up. Tap "Do a tower inspection", say which tower (its tag number and where it stands) and answer 12 checks, from its tag to its guardrails. Each "Action needed" goes on Safety actions under that tower until a later inspection of the same tower finds it put right, and Safety actions shows when each tower is due its next inspection. It works with no signal like the other inspections. The checks are a first draft and may change.',
     link: { label: 'Open Safety actions', href: '/safety-actions' } },
+  { id: 'site-notes', added: '2026-10-20', audience: 'all', title: 'Notes for the next visit',
+    text: 'Leave word on a project for whoever is on site next: where a key is, an area that is locked, what is coming up. Anyone on the project can leave a note or mark one done with, and each shows who left it and when. Notes are not part of any report and are not sent to anyone. Open it from "This project" on your home screen or from the office project sheet.',
+    link: { label: 'Open Notes for the next visit', href: '/site-notes' } },
   { id: 'typed-signature', added: '2026-10-20', audience: 'all', title: 'Sign an inspection without drawing',
     text: 'If you can\'t draw a signature, with a keyboard or screen reader say, choose "Type my name instead" when you sign an inspection: type your full name and tick the statement. It works with no signal too. The office and the PDF show it as a typed signature, with the statement, the time it was sent and who was signed in, so it is never mistaken for a drawing. Drawing works as before.' },
   { id: 'company-chases', added: '2026-10-20', audience: 'office', title: 'Chase notes on Issues by company',
@@ -129,6 +132,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Safety actions', href: '/safety-actions', audience: 'all', text: 'What the safety and tower inspections found, until it is put right, and which towers are due.' },
   { label: 'Before handover', href: '/handover', audience: 'all', text: 'Everything still open on one project, as it nears completion.' },
   { label: 'Issues over time', href: '/issue-trend', audience: 'all', text: 'Whether a project\'s issue list is getting shorter, week by week.' },
+  { label: 'Notes for the next visit', href: '/site-notes', audience: 'all', text: 'Word left on a project for whoever is on site next.' },
   { label: 'My week', href: '/my-week', audience: 'all', text: 'Your own week across every project.' },
   { label: 'Site coverage', href: '/coverage', audience: 'office', text: 'Which live projects have gone quiet.' },
   { label: 'Issues by company', href: '/companies', audience: 'office', text: 'Who to chase, for what, and what they promised last time.' },
@@ -274,6 +278,11 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'When you have signal again, open RELAY and the work goes up by itself. A signed inspection goes to the office, and RELAY says when it has gone; if it changed after you signed, it stays a draft for you to sign again. Everything else stays a draft until you sign and send.',
       'If you share a phone, sign out at the end of the day. Work held on the phone belongs to whoever was last signed in.',
     ] },
+    { id: 'next-visit', heading: 'Passing word on', ordered: false, steps: [
+      'Under "This project" on your home screen, "Notes for the next visit" shows what the last person left for you: a key, a locked area, what is coming up. Read it before you start.',
+      'Leave a note there for whoever comes next. When a note no longer applies, tap "Done with"; it is kept for two weeks in case it is needed back.',
+      'A note is not part of a report and goes to nobody. Anything the client or project manager needs to know still goes in a site update.',
+    ] },
     { id: 'wrong', heading: 'Got something wrong', ordered: false, steps: [
       'Before sending: change it. Removing a card or photograph offers "Undo".',
       'After sending: open the report and tap "Make a correction". It goes as a new revision with your reason, and the first stays on file.',
@@ -287,6 +296,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'A report\'s signature line says whether it was drawn or typed. A typed signature shows the statement the person ticked and who was signed in when it was sent.',
       'Give each new issue an owner and a target date. Overdue issues and work done without an instruction are listed under "Also needs attention".',
       'Chase companies with late work from Issues by company, and log each chase there with what they promised, so the next person to ring them knows.',
+      'Leave word for the engineers on a project under "Notes for the next visit" on its project sheet, and read what they left each other.',
       'Price variations, then record the client\'s instruction with their reference, or decline. Nothing is deleted.',
     ] },
     { id: 'verify', heading: 'Closing an issue', ordered: false, steps: [
@@ -300,7 +310,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     { id: 'meetings', heading: 'For the site meeting', ordered: false, steps: [
       'Weekly summary puts a project\'s week on one page. Snag lists print the open issues for one company or trade. Site diary reads back every visit.',
       'Issues by company is the chase list; Site coverage shows which live projects have gone quiet.',
-      'A project\'s own pages (Safety actions, Issues over time, Before handover, Site diary, Weekly summary, Photographs) are on its project sheet, under its figures. On a phone they are at the top of the project\'s register.',
+      'A project\'s own pages (Safety actions, Issues over time, Before handover, Site diary, Weekly summary, Photographs, Notes for the next visit) are on its project sheet, under its figures. On a phone they are at the top of the project\'s register.',
     ] },
   ],
 };

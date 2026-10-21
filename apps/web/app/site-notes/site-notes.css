@@ -1,0 +1,32 @@
+/* Notes for the next visit: a form and a list of short notes on one project. */
+.sn-page{max-width:760px;}
+.sn-head h1{margin:4px 0 6px;}
+.sn-intro{margin:0 0 14px;font-size:15px;line-height:1.5;color:var(--text-2);max-width:62ch;}
+.sn-controls{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 16px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+.sn-controls label,.sn-form label{font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
+.sn-controls select{flex:1 1 240px;min-height:44px;}
+.sn-form{display:flex;flex-direction:column;gap:8px;margin:0 0 18px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+.sn-form textarea{width:100%;font:inherit;font-size:16px;color:var(--text);min-height:84px;resize:vertical;}
+.sn-form button{align-self:flex-start;min-height:44px;}
+.sn-sub{margin:0;font-size:12.5px;color:var(--text-2);}
+.sn-sub.sn-left{color:var(--caution);font-weight:500;}
+.sn-section{margin-top:6px;}
+.eng-page .sn-section h2{margin:0 0 8px;font-size:17px;display:flex;align-items:center;gap:8px;}
+.sn-count{font:500 11px var(--mono);color:var(--text-3);}
+.sn-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+.sn-note{border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:8px;background:var(--panel);padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:start;}
+.sn-note-done{border-left-color:var(--line-2);}
+.sn-note p{margin:0;grid-column:1;}
+.sn-text{font-size:15.5px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;}
+.sn-meta{font-size:12.5px;color:var(--text-2);overflow-wrap:anywhere;}
+.sn-age{color:var(--text-3);}
+.sn-done{grid-column:2;grid-row:1 / span 3;min-height:44px;white-space:nowrap;}
+.sn-none{margin:0;font-size:14px;color:var(--text-2);}
+.sn-done-list{margin-top:16px;border-top:1px solid var(--line);padding-top:10px;}
+.sn-done-list summary{cursor:pointer;font-size:14px;font-weight:600;padding:8px 0;min-height:44px;display:flex;align-items:center;}
+.sn-done-list .sn-list{margin-top:8px;}
+.sn-foot{margin-top:20px;font-size:12.5px;color:var(--text-2);line-height:1.5;}
+@media (max-width:520px){
+  .sn-note{grid-template-columns:1fr;}
+  .sn-done{grid-column:1;grid-row:auto;justify-self:start;}
+}
