@@ -11,6 +11,7 @@ import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation'
 import { DIARY_KINDS, isDiaryKind, type DiaryCard, type DiaryEntry, type SiteDiary } from '@/lib/siteDiary';
 import type { ObservationType } from '@/lib/fixtures';
 import { dateShort, dayLong, whenShort } from '@/lib/dates';
+import { failure as failed } from '@/lib/failure';
 
 /**
  * A project's living site diary: every visit, day by day, made from the
@@ -97,7 +98,7 @@ export function SiteDiaryPage({ initialProject, initialFind, initialShow, return
     if (before) q.set('before', before);
     const response = await fetch(`/api/site-diary?${q}`, { cache: 'no-store' });
     const body = await response.json().catch(() => ({})) as SiteDiary & { reason?: string };
-    if (!response.ok) throw new Error(body.reason ?? `The diary could not be loaded (${response.status}).`);
+    if (!response.ok) throw failed(response.status, body, 'The diary could not be loaded.');
     return body;
   };
   const failure = (e: unknown) => e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'The diary could not be loaded.';

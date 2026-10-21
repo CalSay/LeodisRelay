@@ -7,6 +7,7 @@ import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation'
 import { QUIET_WORKING_DAYS, fortnightStart, isWeekend, shiftFortnight, type CoverageProject, type CoverageVisit, type SiteCoverage } from '@/lib/siteCoverage';
 import { londonDay } from '@/lib/weeklySummary';
 import { dayShort } from '@/lib/dates';
+import { failure } from '@/lib/failure';
 
 /**
  * Site coverage, for the office: every reportable project against a
@@ -52,7 +53,7 @@ export function SiteCoveragePage({ initialStart, returnTo }: { initialStart: str
     fetch(`/api/site-coverage?${new URLSearchParams({ start })}`, { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as SiteCoverage & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `Site coverage could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'Site coverage could not be loaded.');
         if (!cancelled) setData(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'Site coverage could not be loaded.'); });

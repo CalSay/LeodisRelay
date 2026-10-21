@@ -3,7 +3,7 @@
 import type { Where } from '@/lib/uploadStatus';
 import type { CheckAnswer, Observation } from '@/lib/types';
 import { CHECK_ANSWERS } from '@/lib/reportTypes';
-import { PhotoField, Suggestions } from './ObservationEditor';
+import { PhotoField, Suggestions, TooLong } from './ObservationEditor';
 
 /**
  * One check on an inspection (EXP-5).
@@ -96,6 +96,6 @@ export function CheckEditor({ observation, index, total, hint, raises, actionPro
       </div>
       <PhotoField observation={observation} note=" · optional" {...(photoWhere ? { photoWhere } : {})} onChange={onChange} onRemovePhoto={onRemovePhoto} />
     </> : null}
-
+    <TooLong observation={observation} />
   </section>;
 }

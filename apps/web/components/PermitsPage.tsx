@@ -14,6 +14,8 @@ import {
 } from '@/lib/permits';
 import { safeViewReturn, backLabel } from '@/lib/viewNavigation';
 import { dayShort, whenShort } from '@/lib/dates';
+import { failure } from '@/lib/failure';
+import { DownloadLink } from '@/components/DownloadLink';
 
 /**
  * Permits to work: the hot works, isolation and other permits on a project,
@@ -75,7 +77,7 @@ export function PermitsPage({ initialProject, returnTo }: { initialProject: stri
     fetch(`/api/permits?${new URLSearchParams({ project: projectId })}`, { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as Loaded & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `The permits could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'The permits could not be loaded.');
         if (!cancelled) setData(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'The permits could not be loaded.'); });
@@ -126,7 +128,7 @@ export function PermitsPage({ initialProject, returnTo }: { initialProject: stri
         setRequestId(clientId());
         throw new Error('An earlier try was saved with different details. Save again to keep these as a new permit, or reload to see it.');
       }
-      if (!response.ok) throw new Error(body.reason ?? `The permit could not be saved (${response.status}).`);
+      if (!response.ok) throw failure(response.status, body, 'The permit could not be saved.', 'What you typed is still here.');
       replace(body);
       setSaid(`Permit recorded: ${kindLabel(body.kind)}, open until ${body.ends.slice(11)} ${dayShort(body.ends.slice(0, 10))}.`);
       closeForm();
@@ -145,7 +147,7 @@ export function PermitsPage({ initialProject, returnTo }: { initialProject: stri
       const response = await fetch(`/api/permits/${encodeURIComponent(permit.id)}`, { method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify(action === 'close' ? { action, confirmed, ...(text.trim() ? { note: text } : {}) } : { action, reason: text }) });
       const body = await response.json().catch(() => ({})) as Permit & { reason?: string };
-      if (!response.ok) throw new Error(body.reason ?? `The permit could not be ${action === 'close' ? 'closed' : 'withdrawn'} (${response.status}).`);
+      if (!response.ok) throw failure(response.status, body, `The permit could not be ${action === 'close' ? 'closed' : 'withdrawn'}.`);
       replace(body);
       stopActing();
       setSaid(action === 'close' ? `Permit closed: ${kindLabel(body.kind)}, ${body.work}.` : 'Permit record withdrawn. It stays listed, marked withdrawn, and is left out of the counts.');
@@ -290,10 +292,10 @@ export function PermitsPage({ initialProject, returnTo }: { initialProject: stri
         </form>
           : <div className="pt-actions">
             <button type="button" ref={opener} className="btn-primary" onClick={() => { setFormOpen(true); stopActing(); setSaid(''); }}>Record a permit</button>
-            {data.permits.length > 0 && <a className="eng-link-button" href={download} download>Download spreadsheet</a>}
+            {data.permits.length > 0 && <DownloadLink className="eng-link-button" href={download} what="spreadsheet">Download spreadsheet</DownloadLink>}
           </div>)
           : <div className="eng-panel"><p>This project is not active or in defects liability, so it takes no new permits.</p>
-            {data.permits.length > 0 && <a className="eng-link-button" href={download} download>Download spreadsheet</a>}</div>}
+            {data.permits.length > 0 && <DownloadLink className="eng-link-button" href={download} what="spreadsheet">Download spreadsheet</DownloadLink>}</div>}
 
         <section aria-labelledby="pt-open-title" className="pt-section">
           <h2 id="pt-open-title">Open now <span className="pt-count">{open.length}</span></h2>

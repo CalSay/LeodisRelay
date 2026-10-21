@@ -11,6 +11,7 @@ import type { FixtureProject } from "./fixtures";
 import { issueQueryParams, type IssuePage, type IssueQuery } from './issueQuery';
 import type { Issue, Observation, Photo, Report, ReportSummary, Variation } from "./types";
 import { capturePhoto, uploadPhotos } from './localMedia';
+import { failure, passingFailure, RequestFailure } from './failure';
 import { localSaveJournal } from './localSaveJournal';
 import { SaveConflict, saveWithJournal, type SaveRequest } from './saveRequest';
 import type { SinceLastVisit } from './sinceLastVisit';
@@ -36,11 +37,20 @@ export class ApiError extends Error {
   readonly offline: boolean;
   /** The server's answer, when it gave one. */
   readonly status: number | undefined;
-  constructor(message: string, offline = false, status?: number) {
+  /** The server's code for a refusal that needs RELAY's own words (lib/failure.ts). */
+  readonly code: string | undefined;
+  constructor(message: string, offline = false, status?: number, code?: string) {
     super(message);
     this.offline = offline;
     this.status = status;
+    this.code = code;
   }
+  /** The session has gone: the work is fine, the person needs to sign in again. */
+  get signedOut(): boolean { return this.status === 401; }
+  /** A fault RELAY's server, or signing in, will clear: worth trying again by itself. */
+  get passing(): boolean { return passingFailure(this.status, this.code); }
+  /** The server's definite "no": sending the same again would be refused again (lib/saveRequest.ts). */
+  get refused(): boolean { return !this.offline && this.status !== undefined && this.status >= 400 && this.status < 500 && !this.passing; }
 }
 
 async function request(input: string, init?: RequestInit): Promise<Response> {
@@ -55,10 +65,11 @@ async function request(input: string, init?: RequestInit): Promise<Response> {
 
 async function parse<T>(response: Response): Promise<T> {
   if (!response.ok) {
-    const body = (await response.json().catch(() => ({}))) as { reason?: string; current?: Report };
+    const body = (await response.json().catch(() => ({}))) as { reason?: string; code?: string; current?: Report };
     // A draft saved elsewhere first: the server sends its copy so both can be shown.
     if (response.status === 409 && body.current) throw new SaveConflict(body.reason ?? 'This draft was saved somewhere else.', body.current);
-    throw new ApiError(body.reason ?? `That did not go through (${response.status}).`, false, response.status);
+    const failed = failure(response.status, body, 'That did not go through.');
+    throw new ApiError(failed.message, false, response.status, failed.code);
   }
   return (await response.json()) as T;
 }
@@ -121,7 +132,7 @@ export async function renameInspected(reportId: string, inspected: string): Prom
  */
 export async function sendHeldSave(reportId: string, body: { requestId: string; expectedVersion: number; observations: Observation[]; signature?: HeldSignature | null }): Promise<Report> {
   try { await uploadPhotos(body.observations.flatMap(o => o.photos), { reportId }); }
-  catch (error) { if (error instanceof TypeError) throw new ApiError('No connection. Photographs remain on this phone.', true); throw error; }
+  catch (error) { if (error instanceof TypeError) throw new ApiError('No connection. Photographs remain on this phone.', true); if (error instanceof RequestFailure) throw new ApiError(error.message, false, error.status, error.code); throw error; }
   return parse<Report>(await request(`/api/reports/${reportId}`, {
     method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
   }));
@@ -146,7 +157,7 @@ export async function sendHeldSigned(reportId: string, signature: HeldSignature,
 export async function saveReport(report: Report, expectedVersion?: number,principalId?:string): Promise<Report> {
   const send = async (body:SaveRequest) => {
     try { await uploadPhotos(body.observations.flatMap(o => o.photos), { reportId: report.id }); }
-    catch (error) { if (error instanceof TypeError) throw new ApiError('No connection. Photographs remain on this phone.',true); throw error; }
+    catch (error) { if (error instanceof TypeError) throw new ApiError('No connection. Photographs remain on this phone.',true); if (error instanceof RequestFailure) throw new ApiError(error.message, false, error.status, error.code); throw error; }
     return parse<Report>(await request(`/api/reports/${report.id}`, {
       method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify(body),
     }));

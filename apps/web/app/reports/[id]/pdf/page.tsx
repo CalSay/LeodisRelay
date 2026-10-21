@@ -5,6 +5,8 @@ import Link from 'next/link';
 import type {PDFDocumentProxy, RenderTask} from 'pdfjs-dist/legacy/build/pdf.mjs';
 import {safeViewReturn, withViewReturn} from '@/lib/viewNavigation';
 import {PageTitle} from '@/components/PageTitle';
+import {DownloadLink} from '@/components/DownloadLink';
+import {failure} from '@/lib/failure';
 
 /** Render locally: never navigate the installed app into the device PDF viewer. */
 export default function PdfPage({params,searchParams}: {params:Promise<{id:string}>;searchParams:Promise<{returnTo?:string}>}) {
@@ -15,7 +17,8 @@ export default function PdfPage({params,searchParams}: {params:Promise<{id:strin
   const [zoom,setZoom] = useState(1);
   const [width,setWidth] = useState(320);
   const [error,setError] = useState('');
-  const [signedOut,setSignedOut] = useState(false);
+  /** The file came but this browser could not draw it: the download is the way to read it. */
+  const [cannotShow,setCannotShow] = useState(false);
   const [loading,setLoading] = useState(true);
   const [pageText,setPageText] = useState('');
   const [retry,setRetry] = useState(0);
@@ -35,26 +38,37 @@ export default function PdfPage({params,searchParams}: {params:Promise<{id:strin
     let active = true;
     let task: ReturnType<typeof import('pdfjs-dist/legacy/build/pdf.mjs')['getDocument']> | undefined;
     const abort = new AbortController();
-    setDoc(null);setPage(1);setLoading(true);setError('');setSignedOut(false);
+    setDoc(null);setPage(1);setLoading(true);setError('');setCannotShow(false);
     async function load() {
       try {
         const response = await fetch(`/api/reports/${id}/pdf`,{cache:'no-store',signal:abort.signal});
         if (!response.ok) {
           const body = await response.json().catch(() => ({}));
-          if (response.status === 401 && active) setSignedOut(true);
-          throw new Error(body.reason ?? 'Unable to open this PDF.');
+          throw failure(response.status, body, 'The PDF could not be opened.');
         }
-        const bytes = new Uint8Array(await response.arrayBuffer());
-        // The legacy build carries polyfills for browser features pdf.js now
-        // relies on (such as Map.getOrInsertComputed), which older iPhones
-        // and older desktop browsers lack; the modern build fails there.
-        const pdf = await import('pdfjs-dist/legacy/build/pdf.mjs');
-        if (!active) return;
-        pdf.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs',import.meta.url).toString();
-        task = pdf.getDocument({data:bytes});
-        const document = await task.promise;
-        if (active) setDoc(document);
-      } catch (e) {if (active) {setError(e instanceof Error ? e.message : 'Unable to open PDF.');setLoading(false);}}
+        let bytes: Uint8Array;
+        try { bytes = new Uint8Array(await response.arrayBuffer()); }
+        catch { throw new TypeError('cut off'); }
+        try {
+          // The legacy build carries polyfills for browser features pdf.js now
+          // relies on (such as Map.getOrInsertComputed), which older iPhones
+          // and older desktop browsers lack; the modern build fails there.
+          const pdf = await import('pdfjs-dist/legacy/build/pdf.mjs');
+          if (!active) return;
+          pdf.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/legacy/build/pdf.worker.min.mjs',import.meta.url).toString();
+          task = pdf.getDocument({data:bytes});
+          const document = await task.promise;
+          if (active) setDoc(document);
+        } catch {
+          // pdf.js could not read it, or this browser is too old for pdf.js: the file itself is fine.
+          if (active) {setCannotShow(true);setError('This PDF could not be shown here, on this browser. Download the PDF to open it in your usual PDF reader.');setLoading(false);}
+          return;
+        }
+      } catch (e) {
+        if (!active || (e instanceof DOMException && e.name === 'AbortError')) return;
+        setError(e instanceof TypeError || !(e instanceof Error) ? 'No connection, so the PDF could not be opened. Try again when there is signal.' : e.message);
+        setLoading(false);
+      }
     }
     void load();
     return () => {active=false;abort.abort();if (task) void task.destroy();};
@@ -64,7 +78,7 @@ export default function PdfPage({params,searchParams}: {params:Promise<{id:strin
     let active = true;
     let render:RenderTask | undefined;
     const surface = canvas.current;
-    setLoading(true);setError('');setPageText('');setSignedOut(false);
+    setLoading(true);setError('');setPageText('');setCannotShow(false);
     async function draw() {
       try {
         const pdfPage = await doc!.getPage(page);
@@ -86,7 +100,10 @@ export default function PdfPage({params,searchParams}: {params:Promise<{id:strin
         await render.promise;
         const text = await pdfPage.getTextContent();
         if (active) {setPageText(text.items.map(i => 'str' in i ? i.str : '').join(' '));setLoading(false);}
-      } catch(e) {if (active) {setError(e instanceof Error ? e.message : 'Unable to display this page.');setLoading(false);}}
+      } catch(e) {
+        if (!active || (e instanceof Error && e.name === 'RenderingCancelledException')) return;
+        setCannotShow(true);setError(`Page ${page} could not be shown here, on this browser. Download the PDF to read it in your usual PDF reader.`);setLoading(false);
+      }
     }
     void draw();
     return () => {active=false;render?.cancel();};
@@ -100,10 +117,12 @@ export default function PdfPage({params,searchParams}: {params:Promise<{id:strin
       <span aria-live="polite">{doc ? `Page ${page} of ${doc.numPages}` : 'PDF'}</span>
       <button disabled={!doc || page === doc.numPages || loading} onClick={() => setPage(p => p+1)}>Next page</button>
       <label>Zoom <select value={zoom} onChange={e => setZoom(Number(e.target.value))}><option value={1}>Fit width</option><option value={1.5}>150%</option><option value={2}>200%</option></select></label>
-      {doc && <a className="back" href={`/api/reports/${id}/pdf?download=1`} download>Download PDF</a>}
+      {doc && <DownloadLink className="back" href={`/api/reports/${id}/pdf?download=1`} what="PDF">Download PDF</DownloadLink>}
     </div>
     {loading && <p role="status">Loading PDF…</p>}
-    {error && <div role="alert" className="note note-bad"><p>{error}</p><button onClick={() => setRetry(n => n+1)}>Try again</button>{/* Offered only when the session is the actual problem; on a render fault it sends people to fix something that is not broken. */}{signedOut && <> <Link href="/signin">Sign in</Link></>}</div>}
+    {error && <div role="alert" className="note note-bad"><p>{error}</p>{cannotShow
+      ? <DownloadLink href={`/api/reports/${id}/pdf?download=1`} what="PDF">Download the PDF</DownloadLink>
+      : <button onClick={() => setRetry(n => n+1)}>Try again</button>}</div>}
     <div ref={container} style={{width:'100%',overflowX:'auto',marginTop:16}}>
       {doc && <canvas key={`${page}-${width}-${zoom}`} ref={canvas} role="img" aria-label={`Report PDF, page ${page}. Text is available below.`} style={{display:error ? 'none':'block',background:'#fff'}} />}
     </div>

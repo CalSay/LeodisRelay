@@ -8,6 +8,23 @@ import { fileReport, registerReport } from './sharepoint/reports';
 import { checkSchema } from './sharepoint/preflight';
 import { failVariationOperation, queueVariationBackfill, sendVariationOperation, type VariationOperation } from './sharepoint/variations';
 
+/**
+ * What a report's SharePoint step records when filing fails. While RELAY is
+ * still trying (Microsoft busy, the network down), the step stays waiting and
+ * says so, rather than "needs attention" on the first miss; it fails only when
+ * Microsoft refuses outright or RELAY has given up. The words are for the
+ * office: no stack, no bare status.
+ */
+export function sharePointFailure(error: unknown, final: boolean): { status: 'pending' | 'failed'; error: string } {
+  const what = error instanceof GraphError ? error.message
+    : error instanceof TypeError ? 'SharePoint could not be reached.'
+    : error instanceof Error && /SharePoint/.test(error.message) ? error.message
+    : 'Filing in SharePoint did not finish.';
+  return final
+    ? { status: 'failed', error: `${what} The report is safe in RELAY. An Admin can retry it once SharePoint is fixed.` }
+    : { status: 'pending', error: `${what} RELAY tries again by itself. The report is safe in RELAY.` };
+}
+
 /** One process, one expensive render at a time; web requests only enqueue work. */
 export async function runOneJob(): Promise<boolean> {
   queueVariationBackfill();
@@ -84,14 +101,24 @@ export async function runOneJob(): Promise<boolean> {
           if (permanent || job.attempts >= 8) failVariationOperation(JSON.parse(job.payload) as VariationOperation, error, job.id);
         } else {
           const current = getRecord<Report>('reports', reportId);
-          if (current) putRecord('reports', { ...current, sharepoint: { ...current.sharepoint, status:'failed', error:reason } });
+          if (current) {
+            const failure = sharePointFailure(error, permanent || job.attempts >= 8);
+            // Already registered in the list: still tried again, without going back a step.
+            const status = failure.status === 'pending' && current.sharepoint?.status === 'registered' ? 'registered' : failure.status;
+            putRecord('reports', { ...current, sharepoint: { ...current.sharepoint, ...failure, status } });
+          }
         }
         finishJob(job, reason, error instanceof GraphError ? error.retryAfterMs : 0);
         if (permanent) database().prepare("UPDATE jobs SET status='failed' WHERE id=? AND status='pending'").run(job.id);
         return;
       }
       const current = getRecord<Report>('reports',reportId);
-      if (current) putRecord('reports',{ ...current, delivery:'failed', deliveryError:reason, deliveryErrorStage: job.kind === 'pdf' ? 'pdf' : 'delivery' });
+      // The office sees these words; the job keeps the technical reason for an Admin.
+      const tryingAgain = job.attempts < 8;
+      const said = job.kind === 'pdf'
+        ? `The PDF could not be made${tryingAgain ? ' yet. RELAY tries again by itself.' : '. An Admin can look into it.'}`
+        : `The notification could not be sent${tryingAgain ? ' yet. RELAY tries again by itself.' : '. An Admin can look into it.'}`;
+      if (current) putRecord('reports',{ ...current, delivery:'failed', deliveryError:said, deliveryErrorStage: job.kind === 'pdf' ? 'pdf' : 'delivery' });
       finishJob(job,reason);
     });
   } finally { clearInterval(heartbeat); }

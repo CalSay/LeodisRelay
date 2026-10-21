@@ -59,5 +59,5 @@ test('a signed copy opens only from an https address', () => {
 test('a card refuses a text box too long to have been typed on site', async () => {
   const card = (text: string) => [{ id: 'c1', type: 'update', location: 'Level 2', whatHappened: text, actionNeeded: '', owner: '', photos: [] }];
   assert.equal(await validateObservations(card('x'.repeat(TEXT_MAX)), 'rep-1', []), null);
-  assert.match((await validateObservations(card('x'.repeat(TEXT_MAX + 1)), 'rep-1', []))!, /under 10,000 characters/);
+  assert.match((await validateObservations(card('x'.repeat(TEXT_MAX + 1)), 'rep-1', []))!, /over 10,000 characters, so it was not saved/);
 });
