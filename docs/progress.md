@@ -33,6 +33,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (`releases/2026-10-20-release-notes.md`).
 - Not verified: real phones, real weak signal, a locked phone, screen
   readers, printers, tablets.
+- Not covered: #119 (office Inbox), merged after this check; it waits for
+  the next one.
 - Next: deploy 0d56773 when Cal says so (deploy thread).
 ## 2026-10-21 — Office Inbox tidy-up
 
