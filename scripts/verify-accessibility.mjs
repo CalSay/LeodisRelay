@@ -118,6 +118,15 @@ async function editorStates(scheme,width,phone){
   await state('update-check');
   await page.getByRole('button',{name:'Send to office'}).click();await page.locator('.pagehead .tag-sent').waitFor();
   await state('update-sent');
+  // A tower inspection: the tile asks which tower (refused when empty), then Rename under the title.
+  await page.goto(`${base}/engineer?project=${P}`);await page.getByRole('button',{name:/Do a tower inspection/}).click();
+  await page.getByRole('button',{name:'Start the tower inspection'}).click();await page.getByRole('alert').filter({hasText:'Say which tower'}).waitFor();
+  await state('tower-name');
+  await page.getByLabel('Which tower or podium?').fill('T3, level 2 east corridor');await page.getByRole('button',{name:'Start the tower inspection'}).click();
+  await page.waitForURL(/\/reports\//);await page.locator('.eng-inspected').waitFor();
+  await page.locator('.eng-inspected').getByRole('button',{name:'Rename'}).click();await page.locator('#inspected-name').waitFor();
+  await state('tower-rename');
+  await page.getByRole('button',{name:'Cancel'}).click();
   // A safety inspection: its checks, one answered "Action needed", the check step with what stops it.
   await page.goto(`${base}/engineer?project=${P}`);await page.getByText(/Do a safety inspection/).click();
   await page.waitForURL(/\/reports\//);await page.locator('.eng-cardrow').first().waitFor();

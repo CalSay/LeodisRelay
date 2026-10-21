@@ -4,6 +4,69 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-20 — Tower inspection (EXP-5, fourth report type)
+
+- Added a fourth checklist type, "Tower inspection" (Tower and Podium
+  Inspection, references `-TPI-`): one mobile tower or podium, inspected after
+  it is put up or moved and at least every seven days while it stays up, as
+  the Work at Height Regulations 2005 expect. 12 checks (tag, built to the
+  instructions, ground, castors and legs, stabilisers, braces, damage,
+  platform, guardrails and toe boards, inside access, surroundings, height
+  and load). Signature required, drawn or typed (#57). The checks are
+  Claude's first draft, and the Help entry says they may change.
+- Why this type: M&E engineers use towers and podiums every day, the
+  inspection record is a legal requirement that today lives on paper tags,
+  and it was the type #55 set aside only because inspections had nowhere to
+  name what was inspected. Chosen by Claude under Cal's standing instruction.
+- What was inspected: a type can now `inspects` one thing. The tower is
+  named on the home tile before the inspection starts (free text, never a
+  list: EXP-4), stored as `Report.inspected`, shown under the title,
+  printed on the PDF under the title block, and named in the office sheet
+  and register, site diary, weekly summary, My week and search. The author
+  can rename it while it is a draft ("Rename", `POST /api/reports/:id`
+  `action: rename`); renaming does not change the draft's version, so an open
+  editor is not told its copy is out of date. Sent, it is fixed. Decided
+  here: naming it at the start rather than as a field saved with the checks,
+  so drafts, held copies on the phone and the offline signature need no
+  change; a rename needs signal.
+- Actions: like the safety inspection, a tower inspection raises no issues (a
+  tower that fails is tagged out of use, not snagged). Each "Action needed"
+  goes on Safety actions under its tower, and is cleared only by a later
+  inspection of the same tower (names matched ignoring case and spacing).
+  Safety actions now lists each tower inspected in the last four weeks with
+  its last inspection, and marks one "another is due" after seven days, with
+  a "Towers due" figure. A tower not inspected for four weeks is taken to be
+  down and no longer listed; its open actions stay. The project's "Last
+  safety inspection" and "Inspections due" still count weekly safety
+  inspections only.
+- No signal: the offline page asks for the tower when a tower inspection is
+  chosen and takes it to the server when it starts the report. Service worker
+  cache `relay-public-v12`.
+- Help: What's new "Tower inspection", a "A tower or podium" guide section,
+  and the Safety actions and "Action needed" wording.
+- Checks: `npm run typecheck`, `npm test` (346, new
+  `tests/towerInspection.test.ts`), `npm run build`, new
+  `scripts/verify-tower-inspection.mjs` (112 checks: tile refuses an empty
+  name, Cancel, rename, answers, PDF words, signed and sent with no issue,
+  rename refused once sent and for anyone but the author, Safety actions with
+  a tower overdue, diary, office sheet, 390px light and 1440px dark),
+  `verify-offline-inspection` (now also starts a tower inspection with no
+  signal), `verify-accessibility` (540, now with the tile form and rename
+  open). Also passed: typed-signature, report-types, safety-actions,
+  first-fix-inspection, offline-sign, help, engineer-layout, role-access,
+  handover-offline, editor-usability, unfinished-reports, before-handover,
+  home-and-sheet, site-diary, search, my-week, weekly-summary.
+- Seen, not changed: on a phone, tapping "Next check" straight after typing in
+  "Who is to do it" can land on "Check & send" instead, because leaving the
+  field brings the bottom bar back and moves the page. The new browser check
+  leaves the field first. Worth a look in the next editor pass.
+- Not verified: a physical phone; Cal or a site manager reading the checks;
+  whether "every seven days" matches every client's site rules.
+- Proposed (not added to `docs/tasks.json`): starting another tower
+  inspection while one is a draft (one per type at a time today); a "towers
+  due" line on the engineer home; adding `verify-tower-inspection.mjs` to
+  the browser checks in `CLAUDE.md`.
+
 ## 2026-10-20 — Signing an inspection without drawing
 
 - Why: an inspection could only be signed by drawing, so someone using only a
