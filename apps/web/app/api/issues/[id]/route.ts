@@ -32,7 +32,8 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   if(!canAccessProject(principal,issue.projectId))return NextResponse.json({reason:'Project access required.'},{status:403});
 
   const command = (await request.json().catch(() => null)) as IssueCommand | null;
-  if (!command || typeof command.kind !== 'string' || typeof command.note !== 'string' ||
+  if (!command || typeof command.kind !== 'string' || typeof command.note !== 'string' || command.note.length > 10_000 ||
+      (typeof command.owner === 'string' && command.owner.length > 400) ||
       (command.owner !== undefined && typeof command.owner !== 'string') ||
       (command.targetDate !== undefined && typeof command.targetDate !== 'string')) {
     return NextResponse.json({reason:'Invalid issue action.'},{status:422});
