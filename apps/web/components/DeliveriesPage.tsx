@@ -14,6 +14,8 @@ import {
 } from '@/lib/deliveries';
 import { safeViewReturn, backLabel } from '@/lib/viewNavigation';
 import { dayShort, whenShort } from '@/lib/dates';
+import { failure } from '@/lib/failure';
+import { DownloadLink } from '@/components/DownloadLink';
 
 /**
  * Deliveries to site: what arrived on a project, who took it in and where it
@@ -73,7 +75,7 @@ export function DeliveriesPage({ initialProject, returnTo }: { initialProject: s
     fetch(`/api/deliveries?${new URLSearchParams({ project: projectId })}`, { cache: 'no-store' })
       .then(async response => {
         const body = await response.json().catch(() => ({})) as Loaded & { reason?: string };
-        if (!response.ok) throw new Error(body.reason ?? `The deliveries could not be loaded (${response.status}).`);
+        if (!response.ok) throw failure(response.status, body, 'The deliveries could not be loaded.');
         if (!cancelled) setData(body);
       })
       .catch(e => { if (!cancelled) setError(e instanceof TypeError ? 'No connection. Try again when there is signal.' : e instanceof Error ? e.message : 'The deliveries could not be loaded.'); });
@@ -122,7 +124,7 @@ export function DeliveriesPage({ initialProject, returnTo }: { initialProject: s
         setRequestId(clientId());
         throw new Error('An earlier try was saved with different details. Save again to keep these as a new delivery, or reload to see it.');
       }
-      if (!response.ok) throw new Error(body.reason ?? `The delivery could not be saved (${response.status}).`);
+      if (!response.ok) throw failure(response.status, body, 'The delivery could not be saved.', 'What you typed is still here.');
       replace(body);
       setSaid(body.condition === 'complete' ? `Delivery recorded: ${body.supplier}, all there.` : `Delivery recorded: ${body.supplier}, ${conditionShort(body.condition).toLowerCase()}. It stays under To sort until someone marks it sorted.`);
       closeForm();
@@ -140,7 +142,7 @@ export function DeliveriesPage({ initialProject, returnTo }: { initialProject: s
       const response = await fetch(`/api/deliveries/${encodeURIComponent(delivery.id)}`, { method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify(action === 'sort' ? { action, note: text } : { action, reason: text }) });
       const body = await response.json().catch(() => ({})) as Delivery & { reason?: string };
-      if (!response.ok) throw new Error(body.reason ?? `The delivery could not be ${action === 'sort' ? 'marked sorted' : 'withdrawn'} (${response.status}).`);
+      if (!response.ok) throw failure(response.status, body, `The delivery could not be ${action === 'sort' ? 'marked sorted' : 'withdrawn'}.`);
       replace(body);
       stopActing();
       setSaid(action === 'sort' ? `Marked sorted: ${body.supplier}, ${body.items}.` : 'Delivery record withdrawn. It stays listed, marked withdrawn, and is left out of the counts.');
@@ -269,10 +271,10 @@ export function DeliveriesPage({ initialProject, returnTo }: { initialProject: s
         </form>
           : <div className="dl-actions">
             <button type="button" ref={opener} className="btn-primary" onClick={() => { setFormOpen(true); stopActing(); setSaid(''); }}>Record a delivery</button>
-            {data.deliveries.length > 0 && <a className="eng-link-button" href={download} download>Download spreadsheet</a>}
+            {data.deliveries.length > 0 && <DownloadLink className="eng-link-button" href={download} what="spreadsheet">Download spreadsheet</DownloadLink>}
           </div>)
           : <div className="eng-panel"><p>This project is not active or in defects liability, so it takes no new deliveries.</p>
-            {data.deliveries.length > 0 && <a className="eng-link-button" href={download} download>Download spreadsheet</a>}</div>}
+            {data.deliveries.length > 0 && <DownloadLink className="eng-link-button" href={download} what="spreadsheet">Download spreadsheet</DownloadLink>}</div>}
 
         <section aria-labelledby="dl-sort-title" className="dl-section">
           <h2 id="dl-sort-title">To sort <span className="dl-count">{toSort.length}</span></h2>
