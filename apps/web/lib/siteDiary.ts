@@ -2,12 +2,8 @@ import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import type { ObservationType } from './fixtures';
 import type { CheckAnswer, Issue, Report, Variation } from './types';
-<<<<<<< HEAD
-import { answerLabel, checkCounts, raisesIssue, reportTypeOf } from './reportTypes';
-import { ISSUE_WORK as WORK } from './status';
-=======
 import { answerLabel, checkCounts, raisesIssue, reportName, reportTypeOf } from './reportTypes';
->>>>>>> origin/main
+import { ISSUE_WORK as WORK } from './status';
 
 /**
  * The living site diary (EXP-1): a project's story, day by day, made only from

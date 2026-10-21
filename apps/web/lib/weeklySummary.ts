@@ -2,12 +2,8 @@ import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import type { ObservationType } from './fixtures';
 import type { Issue, Report, Variation } from './types';
-<<<<<<< HEAD
-import { checkCounts, reportTypeOf } from './reportTypes';
-import { ISSUE_WORK as WORK } from './status';
-=======
 import { checkCounts, reportName, reportTypeOf } from './reportTypes';
->>>>>>> origin/main
+import { ISSUE_WORK as WORK } from './status';
 
 /**
  * A project's week on one page: who was on site, what they reported, which

@@ -27,16 +27,13 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
-<<<<<<< HEAD
   { id: 'same-words', added: '2026-10-21', audience: 'all', title: 'The same words on every page',
     text: 'Pages built at different times now use the same words. An issue put forward as fixed reads "Fixed, to check" everywhere, where it was also "Ready for verification", "Awaiting verification" or "Verify". Dates read one way, such as "Wed 21 Oct", with a time where it matters. Project lists name each project by its number and name, issue and project pages have the same header as the rest of RELAY, and every Back link says where it goes.' },
-=======
   { id: 'tidier-pdfs', added: '2026-10-21', audience: 'all', title: 'Tidier report and inspection PDFs',
     text: 'Every page of a PDF now names the report, the project and, on a tower inspection, the tower. An inspection opens its results with a count of each result (say 12 checks: 10 satisfactory, 2 action needed), and its table headings carry on to the next page. Each action says who is to do it, the summary uses the same numbers as the updates, a correction says which revision it replaces and why, and a signature says whether it was drawn or typed and when. A card\'s words and its action, and the sign-off, now stay together on one page. PDFs already made stay as they were.' },
   { id: 'tower-inspection', added: '2026-10-20', audience: 'all', title: 'Tower inspection',
     text: 'Inspect a mobile tower or podium after it is put up or moved, and at least every seven days while it stays up. Tap "Do a tower inspection", say which tower (its tag number and where it stands) and answer 12 checks, from its tag to its guardrails and safe working load. Each "Action needed" goes on Safety actions under that tower until a later inspection of the same tower finds it put right, and Safety actions shows when each tower is due its next inspection. It works with no signal like the other inspections. The checks are a first draft and may change.',
     link: { label: 'Open Safety actions', href: '/safety-actions' } },
->>>>>>> origin/main
   { id: 'site-notes', added: '2026-10-20', audience: 'all', title: 'Notes for the next visit',
     text: 'Leave word on a project for whoever is on site next: where a key is, an area that is locked, what is coming up. Anyone on the project can leave a note or mark one done with, and each shows who left it and when. Notes are not part of any report and are not sent to anyone. Open it from "This project" on your home screen or from the office project sheet.',
     link: { label: 'Open Notes for the next visit', href: '/site-notes' } },
