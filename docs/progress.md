@@ -11,7 +11,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   and two offline sends (#105 site update, #116 defect) that now meet.
 - Checked main at c405f31 (#116), then again in full at 0d56773 once #117
   and #118 merged: typecheck, `npm test` (146 + 513), build, all 86 browser
-  checks one at a time (all pass at 0d56773, verify-busy-projects too), and
+  check scripts one at a time (all pass at 0d56773 with this PR's fix to the
+  day walk-through below, verify-busy-projects too), and
   a clean Docker build (healthy, /signin 200). No deploy change: no new
   settings, packages, data change or offline store version (`relay-public-v14`).
 - A scratch walk (not kept in the repo) at 390px and 1440px, light and dark:
@@ -24,7 +25,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   saving a permit. After 17:00 UK the permit form leaves "Runs until" empty
   on purpose (`defaultEnds` in `PermitsPage.tsx`) and the check never filled
   it, so it failed every evening on any build. It now fills noon tomorrow,
-  UK time, like `verify-permits`; 114 checks pass.
+  UK time (date worked out as in `verify-permits`); the script's 114 checks
+  pass.
 - Seen, not changed: a defect still waiting for signal is not shown on the
   engineer home (a site update is); #116 lists it as next.
 - Release notes updated in project files
