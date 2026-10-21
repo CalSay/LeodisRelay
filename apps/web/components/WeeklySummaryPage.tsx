@@ -140,7 +140,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
         <header className="week-head">
           <p className="lbl">Leodis Developments · Weekly summary</p>
           <h1 id="week-title">{project.projectName}</h1>
-          <p className="week-range">{fmtDay(s.start)} to {fmtDay(s.end, true)}{s.current ? ' · this week so far' : ''}</p>
+          <p className="week-range">{fmtDay(s.start)} to {fmtDay(s.end, true)}{s.current ? ' · this week so far' : s.start === shiftWeek(thisWeek, -1) ? ' · last week' : ''}</p>
           <dl className="week-facts">
             <div><dt>Project</dt><dd className="ref">{project.projectNumber}</dd></div>
             <div><dt>Client</dt><dd>{project.clientName || 'Not recorded'}</dd></div>

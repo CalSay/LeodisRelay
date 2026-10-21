@@ -54,6 +54,9 @@ try {
     await page.getByRole('button',{name:'Issues',exact:true}).first().click();
     await page.locator('.eng-issue-card').first().waitFor();
     const cards=page.locator('.eng-issue-card');
+    // The tab opens on "Yours" (2026-10-21): Sam's two, not Hana's HVAC one. "Open" lists every trade.
+    ok(await cards.count()===2&&!(await page.locator('main').innerText()).includes('Duct lagging'),`${at}: "Yours" lists Sam's two`);
+    await page.getByRole('button',{name:'Open',exact:true}).click();await cards.nth(2).waitFor();
     const heights=await cards.evaluateAll(els=>els.map(e=>Math.round(e.getBoundingClientRect().height)));
     const listTop=await page.locator('.eng-issue-list').first().evaluate(e=>Math.round(e.getBoundingClientRect().top+scrollY));
     console.log(`${at}: ${heights.length} open issue cards, heights ${heights.join(', ')}px (total ${heights.reduce((a,b)=>a+b,0)}px), list starts ${listTop}px down.`);
@@ -73,10 +76,10 @@ try {
       ok(!/Reported by |Trade not recorded|From a site update|Defect flagged on its own|Open issue →/.test(all),`${at}: no trade, reporter or source lines on the cards`);
       ok(!(await cards.filter({hasText:'Duct lagging'}).innerText()).includes('HVAC'),`${at}: no trade tag on the card`);
       ok(!all.includes('Tetley Hall'),`${at}: the project name is not repeated on every card (it heads the list)`);
-      // Filters still work, and "Reported by me" still uses who reported it.
-      await page.getByRole('button',{name:'Reported by me'}).click();
-      ok(await cards.count()===2&&!(await page.locator('.eng-issue-list').first().innerText()).includes('Duct lagging'),`${at}: "Reported by me" keeps only Sam's issues`);
-      await page.getByRole('button',{name:'All issues'}).click();
+      // Filters still work: "Yours" (which replaced "Reported by me") keeps only Sam's issues.
+      await page.getByRole('button',{name:'Yours'}).click();await page.waitForFunction(()=>document.querySelectorAll('.eng-issue-card').length===2);
+      ok(await cards.count()===2&&!(await page.locator('.eng-issue-list').first().innerText()).includes('Duct lagging'),`${at}: "Yours" keeps only Sam's issues`);
+      await page.getByRole('button',{name:'All issues'}).click();await cards.nth(2).waitFor();
       ok(await cards.count()===3,`${at}: "All issues" lists all three`);
       if(width<700){
         const small=await page.evaluate(()=>[...document.querySelectorAll('.eng-issue-tabs button, .eng-issue-card')].filter(e=>e.getBoundingClientRect().height<48).map(e=>e.textContent.trim()));

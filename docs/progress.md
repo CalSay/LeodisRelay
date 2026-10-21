@@ -32,7 +32,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   / "Not signed in now" under Signed in) for the Admin, and to "Signed in
   now" under "Signed in at" on the Manager's list, so nothing the session
   showed is lost. Help "What's new" line added.
-- Checks: typecheck, `npm test` (146 + 517, 3 new in `teamActivity.test.ts`),
+- Checks: typecheck, `npm test` (146 + 522 after merging main, 3 new in `teamActivity.test.ts`),
   build. New `scripts/verify-team-last-sent.mjs` (58 checks; Admin 1440 dark
   and light, Manager 1440 dark and light, Admin 390 light): not signed in
   yet, nothing sent yet after signing in with only a draft, then the new site
@@ -49,6 +49,134 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the engineer's site and link straight to it (`/engineer?project=`), so a new
   starter skips "Which site are you on?"; the 16 roster people with "Name
   needed" crowd the list during setup.
+
+## 2026-10-21 — Engineer's end of week: "Yours" on the Issues tab
+
+- Why: a walk of an engineer's Friday afternoon on main at 390px, light and
+  dark (three sites, three weeks of their own reports, defects for their trade
+  and others', one sent back by the office with a question, two unsent drafts).
+  My week, Unfinished reports and the Weekly summary did their job: both unsent
+  drafts were called out. The hunt was "what is still mine to do on each
+  site?": Issues opened on one project with every trade's open issues mixed in;
+  seeing every site meant "All projects" in a dropdown (two taps), then about
+  2,800px of every trade's issues, each site with its own Open / Reported by me
+  / All buttons; and Back from an issue reset the dropdown to "This project",
+  so the next site's issue had gone. Putting two issues on two sites forward as
+  fixed took 11 taps from home. Decided without asking Cal (his autonomy
+  message, and his 07:02 ask for an easy system). Not a `docs/tasks.json` task;
+  no status changed.
+- Now (`EngineerWorkspace.tsx`, `EngineerIssueList.tsx`, `lib/yourIssues.ts`):
+  the Issues tab opens on "Yours": on every site the engineer works on, the
+  open issues they raised, added to, or that are for their trade, a section
+  per site (the one they are on first) with "N to do". Sent back or written on
+  by the office comes first, marked "Sent back" with what the office wrote (the
+  #110 two-line word); then newest first. Put forward as fixed waits on the
+  office, so it leaves the list and the site says "N put forward as fixed,
+  waiting for the office to check". One row of buttons for every site: Yours /
+  Open / All issues ("Reported by me" folded into Yours); the project dropdown
+  shows only for Open and All. The choice is kept in the address (`show`,
+  `scope`), so Back from an issue returns to the same list. Cards are the #94
+  short cards.
+- Trade: RELAY records the company fixing an issue, not a person, so trade is
+  the nearest thing to "assigned to me". An engineer with no trade set still
+  gets what they raised or added to. Nothing open says so ("Nothing open for
+  you on any of your N sites") with one tap to "See all issues".
+- After: two issues on two sites put forward in 7 taps from home (was 11);
+  the Yours page in the check's data is 1,791px at 390px, against 2,817px for
+  every trade on all projects.
+- Checks: typecheck, `npm test` (146 + 518; new `yourIssues.test.ts`), build.
+  New `scripts/verify-issues-yours.mjs` (43 checks: 390px light whole flow
+  with tap count, 390px and 1440px dark, no trade, nothing open, Open/All keep
+  the project choice after Back, 48px targets, no sideways scroll). Updated for
+  the new default: `verify-simpler-issue-list` (Yours replaces Reported by me),
+  `verify-engineer-day`, `verify-engineer-layout` and `verify-day-walkthrough`
+  (press Open, or `show=open`, where they check every trade),
+  `verify-first-time-use` (Yours empty message, and Open's).
+  Also run and passing: verify-navigation, verify-engineer-nav,
+  verify-came-back-first, verify-came-back-to-update, verify-simpler-issue-page,
+  verify-snag-list, verify-help, verify-accessibility, verify-role-access,
+  verify-search, verify-signature-reload, verify-my-week, verify-office-words,
+  verify-issue-trend, verify-office-actions, verify-review-queue,
+  verify-weekly-summary, verify-busy-projects.
+- The home's "Site issues" row counts every trade's open issues on the
+  project, so it opens "Open" on that project; the Issues button opens Yours.
+- Speed: the first build loaded every trade's issues on every site for Yours,
+  and `verify-busy-projects` caught it (Engineer issues 790 KB, budget 400).
+  Yours now asks the server for the engineer's own open issues only
+  (`GET /api/issues?only=yours`, same `isYours` rule, access-checked per
+  project): 130 KB, 2.1 s against a 4.5 s budget.
+- Fresh-context review found four things, all fixed: the old one-project list
+  could flash under Yours when tapping Issues again (the list now clears
+  whenever its source changes: Yours, one project or all projects); the
+  home's "Site issues" row said "every trade" but opened Yours (it now opens
+  Open); site headings read "Tetley Hall3 to do" to a screen reader (space
+  added); the heading mentioned a trade for engineers with none, and the empty
+  state's "See all issues" showed one project (now every project).
+  A second review found two more, fixed: the defect receipt's "View project
+  issues" opened Yours (it now opens Open on the project, and
+  verify-engineer-layout checks it), and the empty Yours line mentioned a
+  trade for engineers with none.
+- Help: "What's new" line `issues-yours`.
+- Screenshots: `ui-review/end-of-week-pass/` in project files.
+- Not verified: real phones, screen readers, an engineer working across
+  trades (RELAY keeps one trade per person).
+- Seen, not changed: My week's "Defects flagged 0" counts only defects flagged
+  on their own, so a week of defects raised from site updates reads as none;
+  My week shows "Put forward as fixed" for an issue the office has since sent
+  back or closed. Both are small My week wording jobs.
+## 2026-10-21 — Last week's summary from the office overview
+
+- Why: walked an office manager's Monday look back at last week on main
+  88d0589 at the desk (1440, dark and light; three projects, three engineers,
+  six weeks of seeded reports, issues and variations). The Weekly summary
+  answers the questions well (who came on which day, the work in their
+  words, issues raised and closed, what is still open, print to PDF).
+  Reaching last week was the hard part: the overview speaks only of this
+  week ("0 visits, nobody yet" on every project on a Monday morning); the
+  Weekly summary link is the first of six under "Latest from site" on the
+  project sheet, about 1,220px down a 900px window; and it opens on this
+  week, so Previous week is another click. Three projects took 7 clicks and
+  a scroll. Coordinator approved the pick; decided without asking Cal (his
+  autonomy message, and the 07:02 ask that the office gets what it needs
+  easily). Not a `docs/tasks.json` task; no status changed.
+- Changed (`ProjectsView.tsx`, `workspace.css`, `WeeklySummaryPage.tsx`):
+  each row of "Where each project stands" has "Last week's summary" under
+  the project's reference (spoken as "Last week's summary for <project>").
+  It opens that project's Weekly summary on last Monday to Sunday, and Back
+  returns to the overview. The project box at the top of the summary keeps
+  the week, so the next project is one pick away. The row still opens the
+  project: the project name is now the row's link, stretched over the row,
+  with the summary link above it (a link cannot sit inside a link). The
+  focus ring still goes round the whole row. Desk rows keep their height
+  (79px at 1440, 93px at 1280, as before); on a phone the link shares the
+  reference line and is 44px tall (rows 25px taller). The summary's
+  heading now says "· last week" after the dates (as it says "· this week
+  so far"), on screen and on paper. Help "What's new" line and the office
+  guide's "For the site meeting" updated.
+- Result: three projects' last week in 5 clicks with no scrolling (was 7
+  and a scroll), straight from the overview.
+- Checks: typecheck, `npm test` (146 + 514), build. New
+  `scripts/verify-office-weekly-review.mjs` (53; 1440 dark and light, 1280,
+  390): a link a row named for its project, its address (project, last
+  Monday, back to the overview), tap size, name column no taller than the
+  figures, the link on top of the row, axe on the project list, Tab from
+  project to its summary with a ring, the rest of the row still opens the
+  project, the summary shows last week only and says "last week", another
+  project keeps the week, the printed heading, two weeks back is dates only,
+  this week still "so far", Back to the overview. `verify-accessibility`:
+  the project name link is allowed under 44px on a phone (its row is the
+  target) and a ring drawn by `::after` counts. Also passed:
+  verify-accessibility (584), verify-office-progress, verify-office-phone,
+  verify-office-landing, verify-weekly-summary, verify-help,
+  verify-office-sections, verify-seen-by-office, verify-site-diary,
+  verify-photo-library, verify-office-links, verify-role-access,
+  verify-first-time-use, verify-day-walkthrough.
+- Screenshots: project files `ui-review/office-weekly-review/`.
+- Not verified: a real phone, a screen reader.
+- Seen on the walk, not built: the overview's "This week" counts
+  inspections as visits while the summary's "Site reports" does not, so
+  the two numbers differ; the summary's "On site" is long for a busy week
+  (3,500px for seven reports).
 
 ## 2026-10-21 — Quicker inspections on a phone
 

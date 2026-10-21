@@ -6,6 +6,7 @@ import { parseIssueQuery } from '@/lib/issueQuery';
 import { requireSession } from "@/lib/auth/guard";
 import { canAccessProject } from '@/lib/auth/access';
 import { deskIssue } from '@/lib/officeActions';
+import { isYours } from '@/lib/yourIssues';
 import {DEFECT_BODY_LIMIT,type DefectInput} from '@/lib/defects';
 import {DefectError,submitIndividualDefect} from '@/lib/defectStore';
 
@@ -27,6 +28,10 @@ export async function GET(request: Request) {
   // The office desk's snapshot: every issue this person may see, each with its latest event only.
   if (url.searchParams.get("view") === "desk") {
     return jsonResponse(request, { issues: listIssues(projectId).filter(i=>canAccessProject(guard.principal,i.projectId)).map(deskIssue) });
+  }
+  // The engineer's "Yours" on every site they can see: only their open issues, not every trade's (lib/yourIssues.ts).
+  if (only === "yours") {
+    return jsonResponse(request, { issues: listIssues(projectId).filter(i=>canAccessProject(guard.principal,i.projectId) && isYours(i,guard.principal)) });
   }
   if (projectId && only === "open") {
     return jsonResponse(request, { issues: openIssues(projectId).filter(i=>canAccessProject(guard.principal,i.projectId)) });

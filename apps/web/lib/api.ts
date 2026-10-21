@@ -342,6 +342,11 @@ export async function cameBack(projectId: string): Promise<CameBack> {
   return parse<CameBack>(await request(`/api/came-back?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
 }
 
+/** The signed-in engineer's open issues on every site they can see (lib/yourIssues.ts), for "Yours" on the Issues tab. */
+export async function yourOpenIssues(): Promise<Issue[]> {
+  return (await parse<{ issues: Issue[] }>(await request('/api/issues?only=yours', { cache: 'no-store' }))).issues;
+}
+
 export async function projectIssues(projectId: string): Promise<Issue[]> {
   const data = await parse<{ issues: Issue[] }>(
     await request(`/api/issues?projectId=${encodeURIComponent(projectId)}`, { cache: "no-store" }),
