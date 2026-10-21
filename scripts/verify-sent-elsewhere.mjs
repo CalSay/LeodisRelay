@@ -119,8 +119,7 @@ try {
     await (await what(page,'obs-riser')).fill('Containment complete to L4');
     await state(page,'On this phone only');
     await page.evaluate(()=>document.activeElement?.blur());
-    await page.locator('.eng-rail .eng-add').click();
-    await page.locator('#card-editor .eng-tile.update').first().click();
+    await page.locator('.eng-rail .eng-add-kinds').getByRole('button',{name:'+ Progress'}).click();
     const added=await page.locator('#card-editor > div:not([hidden]) textarea[id^="what-"]').first();
     await added.fill('Riser door left open');
     await state(page,'On this phone only');

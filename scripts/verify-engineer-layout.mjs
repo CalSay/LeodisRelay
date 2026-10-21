@@ -82,8 +82,7 @@ try {
   await page.getByLabel('Project scope').selectOption('all');
   await page.locator('a[href^="/issues/layout-issue-1"]').waitFor();
   await page.goto(base+`/reports/${own.id}`);
-  await page.getByRole('button',{name:'+ Add a card',exact:true}).click();
-  await page.getByRole('button',{name:/Work done or progressed/}).click();
+  await page.locator('.eng-add-kinds').getByRole('button',{name:'+ Progress'}).click();
   // Browser locators deliberately target the one visible card editor, while hidden cards stay mounted.
   const visible=page.locator('#card-editor > div:not([hidden])');
   await visible.getByLabel('What happened',{exact:true}).fill('Tablet section survives rotation');
@@ -114,7 +113,8 @@ try {
   const created=await context.request.get(base+'/api'+new URL(page.url()).pathname).then(r=>r.json());
   assert.equal(created.projectId,'proj-014lme');assert.equal(created.authorId,principal.id);
   assert.equal(created.authorTrade,'Electrical');
-  await page.getByRole('button',{name:/Something wrong/}).click();
+  // A new update opens on a progress card; making it a defect is one tap on the card.
+  await page.locator('.kindrow:visible').getByRole('button',{name:/Defect/}).click();
   assert.equal(await page.getByRole('button',{name:'Electrical',exact:true}).getAttribute('aria-pressed'),'true','Defect card defaults to the engineer trade');
   assert.deepEqual(errors,[]);
   console.log('Engineer layouts passed: phone/portrait/landscape, disabled future controls, draft privacy, issue scope, card autosave/rotation/reload, defect trade default and full report submission.');

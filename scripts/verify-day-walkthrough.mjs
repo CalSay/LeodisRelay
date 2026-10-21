@@ -176,7 +176,8 @@ try {
   await page.goto(home);
   await page.getByRole('button',{name:/Start today’s site update/}).click();await page.waitForURL(/\/reports\//);
   const updateId=page.url().split('/reports/')[1].split(/[?#]/)[0];
-  await page.getByRole('button',{name:/Something wrong/}).click();
+  // A new update opens on a progress card; this one is a defect.
+  await page.locator('.eng-slot.open .kindrow').getByRole('button',{name:/Defect/}).click();
   let open=page.locator('.eng-slot.open');
   await open.getByLabel('Where',{exact:true}).fill('Level 2 riser');
   await open.getByRole('button',{name:/Fire stopping missing round pipework/}).click();
@@ -184,11 +185,11 @@ try {
   await open.locator('input[type=file]').first().setInputFiles({name:'riser.jpg',mimeType:'image/jpeg',buffer:await jpeg('#996633')});
   await open.getByText('On the server').last().waitFor({timeout:15000});
   await open.getByRole('button',{name:'Done with this card'}).click();
-  await page.getByRole('button',{name:/Add a card/}).click();
-  await page.getByRole('button',{name:/Something wrong/}).click();
+  await page.locator('.eng-add-kinds').getByRole('button',{name:'+ Defect'}).click();
   open=page.locator('.eng-slot.open');
   await open.getByLabel('Where',{exact:true}).fill('Flat 2.04 kitchen');
   await open.getByLabel(/What’s wrong/).first().fill('Socket faceplate cracked');
+  await open.getByText('More for the office').click();
   await open.getByLabel(/What needs doing/).first().fill('Replace faceplate');
   // Signed out partway: the card is kept on the phone, and saves by itself once signed in again.
   const session=live=>putRecord('sessions',{id:sessions[engineer.oid],principal:engineer,issuedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+(live?7200000:-1000)).toISOString()});
@@ -207,8 +208,7 @@ try {
   await open.getByRole('button',{name:'Done with this card'}).click();
   // Signal goes in the corridor.
   await ec.setOffline(true);
-  await page.getByRole('button',{name:/Add a card/}).click();
-  await page.getByRole('button',{name:/Work done or progressed/}).click();
+  await page.locator('.eng-add-kinds').getByRole('button',{name:'+ Progress'}).click();
   open=page.locator('.eng-slot.open');
   await open.getByLabel('What happened',{exact:true}).fill('Containment on level 2 lidded');
   await open.getByLabel('Where',{exact:true}).fill('Level 2 corridor');

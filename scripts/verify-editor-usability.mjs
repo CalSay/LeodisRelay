@@ -44,11 +44,11 @@ try {
 
     // A site update with one card.
     await page.goto(`${base}/engineer`);await page.getByText('Start today’s site update').click();
-    await page.waitForURL(/\/reports\//);await page.locator('.eng-tile').first().waitFor();
+    await page.waitForURL(/\/reports\//);await page.locator('.eng-cardrow').first().waitFor();
     const head=await page.evaluate(()=>{const h=document.querySelector('.pagehead h1').getBoundingClientRect(),t=document.querySelector('.pagehead .tag').getBoundingClientRect();return {sameLine:t.top<h.bottom,sub:document.querySelector('.pagehead .sub').textContent};});
     ok(head.sameLine,`${label}: the Draft tag sits beside the title`);
     ok(!/draft/i.test(head.sub),`${label}: the line under the title does not say "draft" again (${head.sub})`);
-    await page.locator('.eng-tile').first().click();
+    // A new update opens on its first card, a progress card, with no picker first.
     const card=phone?page.locator('.eng-slot.open'):page.locator('#card-editor > div:not([hidden])');
     await card.getByLabel('Where',{exact:true}).waitFor();
     eq(await card.locator('.eng-card .head .kind').count(),0,`${label}: the open card does not repeat its kind in a tag`);

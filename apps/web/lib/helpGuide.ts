@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'fewer-taps-site-update', added: '2026-10-21', audience: 'site', title: 'Fewer taps for a site update',
+    text: 'A new site update now opens on its first card, a progress card, ready for where, what happened and a photograph; tap Defect, Variation or Access on the card to change it. Under the cards there is a button for each kind ("+ Defect", "+ Variation" and so on), so a new card is one tap instead of two. Places already used on today\'s update are the first ones offered under "Where". The questions the office can do without, such as who should respond to a defect or a variation\'s rough size, are folded under "More for the office", and open by themselves once anything is in them. A card you added and never used is left off when you go to check and send, rather than stopping it. Buttons in the report are bigger, for gloved hands. Sending a site update with a progress card, a defect and a variation took 16 taps on our test phone screen and now takes 14. Tried in a phone-sized browser, not yet on a real phone on site.' },
   { id: 'simpler-for-engineers', added: '2026-10-21', audience: 'all', title: 'A simpler RELAY, built round the site report',
     text: 'The Site page now opens on the job: start or carry on today\'s site update, flag a defect or request a variation, with big buttons at the top. Handover and first fix inspections sit together under them, and the project\'s pages are down to the four used most (issues, reports, notes for the next visit and photographs), with the rest under "More on this project". Toolbox talks, permits to work, deliveries, the weekly safety and tower inspections and Safety actions are now off unless the office turns them on from the Admin tab. While they are off they do not appear on the Site page, the office desk, My week, the weekly summary, Before handover or this Help page, and nothing recorded is deleted.' },
   { id: 'pdfs-hold-long-reports', added: '2026-10-21', audience: 'all', title: 'PDFs that hold a long report',
@@ -316,9 +318,10 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
   site: [
     { id: 'first-update', heading: 'Your first site update', ordered: true, steps: [
       'On your home screen, check the current project. "Change" picks another.',
-      'Tap "Start a site update". Add a card for each thing you want to say: Progress, Defect, Variation or Access. Say where, what happened, and add photographs.',
+      'Tap "Start today’s site update". It opens on a progress card: say where, what happened, and take a photograph. Tap Defect, Variation or Access at the top of the card to make it one of those instead.',
+      'For the next thing, tap "+ Progress", "+ Defect", "+ Variation" or "+ Access" under the cards. A place you have already used is one tap under "Where".',
       'It saves as you go, on the server and on your phone. Leave it whenever you like; it waits under "Unfinished reports".',
-      'When you are done, sign and tap "Send to office". It is then on file and cannot be changed, only corrected.',
+      'When you are done, tap "Check & send", then "Send to office". It is then on file and cannot be changed, only corrected.',
     ] },
     { id: 'after-send', heading: 'After you send', ordered: false, steps: [
       'Defect and Access cards become issues on the project\'s register. Variation cards become variations for the office to price. Each "Action needed" on a handover or first fix inspection becomes an issue too.',

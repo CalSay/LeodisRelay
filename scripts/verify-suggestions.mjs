@@ -59,6 +59,9 @@ try {
     if(!wide||(await rows.first().getAttribute('aria-current'))!=='true')await rows.first().click();
     const editor=page.locator(wide?'#card-editor .eng-card:visible':'.eng-slot.open .eng-card');
     const owner=editor.getByLabel('Who needs to respond',{exact:true});
+    // Who should respond is folded under "More for the office" until it is wanted.
+    await editor.locator('.eng-more-detail').waitFor();
+    if(!await owner.isVisible())await editor.getByText('More for the office').click();
     await owner.waitFor();
     const box=editor.locator('.eng-suggestions').filter({hasText:'Recent companies'});
     await box.waitFor();

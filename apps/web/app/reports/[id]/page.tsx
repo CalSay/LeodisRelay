@@ -33,7 +33,8 @@ import { correctReport as requestCorrection } from '@/lib/api';
 import { ownsReport } from '@/lib/auth/access';
 import { toneClass } from '@/lib/status';
 import { SubmissionStages } from '@/components/SubmissionStages';
-import { OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
+import { CARD_TYPES, OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
+import { placesToOffer, withoutBlankCards } from '@/lib/quickCards';
 import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 import { whenShort } from '@/lib/dates';
 import { cardAtSameLocation, insertAfterSameLocation } from '@/lib/sameLocation';
@@ -729,6 +730,13 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     setReport(next);
     if (next.state === "draft") scheduleSave(next);
   }
+  /**
+   * The latest update, for callbacks kept between renders: addCard is made
+   * once, before the sign-in is known, and calling the update it closed over
+   * left a card added from the home screen unsaved until the next edit.
+   */
+  const updateRef = useRef(update);
+  updateRef.current = update;
 
   const addCard = useCallback((kind?: ObservationType) => {
     const current = latest.current;
@@ -741,7 +749,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     } else {
       setPicking(p => [...p, o.id]);
     }
-    update({ ...current, observations: [...current.observations, o] });
+    updateRef.current({ ...current, observations: [...current.observations, o] });
     setSelectedSection(o.id);
   }, [principal?.trade]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -1000,6 +1008,12 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   function showCheck() {
     if (step === 'check') return;
+    // A card never used (the one a new update opens on, say) has nothing to lose and would only stop the send.
+    const current = latest.current;
+    if (current?.state === 'draft' && !checklist && !sending.current) {
+      const kept = withoutBlankCards(current.observations);
+      if (kept !== current.observations) { setPicking(p => p.filter(x => kept.some(o => o.id === x))); update({ ...current, observations: kept }); }
+    }
     focusNext.current = 'check';
     try { window.history.pushState(window.history.state, '', '#check'); pushedCheck.current = true; } catch {}
     setStep('check');
@@ -1096,22 +1110,20 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           index={index}
           folded={!wide}
           openIssues={projectIssues}
-          locations={suggestions.locations}
+          locations={placesToOffer(report.observations, observation.id, suggestions.locations)}
           companies={suggestions.companies}
           photoWhere={(photoId) => { const w = whereOf.get(observation.id); const at = observation.photos.findIndex(p => p.id === photoId); return w && at >= 0 ? w.each[at] : undefined; }}
           onChange={(next) => update({ ...report, observations: report.observations.map((o) => (o.id === next.id ? next : o)) })}
           onRemove={() => removeCardNow(observation.id)}
           onRemovePhoto={(photoId) => removePhotoNow(observation.id, photoId)}
         />
-        <div className="eng-card-actions">
+        {(observation.location.trim() || !wide) && <div className="eng-card-actions">
           {observation.location.trim() && <button type="button" className="eng-same-place" onClick={() => addAtSameLocation(observation.id)} disabled={submitting}>
             <span>+ Another card here</span><small>{observation.location.trim()}</small>
           </button>}
-          {wide
-            ? <button type="button" onClick={() => addCard()} disabled={submitting}>+ Add another card</button>
-            : <button type="button" className="eng-done" onClick={() => { setSelectedSection(''); requestAnimationFrame(() => document.getElementById(`slot-${observation.id}`)?.scrollIntoView({ block: 'nearest' })); }}>Done with this card</button>}
+          {!wide && <button type="button" className="eng-done" onClick={() => { setSelectedSection(''); requestAnimationFrame(() => document.getElementById(`slot-${observation.id}`)?.scrollIntoView({ block: 'nearest' })); }}>Done with this card</button>}
           {/* "Check & send" is always in the action bar below, so the card does not offer it a second time. */}
-        </div>
+        </div>}
       </>;
 
   async function startCorrection() {
@@ -1126,6 +1138,12 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       setCorrectionError(error instanceof Error ? error.message : 'The correction could not be started.');
     }
   }
+
+  /** A new card of each kind in one tap, where "+ Add a card" used to open a picker first. */
+  const addKinds = <section className="eng-add-kinds" aria-labelledby="eng-add-title">
+    <h2 id="eng-add-title">Add a card</h2>
+    <div>{CARD_TYPES.map(t => <button key={t.value} type="button" className={`tone-${t.tone}`} disabled={submitting} onClick={() => addCard(t.value)}>+ {t.short}</button>)}</div>
+  </section>;
 
   const findingRows = (items: typeof findings, kind: 'stop' | 'note') => items.map((f, i) => <button key={`${kind}${i}`} type="button" className={`find ${kind === 'stop' ? 'find-stop' : 'find-note'}`} style={{ width: '100%', textAlign: 'left', minHeight: 0, background: 'none', font: 'inherit', cursor: f.observationId ? 'pointer' : 'default' }} onClick={() => { if (f.observationId) openCard(f.observationId); }}>
     <span className="find-kind">{kind === 'stop' ? 'Stop' : 'Optional'}</span>
@@ -1234,7 +1252,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               {report.observations.length === 0 && <div className="eng-empty">No cards yet. Add one for each thing you did, found or need.</div>}
               {report.observations.map((o, i) => cardRow(o, i))}
             </div>
-            {!checklist && <button type="button" className="eng-add" disabled={submitting} onClick={() => addCard()}>+ Add a card</button>}
+            {!checklist && report.observations.length > 0 && addKinds}
             {findings.length > 0 && <div className="eng-finds"><span className="lbl">Before you send</span>{findingRows(stopRows, 'stop')}{findingRows(note.slice(0, 3), 'note')}</div>}
           </aside>
           <div id="card-editor" style={{ scrollMarginTop: 24 }}>
@@ -1250,7 +1268,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               <div hidden={open !== o.id}>{cardBody(o, i)}</div>
             </div>)}
           </div>}
-          {report.observations.length > 0 && !checklist && <button type="button" className="eng-add" disabled={submitting} onClick={() => addCard()}>+ Add a card</button>}
+          {report.observations.length > 0 && !checklist && addKinds}
         </div>)}
 
         {step === 'check' && <div id="report-check" className="eng-check">
