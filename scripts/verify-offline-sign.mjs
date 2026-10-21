@@ -67,7 +67,7 @@ try {
     const cards=page.locator('.card');
     await cards.nth(0).getByLabel('Answer').selectOption('action');
     for(let i=1;i<12;i++)await cards.nth(i).getByLabel('Answer').selectOption('ok');
-    await cards.nth(0).getByLabel('Notes or what is wrong').fill('Riser door left unlocked');
+    await cards.nth(0).getByLabel('What’s wrong').fill('Riser door left unlocked');
     await page.locator('#status',{hasText:'Saved on this phone'}).waitFor();
     const left=await sign.innerText();
     check(/: say what needs doing/.test(left)&&(type==='handover-inspection')===/: say where, for the snag list/.test(left)&&!/not answered/.test(left),`${label}: lists what the action still needs: ${left.split('\n').slice(1,4).join(' / ')}`);
@@ -82,7 +82,7 @@ try {
     check(await go.isEnabled(),`${label}: can sign once drawn`);
     await go.click();
     await page.getByRole('heading',{name:'Signed. Not sent yet.'}).waitFor();
-    check(await cards.nth(0).getByLabel('Answer').isDisabled()&&await page.getByText('Add a photo').count()===0,`${label}: signing locks the inspection on this phone`);
+    check(await cards.nth(0).getByLabel('Answer').isDisabled()&&await page.getByText(/Take a photo|Add another photo/).count()===0,`${label}: signing locks the inspection on this phone`);
     check(await page.locator('#drafts .item .tag',{hasText:'Signed · not sent yet'}).count()===1&&await page.locator('.edhead .tag',{hasText:'Signed · not sent yet'}).count()===1,`${label}: it says signed and not sent, in the list and on the report`);
     check(/Signed by Sam Signer/.test(await sign.innerText())&&await sign.locator('.signed-ink img').evaluate(i=>i.complete&&i.naturalWidth>0),`${label}: shows who signed and the signature`);
     if(type==='handover-inspection'){

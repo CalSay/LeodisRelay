@@ -62,19 +62,19 @@ try {
     await page.locator('.savestate',{hasText:'On this phone only'}).waitFor({timeout:20000});
     check((await shots.nth(0).locator('.eng-where').innerText())==='On the server',`${scheme}: the photo already sent stays on the server`);
     const offRow=await row.locator('.eng-where').innerText();
-    check(offRow==='Only on this phone · changes and 1 photo',`${scheme}: the card says what is still to go up: ${offRow}`);
+    check(offRow==='Only on this phone · changes and 1 photograph',`${scheme}: the card says what is still to go up: ${offRow}`);
     check(/On this phone only/.test(await page.locator('.savestate').innerText()),`${scheme}: the save state agrees`);
     if(screenshot)await page.screenshot({path:join(screenshot,`uploads-offline-${scheme}-${width}.png`),fullPage:true});
     if(screenshot)await slot.locator('.shots').screenshot({path:join(screenshot,`uploads-offline-photos-${scheme}-${width}.png`)});
     await page.locator('.actionbar .btn-primary').click();
     const summary=page.locator('.eng-check p.eng-where');
     await summary.waitFor();
-    check((await summary.innerText())==='1 card and 1 photo are only on this phone. They go up by themselves when the server can be reached.',`${scheme}: the check step says what is only on this phone: ${await summary.innerText()}`);
+    check((await summary.innerText())==='1 card and 1 photograph are only on this phone. They go up by themselves when the server can be reached.',`${scheme}: the check step says what is only on this phone: ${await summary.innerText()}`);
     // Restart it: without anyone touching the page, everything reaches the server.
     await start();
     await page.locator('.eng-check p.eng-where-server').waitFor({timeout:45000});
     const back=await summary.innerText();
-    check(back==='The card and 2 photos are on the server.',`${scheme}: after the restart the check step says everything is on the server: ${back}`);
+    check(back==='The card and 2 photographs are on the server.',`${scheme}: after the restart the check step says everything is on the server: ${back}`);
     const saved=getReport(report.id).observations[0];
     check(saved.photos.length===2&&saved.photos[0].caption==='Bracket missing',`${scheme}: the server's copy has both photos and the caption`);
     if(screenshot)await page.screenshot({path:join(screenshot,`uploads-check-${scheme}-${width}.png`),fullPage:true});

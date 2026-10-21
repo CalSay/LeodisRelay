@@ -1,4 +1,5 @@
 "use client";
+import { dayShort, timeOf } from '@/lib/dates';
 import { useState } from 'react';
 import Link from 'next/link';
 import type { Report } from '@/lib/types';
@@ -6,7 +7,8 @@ import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { answerLabel } from '@/lib/reportTypes';
 import type { UnsentChange, UnsentCheck, UnsentWork } from '@/lib/sentElsewhere';
 
-const fmtWhen = (iso?: string) => iso ? new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+/** " on Wed 21 Oct at 14:05", inside a sentence. */
+const onWhen = (iso?: string) => dayShort(iso) ? ` on ${dayShort(iso)} at ${timeOf(iso)}` : '';
 const KIND: Record<UnsentChange['kind'], string> = { changed: 'Changed here', added: 'Added here', removed: 'Removed here' };
 /** Why a change is worth a look before the correction is sent. */
 const CHECK: Record<UnsentCheck, string> = {
@@ -39,7 +41,7 @@ export function SentElsewhere({ sent, work, unheld, busy, error, errorLink, reas
   return <section className="eng-conflict eng-sent-away" aria-labelledby="sent-away-title">
     <div className="note note-bad">
       <h2 id="sent-away-title">Sent from another screen</h2>
-      <p>This report was sent{sent.serverAcknowledgedAt ? ` at ${fmtWhen(sent.serverAcknowledgedAt)}` : ''} from another tab or device. {changes} on this screen {n === 1 ? 'was' : 'were'} not in it. The sent report stays as it is.</p>
+      <p>This report was sent{onWhen(sent.serverAcknowledgedAt)} from another tab or device. {changes} on this screen {n === 1 ? 'was' : 'were'} not in it. The sent report stays as it is.</p>
       <p>{unheld
         ? <strong>This device would not keep a copy of your changes. Do not close this page until you choose.</strong>
         : 'Your changes are kept on this device until you choose.'}</p>

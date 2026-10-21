@@ -71,7 +71,7 @@ try {
     check(await first.getByLabel(/^Where/).count()===0,`${scheme}: no Where until the answer needs one`);
     await first.getByLabel('Answer').selectOption('action');
     await page.locator('.card').nth(0).getByLabel(/^Where/).fill('L4 corridor');
-    await page.locator('.card').nth(0).getByLabel('Notes or what is wrong').fill('Tray lid missing');
+    await page.locator('.card').nth(0).getByLabel('What’s wrong').fill('Tray lid missing');
     await page.locator('.card').nth(0).getByLabel('What needs doing').fill('Fit the lid');
     // A second check: action needed, then satisfactory, clears its Where.
     await page.locator('.card').nth(1).getByLabel('Answer').selectOption('action');

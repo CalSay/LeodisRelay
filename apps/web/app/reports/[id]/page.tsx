@@ -33,7 +33,8 @@ import { ownsReport } from '@/lib/auth/access';
 import { toneClass } from '@/lib/status';
 import { SubmissionStages } from '@/components/SubmissionStages';
 import { OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
-import { backLabel, safeViewReturn, viewName, withViewReturn } from '@/lib/viewNavigation';
+import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { whenShort } from '@/lib/dates';
 import { cardAtSameLocation, insertAfterSameLocation } from '@/lib/sameLocation';
 import { canUndo, removeCard, removedLabel, removePhoto, restoreRemoved, type Removed } from '@/lib/undoRemove';
 import { onPhotoUploads, uploadingPhotos } from '@/lib/localMedia';
@@ -76,7 +77,8 @@ const RETRY_MS = 15_000;
 const UNDO_MS = 12_000;
 
 const KINDS: ObservationType[] = ['update', 'defect', 'instruction', 'access'];
-const fmtWhen = (iso?: string) => iso ? new Date(iso).toLocaleString('en-GB', { timeZone: 'Europe/London', weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+const fmtWhen = (iso?: string) => whenShort(iso);
+const photographs = (n: number) => `${n} photograph${n === 1 ? '' : 's'}`;
 
 export default function ReportPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
   const getProject = useProjectLookup();
@@ -864,16 +866,16 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   if (missing) {
     return (
-      <main className="wrap">
-        <Link href="/projects" className="back">&larr; Projects</Link>
+      <main className="wrap eng-page">
+        <Link href={safeViewReturn(returnTo, '/engineer')} className="back">&larr; {backLabel(safeViewReturn(returnTo, '/engineer'))}</Link>
         <div className="empty">This report could not be loaded. Check your connection or sign in again.</div>
-        <a href="/offline.html">Recover drafts retained on this phone</a>
+        <a href="/offline.html">See what is on this phone</a>
       </main>
     );
   }
   if (!report) {
     return (
-      <main className="wrap">
+      <main className="wrap eng-page">
         <div className="empty" style={{ marginTop: 32 }} role="status">{waitingForHeld ? 'Putting the work from this phone onto the server first…' : 'Loading'}</div>
       </main>
     );
@@ -964,7 +966,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             keeps only its heading and whether it is on the server yet. */}
         {!(isOpen && !wide) && <>
           <span className="desc">{choosing ? 'What kind of update is this?' : text || 'Nothing written yet'}</span>
-          {!choosing && <span className="meta">{o.photos.length} photo{o.photos.length === 1 ? '' : 's'}{stopped ? <em> · {unlabelled(stopped.message, o)}</em> : null}</span>}
+          {!choosing && <span className="meta">{photographs(o.photos.length)}{stopped ? <em> · {unlabelled(stopped.message, o)}</em> : null}</span>}
         </>}
         {/* Opened from a Stop, the card still says what stops it. */}
         {isOpen && !wide && !choosing && stopped && <span className="meta"><em>{unlabelled(stopped.message, o)}</em></span>}
@@ -985,7 +987,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       <div className="main">
         <span className="top"><span className={`kind answer-${answer?.tone ?? 'open'}`}>{answer?.short ?? 'To do'}</span><b>{o.check?.question}</b></span>
         {isOpen && !wide && stopped && answer && <span className="meta"><em>{stopped.message.slice((o.check?.question ?? '').length + 2)}</em></span>}
-        {!(isOpen && !wide) && (text || o.photos.length > 0 || (stopped && answer)) && <span className="meta">{text ? text : ''}{text && o.photos.length ? ' · ' : ''}{o.photos.length ? `${o.photos.length} photo${o.photos.length === 1 ? '' : 's'}` : ''}{stopped && answer ? <em>{text || o.photos.length ? ' · ' : ''}{stopped.message.slice((o.check?.question ?? '').length + 2)}</em> : null}</span>}
+        {!(isOpen && !wide) && (text || o.photos.length > 0 || (stopped && answer)) && <span className="meta">{text ? text : ''}{text && o.photos.length ? ' · ' : ''}{o.photos.length ? photographs(o.photos.length) : ''}{stopped && answer ? <em>{text || o.photos.length ? ' · ' : ''}{stopped.message.slice((o.check?.question ?? '').length + 2)}</em> : null}</span>}
         {(answer || o.photos.length > 0) && <CardWhereLine where={whereOf.get(o.id)} />}
       </div>
       {!wide && <span className="chev" aria-hidden="true">{isOpen ? '−' : '+'}</span>}
@@ -1065,9 +1067,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   return (
     <main className={sent ? "wrap eng-page eng-report-sent" : "wrap wrap-pad eng-report-editor"}>
-      <PageTitle title={sent ? report.reference : 'Site update'} />
+      <PageTitle title={sent ? report.reference : type.name} />
       <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`)} className="back">
-        &larr; {returnTo && viewName(safeViewReturn(returnTo, '')) ? backLabel(safeViewReturn(returnTo, '')) : project?.projectName ?? "Project"}
+        &larr; {backLabel(safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))}
       </Link>
 
       <div className="pagehead">
@@ -1103,7 +1105,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             </p>
           )}
           <p style={{ margin: 0 }}>
-            Received by Relay {fmtWhen(report.serverAcknowledgedAt)}. It can no longer be edited — a correction is issued as a new revision.{" "}
+            Received by RELAY {fmtWhen(report.serverAcknowledgedAt)}. It can no longer be changed: a correction is sent as a new revision.{" "}
             <Link href={withViewReturn(`/reports/${report.id}/preview`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))} style={{ color: "var(--brass)", textDecoration: "underline", textUnderlineOffset: 3 }}>
               View the document &rarr;
             </Link>
@@ -1128,7 +1130,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               />
               {correctionError && <p className="hint" style={{ color: "var(--alert)" }}>{correctionError}</p>}
               <div className="btn-row">
-                <button className="btn-primary btn-sm" onClick={startCorrection}>Start correction</button>
+                <button className="btn-primary btn-sm" onClick={startCorrection}>Start a correction</button>
                 <button className="btn-sm" onClick={() => setCorrecting(false)}>Cancel</button>
               </div>
             </div>
@@ -1137,18 +1139,18 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
       )}
 
       {sent ? <>
-        <div className="sec"><h2 className="lbl">{checklist ? `${type.name} · ${answers.action} action${answers.action === 1 ? '' : 's'}` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`} · {photos} photograph{photos === 1 ? '' : 's'}</h2></div>
+        <div className="sec"><h2 className="lbl">{checklist ? `${type.name} · ${answers.action} action${answers.action === 1 ? '' : 's'}` : `${report.observations.length} card${report.observations.length === 1 ? '' : 's'}`} · {photographs(photos)}</h2></div>
         {checklist ? report.observations.map((o, i) => { const action = o.check?.answer === 'action'; return <section key={o.id} className={`eng-sent-card ${action ? 'tone-defect' : 'tone-neutral'}`}>
           <div className="head"><h3 className="lbl">Check {String(i + 1).padStart(2, '0')}</h3><span className={`kind answer-${o.check?.answer ?? 'open'}`}>{CHECK_ANSWERS.find(a => a.value === o.check?.answer)?.label ?? 'Not answered'}</span></div>
           <p><b>{o.check?.question}</b>{o.location.trim() ? <> · {o.location}</> : null}{o.whatHappened.trim() ? <><br />{o.whatHappened}</> : null}</p>
-          {(o.actionNeeded.trim() || o.owner.trim()) && <small>{o.actionNeeded.trim() && `Action: ${o.actionNeeded}`}{o.actionNeeded.trim() && o.owner.trim() && ' · '}{o.owner.trim() && `For: ${o.owner}`}</small>}
-          {o.photos.length > 0 && <small>{o.photos.length} photograph{o.photos.length === 1 ? '' : 's'}</small>}
+          {(o.actionNeeded.trim() || o.owner.trim()) && <small>{o.actionNeeded.trim() && `Action: ${o.actionNeeded}`}{o.actionNeeded.trim() && o.owner.trim() && ' · '}{o.owner.trim() && `Owner: ${o.owner}`}</small>}
+          {o.photos.length > 0 && <small>{photographs(o.photos.length)}</small>}
         </section>; }) : report.observations.length === 0 ? <div className="empty">No updates were recorded on this visit.</div> : report.observations.map((o, i) => { const k = kindOf(o); return <section key={o.id} className={`eng-sent-card tone-${k?.tone ?? 'neutral'}`}>
           <div className="head"><h3 className="lbl">Card {String(i + 1).padStart(2, '0')} · {o.location || 'No location'}</h3><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{k?.short ?? o.type}</span></div>
           <p>{o.whatHappened}</p>
-          {(o.actionNeeded.trim() || o.owner.trim()) && <small>{o.actionNeeded.trim() && `Action: ${o.actionNeeded}`}{o.actionNeeded.trim() && o.owner.trim() && ' · '}{o.owner.trim() && `For: ${o.owner}`}</small>}
+          {(o.actionNeeded.trim() || o.owner.trim()) && <small>{o.actionNeeded.trim() && `Action: ${o.actionNeeded}`}{o.actionNeeded.trim() && o.owner.trim() && ' · '}{o.owner.trim() && `Owner: ${o.owner}`}</small>}
           {extras(o) && <small>{extras(o)}</small>}
-          {o.photos.length > 0 && <small>{o.photos.length} photograph{o.photos.length === 1 ? '' : 's'}</small>}
+          {o.photos.length > 0 && <small>{photographs(o.photos.length)}</small>}
         </section>; })}
       </> : conflict ? <DraftConflict key={conflict.version} here={report} there={conflict} base={conflictBase} unheld={unheld} saving={submitting} onSave={resolveConflict} /> : <>
         {/* Two steps, so the cards and the final check never compete for the
@@ -1209,7 +1211,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           </dl> : <dl className="eng-sum">
             <div><dt>Progress</dt><dd>{counts.update}</dd></div>
             <div><dt>Defects</dt><dd className={counts.defect ? 'late' : ''}>{counts.defect}<small>{counts.defect ? 'raise issues' : ''}</small></dd></div>
-            <div><dt>Variations</dt><dd className={counts.instruction ? 'soon' : ''}>{counts.instruction}<small>{counts.instruction ? 'raise VOs' : ''}</small></dd></div>
+            <div><dt>Variations</dt><dd className={counts.instruction ? 'soon' : ''}>{counts.instruction}<small>{counts.instruction ? 'raise variations' : ''}</small></dd></div>
             <div><dt>Access</dt><dd>{counts.access}<small>{counts.access ? 'raise issues' : ''}</small></dd></div>
           </dl>}
 
@@ -1299,8 +1301,8 @@ function CardWhereLine({ where }: { where: ReturnType<typeof cardWhere> | undefi
   if (!where) return null;
   const left = where.photos - where.photosOnServer;
   const detail = where.where === 'server' || where.where === 'uploading' ? ''
-    : !where.text ? (left ? ` · changes and ${left} photo${left === 1 ? '' : 's'}` : ' · changes')
-    : left ? ` · ${left} photo${left === 1 ? '' : 's'}` : '';
+    : !where.text ? (left ? ` · changes and ${photographs(left)}` : ' · changes')
+    : left ? ` · ${photographs(left)}` : '';
   return <span className={`eng-where eng-where-${where.where}`}><span className={WHERE_DOT[where.where]} />{WHERE[where.where]}{detail}</span>;
 }
 

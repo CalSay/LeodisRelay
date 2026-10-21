@@ -170,7 +170,7 @@ try {
   for(let k=0;k<60&&getRecord('reports',updateId).observations.length<3;k++)await sleep(250);
   ok(getRecord('reports',updateId).observations.length===3,'site update: the card reached the server once signal returned');
   await page.locator('.actionbar').getByRole('button',{name:/Check & send/}).click();await page.locator('#report-check').waitFor();
-  await page.getByText(/All 3 cards and 3 photos are on the server/).waitFor({timeout:20000});checks++;
+  await page.getByText(/All 3 cards and 3 (photos|photographs) are on the server/).waitFor({timeout:20000});checks++;
   const pad=page.locator('canvas.sigpad');await pad.scrollIntoViewIfNeeded();const box=await pad.boundingBox();
   await page.mouse.move(box.x+20,box.y+40);await page.mouse.down();for(let x=20;x<box.width-20;x+=12)await page.mouse.move(box.x+x,box.y+40+Math.sin(x/15)*20);await page.mouse.up();
   await sleep(500);
@@ -275,9 +275,9 @@ try {
     ok(await p.getByRole('link',{name:'← Back to report'}).isVisible(),`${label}: the PDF page says where Back goes`);
     await noSideways(p,`${label} PDF`);
     await shot(p,`office-pdf-${scheme}-${width}`);
-    await p.getByRole('link',{name:'View report summary'}).click();await p.waitForURL(/\/preview/);
+    await p.getByRole('link',{name:'View the document'}).click();await p.waitForURL(/\/preview/);
     await p.getByRole('link',{name:'← Back to report'}).waitFor();checks++;
-    await p.waitForFunction(ref=>document.title===`Report summary · ${ref} · RELAY`,safety.reference);checks++;
+    await p.waitForFunction(ref=>document.title===`${ref} document · RELAY`,safety.reference);checks++;
     assert.deepEqual(errs,[],`${label}: page errors`);
     await context.close();
   }

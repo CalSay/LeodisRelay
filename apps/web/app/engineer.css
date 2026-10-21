@@ -7,9 +7,10 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--band:#202224;--band-2:#1a1c1e;--band-line:#3a3e41;--band-text:#f0efeb;--band-muted:#b5b7b6;--band-brass:#d9ae4a}}
 :root[data-theme="dark"]{--band:#202224;--band-2:#1a1c1e;--band-line:#3a3e41;--band-text:#f0efeb;--band-muted:#b5b7b6;--band-brass:#d9ae4a}
 
-body:has(.eng-workspace) .appbar .nav>a,body:has(.eng-report-editor) .appbar .nav>a,body:has(.eng-page) .appbar .nav>a{display:none;}
-body:has(.eng-workspace) .appbar .appbar-inner,body:has(.eng-report-editor) .appbar .appbar-inner,body:has(.eng-page) .appbar .appbar-inner{max-width:1120px;flex-wrap:nowrap;}
-body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,body:has(.eng-page) .appbar .nav{width:auto;flex-wrap:nowrap;}
+/* .eng-chrome: a page with its own layout (the report document and PDF) that still takes the engineer header. */
+body:has(.eng-workspace) .appbar .nav>a,body:has(.eng-report-editor) .appbar .nav>a,body:has(.eng-page) .appbar .nav>a,body:has(.eng-chrome) .appbar .nav>a{display:none;}
+body:has(.eng-workspace) .appbar .appbar-inner,body:has(.eng-report-editor) .appbar .appbar-inner,body:has(.eng-page) .appbar .appbar-inner,body:has(.eng-chrome) .appbar .appbar-inner{max-width:1120px;flex-wrap:nowrap;}
+body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,body:has(.eng-page) .appbar .nav,body:has(.eng-chrome) .appbar .nav{width:auto;flex-wrap:nowrap;}
 .eng-workspace,.eng-report-editor,.eng-page{width:100%;max-width:1120px;margin:auto;padding:24px;}
 .eng-workspace button,.eng-workspace a,.eng-report-editor button,.eng-page button{min-height:48px;}
 /* Buttons that sit together on a detail page (an issue, a variation, a project) wrap with a gap rather than touching. */
@@ -278,9 +279,9 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
   .eng-card .two{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 }
 @media(max-width:600px){
-  body:has(.eng-workspace) .appbar,body:has(.eng-report-editor) .appbar,body:has(.eng-page) .appbar{background:var(--panel);backdrop-filter:none;}
-  body:has(.eng-workspace) .appbar .appbar-inner,body:has(.eng-report-editor) .appbar .appbar-inner,body:has(.eng-page) .appbar .appbar-inner{min-height:58px;padding-block:6px;}
-  body:has(.eng-workspace) .appbar .whoami,body:has(.eng-report-editor) .appbar .whoami,body:has(.eng-page) .appbar .whoami{max-width:110px;white-space:nowrap;text-align:center;}
+  body:has(.eng-workspace) .appbar,body:has(.eng-report-editor) .appbar,body:has(.eng-page) .appbar,body:has(.eng-chrome) .appbar{background:var(--panel);backdrop-filter:none;}
+  body:has(.eng-workspace) .appbar .appbar-inner,body:has(.eng-report-editor) .appbar .appbar-inner,body:has(.eng-page) .appbar .appbar-inner,body:has(.eng-chrome) .appbar .appbar-inner{min-height:58px;padding-block:6px;}
+  body:has(.eng-workspace) .appbar .whoami,body:has(.eng-report-editor) .appbar .whoami,body:has(.eng-page) .appbar .whoami,body:has(.eng-chrome) .appbar .whoami{max-width:110px;white-space:nowrap;text-align:center;}
   .eng-workspace,.eng-report-editor,.eng-page{padding:16px;overflow-x:clip;}
   .eng-report-editor{padding-bottom:190px;}
   .eng-workspace h1{font-size:26px;}

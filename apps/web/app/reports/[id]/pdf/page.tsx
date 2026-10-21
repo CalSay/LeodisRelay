@@ -91,8 +91,7 @@ export default function PdfPage({params,searchParams}: {params:Promise<{id:strin
     void draw();
     return () => {active=false;render?.cancel();};
   },[doc,page,width,zoom]);
-  // The shared header (eng-page), as on the issue and project pages, not the old Home / Companies bar.
-  return <main className="wrap eng-page">
+  return <main className="wrap eng-chrome">
     <PageTitle title="Report PDF" />
     <Link href={withViewReturn(`/reports/${id}`,returnTo)} replace className="back">← Back to report</Link>
     <div className="pagehead"><div><h1>Report PDF</h1><p className="sub">View the document without leaving RELAY</p></div></div>
@@ -109,6 +108,6 @@ export default function PdfPage({params,searchParams}: {params:Promise<{id:strin
       {doc && <canvas key={`${page}-${width}-${zoom}`} ref={canvas} role="img" aria-label={`Report PDF, page ${page}. Text is available below.`} style={{display:error ? 'none':'block',background:'#fff'}} />}
     </div>
     {pageText && <details style={{marginTop:16}}><summary>Read page text</summary><p>{pageText}</p></details>}
-    <Link href={withViewReturn(`/reports/${id}/preview`,returnTo)} replace className="back">View report summary</Link>
+    <Link href={withViewReturn(`/reports/${id}/preview`,returnTo)} replace className="back">View the document</Link>
   </main>;
 }

@@ -81,7 +81,7 @@ eq(await card.getByText('Choose a recent place').count(),await card.locator('.en
     const note=page.locator('.find-note').first();
     ok(/optional/i.test(await note.locator('.find-kind').innerText()),`${label}: a suggestion is labelled Optional, not Check`);
     eq(await page.locator('.find-stop').count(),0,`${label}: nothing stops this update`);
-    ok(/^The card and its photo are on the server\.$/.test((await page.locator('.eng-check .eng-where').innerText()).trim()),`${label}: where the work is, in words`);
+    ok(/^The card and its photograph are on the server\.$/.test((await page.locator('.eng-check .eng-where').innerText()).trim()),`${label}: where the work is, in words`);
     const send=page.getByRole('button',{name:'Send to office'});
     // The tap on "Check & send" landed where "Send to office" now is: on a phone it must not look pressed or hovered.
     if(phone){
