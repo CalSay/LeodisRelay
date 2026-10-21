@@ -4,6 +4,29 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Eighth release check
+
+- Checked main at 03188ee (#2 to #27, #29 to #99, including #97, the
+  September office work). Ready to deploy; the deploy itself waits for Cal.
+- Typecheck, `npm test` (146 + 467), `npm run build`, and all 75 browser
+  checks run one at a time (Node 22). 74 pass first time. verify-busy-projects
+  went over budget on the same pages (engineer issues, photographs, office
+  inbox) on main and on the seventh check's 3e470fc alike, so it is this
+  machine today, not a slowdown. verify-september-office: 34 checks pass.
+- Walkthrough (a scratch script, not added to the repo): a phone report with
+  a photograph, a defect and a variation, read in the office at 390px light
+  and 1440px dark (marked Seen, issue and variation raised, PDF made), then
+  the engineer's Issues tab, the issue and the sent report showing "Seen by
+  the office": 26 checks, on 0e56592 and again on 03188ee.
+- Production Docker image built from a clean `git archive` of 03188ee and
+  started healthy (/api/health ok, /signin 200). Docker here needs `dockerd`
+  started by hand and the proxy certificate for npm inside the build (scratch
+  Dockerfile copy only, not in the repo).
+- Found one fault, fixed in #99: the office report's "Actions and decisions"
+  rows squashed their words on a phone.
+- Release notes refreshed: project files `releases/2026-10-20-release-notes.md`.
+- Not verified: a real phone, the live tenant, the server's own Docker build.
+
 ## 2026-10-21 — September office work merged into main
 
 - Why: Cal asked to deploy all recent changes (10:25). The first deploy
