@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
   BACKDATE_DAYS, LONGEST_DAYS, PERMIT_COLUMNS, PERMIT_KINDS, RECENT_DAYS, closeCheck, closeProblem, endsWords, londonMinute, permitAttention,
-  permitFileName, permitProblem, permitRepeats, permitRowWords, permitRows, permitState, permitsAll, projectPermits, withdrawProblem, type Permit, type PermitInput,
+  permitProblem, permitRepeats, permitRowWords, permitRows, permitState, permitsAll, projectPermits, withdrawProblem, type Permit, type PermitInput,
 } from '../lib/permits';
 import { canWithdraw, closePermit, permitsAcross, permitsFor, recordPermit, withdrawPermit } from '../lib/permitStore';
 import { database, records } from '../lib/storage';
@@ -117,11 +117,12 @@ test('starting from a recent one offers the latest of each kind and work, not wi
 });
 
 test('the spreadsheet has one row per permit in UK time, and is named for the project', () => {
-  const rows = permitRows([permit('a', { reference: 'HW-0142', closed: { ...sign, at: '2026-10-21T16:10:00Z', note: 'Fire watch by Chris' } }), permit('b', { ends: `${TODAY}T09:00` })], NOW);
+  const rows = permitRows([permit('a', { reference: 'HW-0142', closed: { ...sign, at: '2026-10-21T16:10:00Z', note: 'Fire watch by Chris' } }), permit('b', { ends: `${TODAY}T09:00` })], NOW, { projectNumber: '011LME', projectName: 'Tetley Hall' });
   assert.equal(rows[0]!.length, PERMIT_COLUMNS.length);
-  assert.deepEqual(rows[0], ['Hot works', 'HW-0142', ok.work, ok.issuedBy, 'Pat Pipe', TODAY, `${TODAY} 17:00`, 'Closed', 'Office', `${TODAY} 17:10`, closeCheck('hot-works'), 'Fire watch by Chris', undefined, 'Pat Pipe', `${TODAY} 09:00`, undefined, undefined]);
-  assert.equal(rows[1]![7], 'Open, past its end time');
-  assert.equal(permitFileName(TODAY, '011 LME'), 'relay-permits-011LME-2026-10-21.csv');
+  assert.deepEqual(rows[0], ['HW-0142', '011LME', 'Tetley Hall', 'Hot works', ok.work, TODAY, ok.issuedBy, 'Pat Pipe', `${TODAY} 17:00`, 'Closed', `${TODAY} 17:10`, 'Office', closeCheck('hot-works'), 'Fire watch by Chris', undefined, `${TODAY} 09:00`, 'Pat Pipe', undefined, undefined, undefined]);
+  assert.equal(rows[1]![PERMIT_COLUMNS.indexOf('Status')], 'Open, past its end time');
+  const gone = permitRows([permit('c', { withdrawn: { ...sign, at: '2026-10-21T23:30:00Z', reason: 'Wrong project' } })], NOW, { projectNumber: '011LME', projectName: 'Tetley Hall' })[0]!;
+  assert.deepEqual([gone[PERMIT_COLUMNS.indexOf('Status')], ...gone.slice(-3)], ['Withdrawn', '2026-10-22', 'Office', 'Wrong project'], 'withdrawn on the UK day, by whom and why');
 });
 
 test('a permit is recorded by whoever is signed in, a retry is kept once, anyone on the project closes it, and only its recorder or the office withdraws it', () => {

@@ -70,7 +70,7 @@ try {
     check(all.name===`relay-issues-${today}.csv`,`office: file name ${all.name}`);
     check(all.text.startsWith('﻿'),'office: led by a byte-order mark for Excel');
     const rows=parseCsv(all.text.slice(1));
-    check(rows[0][0]==='Reference'&&rows[0].includes('Responsible company')&&rows[0].includes('Verification'),`office: header row ${rows[0].join('|')}`);
+    check(rows[0][0]==='Reference'&&rows[0].includes('Owner')&&rows[0].includes('Verification'),`office: header row ${rows[0].join('|')}`);
     check(rows.length===81,`office: every open issue on every page, not just the 50 shown (${rows.length-1})`);
     const screenRefs=await page.locator('table.reg tbody .ref').allTextContents();
     check(JSON.stringify(rows.slice(1,51).map(r=>r[0]))===JSON.stringify(screenRefs),'office: the file keeps the register\'s order');
@@ -89,7 +89,7 @@ try {
     const narrowed=await save(page,()=>page.getByRole('link',{name:new RegExp(`^Download ${want} issues`)}).click());
     const nrows=parseCsv(narrowed.text.slice(1));
     check(narrowed.name===`relay-issues-011LME-${today}.csv`,`office: a project's file is named for it (${narrowed.name})`);
-    check(nrows.length-1===want&&nrows.slice(1).every(r=>r[col('Responsible company')]==='Pipeworks Ltd'&&r[col('Location')]==='Level 3, Riser 2'),`office: the file holds this search only (${nrows.length-1} of ${want})`);
+    check(nrows.length-1===want&&nrows.slice(1).every(r=>r[col('Owner')]==='Pipeworks Ltd'&&r[col('Location')]==='Level 3, Riser 2'),`office: the file holds this search only (${nrows.length-1} of ${want})`);
     // Closed filter: the closed issues, with their verification words.
     await page.getByRole('button',{name:'Clear filters'}).first().click();
     await page.getByRole('button',{name:/^Closed · /}).click();await showing(page,3);

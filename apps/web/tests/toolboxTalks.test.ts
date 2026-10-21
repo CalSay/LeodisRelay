@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ATTENDEES_MAX, BACKDATE_DAYS, COMMON_TOPICS, RECENT_DAYS, TALK_COLUMNS, cleanAttendees, daysAgo, projectTalks, splitAttendees, talkFileName, talkProblem, talkRows, talkSummary, topicStarters, withdrawProblem, type ToolboxTalk } from '../lib/toolboxTalks';
+import { ATTENDEES_MAX, BACKDATE_DAYS, COMMON_TOPICS, RECENT_DAYS, TALK_COLUMNS, cleanAttendees, daysAgo, projectTalks, splitAttendees, talkProblem, talkRows, talkSummary, topicStarters, withdrawProblem, type ToolboxTalk } from '../lib/toolboxTalks';
 import { canWithdraw, recordTalk, talksFor, withdrawTalk } from '../lib/toolboxTalkStore';
 import { database, records } from '../lib/storage';
 import type { Principal } from '@relay/platform';
@@ -67,10 +67,11 @@ test('topic starters put this project\'s own topics first, then the common ones,
 });
 
 test('the spreadsheet has one row per talk with attendees in one cell, and is named for the project', () => {
-  const rows = talkRows([talk('a', TODAY, { notes: 'Asked about harness checks', withdrawn: { by: 'Office', byId: 'o', at: '2026-10-21T23:30:00Z', reason: 'Wrong project' } })]);
+  const project = { projectNumber: '011LME', projectName: 'Tetley Hall' };
+  const rows = talkRows([talk('a', TODAY, { notes: 'Asked about harness checks', withdrawn: { by: 'Office', byId: 'o', at: '2026-10-21T23:30:00Z', reason: 'Wrong project' } }), talk('b', TODAY)], project);
   assert.equal(rows[0]!.length, TALK_COLUMNS.length);
-  assert.deepEqual(rows[0], [TODAY, 'Topic a', 'Sam', 'Jo; Ali', 2, 'Asked about harness checks', 'Sam', `${TODAY} 09:00`, '2026-10-22', 'Wrong project'], 'UK time: 08:00Z is 09:00 BST, 23:30Z is the next day');
-  assert.equal(talkFileName(TODAY, '011 LME'), 'relay-toolbox-talks-011LME-2026-10-21.csv');
+  assert.deepEqual(rows[0], ['011LME', 'Tetley Hall', 'Topic a', TODAY, 'Sam', 'Jo; Ali', 2, 'Withdrawn', 'Asked about harness checks', `${TODAY} 09:00`, 'Sam', '2026-10-22', 'Office', 'Wrong project'], 'UK time: 08:00Z is 09:00 BST, 23:30Z is the next day');
+  assert.equal(rows[1]![TALK_COLUMNS.indexOf('Status')], 'Given');
 });
 
 test('a talk is recorded by whoever is signed in, a retry is kept once, and only its recorder or the office can withdraw it', () => {

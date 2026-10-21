@@ -152,7 +152,7 @@ try {
     const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('link',{name:'Download spreadsheet'}).click()]);
     check(/^relay-toolbox-talks-011LME-\d{4}-\d{2}-\d{2}\.csv$/.test(download.suggestedFilename()),`engineer: the spreadsheet is named for the project (${download.suggestedFilename()})`);
     const csv=readFileSync(await download.path(),'utf8');
-    check(csv.startsWith('﻿Day,Topic,Given by,Attendees')&&csv.split('\r\n').filter(Boolean).length===4,'engineer: the spreadsheet has a header and every talk, withdrawn included');
+    check(csv.startsWith('﻿Project number,Project,Topic,Given on,Given by,Attendees')&&csv.split('\r\n').filter(Boolean).length===4,'engineer: the spreadsheet has a header and every talk, withdrawn included');
     check(csv.includes('"Pat Plumb; Chris Weld; Dana Lee, Northbank Electrical; Jo Bloggs"')&&csv.includes('Recorded by mistake while testing'),'engineer: attendees in one cell, and the withdrawal reason');
 
     await page.goto(`${base}/engineer?project=${P}`);

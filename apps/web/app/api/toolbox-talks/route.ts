@@ -3,8 +3,8 @@ import { requireSession } from '@/lib/auth/guard';
 import { reportableProject } from '@/lib/projects';
 import { noteProject } from '@/lib/siteNoteRoute';
 import { recordTalk, talksFor } from '@/lib/toolboxTalkStore';
-import { TALK_COLUMNS, talkFileName, talkRows, topicStarters } from '@/lib/toolboxTalks';
-import { toCsv } from '@/lib/registerExport';
+import { TALK_COLUMNS, talkRows, topicStarters } from '@/lib/toolboxTalks';
+import { registerFileName, toCsv } from '@/lib/sheet';
 import { londonDay } from '@/lib/weeklySummary';
 
 export const dynamic = 'force-dynamic';
@@ -23,8 +23,8 @@ export async function GET(request: Request) {
   if ('response' in found) return found.response;
   const all = talksFor(projectId);
   if (params.get('format') === 'csv') {
-    const csv = toCsv([[...TALK_COLUMNS], ...talkRows(all.talks)]);
-    const name = talkFileName(londonDay(new Date()), found.project.projectNumber);
+    const csv = toCsv([[...TALK_COLUMNS], ...talkRows(all.talks, found.project)]);
+    const name = registerFileName('toolbox-talks', londonDay(new Date()), found.project.projectNumber);
     return new NextResponse(csv, { headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${name}"`, 'cache-control': 'no-store' } });
   }
   if (params.get('summary') === '1') return NextResponse.json({ projectId, summary: all.summary });
