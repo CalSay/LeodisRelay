@@ -34,7 +34,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Check: `npm run typecheck`, `npm test` (new `apps/web/tests/security.test.ts`
   and `safeReturnTo` tests); `scripts/verify-role-access.mjs` now also checks
   the cross-site refusal, the headers, the sign-in wording and the return
-  address. The other browser checks were run against the change.
+  address (95 checks). All 56 other `scripts/verify-*.mjs` checks passed
+  against this branch's production build; `verify-pdf-navigation.mjs` was not
+  run (it fails on main, see CLAUDE.md).
 - Deploy: nothing needs Entra or SharePoint. Optional Caddy request size limit
   described in the review notes. After deploying, send one test report to
   confirm the cross-site check accepts RELAY's own address through Caddy.
