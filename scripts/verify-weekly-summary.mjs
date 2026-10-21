@@ -25,10 +25,11 @@ for(const p of [engineer,manager]){sessions[p.role]=randomUUID();putRecord('sess
 const today=londonDay(new Date()),monday=weekStart(undefined,today),lastMonday=shiftWeek(monday,-1);
 const at=(ymd,hour=10)=>`${ymd}T${String(hour).padStart(2,'0')}:00:00.000Z`;
 const now=new Date().toISOString();
-const card=(type,location)=>({id:randomUUID(),type,location,whatHappened:'Work noted',actionNeeded:'',owner:'',photos:[]});
+const card=(type,location,whatHappened='Work noted')=>({id:randomUUID(),type,location,whatHappened,actionNeeded:'',owner:'',photos:[]});
+const LONG='Ductwork hangers fitted along the whole of the level 3 corridor ceiling void, insulation to follow once the pressure test is signed off by the mechanical lead, and the access panels marked up for the ceiling fixers';
 const report=(extra)=>{const r={id:randomUUID(),projectId:'proj-011lme',reference:`011LME-SPR-${randomUUID().slice(0,4)}`,visitDate:monday,author:engineer.name,authorId:engineer.id,authorTrade:'Electrical',state:'submitted',version:1,revision:1,review:'not_required',serverAcknowledgedAt:now,observations:[],...extra};putRecord('reports',r);return r;};
 const sent=report({reference:'011LME-SPR-101',observations:[card('update','Level 2 corridor'),card('defect','level 2  corridor'),card('instruction','Plant room')]});
-const theirs=report({reference:'011LME-SPR-102',review:'pending',author:other.name,authorId:other.id,authorTrade:'P&H',observations:[card('update','Riser')]});
+const theirs=report({reference:'011LME-SPR-102',review:'pending',author:other.name,authorId:other.id,authorTrade:'P&H',observations:[card('update','Riser','Pipework lagged'),card('update','Level 3 corridor',LONG),card('update','Plant room','Valves tagged'),card('update','Roof','Condensate run fixed'),card('update','Bin store','Drain capped')]});
 const lastWeek=report({reference:'011LME-SPR-090',visitDate:lastMonday,observations:[card('update','Roof')]});
 const draft=report({reference:'011LME-SPR-103',author:other.name,authorId:other.id,state:'draft',serverAcknowledgedAt:undefined,lastSavedAt:now});
 const elsewhere=report({reference:'014LME-SPR-001',projectId:'proj-014lme'});
@@ -42,7 +43,7 @@ const port=4336,base=`http://127.0.0.1:${port}`;let output='';
 const server=spawn(process.execPath,[resolve('node_modules/next/dist/bin/next'),'start','-p',String(port),'-H','127.0.0.1'],{cwd:resolve('apps/web'),windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,NODE_ENV:'production',ENTRA_TENANT_ID:'00000000-0000-0000-0000-000000000001',ENTRA_CLIENT_ID:'00000000-0000-0000-0000-000000000002',ENTRA_CLIENT_SECRET:'synthetic-week-check',ENTRA_REDIRECT_URI:`${base}/api/auth/callback`}});
 server.stdout.on('data',d=>output+=d);server.stderr.on('data',d=>output+=d);
 let browser,checks=0;const check=(...a)=>{assert.ok(...a);checks++;};
-const rows=(page,section)=>page.locator('.week-section').filter({has:page.getByRole('heading',{name:section,level:2})}).locator('.week-rows li');
+const rows=(page,section)=>page.locator('.week-section').filter({has:page.getByRole('heading',{name:section,level:2})}).locator('.week-rows > li');
 try {
   let ready=false;for(let k=0;k<60;k++){if(server.exitCode!==null)throw Error(output);try{if((await fetch(base+'/signin')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready,output);
   browser=await chromium.launch({headless:true,...(process.env.RELAY_BROWSER_PATH?{executablePath:process.env.RELAY_BROWSER_PATH}:{})});
@@ -74,7 +75,23 @@ try {
     check(!text.includes(lastWeek.reference)&&!text.includes(draft.reference)&&!text.includes(elsewhere.reference),'engineer: last week, a draft and another project are left out');
     check(/awaiting review/i.test(onSite.find(t=>t.includes(theirs.reference)))&&!/awaiting review/i.test(onSite.find(t=>t.includes(sent.reference))),'engineer: a report still awaiting review is marked, a settled one is not');
     const mine=onSite.find(t=>t.includes(sent.reference));
-    check(/1 progress update, 1 defect, 1 variation required/.test(mine)&&mine.includes('Level 2 corridor · Plant room'),`engineer: report row says what it found and where: ${mine}`);
+    check(/1 progress update, 1 defect, 1 variation required/.test(mine),`engineer: report row counts what it found: ${mine}`);
+    // What was done, in the engineer's words, without opening the report; the defect and variation are in their own sections.
+    const work=await page.getByRole('list',{name:`Work done, ${sent.reference}`}).innerText();
+    check(work.includes('Level 2 corridor: Work noted')&&!work.includes('Plant room'),`engineer: the visit says what was done and where, progress only: ${work}`);
+    // A long visit shows three updates, each in full, then Show all.
+    const theirsWork=page.getByRole('list',{name:`Work done, ${theirs.reference}`}).locator('li');
+    const visible=async()=>(await theirsWork.evaluateAll(ls=>ls.filter(l=>l.offsetHeight>0).length));
+    check(await theirsWork.count()===5&&await visible()===3,`engineer: five updates, three shown at first (${await visible()})`);
+    const longLine=theirsWork.filter({hasText:'Level 3 corridor'});
+    check((await longLine.innerText()).includes('ceiling fixers'),'engineer: a long note shows in full, never cut');
+    const showAll=page.getByRole('button',{name:'Show all 5 updates'});
+    check(await showAll.getAttribute('aria-expanded')==='false','engineer: Show all says it is folded');
+    await showAll.click();
+    check(await visible()===5,'engineer: Show all shows every update');
+    await page.getByRole('button',{name:'Show less'}).click();
+    check(await visible()===3,'engineer: Show less folds it again');
+    check(await page.getByRole('button',{name:/^Show all/}).count()===1,'engineer: a short visit has no Show all');
     const stats=await page.locator('.week-stats').innerText();
     check(/Site reports\s*2/i.test(stats)&&/Engineers\s*2/i.test(stats)&&/Issues raised\s*1/i.test(stats)&&/Variations raised\s*1/i.test(stats),`engineer: headline counts: ${JSON.stringify(stats)}`);
     check((await rows(page,'Issues').allInnerTexts()).some(t=>t.includes(raised.reference)),'engineer: issue raised this week is listed');
@@ -112,6 +129,9 @@ try {
     await page.emulateMedia({media:'print'});
     check(!(await page.locator('.appbar').isVisible())&&!(await page.locator('.week-controls').isVisible())&&!(await page.locator('.back').isVisible()),'print: app bar, controls and back link hidden');
     check(await page.locator('.banner').isVisible(),'print: prototype banner still prints');
+    const printed=page.getByRole('list',{name:`Work done, ${theirs.reference}`}).locator('li');
+    check((await printed.evaluateAll(ls=>ls.filter(l=>l.offsetHeight>0&&l.scrollHeight<=l.clientHeight+2).length))===5,'print: every update printed in full');
+    check(!(await page.getByRole('button',{name:/Show all/}).isVisible()),'print: Show all is left off paper');
     const bg=await page.evaluate(()=>getComputedStyle(document.querySelector('.week-sheet')).backgroundColor);
     check(bg==='rgb(255, 255, 255)',`print: white sheet in dark mode (${bg})`);
     if(screenshot)await page.screenshot({path:join(screenshot,'week-print-dark.png'),fullPage:true});

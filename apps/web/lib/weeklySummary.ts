@@ -57,9 +57,17 @@ export interface WeekReport {
   photos: number;
   /** Where the work was, as the engineer wrote it, without repeats. */
   locations: string[];
+  /**
+   * What was done: each progress update in the order written, so the week reads
+   * without opening every report. Defects, access problems and variations are
+   * left out: they have their own sections, with their references. None on an inspection.
+   */
+  work: WeekWork[];
   /** An inspection: its name and how its checks came out. Its checks are not counted as cards. */
   inspection?: { name: string; ok: number; action: number; na: number };
 }
+/** One progress update as the engineer wrote it. */
+export interface WeekWork { id: string; location: string; text: string; photos: number }
 export interface WeekIssue { id: string; reference: string; location: string; description: string; owner: string; trade?: string; at: string; status: string }
 export interface WeekVariation { id: string; reference: string; location: string; description: string; at: string; status: string; workDone: boolean }
 export interface WeekTalk { id: string; day: string; topic: string; givenBy: string; attendees: number }
@@ -132,6 +140,8 @@ export function weeklySummary(sources: WeekSources, principal: Principal, projec
     const checks = type.checklist ? checkCounts(r.observations) : undefined;
     return { id: r.id, reference: r.reference, visitDate: r.visitDate, author: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}), revision: r.revision, review: r.review, kinds,
       photos: r.observations.reduce((n, o) => n + o.photos.length, 0), locations: [...places.values()],
+      work: checks ? [] : r.observations.filter(o => o.type === 'update' && (o.whatHappened.trim() || o.location.trim()))
+        .map(o => ({ id: o.id, location: tidy(o.location), text: o.whatHappened.trim(), photos: o.photos.length })),
       ...(checks ? { inspection: { name: reportName(r), ok: checks.ok, action: checks.action, na: checks.na } } : {}) };
   }).sort((a, b) => a.visitDate.localeCompare(b.visitDate) || byRef(a, b));
   const kinds = emptyKinds();

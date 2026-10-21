@@ -59,6 +59,25 @@ test('lists sent reports by visit day, never drafts, other projects or other wee
   assert.equal(s.current, false);
 });
 
+test('says what was done on each visit: progress updates in the order written, nothing else', () => {
+  const s = weeklySummary({ ...none, reports:[
+    report({ id:'tue', observations:[
+      card({ id:'a', type:'update', location:' Level 3  riser ', whatHappened:' Containment fixed along the full run ', photos:[{ id:'p', dataUrl:'', caption:'', capturedAt:'' }] }),
+      card({ id:'b', type:'defect', location:'Plant room', whatHappened:'Cracked faceplate' }),
+      card({ id:'c', type:'access', location:'Level 2', whatHappened:'Blocked by plasterboard' }),
+      card({ id:'d', type:'instruction', location:'Roof', whatHappened:'Extra grille asked for' }),
+      card({ id:'e', type:'update', location:'', whatHappened:'Board labelled' }),
+      card({ id:'f', type:'update', location:'  ', whatHappened:'  ' })] }),
+    report({ id:'ffi', reference:'011LME-FFI-001', reportType:'first-fix-inspection', observations:[card({ id:'g', type:'check', location:'Flat 204', whatHappened:'Boxes at the right height' })] }),
+  ] }, manager, 'p1', MONDAY, TODAY);
+  const tue = s.reports.find(r => r.id === 'tue')!;
+  assert.deepEqual(tue.work, [
+    { id:'a', location:'Level 3 riser', text:'Containment fixed along the full run', photos:1 },
+    { id:'e', location:'', text:'Board labelled', photos:0 },
+  ], 'progress only, tidied, blanks left out; defects, access and variations have their own sections');
+  assert.deepEqual(s.reports.find(r => r.id === 'ffi')!.work, [], 'an inspection has checks, not work lines');
+});
+
 test('an engineer never sees another engineer\'s draft, even their own drafts are left out', () => {
   const sources = { ...none, reports:[report({ id:'mine', state:'draft' }), report({ id:'theirs', state:'draft', authorId:other.id })] };
   assert.deepEqual(weeklySummary(sources, engineer, 'p1', MONDAY, TODAY).reports, []);

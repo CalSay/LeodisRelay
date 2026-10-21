@@ -4,6 +4,49 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — The week in the engineers' words (Weekly summary)
+
+- Why: Cal's 07:02 direction (get the office the information it needs).
+  Walked through the office on seeded projects with six weeks of reports,
+  asking "what happened on site X this week?", "which jobs haven't had a
+  visit?", "what issues and variations does Y have?" and "show me Tuesday's
+  photos". The last three are answered in a click or two (Where each project
+  stands, the project sheet, Photographs grouped by day). The first was not:
+  the Weekly summary listed each visit only as counts and places ("2
+  progress updates, 1 defect"), so the office had to open every report, 7
+  reports and about 16 clicks for one week on Tetley Hall. The site diary
+  has the words, but it runs back months and mixes in every card.
+  Decided without asking Cal, per his autonomy message. Not a
+  `docs/tasks.json` task; no status changed.
+- Changed: under each site report in the Weekly summary's "On site", its
+  progress updates in the order written (place in bold, then what was
+  done). Three show; "Show all N updates" opens the rest. Each is shown in
+  full, never cut (a fresh review found a two-line cut hid the end of notes
+  on a phone with no way to open them, so the cut was dropped). Printed, all
+  of them show. Defects, access problems and variations are left out of
+  these lines: the page lists them under Issues and Variations with their
+  references. Inspections keep their check counts. The places line now
+  shows only for a visit with no progress written. Built from the same
+  reports the person may already read (`canReadReport`), corrections in
+  place of what they correct. Help "What's new" line added.
+- Busy project (busy-projects seed, last week on Tetley Hall, 13 reports):
+  API 145 ms and 24 KB (was 134 ms, 18 KB on main), page ready in about
+  0.5 s either way, page 7,479 px tall at 1440 (was 6,489) and 11,081 px
+  at 390 (was 9,652), printed PDF 8 A4 pages on both. Screenshots and the
+  PDF: project files `ui-review/weekly-work-done/`.
+- Checks: `npm run typecheck`, `npm test` (146 + 468, one new unit test),
+  `npm run build`; browser checks one at a time: verify-weekly-summary (38,
+  new: work lines, Show all and Show less, nothing cut, all printed),
+  verify-help, verify-office-progress, verify-september-office,
+  verify-role-access, verify-accessibility, verify-day-walkthrough,
+  verify-error-messages, verify-first-time-use, verify-home-and-sheet,
+  verify-navigation, verify-simpler-home, verify-site-coverage and
+  verify-busy-projects (38 timings within budget). verify-office-progress
+  failed once while another run overlapped it and passed alone (75).
+- Not verified: a real phone or printer, the live tenant.
+- Next (proposed, not built): Photographs could open on a chosen day (today
+  a past week's Tuesday needs a few "Show more" taps).
+
 ## 2026-10-21 — One caption line before sending
 
 - Why: Cal (2026-10-21 07:02) wants RELAY easy for hands-on engineers.
