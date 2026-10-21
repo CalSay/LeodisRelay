@@ -78,12 +78,10 @@ function ProjectsCol({ ctx, current }: { ctx: Ctx; current?: ProjectStats }) {
 }
 
 /** "Last visit today · Electrical", or how long an active site has gone without a report. */
-function VisitMeta({ s, day, link }: { s: ProjectStats; day: string; link?: boolean }) {
+function VisitMeta({ s, day }: { s: ProjectStats; day: string }) {
   const v = lastVisitWords(s.standing, day);
   const last = s.standing.last;
-  const words = v.quiet ?? (last ? `Last visit ${visitDay(last.visitDate, day)}${last.trade ? ` · ${last.trade}` : ''}` : 'No visit yet');
-  // Inside a project's row it is part of that link; on the phone's register it opens the last visit's report.
-  return <div className="meta">{link && last ? <a className={`meta-go ${v.quiet ? 'late' : ''}`} href={`#/projects/${s.code}/report/${last.reportId}`}>{words}</a> : <span className={v.quiet ? 'late' : ''}>{words}</span>}</div>;
+  return <div className="meta"><span className={v.quiet ? 'late' : ''}>{v.quiet ?? (last ? `Last visit ${visitDay(last.visitDate, day)}${last.trade ? ` · ${last.trade}` : ''}` : 'No visit yet')}</span></div>;
 }
 
 /** True on a phone, where the register stands in for the project sheet. */
@@ -127,8 +125,8 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   const settled = s.variations.filter(v => v.instruction !== 'pending');
   return <div className="col">
     <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h2>Register · {s.project.projectName}</h2><i>{s.reports.length} report{s.reports.length === 1 ? '' : 's'} · {s.active.length} open</i></div>
-    {/* A phone shows this column in place of the project sheet, so where the project stands and what site said come first. */}
-    {phone && <div className="phone-only register-standing"><VisitMeta s={s} day={day} link /><LatestFromSite ctx={ctx} s={s} shown={2} /></div>}
+    {/* A phone shows this column in place of the project sheet, so the sheet's four figures, the project's own pages and what site said come first. */}
+    {phone && <div className="phone-only register-standing"><SheetFigures ctx={ctx} s={s} /><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /><LatestFromSite ctx={ctx} s={s} shown={2} /></div>}
     <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
       {([['action', `Needs action · ${s.needsAction + onSite.length}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
     </div>
@@ -155,8 +153,6 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
       {settled.length ? settled.map(variationRow) : <div className="empty" style={{ padding: 14 }}>No variations instructed or declined yet.</div>}
     </>}
     {filter === 'drafts' && (s.drafts.length ? s.drafts.map(draftRow) : <div className="empty">No drafts saved to the server on this project.</div>)}
-    {/* And the project's other pages after its records. */}
-    <div className="phone-only"><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /></div>
     <div className="colpad sticky-foot"><div className="rowsub">{filter === 'action' ? `${onSite.length ? 'Safety, permit and delivery lines each open their own page. ' : ''}Needs action hides ${count(s.reports.length - attnReports.length, 'report')}, ${count(s.issues.length - attnIssues.length, 'issue')} and ${count(s.variations.length - attnVariations.length, 'variation')} that need nobody.` : ''} Reports, issues and variations share one column because the office reads them as one stream. Work held only on an engineer’s device is not visible here.</div></div>
   </div>;
 }
@@ -342,20 +338,24 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   const phone = usePhone();
   const month = Date.now() - 30 * 86400000;
   const engineers = [...new Set(s.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > month).map(r => r.author))];
-  const v = lastVisitWords(s.standing, ctx.day);
   // Where it stands, then what site said; the project's other pages and its details after them. What needs the office
   // and every report are in the register column beside the sheet (a phone shows that column instead), so not repeated here.
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
       <div className="actions"><BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'variation-new', projects: ctx.projects, projectId: p.id, opened: v => ctx.go(`#/projects/${s.code}/variation/${v.id}`) })}>Add variation</BtnQ><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link></div></div>
-    {/* Each figure opens what it counts: the last visit's report, or the register on this project and filter. */}
-    <dl className="tb"><div><dt>Last visit</dt><dd className={`big ${v.quiet ? 'late' : ''}`}><Go href={s.standing.last && `#/projects/${s.code}/report/${s.standing.last.reportId}`}>{v.when}<small>{v.quiet ? `${v.quiet} · ` : ''}{v.who} · {count(s.standing.thisWeek, 'visit')} this week</small></Go></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}><Go href={s.overdue.length ? `#/issues/show/overdue/${p.id}` : undefined}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'} · {s.active.length} open</small></Go></dd></div><div><dt>Fixed, to check</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}><Go href={s.verify.length ? `#/issues/show/verify/${p.id}` : undefined}>{s.verify.length}<small>{s.verify.length ? `put forward ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing waiting to be checked'}</small></Go></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}><Go href={s.pendingVariations.length ? `#/variations/show/pending/${p.id}` : undefined}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></Go></dd></div></dl>
+    <SheetFigures ctx={ctx} s={s} />
     <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
     {!phone && <LatestFromSite ctx={ctx} s={s} />}
     {s.drafts.length > 0 && <p className="rowsub" style={{ marginTop: 12 }}>{s.drafts.length} draft{s.drafts.length === 1 ? '' : 's'} in progress on site. Contents stay private until sent.</p>}
     <ProjectLinks ctx={ctx} projectId={p.id} />
     <dl className="tb" style={{ marginTop: 12 }}><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
   </div>;
+}
+
+/** Where the project stands in four figures. Each opens what it counts: the last visit's report, or the register on this project and filter. */
+function SheetFigures({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
+  const v = lastVisitWords(s.standing, ctx.day);
+  return <dl className="tb"><div><dt>Last visit</dt><dd className={`big ${v.quiet ? 'late' : ''}`}><Go href={s.standing.last && `#/projects/${s.code}/report/${s.standing.last.reportId}`}>{v.when}<small>{v.quiet ? `${v.quiet} · ` : ''}{v.who} · {count(s.standing.thisWeek, 'visit')} this week</small></Go></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}><Go href={s.overdue.length ? `#/issues/show/overdue/${s.project.id}` : undefined}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'} · {s.active.length} open</small></Go></dd></div><div><dt>Fixed, to check</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}><Go href={s.verify.length ? `#/issues/show/verify/${s.project.id}` : undefined}>{s.verify.length}<small>{s.verify.length ? `put forward ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing waiting to be checked'}</small></Go></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}><Go href={s.pendingVariations.length ? `#/variations/show/pending/${s.project.id}` : undefined}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></Go></dd></div></dl>;
 }
 
 /** How many progress lines each trade shows before "and N more in the report"; a phone's register shows two. */
