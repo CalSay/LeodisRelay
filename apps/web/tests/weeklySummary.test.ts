@@ -114,3 +114,34 @@ test('carries each report\'s review state, so one awaiting review or returned is
   const s = weeklySummary({ ...none, reports:[report({ id:'a', review:'pending' }), report({ id:'b', reference:'011LME-SPR-002', review:'returned' }), report({ id:'c', reference:'011LME-SPR-003' })] }, manager, 'p1', MONDAY, TODAY);
   assert.deepEqual(s.reports.map(r => [r.id, r.review]), [['a', 'pending'], ['b', 'returned'], ['c', 'not_required']]);
 });
+
+test('lists the week\'s toolbox talks, permits issued or closed and deliveries, leaving out withdrawn ones and other projects', () => {
+  const sign = (at: string) => ({ by:'Sam Spark', byId:engineer.id, at });
+  const s = weeklySummary({ ...none,
+    talks:[
+      { id:'t1', projectId:'p1', day:'2026-10-13', topic:'Safe isolation', givenBy:'Sam Spark', attendees:['Jo', 'Ali'], ...sign('2026-10-13T06:30:00Z') },
+      { id:'t2', projectId:'p1', day:'2026-10-14', topic:'Mistake', givenBy:'Sam Spark', attendees:['Jo'], ...sign('2026-10-14T06:30:00Z'), withdrawn:{ ...sign('2026-10-14T07:00:00Z'), reason:'typo' } },
+      { id:'t3', projectId:'p2', day:'2026-10-13', topic:'Elsewhere', givenBy:'Sam Spark', attendees:['Jo'], ...sign('2026-10-13T06:30:00Z') },
+      { id:'t4', projectId:'p1', day:'2026-10-09', topic:'Last week', givenBy:'Sam Spark', attendees:['Jo'], ...sign('2026-10-09T06:30:00Z') },
+    ],
+    permits:[
+      { id:'p-last', projectId:'p1', kind:'hot-works', reference:'HW-1', work:'Brazing', issuedBy:'Dana', heldBy:'Pat', day:'2026-10-09', ends:'2026-10-12T17:00', ...sign('2026-10-09T07:00:00Z'), closed:sign('2026-10-12T16:00:00Z') },
+      { id:'p-open', projectId:'p1', kind:'electrical-isolation', work:'DB-3', issuedBy:'Dana', heldBy:'Sam Spark', day:'2026-10-14', ends:'2026-10-14T23:59', ...sign('2026-10-14T07:00:00Z') },
+      { id:'p-old', projectId:'p1', kind:'other', work:'Old', issuedBy:'Dana', heldBy:'Sam', day:'2026-10-02', ends:'2026-10-02T17:00', ...sign('2026-10-02T07:00:00Z'), closed:sign('2026-10-02T16:00:00Z') },
+    ],
+    deliveries:[
+      { id:'d1', projectId:'p1', supplier:'Edmundson', items:'6 reels', day:'2026-10-15', receivedBy:'Sam', condition:'short', problem:'2 short', ...sign('2026-10-15T09:00:00Z') },
+      { id:'d2', projectId:'p1', supplier:'City Plumbing', items:'Copper', day:'2026-10-13', receivedBy:'Pat', condition:'complete', ...sign('2026-10-13T09:00:00Z') },
+    ],
+  }, manager, 'p1', MONDAY, TODAY);
+  assert.deepEqual(s.site.talks.map(t => [t.topic, t.attendees]), [['Safe isolation', 2]]);
+  assert.deepEqual(s.site.permits.map(p => [p.id, p.day, p.title, p.closedDay ?? '']), [['p-last', '2026-10-12', 'Hot works HW-1', '2026-10-12'], ['p-open', '2026-10-14', 'Electrical isolation', '']], 'issued last week and closed on Monday belongs to this week too');
+  assert.deepEqual(s.site.deliveries.map(d => [d.supplier, d.condition, d.toSort]), [['City Plumbing', 'All there', false], ['Edmundson', 'Short', true]]);
+  assert.deepEqual(weeklySummary(none, manager, 'p1', MONDAY, TODAY).site, { talks:[], permits:[], deliveries:[] });
+});
+
+test('a delivery taken in last week and sorted this week is dated the day it was sorted', () => {
+  const s = weeklySummary({ ...none, deliveries:[{ id:'d', projectId:'p1', supplier:'CEF', items:'Tray', day:'2026-10-09', receivedBy:'Sam', condition:'damaged', problem:'Bent', by:'Sam', byId:engineer.id, at:'2026-10-09T09:00:00Z',
+    sorted:{ by:'Sam', byId:engineer.id, at:'2026-10-13T10:00:00Z', note:'Replaced' } }] }, manager, 'p1', MONDAY, TODAY);
+  assert.deepEqual(s.site.deliveries.map(d => [d.day, d.arrived, d.sortedDay, d.toSort]), [['2026-10-13', '2026-10-09', '2026-10-13', false]]);
+});

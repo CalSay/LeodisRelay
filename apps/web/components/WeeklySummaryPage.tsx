@@ -14,7 +14,8 @@ import { failure } from '@/lib/failure';
 
 /**
  * One project's week, for the weekly site or client meeting: who was on site,
- * what they reported, and how issues and variations moved. It reads what is
+ * what they reported, how issues and variations moved, and the toolbox talks,
+ * permits and deliveries recorded. It reads what is
  * already in RELAY and changes nothing.
  */
 
@@ -94,6 +95,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
 
   const s = summary?.projectId === projectId && summary.start === week ? summary : null;
   const issuesMoved = s ? s.issuesRaised.length + s.issuesFixed.length + s.issuesClosed.length : 0;
+  const siteCount = s ? s.site.talks.length + s.site.permits.length + s.site.deliveries.length : 0;
   const snagHref = `/issues/snag-list?${new URLSearchParams({ project: projectId, returnTo: here })}`;
 
   return <main className="eng-page week-page">
@@ -162,8 +164,30 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
           <h3>Instructed by the client</h3><VariationRows rows={s.variationsInstructed} empty="No variations instructed this week." here={here} />
         </section>
 
+        <section className="week-section">
+          <h2>Toolbox talks, permits and deliveries<span>{siteCount ? plural(siteCount, 'record') : 'none recorded'}</span></h2>
+          <h3>Toolbox talks</h3>
+          {s.site.talks.length ? <ul className="week-rows">{s.site.talks.map(t => <li key={t.id}>
+            <span className="week-when">{fmtDay(t.day)}</span>
+            <div><p>Given by {t.givenBy}</p><p className="week-desc">{t.topic}</p><p className="week-meta">{plural(t.attendees, 'person', 'people')} attended</p></div>
+          </li>)}</ul> : <p className="week-none">No toolbox talks recorded this week.</p>}
+          <h3>Permits to work</h3>
+          {s.site.permits.length ? <ul className="week-rows">{s.site.permits.map(p => <li key={p.id}>
+            <span className="week-when">{fmtDay(p.day)}</span>
+            <div><p>{p.title} <span className={`tag ${p.closedDay ? 'tag-sent' : 'tag-draft'}`}>{p.closedDay ? `Closed ${fmtDay(p.closedDay)}` : 'Open'}</span></p>
+              <p className="week-desc">{p.work}</p><p className="week-meta">Held by {p.heldBy}{p.issued !== p.day ? ` · issued ${fmtDay(p.issued)}` : ''}</p></div>
+          </li>)}</ul> : <p className="week-none">No permits issued or closed this week.</p>}
+          <h3>Deliveries</h3>
+          {s.site.deliveries.length ? <ul className="week-rows">{s.site.deliveries.map(d => <li key={d.id}>
+            <span className="week-when">{fmtDay(d.day)}</span>
+            <div><p>{d.supplier} <span className={`tag ${d.toSort ? 'tag-alert' : d.sortedDay ? 'tag-sent' : 'tag-draft'}`}>{d.toSort ? `${d.condition} · to sort` : d.sortedDay ? `${d.condition} · sorted ${fmtDay(d.sortedDay)}` : d.condition}</span></p>
+              <p className="week-desc">{d.items}</p>{(d.problem || d.arrived !== d.day) && <p className="week-meta">{[d.problem, d.arrived !== d.day ? `arrived ${fmtDay(d.arrived)}` : ''].filter(Boolean).join(' · ')}</p>}</div>
+          </li>)}</ul> : <p className="week-none">No deliveries recorded this week.</p>}
+          {siteCount > 0 && <p className="week-total week-noprint"><Link href={withViewReturn(`/toolbox-talks?${new URLSearchParams({ project: projectId })}`, here)}>Toolbox talks</Link> · <Link href={withViewReturn(`/permits?${new URLSearchParams({ project: projectId })}`, here)}>Permits to work</Link> · <Link href={withViewReturn(`/deliveries?${new URLSearchParams({ project: projectId })}`, here)}>Deliveries</Link></p>}
+        </section>
+
         <footer className="week-foot">
-          <p>Made from site reports sent to the office and the issue and variation registers in RELAY. Reports are placed by their visit day; issues and variations by the day each change was recorded. A corrected report replaces the one it corrects. Reports still awaiting review or returned for changes are marked. &ldquo;Open now&rdquo; is as of {fmtDay(today, true)}. Prices are not shown.</p>
+          <p>Made from site reports sent to the office, the issue and variation registers, and the toolbox talks, permits and deliveries recorded in RELAY. Reports are placed by their visit day; issues and variations by the day each change was recorded; talks by the day given, permits and deliveries by the day issued or taken in, or closed or sorted when that was this week. A corrected report replaces the one it corrects. Reports still awaiting review or returned for changes are marked. &ldquo;Open now&rdquo; is as of {fmtDay(today, true)}. Prices are not shown.</p>
         </footer>
       </article>}
   </main>;
