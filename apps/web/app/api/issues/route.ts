@@ -1,9 +1,11 @@
 import { refreshIssues, IssueSyncError } from '@/lib/sharepoint/issues';
+import { jsonResponse } from '@/lib/jsonResponse';
 import { NextResponse } from "next/server";
 import { issueRegister, listIssues, openIssues } from "@/lib/issueStore";
 import { parseIssueQuery } from '@/lib/issueQuery';
 import { requireSession } from "@/lib/auth/guard";
 import { canAccessProject } from '@/lib/auth/access';
+import { deskIssue } from '@/lib/officeActions';
 import {DEFECT_BODY_LIMIT,type DefectInput} from '@/lib/defects';
 import {DefectError,submitIndividualDefect} from '@/lib/defectStore';
 
@@ -20,12 +22,16 @@ export async function GET(request: Request) {
   // The register asks for one page at a time; older callers still get every issue.
   if (url.searchParams.get("register") === "1") {
     const day = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
-    return NextResponse.json(issueRegister(guard.principal, parseIssueQuery(url.searchParams), day));
+    return jsonResponse(request, issueRegister(guard.principal, parseIssueQuery(url.searchParams), day));
+  }
+  // The office desk's snapshot: every issue this person may see, each with its latest event only.
+  if (url.searchParams.get("view") === "desk") {
+    return jsonResponse(request, { issues: listIssues(projectId).filter(i=>canAccessProject(guard.principal,i.projectId)).map(deskIssue) });
   }
   if (projectId && only === "open") {
-    return NextResponse.json({ issues: openIssues(projectId).filter(i=>canAccessProject(guard.principal,i.projectId)) });
+    return jsonResponse(request, { issues: openIssues(projectId).filter(i=>canAccessProject(guard.principal,i.projectId)) });
   }
-  return NextResponse.json({ issues: listIssues(projectId).filter(i=>canAccessProject(guard.principal,i.projectId)) });
+  return jsonResponse(request, { issues: listIssues(projectId).filter(i=>canAccessProject(guard.principal,i.projectId)) });
 }
 
 export async function POST(request:Request){

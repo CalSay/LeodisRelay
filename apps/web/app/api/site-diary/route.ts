@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { jsonResponse } from '@/lib/jsonResponse';
 import { requireSession } from '@/lib/auth/guard';
 import { canAccessProject } from '@/lib/auth/access';
 import { listReports } from '@/lib/serverStore';
@@ -25,7 +26,7 @@ export async function GET(request: Request) {
   const project = projects.find(p => p.id === projectId && (sharePointMode() === 'off' || reportableProject(p)) && canAccessProject(guard.principal, p.id));
   if (!project) return NextResponse.json({ reason:'This project is not open to you.' },{ status:404 });
   const kind = url.searchParams.get('kind') ?? '';
-  return NextResponse.json(siteDiary({ reports:listReports(projectId), issues:listIssues(projectId), variations:listVariations(projectId) }, guard.principal, projectId, {
+  return jsonResponse(request, siteDiary({ reports:listReports(projectId), issues:listIssues(projectId), variations:listVariations(projectId) }, guard.principal, projectId, {
     kind: isDiaryKind(kind) ? kind : '', words: url.searchParams.get('q') ?? '', before: url.searchParams.get('before') ?? undefined,
   }));
 }

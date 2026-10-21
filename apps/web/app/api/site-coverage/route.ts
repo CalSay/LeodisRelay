@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { jsonResponse } from '@/lib/jsonResponse';
 import { requireSession } from '@/lib/auth/guard';
 import { canAccessProject, canManage } from '@/lib/auth/access';
 import { listReports } from '@/lib/serverStore';
@@ -20,5 +21,5 @@ export async function GET(request: Request) {
   const open = projects.filter(p => reportableProject(p) && canAccessProject(guard.principal, p.id));
   const today = londonDay(new Date());
   const start = fortnightStart(new URL(request.url).searchParams.get('start') ?? undefined, today);
-  return NextResponse.json(siteCoverage(open, open.flatMap(p => listReports(p.id)), guard.principal, start, today));
+  return jsonResponse(request, siteCoverage(open, open.flatMap(p => listReports(p.id)), guard.principal, start, today));
 }

@@ -1,3 +1,4 @@
+import { naturalOrder } from './naturalOrder';
 import { checkCounts, reportName, reportTypeOf } from './reportTypes';
 import type { Principal } from '@relay/platform';
 import { canReadReport, ownsReport } from './auth/access';
@@ -57,7 +58,7 @@ export interface MyWeekSources { reports: Report[]; issues: Issue[] }
 
 const addDays = (ymd: string, n: number) => { const d = new Date(`${ymd}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');
-const byRef = (a: { reference: string }, b: { reference: string }) => a.reference.localeCompare(b.reference, 'en', { numeric: true });
+const byRef = (a: { reference: string }, b: { reference: string }) => naturalOrder(a.reference, b.reference);
 const emptyKinds = (): Record<ObservationType, number> => ({ update: 0, defect: 0, instruction: 0, access: 0, check: 0 });
 
 /**
@@ -120,7 +121,7 @@ export function myWeek(projects: MyWeekProjectSource[], sources: MyWeekSources, 
     });
   }
 
-  const order = (a: MyWeekProject, b: MyWeekProject) => a.projectNumber.localeCompare(b.projectNumber, 'en', { numeric: true }) || a.projectName.localeCompare(b.projectName);
+  const order = (a: MyWeekProject, b: MyWeekProject) => naturalOrder(a.projectNumber, b.projectNumber) || a.projectName.localeCompare(b.projectName);
   const out = days.map(day => ({ day, projects: [...slots.get(day)!.values()].sort(order).map(p => ({
     ...p, reports: p.reports.sort(byRef), drafts: p.drafts.sort(byRef), issues: p.issues.sort((a, b) => a.at.localeCompare(b.at) || byRef(a, b)),
   })) }));

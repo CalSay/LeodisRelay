@@ -12,8 +12,21 @@ export const isUnassigned = (i: Issue): boolean => isActiveIssue(i) && i.owner.t
 export const isVerify = (i: Issue): boolean => isActiveIssue(i) && i.work === 'awaiting_verification';
 export const notAcknowledged = (r: ReportSummary): boolean => r.state === 'submitted' && !r.acknowledged;
 
-/** The calendar day in the office's time zone, as YYYY-MM-DD. */
-export const londonDay = (iso: string): string => new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
+/**
+ * An issue as the office desk's registers and totals use it: every field, and
+ * only its latest event (for "waiting N days"), without its note or
+ * photographs. The issue's own page loads its whole history. On a busy
+ * register the full histories were most of a 10 MB answer, fetched every
+ * 15 seconds.
+ */
+export const deskIssue = (i: Issue): Issue => {
+  const last = i.events.at(-1);
+  return { ...i, events: last ? [{ ...last, note: '', photos: [] }] : [] };
+};
+
+const LONDON_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' });
+/** The calendar day in the office's time zone, as YYYY-MM-DD. One formatter, made once, as it runs per issue. */
+export const londonDay = (iso: string): string => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? 'Invalid Date' : LONDON_DAY.format(d); };
 
 /**
  * The working day before `day` (YYYY-MM-DD): Friday for a Saturday, Sunday or

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { jsonResponse } from '@/lib/jsonResponse';
 import { requireSession } from '@/lib/auth/guard';
 import { canAccessProject, canManage } from '@/lib/auth/access';
 import { listIssues } from '@/lib/issueStore';
@@ -12,7 +13,7 @@ import { companyKey } from '@/lib/companyIssues';
 export const dynamic = 'force-dynamic';
 
 /** Open issues grouped by the company or person who owns them, across every project, with the office's chase notes for each. An office view: Managers and Admins. */
-export async function GET() {
+export async function GET(request: Request) {
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
   if (!canManage(guard.principal)) return NextResponse.json({ reason:'Manager access required.' },{ status:403 });
@@ -23,5 +24,5 @@ export async function GET() {
   const issues = listIssues().filter(i => canAccessProject(guard.principal, i.projectId));
   const result = companyIssues(issues, projects, londonDay(new Date()));
   // Only the chases for companies on this page, so a company named only on a project this person cannot open stays out of view.
-  return NextResponse.json({ ...result, chases: chasesFor(result.companies.map(c => companyKey(c.owner))) });
+  return jsonResponse(request, { ...result, chases: chasesFor(result.companies.map(c => companyKey(c.owner))) });
 }

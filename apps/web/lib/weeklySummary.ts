@@ -1,3 +1,4 @@
+import { naturalOrder } from './naturalOrder';
 import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import type { ObservationType } from './fixtures';
@@ -20,10 +21,13 @@ import { ISSUE_WORK as WORK } from './status';
 export const LONDON = 'Europe/London';
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 
+// One formatter, made once: toLocaleDateString builds a new one on every call,
+// which is most of the time on a page that dates thousands of issue events.
+const LONDON_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: LONDON });
 /** The calendar day an instant fell on in the office's time zone, as YYYY-MM-DD. */
 export function londonDay(at: string | Date): string {
   const d = typeof at === 'string' ? new Date(at) : at;
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('en-CA', { timeZone: LONDON });
+  return Number.isNaN(d.getTime()) ? '' : LONDON_DAY.format(d);
 }
 const addDays = (ymd: string, n: number) => { const d = new Date(`${ymd}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 /** The Monday that starts the week holding `ymd`. Anything that is not a date reads as `fallback`'s week. */
@@ -77,7 +81,7 @@ export interface WeeklySummary {
 const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined' };
 const emptyKinds = (): Record<ObservationType, number> => ({ update: 0, defect: 0, instruction: 0, access: 0, check: 0 });
 const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');
-const byRef = (a: { reference: string }, b: { reference: string }) => a.reference.localeCompare(b.reference, 'en', { numeric: true });
+const byRef = (a: { reference: string }, b: { reference: string }) => naturalOrder(a.reference, b.reference);
 
 function issueStatus(i: Issue): string {
   if (i.confirmation === 'withdrawn') return 'Withdrawn';

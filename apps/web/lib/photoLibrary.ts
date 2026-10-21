@@ -1,3 +1,4 @@
+import { naturalOrder } from './naturalOrder';
 import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import { londonDay } from './weeklySummary';
@@ -101,7 +102,7 @@ export function photoLibrary(sources: LibrarySources, principal: Principal, proj
       location: tidy(v.location), description: tidy(v.description), by: e.actor, source: { kind: 'variation', id: v.id, reference: v.reference } });
   }
 
-  photos.sort((a, b) => b.day.localeCompare(a.day) || b.at.localeCompare(a.at) || a.source.reference.localeCompare(b.source.reference, 'en', { numeric: true }));
+  photos.sort((a, b) => b.day.localeCompare(a.day) || b.at.localeCompare(a.at) || naturalOrder(a.source.reference, b.source.reference));
   return { projectId, photos };
 }
 

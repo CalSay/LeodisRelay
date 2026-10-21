@@ -16,10 +16,15 @@ export type StoreOutcome<T> = { ok: true; value: T } | { ok: false; status: numb
 const reject = (reason: string, status = 409): StoreOutcome<never> => ({ ok: false, status, reason });
 export function listReports(projectId?: string): Report[] { return records('reports', projectId); }
 export function getReport(id: string): Report | undefined { return getRecord('reports', id); }
+/** A report's reference alone, read from its summary rather than the whole report. */
+export function reportReference(id: string): string | undefined {
+  const row = database().prepare("SELECT json_extract(summary,'$.reference') AS reference FROM records WHERE kind='reports' AND id=?").get(id);
+  return typeof row?.reference === 'string' ? row.reference : undefined;
+}
 export function reportPage(projectId?: string, offset = 0) { return pageRecords<ReportSummary>('reports', projectId, offset); }
 
 /** Filter before pagination: another engineer's draft never reaches the response. */
-export function reportsFor(principal: Principal, projectId?: string, offset = 0) {
+export function reportsFor(principal: Principal, projectId?: string, offset = 0, limit = 50) {
   const where = ["kind='reports'"];
   const args: string[] = [];
   if (sharePointMode() !== 'off') {
@@ -29,10 +34,10 @@ export function reportsFor(principal: Principal, projectId?: string, offset = 0)
   }
   if (projectId) { where.push('project=?'); args.push(projectId); }
   if (!canManage(principal)) {
-    where.push("(state='submitted' OR json_extract(data,'$.authorId')=?)"); args.push(principal.id);
+    where.push("(state='submitted' OR json_extract(summary,'$.authorId')=?)"); args.push(principal.id);
   }
-  const rows = database().prepare(`SELECT summary FROM records WHERE ${where.join(' AND ')} ORDER BY updated DESC,id DESC LIMIT 51 OFFSET ?`).all(...args,offset);
-  return { items: rows.slice(0,50).map(row => {
+  const rows = database().prepare(`SELECT summary FROM records WHERE ${where.join(' AND ')} ORDER BY updated DESC,id DESC LIMIT ? OFFSET ?`).all(...args,limit + 1,offset);
+  return { items: rows.slice(0,limit).map(row => {
     const r = JSON.parse(row.summary as string) as ReportSummary;
     if (r.state === 'submitted' || ownsReport(principal,r)) return r;
     // Explicit allowlist: no notes, signature, delivery details or correction
@@ -44,7 +49,7 @@ export function reportsFor(principal: Principal, projectId?: string, offset = 0)
       ...(r.lastSavedAt ? {lastSavedAt:r.lastSavedAt}:{}),...(r.corrects ? {corrects:r.corrects}:{}),
       observationCount:r.observationCount,photoCount:0,defectCount:0 };
     return allowed;
-  }), next: rows.length > 50 ? offset + 50 : null };
+  }), next: rows.length > limit ? offset + limit : null };
 }
 
 /**

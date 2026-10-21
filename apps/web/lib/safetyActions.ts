@@ -1,3 +1,4 @@
+import { naturalOrder } from './naturalOrder';
 import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import type { Report } from './types';
@@ -112,7 +113,7 @@ export const TOWER_SHOWN_DAYS = 28;
 const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');
 export const daysBetween = (from: string, to: string) =>
   Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86_400_000);
-const byNumber = (a: SafetyProject, b: SafetyProject) => a.projectNumber.localeCompare(b.projectNumber, 'en', { numeric: true }) || a.projectName.localeCompare(b.projectName);
+const byNumber = (a: SafetyProject, b: SafetyProject) => naturalOrder(a.projectNumber, b.projectNumber) || a.projectName.localeCompare(b.projectName);
 const ref = (r: Report): SafetyInspectionRef => ({ id: r.id, reference: r.reference, revision: r.revision, visitDate: r.visitDate, author: r.author });
 
 /**
@@ -126,7 +127,7 @@ export function safetyActions(projects: SafetyProjectSource[], reports: Report[]
   // A sent correction stands in for the inspection it corrects.
   const superseded = new Set(sent.map(r => r.corrects).filter((id): id is string => Boolean(id)));
   const followed = sent.filter(r => (r.reportType === 'safety-inspection' || (r.reportType === 'tower-inspection' && r.inspected)) && !superseded.has(r.id))
-    .sort((a, b) => a.visitDate.localeCompare(b.visitDate) || a.reference.localeCompare(b.reference, 'en', { numeric: true }));
+    .sort((a, b) => a.visitDate.localeCompare(b.visitDate) || naturalOrder(a.reference, b.reference));
 
   const out = projects.map(p => {
     const all = followed.filter(r => r.projectId === p.id);
@@ -168,7 +169,7 @@ export function safetyActions(projects: SafetyProjectSource[], reports: Report[]
       const sinceLast = daysBetween(t.last.visitDate, today);
       return { name: t.name, last: t.last, sinceLast, due: sinceLast >= TOWER_DUE_DAYS, open: openActions.filter(a => a.tower && inspectedKey(a.tower) === key).length };
     }).filter(t => t.sinceLast <= TOWER_SHOWN_DAYS)
-      .sort((a, b) => b.sinceLast - a.sinceLast || a.name.localeCompare(b.name, 'en', { numeric: true }));
+      .sort((a, b) => b.sinceLast - a.sinceLast || naturalOrder(a.name, b.name));
     const project: SafetyProject = {
       projectId: p.id, projectNumber: p.projectNumber, projectName: p.projectName, inspections: mine.length, towers: towerList,
       due: sinceLast !== undefined && sinceLast > INSPECTION_DUE_DAYS,
