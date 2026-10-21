@@ -4,6 +4,35 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Tenth release check: main ready at 0d56773
+
+- Why: about ten merges since the ninth check (#110 to #118), several on the
+  same screens (engineer home, report editor, Flag a defect, office phone),
+  and two offline sends (#105 site update, #116 defect) that now meet.
+- Checked main at c405f31 (#116), then again in full at 0d56773 once #117
+  and #118 merged: typecheck, `npm test` (146 + 513), build, all 86 browser
+  checks one at a time (all pass at 0d56773, verify-busy-projects too), and
+  a clean Docker build (healthy, /signin 200). No deploy change: no new
+  settings, packages, data change or offline store version (`relay-public-v14`).
+- A scratch walk (not kept in the repo) at 390px and 1440px, light and dark:
+  a site update and a defect both sent with no signal, a third tab opened as
+  signal returned, "Try again" during the send, reloads: exactly one report
+  and one issue each time, nothing left on the phone; then the office pages
+  (overview, project, Issues, Weekly summary, Site diary, Photographs, the
+  report) with no errors or sideways scroll.
+- One failure, in a check, not the app: `verify-day-walkthrough` timed out
+  saving a permit. After 17:00 UK the permit form leaves "Runs until" empty
+  on purpose (`defaultEnds` in `PermitsPage.tsx`) and the check never filled
+  it, so it failed every evening on any build. It now fills noon tomorrow,
+  UK time, like `verify-permits`; 114 checks pass.
+- Seen, not changed: a defect still waiting for signal is not shown on the
+  engineer home (a site update is); #116 lists it as next.
+- Release notes updated in project files
+  (`releases/2026-10-20-release-notes.md`).
+- Not verified: real phones, real weak signal, a locked phone, screen
+  readers, printers, tablets.
+- Next: deploy 0d56773 when Cal says so (deploy thread).
+
 ## 2026-10-21 — Everyone who was on site, on the office overview
 
 - Why: walked an office manager's end-of-day check at the desk (1440px, dark
