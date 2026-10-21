@@ -254,7 +254,9 @@ try {
   ok(/Socket faceplate cracked/.test(await page.locator('.eng-list').filter({hasText:'you raised it'}).innerText()),'home: the new issue came back from the office list');
   await noSideways(page,'home');
   await shot(page,'engineer-home-afternoon-light-390');
-  await page.goto(`${home}&view=issues`);await page.getByText('Socket faceplate cracked').waitFor();
+  // The home's "Site issues" row counts every trade's open issues and opens "Open" on this project (the tab itself opens on "Yours").
+  await page.getByRole('button',{name:/^Site issues/}).click();await page.getByText('Socket faceplate cracked').waitFor();
+  ok(await page.getByRole('button',{name:'Open',exact:true}).getAttribute('aria-pressed')==='true','Issues: the Site issues row opens Open');
   ok(await page.locator('.eng-panel a[href^="/issues/"]').count()===issues,'Issues: lists the same number as the home screen');
   ok(await page.getByRole('button',{name:/Assigned to me/}).count()===0,'Issues: no unfinished "Assigned to me" button');
   await shot(page,'engineer-issues-light-390');

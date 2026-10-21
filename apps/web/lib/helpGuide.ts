@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'issues-yours', added: '2026-10-21', audience: 'site', title: 'Your issues on every site, in one list',
+    text: 'The Issues tab now opens on "Yours": the open issues you raised, or that are for your trade, on every site you work on, a section per site with how many are still to do. Anything the office sent back comes first, with what they wrote. Once you put one forward as fixed it leaves the list and the site says how many are waiting for the office to check. "Open" and "All issues" still show every trade on a project, and after you open an issue, Back brings you to the same list. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open your issues', href: '/engineer?view=issues' } },
   { id: 'office-inbox-tidy', added: '2026-10-21', audience: 'office', title: 'A roomier Inbox, newest first',
     text: 'In the office, the Inbox list now uses the whole width until you open a report, so each row reads across on one line instead of project names wrapping; the reader comes in beside the list when you pick one, and the list then leaves what the visit found to the reader. A report received today says "Today" with the time. "Not seen yet" on the office position now lists the newest first, like the Inbox, so today\'s reports are at the top rather than behind older ones. Checked in a desktop browser, light and dark, and a phone-sized window.',
     link: { label: 'Open the Inbox', href: '/office#/inbox' } },

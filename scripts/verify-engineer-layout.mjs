@@ -74,6 +74,7 @@ try {
   await page.locator(`a[href^="/issues/${individual[0].id}"]`).waitFor();
   if(screenshot)await page.screenshot({path:join(screenshot,'issues-landscape.png'),fullPage:true});
   await page.getByRole('navigation',{name:'Site companion navigation'}).getByRole('button',{name:'Issues',exact:true}).click();
+  await page.getByRole('button',{name:'Open',exact:true}).click();
   await page.getByRole('link').filter({hasText:'Layout scope evidence'}).first().waitFor();
   assert.equal(await page.locator('a[href^="/issues/layout-issue-1"]').count(),0);
   // No dead "Assigned to me · Coming soon" button: owners are companies, not accounts.
