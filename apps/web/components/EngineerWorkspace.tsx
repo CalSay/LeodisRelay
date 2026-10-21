@@ -19,6 +19,7 @@ import { IndividualDefect } from './IndividualDefect';
 import { SinceLastVisit } from './SinceLastVisit';
 import { SiteNotesRow } from './SiteNotesRow';
 import { ToolboxTalksRow } from './ToolboxTalksRow';
+import { PermitsRow } from './PermitsRow';
 import { PageTitle } from './PageTitle';
 import { ISSUE_WORK, acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
 import { fmtMoney, variationValue } from '@/lib/variations';
@@ -246,6 +247,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
                 <button type="button" className="eng-row" onClick={()=>navigate('issues')}><div className="main"><b>Site issues</b><span>{back && !back.failed ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
                 <SafetyActionsRow key={projectId} projectId={projectId} href={`/safety-actions?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
                 <ToolboxTalksRow key={`tt-${projectId}`} projectId={projectId} href={`/toolbox-talks?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
+                <PermitsRow key={`pt-${projectId}`} projectId={projectId} href={`/permits?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
                 {projectPage('/issue-trend','Issues over time','Raised, closed and still open, week by week')}
                 {projectPage('/handover','Before handover','Everything still open, on one page')}
               </div>
