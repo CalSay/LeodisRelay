@@ -129,7 +129,7 @@ async function pdf(sent){
   const doc=await pdfjs.getDocument({data:bytes.slice(),useSystemFonts:true}).promise;
   let text='';for(let n=1;n<=doc.numPages;n++)text+=(await (await doc.getPage(n)).getTextContent()).items.map(i=>i.str).join(' ')+'\n';
   const flat=text.replace(/\s+/g,' ');
-  check(/Typed signature · \d\d\/\d\d\/\d{4}, \d\d:\d\d · signed in as Tess Typed/.test(flat),`PDF: the sign-off says typed, when and who was signed in`);
+  check(/Typed signature · \d{1,2} [A-Z][a-z]{2} \d{4}, \d\d:\d\d · signed in as Tess Typed/.test(flat),`PDF: the sign-off says typed, when and who was signed in`);
   check(flat.includes('I carried out this inspection and this record is accurate.'),`PDF: the statement is printed`);
   if(screenshot){
     const file=join(screenshot,'typed-signature.pdf');writeFileSync(file,bytes);

@@ -77,7 +77,7 @@ try {
     eq(await rows.count(),2,`${label}: the card is gone from the list`);
     await bar.waitFor();
     const text=await bar.innerText();
-    ok(/Card 01 removed/.test(text)&&/Defect/.test(text)&&/Level 2 riser/.test(text)&&/2 photos/.test(text),`${label}: the bar says what was removed: ${text}`);
+    ok(/Card 01 removed/.test(text)&&/Defect/.test(text)&&/Level 2 riser/.test(text)&&/2 photographs/.test(text),`${label}: the bar says what was removed: ${text}`);
     const undo=bar.getByRole('button',{name:'Undo',exact:true});
     ok(await undo.isVisible(),`${label}: Undo is visible`);
     const box=await undo.boundingBox();
@@ -93,7 +93,7 @@ try {
     eq(await bar.count(),0,`${label}: the bar goes once used`);
     eq(await rows.count(),3,`${label}: the card is back in the list`);
     // Open on a phone, its row is only its heading; its two photographs are counted in the card below.
-    ok(/Level 2 riser/.test(await rows.nth(0).innerText())&&(!wide||/2 photos/.test(await rows.nth(0).innerText())),`${label}: it is back first${wide?', with its two photos':''}`);
+    ok(/Level 2 riser/.test(await rows.nth(0).innerText())&&(!wide||/2 photographs/.test(await rows.nth(0).innerText())),`${label}: it is back first${wide?', with its two photos':''}`);
     ok(wide?(await rows.nth(0).getAttribute('aria-current'))==='true':(await rows.nth(0).getAttribute('aria-expanded'))==='true',`${label}: the restored card is open`);
     // Side by side focus is on the card's Remove; on a phone Remove is at the card's foot, so focus is on its row instead.
     await page.waitForFunction(wide=>wide?document.activeElement?.getAttribute('aria-label')==='Remove card 1':document.activeElement===document.querySelector('.eng-cardrow'),wide);checks++;
@@ -123,7 +123,7 @@ try {
     await card().getByRole('button',{name:'Remove photo 1',exact:true}).click();
     eq(await card().locator('.shot img').count(),1,`${label}: the photograph is gone from the card`);
     await bar.waitFor();
-    ok(/Photo 01 removed/.test(await bar.innerText())&&/Tray joint/.test(await bar.innerText()),`${label}: the bar names the photograph`);
+    ok(/Photograph 01 removed/.test(await bar.innerText())&&/Tray joint/.test(await bar.innerText()),`${label}: the bar names the photograph`);
     await shot(page,`undo-photo-${scheme}-${width}`);
     await stored(r=>r.observations[0].photos.length===1,'the photograph removed');
     await settle();
@@ -157,7 +157,7 @@ try {
     await open(0);
     await card().getByRole('button',{name:'Remove photo 2',exact:true}).click();
     eq(await bar.count(),1,`${label}: one bar at a time`);
-    ok(/Photo 02 removed/.test(await bar.innerText()),`${label}: the bar offers the latest removal`);
+    ok(/Photograph 02 removed/.test(await bar.innerText()),`${label}: the bar offers the latest removal`);
     await bar.getByRole('button',{name:'Dismiss',exact:true}).click();
     eq(await bar.count(),0,`${label}: Dismiss closes the bar`);
     await page.waitForFunction(()=>document.activeElement?.matches('.eng-steps [aria-current="step"]'));checks++;

@@ -167,7 +167,7 @@ async function editorStates(scheme,width,phone){
   const cards=page.locator('.card');
   await cards.nth(0).getByLabel('Answer').selectOption('action');
   for(let i=1;i<12;i++)await cards.nth(i).getByLabel('Answer').selectOption('ok');
-  await cards.nth(0).getByLabel('Notes or what is wrong').fill('Riser door left unlocked');
+  await cards.nth(0).getByLabel('What’s wrong').fill('Riser door left unlocked');
   await cards.nth(0).getByLabel('What needs doing').fill('Lock it');
   await page.locator('.sigpad').waitFor();
   await state('offline-sign');

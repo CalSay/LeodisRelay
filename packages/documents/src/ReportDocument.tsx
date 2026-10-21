@@ -337,17 +337,40 @@ function Field({
   );
 }
 
-/** Long form, because the document is read by a client and not by a system. */
-function formatVisitDate(iso: string): string {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime())
-    ? iso
-    : date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+/*
+ * Dates as RELAY writes them on screen (apps/web/lib/dates.ts), written out
+ * from parts because Chromium and Node do not agree on the en-GB pattern.
+ */
+const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+const LONDON = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+function dateParts(value: string): { year: number; month: number; day: number; time?: string } | undefined {
+  const calendar = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (calendar) return { year: Number(calendar[1]), month: Number(calendar[2]), day: Number(calendar[3]) };
+  const at = new Date(value);
+  if (Number.isNaN(at.getTime())) return undefined;
+  const p = Object.fromEntries(LONDON.formatToParts(at).map((x) => [x.type, x.value]));
+  return { year: Number(p.year), month: Number(p.month), day: Number(p.day), time: `${p.hour}:${p.minute}` };
 }
 
-/** "20/10/2026, 23:05", UK time: a signature is dated to the minute it was sent. */
-const signedWhen = (iso: string): string =>
-  new Date(iso).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
+/** "Monday 19 October 2026": long form, because the document is read by a client and not by a system. */
+function formatVisitDate(value: string): string {
+  const p = dateParts(value);
+  if (!p) return value;
+  return `${DAYS[new Date(Date.UTC(p.year, p.month - 1, p.day)).getUTCDay()]} ${p.day} ${MONTHS[p.month - 1]} ${p.year}`;
+}
+
+/** "19 Oct 2026", UK time: when a photograph was taken. */
+const takenOn = (iso: string): string => {
+  const p = dateParts(iso);
+  return p ? `${p.day} ${MONTHS[p.month - 1]!.slice(0, 3)} ${p.year}` : "";
+};
+
+/** "19 Oct 2026, 16:32", UK time: a signature is dated to the minute it was sent. */
+const signedWhen = (iso: string): string => {
+  const p = dateParts(iso);
+  return p ? `${takenOn(iso)}${p.time ? `, ${p.time}` : ""}` : "";
+};
 
 /** A lead taller than this (points) may break across pages rather than leave most of one empty. */
 const LEAD_LIMIT = 360;
@@ -595,7 +618,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
                           <Image style={single ? s.imgFull : s.img} src={photo.dataUrl} />
                           <Text style={s.capNo}>PHOTOGRAPH {String(figureNumber).padStart(2, "0")}</Text>
                           <Text style={s.cap}>{photo.caption.trim() || "No caption recorded"}</Text>
-                          <Text style={s.capDate}>Taken {new Date(photo.capturedAt).toLocaleDateString("en-GB")}</Text>
+                          <Text style={s.capDate}>Taken {takenOn(photo.capturedAt)}</Text>
                         </View>
                       );
                     })}

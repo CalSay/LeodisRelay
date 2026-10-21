@@ -51,7 +51,7 @@ try {
     eq(await visibleEditors(),0,`${scheme}: every card starts folded on the phone`);
     for(const i of [0,1,2])eq(await rows.nth(i).getAttribute('aria-expanded'),'false',`${scheme}: row ${i+1} folded`);
     const row=await rows.nth(2).innerText();
-    ok(/Plant room/.test(row)&&/Extra socket asked for/.test(row)&&/0 photos/.test(row),`${scheme}: summary row shows location, description and photo count`);
+    ok(/Plant room/.test(row)&&/Extra socket asked for/.test(row)&&/0 photographs/.test(row),`${scheme}: summary row shows location, description and photo count`);
     ok(/needs at least one photograph/.test(await rows.nth(1).innerText()),`${scheme}: a card that would stop sending says why`);
     const folded=await page.evaluate(()=>document.documentElement.scrollHeight);
     ok(folded<1300,`${scheme}: folded draft is short (${folded}px)`);

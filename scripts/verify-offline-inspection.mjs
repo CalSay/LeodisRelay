@@ -79,7 +79,7 @@ try {
     await first.getByLabel('Answer').selectOption('action');
     if(raises)await page.locator('.card').nth(0).getByLabel(/^Where/).fill('Level 2 east corridor');
     else check(await page.locator('.card').nth(0).getByLabel(/^Where/).count()===0,`${scheme}: a safety action asks no Where`);
-    await page.locator('.card').nth(0).getByLabel('Notes or what is wrong').fill('Tray lid missing over the door');
+    await page.locator('.card').nth(0).getByLabel('What’s wrong').fill('Tray lid missing over the door');
     await page.locator('.card').nth(0).getByLabel('What needs doing').fill('Fit the lid');
     await page.locator('.card').nth(0).locator('input[type=file]').setInputFiles({name:'tray.jpg',mimeType:'image/jpeg',buffer:await jpeg('#aa6633')});
     await page.locator('.card').nth(0).locator('.shot img').waitFor();

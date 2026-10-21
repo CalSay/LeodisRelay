@@ -12,7 +12,7 @@ test('a card the server holds word for word, with its photos, is on the server',
   const c = card({ photos:[photo('p1')] });
   const where = cardWhere(c, savedCopy(c), none, false);
   assert.deepEqual(where, { where:'server', text:true, photos:1, photosOnServer:1, each:['server'] });
-  assert.equal(reportWhere([where], false).text, 'The card and its photo are on the server.');
+  assert.equal(reportWhere([where], false).text, 'The card and its photograph are on the server.');
 });
 
 test('the server copy matches whatever order its keys come back in', () => {
@@ -26,7 +26,7 @@ test('a new photo is pending on its own; the words already saved stay on the ser
   const now = { ...saved, photos:[photo('p1'), photo('p2')] };
   const where = cardWhere(now, savedCopy(saved), none, false);
   assert.deepEqual(where, { where:'pending', text:true, photos:2, photosOnServer:1, each:['server','pending'] });
-  assert.equal(reportWhere([where], false).text, '1 photo is not yet on the server.');
+  assert.equal(reportWhere([where], false).text, '1 photograph is not yet on the server.');
 });
 
 test('a photo being sent says so, and the card with it', () => {
@@ -34,7 +34,7 @@ test('a photo being sent says so, and the card with it', () => {
   const now = { ...saved, photos:[photo('p1')] };
   const where = cardWhere(now, savedCopy(saved), new Set(['p1']), false);
   assert.deepEqual([where.where, where.each], ['uploading', ['uploading']]);
-  assert.equal(reportWhere([where], false).text, '1 photo is still uploading.');
+  assert.equal(reportWhere([where], false).text, '1 photograph is still uploading.');
 });
 
 test('uploaded bytes the saved card does not list yet are still pending', () => {
@@ -64,24 +64,24 @@ test('when the server cannot be reached, pending work is only on this phone', ()
   const saved = card();
   const rows = [cardWhere(fresh, undefined, none, true), cardWhere({ ...saved, location:'Riser 3' }, savedCopy(saved), none, true)];
   assert.deepEqual(rows.map(r => [r.where, r.each]), [['phone', ['phone','phone']], ['phone', []]]);
-  assert.equal(reportWhere(rows, true).text, '2 cards and 2 photos are only on this phone. They go up by themselves when the server can be reached.');
+  assert.equal(reportWhere(rows, true).text, '2 cards and 2 photographs are only on this phone. They go up by themselves when the server can be reached.');
 });
 
 test('counts every card and photo when all are on the server', () => {
   const a = card({ photos:[photo('p1'), photo('p2')] }), b = card({ id:'c2', type:'update' });
   assert.equal(reportWhere([cardWhere(a, savedCopy(a), none, false), cardWhere(b, savedCopy(b), none, false)], false).text,
-    'Both cards and 2 photos are on the server.');
+    'Both cards and 2 photographs are on the server.');
   assert.equal(reportWhere([], false).text, '');
   assert.equal(reportWhere([cardWhere(a, savedCopy(a), none, false), cardWhere(b, savedCopy(b), none, false), cardWhere(b, savedCopy(b), none, false)], false, { removed:0, signature:false, noun:'check' }).text,
-    'All 3 checks and 2 photos are on the server.');
+    'All 3 checks and 2 photographs are on the server.');
 });
 
 test('two cards with one photo between them do not say "its photo"', () => {
   const a = card({ photos:[photo('p1')] }), b = card({ id:'c2', type:'update' });
   assert.equal(reportWhere([cardWhere(a, savedCopy(a), none, false), cardWhere(b, savedCopy(b), none, false)], false).text,
-    'Both cards and 1 photo are on the server.');
+    'Both cards and 1 photograph are on the server.');
   assert.equal(reportWhere([cardWhere(a, savedCopy(a), none, false)], false, { removed:0, signature:false, noun:'check' }).text,
-    'The check and its photo are on the server.');
+    'The check and its photograph are on the server.');
 });
 
 test('a removed card or a changed signature keeps the summary from going green', () => {
