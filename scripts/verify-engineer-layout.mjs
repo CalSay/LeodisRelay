@@ -113,7 +113,8 @@ try {
   const created=await context.request.get(base+'/api'+new URL(page.url()).pathname).then(r=>r.json());
   assert.equal(created.projectId,'proj-014lme');assert.equal(created.authorId,principal.id);
   assert.equal(created.authorTrade,'Electrical');
-  // A new update opens on a progress card; making it a defect is one tap on the card.
+  // A new update opens on a progress card; "Change kind" on the card makes it a defect.
+  await page.getByRole('button',{name:'Change kind',exact:true}).filter({visible:true}).click();
   await page.locator('.kindrow:visible').getByRole('button',{name:/Defect/}).click();
   assert.equal(await page.getByRole('button',{name:'Electrical',exact:true}).getAttribute('aria-pressed'),'true','Defect card defaults to the engineer trade');
   assert.deepEqual(errors,[]);

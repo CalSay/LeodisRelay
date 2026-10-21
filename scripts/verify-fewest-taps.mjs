@@ -77,7 +77,7 @@ try {
   // 2. A progress card with a photograph.
   if(!await open().count())await tap(page.locator('.eng-pick .eng-tile').filter({hasText:'Progress'}),'pick Progress');
   await open().getByLabel('Where',{exact:true}).waitFor();
-  eq(await open().locator('.kindrow [aria-pressed="true"]').textContent().then(t=>t.replace('✓','').trim()),'Progress','the first card is a progress card');
+  eq(await open().locator('.eng-kindline > span').textContent().then(t=>t.trim()),'Progress card','the first card is a progress card');
   await where('Level 2 corridor');
   await typeInto(open().locator('textarea').first(),'Containment run complete to grid C','What happened');
   await photo();

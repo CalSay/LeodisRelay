@@ -483,3 +483,7 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .issue-eng-update .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .issue-eng-update .btn-row button{min-height:48px;width:100%;}
 .issue-more .issue-eng-facts{margin-top:4px;}
+/* "Change kind" sits with Remove; the four kind buttons come out only after it is tapped (2026-10-21). */
+.eng-card-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
+.eng-card-foot .eng-remove-card{margin-top:0;}
+.eng-card-foot .btn-sm,.eng-card .head .eng-change-kind{min-height:48px;}

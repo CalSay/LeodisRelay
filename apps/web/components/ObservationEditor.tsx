@@ -93,11 +93,30 @@ export function ObservationEditor({
   const raisesIssue = kind === "defect" || kind === "access";
   const id = observation.id;
 
-  function changeKind(next: ObservationType) {
-    const copy: Observation = { ...observation, type: next };
-    // A defect names the trade whose work it is; the engineer's own is the usual answer.
-    if (next === 'defect' && !copy.affectedTrade && principal?.trade) copy.affectedTrade = principal.trade;
-    onChange(copy);
+  /**
+   * The kind was chosen when the card was added ("+ Defect", or the big button
+   * for a progress card), so the four kind buttons stay folded behind "Change
+   * kind" (2026-10-21) and fold away again once one is picked.
+   */
+  const [choosingKind, setChoosingKind] = useState(false);
+  const changeRef = useRef<HTMLButtonElement>(null);
+  const focusAfterPick = useRef(false);
+  useEffect(() => {
+    if (choosingKind) document.getElementById(`kinds-${id}`)?.querySelector<HTMLButtonElement>('[aria-pressed="true"]')?.focus();
+    else if (focusAfterPick.current) { focusAfterPick.current = false; changeRef.current?.focus(); }
+  }, [choosingKind, id]);
+  // A kind set from outside (a blank card turned into a defect by "+ Defect") folds the buttons too.
+  useEffect(() => { setChoosingKind(false); }, [kind]);
+
+  function pickKind(next: ObservationType) {
+    if (next !== kind) {
+      const copy: Observation = { ...observation, type: next };
+      // A defect names the trade whose work it is; the engineer's own is the usual answer.
+      if (next === 'defect' && !copy.affectedTrade && principal?.trade) copy.affectedTrade = principal.trade;
+      onChange(copy);
+    }
+    focusAfterPick.current = true;
+    setChoosingKind(false);
   }
 
   /** Linking a defect to an issue already raised takes that issue's trade, which is whose work it is. */
@@ -121,22 +140,26 @@ export function ObservationEditor({
     <p className="hint">{observation.linkedIssueId ? "This will be added to that issue's history rather than raising a new one." : "Linking avoids raising a second issue for the same defect."}</p>
   </div>;
 
+  const changeButton = <button ref={changeRef} type="button" className="btn-quiet btn-sm eng-change-kind" aria-expanded={choosingKind} aria-controls={choosingKind ? `kinds-${id}` : undefined} onClick={() => setChoosingKind(v => !v)}>Change kind</button>;
+  const kindPicker = choosingKind && <div className="field eng-kind-pick">
+    <label id={`kind-${id}`}>Kind</label>
+    <div id={`kinds-${id}`} className="kindrow" role="group" aria-labelledby={`kind-${id}`}>{CARD_TYPES.map(t => <button key={t.value} type="button" className={`tone-${t.tone}`} aria-pressed={kind === t.value} onClick={() => pickKind(t.value)}>{kind === t.value && <span aria-hidden="true">✓</span>}{t.short}</button>)}</div>
+  </div>;
+
   const photos = <PhotoField observation={observation} note={kind === 'defect' ? ' · at least one' : ''} {...(photoWhere ? { photoWhere } : {})} onChange={onChange} onRemovePhoto={onRemovePhoto} />;
 
   return (
     <section className={`eng-card ${tone}`}>
-      {/* The kind is picked, with a tick, just below: no tag repeating it here. */}
+      {/* The card's heading (its row on the phone, the list on a wide screen) says
+          its kind, so the four kind buttons only come out after "Change kind". */}
       {!folded && <div className="head">
         <span className="lbl">Card {String(index + 1).padStart(2, "0")}</span>
         <div>
+          {changeButton}
           <button type="button" className="btn-quiet btn-sm" onClick={onRemove} aria-label={`Remove card ${index + 1}`}>Remove</button>
         </div>
       </div>}
-
-      <div className="field">
-        <label id={`kind-${id}`}>Kind</label>
-        <div className="kindrow" role="group" aria-labelledby={`kind-${id}`}>{CARD_TYPES.map(t => <button key={t.value} type="button" className={`tone-${t.tone}`} aria-pressed={kind === t.value} onClick={() => changeKind(t.value)}>{kind === t.value && <span aria-hidden="true">✓</span>}{t.short}</button>)}</div>
-      </div>
+      {!folded && kindPicker}
 
       {where}
 
@@ -227,7 +250,11 @@ export function ObservationEditor({
 
       <TooLong observation={observation} />
       {photos}
-      {folded && <button type="button" className="btn-quiet btn-sm eng-remove-card" onClick={onRemove} aria-label={`Remove card ${index + 1}`}>Remove card {index + 1}</button>}
+      {folded && kindPicker}
+      {folded && <div className="eng-card-foot">
+        {changeButton}
+        <button type="button" className="btn-quiet btn-sm eng-remove-card" onClick={onRemove} aria-label={`Remove card ${index + 1}`}>Remove card {index + 1}</button>
+      </div>}
     </section>
   );
 }

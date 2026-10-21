@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'lighter-card', added: '2026-10-21', audience: 'site', title: 'A shorter card',
+    text: 'A card in a site update no longer opens with four Kind buttons at the top; the card\'s heading already says whether it is progress, a defect, a variation or access. So "Where", "What happened" and "Take a photo" sit about 160px higher on a phone. Picked the wrong kind? Tap "Change kind", next to "Remove" on the card. Tapping "+ Defect" or another kind while the last card is still empty turns that card into the new kind instead of leaving an empty one behind. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'came-back-to-update', added: '2026-10-21', audience: 'site', title: 'Straight to the update',
     text: 'Tapping one of your issues under "Came back from the office" now opens it with "Add photograph" and "Put forward as fixed" on screen for most issues, while what is wrong and where stay in view; a very long description still needs a short scroll to the button. A long description now takes less room, so the buttons sit nearer the top. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'simpler-issue-list', added: '2026-10-21', audience: 'site', title: 'A shorter issues list',
@@ -336,7 +338,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
   site: [
     { id: 'first-update', heading: 'Your first site update', ordered: true, steps: [
       'On your home screen, check the current project. "Change" picks another.',
-      'Tap "Start today’s site update". It opens on a progress card: say where, what happened, and take a photograph. Tap Defect, Variation or Access at the top of the card to make it one of those instead. For the next thing, tap "+ Progress", "+ Defect", "+ Variation" or "+ Access" under the cards; a place you have already used is one tap under "Where".',
+      'Tap "Start today’s site update". It opens on a progress card: say where, what happened, and take a photograph. To start with something else, tap "+ Defect", "+ Variation" or "+ Access" under the card and the empty card becomes that; "Change kind", next to "Remove" on the card, changes it once you have started. For the next thing, tap "+ Progress", "+ Defect", "+ Variation" or "+ Access" under the cards; a place you have already used is one tap under "Where".',
       'It saves as you go, on the server and on your phone. Leave it whenever you like; "Carry on with today’s update" opens it again. One left from an earlier day waits under "Unfinished reports", and the big button starts today’s.',
       'When you are done, tap "Check & send", then "Send to office". It is then on file and cannot be changed, only corrected.',
     ] },

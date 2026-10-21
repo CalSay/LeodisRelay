@@ -744,13 +744,20 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     // An inspection holds its checklist and nothing else.
     if (!current || current.state !== 'draft' || sending.current || reportTypeOf(current).checklist) return;
     const o = newObservation();
+    // A last card with nothing on it yet (such as the progress card "Start today's
+    // site update" opens on) becomes the kind asked for, rather than a second card
+    // under a blank one: "+ Defect" straight away is still one tap to a defect.
+    const last = current.observations[current.observations.length - 1];
+    const reuse = kind && last && isBlankCard(last) ? last : undefined;
+    if (reuse) o.id = reuse.id;
     if (kind) {
       o.type = kind;
       if (kind === 'defect' && principal?.trade) o.affectedTrade = principal.trade;
+      if (reuse) setPicking(p => p.filter(x => x !== reuse.id));
     } else {
       setPicking(p => [...p, o.id]);
     }
-    updateRef.current({ ...current, observations: [...current.observations, o] });
+    updateRef.current({ ...current, observations: reuse ? current.observations.map(x => x.id === reuse.id ? o : x) : [...current.observations, o] });
     setSelectedSection(o.id);
   }, [principal?.trade]); // eslint-disable-line react-hooks/exhaustive-deps
 

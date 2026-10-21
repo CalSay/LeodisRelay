@@ -45,6 +45,32 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `ui-review/came-back-to-update/`.
 - Not verified: no real phone, no real engineer, no live tenant.
 
+## 2026-10-21 — A shorter card in the site update
+
+- Why: Cal (2026-10-21 07:02) wants RELAY simple for engineers. Every open
+  card in a site update began with four big Kind buttons (Progress, Defect,
+  Variation, Access), though the kind was already chosen by "Start today's
+  site update" or "+ Defect" and the like, and the card's heading says it.
+  Picked over FE-1 (Undo, another card at the same place and recent places
+  are already built) and the small wording ideas left in #90 to #96. Not a
+  `docs/tasks.json` task; no status changed.
+- Changed (`components/ObservationEditor.tsx`, `app/reports/[id]/page.tsx`,
+  `app/engineer.css`): the Kind buttons come out only after "Change kind",
+  which sits with "Remove card" at the foot of the card on a phone and beside
+  "Remove" in the card's heading on a wide screen. Picking a kind folds them
+  away again and puts focus back on "Change kind". "+ Defect" (or any kind)
+  while the last card is still blank turns that card into the kind asked for
+  instead of adding a second card under an empty one, so starting the day
+  with a defect is still one tap. Help: "What's new" line "A shorter card",
+  and the site-update step no longer says to tap Defect at the top of a card.
+- Measured (new `scripts/verify-lighter-card.mjs`, 390px): from the top of a
+  new progress card to "Take a photo", 732px on main 3cde9ab, 572px now; the
+  open card is 712px tall instead of 872px.
+- Checks: `npm run typecheck`, `npm test`, `npm run build`, browser checks
+  listed in the PR. verify-fewest-taps, verify-engineer-layout and
+  verify-day-walkthrough changed where they used the Kind buttons.
+- Not verified: no real phone, no real engineer, no live server or tenant.
+
 ## 2026-10-21 — No-signal check brought up to date
 
 - Why: `verify-offline-capture` failed at its Unfinished reports step on
