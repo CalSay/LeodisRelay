@@ -1,6 +1,6 @@
 // Browser check for a working day across RELAY, end to end, where features
 // built separately meet. An engineer on a phone opens the site home, reads the
-// notes for the next visit, does a weekly safety inspection (signed by typing)
+// notes for the next visit, records the morning toolbox talk, does a weekly safety inspection (signed by typing)
 // and a tower inspection (each with one action), sends a site update with a
 // defect linked to an existing issue, a new defect and a progress card added
 // with no signal, then checks the home screen, My week and Safety actions (starting the
@@ -91,6 +91,16 @@ try {
   await row('Notes for the next visit').click();await page.getByText('Gate code changed to 4721').waitFor();
   ok(true,'notes: the office\'s note is there');
   await page.getByRole('link',{name:'← Back to Site'}).click();await page.waitForURL(home);
+  // The morning briefing: a toolbox talk recorded from the home screen, which then shows it.
+  await row('Toolbox talks').filter({hasText:/None recorded yet/}).waitFor();
+  await row('Toolbox talks').click();await page.getByRole('button',{name:'Record a toolbox talk'}).click();
+  await page.getByRole('group',{name:'Topics to start from'}).getByRole('button',{name:'Safe isolation'}).click();
+  await page.getByLabel('Who attended').fill('Jo Bloggs\nAli Khan, Northbank Electrical');
+  await page.getByRole('button',{name:'Save toolbox talk'}).click();await page.locator('.tt-talk').first().waitFor();
+  ok(records('toolbox-talks',P).length===1,'toolbox talk: the morning briefing is kept');
+  await page.getByRole('link',{name:'← Back to Site'}).click();await page.waitForURL(home);
+  await row('Toolbox talks').filter({hasText:'Last: Safe isolation · today'}).waitFor();
+  ok(true,'home: the toolbox talk row shows this morning\'s briefing');
 
   // 2. A weekly safety inspection, then a tower inspection, each with one action.
   const card=()=>page.locator('.eng-slot.open .eng-card');
