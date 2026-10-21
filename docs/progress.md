@@ -37,6 +37,58 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: printed on paper, Acrobat or a phone's PDF viewer (poppler
   and pdf.js only), a real SharePoint-filed PDF.
 
+## 2026-10-21 — Toolbox talks (new feature)
+
+- Why: Claude's choice under Cal's freedom to add features. A toolbox talk
+  is the short safety briefing given on site before work starts; principal
+  contractors and clients ask for the record (topic, day, who attended) at
+  audits, and today it is a paper sheet in the cabin that rarely reaches the
+  office. RELAY had nothing for it. It is useful to engineers (record it in a
+  minute, repeat last time's names) and to the office (one record per
+  project, a spreadsheet for an audit). Not a `docs/tasks.json` task, so no
+  status changed there. Checked against the backlog: not FE-2 (no
+  photographs), not EXP-2 (nothing is requested, routed or sent for a
+  decision), not EXP-4 (no locations at all). Not a report type (EXP-5): it
+  needs no PDF, signature or revision, so it is a light record like notes
+  for the next visit, and the report editor is untouched.
+- What: `/toolbox-talks?project=…` for every role on a project. Record a talk:
+  topic (free text, with one-tap starters: this project's own recent topics,
+  then 12 common M&E ones), given on (today or up to 31 days back), given by
+  (starts as the signed-in person), who attended (one name per line or
+  semicolon, the same name twice kept once, up to 60, "Same people as the
+  last talk"), optional notes. The page shows the last talk and how long ago
+  (caution colour when more than a week), and the last four weeks' talks,
+  attendances and different people. Download spreadsheet gives every talk,
+  withdrawn ones marked. A talk entered by mistake is withdrawn with a
+  reason by whoever recorded it or the office, stays listed struck through,
+  and leaves the figures. Nothing is removed, sent or written to SharePoint
+  (local store kind `toolbox-talks`). Closed projects take no new talks.
+- Where: a "Toolbox talks" row under Issues and safety on the engineer home
+  ("Last: Safe isolation · today", from `?summary=1` so the home reads a few
+  bytes), and a link in the office project sheet's Issues and safety group.
+- Decisions (Claude's): names are typed, not signed, as on most paper
+  sheets; commas do not split names, so "Ali Khan, Northbank Electrical" is
+  one person. No count added to Needs attention or Safety actions: how often
+  talks are due differs by contractor, and a "talk due" warning would be a
+  rule nobody agreed.
+- Help: What's new "Toolbox talks", and a Where to find things entry.
+- Check: `scripts/verify-toolbox-talks.mjs` (new, 68 checks) covers refused
+  saves, the home row, recording with a starter and the same people, the
+  figures, reload, retries kept once, withdrawing and who may (another
+  engineer is refused), the spreadsheet, the office from the project sheet,
+  other and complete projects, no connection, axe at 390px light and 1440px
+  dark, and focus after a withdrawal. The spreadsheet writes times in UK
+  time. `verify-day-walkthrough.mjs` now records the morning toolbox talk
+  from the home screen; `verify-home-and-sheet.mjs` expects the new row and
+  link. Also run and passing: help, navigation, role-access, accessibility
+  (551), busy-projects (38 timings within budget). Unit tests in
+  `tests/toolboxTalks.test.ts`.
+- Not verified: a physical phone, screen readers, a live tenant (none
+  needed: nothing leaves RELAY). With no signal a talk cannot be recorded;
+  what was typed stays in the form.
+- Proposed, not built: record a talk with no signal (as notes and
+  inspections do); show talks in the site diary and weekly summary.
+
 ## 2026-10-21 — Report editor on tablets and desktops
 
 - Why: the editor was designed and checked phone first. Some engineers use a

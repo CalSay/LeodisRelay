@@ -248,7 +248,7 @@ function LatestReports({ ctx, reports, showProject }: { ctx: Ctx; reports: Repor
 
 /** The project's own pages, grouped as on the engineer's home screen. */
 const PROJECT_LINKS: { title: string; links: [string, string][] }[] = [
-  { title: 'Issues and safety', links: [['/safety-actions', 'Safety actions'], ['/issue-trend', 'Issues over time'], ['/handover', 'Before handover']] },
+  { title: 'Issues and safety', links: [['/safety-actions', 'Safety actions'], ['/toolbox-talks', 'Toolbox talks'], ['/issue-trend', 'Issues over time'], ['/handover', 'Before handover']] },
   { title: 'Reports and records', links: [['/diary', 'Site diary'], ['/weekly-summary', 'Weekly summary'], ['/photos', 'Photographs'], ['/site-notes', 'Notes for the next visit']] },
 ];
 function ProjectLinks({ ctx, projectId, heading: H = 'h4', projectPage }: { ctx: Ctx; projectId: string; heading?: 'h3' | 'h4'; projectPage?: boolean }) {

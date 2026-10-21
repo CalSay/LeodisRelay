@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'toolbox-talks', added: '2026-10-21', audience: 'all', title: 'Toolbox talks',
+    text: 'Record each safety briefing you give on site: the topic, the day, who gave it and the name of everyone who attended. Tap a topic to start from, or "Same people as the last talk" when the same gang is there. The page shows when the last talk was and how many there have been in four weeks, and downloads the whole record as a spreadsheet for an audit. A talk entered by mistake is withdrawn with a reason and stays listed. Toolbox talks are not part of any report and are not sent to anyone. Open it from "This project" on your home screen or from the office project sheet.',
+    link: { label: 'Open Toolbox talks', href: '/toolbox-talks' } },
   { id: 'inspection-pdf-found', added: '2026-10-21', audience: 'all', title: 'Inspection PDFs say what was wrong',
     text: 'In an inspection PDF, each row under "Actions arising" now says what was found ("Found: open edge with only a strap across it") above the action, so a client or contractor reading the first page knows what to put right without turning to the notes. Long notes are shortened there and point to the full notes further on. PDFs already made stay as they were.' },
   { id: 'editor-wide-screens', added: '2026-10-21', audience: 'all', title: 'Reports and inspections on a tablet or computer',
@@ -155,6 +158,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Before handover', href: '/handover', audience: 'all', text: 'Everything still open on one project, as it nears completion.' },
   { label: 'Issues over time', href: '/issue-trend', audience: 'all', text: 'Whether a project\'s issue list is getting shorter, week by week.' },
   { label: 'Notes for the next visit', href: '/site-notes', audience: 'all', text: 'Word left on a project for whoever is on site next.' },
+  { label: 'Toolbox talks', href: '/toolbox-talks', audience: 'all', text: 'Safety briefings given on a project and who attended, ready for an audit.' },
   { label: 'My week', href: '/my-week', audience: 'all', text: 'Your own week across every project.' },
   { label: 'Site coverage', href: '/coverage', audience: 'office', text: 'Which live projects have gone quiet.' },
   { label: 'Issues by company', href: '/companies', audience: 'office', text: 'Who to chase, for what, and what they promised last time.' },
