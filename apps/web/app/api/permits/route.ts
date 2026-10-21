@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { safetyRecordsRefusal } from '@/lib/features';
 import { requireSession } from '@/lib/auth/guard';
 import { canAccessProject } from '@/lib/auth/access';
 import { refreshProjects, reportableProject } from '@/lib/projects';
@@ -21,6 +22,9 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
+  // Behind the office's switch, off by default (lib/featureSwitch.ts).
+  const off = safetyRecordsRefusal();
+  if (off) return off;
   const params = new URL(request.url).searchParams;
   const projectId = params.get('project');
   if (projectId === null) {
@@ -45,6 +49,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
+  // Behind the office's switch, off by default (lib/featureSwitch.ts).
+  const off = safetyRecordsRefusal();
+  if (off) return off;
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const text = (v: unknown, max: number) => typeof v === 'string' && v.length <= max;
   const optional = (v: unknown, max: number) => v === undefined || text(v, max);

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useFeatures } from './FeaturesContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { usePrincipal } from './PrincipalContext';
@@ -39,6 +40,8 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
   const router = useRouter();
   const today = londonDay(new Date());
   const thisWeek = weekStart(undefined, today);
+  // Talks, permits and deliveries only while the office has them on (lib/featureSwitch.ts).
+  const { safetyRecords } = useFeatures();
   const [week, setWeek] = useState(weekStart(initialWeek, today));
   const [data, setData] = useState<MyWeek | null>(null);
   const [error, setError] = useState('');
@@ -102,7 +105,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
           <div><dt>Reports sent</dt><dd>{w.totals.reports}{w.totals.records > 0 && <small>{plural(w.totals.records, 'other site record')}</small>}</dd></div>
           <div><dt>Defects flagged</dt><dd>{w.totals.flagged}<small>{plural(w.totals.issueUpdates, 'issue update')}</small></dd></div>
         </dl>
-        {!w.totals.days && !w.totals.drafts && <p className="note mw-nothing">Nothing recorded {w.current ? 'this week yet' : 'that week'}. Reports you send, defects you flag on their own, updates you add on an issue, and toolbox talks, permits and deliveries you record show here, day by day.</p>}
+        {!w.totals.days && !w.totals.drafts && <p className="note mw-nothing">Nothing recorded {w.current ? 'this week yet' : 'that week'}. Reports you send, defects you flag on their own, updates you add on an issue{safetyRecords ? ', and toolbox talks, permits and deliveries you record' : ''} show here, day by day.</p>}
         {w.totals.drafts > 0 && <p className="note mw-unsent">{w.totals.drafts === 1 ? 'One report for this week is' : `${w.totals.drafts} reports for this week are`} not sent yet. {w.totals.drafts === 1 ? 'It is' : 'They are'} marked below; the office has not got {w.totals.drafts === 1 ? 'it' : 'them'}.</p>}
         <ol className="mw-days">
           {shown.map(d => <li key={d.day} className={`mw-day${d.day === today ? ' mw-today' : ''}${d.projects.length ? '' : ' mw-empty'}`}>
@@ -133,7 +136,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
               </section>)}
           </li>)}
         </ol>
-        <p className="mw-foot">Made from what you recorded in RELAY: reports you sent, placed on the visit day you gave; defects you flagged on their own; updates you added on an issue; and toolbox talks, permits and deliveries you recorded, closed or sorted. A corrected report replaces the one it corrects. RELAY does not know your hours, so check the times before you send a timesheet.</p>
+        <p className="mw-foot">Made from what you recorded in RELAY: reports you sent, placed on the visit day you gave; defects you flagged on their own; updates you added on an issue{safetyRecords ? '; and toolbox talks, permits and deliveries you recorded, closed or sorted' : ''}. A corrected report replaces the one it corrects. RELAY does not know your hours, so check the times before you send a timesheet.</p>
       </>}
   </main>;
 }

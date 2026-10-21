@@ -16,6 +16,8 @@ const sharp=require('sharp');
 const root=mkdtempSync(join(tmpdir(),'relay-editor-wide-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord}=require('../apps/web/.test-build/lib/storage.js');
+// Safety, permits and deliveries are off unless the office turns them on (lib/featureSwitch.ts); this check needs them on. verify-simpler-home.mjs covers both states.
+putRecord('settings',{id:'features',safetyRecords:true});
 const sessionFor=name=>{const principal={id:`entra:wide-${name}`,oid:`wide-${name}`,name:`Wide ${name}`,email:`wide-${name}@example.test`,role:'Engineer',trade:'Electrical'};const id=randomUUID();putRecord('sessions',{id,principal,issuedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+3600000).toISOString()});return id;};
 const port=4377,base=`http://127.0.0.1:${port}`;let output='';
 const server=spawn(process.execPath,[resolve('node_modules/next/dist/bin/next'),'start','-p',String(port),'-H','127.0.0.1'],{cwd:resolve('apps/web'),windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,NODE_ENV:'production',ENTRA_TENANT_ID:'00000000-0000-0000-0000-000000000001',ENTRA_CLIENT_ID:'00000000-0000-0000-0000-000000000002',ENTRA_CLIENT_SECRET:'synthetic-editor-wide-check',ENTRA_REDIRECT_URI:`${base}/api/auth/callback`}});
@@ -48,7 +50,7 @@ try {
 
     try {
     // A site update: progress with two photographs, then a defect.
-    await page.goto(`${base}/engineer`);await tap(page.getByText('Start a site update'));
+    await page.goto(`${base}/engineer`);await tap(page.getByText('Start today’s site update'));
     await page.waitForURL(/\/reports\//);await page.locator('.eng-tile').first().waitFor();
     await shot('update-new');
     await tap(page.locator('.eng-tile').first());

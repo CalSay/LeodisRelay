@@ -4,6 +4,159 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Simpler RELAY for site engineers
+
+- Why: Cal, 07:02 today: too much health and safety and checking of outside
+  factors that are not site auditing of project progress; engineers are
+  hands-on people, not IT people, and need an easy system that gets the
+  office what it needs. Not a `docs/tasks.json` task; EXP-5's notes record
+  that its safety and tower types are now behind the switch.
+- Decision (Claude's, Cal was asked whether to delete instead): hide, don't
+  delete. One office switch, "Safety, permits and deliveries", off by
+  default, on the Admin tab under Site records (Admin only, audited). It
+  covers toolbox talks, permits to work, deliveries, the weekly safety and
+  tower inspections and Safety actions. Off: no row, tile, link, count or
+  Needs attention line for them on the Site page, Reports, the office
+  overview, project sheet or phone register; My week, the weekly summary and
+  Before handover leave them out; Help drops their What's new entries, guide
+  section, page links and glossary sentences. Their four pages say plainly
+  they are not in use with a way back, their API answers 404, and a safety
+  or tower inspection cannot be started online or from the no-signal page.
+  One already started with no signal is still accepted, and a draft already
+  open still shows, so no work is stranded. Stored data is untouched;
+  turning the switch on brings everything back.
+- Decision: pre-handover and first fix inspections stay. Walking the Site
+  page, they did not get in the way once grouped under "Inspections" below
+  the main buttons; they are quality checks on our own work whose actions go
+  on the snag list, which is progress and snags, not health and safety.
+- The engineer's Site page, tidied round the site report: one big gold
+  "Start today's site update" (or "Carry on with today's update") button,
+  then Flag a defect and Request a variation; Unfinished reports only when
+  there are some; Came back from the office ahead of Since your last visit;
+  This project down to Site issues, Reports, Notes for the next visit and
+  Photographs, with Weekly summary, Site diary, Before handover and Issues
+  over time folded under "More on this project"; rows at least 56px tall on
+  a phone. On a 390px phone the page is 2,436px tall, down from 3,241px, and
+  the big button sits in the first screen. The office keeps its view of
+  progress, issues and variations; its project sheet groups pages as
+  Reports and records, then Issues.
+- Screenshots: `ui-review/simpler-for-engineers/` in the project files,
+  before and after, phone 390px light and desktop 1440px dark, plus the
+  Site page with the switch on.
+- Checks: `npm run typecheck`, `npm test`, `npm run build`. New
+  `scripts/verify-simpler-home.mjs` (both states, the Admin turning the
+  switch on from the Admin tab, a Manager refused, data kept).
+  `verify-home-and-sheet.mjs` rewritten for the new home and sheet in both
+  states. Every check that uses the hidden records now turns the switch on
+  first; `verify-first-time-use` and `verify-help` expect a first day with
+  it off; checks that tapped "Start a site update" or a folded page now tap
+  "Start today's site update" or open "More on this project" first. All 65
+  browser checks passed against this branch's build (simpler-home 56,
+  home-and-sheet 254, accessibility 584, first-time-use 364, day-walkthrough
+  112, help 36 and the rest), plus `npm test` (146 + 428).
+- Search, My week and the weekly summary also leave out sent safety and
+  tower inspections while the switch is off; they stay in report lists, the
+  Inbox and the site diary, which are the record of what was sent (found by
+  the fresh-context review). A safety draft carried on while off still says
+  its actions go on Safety actions; left, as such drafts are rare.
+- Not verified: a physical phone, screen readers, the live server.
+- Proposed, not built: remove the hidden records entirely if Cal says so;
+  shorter inspection blurbs (they repeat "actions go on the snag list").
+## 2026-10-21 — PDFs with long, real content
+
+- Why: a quality pass asked for by the coordinator. Clients, auditors and the
+  office keep these PDFs, and until now they were only looked at with tidy
+  sample data. Not a `docs/tasks.json` task, so no status changed there.
+- How: `scripts/long-pdf-cases.mjs` builds ten worst cases across every
+  report type (site update, weekly safety, pre-handover, first fix, tower and
+  podium): 40 cards; notes, actions, owners, a place and a correction reason
+  at the 10,000-character limit; a list of 120 short lines; long accented
+  company and person names with apostrophes; 33 photographs on one report,
+  each its own picture put through the app's own PDF resize, including
+  500×2000 and 4000×600 ones; typed and drawn signatures; every check failed;
+  an all-clear tower; a report with one empty card and one with none. Pages
+  were rendered to images and looked at, before and after; the pairs are in
+  the project files under `ui-review/pdfs/long-content/`.
+- Found on main, and fixed in `packages/documents`:
+  - A summary row, a card's action box, a correction or a card's title taller
+    than a page was kept on one page anyway: it ran under the footer and off
+    the paper, and the words there were lost (the layout engine warned nine
+    times on one report). The card's owner was also left out of the estimate
+    of how tall a card is, so a long owner kept a card together that could not
+    fit, and its parts were drawn over each other. Now each may carry on to
+    the next page when it is too tall for one, and the estimate counts the
+    owner. A caption over 600 characters may part from its photograph.
+  - In the summary, an item, action or owner longer than 160, 400 and 160
+    characters (or more than six lines) is shortened at a word and points to
+    the card, as "Found:" lines do (#70), so each row still fits on a page.
+    Shorter text prints as written, line breaks and all.
+  - A project name long enough to wrap printed its lines over each other
+    (the page's 14pt line height reached the 21pt title) and pushed the
+    reference past the margin. The title now takes the room the reference
+    leaves and has its own line height, with a negative margin taking the
+    extra height back, so a one-line title sits where it always has (checked:
+    every word on the tidy samples is where it was on main). On a wrapped
+    name the rule under the title is as close to the last line as it always
+    was to a one-line title. A card's long place name ran
+    under its type label; it now wraps short of it.
+  - A title-block value on more than one line had its label level with the
+    last line; labels are now set from the top, which puts them in the same
+    place on one line and level with the first line on more.
+  - A panorama (at least 2.5 times as wide as tall) was 34pt high in a
+    half-width frame; it now has its own row across the card at the height it
+    needs. A photograph at least 2.5 times as tall as wide was 32pt wide; it
+    now has its own row in a 320pt frame. Every other photograph is laid out
+    as before. Read from the image's own size, so nothing new is stored.
+  - Labels, table heads, photograph dates and the footer's ACCREDITATIONS
+    were #83868c: 3.6:1 on white and 3.3:1 on the table heads' wash, faint
+    for 6pt type on paper. Now #6c6f75 (5.0:1 and 4.6:1).
+  - A run of more than 20 characters with no space now breaks every 20, not
+    every 24: a 24-character name ran 5pt into the margin in the summary's owner
+    column.
+- Decisions (Claude's): photographs stay at the app's 1,600-pixel PDF copy,
+  about 330 KB each, so a 33-photograph report is about 10.7 MB. They are
+  evidence and are zoomed into; nothing is emailed (delivery files to
+  SharePoint). Proposed in the PR, not built: a smaller copy for PDFs if
+  reports are ever emailed. A 10,000-character place name prints as a title
+  pages long in the card; it is what was typed, so it is not cut. PDFs
+  already made are cached per sent revision and are not made again.
+- Priority: part-way through, Cal asked (via the coordinator) for RELAY to
+  focus on progress reporting, with the site update PDF first and the safety
+  and tower ones left alone. Every fix here is in the one renderer all report
+  types share, so the site update gets all of them; nothing was added that is
+  only for safety or tower inspections. Their worst cases stay in the check
+  because they cost nothing extra to keep.
+- Not changed: anything in the report editor; registers (spreadsheets, not
+  PDFs). The pages people print from the browser (weekly summary, snag list,
+  before handover, safety actions, My week) were printed to PDF with a year of
+  busy data (`seed-busy-projects`) and looked at: nothing cut off or
+  overlapping, so left as they are.
+- Checks: `npm run typecheck`, `npm test` (146 + 427; two new in
+  `apps/web/tests/reportPdf.test.ts`: boxes at the limit print in full with
+  no page-tall block and the summary points to the card; a long project name
+  wraps without overlapping or leaving the margin; both fail on main). New
+  `scripts/verify-long-pdfs.mjs` builds the ten worst cases and checks, read
+  back with pdf.js: no block taller than a page, a footer and "Page n of N" on
+  every page, no text off the page or into the footer, no line drawn over
+  another, every long box there to its last words, no page ending on a
+  heading or card title (a card's head line holds its title, number and label), photographs not stretched and at least 40pt, the
+  page count in range and the file no more than 400 KB beyond its
+  photographs. It passes on this branch and fails 9 of 10 cases on main. The
+  tidy samples (`scripts/render-sample-pdfs.mjs`) render pixel for pixel as
+  on main apart from the darker grey, the one 1600×500 panorama, one check
+  title on the pre-handover sample that used to touch its label and now
+  wraps, and a long reference and a signed-in email address that now break
+  every 20 characters. Browser checks after
+  `npm run build`, all passed: `verify-help`, `verify-typed-signature`,
+  `verify-report-types`, `verify-first-fix-inspection`,
+  `verify-handover-inspection`, `verify-tower-inspection`,
+  `verify-role-access`, `verify-pdf-navigation`, `verify-day-walkthrough`
+  and `verify-error-messages`.
+- Not verified: printing on paper, Adobe Acrobat or a phone's PDF viewer
+  (pages were read with pdf.js and drawn with poppler only); real phone
+  photographs (the photographs were made from noise, sized and compressed as
+  the app does).
+
 ## 2026-10-21 — Sixth release check (main at e2e84ff, #74 to #78)
 
 - Why: the coordinator's release check before a first deploy. Not a

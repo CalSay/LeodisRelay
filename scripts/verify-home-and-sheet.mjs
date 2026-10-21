@@ -1,6 +1,7 @@
 // Browser check for the engineer home screen and the office project sheet:
 // the project's pages are grouped, daily ones first, every one still a tap
-// away, with nothing crowded at phone width or on a desktop.
+// away, with nothing crowded at phone width or on a desktop. Run with the
+// office's safety, permits and deliveries switch off (the default) and on.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 // RELAY_SCREENSHOT_DIR=<dir> saves full-page screenshots (RELAY_SHOT_PREFIX names them, default "after").
 import assert from 'node:assert/strict';
@@ -30,7 +31,10 @@ server.stdout.on('data',d=>output+=d);server.stderr.on('data',d=>output+=d);
 // RELAY_SHOTS_ONLY=1 takes the screenshots without the checks (for "before" pictures of older code).
 const shotsOnly=process.env.RELAY_SHOTS_ONLY==='1';
 let browser,checks=0;const check=(ok,message)=>{if(shotsOnly)return;assert.ok(ok,message);checks++;};
-const pages=['/weekly-summary','/photos','/diary','/safety-actions','/handover','/issue-trend','/site-notes','/permits','/deliveries'];
+const pages=['/weekly-summary','/photos','/diary','/handover','/issue-trend','/site-notes'];
+const safetyPages=['/safety-actions','/toolbox-talks','/permits','/deliveries'];
+// Each state, and which widths and themes it is looked at in.
+const states=[[false,[['light',375],['dark',375],['light',1440],['dark',1440]]],[true,[['light',375],['dark',1440]]]];
 try {
   let ready=false;for(let k=0;k<60;k++){if(server.exitCode!==null)throw Error(output);try{if((await fetch(base+'/signin')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready,output);
   browser=await chromium.launch({headless:true,...(process.env.RELAY_BROWSER_PATH?{executablePath:process.env.RELAY_BROWSER_PATH}:{})});
@@ -40,45 +44,61 @@ try {
   const noSideways=async(page,at)=>check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`${at}: no sideways scroll`);
   const names=async loc=>(await loc.locator(':scope > a, :scope > button').evaluateAll(els=>els.map(e=>(e.querySelector('b')??e).textContent.trim())));
 
-  for(const [scheme,width] of [['light',375],['dark',375],['light',1440],['dark',1440]]){
-    const at=`engineer ${width}px ${scheme}`;
+  for(const [on,views] of states){
+  putRecord('settings',{id:'features',safetyRecords:on});
+  const state=on?'switch on':'switch off';
+  for(const [scheme,width] of views){
+    const at=`engineer ${width}px ${scheme}, ${state}`;
     const {context,page,errors}=await open('Engineer',scheme,width);
     await page.goto(`${base}/engineer?project=proj-011lme`);
     await page.getByRole('heading',{name:'Came back from the office'}).waitFor();
     await page.locator('.eng-since').first().waitFor().catch(()=>{});
     await page.waitForTimeout(400);
-    await shot(page,`engineer-home-${scheme}-${width}`);
+    await shot(page,`engineer-home-${on?'on-':''}${scheme}-${width}`);
     if(shotsOnly){await context.close();continue;}
-    // The right-hand column reads: what changed, what came back, the project's pages, then you.
+    // The job comes first: one big button for the site update, then the two quick ones.
+    const tiles=await page.locator('.eng-tiles-main > :is(a,button) b').allInnerTexts();
+    check(tiles.join('|')==='Start today’s site update|Flag a defect|Request a variation',`${at}: the main actions (${tiles.join('|')})`);
+    const inspections=await page.getByRole('region',{name:'Inspections'}).locator('.eng-tile b').allInnerTexts();
+    check(inspections.join('|')===(on?'Do a safety inspection|Do a handover inspection|Do a first fix inspection|Do a tower inspection':'Do a handover inspection|Do a first fix inspection'),`${at}: inspections (${inspections.join('|')})`);
+    check(await page.getByRole('heading',{name:'Unfinished reports'}).count()===0,`${at}: no empty Unfinished reports section`);
+    // The right-hand column reads: what came back, what changed, the project's pages, then you.
     const order=await page.locator('.eng-home-grid > div:last-child h2').allInnerTexts();
-    check(order.join('|')==='Since your last visit|Came back from the office|This project|Your week and help',`${at}: home sections in order (${order.join('|')})`);
+    check(order.join('|')==='Came back from the office|Since your last visit|This project|Your week and help',`${at}: home sections in order (${order.join('|')})`);
     const project=page.getByRole('region',{name:'This project'});
-    const issues=project.getByRole('group',{name:'Issues and safety'}),records=project.getByRole('group',{name:'Reports and records'});
-    check((await project.locator('h3').allTextContents()).join('|')==='Issues and safety|Reports and records',`${at}: This project has two groups`);
-    check((await names(issues.locator('.eng-list'))).join('|')==='Site issues|Safety actions|Toolbox talks|Permits to work|Issues over time|Before handover',`${at}: issues and safety, daily first (${await names(issues.locator('.eng-list'))})`);
-    check((await names(records.locator('.eng-list'))).join('|')==='Reports|Notes for the next visit|Deliveries|Site diary|Weekly summary|Photographs',`${at}: reports and records, daily first (${await names(records.locator('.eng-list'))})`);
+    check((await names(project.locator(':scope > .eng-list'))).join('|')==='Site issues|Reports|Notes for the next visit|Photographs',`${at}: the four pages used most (${await names(project.locator(':scope > .eng-list'))})`);
+    const more=project.locator('details.eng-more-pages');
+    check(await more.evaluate(d=>!d.open),`${at}: More on this project starts folded`);
+    check((await names(more.locator('.eng-list'))).join('|')==='Weekly summary|Site diary|Before handover|Issues over time',`${at}: More on this project (${await names(more.locator('.eng-list'))})`);
+    const safety=project.getByRole('group',{name:'Safety, permits and deliveries'});
+    if(on)check((await names(safety.locator('.eng-list'))).join('|')==='Safety actions|Toolbox talks|Permits to work|Deliveries',`${at}: safety, permits and deliveries (${await names(safety.locator('.eng-list'))})`);
+    else check(await safety.count()===0,`${at}: no safety, permits and deliveries group`);
     check((await names(page.getByRole('region',{name:'Your week and help'}).locator('.eng-list'))).join('|')==='My week|How RELAY works and what’s new',`${at}: your week and help`);
-    for(const path of pages){const href=await page.locator(`.eng-home-grid a[href^="${path}?"]`).getAttribute('href');check(href&&new URLSearchParams(href.split('?')[1]).get('project')==='proj-011lme',`${at}: home links to ${path} for the project`);}
+    for(const path of [...pages,...(on?safetyPages:[])]){const href=await page.locator(`.eng-home-grid a[href^="${path}?"]`).getAttribute('href');check(href&&new URLSearchParams(href.split('?')[1]).get('project')==='proj-011lme',`${at}: home links to ${path} for the project`);}
+    if(!on)for(const path of safetyPages)check(await page.locator(`a[href^="${path}"]`).count()===0,`${at}: no link to ${path}`);
     if(width<600){
-      const small=await page.locator('.eng-home-grid .eng-row').evaluateAll(els=>els.filter(e=>e.getBoundingClientRect().height<44).length);
-      check(small===0,`${at}: every home row is at least 44px tall`);
-      const wraps=await project.locator('.eng-row .main>span').evaluateAll(els=>els.filter(e=>e.getBoundingClientRect().height>40).length);
+      const small=await page.locator('.eng-home-grid .eng-row:visible').evaluateAll(els=>els.filter(e=>e.getBoundingClientRect().height<56).length);
+      check(small===0,`${at}: every home row is at least 56px tall`);
+      const main=await page.locator('.eng-tile-main').boundingBox();
+      check(main&&main.height>=72&&main.y+main.height<=900,`${at}: the site update button is big and on the first screen`);
+      const wraps=await project.locator('.eng-row:visible .main>span').evaluateAll(els=>els.filter(e=>e.getBoundingClientRect().height>40).length);
       check(wraps===0,`${at}: no project row's note runs past two lines`);
     }
     await noSideways(page,at);
+    await more.locator('summary').click();
     await project.getByRole('link',{name:/^Before handover/}).click();await page.waitForURL(/\/handover\?project=proj-011lme/);
     check(await page.locator('a.back').first().innerText()==='← Back to Site',`${at}: Before handover says Back to Site`);
     if(!shotsOnly)assert.deepEqual(errors,[],`${at}: page errors`);
     await context.close();
   }
 
-  for(const [scheme,width] of [['light',375],['dark',375],['light',1440],['dark',1440]]){
-    const at=`office sheet ${width}px ${scheme}`;
+  for(const [scheme,width] of views){
+    const at=`office sheet ${width}px ${scheme}, ${state}`;
     const {context,page,errors}=await open('Manager',scheme,width);
     await page.goto(`${base}/office#/projects/proj-011lme`);
     await page.getByRole('heading',{name:/^Register · Tetley Hall/}).waitFor();
     await page.waitForTimeout(400);
-    await shot(page,`office-sheet-${scheme}-${width}`);
+    await shot(page,`office-sheet-${on?'on-':''}${scheme}-${width}`);
     if(shotsOnly){await context.close();continue;}
     const phone=width<600;
     if(!phone){const actions=await page.locator('.sheet-title .actions a:visible').allInnerTexts();
@@ -86,11 +106,13 @@ try {
     // On a phone the register stands in for the sheet, so the links come with it.
     const more=page.getByRole('navigation',{name:'On this project'});
     check(await more.count()===1,`${at}: one set of project links on screen`);
-    check((await more.locator(':is(h3,h4)').allTextContents()).join('|')==='Issues and safety|Reports and records',`${at}: two groups`);
+    check((await more.locator(':is(h3,h4)').allTextContents()).join('|')===(on?'Reports and records|Issues|Safety, permits and deliveries':'Reports and records|Issues'),`${at}: groups (${await more.locator(':is(h3,h4)').allTextContents()})`);
     const group=n=>more.locator('.sheet-links-group').nth(n).locator('a').allInnerTexts();
-    check((await group(0)).join('|')==='Safety actions|Toolbox talks|Permits to work|Issues over time|Before handover',`${at}: issues and safety (${await group(0)})`);
-    check((await group(1)).join('|')===(phone?'Site diary|Weekly summary|Photographs|Notes for the next visit|Deliveries|Project page':'Site diary|Weekly summary|Photographs|Notes for the next visit|Deliveries'),`${at}: reports and records (${await group(1)})`);
-    for(const path of pages){const href=await more.locator(`a[href^="${path}?"]`).getAttribute('href');check(href&&new URLSearchParams(href.split('?')[1]).get('project')==='proj-011lme',`${at}: the project links go to ${path} for the project`);}
+    check((await group(0)).join('|')===(phone?'Weekly summary|Site diary|Photographs|Notes for the next visit|Project page':'Weekly summary|Site diary|Photographs|Notes for the next visit'),`${at}: reports and records (${await group(0)})`);
+    check((await group(1)).join('|')==='Issues over time|Before handover',`${at}: issues (${await group(1)})`);
+    if(on)check((await group(2)).join('|')==='Safety actions|Toolbox talks|Permits to work|Deliveries',`${at}: safety, permits and deliveries (${await group(2)})`);
+    for(const path of [...pages,...(on?safetyPages:[])]){const href=await more.locator(`a[href^="${path}?"]`).getAttribute('href');check(href&&new URLSearchParams(href.split('?')[1]).get('project')==='proj-011lme',`${at}: the project links go to ${path} for the project`);}
+    if(!on)for(const path of safetyPages)check(await page.locator(`a[href^="${path}"]`).count()===0,`${at}: no link to ${path}`);
     // Where the project stands, what site said and what needs the office come first; the project's other pages after them.
     if(phone)check(await page.evaluate(()=>{const nav=[...document.querySelectorAll('.sheet-links')].find(e=>e.offsetParent),chips=[...document.querySelectorAll('.filters')].find(e=>e.offsetParent);return !!nav&&!!chips&&!!(chips.compareDocumentPosition(nav)&Node.DOCUMENT_POSITION_FOLLOWING);}),`${at}: the links come after the register`);
     else check(await page.evaluate(()=>{const nav=[...document.querySelectorAll('.sheet-links')].find(e=>e.offsetParent),h=[...document.querySelectorAll('.sec-h')].find(e=>/Needs attention/.test(e.textContent));return !!nav&&!!h&&!!(h.compareDocumentPosition(nav)&Node.DOCUMENT_POSITION_FOLLOWING);}),`${at}: the links come after Needs attention`);
@@ -102,7 +124,8 @@ try {
     if(!shotsOnly)assert.deepEqual(errors,[],`${at}: page errors`);
     await context.close();
   }
-  console.log(shotsOnly?'Screenshots taken.':`Home and project sheet check passed (${checks} checks): engineer home sections and groups in order, office project sheet links grouped under one title button and on the phone register, every page linked for the project, 44px rows on a phone, no sideways scroll, at 375 and 1440px in light and dark.`);
+  }
+  console.log(shotsOnly?'Screenshots taken.':`Home and project sheet check passed (${checks} checks): with the safety, permits and deliveries switch off and on, the engineer home leads with the site update, keeps four project pages in view and the rest folded, office project sheet links grouped under one title button and on the phone register, every page linked for the project, 56px rows on a phone, no sideways scroll, at 375 and 1440px in light and dark.`);
 } finally {
   await browser?.close();server.kill();if(server.exitCode===null)await once(server,'exit');database().close();rmSync(root,{recursive:true,force:true});
 }

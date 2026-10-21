@@ -21,6 +21,7 @@ const axeSource=readFileSync(require.resolve('axe-core/axe.min.js'),'utf8');
 const root=mkdtempSync(join(tmpdir(),'relay-first-time-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,database}=require('../apps/web/.test-build/lib/storage.js');
+// A first day: the office's safety, permits and deliveries switch is at its default, off, so those pages say they are not in use.
 const {createReport}=require('../apps/web/.test-build/lib/serverStore.js');
 const engineer={id:'entra:first-engineer',oid:'first-engineer',name:'New Engineer',email:'new@example.test',role:'Engineer',trade:'Electrical'};
 const manager={id:'entra:first-manager',oid:'first-manager',name:'New Manager',email:'newm@example.test',role:'Manager'};
@@ -32,7 +33,7 @@ const P='proj-011lme';
 // Each page, the words that must be on it, and words that must not.
 const pages={
   Engineer:[
-    {path:`/engineer?project=${P}`,has:['Start a site update','Nothing new from anyone else','Nothing on this project yet.','Start here'],not:[/new to you/i]},
+    {path:`/engineer?project=${P}`,has:['Start today’s site update','Nothing new from anyone else','Nothing on this project yet.','Start here'],not:[/new to you/i]},
     {path:`/engineer?project=${P}&view=issues`,has:['No open issues on this project.']},
     {path:`/engineer?project=${P}&view=reports`,has:['No reports yet on this project.']},
     {path:`/issues/snag-list?project=${P}`,has:['Nothing open on this project.']},
@@ -41,13 +42,13 @@ const pages={
     {path:`/photos?project=${P}`,has:['No photographs yet']},
     {path:`/diary?project=${P}`,has:['No site visits yet']},
     {path:'/my-week',has:['One report for this week is not sent yet.'],not:[/Nothing recorded this week yet/]},
-    {path:`/safety-actions?project=${P}`,has:['No safety inspection has been sent from this project yet.','Do a safety inspection']},
+    {path:`/safety-actions?project=${P}`,has:['is not in use.','ask the office']},
     {path:`/handover?project=${P}`,has:['Nothing is open in RELAY on this project.']},
     {path:`/issue-trend?project=${P}`,has:['No issues in the last 12 weeks.','Nothing to chart yet.'],not:[/Week by week/,/Open at the end of each week/]},
     {path:`/site-notes?project=${P}`,has:['No notes on this project.']},
-    {path:`/toolbox-talks?project=${P}`,has:['No toolbox talks recorded on this project yet.']},
-    {path:`/permits?project=${P}`,has:['No permits recorded on this project yet.','no permit open']},
-    {path:`/deliveries?project=${P}`,has:['No deliveries recorded on this project yet.','nothing waiting on a supplier']},
+    {path:`/toolbox-talks?project=${P}`,has:['is not in use.','ask the office']},
+    {path:`/permits?project=${P}`,has:['is not in use.','ask the office']},
+    {path:`/deliveries?project=${P}`,has:['is not in use.','ask the office']},
     {path:`/reports/${draft.id}/preview`,has:['Nothing recorded yet. Cards added to the report show here.'],not:[/No actions or decisions arise/]},
     {path:'/help?for=site',has:['New to RELAY? Start with How it works'],not:[/new to you/i],after:async(page,label)=>{
       check(/^How it works/.test(await page.locator('.help-section-title').first().innerText()),`${label}: How it works comes first`);
@@ -65,10 +66,10 @@ const pages={
       after:async(page,label)=>check(!(await page.locator('.cov-quiet-list,.cov-quiet').count()),`${label}: no site is marked as gone quiet before any has started`)},
     {path:'/my-week',has:['Nothing recorded this week yet.'],after:async(page,label)=>check(!(await page.getByRole('button',{name:'Copy for my timesheet'}).isEnabled()),`${label}: nothing to copy for a timesheet`)},
     {path:'/companies',has:['No company or person has open issues']},
-    {path:`/safety-actions?project=${P}`,has:['No safety inspection has been sent from this project yet.']},
-    {path:`/toolbox-talks?project=${P}`,has:['No toolbox talks recorded on this project yet.']},
-    {path:`/permits?project=${P}`,has:['No permits recorded on this project yet.','no permit open']},
-    {path:`/deliveries?project=${P}`,has:['No deliveries recorded on this project yet.','nothing waiting on a supplier']},
+    {path:`/safety-actions?project=${P}`,has:['is not in use.','ask the office']},
+    {path:`/toolbox-talks?project=${P}`,has:['is not in use.','ask the office']},
+    {path:`/permits?project=${P}`,has:['is not in use.','ask the office']},
+    {path:`/deliveries?project=${P}`,has:['is not in use.','ask the office']},
     {path:`/issue-trend?project=${P}`,has:['No issues in the last 12 weeks.']},
     {path:'/help?for=office',has:['New to RELAY? Start with How it works']},
   ],

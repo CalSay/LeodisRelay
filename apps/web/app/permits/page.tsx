@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { currentPrincipal } from '@/lib/auth/session';
+import { isAdmin } from '@/lib/auth/access';
+import { safetyRecordsOn } from '@/lib/features';
+import { SwitchedOff } from '@/components/SwitchedOff';
 import { PermitsPage } from '@/components/PermitsPage';
 import './permits.css';
 
@@ -13,5 +16,7 @@ export default async function Permits({ searchParams }: { searchParams: Promise<
   const query = await searchParams;
   const kept = new URLSearchParams(Object.entries(query).filter((e): e is [string, string] => typeof e[1] === 'string'));
   if (!principal) redirect(`/signin?returnTo=${encodeURIComponent(`/permits${kept.size ? `?${kept}` : ''}`)}`);
+  // Behind the office's switch, off by default (lib/featureSwitch.ts).
+  if (!safetyRecordsOn()) return <SwitchedOff page="Permits to work" returnTo={query.returnTo} admin={isAdmin(principal)} />;
   return <PermitsPage initialProject={query.project ?? ''} returnTo={query.returnTo} />;
 }

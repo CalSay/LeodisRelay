@@ -4,8 +4,10 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { usePrincipal } from './PrincipalContext';
+import { useFeatures } from './FeaturesContext';
 import { sendHeldWork, type HeldSendResult } from '@/lib/heldSend';
 import { OFFLINE_PERSON_KEY, OFFLINE_TYPES_KEY, offlineTypes, sentLine } from '@/lib/offlineStart';
+import { isSafetyRecordType } from '@/lib/featureSwitch';
 
 /**
  * Work held on this device from the offline page goes up by itself once RELAY
@@ -23,16 +25,18 @@ export function HeldWork() {
   const principal = usePrincipal();
   const pathname = usePathname();
   const router = useRouter();
+  const { safetyRecords } = useFeatures();
   const [result, setResult] = useState<HeldSendResult | null>(null);
 
   useEffect(() => {
     try {
       if (principal) localStorage.setItem(OFFLINE_PERSON_KEY, JSON.stringify({ id: principal.id, name: principal.name }));
       else localStorage.removeItem(OFFLINE_PERSON_KEY);
-      // The inspections and their checks, so the offline page can start one too.
-      if (principal) localStorage.setItem(OFFLINE_TYPES_KEY, JSON.stringify(offlineTypes()));
+      // The inspections and their checks, so the offline page can start one too:
+      // only those the office has on (featureSwitch.ts).
+      if (principal) localStorage.setItem(OFFLINE_TYPES_KEY, JSON.stringify(offlineTypes().filter(t => safetyRecords || !isSafetyRecordType(t.id))));
     } catch { /* Storage blocked: the offline page says to reconnect. */ }
-  }, [principal]);
+  }, [principal, safetyRecords]);
 
   const editor = pathname.startsWith('/reports/');
   useEffect(() => {

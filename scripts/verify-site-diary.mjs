@@ -74,6 +74,8 @@ try {
   {
     const {context,page,errors}=await open('Engineer','light',390);
     await page.goto(`${base}/engineer?project=proj-011lme`);
+    // The Site page keeps it under "More on this project", folded until opened.
+    await page.locator('details.eng-more-pages summary').click();
     const link=page.getByRole('link',{name:/Site diary/});await link.waitFor();
     check(true,'engineer: home offers the site diary');
     await link.click();await page.waitForURL(/\/diary\?/);await page.locator('.diary-entry').first().waitFor();

@@ -21,7 +21,8 @@ const engineer={id:'entra:help-engineer',oid:'help-engineer',name:'Help Engineer
 const manager={id:'entra:help-manager',oid:'help-manager',name:'Help Manager',email:'helpm@example.test',role:'Manager'};
 const sessions={};
 for(const p of [engineer,manager]){sessions[p.role]=randomUUID();putRecord('sessions',{id:sessions[p.role],principal:p,issuedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+600000).toISOString()});}
-const siteCount=whatsNewFor('site').length,officeCount=whatsNewFor('office').length;
+// The office's safety, permits and deliveries switch is at its default, off, so their entries are left out (lib/featureSwitch.ts).
+const siteCount=whatsNewFor('site',undefined,false).length,officeCount=whatsNewFor('office',undefined,false).length;
 const port=4341,base=`http://127.0.0.1:${port}`;let output='';
 const server=spawn(process.execPath,[resolve('node_modules/next/dist/bin/next'),'start','-p',String(port),'-H','127.0.0.1'],{cwd:resolve('apps/web'),windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,NODE_ENV:'production',ENTRA_TENANT_ID:'00000000-0000-0000-0000-000000000001',ENTRA_CLIENT_ID:'00000000-0000-0000-0000-000000000002',ENTRA_CLIENT_SECRET:'synthetic-help-check',ENTRA_REDIRECT_URI:`${base}/api/auth/callback`}});
 server.stdout.on('data',d=>output+=d);server.stderr.on('data',d=>output+=d);
@@ -58,7 +59,7 @@ try {
     check((await page.locator('.help-new li.is-new').count())===0&&!(await page.locator('main').innerText()).toLowerCase().includes('new to you'),'engineer: on a first visit nothing is marked New, as all of it is new to them');
     check((await page.locator('.help-new li').count())===6,'engineer: on a first visit the latest six are shown');
     const text=await page.locator('main').innerText();
-    check(text.includes(whatsNewFor('site')[0].title)&&!text.includes('Issues by company'),'engineer: site entries, no office-only entries or links');
+    check(text.includes(whatsNewFor('site',undefined,false)[0].title)&&!text.includes('Issues by company'),'engineer: site entries, no office-only entries or links');
     check(text.includes('Your first site update')&&text.includes('Send to office')&&text.includes('Make a correction'),'engineer: the guide names the real buttons');
     check(text.includes('Fixed, to check')&&text.includes('Action needed')&&text.includes('Not emailed'),'engineer: the words explained');
     check((await page.locator('.help-steps li').count())===4,'engineer: four steps to a first update');
@@ -78,7 +79,7 @@ try {
     const office=await page.locator('main').innerText();
     check(office.includes('Issues by company')&&office.includes('Closing an issue'),'engineer: the office tab explains the office side');
     check(!(await page.locator('main a[href^="/companies"],main a[href^="/coverage"],main a[href^="/office"]').count()),'engineer: the office tab offers no page an engineer cannot open');
-    check((await page.locator('.help-new li.is-new').count())===officeCount-whatsNewFor('office').filter(e=>e.audience==='all').length,'engineer: only the office-only entries are new on the office tab');
+    check((await page.locator('.help-new li.is-new').count())===officeCount-whatsNewFor('office',undefined,false).filter(e=>e.audience==='all').length,'engineer: only the office-only entries are new on the office tab');
     await page.goto(`${base}/engineer?project=proj-011lme`);await page.getByRole('link',{name:/How RELAY works and what’s new/}).waitFor();
     await page.waitForTimeout(300);
     check(!(await page.getByText(/new to you/).count())&&!(await page.getByText('Start here').count()),'engineer: home no longer shows a new count or Start here');
@@ -113,7 +114,7 @@ try {
     let help=page.locator('.tbtn-help');await help.waitFor();await page.waitForTimeout(300);
     check(!(await page.locator('.tbtn-help .tbtn-new').count()),'manager: no count on Help for someone who has never opened it');
     // Someone who opened Help before the last two entries were added.
-    const older=whatsNewFor('office').slice(2).map(e=>e.id);
+    const older=whatsNewFor('office',undefined,false).slice(2).map(e=>e.id);
     await page.evaluate(([id,seen])=>localStorage.setItem(`relay-help-seen:${id}`,JSON.stringify(seen)),[manager.id,older]);
     await page.reload();help=page.locator('.tbtn-help');await help.waitFor();
     await page.waitForFunction(()=>document.querySelector('.tbtn-help .tbtn-new')?.textContent==='2');

@@ -109,7 +109,7 @@ try {
   assert.equal(saved.state,'submitted');assert.equal(saved.observations.length,2);
   assert.equal(saved.observations[1].whatHappened,'Tablet section survives rotation');
   await page.goto(base+'/engineer?project=proj-014lme');
-  await page.getByRole('button',{name:/Start a site update/}).click();
+  await page.getByRole('button',{name:/Start today’s site update/}).click();
   await page.waitForURL('**/reports/*');
   const created=await context.request.get(base+'/api'+new URL(page.url()).pathname).then(r=>r.json());
   assert.equal(created.projectId,'proj-014lme');assert.equal(created.authorId,principal.id);

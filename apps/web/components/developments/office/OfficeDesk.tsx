@@ -7,6 +7,7 @@ import { usePrincipal } from '@/components/PrincipalContext';
 import { useWhatsNew } from '@/components/useWhatsNew';
 import { Toasts, parseHash, useHashRoute } from '@/components/workspace/hooks';
 import { allIssues, allVariations, listProjects, officeAll, officeTeam, permitsAll, deliveriesAll, safetyActionsAll, type OfficeTeam } from '@/lib/api';
+import { useFeatures } from '@/components/FeaturesContext';
 import { canAccessProject, isAdmin } from '@/lib/auth/access';
 import { useProjects } from '@/components/ProjectContext';
 import type { FixtureProject } from '@/lib/fixtures';
@@ -48,6 +49,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const [q, setQ] = useState('');
   const [attnOpen, setAttnOpen] = useState(false);
   const generation = useRef(0);
+  const { safetyRecords } = useFeatures();
 
   // Every page before any total: a page is never presented as the portfolio.
   const refresh = useCallback(async () => {
@@ -58,21 +60,22 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
         allIssues(),
         allVariations(),
         listProjects(),
+        // Only while the office has them on (lib/featureSwitch.ts); off, they stay null and no line is shown.
         // Safety actions failing to load must not stop the desk: it keeps the last answer it had.
-        safetyActionsAll().catch(() => undefined),
+        safetyRecords ? safetyActionsAll().catch(() => undefined) : null,
         // The same for permits to work.
-        permitsAll().catch(() => undefined),
+        safetyRecords ? permitsAll().catch(() => undefined) : null,
         // And for deliveries.
-        deliveriesAll().catch(() => undefined),
+        safetyRecords ? deliveriesAll().catch(() => undefined) : null,
       ]);
       if (g !== generation.current) return;
       setProjectData(currentProjects);
-      setSnap(prev => ({ reports, drafts, issues, variations, loadedAt: new Date().toISOString(), safety: safety ?? prev?.safety ?? null, permits: permits ?? prev?.permits ?? null, deliveries: deliveries ?? prev?.deliveries ?? null }));
+      setSnap(prev => ({ reports, drafts, issues, variations, loadedAt: new Date().toISOString(), safety: safety === null ? null : safety ?? prev?.safety ?? null, permits: permits === null ? null : permits ?? prev?.permits ?? null, deliveries: deliveries === null ? null : deliveries ?? prev?.deliveries ?? null }));
       setError('');
     } catch (e) {
       if (g === generation.current) setError(e instanceof Error ? e.message : 'Unable to refresh office records.');
     }
-  }, []);
+  }, [safetyRecords]);
   // The first load always happens, even in a background tab; only the repeats
   // wait for the tab to be looked at.
   useEffect(() => {

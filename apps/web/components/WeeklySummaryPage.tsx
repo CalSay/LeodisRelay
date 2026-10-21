@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useFeatures } from './FeaturesContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useProjects } from './ProjectContext';
@@ -93,6 +94,8 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
   const here = `/weekly-summary${q.size ? `?${q}` : ''}`;
   useEffect(() => { router.replace(here, { scroll: false }); }, [here, router]);
 
+  // Talks, permits and deliveries only while the office has them on (lib/featureSwitch.ts).
+  const { safetyRecords } = useFeatures();
   const s = summary?.projectId === projectId && summary.start === week ? summary : null;
   const issuesMoved = s ? s.issuesRaised.length + s.issuesFixed.length + s.issuesClosed.length : 0;
   const siteCount = s ? s.site.talks.length + s.site.permits.length + s.site.deliveries.length : 0;
@@ -164,7 +167,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
           <h3>Instructed by the client</h3><VariationRows rows={s.variationsInstructed} empty="No variations instructed this week." here={here} />
         </section>
 
-        <section className="week-section">
+        {safetyRecords && <section className="week-section">
           <h2>Toolbox talks, permits and deliveries<span>{siteCount ? plural(siteCount, 'record') : 'none recorded'}</span></h2>
           <h3>Toolbox talks</h3>
           {s.site.talks.length ? <ul className="week-rows">{s.site.talks.map(t => <li key={t.id}>
@@ -184,10 +187,10 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
               <p className="week-desc">{d.items}</p>{(d.problem || d.arrived !== d.day) && <p className="week-meta">{[d.problem, d.arrived !== d.day ? `arrived ${fmtDay(d.arrived)}` : ''].filter(Boolean).join(' · ')}</p>}</div>
           </li>)}</ul> : <p className="week-none">No deliveries recorded this week.</p>}
           {siteCount > 0 && <p className="week-total week-noprint"><Link href={withViewReturn(`/toolbox-talks?${new URLSearchParams({ project: projectId })}`, here)}>Toolbox talks</Link> · <Link href={withViewReturn(`/permits?${new URLSearchParams({ project: projectId })}`, here)}>Permits to work</Link> · <Link href={withViewReturn(`/deliveries?${new URLSearchParams({ project: projectId })}`, here)}>Deliveries</Link></p>}
-        </section>
+        </section>}
 
         <footer className="week-foot">
-          <p>Made from site reports sent to the office, the issue and variation registers, and the toolbox talks, permits and deliveries recorded in RELAY. Reports are placed by their visit day; issues and variations by the day each change was recorded; talks by the day given, permits and deliveries by the day issued or taken in, or closed or sorted when that was this week. A corrected report replaces the one it corrects. Reports still awaiting review or returned for changes are marked. &ldquo;Open now&rdquo; is as of {fmtDay(today, true)}. Prices are not shown.</p>
+          <p>Made from site reports sent to the office{safetyRecords ? ', the issue and variation registers, and the toolbox talks, permits and deliveries recorded in RELAY' : ' and the issue and variation registers'}. Reports are placed by their visit day; issues and variations by the day each change was recorded{safetyRecords ? '; talks by the day given, permits and deliveries by the day issued or taken in, or closed or sorted when that was this week' : ''}. A corrected report replaces the one it corrects. Reports still awaiting review or returned for changes are marked. &ldquo;Open now&rdquo; is as of {fmtDay(today, true)}. Prices are not shown.</p>
         </footer>
       </article>}
   </main>;

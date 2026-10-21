@@ -56,9 +56,10 @@ try {
     await tile.waitFor();
     ok(/12 checks/.test(await tile.innerText())&&/snag list/.test(await tile.innerText()),`${label}: the tile says what it asks and where actions go`);
     ok(/before ceilings and walls are closed/.test(await tile.innerText()),`${label}: the tile says when to do it`);
-    ok(await page.getByRole('button',{name:/Do a safety inspection/}).isVisible(),`${label}: the safety inspection is still there`);
+    // The safety inspection is behind the office's switch, off by default (lib/featureSwitch.ts).
+    ok(await page.getByRole('button',{name:/Do a safety inspection/}).count()===0,`${label}: no safety inspection while the office has it off`);
     ok(await page.getByRole('button',{name:/Do a handover inspection/}).isVisible(),`${label}: the handover inspection is still there`);
-    ok(await page.getByRole('button',{name:/Start a site update/}).isVisible(),`${label}: the site update is still there`);
+    ok(await page.getByRole('button',{name:/Start today’s site update/}).isVisible(),`${label}: the site update is still there`);
     eq(await overflow(),false,`${label}: home has no sideways scroll`);
     await shot(page,`home-${scheme}-${width}`);
     await tile.click();

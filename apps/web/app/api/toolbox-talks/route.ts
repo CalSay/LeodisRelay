@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { safetyRecordsRefusal } from '@/lib/features';
 import { requireSession } from '@/lib/auth/guard';
 import { reportableProject } from '@/lib/projects';
 import { noteProject } from '@/lib/siteNoteRoute';
@@ -17,6 +18,9 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
+  // Behind the office's switch, off by default (lib/featureSwitch.ts).
+  const off = safetyRecordsRefusal();
+  if (off) return off;
   const params = new URL(request.url).searchParams;
   const projectId = params.get('project') ?? '';
   const found = await noteProject(guard.principal, projectId);
@@ -35,6 +39,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
+  // Behind the office's switch, off by default (lib/featureSwitch.ts).
+  const off = safetyRecordsRefusal();
+  if (off) return off;
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   const text = (v: unknown, max: number) => typeof v === 'string' && v.length <= max;
   if (!body || typeof body.project !== 'string' || typeof body.requestId !== 'string' || !text(body.day, 20) || !text(body.topic, 1000) || !text(body.givenBy, 1000)

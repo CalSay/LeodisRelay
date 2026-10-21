@@ -6,6 +6,7 @@ import { getReport, getVariation } from '@/lib/api';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { answerLabel, reportTypeOf } from '@/lib/reportTypes';
 import { SubmissionStages } from '@/components/SubmissionStages';
+import { useFeatures } from '@/components/FeaturesContext';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { officeActions, sinceWords } from '@/lib/officeActions';
 import { withViewReturn } from '@/lib/viewNavigation';
@@ -172,12 +173,14 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const groups = actionGroups(ctx);
   // Read with the rest of the desk, so the button, the bell and Needs attention count from one answer.
   const safety = snap.safety?.totals;
+  // Switched off by the office (lib/featureSwitch.ts): no button to a page that is not in use.
+  const { safetyRecords } = useFeatures();
   // Where each project stands comes first: it is the question the office opens RELAY to answer.
   // The totals, overdue count and latest reports that used to sit here are in that list, the
   // action groups and the Inbox, so they are no longer repeated.
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h3>Office position</h3><div className="rowsub">{ctx.projects.length} reportable project{ctx.projects.length === 1 ? '' : 's'} · {snap.reports.length} report{snap.reports.length === 1 ? '' : 's'} received · {openIssues} open issue{openIssues === 1 ? '' : 's'} · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
-      <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link><Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions{safety ? ` · ${safety.open} open` : ''}</Link></div></div>
+      <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link>{safetyRecords && <Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions{safety ? ` · ${safety.open} open` : ''}</Link>}</div></div>
     {!snap.reports.length && !snap.issues.length && !snap.variations.length && <div className="note info office-first" role="status"><span>
       <b>Nothing has come in from site yet.</b> Reports arrive in the Inbox as engineers send them, and their defects and variations fill the Issues and Variations registers. Choose a project to see its sheet, or open Help for how RELAY works.
     </span></div>}
@@ -311,16 +314,22 @@ function LatestReports({ ctx, reports }: { ctx: Ctx; reports: ReportSummary[] })
   </tbody></table>;
 }
 
-/** The project's own pages, grouped as on the engineer's home screen. */
-const PROJECT_LINKS: { title: string; links: [string, string][] }[] = [
-  { title: 'Issues and safety', links: [['/safety-actions', 'Safety actions'], ['/toolbox-talks', 'Toolbox talks'], ['/permits', 'Permits to work'], ['/issue-trend', 'Issues over time'], ['/handover', 'Before handover']] },
-  { title: 'Reports and records', links: [['/diary', 'Site diary'], ['/weekly-summary', 'Weekly summary'], ['/photos', 'Photographs'], ['/site-notes', 'Notes for the next visit'], ['/deliveries', 'Deliveries']] },
+/**
+ * The project's own pages: its reports and records first, then issues. The
+ * safety, permits and deliveries pages only while the office has them on
+ * (lib/featureSwitch.ts).
+ */
+const PROJECT_LINKS: { title: string; links: [string, string][]; safetyRecords?: true }[] = [
+  { title: 'Reports and records', links: [['/weekly-summary', 'Weekly summary'], ['/diary', 'Site diary'], ['/photos', 'Photographs'], ['/site-notes', 'Notes for the next visit']] },
+  { title: 'Issues', links: [['/issue-trend', 'Issues over time'], ['/handover', 'Before handover']] },
+  { title: 'Safety, permits and deliveries', safetyRecords: true, links: [['/safety-actions', 'Safety actions'], ['/toolbox-talks', 'Toolbox talks'], ['/permits', 'Permits to work'], ['/deliveries', 'Deliveries']] },
 ];
 function ProjectLinks({ ctx, projectId, heading: H = 'h4', projectPage }: { ctx: Ctx; projectId: string; heading?: 'h3' | 'h4'; projectPage?: boolean }) {
+  const { safetyRecords } = useFeatures();
   return <nav className="sheet-links" aria-label="On this project">
-    {PROJECT_LINKS.map((g, n) => <div key={g.title} className="sheet-links-group"><H>{g.title}</H><div>{g.links.map(([path, label]) => <Link key={path} className="btn btn-q btn-sm" href={`${path}?${new URLSearchParams({ project: projectId, returnTo: officeReturn(ctx) })}`}>{label}</Link>)}
+    {PROJECT_LINKS.filter(g => safetyRecords || !g.safetyRecords).map((g, n) => <div key={g.title} className="sheet-links-group"><H>{g.title}</H><div>{g.links.map(([path, label]) => <Link key={path} className="btn btn-q btn-sm" href={`${path}?${new URLSearchParams({ project: projectId, returnTo: officeReturn(ctx) })}`}>{label}</Link>)}
       {/* The sheet's title has "Project page"; on a phone, where the sheet is not shown, it goes with the records. */}
-      {projectPage && n === PROJECT_LINKS.length - 1 && <Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${projectId}`, officeReturn(ctx))}>Project page</Link>}</div></div>)}
+      {projectPage && n === 0 && <Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${projectId}`, officeReturn(ctx))}>Project page</Link>}</div></div>)}
   </nav>;
 }
 

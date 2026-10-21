@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { readSeen, seenKey, unseen, type HelpTab } from '@/lib/helpGuide';
 import { usePrincipal } from './PrincipalContext';
+import { useFeatures } from './FeaturesContext';
 
 /** Fired on this tab when Help marks entries seen; `storage` covers other tabs. */
 export const SEEN_EVENT = 'relay-help-seen';
@@ -30,13 +31,15 @@ export function newToRelay(principalId: string | undefined): boolean {
  */
 export function useWhatsNew(tab: HelpTab): { count: number; newcomer: boolean } {
   const principal = usePrincipal();
+  // Entries about records the office has switched off are not counted (lib/featureSwitch.ts).
+  const { safetyRecords } = useFeatures();
   const [state, setState] = useState({ count: 0, newcomer: false });
   useEffect(() => {
-    const update = () => setState({ count: unseen(tab, loadSeen(principal?.id)).length, newcomer: newToRelay(principal?.id) });
+    const update = () => setState({ count: unseen(tab, loadSeen(principal?.id), undefined, safetyRecords).length, newcomer: newToRelay(principal?.id) });
     update();
     window.addEventListener('storage', update);
     window.addEventListener(SEEN_EVENT, update);
     return () => { window.removeEventListener('storage', update); window.removeEventListener(SEEN_EVENT, update); };
-  }, [tab, principal?.id]);
+  }, [tab, principal?.id, safetyRecords]);
   return state;
 }

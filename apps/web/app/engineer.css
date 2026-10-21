@@ -430,3 +430,27 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-too-long{margin-top:12px;}
 /* Signed out, or the server not answering: nothing is wrong with the work, so amber and calm, not red. */
 .actionbar .eng-save-problem.is-waiting{border-color:color-mix(in srgb,var(--caution) 40%,transparent);border-left-color:var(--caution);background:var(--caution-wash);color:var(--text);}
+
+/* Simpler home (2026-10-21): one big button for the site update, the project's
+   main pages in one list with the rest folded away, and roomy rows to tap. */
+.eng-heading-home{margin:16px 0 14px;}
+.eng-heading-home h1{font-size:26px;}
+.eng-tiles-main{margin-bottom:0;}
+.eng-tile.eng-tile-main{min-height:84px;padding:18px;background:var(--brass);border-color:var(--brass);color:var(--brass-ink);}
+.eng-tile.eng-tile-main b{font-size:19px;font-weight:600;}
+.eng-tile.eng-tile-main small{color:inherit;opacity:.85;font-size:13px;}
+.eng-tile.eng-tile-main .arrow{color:inherit;font-size:22px;}
+.eng-tile.eng-tile-main:focus-visible{outline:3px solid var(--text);outline-offset:2px;}
+.eng-section-note{font-size:13px;line-height:1.5;color:var(--text-2);margin:-4px 0 10px;}
+.eng-inspections{margin-top:8px;}
+.eng-home-grid .eng-row{min-height:56px;}
+.eng-more-pages{margin-top:10px;border:1px solid var(--line);border-radius:9px;background:var(--panel);}
+.eng-more-pages>summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:3px;min-height:56px;justify-content:center;padding:10px 40px 10px 14px;position:relative;font-size:14px;font-weight:500;}
+.eng-more-pages>summary::-webkit-details-marker{display:none;}
+.eng-more-pages>summary::after{content:'+';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:18px;color:var(--text-3);}
+.eng-more-pages[open]>summary::after{content:'−';}
+.eng-more-pages>summary span{font-size:12px;font-weight:400;color:var(--text-3);}
+.eng-more-pages>summary:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:9px;}
+.eng-more-pages .eng-list{border:0;border-top:1px solid var(--line);border-radius:0 0 9px 9px;margin:0;}
+.eng-home-grid>div>.eng-section-title:first-child{margin-top:0;}
+.eng-home-grid .eng-since{margin-top:22px;}
