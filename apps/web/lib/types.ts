@@ -320,3 +320,12 @@ export interface Variation {
 
 /** A drawing (`dataUrl`), or a typed name with the statement ticked (`typed`), never both. */
 export interface DraftSignature { name: string; dataUrl?: string; typed?: true }
+
+/** One of an engineer's own safety or tower inspections still in draft (Safety actions). */
+export interface InspectionDraft {
+  id: string;
+  projectId: string;
+  reportType: 'safety-inspection' | 'tower-inspection';
+  inspected?: string;
+  correction?: true;
+}

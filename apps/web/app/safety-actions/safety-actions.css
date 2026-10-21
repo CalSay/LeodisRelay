@@ -27,6 +27,20 @@
 .sa-towers li{overflow-wrap:anywhere;color:var(--text-2);}
 .sa-towers li b{color:var(--text);font-weight:600;}
 .sa-towers li.sa-due span{color:var(--caution);font-weight:500;}
+/* Starting the inspection that is due: big enough for a gloved thumb, gold only when it is due. */
+.sa-start{margin:10px 0 0;}
+.sa-start-buttons{display:flex;flex-wrap:wrap;gap:8px;}
+.sa-start-button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:0 18px;border:1px solid var(--line-2);border-radius:var(--r,8px);background:var(--panel-2);color:var(--text);font-size:14.5px;font-weight:500;text-decoration:none;}
+.sa-start-button.btn-primary{background:var(--brass);border-color:var(--brass);color:var(--brass-ink);font-weight:600;}
+.sa-tower-line{display:flex;align-items:center;justify-content:space-between;gap:6px 12px;flex-wrap:wrap;}
+.sa-tower-line p{margin:0;flex:1 1 220px;min-width:0;}
+.sa-tower-start{min-height:44px;min-width:96px;padding:0 16px;font-size:14px;}
+.sa-start-problem{flex-basis:100%;margin:6px 0 0;font-size:13px;color:var(--alert);}
+.sa-towers ul:has(.sa-tower-start){gap:10px;}
+.sa-never ul.sa-never-start{flex-direction:column;gap:10px;}
+.sa-never-start li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:6px 12px;}
+.sa-never-start .sa-start{margin:0;}
+@media (max-width:640px){.sa-start-button{flex:1 1 100%;}}
 .sa-tower{font-size:14px;font-weight:600;margin-bottom:2px !important;overflow-wrap:anywhere;}
 .sa-tower .lbl{margin-right:6px;}
 .sa-none{margin:10px 0 0;font-size:13.5px;color:var(--text-2);}

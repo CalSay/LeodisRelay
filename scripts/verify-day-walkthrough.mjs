@@ -3,7 +3,8 @@
 // notes for the next visit, does a weekly safety inspection (signed by typing)
 // and a tower inspection (each with one action), sends a site update with a
 // defect linked to an existing issue, a new defect and a progress card added
-// with no signal, then checks the home screen, My week and Safety actions, and
+// with no signal, then checks the home screen, My week and Safety actions (starting the
+// podium's inspection from there), and
 // the home screen with no signal. The office, on a phone and a desktop, reads
 // the overview, the Inbox and the report, the new issue, Safety actions, Before
 // handover and the snag list, logs a chase, downloads the issue register and
@@ -200,6 +201,27 @@ try {
   await page.goto(`${base}/safety-actions?project=${P}`);await page.locator('.sa-stats').waitFor();
   const saStats=await page.locator('.sa-stats').innerText();
   ok(/Open actions\s*2/i.test(saStats)&&/Towers due\s*1/i.test(saStats),`Safety actions: matches the home screen: ${JSON.stringify(saStats)}`);
+  // The podium is due: start its inspection from here, named as last time, and come back.
+  const podium=page.getByRole('button',{name:'Inspect Podium P1, plant room'});
+  ok(await podium.evaluate(b=>b.classList.contains('btn-primary')),'Safety actions: the podium due has a gold Inspect button');
+  ok(!(await page.getByRole('button',{name:'Inspect T3, east stair'}).evaluate(b=>b.classList.contains('btn-primary'))),'Safety actions: the tower inspected today has a plain one');
+  ok(await page.getByRole('button',{name:/^Do a safety inspection on 011LME /}).count()===1,'Safety actions: offers the weekly safety inspection');
+  await noSideways(page,'Safety actions with start buttons');
+  await shot(page,'engineer-safety-actions-light-390');
+  await podium.click();await page.waitForURL(/\/reports\/rep-/);await page.locator('.eng-checkrow').first().waitFor();
+  const podiumId=page.url().split('/reports/')[1].split(/[?#]/)[0];
+  ok(getRecord('reports',podiumId).reportType==='tower-inspection'&&getRecord('reports',podiumId).inspected==='Podium P1, plant room','Safety actions: Inspect starts a tower inspection naming the podium');
+  // The phone's own Back, then the editor's Back link: either way the page knows of the draft.
+  const carriesOn=async how=>{
+    await page.waitForURL(/\/safety-actions\?project=/);
+    const cont=page.getByRole('link',{name:/^Continue the tower inspection of Podium P1, plant room on /});await cont.waitFor();
+    ok(await cont.count()===1&&await page.getByRole('button',{name:/^Inspect /}).count()===0,`Safety actions: after ${how}, it carries on with the draft rather than starting another`);
+    return cont;
+  };
+  await page.goBack();
+  await (await carriesOn('the browser\'s Back')).click();await page.waitForURL(new RegExp(podiumId));
+  await page.getByRole('link',{name:/Back to Safety actions/}).first().click();
+  await carriesOn('Back to Safety actions');
   // 5. No signal in the riser: the home screen says it cannot check rather than showing nothing open.
   await page.goto(home);await row('Site issues').filter({hasText:/open/}).waitFor();await sleep(500);
   // Playwright's offline switch does not reach the service worker's own fetch, so the
@@ -251,6 +273,7 @@ try {
     // Safety actions, Before handover and the snag list agree.
     await p.goto(`${base}/safety-actions?project=${P}`);await p.locator('.sa-stats').waitFor();
     ok(/Open actions\s*2/i.test(await p.locator('.sa-stats').innerText()),`${label}: Safety actions, 2 open`);
+    ok(await p.locator('.sa-start, .sa-tower-start').count()===0,`${label}: Safety actions has no start buttons for the office`);
     await p.goto(`${base}/handover?project=${P}`);await p.getByText('Safety actions still open').waitFor();
     const handover=await p.locator('main').innerText();
     const tile=name=>Number(handover.match(new RegExp(`${name}\\s*(\\d+)`,'i'))?.[1]);
