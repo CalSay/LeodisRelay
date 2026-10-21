@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'deliveries-to-site', added: '2026-10-21', audience: 'all', title: 'Deliveries',
+    text: 'Record what arrives on site: the supplier, what came, the day, who took it in, where it was put and the delivery note number. Say whether it was all there and in good order; one that came short, damaged or wrong stays under "To sort" until someone on the project says how it was sorted, for example that the rest arrived. The office sees each project\'s deliveries still to sort in Needs attention, so the supplier can be chased while the delivery note is to hand. Your recent suppliers are one tap. RELAY sends nothing to the supplier or anyone else; the spreadsheet download has every delivery.',
+    link: { label: 'Open Deliveries', href: '/deliveries' } },
   { id: 'clearer-problems', added: '2026-10-21', audience: 'all', title: 'Clearer messages when something goes wrong',
     text: 'When something goes wrong, RELAY now says what happened, whether your work is safe and what to do, without codes. Signed out partway through a report: it says so, keeps your work on the phone, offers "Sign in again" in a new tab, and saves by itself once you are back. The server not answering or slow: your work stays on the phone and RELAY keeps trying. Photographs of the wrong type or over 20 MB are named and the others still added; a photograph the server will not take names its card. A box over 10,000 characters is pointed out on the card, and nothing is cut off. A spreadsheet or PDF that will not download says so beside the button, and a missing page or a broken one has a plain page with a way home. Work signed on the phone with no signal keeps its signature if the server is down when it goes up.' },
   { id: 'registers-one-set', added: '2026-10-21', audience: 'all', title: 'Spreadsheets that match',
@@ -172,6 +175,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Notes for the next visit', href: '/site-notes', audience: 'all', text: 'Word left on a project for whoever is on site next.' },
   { label: 'Toolbox talks', href: '/toolbox-talks', audience: 'all', text: 'Safety briefings given on a project and who attended, ready for an audit.' },
   { label: 'Permits to work', href: '/permits', audience: 'all', text: 'Hot works and isolation permits open on a project, until they are closed.' },
+  { label: 'Deliveries', href: '/deliveries', audience: 'all', text: 'Materials taken in on a project, and any short or damaged still to sort.' },
   { label: 'My week', href: '/my-week', audience: 'all', text: 'Your own week across every project.' },
   { label: 'Site coverage', href: '/coverage', audience: 'office', text: 'Which live projects have gone quiet.' },
   { label: 'Issues by company', href: '/companies', audience: 'office', text: 'Who to chase, for what, and what they promised last time.' },
