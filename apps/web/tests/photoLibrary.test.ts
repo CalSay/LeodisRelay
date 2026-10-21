@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Principal } from '@relay/platform';
-import { matchesPhoto, photoLibrary, type LibrarySources } from '../lib/photoLibrary';
+import { isPhotoDay, matchesPhoto, photoDays, photoLibrary, type LibrarySources } from '../lib/photoLibrary';
 import type { Issue, IssueEvent, Observation, Photo, Report, Variation } from '../lib/types';
 
 const engineer: Principal = { id:'entra:eng' as never, oid:'eng', name:'Sam Spark', email:'s@example.test', role:'Engineer', trade:'Electrical' };
@@ -99,4 +99,23 @@ test('through a chain of corrections a photograph links to the latest revision t
 test("evidence added to an issue does not borrow the issue's trade for the person who added it", () => {
   const lib = photoLibrary({ ...none, issues:[issue({ affectedTrade:'HVAC', events:[ev('verified', '2026-10-16T09:00:00Z', [photo('ok')])] })] }, engineer, 'p1');
   assert.equal(lib.photos[0]!.trade, undefined);
+});
+
+test('a day choice lists each day with photographs, newest first, keeping a chosen day with none', () => {
+  const lib = photoLibrary({ ...none, reports:[
+    report({ id:'mon', visitDate:'2026-10-12', observations:[card({ photos:[photo('a')] })] }),
+    report({ id:'tue', visitDate:'2026-10-13', reference:'011LME-SPR-002', observations:[card({ photos:[photo('b'), photo('c')] })] }),
+    report({ id:'thu', visitDate:'2026-10-15', reference:'011LME-SPR-003', observations:[card({ photos:[photo('d')] })] }),
+  ] }, engineer, 'p1');
+  assert.deepEqual(photoDays(lib.photos), [{ day:'2026-10-15', count:1 }, { day:'2026-10-13', count:2 }, { day:'2026-10-12', count:1 }]);
+  assert.deepEqual(photoDays(lib.photos, '2026-10-14').map(d => `${d.day}:${d.count}`), ['2026-10-15:1', '2026-10-14:0', '2026-10-13:2', '2026-10-12:1']);
+  assert.deepEqual(photoDays(lib.photos, '2026-10-13').length, 3);
+  assert.deepEqual(photoDays([]), []);
+});
+
+test('only a real calendar day is taken from the address', () => {
+  assert.equal(isPhotoDay('2026-10-13'), true);
+  assert.equal(isPhotoDay('2026-02-30'), false);
+  assert.equal(isPhotoDay('13/10/2026'), false);
+  assert.equal(isPhotoDay(''), false);
 });

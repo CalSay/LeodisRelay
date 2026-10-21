@@ -114,3 +114,24 @@ export function matchesPhoto(p: LibraryPhoto, words: string, group: PhotoGroup |
   const hay = [p.location, p.description, p.caption, p.label, p.by, p.trade ?? '', p.source.reference].join(' ').toLowerCase().replace(/\s+/g, ' ');
   return terms.every(t => hay.includes(t));
 }
+
+/** A day as the page's address carries it: a real calendar day, "2026-10-13". */
+export function isPhotoDay(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const d = new Date(`${value}T12:00:00Z`);
+  return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
+
+/**
+ * The days that have photographs, newest first, each with how many: the
+ * choices for "Show me Tuesday's photographs". `photos` arrive newest first,
+ * as photoLibrary() orders them; a chosen day with none (a filter that leaves
+ * nothing, or a link to a quiet day) is kept in its place with 0, so the
+ * choice still reads back what was asked for.
+ */
+export function photoDays(photos: LibraryPhoto[], chosen = ''): { day: string; count: number }[] {
+  const out: { day: string; count: number }[] = [];
+  for (const p of photos) { const last = out.at(-1); if (last?.day === p.day) last.count++; else out.push({ day: p.day, count: 1 }); }
+  if (chosen && !out.some(d => d.day === chosen)) { out.push({ day: chosen, count: 0 }); out.sort((a, b) => b.day.localeCompare(a.day)); }
+  return out;
+}

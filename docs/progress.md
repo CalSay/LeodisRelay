@@ -4,6 +4,43 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Photographs from one day
+
+- Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information
+  it needs. Walking the office's questions on a seeded busy project (overview,
+  project sheet, Before handover, Not seen yet all answer in a click or two),
+  "show me last Tuesday's photographs on Tetley Hall" was the slow one, and
+  #103 named it as its runner-up. Photographs paged 60 at a time from today
+  and the find box could not search by date. Not a `docs/tasks.json` task; no
+  status changed.
+- Changed: Photographs has a Day choice ("Every day", then each day with
+  photographs, newest first, with its count under the current find words and
+  filter). A chosen day shows only that day, with "Newer day", "Every day"
+  and "Older day" buttons (each naming the day it goes to). The day is in the
+  link (`day=YYYY-MM-DD`, ignored if not a real date), kept by Back from a
+  record, and cleared when the project changes. A day with nothing says so.
+  Day means the report's visit day, or the day evidence was added to an issue
+  or variation, as before. Nothing else on the page changed; styling stays in
+  `app/photos/photos.css`. Help "What's new": "Photographs from one day".
+- Measured (busy-projects seed, 420 days, 8,494 photographs on 011LME): last
+  week's Tuesday took 2 "Show more" presses and was 5,854px down at 1440px
+  (7,126px at 390px); three weeks back took 6 presses and 19,567px. Now one
+  choice, under 0.2 s, the day starting 519px down (773px at 390px). The Day
+  list has 403 entries; page load unchanged (no API change).
+- Checks: typecheck, `npm test` (146 + 480 after rebasing on #105, two new unit tests), build;
+  browser checks one at a time: verify-photo-library (51, 13 new for the day),
+  verify-help, verify-accessibility, verify-first-time-use,
+  verify-home-and-sheet, verify-navigation, verify-snag-list,
+  verify-office-progress (75), verify-september-office (43),
+  verify-role-access, verify-busy-projects (38 timings within budget).
+  A fresh-context review found three small points, all fixed: keep the day
+  across projects (now cleared), Help wording, step buttons' spoken names.
+  Screenshots: project files `ui-review/photos-by-day/` (the busy-project
+  shots have no image files, so tiles show empty frames).
+- Not verified: a real phone, the live server or tenant.
+- Next (proposal, not built): the Weekly summary's "N photographs" on each
+  visit could link to that day's photographs.
+
 ## 2026-10-21 — Sent with no signal, it goes by itself
 
 - Why: Cal (2026-10-21 07:02) wants RELAY easy for hands-on engineers and

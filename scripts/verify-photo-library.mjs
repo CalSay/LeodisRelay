@@ -1,6 +1,6 @@
 // Browser check for the photo library: one project's photographs from sent
 // reports and later issue evidence, opened from the engineer Reports view and
-// the office project, with the find box, the kind filter and the viewer.
+// the office project, with the find box, the kind filter, the Day choice and the viewer.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -18,6 +18,7 @@ process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media')
 const {putRecord,database}=require('../apps/web/.test-build/lib/storage.js');
 const {putMedia}=require('../apps/web/.test-build/lib/mediaStore.js');
 const {londonDay,shiftWeek}=require('../apps/web/.test-build/lib/weeklySummary.js');
+const {dayShort}=require('../apps/web/.test-build/lib/dates.js');
 const engineer={id:'entra:photo-engineer',oid:'photo-engineer',name:'Photo Engineer',email:'photo@example.test',role:'Engineer',trade:'Electrical'};
 const other={id:'entra:photo-other',oid:'photo-other',name:'Pat Pipe',email:'pat@example.test',role:'Engineer',trade:'P&H'};
 const manager={id:'entra:photo-manager',oid:'photo-manager',name:'Office Manager',email:'manager@example.test',role:'Manager'};
@@ -109,6 +110,37 @@ try {
     await page.getByRole('button',{name:'All',exact:true}).click();
     await page.waitForFunction(()=>document.querySelectorAll('.photos-tile').length===4);
 
+    // Day choice: each day with photographs and its count, one day at a time, kept in the address.
+    const day=page.getByRole('combobox',{name:/^Day/});
+    const options=await day.locator('option').evaluateAll(o=>o.map(x=>x.textContent));
+    check(JSON.stringify(options)===JSON.stringify(['Every day',`${dayShort(today,true)} · 3 photographs`,`${dayShort(earlier,true)} · 1 photograph`]),`day: every day, then each day newest first with its count: ${JSON.stringify(options)}`);
+    await day.selectOption(earlier);
+    await page.waitForFunction(()=>document.querySelectorAll('.photos-tile').length===1);
+    check((await tiles(page).first().innerText()).includes('Roof')&&new URL(page.url()).searchParams.get('day')===earlier,'day: an earlier day shows only its photograph, and the day is in the address');
+    check((await page.locator('.photos-count').innerText()).trim()===`1 of 4 photographs on ${dayShort(earlier,true)}`,'day: the count names the day');
+    const step=page.getByRole('navigation',{name:'Move by a day'});
+    check(await step.getByRole('button',{name:/Older day/}).isDisabled(),'day: no older day with photographs, so Older day is off');
+    check((await step.getByRole('button',{name:/Newer day/}).innerText()).includes(dayShort(today,true)),'day: Newer day names the day it goes to');
+    const sw=await page.evaluate(()=>document.documentElement.scrollWidth);
+    check(sw<=390,`day: no sideways scroll at 390px (${sw})`);
+    const small=await step.getByRole('button').evaluateAll(b=>b.map(x=>x.getBoundingClientRect().height).filter(h=>h<44));
+    check(!small.length,`day: the day buttons are at least 44px tall (${JSON.stringify(small)})`);
+    if(screenshot)await page.screenshot({path:join(screenshot,'photos-day-light-390.png'),fullPage:true});
+    await step.getByRole('button',{name:/Newer day/}).click();
+    await page.waitForFunction(()=>document.querySelectorAll('.photos-tile').length===3);
+    check(await day.inputValue()===today&&await step.getByRole('button',{name:/Newer day/}).isDisabled(),'day: Newer day steps to today, the newest');
+    await step.getByRole('button',{name:/Older day/}).click();
+    await page.waitForFunction(()=>document.querySelectorAll('.photos-tile').length===1);
+    check(await day.inputValue()===earlier,'day: Older day steps back');
+    await page.getByLabel('Find').fill('plant');
+    await page.getByText(`No photographs match on ${dayShort(earlier,true)}`).waitFor();
+    await page.getByRole('button',{name:'Clear the find box and filter'}).click();
+    await page.waitForFunction(()=>document.querySelectorAll('.photos-tile').length===1);
+    check(await day.inputValue()===earlier,'day: no match on the day says so, and clearing the words keeps the day');
+    await step.getByRole('button',{name:'Every day'}).click();
+    await page.waitForFunction(()=>document.querySelectorAll('.photos-tile').length===4);
+    check(!new URL(page.url()).searchParams.has('day')&&!(await step.count()),'day: Every day brings all four back and leaves the address');
+
     // Viewer: large copy, details, stepping, and the record it came from.
     await page.getByRole('button',{name:/Open photograph: Defect, Plant room/}).click();
     const viewer=page.locator('dialog.photos-viewer[open]');await viewer.waitFor();
@@ -156,9 +188,31 @@ try {
     check(!(await page.locator('dialog.photos-viewer[open]').count()),'office: Close shuts the viewer');
     await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/office/);
     check(true,'office: back returns to the office');
+    // A link to a day opens on it, and Back from a record keeps it.
+    await page.goto(`${base}/photos?project=proj-011lme&day=${earlier}`);
+    await page.waitForFunction(()=>document.querySelectorAll('.photos-tile').length===1);
+    check(await page.getByRole('combobox',{name:/^Day/}).inputValue()===earlier,'office: a link with a day opens on that day');
+    if(screenshot)await page.screenshot({path:join(screenshot,'photos-day-dark-1440.png'),fullPage:true});
+    await tiles(page).first().click();
+    await page.locator('dialog.photos-viewer[open]').getByRole('link',{name:`Open report ${older.reference}`}).click();await page.waitForURL(`**/reports/${older.id}**`);
+    await page.getByRole('link',{name:/^← Back to /}).first().click();await page.waitForURL(/\/photos\?/);
+    await page.waitForFunction(()=>document.querySelectorAll('.photos-tile').length===1);
+    check(new URL(page.url()).searchParams.get('day')===earlier,'office: Back from the report returns to the same day');
+    await page.getByRole('combobox',{name:/^Project/}).selectOption('proj-014lme');
+    await page.waitForFunction(()=>new URL(location.href).searchParams.get('project')==='proj-014lme');
+    check(await page.getByRole('combobox',{name:/^Day/}).inputValue()===''&&!new URL(page.url()).searchParams.has('day'),'office: choosing another project goes back to every day');
+    // A quiet day says so; a day that is not a date is ignored.
+    const quiet=shiftWeek(earlier,-1);
+    await page.goto(`${base}/photos?project=proj-011lme&day=${quiet}`);
+    await page.getByText(`No photographs were sent on ${dayShort(quiet,true)}`).waitFor();
+    check((await page.getByRole('combobox',{name:/^Day/}).locator('option:checked').textContent())===`${dayShort(quiet,true)} · 0 photographs`,'office: a day with no photographs says so and stays chosen');
+    await page.goto(`${base}/photos?project=proj-011lme&day=2026-02-30`);
+    await page.waitForFunction(()=>document.querySelectorAll('.photos-tile').length===4);
+    check(await page.getByRole('combobox',{name:/^Day/}).inputValue()==='','office: a day that is not a date opens every day');
     // A project with no photographs says so.
     await page.goto(`${base}/photos?project=proj-009lcp`);await page.getByText('No photographs yet').waitFor();
     check(true,'office: an empty project says so');
+    check(JSON.stringify(await page.getByRole('combobox',{name:/^Day/}).locator('option').evaluateAll(o=>o.map(x=>x.textContent)))==='["Every day"]','office: an empty project offers only Every day');
     const res=await page.request.get(`${base}/api/photos?projectId=no-such-project`);
     check(res.status()===404,`unknown project: refused (${res.status()})`);
     assert.deepEqual(errors,[],'office: page errors');
@@ -174,7 +228,7 @@ try {
     assert.deepEqual(errors,[],'empty: page errors');
     await context.close();
   }
-  console.log(`Photo library check passed (${checks} checks): engineer and office routes, drafts and other projects left out, find, filter, viewer, light and dark.`);
+  console.log(`Photo library check passed (${checks} checks): engineer and office routes, drafts and other projects left out, find, filter, day, viewer, light and dark.`);
 } finally {
   await browser?.close();server.kill();if(server.exitCode===null)await once(server,'exit');database().close();rmSync(root,{recursive:true,force:true});
 }
