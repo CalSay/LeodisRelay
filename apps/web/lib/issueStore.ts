@@ -11,6 +11,7 @@ import type { Principal } from '@relay/platform';
 import { canAccessProject } from './auth/access';
 import { queryIssues, type IssuePage, type IssueQuery } from './issueQuery';
 import { raisesIssue, reportTypeOf } from './reportTypes';
+import { SEND_BACK_REASON } from './checkFix';
 
 /**
  * Issue records for the prototype.
@@ -392,6 +393,11 @@ function applyIssueCommand(issueId: string, command: IssueCommand, context: Issu
       // A closure the office is not satisfied with goes back to in progress:
       // the work has an owner and a history, so "open" would be a lie. Only a
       // verified closure reopens fully.
+      // Sending a fix back needs a reason: the engineer has to know what is left
+      // (walk of 21 Oct 2026). An older app may still send none; it gets the same words as the dialog.
+      if (issue.work === "awaiting_verification" && !command.note.trim()) {
+        return { ok: false, status: 422, reason: SEND_BACK_REASON };
+      }
       const moved = transition(
         toContract(issue),
         { axis: "work", to: issue.work === "awaiting_verification" ? "in_progress" : "open", actor: (command.actorId ?? command.actor) as never },

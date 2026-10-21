@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'check-fixes', added: '2026-10-21', audience: 'office', title: 'Check fixes one after another',
+    text: 'In the office, Verify and "Not finished" on a fix waiting to be checked now show the photo of the defect beside the photo sent with the fix, with the engineer\'s note, who put it forward and when, and the target date. Tap a photo to open it full size. After you verify it or send it back, the next fix on the same list opens by itself ("4 of 25"): from the overview, the Issues register in its current order and filters, or "Verify the oldest", oldest first. Skip moves on without changing anything, and Stop or Esc closes it. Sending a fix back now needs a reason, so the engineer always sees why it came back. Checked in a desktop browser, light and dark, and a phone-sized window.',
+    link: { label: 'Open the fixes to check', href: '/office#/issues/show/verify' } },
   { id: 'monthly-summary', added: '2026-10-21', audience: 'all', title: 'A month on one page',
     text: 'The Weekly summary now has a Month choice: one calendar month of one project, for the monthly progress meeting. It gives the month\'s figures (days on site, site reports, issues raised and closed, variations raised and instructed) with a row for each week, cut to the days in the month, so they add up. "Where work moved on" lists each place once with the newest progress written about it. "Behind or stuck" lists issues past their target and places with access problems on more than one day. "Still open, with whom" gives each company\'s open and past-target issues at the end of the month, and "A few photographs" shows the newest progress photograph from up to eight places. Tap a figure to see the records it counts. It prints like the weekly one. Health and safety records are not on it. Checked in a desktop browser, light and dark, and a phone-sized window.',
     link: { label: 'Open the Weekly summary', href: '/weekly-summary?period=month' } },
@@ -470,7 +473,8 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     ] },
     { id: 'verify', heading: 'Closing an issue', ordered: false, steps: [
       'Whoever does the work puts it forward as fixed. The issue then reads "Fixed, to check" on every page.',
-      'Someone else checks it and verifies it, which closes it, or reopens it with a reason. RELAY does not let the person who put it forward verify their own work.',
+      'Someone else checks it and verifies it, which closes it, or sends it back as not finished with a reason the engineer will see. RELAY does not let the person who put it forward verify their own work.',
+      'Verify shows the photo of the defect beside the photo sent with the fix. When you have decided, the next fix on the same list opens, so you can work through them in one go. Skip leaves one as it is.',
     ] },
     { id: 'review', heading: 'Review', ordered: false, steps: [
       'Review is off unless a project is set up to need it. When it is on, reports wait under "To review" until someone approves them or sends them back with a reason.',

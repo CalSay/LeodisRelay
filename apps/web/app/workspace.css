@@ -250,6 +250,20 @@ body:has(.ws){overflow:hidden auto}
 .ws .dlg-head .x{margin-left:auto;background:none;border:0;color:var(--text-3);font-size:18px;line-height:1;padding:0 4px}
 .ws .dlg-body{padding:var(--s4) var(--s5);display:flex;flex-direction:column;gap:var(--s4)}
 .ws .dlg-foot{padding:var(--s3) var(--s5);border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:var(--s2);background:var(--panel-2)}
+.ws .cf-dialog{width:min(920px,94vw)}
+.ws .cf-what{display:flex;flex-direction:column;gap:4px}
+.ws .cf-what p{margin:0}
+.ws .cf-note{font-size:13.5px}
+.ws .cf-pair{display:grid;grid-template-columns:1fr 1fr;gap:var(--s4)}
+.ws .cf-side{border:1px solid var(--line-2);padding:var(--s3);min-width:0}
+.ws .cf-side h3{margin:0 0 var(--s2);font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2)}
+.ws .cf-shots{display:grid;grid-template-columns:1fr;gap:var(--s2)}
+.ws .cf-shots:has(> :nth-child(2)){grid-template-columns:1fr 1fr}
+.ws .cf-shots a,.ws .cf-shots figure{display:block;margin:0;color:inherit;text-decoration:none;min-width:0}
+.ws .cf-shots img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;border:1px solid var(--line)}
+.ws .cf-cap{display:block;font-size:11px;color:var(--text-3);margin-top:3px}
+.ws .cf-none{margin:0;padding:var(--s5) var(--s3);text-align:center;color:var(--text-2);font-size:13px;background:var(--panel-2);border:1px dashed var(--line-2)}
+.ws .cf-foot .spacer{flex:1}
 .ws .f{display:flex;flex-direction:column;gap:4px;margin:0}
 .ws .f label{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--text-3);margin:0;font-weight:500}
 .ws .f input,.ws .f select,.ws .f textarea{padding:8px 10px;background:var(--sunken);width:100%;min-height:0;font-size:13px}
@@ -316,6 +330,8 @@ body:has(.ws){overflow:hidden auto}
   .ws .sec-h a{display:inline-flex;align-items:center;min-height:44px}
   .ws .filters input,.ws .filters select,.ws .pagehead select,.ws .pagehead input{min-height:44px}
   .ws .ws-dialog{width:100vw;max-width:100vw;max-height:100dvh;margin:auto 0 0}
+  .ws .cf-pair{grid-template-columns:1fr}
+  .ws .cf-foot{flex-wrap:wrap}
   .ws .f-row{grid-template-columns:1fr}
   .ws .cm-toasts{left:12px;right:12px;bottom:84px}
   .ws .photos{grid-template-columns:1fr 1fr}

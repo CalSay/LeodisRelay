@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 
 /**
  * Helpers shared by the two office workspaces (Compliance and Developments).
@@ -48,10 +48,10 @@ export function Toasts() {
 }
 
 /* --------------------------------------------------------------- modals */
-export function Modal({ className, onClose, children }: { className: string; onClose: () => void; children: ReactNode }) {
+export function Modal({ className, onClose, onCancel, children }: { className: string; onClose: () => void; onCancel?: (e: SyntheticEvent<HTMLDialogElement>) => void; children: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => { const d = ref.current; if (d && !d.open) d.showModal(); }, []);
-  return <dialog ref={ref} className={className} onClose={onClose} onClick={e => { if (e.target === ref.current) onClose(); }}>{children}</dialog>;
+  return <dialog ref={ref} className={className} onClose={onClose} onCancel={onCancel} onClick={e => { if (e.target === ref.current) onClose(); }}>{children}</dialog>;
 }
 
 /** Read a standard <form> into a plain record. */

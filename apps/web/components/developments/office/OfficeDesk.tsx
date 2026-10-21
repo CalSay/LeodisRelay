@@ -124,11 +124,14 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   ];
   const results = q.trim().length >= 2 ? search(q, ctx) : [];
 
+  const attnFixes = attn.flatMap(x => x.action?.kind === 'verify' && x.action.issue ? [x.action.issue] : []);
   const actionFor = (i: typeof attn[number]) => {
     const a = i.action; if (!a) return null;
     const B = a.primary ? Btn : BtnQ;
     if (a.kind === 'review' && a.report) return <BtnQ className="btn-sm" onClick={() => setDialog({ kind: 'review', report: a.report! })}>Review</BtnQ>;
     if (a.variation) return <B className="btn-sm" onClick={() => setDialog({ kind: a.kind === 'instruct' ? 'variation-instruct' : 'variation-price', variation: a.variation! })}>{a.label}</B>;
+    // Verify goes on through every fix on this list, in its order.
+    if (a.issue && a.kind === 'verify') return <B className="btn-sm" onClick={() => setDialog({ kind: 'verify', issue: a.issue!, list: () => Promise.resolve(attnFixes) })}>{a.label}</B>;
     if (a.issue) return <B className="btn-sm" onClick={() => setDialog(dialogFor(a.kind, a.issue!, ctx))}>{a.label}</B>;
     return null;
   };
@@ -172,7 +175,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
     {error && <div className="note bad" style={{ margin: '12px 24px 0' }} role="alert"><span>{error} {snap ? 'Showing previously loaded records.' : ''}</span><BtnQ className="btn-sm" onClick={() => void refresh()}>Retry</BtnQ></div>}
     {route.tab === 'inbox' ? <InboxView ctx={ctx} /> : route.tab === 'issues' ? <IssuesView ctx={ctx} /> : route.tab === 'variations' ? <VariationsView ctx={ctx} /> : route.tab === 'team' ? <TeamView ctx={ctx} /> : route.tab === 'admin' ? <AdminView ctx={ctx} /> : <ProjectsView ctx={ctx} />}
     </main>
-    {dialog && <Dialogs d={dialog} close={() => setDialog(null)} done={() => { void refresh(); if (route.tab === 'team' || route.tab === 'admin') loadTeam(); }} />}
+    {dialog && <Dialogs d={dialog} me={me} close={() => setDialog(null)} done={() => { void refresh(); if (route.tab === 'team' || route.tab === 'admin') loadTeam(); }} />}
     <Toasts />
   </div>;
 }
