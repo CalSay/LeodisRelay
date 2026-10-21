@@ -10,6 +10,7 @@ import { raiseVariationsFromReport } from './variationStore';
 import { raisesIssue, reportTypeOf, startingCards, type ReportTypeId } from './reportTypes';
 import { signs, TYPED_STATEMENT, type SignatureInput } from './signature';
 import { atomic, getRecord, putRecord, records, pageRecords, enqueue, database } from './storage';
+import { londonDay } from './weeklySummary';
 
 /** `current`: on a draft save that lost a race, the draft as the server now holds it, so the author can compare. */
 export type StoreOutcome<T> = { ok: true; value: T } | { ok: false; status: number; reason: string; current?: Report };
@@ -83,7 +84,7 @@ export function createReport(projectId: string, author: string, principal?: Prin
       ...(type.inspects && inspected ? { inspected } : {}),
       ...(principal ? { authorId:principal.id, ...(principal.trade ? {authorTrade:principal.trade}: {}) } : {}),
       reference: `${project.source ? 'DEMO-' : ''}${project.projectNumber}-${type.code}-${String(Number(count.n) + 1).padStart(3,'0')}`,
-      visitDate: started?.visitDate ?? new Date().toISOString().slice(0,10), state: 'draft', version: 1,
+      visitDate: started?.visitDate ?? londonDay(new Date()), state: 'draft', version: 1,
       revision: 1, review: 'not_required', observations: startingCards(type), lastSavedAt: new Date().toISOString(),
     };
     putRecord('reports',report);
