@@ -108,7 +108,7 @@ try {
     await page.goto(`${base}/office`);await page.locator('.sheet-title').first().waitFor();
     await title(page,'Projects · Office · RELAY',`${at} desk`);
     const actions=await page.locator('.sheet-title .actions').first().locator('a').allInnerTexts();
-    check(actions.join('|')==='Site coverage|Issues by company|Safety actions',`${at}: the overview offers pages the tabs do not (${actions.join('|')})`);
+    check(/^Site coverage\|Issues by company\|Safety actions( · \d+ open)?$/.test(actions.join('|')),`${at}: the overview offers pages the tabs do not (${actions.join('|')})`);
     await shot(page,`nav-office-desk-${scheme}-${width}`);
     await page.goto(`${base}/office#/issues`);await page.getByRole('heading',{name:'Issues'}).waitFor();
     await title(page,'Issues · Office · RELAY',`${at} issues tab`);

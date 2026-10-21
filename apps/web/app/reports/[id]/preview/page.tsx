@@ -8,6 +8,7 @@ import { OBSERVATION_TYPES } from "@/lib/fixtures";
 import { answerLabel, reportTypeOf } from "@/lib/reportTypes";
 import type { Report } from "@/lib/types";
 import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { PageTitle } from '@/components/PageTitle';
 
 /**
  * What the issued document would say.
@@ -41,14 +42,14 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
 
   if (missing) {
     return (
-      <main className="wrap">
+      <main className="wrap eng-page">
         <div className="empty">That report could not be found.</div>
       </main>
     );
   }
   if (!report) {
     return (
-      <main className="wrap">
+      <main className="wrap eng-page">
         <div className="empty">Loading...</div>
       </main>
     );
@@ -66,10 +67,11 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
   let photoNumber = 0;
 
   return (
-    <main className="wrap">
+    <main className="wrap eng-page">
+      <PageTitle title={`Report summary · ${report.reference}`} />
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
         <Link href={withViewReturn(`/reports/${id}`, returnTo)} className="back">
-          &larr; Report
+          &larr; Back to report
         </Link>
         <Link href={withViewReturn(`/reports/${id}/pdf`, returnTo)} className="back" style={{ color: "var(--brass)" }}>
           Open the PDF &rarr;

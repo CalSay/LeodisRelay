@@ -4,6 +4,54 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — A day on site, end to end
+
+- Why: every feature was tested on its own; nobody had walked a whole day
+  across them. Asked for by the coordinator under Cal's standing ask for a
+  clear, inviting UI; the fixes are Claude's decisions. Not a
+  `docs/tasks.json` task, so no status changed there.
+- Walked (local data, 71 pages read as text and screenshots): an engineer on a
+  390px phone reads the home screen and notes, does a weekly safety inspection
+  (typed signature) and a tower inspection, sends a site update with a defect
+  linked to an existing issue, a new defect and a card added with no signal,
+  then My week, Safety actions, the diary, Before handover and the home screen
+  with no signal; the office on a 390px phone and at 1440px reads the overview,
+  Inbox and reader, review queue, issues, the new issue, Safety actions, Before
+  handover, snag list, companies, coverage, search, notes, the PDF and summary.
+- Fixed:
+  - With no signal the site home said "0 open issues", "0 open · every trade"
+    and "0 on file", and "Came back from the office" said "Nothing on this
+    project yet". It now says RELAY cannot check with the office (with Try
+    again) and shows no counts; the notes row shows the copy kept on the phone
+    (PR #63), marked "copy on this phone".
+  - Safety actions had no count anywhere, so two open actions and a tower due
+    were invisible from the home screen and the office overview. The home row
+    now reads "2 open · 1 tower due" (and "safety inspection due" when a week
+    has passed); the office overview button "Safety actions · 2 open".
+    `/api/safety-actions?project=` narrows the work to one project for the home.
+  - The report PDF viewer and report summary still had the old Home /
+    Companies / Projects bar and no tab name; they now use the shared header
+    (`eng-page`), are named "Report PDF" and "Report summary · <ref>", and the
+    summary's "← Report" reads "← Back to report".
+  - The office overview's "Received this week 6 · 7 PM notifications pending"
+    counted every report ever waiting; it now counts this week's only.
+  - Engineer Issues had a disabled "Assigned to me · Coming soon" button and a
+    developer note under it; removed (owners are companies, not accounts).
+- Check: `scripts/verify-day-walkthrough.mjs` (59 checks) runs the whole day
+  and compares counts between pages (home, Issues, register download, snag
+  list, Before handover, Safety actions, My week). Updated
+  `verify-engineer-layout` (no Assigned to me), `verify-navigation` (count on
+  the overview button) and `verify-pdf-navigation` (Next's route announcer now
+  reads the tab title; the check passes in this container's Chromium 141).
+- Not fixed, written up in the PR as proposals or for the report editor thread:
+  inspections' browser tab says "Site update"; the check step says "2 issues
+  raised" when one defect is linked; a linked defect's trade defaults to the
+  engineer's, not the issue's; the sent screen's date "Wed, 21 Oct" has a
+  comma; the inspection PDF's action list leaves out what was wrong; Safety
+  actions offers no way to start the inspection that is due.
+- Not verified: a physical phone or real loss of signal (Playwright's offline
+  switch stands in), a live tenant, screen readers.
+
 ## 2026-10-21 — Speed on busy projects
 
 - Why: the pages added on 2026-10-20 add things up across every report, issue

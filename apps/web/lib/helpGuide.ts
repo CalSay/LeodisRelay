@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'day-walkthrough', added: '2026-10-21', audience: 'all', title: 'Smoother from one page to the next',
+    text: 'The site home and the office overview now say how many safety actions are open, and on site whether a tower or the weekly safety inspection is due. With no signal the site home no longer shows "0 open issues": it says it cannot check with the office, and Notes for the next visit shows the copy kept on your phone. The report PDF and summary pages have the same header and Back link as the rest of RELAY. The office\'s "Received this week" counts only this week\'s notifications still to go, and the unfinished "Assigned to me" button has gone from Issues.',
+    link: { label: 'Open Safety actions', href: '/safety-actions' } },
   { id: 'busy-projects-faster', added: '2026-10-21', audience: 'all', title: 'Quicker on busy projects',
     text: 'On a project with a year or more of reports, the site home, Issues, the snag list and Photographs opened about twice as fast in tests on a slowed-down browser set up like a phone on 4G, and the site home now downloads a few kilobytes instead of every issue on the project. In the office the desk refreshes with a tenth of the data, and downloading the issue register as a spreadsheet takes a moment rather than half a minute. Nothing on the pages has changed.' },
   { id: 'site-notes-offline', added: '2026-10-21', audience: 'site', title: 'Read notes for the next visit with no signal',

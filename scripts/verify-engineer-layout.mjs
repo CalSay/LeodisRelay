@@ -77,7 +77,8 @@ try {
   await page.getByRole('navigation',{name:'Site companion navigation'}).getByRole('button',{name:'Issues',exact:true}).click();
   await page.getByRole('link').filter({hasText:'Layout scope evidence'}).first().waitFor();
   assert.equal(await page.locator('a[href^="/issues/layout-issue-1"]').count(),0);
-  assert.ok(await page.getByRole('button',{name:/Assigned to me/}).isDisabled());
+  // No dead "Assigned to me · Coming soon" button: owners are companies, not accounts.
+  assert.equal(await page.getByRole('button',{name:/Assigned to me/}).count(),0);
   await page.getByLabel('Project scope').selectOption('all');
   await page.locator('a[href^="/issues/layout-issue-1"]').waitFor();
   await page.goto(base+`/reports/${own.id}`);

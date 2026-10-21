@@ -43,8 +43,9 @@ try {
   await page.waitForFunction(()=>document.querySelector('canvas')?.width>0 && !document.body.innerText.includes('Loading PDF'));
   assert.equal(context.pages().length,1,'No separate PDF window');
   const painted=await page.locator('canvas').evaluate(c=>{const b=c.getContext('2d').getImageData(0,0,c.width,c.height).data;for(let i=0;i<b.length;i+=4)if(b[i]<100&&b[i+1]<100&&b[i+2]<100&&b[i+3]>0)return true;return false;});
-  // Next.js adds an empty route announcer with the alert role; skip it.
-  const alert=(await page.getByRole('alert').allInnerTexts()).filter(t=>t.trim());
+  // Next.js adds a route announcer with the alert role, which reads out the tab's title; skip it.
+  const tab=await page.title();
+  const alert=(await page.getByRole('alert').allInnerTexts()).filter(t=>t.trim()&&t.trim()!==tab);
   assert.deepEqual(alert,[],'The viewer must not show an error');
   assert.ok(painted,'PDF must render visible ink');
   await page.getByRole('button',{name:'Next page'}).click();

@@ -13,6 +13,7 @@ import { confirmationNote } from '@/lib/issueConfirmation';
 import type { Issue, Report, ReportSummary, Variation } from '@/lib/types';
 import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
+import type { SafetyActions } from '@/lib/safetyActions';
 import { dialogFor } from './OfficeDesk';
 import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, Found, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
 import { WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, shortRef, toneTag, type ProjectStats } from './model';
@@ -140,6 +141,20 @@ function foundWords(r: ReportSummary): string {
   return parts.join(', ');
 }
 
+/** Open safety actions across the office's projects, for the Safety actions button; null until known. */
+function useSafetyTotals(): SafetyActions['totals'] | null {
+  const [totals, setTotals] = useState<SafetyActions['totals'] | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/safety-actions', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() as Promise<SafetyActions> : null)
+      .then(body => { if (!cancelled && body?.totals) setTotals(body.totals); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+  return totals;
+}
+
 /* ---------------------------------------------------------------- sheets */
 function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const snap = ctx.snap!;
@@ -149,11 +164,14 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const pendingVariations = ctx.stats.flatMap(s => s.pendingVariations), exposed = ctx.stats.flatMap(s => s.exposedVariations);
   const latest = snap.reports.slice(0, 6);
   const openIssues = snap.issues.filter(isActive).length;
+  // Only this week's: the tile counts this week's reports, and "7 pending" under "6 received" read as nonsense.
+  const thisWeekIds = new Set(thisWeek.map(r => r.id)), pendingThisWeek = notNotified.filter(r => thisWeekIds.has(r.id));
+  const safety = useSafetyTotals();
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h3>Office position</h3><div className="rowsub">{ctx.projects.length} reportable project{ctx.projects.length === 1 ? '' : 's'} · {snap.reports.length} report{snap.reports.length === 1 ? '' : 's'} received · {openIssues} open issue{openIssues === 1 ? '' : 's'} · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
-      <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link><Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions</Link></div></div>
+      <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link><Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions{safety ? ` · ${safety.open} open` : ''}</Link></div></div>
     <OfficeActionGroups ctx={ctx} />
-    <dl className="tb three"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{notNotified.length ? `${notNotified.length} PM notification${notNotified.length === 1 ? '' : 's'} pending` : 'project managers notified'}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Variations pending</dt><dd className={`big ${exposed.length ? 'late' : pendingVariations.length ? 'soon' : ''}`}>{pendingVariations.length}<small>{exposed.length ? `${exposed.length} done without an instruction` : pendingVariations.some(v => v.quotedValue === undefined) ? `${pendingVariations.filter(v => v.quotedValue === undefined).length} still to price` : 'all priced, awaiting the client'}</small></dd></div></dl>
+    <dl className="tb three"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{pendingThisWeek.length ? `${pendingThisWeek.length} PM notification${pendingThisWeek.length === 1 ? '' : 's'} pending` : thisWeek.length ? 'project managers notified' : 'none this week'}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${overdue.length ? 'late' : ''}`}>{overdue.length}<small>{overdue.length ? `oldest ${Math.max(...overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Variations pending</dt><dd className={`big ${exposed.length ? 'late' : pendingVariations.length ? 'soon' : ''}`}>{pendingVariations.length}<small>{exposed.length ? `${exposed.length} done without an instruction` : pendingVariations.some(v => v.quotedValue === undefined) ? `${pendingVariations.filter(v => v.quotedValue === undefined).length} still to price` : 'all priced, awaiting the client'}</small></dd></div></dl>
     <SecH right={<a href="#/issues">All →</a>}>Also needs attention</SecH>
     <AttentionList ctx={ctx} limit={6} skipActions />
     {/* A phone leaves the wide table to the Inbox; New reports above already lists the latest. */}
