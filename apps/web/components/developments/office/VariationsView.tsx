@@ -11,6 +11,8 @@ type Filter = 'pending' | 'unpriced' | 'exposed' | 'instructed' | 'declined' | '
 const FILTERS: [Filter, string, boolean][] = [['pending', 'Awaiting instruction', false], ['unpriced', 'Needs a quote', false], ['exposed', 'Done, not instructed', true], ['instructed', 'Instructed', false], ['declined', 'Declined', false], ['all', 'All', false]];
 
 // What an empty list means, in words, for each filter.
+/** Before anything has been raised: where variations come from. */
+const FIRST = 'No variations have been raised yet. Variation cards in site updates arrive here for you to price and put to the client.';
 const EMPTY: Record<Filter, string> = { pending: 'Nothing is awaiting instruction', unpriced: 'Every variation awaiting instruction has a quote', exposed: 'No work has been done without an instruction', instructed: 'No variations have been instructed', declined: 'No variations have been declined', all: 'No variations have been raised' };
 
 /**
@@ -55,7 +57,7 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
   };
   const d = (kind: 'variation-price' | 'variation-instruct' | 'variation-decline' | 'variation-reopen' | 'variation-details', variation: Variation) => ctx.setDialog({ kind, variation });
   return <div className="view">
-    <div className="pagehead"><div><h2>Variations</h2><p>{counts.pending} awaiting instruction across {ctx.projects.length} projects · {counts.unpriced ? `${counts.unpriced} without a quote` : 'all priced'} · {counts.exposed ? <span className="late">{counts.exposed} done without an instruction</span> : 'nothing done uninstructed'} · {counts.instructed} instructed worth {fmtMoney(instructedTotal)} · {counts.declined} declined</p></div>
+    <div className="pagehead"><div><h2>Variations</h2><p>{counts.pending} awaiting instruction across {ctx.projects.length} projects · {counts.unpriced ? `${counts.unpriced} without a quote` : 'all priced'} · {counts.exposed ? <span className="late">{counts.exposed} done without an instruction</span> : 'nothing done uninstructed'} · {counts.instructed ? `${counts.instructed} instructed worth ${fmtMoney(instructedTotal)}` : '0 instructed'} · {counts.declined} declined</p></div>
       <div className="actions">{shown.length > 0 && <BtnQ onClick={download} aria-label={`Download ${shown.length} ${shown.length === 1 ? 'variation' : 'variations'} as a spreadsheet (CSV)`}>Download spreadsheet</BtnQ>}{counts.unpriced > 0 && <Btn onClick={() => { const v = shown.find(isUnpriced) ?? scoped.find(isUnpriced); if (v) d('variation-price', v); }}>Price the oldest</Btn>}</div></div>
     <div className="filters">
       {FILTERS.map(([k, l, warn]) => <button type="button" key={k} className={`chip ${warn && counts[k] ? 'warn' : ''} ${filter === k ? 'on' : ''}`} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l} · {counts[k]}</button>)}
@@ -80,7 +82,7 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
           {v.instruction === 'pending' && (v.quotedValue === undefined ? <BtnQ className="btn-sm" onClick={() => d('variation-instruct', v)}>Instruct</BtnQ> : <Btn className="btn-sm" onClick={() => d('variation-instruct', v)}>Instruct</Btn>)}
           {v.instruction === 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-decline', v)}>Decline</BtnQ>}
           {v.instruction !== 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-reopen', v)}>Reopen</BtnQ>}
-        </div></td></tr>; }) : <tr><td colSpan={9} className="empty">{EMPTY[filter]}{narrowed ? ' for these filters' : ''}.{narrowed && <> <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button></>}</td></tr>}
+        </div></td></tr>; }) : <tr><td colSpan={9} className="empty">{snap.variations.length === 0 && !narrowed ? FIRST : <>{EMPTY[filter]}{narrowed ? ' for these filters' : ''}.</>}{narrowed && <> <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button></>}</td></tr>}
     </tbody>{shown.length > 1 && <tfoot><tr><td colSpan={5} className="c-title">{shown.length} shown</td><td className="money" data-label="Quoted"><Money n={sum(v => v.quotedValue)} /></td><td className="money" data-label="Instructed"><Money n={sum(v => v.instruction === 'instructed' ? variationValue(v) : undefined)} /></td><td className="money" data-label="Margin"><Money n={sum(v => v.instruction === 'declined' ? undefined : estimatedMargin(v))} /></td><td /></tr></tfoot>}</table>
       <div className="panel-foot">Quoted is what was put to the client; instructed is what they agreed, and it fixes the value from then on. Margin is the value less expected cost (labour × rate, parts, plant and subcontract), so it is an estimate until the job is costed. “Done, not instructed” is work carried out on a say-so with nothing in writing; get the client’s sign-off recorded before it is invoiced. Download spreadsheet saves the variations shown here, with their figures, as a CSV file that opens in Excel.</div></div>
   </div>;

@@ -4,6 +4,59 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — First-time use and empty pages
+
+- Why: a cross-app quality pass (coordinator, under Cal's ask for a clear,
+  inviting UI). About 70 features were each built and checked with sample
+  data; nobody had looked at RELAY with nothing in it, which is what a new
+  engineer or office user sees on day one. Not a `docs/tasks.json` task, so
+  no status changed there. Not FE-2, EXP-2 or EXP-4: wording and empty
+  states only, nothing new is stored or sent.
+- Walked with an empty data store (only the fixture projects) as an engineer
+  at 390px light and an office manager at 1440px dark, 40-odd pages. Most
+  pages already said what goes there. Fixed:
+  - Help: someone who has never opened it saw "40 new to you" on the home
+    screen and 31 on the office's Help button, and every entry marked New.
+    Now the home row says "Start here", the office button shows no number,
+    and a first visit opens with How it works (What's new after it, nothing
+    marked New). From the second visit it works as before. Decision
+    (Claude's): reverses #45's "everything is new on a first visit", because
+    to a new person every entry is new and 40 marks say nothing.
+  - Site coverage: before any site had sent a report, every active site was
+    "Gone quiet" (amber count, list and tags). Now it says no site has sent a
+    report through RELAY yet; gone quiet starts once any site has.
+  - Issues over time: with nothing in 12 weeks it drew an empty chart, a "1"
+    axis and twelve rows of noughts. Now it says so and where issues come
+    from; the chart and table come back once anything is raised.
+  - Office overview: "Every report has been read" and "Every open issue has
+    an owner" with none at all; "all priced, awaiting the client" with no
+    variations. Now "No reports received yet", "No open issues", "none
+    awaiting instruction", and a short note that nothing has come in yet
+    and where it will arrive. Inbox, Issues and Variations say where their
+    records come from while the register is empty; Variations no longer says
+    "0 instructed worth £0.00".
+  - My week: a week with nothing says so once at the top (copy for a
+    timesheet is off until there is something to copy). Weekly summary:
+    "no reports" and "no changes", not "0 reports" and "0 changes".
+  - A draft with no cards: its preview and PDF said "No actions or decisions
+    arise from this visit" and the PDF had an empty Updates heading. Now
+    "Nothing recorded yet. Cards added to the report show here." Only drafts
+    can be empty (a site update needs a card to send). Unit test added.
+  - Report preview (screen only): four greys and the gold label were under
+    4.5:1 on its paper background; darkened (found by the new check's axe
+    scan; the preview is not in verify-accessibility's list).
+- Checked and left alone (already clear): engineer home and its rows,
+  Issues, Reports, snag list, search, photographs, site diary, Safety
+  actions, Before handover, notes for the next visit, Toolbox talks (#72),
+  project sheet, Issues by company. The report editor was not changed.
+- Check: `scripts/verify-first-time-use.mjs` (new) opens 16 engineer and 12
+  office pages with no data at 390px light and 1440px dark: each shows its
+  empty message, none shows an error, NaN or "undefined", no sideways scroll
+  on a phone, axe-core finds nothing. `verify-help.mjs` now checks a
+  newcomer's Help and a returning person's "2 new". Before and after
+  screenshots: `ui-review/first-time-use/` in the project files.
+- Not verified: a physical phone, a live tenant, screen readers.
+
 ## 2026-10-21 — Safety in the office's Needs attention
 
 - Why: the last of the day walkthrough's (#65) bigger ideas still open

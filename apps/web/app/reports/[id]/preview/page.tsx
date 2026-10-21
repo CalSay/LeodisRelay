@@ -121,7 +121,7 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
         <section>
           <h2 className="doc-h2">{inspection ? "Actions arising" : "Action and decision summary"}</h2>
           {actions.length === 0 ? (
-            <p className="doc-body">{inspection ? "No actions arise from this inspection." : "No actions or decisions arise from this visit."}</p>
+            <p className="doc-body">{report.observations.length === 0 ? "Nothing recorded yet. Cards added to the report show here." : inspection ? "No actions arise from this inspection." : "No actions or decisions arise from this visit."}</p>
           ) : (
             <div className="doc-tw">
               <table className="doc-table">
