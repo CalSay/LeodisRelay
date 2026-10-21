@@ -31,6 +31,7 @@ export interface WhatsNew {
 export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'came-back-first', added: '2026-10-21', audience: 'site', title: 'The office\'s answers first',
     text: '"Came back from the office" now sits under "Flag a defect" and "Request a variation" on the home screen (and under any unfinished reports), above Inspections, so on a phone you usually see it without scrolling. Anything the office wrote on, or sent back to you (an issue marked not finished, a report returned to correct), is at the top of it; your new defects and reports the office has only received come after. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open your home screen', href: '/engineer' } },
   { id: 'defect-send-on-signal', added: '2026-10-21', audience: 'site', title: 'A defect sent with no signal goes by itself',
     text: 'Send a defect with no signal and RELAY says "Defect not sent yet" and "Waiting for signal": it is kept on your phone and goes to the office by itself as soon as there is signal, while RELAY is open, the same as a site update. You can carry on with other things in RELAY: it says when the defect has gone, with a link to it. If you closed RELAY, opening it again with signal sends it. "Try again" still sends it straight away, and it only ever goes once. Checked in a phone-sized browser with its signal switched off, not on a real phone.',
     link: { label: 'Open your home screen', href: '/engineer' } },
