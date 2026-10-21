@@ -68,6 +68,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   figures and a row a week, progress grouped by place, behind or stuck, still
   open and with whom, a few photographs), built on these figures. Walk notes:
   project files `ui-review/monthly-progress/walk-notes.md`.
+
 ## 2026-10-21 — Eleventh release check: main ready at 6def5e8
 
 - Why: eight merges since the tenth check (#119 to #126), with inspections
