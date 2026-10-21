@@ -2,7 +2,7 @@
 import { IssueSyncStatus } from '@/components/SharePointStatus';
 import { useProjectLookup } from "@/components/ProjectContext";
 
-import { use, useEffect, useState, type FormEvent } from "react";
+import { use, useEffect, useRef, useState, type FormEvent } from "react";
 import { PageTitle } from '@/components/PageTitle';
 import Link from "next/link";
 import { projectSuggestions, readPhoto } from "@/lib/api";
@@ -54,12 +54,12 @@ const EVENT_LABEL: Record<string, string> = {
 // The engineer's history uses the words on the engineer's buttons.
 const ENGINEER_EVENT_LABEL: Record<string, string> = { ...EVENT_LABEL, closure_submitted: "Put forward as fixed", verified: "Checked and closed" };
 
-export default function IssuePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
+export default function IssuePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string; update?: string }> }) {
   const getProject = useProjectLookup();
   const principal = usePrincipal();
   const manager = principal ? canManage(principal) : false;
   const { id } = use(params);
-  const returnTo = use(searchParams).returnTo;
+  const { returnTo, update } = use(searchParams);
   const [issue, setIssue] = useState<Issue | null>(null);
   const [missing, setMissing] = useState<string | null>(null);
   const [reviewOn, setReviewOn] = useState(false);
@@ -81,6 +81,22 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
       .then(({ reviewOn, ...found }: Issue & { reviewOn?: boolean }) => { setIssue(found); setReviewOn(!!reviewOn); })
       .catch((e) => setMissing(e instanceof TypeError || !(e instanceof Error) ? "No connection, so this issue could not be opened. Try again when there is signal." : e.message));
   }, [id]);
+
+  // Opened from "Came back from the office" (?update=1): bring the photograph
+  // and the buttons into view once, but never push what is wrong under the
+  // app bar, so the engineer still sees what and where without scrolling up.
+  const landed = useRef(false);
+  useEffect(() => {
+    if (update !== "1" || manager || !issue || landed.current) return;
+    landed.current = true;
+    const buttons = document.querySelector(".issue-eng-update .btn-row");
+    const title = document.querySelector(".issue-eng-title");
+    if (!buttons || !title) return;
+    const bar = document.querySelector(".appbar")?.getBoundingClientRect().bottom ?? 0;
+    const need = buttons.getBoundingClientRect().bottom + 16 - window.innerHeight;
+    const room = title.getBoundingClientRect().top - bar - 8;
+    if (need > 0 && room > 0) window.scrollBy(0, Math.min(need, room));
+  }, [update, manager, issue]);
 
   async function run(kind: string) {
     if (!issue) return;
