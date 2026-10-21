@@ -4,6 +4,29 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Recent places take less room on a new card
+
+- Why: Cal's 07:02 direction (simple for hands-on engineers). Two
+  walk-throughs found that on a new card at 390px the Recent places box (a
+  panel with a count, three full-width rows) and its hint line pushed "Take a
+  photo" to about 1,040px down the page: 572px down the card, and "What
+  happened" off the first screen. #102's write-up suggested cutting the hint
+  and the chip for a place already in "Where". Decided without asking Cal, per
+  his autonomy message. Not a `docs/tasks.json` task; no status changed.
+- Change (site update card only; `Suggestions` gains a `compact` mode used
+  for places in `ObservationEditor`): chips sit under "Where" as wide as
+  their words (sans 14px, still 48px tall), with no panel, count or hint; "Show
+  N more" sits on the chip rows; the place already in "Where" (any case or
+  spacing) is not offered. Places stay one tap away and "Where" stays free
+  text (no catalogue, EXP-4). Recent companies, inspection checks and the
+  other pages' chips are unchanged. Help "What's new" line added.
+- Measured (new `scripts/verify-recent-places.mjs`, 109 checks, light and dark
+  at 390px, dark at 1440px): "Take a photo" 572px → 392px down a new card at
+  390px (180px higher), "What happened" on the first screen; 527px → 477px at
+  1440px. Screenshots: project files `ui-review/recent-places/`.
+- `verify-editor-usability` now expects no hint line under recent places.
+- Not verified: a real phone, a screen reader.
+
 ## 2026-10-21 — Photographs from one day
 
 - Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information

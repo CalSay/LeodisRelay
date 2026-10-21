@@ -81,6 +81,11 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-suggestions{margin-top:10px;padding:10px;border:1px solid var(--line);border-radius:7px;background:var(--panel-2);min-width:0;}
 .eng-suggestions-head{display:flex;justify-content:space-between;gap:8px;font:10px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);}
 .eng-suggestions-toggle{min-height:48px!important;margin-top:8px;padding:0;border:0;background:none;color:var(--brass);font:11px var(--mono);letter-spacing:.05em;}
+/* Recent places under a card's Where box: a row of chips, not a panel of full-width rows. */
+.eng-suggestions.compact{margin-top:8px;padding:0;border:0;background:none;}
+.eng-suggestions.compact .eng-chips{margin-top:6px;}
+.eng-suggestions.compact .eng-chip{width:auto;font:14px/1.3 var(--sans);letter-spacing:0;padding:8px 14px;color:var(--text);}
+.eng-suggestions.compact .eng-suggestions-toggle{margin-top:0;padding:0 6px;font:14px var(--sans);letter-spacing:0;text-decoration:underline;text-underline-offset:3px;}
 .eng-seg{display:flex;gap:6px;flex-wrap:wrap;}
 .eng-seg button{flex:1 1 auto;min-height:48px!important;padding:0 10px;border:1px solid var(--line-2);border-radius:var(--r);font-size:13px;background:var(--panel);color:var(--text);}
 .eng-seg button[aria-pressed=true]{border-color:var(--brass);background:var(--brass-wash);color:var(--brass);font-weight:500;}
