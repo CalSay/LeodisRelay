@@ -35,6 +35,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   tower inspections (behind the Safety, permits and deliveries switch) get
   the same behaviour through the shared editor; nothing else of theirs
   changed. Help "What's new" line added.
+- Review (fresh context) found two small gaps, both fixed: a check's change
+  now builds on the latest copy of the report (a photograph read in the
+  background could have undone an answer given meanwhile; this was already
+  so before), and a check moves on at most once, so a quick second tap
+  before the page redraws cannot leave Action needed folded.
 - Result: the same walk is 33 taps and about 3,220px of scrolling. The Where
   box with its places is 125px.
 - Checks: typecheck, `npm test` (146 + 514, 1 new in `quickCards.test.ts`),

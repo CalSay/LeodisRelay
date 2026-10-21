@@ -936,6 +936,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   // ready to type: folded, it only cost a tap. An inspection opens at its first
   // check still to answer, as it does on a wide screen. Once, as the draft opens.
   const openedBlank = useRef('');
+  /** Checks given their first answer here, which moves on at most once. */
+  const movedOn = useRef(new Set<string>());
   useEffect(() => {
     if (!report || wide || step !== 'cards' || report.state !== 'draft' || openedBlank.current === report.id) return;
     openedBlank.current = report.id;
@@ -1218,8 +1220,12 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         // opens by itself, or Check & sign once there are none; the folded row says the answer, and tapping it
         // brings the check back to change it or add a note or photograph. Action needed stays open to fill in.
         onChange={(changed) => {
-          update({ ...report, observations: report.observations.map((o) => (o.id === changed.id ? changed : o)) });
-          const answered = !observation.check?.answer ? changed.check?.answer : undefined;
+          // From the latest report, not this render's: a photograph read in the background must not undo an answer given meanwhile.
+          const current = latest.current ?? report;
+          update({ ...current, observations: current.observations.map((o) => (o.id === changed.id ? changed : o)) });
+          // Once per check, so a quick second tap (before the page has drawn the first) never moves on twice.
+          const answered = !observation.check?.answer && !movedOn.current.has(changed.id) ? changed.check?.answer : undefined;
+          if (answered) movedOn.current.add(changed.id);
           if (answered && answered !== 'action') {
             const after = nextUnanswered(index);
             if (after) openCard(after.id); else { setSelectedSection(changed.id); showCheck(); }
