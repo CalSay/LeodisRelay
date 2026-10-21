@@ -115,7 +115,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
   const siteCount = s ? s.site.talks.length + s.site.permits.length + s.site.deliveries.length : 0;
   const snagHref = `/issues/snag-list?${new URLSearchParams({ project: projectId, returnTo: here })}`;
   // The office's issue register on this project, waiting to be checked; the snag list is the engineer's way in.
-  // "Past target" stays words: it leaves out issues already put forward as fixed, which the register's Overdue keeps.
+  // "Past target" stays words; it is the register's Overdue (lib/officeActions.ts `isOverdueIssue`).
   const officeVerify = `/office#/issues/show/verify/${encodeURIComponent(projectId)}`;
 
   return <main className="eng-page week-page">

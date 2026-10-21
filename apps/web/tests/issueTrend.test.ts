@@ -74,3 +74,20 @@ test('withdrawn issues are left out, and a closure with no recorded day is never
   assert.equal(t.weeks.reduce((s, w) => s + w.closed, 0), 0);
   assert.equal(t.weeks.find(w => w.monday === '2026-10-05')!.open, 1);
 });
+
+test('past target leaves out work put forward as fixed by then, and counts it again once sent back', () => {
+  n = 0;
+  const ev = (kind: IssueEvent['kind'], at: string): IssueEvent => ({ at, actor:'Sam', kind, note:'', photos:[] });
+  const t = issueTrend([
+    // Late since 2 October, put forward as fixed on 9 October and still waiting: late at the end of week 28 Sep only.
+    issue({ raisedAt:'2026-09-28T09:00:00Z', targetDate:'2026-10-02', work:'awaiting_verification', events:[ev('closure_submitted', '2026-10-09T09:00:00Z')] }),
+    // Put forward on 9 October, sent back on 13 October: late again from the week of 12 October.
+    issue({ raisedAt:'2026-09-28T09:00:00Z', targetDate:'2026-10-02', work:'in_progress', events:[ev('closure_submitted', '2026-10-09T09:00:00Z'), ev('reopened', '2026-10-13T09:00:00Z')] }),
+  ], 'p1', TODAY);
+  const late = (monday: string) => t.weeks.find(w => w.monday === monday)!.late;
+  assert.equal(late('2026-09-28'), 2);
+  assert.equal(late('2026-10-05'), 0);
+  assert.equal(late('2026-10-12'), 1);
+  assert.equal(t.lateNow, 1, 'today, the same count as the project sheet');
+  assert.equal(t.openNow, 2, 'put forward as fixed is still open');
+});

@@ -1,7 +1,7 @@
 import { naturalOrder } from './naturalOrder';
 import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
-import { isActiveIssue } from './officeActions';
+import { isActiveIssue, isOverdueIssue } from './officeActions';
 import { checkCounts, reportTypeOf } from './reportTypes';
 import { safetyActions, type SafetyAction } from './safetyActions';
 import type { CheckAnswer, Issue, Report, Variation } from './types';
@@ -148,7 +148,7 @@ export function beforeHandover(project: HandoverProject, sources: HandoverSource
     const target = /^\d{4}-\d{2}-\d{2}$/.test(i.targetDate) ? i.targetDate : '';
     const fixedBy = i.work === 'awaiting_verification' ? i.closureSubmittedBy?.trim() : undefined;
     return { id: i.id, reference: i.reference, description: tidy(i.description), location: tidy(i.location), owner: tidy(i.owner),
-      targetDate: target, overdue: !!target && target < today && i.work !== 'awaiting_verification', disputed: i.confirmation === 'disputed',
+      targetDate: target, overdue: isOverdueIssue(i, today), disputed: i.confirmation === 'disputed',
       ...(trade ? { trade } : {}), ...(fixedBy ? { fixedBy } : {}), ...(inspection ? { inspection } : {}) };
   };
   const rows = live.map(row);

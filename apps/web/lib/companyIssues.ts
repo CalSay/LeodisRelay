@@ -2,6 +2,7 @@ import { naturalOrder } from './naturalOrder';
 import type { Issue } from './types';
 import { issueTrade } from './snagList';
 import { londonDay } from './weeklySummary';
+import { isOverdueIssue } from './officeActions';
 
 /**
  * Open issues by company: for each company or person named as the owner of
@@ -73,8 +74,8 @@ export function companyIssues(issues: Issue[], projects: ProjectNames[], today: 
     const closed = closedOn(issue);
     if (!live && !(closed && closed >= since && closed <= today)) continue;
     const fixed = live && issue.work === 'awaiting_verification';
-    // The register's rule (`isOverdueIssue`): work put forward as fixed but not yet checked is still late if its target has passed.
-    const overdue = live && isDay(issue.targetDate) && issue.targetDate < today;
+    // The register's rule (`isOverdueIssue`): past target and not yet put forward as fixed. Fixed, to check waits on the office, not the company.
+    const overdue = live && isOverdueIssue(issue, today);
     const k = key(issue.owner);
     if (!k) {
       if (live) { if (fixed) unassigned.fixed++; else unassigned.toDo++;

@@ -23,10 +23,10 @@ test('counts each company\'s work across projects: to put right, past target and
   assert.equal(r.companies.length, 1);
   const [c] = r.companies;
   assert.equal(c!.toDo, 3);
-  assert.equal(c!.overdue, 3, 'a target of today is not yet late; fixed but unchecked work past its target is, as on the register');
+  assert.equal(c!.overdue, 2, 'a target of today is not yet late; fixed but unchecked work waits on the office, so it is not late, as on the register');
   assert.equal(c!.fixed, 1);
   assert.equal(c!.closedRecently, 0, 'closed without an office check in the window');
-  assert.deepEqual(c!.projects.map(p => [p.projectNumber, p.toDo, p.overdue, p.fixed]), [['011LME', 2, 2, 1], ['014LME', 1, 1, 0]]);
+  assert.deepEqual(c!.projects.map(p => [p.projectNumber, p.toDo, p.overdue, p.fixed]), [['011LME', 2, 1, 1], ['014LME', 1, 1, 0]]);
   assert.equal(r.since, '2026-09-23');
 });
 
