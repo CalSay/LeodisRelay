@@ -1,5 +1,6 @@
 // Browser check for UI-1: the office desk opens on the office position across
-// the full width, not on an empty register column. Choosing a project brings
+// the full width, not on an empty register column (on a phone, the office
+// position alone: its "Where each project stands" list is the project list). Choosing a project brings
 // the register back; going back to all projects removes it again.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 // RELAY_SCREENSHOT_DIR=<dir> saves the desk at 1440px and the phone at 390px, light and dark.
@@ -57,9 +58,9 @@ try {
 
     const phone=await browser.newContext({viewport:{width:390,height:844},colorScheme,isMobile:true,hasTouch:true});await phone.addCookies([{name:'relay_session',value:session,url:base}]);
     const p=await phone.newPage();p.on('pageerror',e=>errors.push(e.message));
-    await p.goto(`${base}/office#/projects`);await p.locator('.cols .item').first().waitFor();
+    await p.goto(`${base}/office#/projects`);await p.locator('.glance-row').first().waitFor();
     const cols=await visibleCols(p);
-    assert.deepEqual(cols.map(c=>c.head),['Overview','Projects'],`${colorScheme}: phone opens on the office position, the project list after it`);checks++;
+    assert.deepEqual(cols.map(c=>c.head),['Overview'],`${colorScheme}: phone opens on the office position, whose project list stands in for the column`);checks++;
     assert.ok(await overflow(p)<=0,`${colorScheme}: no horizontal scroll on the phone`);checks++;
     if(shot)await p.screenshot({path:join(shot,`office-landing-390-${colorScheme}.png`)});
     await phone.close();

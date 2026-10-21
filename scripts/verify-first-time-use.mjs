@@ -55,7 +55,7 @@ const pages={
     }},
   ],
   Manager:[
-    {path:'/office#/projects',has:['Nothing has come in from site yet.','No reports received yet.','No open issues.','none awaiting instruction','Nothing needs attention.'],not:[/Every report has been read/,/Every open issue has an owner/,/all priced, awaiting the client/],
+    {path:'/office#/projects',has:['Nothing has come in from site yet.','No reports received yet.','No open issues.','none waiting','No visit yet','Nothing needs attention.'],not:[/Every report has been read/,/Every open issue has an owner/,/all priced, awaiting the client/],
       after:async(page,label)=>check(!(await page.locator('.tbtn-help .tbtn-new').count()),`${label}: no "new" count on Help for someone who has never opened it`)},
     {path:'/office#/inbox',has:['No reports have come in yet.']},
     {path:'/office#/issues',has:['No issues have been raised yet.']},
