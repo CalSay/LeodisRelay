@@ -105,11 +105,20 @@ try {
     for(let i=0;i<rows;i++){
       // The first check from the list, then each next one by "Next check", as an engineer goes.
       if(i===0){const row=page.locator('.eng-cardrow').first();if(!(await row.getAttribute('class')).includes(' on '))await tap(row);}
-      else await tap(page.locator('.eng-next-check:visible'));
+      // Satisfactory and Not applicable open the next check by themselves; "Next check" follows an action.
+      else {const next=page.locator('.eng-next-check:visible');if(await next.count())await tap(next);}
       await page.locator('.eng-cardrow.on').nth(0).waitFor();
       eq(await page.locator('.eng-cardrow.on .no').first().innerText(),String(i+1).padStart(2,'0'),`${label}: "Next check" opens check ${i+1}`);
       const body=openBody();
       const answer=i===2?/Action needed/:i===rows-1?/Not applicable/:/Satisfactory/;
+      // The last answer opens Check & sign by itself, so the list is measured before it.
+      if(wide&&i===rows-1){
+        // Stuck under the header (top 70px), the list's own column ends above the bar.
+        const rail=await page.evaluate(()=>{const r=document.querySelector('.eng-rail').getBoundingClientRect(),bar=document.querySelector('.actionbar').getBoundingClientRect();return {height:r.height,room:bar.top-70};});
+        ok(rail.height<=rail.room,`${label}: the list of checks fits between the header and the bar (${JSON.stringify(rail)})`);
+        const seen=await page.evaluate(()=>{const rail=document.querySelector('.eng-rail'),row=rail.querySelector('[aria-current="true"]').getBoundingClientRect(),b=rail.getBoundingClientRect();return {ok:row.top>=b.top-1&&row.bottom<=b.bottom+1,row:[row.top,row.bottom],rail:[b.top,b.bottom],scroll:[rail.scrollTop,rail.scrollHeight,rail.clientHeight]};});
+        ok(seen.ok,`${label}: the open check is in sight in the list (${JSON.stringify(seen)})`);
+      }
       await tap(body.getByRole('button',{name:answer}));
       if(i===2){
         await body.getByLabel('What’s wrong').fill('Edge protection missing on the landing.');
@@ -120,15 +129,7 @@ try {
         await shot('inspection-action');
       }
     }
-    if(wide){
-      // Stuck under the header (top 70px), the list's own column ends above the bar.
-      const rail=await page.evaluate(()=>{const r=document.querySelector('.eng-rail').getBoundingClientRect(),bar=document.querySelector('.actionbar').getBoundingClientRect();return {height:r.height,room:bar.top-70};});
-      ok(rail.height<=rail.room,`${label}: the list of checks fits between the header and the bar (${JSON.stringify(rail)})`);
-      const seen=await page.evaluate(()=>{const rail=document.querySelector('.eng-rail'),row=rail.querySelector('[aria-current="true"]').getBoundingClientRect(),b=rail.getBoundingClientRect();return {ok:row.top>=b.top-1&&row.bottom<=b.bottom+1,row:[row.top,row.bottom],rail:[b.top,b.bottom],scroll:[rail.scrollTop,rail.scrollHeight,rail.clientHeight]};});
-      ok(seen.ok,`${label}: the open check is in sight in the list (${JSON.stringify(seen)})`);
-    }
-    await page.evaluate(()=>document.activeElement?.blur());await tap(page.locator('.actionbar').getByRole('button',{name:/Check & send/}));
-    await page.locator('#report-check').waitFor();
+    await page.locator('#report-check').waitFor(); // the last answer opens Check & sign by itself
     await page.getByText(/All 12 checks/).waitFor({timeout:15000});
     await shot('inspection-check');await shot('inspection-check-full',true);
     const pad=page.locator('canvas.sigpad');await pad.evaluate(e=>e.scrollIntoView({block:'center'}));await page.waitForTimeout(200);
@@ -169,7 +170,7 @@ try {
       await page.goto(`${base}/engineer`);await tap(page.getByText(start));
       if(inspects){const form=page.locator('.eng-tile-form');await form.locator('input').fill(inspects);await tap(form.getByRole('button',{name:/^Start the/}));}
       await page.waitForURL(/\/reports\//);await page.locator('.eng-cardrow').first().waitFor();
-      if(width<900)await tap(page.locator('.eng-cardrow').first());
+      // The first check opens by itself, on a phone too (2026-10-21).
       await tap(openBody().getByRole('button',{name:/Action needed/}));
       await shot(`${name}-action`);
     }

@@ -36,3 +36,9 @@ test('places on this report come first, latest first, then the project’s, each
   // The card's own place is not offered back to it, and nor are an inspection's.
   assert.deepEqual(placesToOffer([blank('c', { location: 'Kitchen' }), blank('k', { type: 'check', location: 'Bay 1', check: { item: 'x', question: 'q' } })], 'c', []), []);
 });
+
+test('a check on an inspection is offered the places its other checks named first', () => {
+  const check = (id: string, location: string) => blank(id, { type: 'check', location, check: { item: id, question: 'q' } });
+  const checks = [check('a', 'Flat 3.02'), check('b', ''), check('c', 'Plant room'), check('d', 'Riser B')];
+  assert.deepEqual(placesToOffer(checks, 'd', ['Riser B', 'Roof', 'flat 3.02']), ['Plant room', 'Flat 3.02', 'Riser B', 'Roof']);
+});

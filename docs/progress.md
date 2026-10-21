@@ -4,6 +4,66 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Quicker inspections on a phone
+
+- Why: walked an engineer through a handover inspection on main 433691d at
+  390px (12 checks: three needing action, each with a recent place, words
+  and a photo; one not applicable; the rest satisfactory; draw a signature,
+  send). 43 taps and about 3,960px of scrolling. Ten of the taps did nothing
+  but move on: "Next check" after every satisfactory or not applicable
+  answer (8), "All answered · check & sign" (1), and opening check 1, since
+  on a phone no check was open on arrival (the wide editor already opened
+  it). The Recent places panel on an action check was the old boxed list,
+  one full-width row per place (about 260px with its Where box), where site
+  update cards have had compact chips since #107. Coordinator approved the
+  pick; decided without asking Cal, per his 07:02 ask (fewer taps, less on
+  screen). Not a `docs/tasks.json` task; no status changed.
+- Changed (report editor, `CheckEditor.tsx`, `reports/[id]/page.tsx`):
+  on a phone an inspection opens at its first check still to answer (once,
+  as the draft opens, like #114's empty card). A first answer of
+  Satisfactory or Not applicable opens the next check still to answer by
+  itself, with focus on it (its row on a phone, its body side by side);
+  after the last one Check & sign opens, focus on its heading, Back returns
+  to the checks. Action needed stays open to fill in, and changing an
+  answer already given never moves on. The folded row now says the answer
+  in words ("Satisfactory", "Action needed", "Not applicable", was "OK",
+  "Action", "N/A") so a mis-tap is easy to spot; one tap on the row opens
+  the check again. Recent places on an action check are compact chips
+  (`Suggestions compact`, as on site update cards), with the places this
+  inspection's other checks named first (`placesToOffer` now includes
+  checks when asked for a check). Recent companies unchanged. Safety and
+  tower inspections (behind the Safety, permits and deliveries switch) get
+  the same behaviour through the shared editor; nothing else of theirs
+  changed. Help "What's new" line added.
+- Review (fresh context) found two small gaps, both fixed: a check's change
+  now builds on the latest copy of the report (a photograph read in the
+  background could have undone an answer given meanwhile; this was already
+  so before), and a check moves on at most once, so a quick second tap
+  before the page redraws cannot leave Action needed folded.
+- Result: the same walk is 33 taps and about 3,220px of scrolling. The Where
+  box with its places is 125px.
+- Checks: typecheck, `npm test` (146 + 514, 1 new in `quickCards.test.ts`),
+  build. New `scripts/verify-quicker-inspections.mjs` (100, light and dark
+  at 390px, dark at 1440px): first check open on arrival, Satisfactory moves
+  on with focus, no "Next check" on a check still to answer, the row says
+  Satisfactory, one tap reopens, Action needed and a changed answer stay
+  put, compact chips (no count, shared rows, 48px), this inspection's place
+  first, a chip fills Where and is saved, the last answer opens Check &
+  sign with focus, all answers saved, every row says its answer, axe on an
+  open action check, no sideways scroll. Updated for the new flow (they
+  tapped "Next check" after every answer, or tapped check 1's row, which now
+  folds it): verify-handover-inspection, verify-first-fix-inspection,
+  verify-report-types, verify-tower-inspection, verify-editor-usability,
+  verify-editor-wide, verify-accessibility, verify-day-walkthrough; all
+  pass (verify-day-walkthrough, 114, after merging main with #120's fix to
+  its permit step; its first run after the merge stopped before the
+  inspections, the second passed). Also passed: verify-offline-inspection, verify-offline-sign,
+  verify-handover-offline, verify-typed-signature, verify-safety-actions,
+  verify-recent-places, verify-fewest-taps, verify-quicker-update,
+  verify-help. Screenshots before and after: project files
+  `ui-review/quicker-inspections/`.
+- Not verified: a real phone, a screen reader.
+
 ## 2026-10-21 — Inbox report on its own screen on a phone
 
 - Why: a manager's phone walk on main (390px, light and dark; three

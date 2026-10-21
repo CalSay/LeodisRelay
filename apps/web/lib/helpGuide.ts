@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'quicker-inspections', added: '2026-10-21', audience: 'site', title: 'Quicker inspections',
+    text: 'On a phone an inspection now opens at the first check still to answer. Tap Satisfactory or Not applicable and the next check opens by itself, with no "Next check" to tap; after the last one you go straight to Check & sign. The check you answered folds to one line that says your answer: tap it to change the answer or add a note or photo. Action needed stays open for you to fill in, and its recent places are now a row of small buttons, with places already used on this inspection first. A 12-check handover inspection with three actions took 33 taps instead of 43. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open your home screen', href: '/engineer' } },
   { id: 'office-inbox-phone-reader', added: '2026-10-21', audience: 'office', title: 'Reports open straight away in the Inbox on a phone',
     text: 'On a phone, picking a report in the Inbox now opens it at the top of the screen, instead of under the whole list where it was easy to miss. "‹ Inbox" or the phone\'s Back takes you back to the same place in the list, with the same filters. Inspection names on Inbox rows wrap instead of being cut off. On a computer the list and the report still sit side by side. Checked in a phone-sized browser window, light and dark, not on a real phone.',
     link: { label: 'Open the Inbox', href: '/office#/inbox' } },

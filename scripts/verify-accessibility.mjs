@@ -132,7 +132,7 @@ async function editorStates(scheme,width,phone){
   await page.goto(`${base}/engineer?project=${P}`);await page.getByText(/Do a safety inspection/).click();
   await page.waitForURL(/\/reports\//);await page.locator('.eng-cardrow').first().waitFor();
   await state('inspection-new');
-  if(phone)await page.locator('.eng-cardrow').first().click();
+  // The first check opens by itself, on a phone too (2026-10-21).
   await open().locator('.eng-answers').waitFor();
   await open().getByRole('button',{name:/Action needed/}).click();
   await state('inspection-action');

@@ -70,7 +70,7 @@ try {
 
     // 2. The first check needs action: where, what, what to do, who, a photograph.
     const card=()=>page.locator(wide?'#card-editor .eng-card:visible':'.eng-slot.open .eng-card');
-    if(!wide)await rows.nth(0).click();
+    // The first check opens by itself, on a phone too (2026-10-21).
     await card().getByRole('heading',{name:HANDOVER_CHECKLIST[0].question}).waitFor();checks++;
     eq(await card().getByLabel('Where',{exact:true}).count(),0,`${label}: no Where before the answer needs one`);
     await card().getByRole('button',{name:'Action needed'}).click();
@@ -85,17 +85,14 @@ try {
 
     // 3. The rest: satisfactory, but one not applicable.
     for(let i=1;i<N;i++){
-      await page.locator('.eng-next-check:visible').click();
+      {const next=page.locator('.eng-next-check:visible');if(await next.count())await next.click();}
       await card().getByRole('heading',{name:HANDOVER_CHECKLIST[i].question}).waitFor();
       await card().getByRole('button',{name:i===4?'Not applicable':'Satisfactory'}).click();
     }
     checks++;
-    const allDone=page.locator('.eng-review-link:visible').filter({hasText:'All answered'});
-    eq(await allDone.count(),1,`${label}: the last check offers check and sign`);
+    await page.locator('#report-check').waitFor();checks++; // the last answer opens Check & sign by itself
 
     // 4. Check and sign: the missing Where stops sending, and says why.
-    await allDone.click();
-    await page.locator('#report-check').waitFor();
     ok(/say where, for the snag list/.test(await page.locator('#report-check .eng-finds').innerText()),`${label}: an action with no Where stops sending`);
     ok(/1 issue raised/.test(await page.locator('.eng-does').innerText()),`${label}: it says sending raises an issue`);
     const sum=await page.locator('.eng-sum').innerText();
