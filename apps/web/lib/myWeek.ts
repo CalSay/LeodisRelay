@@ -2,6 +2,7 @@ import { naturalOrder } from './naturalOrder';
 import { checkCounts, reportName, reportTypeOf } from './reportTypes';
 import type { Principal } from '@relay/platform';
 import { canReadReport, ownsReport } from './auth/access';
+import { raisedIssue } from './cameBack';
 import type { ObservationType } from './fixtures';
 import type { Issue, Report } from './types';
 import type { ToolboxTalk } from './toolboxTalks';
@@ -38,7 +39,11 @@ export interface MyWeekDraft { id: string; reference: string; cards: number; cor
   /** What kind of report the draft is, such as "Safety inspection". */
   typeName: string }
 export type MyWeekIssueKind = 'flagged' | 'progress' | 'fixed';
-export interface MyWeekIssue { id: string; reference: string; description: string; location: string; at: string; kind: MyWeekIssueKind }
+/** What the office has done since with an issue put forward as fixed: sent it back, or checked it and closed it. */
+export type MyWeekFixOutcome = 'sent-back' | 'closed' | 'reopened';
+export interface MyWeekIssue { id: string; reference: string; description: string; location: string; at: string; kind: MyWeekIssueKind;
+  /** Only on a fix the office has since sent back or closed; absent while it waits to be checked. */
+  since?: MyWeekFixOutcome }
 /** A site record this person made: a toolbox talk, a permit recorded or closed, a delivery recorded or sorted. */
 export type MyWeekRecordKind = 'talk' | 'permit' | 'permit-closed' | 'delivery' | 'delivery-sorted';
 export interface MyWeekRecord { id: string; kind: MyWeekRecordKind; at: string; title: string; detail: string }
@@ -59,7 +64,16 @@ export interface MyWeek {
   current: boolean;
   /** Every day of the week, Monday first, each with the projects that have records that day. */
   days: MyWeekDay[];
-  totals: { days: number; projects: number; reports: number; flagged: number; issueUpdates: number; drafts: number; records: number };
+  totals: { days: number; projects: number; reports: number;
+    /**
+     * Issues this person raised in the week, by any route: defects flagged on
+     * their own, and defect cards, access problems and inspection actions in
+     * the reports they sent. Each issue once, on the UK day it was raised, as
+     * the office's Weekly summary counts "Issues raised". A further sighting of
+     * an issue already raised, or a corrected report, raises nothing new.
+     */
+    raised: number;
+    issueUpdates: number; drafts: number; records: number };
 }
 
 export interface MyWeekProjectSource { id: string; projectNumber: string; projectName: string }
@@ -128,9 +142,12 @@ export function myWeek(projects: MyWeekProjectSource[], sources: MyWeekSources, 
         : e.kind === 'progress' ? 'progress' : e.kind === 'closure_submitted' ? 'fixed' : undefined;
       const day = londonDay(e.at);
       if (!kind || !inWeek(day)) return;
-      slot(day, i.projectId)?.issues.push({ id: i.id, reference: i.reference, description: i.description, location: tidy(i.location), at: e.at, kind });
+      slot(day, i.projectId)?.issues.push({ id: i.id, reference: i.reference, description: i.description, location: tidy(i.location), at: e.at, kind,
+        ...(kind === 'fixed' ? since(i, n) : {}) });
     });
   }
+  // Every issue this person raised in the week, whichever way it came in.
+  const raised = sources.issues.filter(i => known.has(i.projectId) && raisedIssue(i, principal.id) && inWeek(londonDay(i.raisedAt))).length;
 
   // Site records this person made. A withdrawn one was entered by mistake, so it is not a record of the day.
   const record = (day: string, projectId: string, r: MyWeekRecord) => { if (inWeek(day)) slot(day, projectId)?.records.push(r); };
@@ -163,13 +180,28 @@ export function myWeek(projects: MyWeekProjectSource[], sources: MyWeekSources, 
       days: out.filter(d => d.projects.some(recorded)).length,
       projects: new Set(all.filter(recorded).map(p => p.projectId)).size,
       reports: all.reduce((n, p) => n + p.reports.length, 0),
-      flagged: all.reduce((n, p) => n + p.issues.filter(i => i.kind === 'flagged').length, 0),
+      raised,
       issueUpdates: all.reduce((n, p) => n + p.issues.filter(i => i.kind !== 'flagged').length, 0),
       drafts: all.reduce((n, p) => n + p.drafts.length, 0),
       // A permit recorded and closed the same day is one record, as the timesheet copy counts it.
       records: all.reduce((n, p) => n + new Set(p.records.map(r => r.id)).size, 0),
     },
   };
+}
+
+/**
+ * What the office did after the fix put forward at `events[n]`, from its first
+ * decision after it: sent it back (reopened), or checked and closed it, and
+ * opened it again later if so. A later fix put forward has a row of its own.
+ * An issue closed in SharePoint has no decision here, so closed now says
+ * closed. Nothing while it waits to be checked.
+ */
+function since(i: Issue, n: number): { since?: MyWeekFixOutcome } {
+  const after = i.events.slice(n + 1);
+  const first = after.findIndex(e => e.kind === 'reopened' || e.kind === 'verified');
+  if (first >= 0 && after[first]!.kind === 'reopened') return { since: 'sent-back' };
+  if (first >= 0) return { since: after.slice(first + 1).some(e => e.kind === 'reopened') ? 'reopened' : 'closed' };
+  return i.work === 'closed' ? { since: 'closed' } : {};
 }
 
 /** "1 toolbox talk", "2 permits", "1 delivery": a permit or delivery is counted once a day, however many times it was touched. */

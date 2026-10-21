@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'my-week-issues-raised', added: '2026-10-21', audience: 'all', title: 'My week counts every issue you raised',
+    text: 'My week used to say "Defects flagged" and counted only defects flagged on their own, so a week of defects sent in site updates read as none. It now says "Issues raised" and counts every defect, access problem or inspection action you raised that week, from a report or flagged on its own, each once: the same count the office sees under "Issues raised" on the Weekly summary. A defect seen again in a later update, or a corrected report, is not counted twice. An issue you put forward as fixed now also says what the office did since: sent it back as not finished, checked it and closed it, or closed it and then opened it again. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open My week', href: '/my-week' } },
   { id: 'team-last-sent', added: '2026-10-21', audience: 'office', title: 'See who has got going on the Team tab',
     text: 'The Team tab now has a "Last sent" column instead of "Now": the site each person last sent a report for and the day of that visit (tap the site to open the report), "Nothing sent yet" for someone who has signed in but sent nothing, and "Not signed in yet" for someone who has never signed in. When a new site starts, or a new engineer joins, you can see at a glance whether they are reporting and from where, without opening each person. Whether someone is signed in now is beside when they signed in (for the Admin, on the person\'s own panel). Checked in a desktop browser, light and dark, and a phone-sized window.',
     link: { label: 'Open the Team tab', href: '/office#/team' } },

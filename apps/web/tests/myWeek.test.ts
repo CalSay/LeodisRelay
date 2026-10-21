@@ -37,7 +37,7 @@ test('places only my sent reports on their visit day, across projects, never any
   assert.equal(tue.projects[1]!.reports[0]!.photos, 1);
   assert.deepEqual(tue.projects[1]!.reports[0]!.locations, ['Level 3 riser']);
   assert.equal(w.days[2]!.projects.length, 0, 'another engineer\'s report is not mine');
-  assert.deepEqual(w.totals, { days:1, projects:2, reports:2, flagged:0, issueUpdates:0, drafts:0, records:0 });
+  assert.deepEqual(w.totals, { days:1, projects:2, reports:2, raised:0, issueUpdates:0, drafts:0, records:0 });
   assert.equal(w.current, false);
 });
 
@@ -58,13 +58,13 @@ test('my drafts for the week are listed apart and do not make a day with records
   ] }, engineer, MONDAY, TODAY);
   assert.deepEqual(w.days[3]!.projects[0]!.drafts, [{ id:'draft', reference:'011LME-SPR-001', cards:2, correction:false, typeName:'Site update' }]);
   assert.equal(w.days[4]!.projects[0]!.drafts[0]!.correction, true);
-  assert.deepEqual(w.totals, { days:0, projects:0, reports:0, flagged:0, issueUpdates:0, drafts:2, records:0 });
+  assert.deepEqual(w.totals, { days:0, projects:0, reports:0, raised:0, issueUpdates:0, drafts:2, records:0 });
 });
 
-test('defects I flagged and updates I made on an issue count, by UK day; report sightings and office decisions do not', () => {
+test('defects I flagged and updates I made on an issue are listed by UK day; report sightings and office decisions are not', () => {
   const w = myWeek(projects, { ...none, issues:[
-    issue({ id:'flagged', source:'individual', reportedById:engineer.id, events:[ev('raised', '2026-10-14T22:30:00Z')] }), // 23:30 BST Wednesday
-    issue({ id:'from-report', source:'report', events:[ev('raised', '2026-10-14T09:00:00Z', engineer, { source:{ reportId:'r', reference:'R', revision:1 } })] }),
+    issue({ id:'flagged', source:'individual', reportedById:engineer.id, raisedAt:'2026-10-14T22:30:00Z', events:[ev('raised', '2026-10-14T22:30:00Z')] }), // 23:30 BST Wednesday
+    issue({ id:'from-report', source:'report', raisedAt:'2026-10-14T09:00:00Z', events:[ev('raised', '2026-10-14T09:00:00Z', engineer, { source:{ reportId:'r', reference:'R', revision:1 } })] }),
     issue({ id:'worked', reference:'011LME-ISS-002', events:[ev('raised', '2026-10-01T09:00:00Z', other), ev('progress', '2026-10-15T09:00:00Z'), ev('closure_submitted', '2026-10-16T09:00:00Z'),
       ev('progress', '2026-10-15T10:00:00Z', engineer, { source:{ reportId:'r', reference:'R', revision:1 } }), ev('verified', '2026-10-16T12:00:00Z'), ev('assigned', '2026-10-16T13:00:00Z')] }),
     issue({ id:'someone-else', events:[ev('progress', '2026-10-15T09:00:00Z', other)] }),
@@ -72,7 +72,7 @@ test('defects I flagged and updates I made on an issue count, by UK day; report 
   ] }, engineer, MONDAY, TODAY);
   const kinds = w.days.map(d => d.projects.flatMap(p => p.issues.map(i => `${i.id}:${i.kind}`)));
   assert.deepEqual(kinds, [[], [], ['flagged:flagged'], ['worked:progress'], ['worked:fixed'], [], []]);
-  assert.deepEqual(w.totals, { days:3, projects:1, reports:0, flagged:1, issueUpdates:2, drafts:0, records:0 });
+  assert.deepEqual(w.totals, { days:3, projects:1, reports:0, raised:2, issueUpdates:2, drafts:0, records:0 });
 });
 
 test('the timesheet text names every weekday up to today, weekends only with records, and leaves drafts out', () => {
@@ -128,8 +128,41 @@ test('lists the toolbox talks, permits and deliveries I recorded, closed or sort
   assert.equal(thu.projectId, 'p2');
   assert.deepEqual(thu.records.map(r => r.kind), ['delivery', 'delivery-sorted']);
   assert.equal(thu.records[0]!.detail, 'Short · 6 reels');
-  assert.deepEqual(w.totals, { days:3, projects:2, reports:0, flagged:0, issueUpdates:0, drafts:0, records:4 });
+  assert.deepEqual(w.totals, { days:3, projects:2, reports:0, raised:0, issueUpdates:0, drafts:0, records:4 });
   const text = myWeekText(w, 'Sam Spark', TODAY);
   assert.match(text, /Tue 13 Oct: 011LME Tetley Hall \(1 toolbox talk, 1 permit\)/);
   assert.match(text, /Thu 15 Oct: 009LME Aire Court \(1 delivery\)/, 'recorded and sorted the same day is one delivery');
+});
+
+test('issues raised counts every issue I raised in the week once, from a report or flagged on its own', () => {
+  const from = (reportId: string) => ({ source:{ reportId, reference:'R', revision:1 } });
+  const w = myWeek(projects, { reports:[report({ id:'r1', visitDate:'2026-10-13', observations:[card({ id:'a', type:'defect' }), card({ id:'b', type:'defect', linkedIssueId:'old' }), card({ id:'c', type:'access' })] })], issues:[
+    issue({ id:'own', source:'individual', reportedById:engineer.id, raisedAt:'2026-10-14T09:00:00Z', events:[ev('raised', '2026-10-14T09:00:00Z')] }),
+    issue({ id:'card-a', source:'report', reportedById:engineer.id, raisedByReport:'r1', raisedAt:'2026-10-13T16:00:00Z', events:[ev('raised', '2026-10-13T16:00:00Z', engineer, from('r1'))] }),
+    issue({ id:'card-c', source:'report', reportedById:engineer.id, raisedByReport:'r1', raisedAt:'2026-10-13T16:00:00Z', events:[ev('raised', '2026-10-13T16:00:00Z', engineer, from('r1'))] }),
+    // Seen again in r1: an older issue with a new sighting is not raised again.
+    issue({ id:'old', source:'report', reportedById:engineer.id, raisedAt:'2026-10-02T09:00:00Z', events:[ev('raised', '2026-10-02T09:00:00Z'), ev('progress', '2026-10-13T16:00:00Z', engineer, from('r1'))] }),
+    issue({ id:'theirs', source:'report', reportedById:other.id, raisedAt:'2026-10-13T16:00:00Z', events:[ev('raised', '2026-10-13T16:00:00Z', other)] }),
+    issue({ id:'elsewhere', projectId:'p9', source:'individual', reportedById:engineer.id, raisedAt:'2026-10-13T16:00:00Z', events:[ev('raised', '2026-10-13T16:00:00Z')] }),
+    issue({ id:'sunday-night', source:'individual', reportedById:engineer.id, raisedAt:'2026-10-18T23:30:00Z', events:[ev('raised', '2026-10-18T23:30:00Z')] }), // Monday in the UK
+  ] }, engineer, MONDAY, TODAY);
+  assert.equal(w.totals.raised, 3, 'one flagged on its own, a defect and an access problem from the report');
+  assert.deepEqual(w.days.flatMap(d => d.projects.flatMap(p => p.issues.map(i => i.id))), ['own'], 'report-raised issues show under their report, not as rows of their own');
+  assert.equal(w.days[1]!.projects[0]!.reports[0]!.kinds.defect, 2);
+});
+
+test('a fix put forward says what the office did since: sent back, closed, or nothing yet', () => {
+  const office: Principal = { ...other, id:'entra:office' as never, name:'Office', role:'Manager' };
+  const fixed = ev('closure_submitted', '2026-10-15T09:00:00Z');
+  const w = myWeek(projects, { ...none, issues:[
+    issue({ id:'waiting', work:'awaiting_verification', events:[ev('raised', '2026-10-01T09:00:00Z', other), fixed] }),
+    issue({ id:'back', work:'in_progress', events:[ev('raised', '2026-10-01T09:00:00Z', other), fixed, ev('reopened', '2026-10-16T09:00:00Z', office)] }),
+    issue({ id:'closed', work:'closed', events:[ev('raised', '2026-10-01T09:00:00Z', other), fixed, ev('verified', '2026-10-16T09:00:00Z', office)] }),
+    issue({ id:'again', work:'closed', events:[ev('raised', '2026-10-01T09:00:00Z', other), fixed, ev('reopened', '2026-10-15T12:00:00Z', office),
+      ev('closure_submitted', '2026-10-16T09:00:00Z'), ev('verified', '2026-10-16T12:00:00Z', office)] }),
+    issue({ id:'later', work:'in_progress', events:[ev('raised', '2026-10-01T09:00:00Z', other), ev('closure_submitted', '2026-10-17T09:00:00Z'), ev('verified', '2026-10-17T10:00:00Z', office), ev('reopened', '2026-10-17T11:00:00Z', office)] }),
+    issue({ id:'in-sharepoint', work:'closed', events:[ev('raised', '2026-10-01T09:00:00Z', other), ev('closure_submitted', '2026-10-18T09:00:00Z')] }),
+  ] }, engineer, MONDAY, TODAY);
+  const rows = w.days.flatMap(d => d.projects.flatMap(p => p.issues.map(i => `${i.id}@${i.at.slice(8, 10)}:${i.since ?? '-'}`)));
+  assert.deepEqual(rows.sort(), ['again@15:sent-back', 'again@16:closed', 'back@15:sent-back', 'closed@15:closed', 'in-sharepoint@18:closed', 'later@17:reopened', 'waiting@15:-']);
 });
