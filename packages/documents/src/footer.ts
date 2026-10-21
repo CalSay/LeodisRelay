@@ -46,6 +46,9 @@ export interface FooterText {
   title?: string;
 }
 
+/** Letters with no accent to strip that still have an obvious plain form. */
+const PLAIN: Record<string, string> = { "Ł": "L", "ł": "l", "Đ": "D", "đ": "d", "Ħ": "H", "ħ": "h", "ı": "i", "Ø": "O", "ø": "o" };
+
 /** `text` cut to fit `width` at `size`, ending in an ellipsis when cut. */
 function fitText(text: string, width: number, measure: (t: string) => number): string {
   if (measure(text) <= width) return text;
@@ -69,15 +72,15 @@ export async function stampFooter(pdf: Uint8Array, text: FooterText): Promise<Ui
   const medium = await doc.embedFont(StandardFonts.HelveticaBold);
 
   // Standard Helvetica only has the WinAnsi characters; a project name with
-  // anything else (a Polish street name, an emoji) would stop the stamp, so
-  // those characters fall back to their plain letter or a question mark.
+  // anything else (a Polish place name, an emoji) would stop the stamp, so
+  // those characters fall back to their plain letter, or are left out.
   const supported = new Set(regular.getCharacterSet());
   const encodable = (t: string): string =>
     [...t.normalize("NFC")].map((ch) => {
       if (supported.has(ch.codePointAt(0)!)) return ch;
-      const plain = ch.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-      return plain && [...plain].every((c) => supported.has(c.codePointAt(0)!)) ? plain : "?";
-    }).join("");
+      const plain = (PLAIN[ch] ?? ch.normalize("NFD")).replace(/[\u0300-\u036f]/g, "");
+      return [...plain].every((c) => supported.has(c.codePointAt(0)!)) ? plain : "";
+    }).join("").replace(/\s+/g, " ").trim();
 
   const pages = doc.getPages();
   const total = pages.length;
