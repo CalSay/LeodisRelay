@@ -22,9 +22,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   gold outline and a gold-tinted fill. No content added or removed. Help
   "What's new": "Clearer edges on the office desk".
 - Measured (new `scripts/verify-office-sections.mjs`, 1440 and 1180px, light
-  and dark, plus 390px): on main 48 of 59 checks failed (no surface change
-  between top bar and tabs, edges 1.32-1.64:1, cards 0px apart); now all
-  63 pass. Screenshots before and after: project files
+  and dark, plus 390px): on main 48 of the 59 checks it had then failed (no
+  surface change between top bar and tabs, edges 1.32-1.64:1, cards 0px
+  apart; the card-fill check was added after); now all 63 pass. Screenshots before and after: project files
   `ui-review/office-sections/`.
 - Checks: typecheck, `npm test` (146 + 472), build; browser checks
   verify-office-sections, verify-accessibility, verify-office-desk,
