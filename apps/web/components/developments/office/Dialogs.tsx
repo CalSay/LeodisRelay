@@ -179,16 +179,16 @@ export function Dialogs({ d, close, done }: { d: Dialog; close: () => void; done
       return `${v.reference} added to ${project.projectName}. It needs a quote.`;
     })}>
       {shell('Add a variation', fixed ? `${fixed.projectNumber} · ${fixed.projectName}` : 'Raised by the office', <>
-        <div className="f"><label>Project</label><select name="projectId" defaultValue={d.projectId ?? ''} autoFocus={!fixed}><option value="" disabled>Choose a project</option>{d.projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} · {p.projectName}</option>)}</select></div>
-        <div className="f"><label>Variation</label><textarea name="description" placeholder="What is being asked for, beyond the contract" autoFocus={!!fixed} /></div>
+        <div className="f"><label htmlFor="vn-projectId">Project</label><select id="vn-projectId" name="projectId" defaultValue={d.projectId ?? ''} autoFocus={!fixed}><option value="" disabled>Choose a project</option>{d.projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} · {p.projectName}</option>)}</select></div>
+        <div className="f"><label htmlFor="vn-description">Variation</label><textarea id="vn-description" name="description" placeholder="What is being asked for, beyond the contract" autoFocus={!!fixed} /></div>
         <div className="f-row three">
-          <div className="f"><label>Location</label><input name="location" placeholder="L1 plantroom" /></div>
-          <div className="f"><label>Trade</label><select name="trade" defaultValue=""><option value="">Not set</option>{VARIATION_TRADES.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
-          <div className="f"><label>Reason</label><select name="reason" defaultValue=""><option value="">Not set</option>{VARIATION_REASONS.map(r => <option key={r} value={r}>{r}</option>)}</select></div>
+          <div className="f"><label htmlFor="vn-location">Location</label><input id="vn-location" name="location" placeholder="L1 plantroom" /></div>
+          <div className="f"><label htmlFor="vn-trade">Trade</label><select id="vn-trade" name="trade" defaultValue=""><option value="">Not set</option>{VARIATION_TRADES.map(t => <option key={t} value={t}>{t}</option>)}</select></div>
+          <div className="f"><label htmlFor="vn-reason">Reason</label><select id="vn-reason" name="reason" defaultValue=""><option value="">Not set</option>{VARIATION_REASONS.map(r => <option key={r} value={r}>{r}</option>)}</select></div>
         </div>
-        <div className="f"><label>Asked for by · optional</label><input name="askedBy" placeholder="Name and company" /></div>
+        <div className="f"><label htmlFor="vn-askedBy">Asked for by · optional</label><input id="vn-askedBy" name="askedBy" placeholder="Name and company" /></div>
         <div className="f check"><input id="vn-done" name="workDone" type="checkbox" /><label htmlFor="vn-done">Work already carried out without a written instruction</label></div>
-        <div className="f"><label>Note · optional</label><textarea name="note" placeholder="How the office heard about it: client email of 18 Sep, site meeting" /></div>
+        <div className="f"><label htmlFor="vn-note">Note · optional</label><textarea id="vn-note" name="note" placeholder="How the office heard about it: client email of 18 Sep, site meeting" /></div>
         <p className="rowsub" style={{ margin: 0 }}>It joins the register awaiting instruction and unpriced, raised by you, and takes the project’s next VO number. Price it and record the client’s instruction from the variation, as for one raised on site. Who asked is not an instruction.</p>
       </>, <Foot label="Add variation" />)}
     </form></Modal>;

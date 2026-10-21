@@ -18,8 +18,9 @@ const roleWords = (assignment: string) => assignment.split('.').map(w => w === '
 
 /**
  * The roster reconciled with sessions. Read-only: roles are set in Microsoft.
- * The Team tab shows it in plain words; Admin's Roles & access keeps the
- * Microsoft app role names, which are what an Admin types into Entra.
+ * The Team tab shows it in plain words (`plain`); without it, the Microsoft
+ * app role names are kept, which are what an Admin types into Entra. The
+ * Admin changes the checklist itself under People.
  */
 function RosterTable({ members, note, plain }: { members: TeamMember[] | null; note?: string; plain?: boolean }) {
   const groups: [string, (m: TeamMember) => boolean][] = [['Admin', m => m.assignment === 'Admin'], ['Managers', m => m.assignment === 'Manager'], ['Engineers', m => m.assignment.startsWith('Engineer')], ['Signed in, not on the checklist', m => !m.onChecklist]];
@@ -116,7 +117,7 @@ function People({ ctx }: { ctx: Ctx }) {
   const unnamed = listed.filter(m => m.onChecklist && !m.name);
   const saved = () => { ctx.loadTeam(); void ctx.refresh(); };
   return <div className="two-wide">
-    <div className="panel"><div className="panel-head"><h3>People</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{unnamed.length ? `${unnamed.length} need${unnamed.length === 1 ? 's' : ''} a name` : 'Names shown across RELAY'}</span><Btn className="btn-sm" onClick={() => { setAdding(true); setSel(null); }}>Add person</Btn></div>
+    <div className="panel"><div className="panel-head"><h3>Team assignment checklist</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{unnamed.length ? `${unnamed.length} need${unnamed.length === 1 ? 's' : ''} a name` : 'Names shown across RELAY'}</span><BtnQ className="btn-sm" onClick={() => { setAdding(true); setSel(null); }}>Add person</BtnQ></div>
       <table className="reg cards"><thead><tr><th>Person</th><th>Role on the checklist</th><th>Now</th></tr></thead><tbody>
         {!members && <tr><td colSpan={3} className="loading" style={{ minHeight: 0, padding: 24 }}>Loading the roster</td></tr>}
         {members && !listed.length && <tr><td colSpan={3} className="empty">Nobody on the checklist and nobody signed in.</td></tr>}
