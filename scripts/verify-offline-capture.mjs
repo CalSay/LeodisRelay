@@ -18,7 +18,7 @@ const {chromium}=require(process.env.RELAY_PLAYWRIGHT_MODULE || 'playwright');
 const sharp=require('sharp');
 const root=mkdtempSync(join(tmpdir(),'relay-offline-capture-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
-const {putRecord,records}=require('../apps/web/.test-build/lib/storage.js');
+const {database,putRecord,records}=require('../apps/web/.test-build/lib/storage.js');
 const {createReport,getReport,saveDraft}=require('../apps/web/.test-build/lib/serverStore.js');
 const principal={id:'entra:offline-engineer',oid:'offline-engineer',name:'Offline Engineer',email:'offline@example.test',role:'Engineer',trade:'Electrical'};
 // One session per run: the light run ends by signing out, which ends its session.
@@ -148,8 +148,31 @@ try {
     check(o.type==='defect'&&o.location==='Riser 3, level 4'&&o.actionNeeded==='Fire stop before close-up'&&o.photos.length===1,`${scheme}: the defect card and its photo are in the server's copy`);
     const updated=getReport(draft.id);
     check(updated.observations[0].whatHappened==='Containment run and lidded'&&updated.observations[0].photos.length===1,`${scheme}: the held draft's change and photo reached the server`);
-    await page.locator('.eng-list .eng-row',{hasText:made.reference.split('-').slice(1).join('-')}).waitFor();
-    check(true,`${scheme}: the new draft is under Unfinished reports with its reference`);
+    // Both of today's drafts can be found again. The big button carries on
+    // with the one the server saved last (the order the engineer page reads
+    // drafts in); every other draft of today waits under Unfinished reports
+    // with its reference. Which one the server saved last depends on the order
+    // the phone sent them, so the check works it out rather than assuming.
+    const todays=database().prepare("SELECT id FROM records WHERE kind='reports' AND state='draft' AND project='proj-011lme' AND json_extract(data,'$.authorId')=? AND json_extract(data,'$.visitDate')=? ORDER BY updated DESC,id DESC").all(principal.id,made.visitDate).map(r=>r.id);
+    check(todays.includes(made.id)&&todays.includes(draft.id),`${scheme}: both of today's drafts are on the server as drafts`);
+    const tile=page.locator('a.eng-tile-main');
+    const onTile=id=>page.locator(`a.eng-tile-main[href^="/reports/${id}?"]`);
+    const unfinishedRow=id=>page.locator(`section[aria-labelledby="eng-unfinished-title"] a.eng-row[href^="/reports/${id}?"]`);
+    await onTile(todays[0]).waitFor({timeout:15000});
+    check(/Carry on with today’s update/.test(await tile.innerText()),`${scheme}: the big button carries on with today's update: ${await tile.innerText()}`);
+    for(const r of [made,updated,...(conflict?[getReport(conflict.id)]:[])]){
+      const ref=r.reference.split('-').slice(1).join('-');
+      const row=unfinishedRow(r.id);
+      if(r.id===todays[0]){
+        check((await tile.count())===1,`${scheme}: ${ref}, saved last, is on the big button`);
+        // Listed again only when the list has something to say about it (held, refused, signed).
+        // Wait for it to go: the home screen re-reads what the phone holds a moment after the refresh.
+        if(r.id!==conflict?.id)check(await row.waitFor({state:'detached',timeout:10000}).then(()=>true,()=>false),`${scheme}: ${ref} is not listed twice`);
+      } else {
+        await row.waitFor();
+        check((await row.innerText()).includes(ref),`${scheme}: ${ref} is under Unfinished reports with its reference`);
+      }
+    }
     const keys=await heldKeys(page);
     if(conflict){
       const problem=page.locator('.held-send .note-bad');

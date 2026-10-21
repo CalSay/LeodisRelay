@@ -4,6 +4,36 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — No-signal check brought up to date
+
+- Why: `verify-offline-capture` failed at its Unfinished reports step on
+  main (found in PR #93), and a deploy of 5107b78 was waiting on whether
+  no-signal work could be lost. Not a `docs/tasks.json` change (FE-3e
+  already passes), so no status changed.
+- Finding: an out-of-date check, not an app fault. Every server-side
+  assertion passed: cards, photos and edits made with no signal reach the
+  server whole and nothing is made twice. Since #90 the big "Carry on with
+  today's update" button opens today's draft the server saved last (the
+  engineer page reads drafts by `updated DESC, id DESC`), and any other draft
+  of today is listed under Unfinished reports. The check assumed the new
+  offline draft was always in that list, so it passed or failed on which of
+  the two drafts the phone sent last. Decision: keep #90's rule and the
+  app's order (most recently saved first is fixed and sensible), and change
+  only the check.
+- Changed: the check now works out from the server which of today's drafts
+  was saved last, and proves that one is on the big button (and not listed
+  twice) while every other one, the new offline draft, the held draft and
+  (dark run) the draft changed elsewhere, is under Unfinished reports with
+  its reference. No app change, so no Help "What's new" line.
+- Checks: `npm run typecheck`, `npm test`, `npm run build`.
+  verify-offline-capture passed 7 runs (62 checks); both orders came up
+  (new draft on the button 3 runs, held draft 1 run, 3 unlogged). The
+  "not listed twice" step waits for the row to go, because the home screen
+  re-reads what the phone holds just after its refresh. Also passed:
+  offline-drafts, offline-inspection, offline-sign, site-notes-offline,
+  handover-offline, engineer-day, day-walkthrough, engineer-layout.
+- Not verified: no real phone, no live tenant.
+
 ## 2026-10-21 — Shorter issues list for engineers
 
 - Why: Cal (2026-10-21 07:02): engineers are hands-on people and want a
