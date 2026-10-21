@@ -27,6 +27,8 @@ const sharp=require('sharp');
 const root=mkdtempSync(join(tmpdir(),'relay-day-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,records,getRecord,database}=require('../apps/web/.test-build/lib/storage.js');
+// Safety, permits and deliveries are off unless the office turns them on (lib/featureSwitch.ts); this check needs them on. verify-simpler-home.mjs covers both states.
+putRecord('settings',{id:'features',safetyRecords:true});
 const {createReport,saveDraft,submitReport,renameInspected}=require('../apps/web/.test-build/lib/serverStore.js');
 const {leaveNote}=require('../apps/web/.test-build/lib/siteNoteStore.js');
 const {runOneJob}=require('../apps/web/.test-build/lib/reportWorker.js');
@@ -172,7 +174,7 @@ try {
   const before=openIssues();
   const riser=records('issues',P).find(i=>/Fire stopping/.test(i.description));
   await page.goto(home);
-  await page.getByRole('button',{name:/Start a site update/}).click();await page.waitForURL(/\/reports\//);
+  await page.getByRole('button',{name:/Start today’s site update/}).click();await page.waitForURL(/\/reports\//);
   const updateId=page.url().split('/reports/')[1].split(/[?#]/)[0];
   await page.getByRole('button',{name:/Something wrong/}).click();
   let open=page.locator('.eng-slot.open');

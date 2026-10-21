@@ -15,6 +15,8 @@ const {chromium}=require(process.env.RELAY_PLAYWRIGHT_MODULE || 'playwright');
 const root=mkdtempSync(join(tmpdir(),'relay-before-handover-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,database}=require('../apps/web/.test-build/lib/storage.js');
+// Safety, permits and deliveries are off unless the office turns them on (lib/featureSwitch.ts); this check needs them on. verify-simpler-home.mjs covers both states.
+putRecord('settings',{id:'features',safetyRecords:true});
 const {londonDay}=require('../apps/web/.test-build/lib/weeklySummary.js');
 const engineer={id:'entra:ho-engineer',oid:'ho-engineer',name:'Hand Over',email:'ho@example.test',role:'Engineer',trade:'Electrical'};
 const manager={id:'entra:ho-manager',oid:'ho-manager',name:'Office Manager',email:'manager@example.test',role:'Manager'};
@@ -71,6 +73,8 @@ try {
     const res=await page.request.get(`${base}/api/before-handover?projectId=proj-missing`);
     check(res.status()===404,`engineer: a project that does not exist is refused (${res.status()})`);
     await page.goto(`${base}/engineer?project=proj-011lme`);
+    // The Site page keeps it under "More on this project", folded until opened.
+    await page.locator('details.eng-more-pages summary').click();
     const link=page.getByRole('link',{name:/^Before handover/});await link.waitFor();
     check(true,'engineer: home offers Before handover');
     await link.click();await page.waitForURL(/\/handover\?project=proj-011lme/);await page.locator('.ho-sheet').waitFor();

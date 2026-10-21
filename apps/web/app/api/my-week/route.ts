@@ -8,6 +8,7 @@ import { refreshProjects, reportableProject } from '@/lib/projects';
 import { refreshIssues } from '@/lib/sharepoint/issues';
 import { sharePointMode } from '@/lib/sharepoint/config';
 import { myWeek } from '@/lib/myWeek';
+import { safetyRecordsOn, withoutSafetyReports } from '@/lib/features';
 import { talksFor } from '@/lib/toolboxTalkStore';
 import { permitsFor } from '@/lib/permitStore';
 import { deliveriesFor } from '@/lib/deliveryStore';
@@ -26,6 +27,7 @@ export async function GET(request: Request) {
   const open = projects.filter(p => (sharePointMode() === 'off' || reportableProject(p)) && canAccessProject(guard.principal, p.id));
   const today = londonDay(new Date());
   const monday = weekStart(new URL(request.url).searchParams.get('week') ?? undefined, today);
-  return jsonResponse(request, myWeek(open, { reports:open.flatMap(p => listReports(p.id)), issues:open.flatMap(p => listIssues(p.id)),
-    talks:open.flatMap(p => talksFor(p.id).talks), permits:open.flatMap(p => permitsFor(p.id).permits), deliveries:open.flatMap(p => deliveriesFor(p.id).deliveries) }, guard.principal, monday, today));
+  return jsonResponse(request, myWeek(open, { reports:withoutSafetyReports(open.flatMap(p => listReports(p.id))), issues:open.flatMap(p => listIssues(p.id)),
+    // Talks, permits and deliveries only while the office has them on (featureSwitch.ts).
+    ...(safetyRecordsOn() ? { talks:open.flatMap(p => talksFor(p.id).talks), permits:open.flatMap(p => permitsFor(p.id).permits), deliveries:open.flatMap(p => deliveriesFor(p.id).deliveries) } : {}) }, guard.principal, monday, today));
 }

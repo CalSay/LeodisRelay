@@ -17,6 +17,8 @@ const {chromium}=require(process.env.RELAY_PLAYWRIGHT_MODULE || 'playwright');
 const root=mkdtempSync(join(tmpdir(),'relay-report-types-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,getRecord,records,database}=require('../apps/web/.test-build/lib/storage.js');
+// Safety, permits and deliveries are off unless the office turns them on (lib/featureSwitch.ts); this check needs them on. verify-simpler-home.mjs covers both states.
+putRecord('settings',{id:'features',safetyRecords:true});
 const {SAFETY_CHECKLIST}=require('../apps/web/.test-build/lib/reportTypes.js');
 const engineer={id:'entra:inspect-engineer',oid:'inspect-engineer',name:'Ivy Inspector',email:'ivy@example.test',role:'Engineer',trade:'Electrical'};
 const manager={id:'entra:inspect-manager',oid:'inspect-manager',name:'Morgan Office',email:'morgan@example.test',role:'Manager'};
@@ -51,7 +53,7 @@ try {
     const tile=page.getByRole('button',{name:/Do a safety inspection/});
     await tile.waitFor();
     ok(/12 checks/.test(await tile.innerText()),`${label}: the tile says what an inspection asks`);
-    ok(await page.getByRole('button',{name:/Start a site update/}).isVisible(),`${label}: the site update is still there`);
+    ok(await page.getByRole('button',{name:/Start today’s site update/}).isVisible(),`${label}: the site update is still there`);
     eq(await overflow(),false,`${label}: home has no sideways scroll`);
     await shot(page,`home-${scheme}-${width}`);
     await tile.click();

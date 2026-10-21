@@ -1,3 +1,4 @@
+import { withoutSafetyReports } from '@/lib/features';
 import { NextResponse } from 'next/server';
 import { jsonResponse } from '@/lib/jsonResponse';
 import { requireSession } from '@/lib/auth/guard';
@@ -28,7 +29,7 @@ export async function GET(request: Request) {
   const allowed = new Set(open.map(p => p.id));
   const scoped = <T extends { projectId: string }>(rows: T[]) => rows.filter(r => allowed.has(r.projectId));
   return jsonResponse(request, search(query, {
-    reports:scoped(listReports()), issues:scoped(listIssues()), variations:scoped(listVariations()),
+    reports:withoutSafetyReports(scoped(listReports())), issues:scoped(listIssues()), variations:scoped(listVariations()),
     projects:open.map(p => ({ id:p.id, projectName:p.projectName, projectNumber:p.projectNumber })),
   }, guard.principal, projectId));
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
+import { useFeatures } from './FeaturesContext';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useProjects } from './ProjectContext';
@@ -44,6 +45,8 @@ export function BeforeHandoverPage({ initialProject, returnTo }: { initialProjec
   const principal = usePrincipal();
   const router = useRouter();
   const today = londonDay(new Date());
+  // Safety actions only while the office has them on (lib/featureSwitch.ts).
+  const { safetyRecords } = useFeatures();
   const [projectId, setProjectId] = useState(projects.some(p => p.id === initialProject) ? initialProject : projects.length === 1 ? projects[0]!.id : '');
   const [data, setData] = useState<BeforeHandover | null>(null);
   const [error, setError] = useState('');
@@ -89,7 +92,7 @@ export function BeforeHandoverPage({ initialProject, returnTo }: { initialProjec
       <button type="button" className="btn-primary" onClick={() => window.print()} disabled={!d}>Print or save as PDF</button>
     </div>
 
-    {!project ? <div className="eng-panel ho-noprint"><h1>Before handover</h1><p className="eng-help">Choose a project to see everything RELAY still has open on it, in one place: snags on our work, fixes waiting to be checked, handover inspections, other trades&rsquo; issues, variations not yet settled and safety actions.</p></div>
+    {!project ? <div className="eng-panel ho-noprint"><h1>Before handover</h1><p className="eng-help">Choose a project to see everything RELAY still has open on it, in one place: snags on our work, fixes waiting to be checked, handover inspections, other trades&rsquo; issues{safetyRecords ? <>, variations not yet settled and safety actions</> : <> and variations not yet settled</>}.</p></div>
       : error ? <><h1>Before handover</h1><div className="note note-bad" role="alert">{error} <button type="button" onClick={() => setRetry(n => n + 1)}>Retry</button></div></>
       : !d ? <><h1>Before handover</h1><p role="status">Loading what is still open…</p></>
       : <article className="ho-sheet" aria-labelledby="ho-title">
@@ -105,12 +108,12 @@ export function BeforeHandoverPage({ initialProject, returnTo }: { initialProjec
           <p className="ho-sub">As of {dayLabel(today, true)}{project.projectManager ? ` · ${project.projectManager}, project manager` : ''}</p>
         </header>
 
-        <nav className="ho-stats" aria-label="Jump to a list">
+        <nav className="ho-stats" aria-label="Jump to a list" style={{ '--ho-stats': safetyRecords ? 5 : 4 } as React.CSSProperties}>
           {stat('#ho-ours', 'Our snags', d.totals.ours, 'to put right', 'ho-stat-alert')}
           {stat('#ho-check', 'Waiting to be checked', d.totals.toCheck, 'fixed, not yet closed', 'ho-stat-due')}
           {stat('#ho-others', 'Other trades', d.totals.others, 'open on the list', 'ho-stat-due')}
           {stat('#ho-variations', 'Variations', d.totals.variations, d.totals.workDone ? `${d.totals.workDone} done, not instructed` : 'not yet instructed', d.totals.workDone ? 'ho-stat-alert' : 'ho-stat-due')}
-          {stat('#ho-safety', 'Safety actions', d.totals.safety, d.safetyInspected ? 'still open' : 'no inspection yet', 'ho-stat-alert')}
+          {safetyRecords && stat('#ho-safety', 'Safety actions', d.totals.safety, d.safetyInspected ? 'still open' : 'no inspection yet', 'ho-stat-alert')}
         </nav>
 
         <Section id="ho-ours" title="Snags on our work" count={d.totals.ours ? `${d.totals.ours} open` : 'none open'}>
@@ -152,13 +155,13 @@ export function BeforeHandoverPage({ initialProject, returnTo }: { initialProjec
           </li>)}</ul> : <p className="ho-none">Every variation has been instructed or declined.</p>}
         </Section>
 
-        <Section id="ho-safety" title="Safety actions still open" count={d.safety.length ? String(d.safety.length) : 'none'}>
+        {safetyRecords && <Section id="ho-safety" title="Safety actions still open" count={d.safety.length ? String(d.safety.length) : 'none'}>
           {d.safety.length ? <ul className="ho-rows">{d.safety.map(a => <li key={a.key} className="ho-late">
             <p className="ho-tags"><Link className="ref" href={withViewReturn(`/reports/${a.latest.id}`, here)}>{a.latest.reference}</Link><span className="tag tag-alert">Open {a.days > 0 ? plural(a.days, 'day') : 'since today'}</span></p>
             <p className="ho-desc">{a.tower ? `${a.tower}: ${a.question}` : a.question}</p>
             <p className="ho-meta">{[a.actionNeeded || a.found, a.location, a.who].filter(Boolean).join(' · ')}</p>
           </li>)}</ul> : <p className="ho-none">{d.safetyInspected ? 'The safety and tower inspections left nothing open.' : 'No safety or tower inspection has been sent from this project yet.'}</p>}
-        </Section>
+        </Section>}
 
         <footer className="ho-foot">
           <p>Made from the issue and variation registers and the inspections sent in RELAY, as of {dayLabel(today, true)}. Nothing here is typed in or changed. It covers only what is in RELAY: drawings, test certificates, O&amp;M manuals and the client&rsquo;s own snag list are not.</p>

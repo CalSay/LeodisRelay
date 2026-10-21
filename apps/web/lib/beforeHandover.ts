@@ -99,7 +99,8 @@ const byPlace = (a: HandoverIssue, b: HandoverIssue) =>
 const isOurs = (trade: string | undefined): trade is OurTrade => OUR_TRADES.some(t => t === trade);
 
 /** `today` is today in the office calendar (YYYY-MM-DD), so target dates compare as strings. */
-export function beforeHandover(project: HandoverProject, sources: HandoverSources, principal: Principal, today: string): BeforeHandover {
+/** `safety: false`: Safety actions are switched off by the office (featureSwitch.ts), so none are listed or counted. */
+export function beforeHandover(project: HandoverProject, sources: HandoverSources, principal: Principal, today: string, options: { safety?: boolean } = {}): BeforeHandover {
   const reports = sources.reports.filter(r => r.projectId === project.id && canReadReport(principal, r));
   const sent = reports.filter(r => r.state === 'submitted');
   const superseded = new Set(sent.map(r => r.corrects).filter((id): id is string => Boolean(id)));
@@ -160,7 +161,7 @@ export function beforeHandover(project: HandoverProject, sources: HandoverSource
     .map(v => ({ id: v.id, reference: v.reference, description: tidy(v.description), location: tidy(v.location), workDone: v.workDone, quoted: v.quotedValue !== undefined }))
     .sort((a, b) => Number(b.workDone) - Number(a.workDone) || byRef(a, b));
 
-  const safetyProject = safetyActions([project], reports, principal, today).projects[0];
+  const safetyProject = options.safety === false ? undefined : safetyActions([project], reports, principal, today).projects[0];
   const safety = safetyProject?.open ?? [];
 
   const oursCount = ours.reduce((n, g) => n + g.issues.length, 0);

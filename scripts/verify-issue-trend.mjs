@@ -60,6 +60,8 @@ try {
     const res=await page.request.get(`${base}/api/issue-trend?projectId=proj-missing`);
     check(res.status()===404,`engineer: a project that does not exist is refused (${res.status()})`);
     await page.goto(`${base}/engineer?project=proj-011lme`);
+    // The Site page keeps it under "More on this project", folded until opened.
+    await page.locator('details.eng-more-pages summary').click();
     const link=page.getByRole('link',{name:/^Issues over time/});await link.waitFor();
     check(true,'engineer: home offers Issues over time');
     await link.click();await page.waitForURL(/\/issue-trend\?project=proj-011lme/);await page.locator('.it-sheet').waitFor();

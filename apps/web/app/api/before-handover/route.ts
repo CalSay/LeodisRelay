@@ -9,6 +9,7 @@ import { refreshProjects, reportableProject } from '@/lib/projects';
 import { refreshIssues } from '@/lib/sharepoint/issues';
 import { refreshVariations } from '@/lib/sharepoint/variations';
 import { sharePointMode } from '@/lib/sharepoint/config';
+import { safetyRecordsOn } from '@/lib/features';
 import { beforeHandover } from '@/lib/beforeHandover';
 import { londonDay } from '@/lib/weeklySummary';
 
@@ -25,5 +26,5 @@ export async function GET(request: Request) {
   // The same project rule as the weekly summary and the report, issue and variation lists.
   const project = projects.find(p => p.id === projectId && (sharePointMode() === 'off' || reportableProject(p)) && canAccessProject(guard.principal, p.id));
   if (!project) return NextResponse.json({ reason:'This project is not open to you.' },{ status:404 });
-  return jsonResponse(request, beforeHandover(project, { reports:listReports(projectId), issues:listIssues(projectId), variations:listVariations(projectId) }, guard.principal, londonDay(new Date())));
+  return jsonResponse(request, beforeHandover(project, { reports:listReports(projectId), issues:listIssues(projectId), variations:listVariations(projectId) }, guard.principal, londonDay(new Date()), { safety: safetyRecordsOn() }));
 }

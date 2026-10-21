@@ -18,6 +18,8 @@ const sharp=require('sharp');
 const root=mkdtempSync(join(tmpdir(),'relay-editor-usability-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord}=require('../apps/web/.test-build/lib/storage.js');
+// Safety, permits and deliveries are off unless the office turns them on (lib/featureSwitch.ts); this check needs them on. verify-simpler-home.mjs covers both states.
+putRecord('settings',{id:'features',safetyRecords:true});
 // One engineer per run, so each starts with no drafts of their own.
 const sessionFor=scheme=>{const principal={id:`entra:usability-${scheme}`,oid:`usability-${scheme}`,name:`Usability ${scheme}`,email:`usability-${scheme}@example.test`,role:'Engineer',trade:'Electrical'};const id=randomUUID();putRecord('sessions',{id,principal,issuedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+3600000).toISOString()});return id;};
 const port=4361,base=`http://127.0.0.1:${port}`;let output='';
@@ -41,7 +43,7 @@ try {
     const visible=sel=>page.locator(`${sel}:visible`).count();
 
     // A site update with one card.
-    await page.goto(`${base}/engineer`);await page.getByText('Start a site update').click();
+    await page.goto(`${base}/engineer`);await page.getByText('Start today’s site update').click();
     await page.waitForURL(/\/reports\//);await page.locator('.eng-tile').first().waitFor();
     const head=await page.evaluate(()=>{const h=document.querySelector('.pagehead h1').getBoundingClientRect(),t=document.querySelector('.pagehead .tag').getBoundingClientRect();return {sameLine:t.top<h.bottom,sub:document.querySelector('.pagehead .sub').textContent};});
     ok(head.sameLine,`${label}: the Draft tag sits beside the title`);
