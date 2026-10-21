@@ -33,10 +33,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
     names its project in the line under the reference, which the Back link
     used to do. Buttons on these pages no longer touch.
   - A variation done before instruction is "Done, not instructed" on the
-    weekly summary too; Search shows a waiting variation as "Awaiting
-    instruction" for everyone (it said "With the office" to the office as
-    well). The engineer's own variation page keeps "With the office", which
-    is written for them.
+    weekly summary too. Search keeps "With the office" for a waiting
+    variation, so it matches the variation page it opens.
+  - The issue spreadsheet's Work column says "Fixed, to check" like its
+    Verification column, and the office's attention lists tag such issues
+    "Fixed, to check" (their buttons still say "Verify").
   - The project page says "Start a site update", "cards" and "Received", as
     the engineer home does; the office says "cards", not "sections". Plurals
     fixed: "1 reports", "Needs action hides 1 reports, 1 issues".

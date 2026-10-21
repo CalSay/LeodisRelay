@@ -47,7 +47,7 @@ export const SEARCH_LIMIT = 25;
 export const MIN_QUERY = 2;
 const MAX_WORDS = 8;
 
-const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined' };
+const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'With the office', instructed: 'Instructed', declined: 'Declined' };
 
 /** Lower case, no accents, and dashes read as spaces, so "Level-3" finds "level 3" and "VO 004" finds "VO-004". */
 function fold(text: string): string {
