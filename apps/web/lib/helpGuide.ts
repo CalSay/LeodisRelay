@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-sections', added: '2026-10-21', audience: 'office', title: 'Clearer edges on the office desk',
+    text: 'The top bar, the tabs and the column headings now each have their own shade with a clear line between them, so it is easy to see where one ends and the next starts. With a project open, each project in the Projects column is its own card, and the open one has a gold outline.' },
   { id: 'weekly-work-done', added: '2026-10-21', audience: 'all', title: 'The week in the engineers\' words',
     text: 'The Weekly summary now shows what was done on each visit, where and in the engineer\'s own words, so you can read the week without opening every report. The first three updates on a visit show; "Show all" opens the rest. A printed copy has every one.',
     link: { label: 'Open the Weekly summary', href: '/weekly-summary' } },

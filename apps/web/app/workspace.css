@@ -4,9 +4,9 @@
    only the accent role differs. Developments sets --acc to the hub's gold
    (the role aquamarine plays in Compliance). Status colours are the
    application's own and are never the accent. */
-.ws{--ground:#eeede9;--sunken:#e4e3de;--panel:#f8f7f3;--panel-2:#efeeea;--panel-3:#e3e2dd;--line:#d6d7d3;--line-2:#c3c6c4;--text:#25282a;--text-2:#4f5354;--text-3:#5e6263;--acc:#765a1d;--acc-ink:#fff;--acc-wash:rgba(129,99,33,.09);--gold:#765a1d;--gold-ink:#fff;--gold-wash:rgba(129,99,33,.09);--alert:#a83c22;--alert-wash:rgba(168,60,34,.09);--caution:#7d5a12;--caution-wash:rgba(125,90,18,.11);--ok:#2b6b48;--ok-wash:rgba(43,107,72,.10);--access:#5f7a9c;--r:2px;--touch:48px;color:var(--text);background:var(--ground)}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ws{--ground:#202224;--sunken:#1a1c1e;--panel:#282b2d;--panel-2:#2e3134;--panel-3:#363a3d;--line:#3a3e41;--line-2:#484c4e;--text:#f0efeb;--text-2:#c2c4c3;--text-3:#a5a9aa;--acc:#ccb071;--acc-ink:#202224;--acc-wash:rgba(204,176,113,.10);--gold:#ccb071;--gold-ink:#202224;--gold-wash:rgba(204,176,113,.10);--alert:#ec8a76;--alert-wash:rgba(226,112,90,.11);--caution:#dda94f;--caution-wash:rgba(221,169,79,.11);--ok:#63b78d;--ok-wash:rgba(99,183,141,.11);--access:#8fa9c9}}
-:root[data-theme="dark"] .ws{--ground:#202224;--sunken:#1a1c1e;--panel:#282b2d;--panel-2:#2e3134;--panel-3:#363a3d;--line:#3a3e41;--line-2:#484c4e;--text:#f0efeb;--text-2:#c2c4c3;--text-3:#a5a9aa;--acc:#ccb071;--acc-ink:#202224;--acc-wash:rgba(204,176,113,.10);--gold:#ccb071;--gold-ink:#202224;--gold-wash:rgba(204,176,113,.10);--alert:#ec8a76;--alert-wash:rgba(226,112,90,.11);--caution:#dda94f;--caution-wash:rgba(221,169,79,.11);--ok:#63b78d;--ok-wash:rgba(99,183,141,.11);--access:#8fa9c9}
+.ws{--ground:#eeede9;--sunken:#e4e3de;--panel:#f8f7f3;--panel-2:#efeeea;--panel-3:#e3e2dd;--line:#d6d7d3;--line-2:#c3c6c4;--edge:#7a7d7b;--chrome:#e4e3de;--text:#25282a;--text-2:#4f5354;--text-3:#5e6263;--acc:#765a1d;--acc-ink:#fff;--acc-wash:rgba(129,99,33,.09);--gold:#765a1d;--gold-ink:#fff;--gold-wash:rgba(129,99,33,.09);--alert:#a83c22;--alert-wash:rgba(168,60,34,.09);--caution:#7d5a12;--caution-wash:rgba(125,90,18,.11);--ok:#2b6b48;--ok-wash:rgba(43,107,72,.10);--access:#5f7a9c;--r:2px;--touch:48px;color:var(--text);background:var(--ground)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .ws{--ground:#202224;--sunken:#1a1c1e;--panel:#282b2d;--panel-2:#2e3134;--panel-3:#363a3d;--line:#3a3e41;--line-2:#484c4e;--edge:#85898b;--chrome:#151719;--text:#f0efeb;--text-2:#c2c4c3;--text-3:#a5a9aa;--acc:#ccb071;--acc-ink:#202224;--acc-wash:rgba(204,176,113,.10);--gold:#ccb071;--gold-ink:#202224;--gold-wash:rgba(204,176,113,.10);--alert:#ec8a76;--alert-wash:rgba(226,112,90,.11);--caution:#dda94f;--caution-wash:rgba(221,169,79,.11);--ok:#63b78d;--ok-wash:rgba(99,183,141,.11);--access:#8fa9c9}}
+:root[data-theme="dark"] .ws{--ground:#202224;--sunken:#1a1c1e;--panel:#282b2d;--panel-2:#2e3134;--panel-3:#363a3d;--line:#3a3e41;--line-2:#484c4e;--edge:#85898b;--chrome:#151719;--text:#f0efeb;--text-2:#c2c4c3;--text-3:#a5a9aa;--acc:#ccb071;--acc-ink:#202224;--acc-wash:rgba(204,176,113,.10);--gold:#ccb071;--gold-ink:#202224;--gold-wash:rgba(204,176,113,.10);--alert:#ec8a76;--alert-wash:rgba(226,112,90,.11);--caution:#dda94f;--caution-wash:rgba(221,169,79,.11);--ok:#63b78d;--ok-wash:rgba(99,183,141,.11);--access:#8fa9c9}
 .ws :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .ws a{color:inherit;text-decoration:none}
 .ws button{min-height:0;border:0;background:none;padding:0;border-radius:0;font:inherit;font-weight:400;color:inherit;cursor:pointer}
@@ -21,12 +21,15 @@
 /* ---------------------------------------------------------------- shell */
 .ws{position:relative;height:100dvh;min-width:1180px;display:flex;flex-direction:column;font-family:var(--sans);font-size:14px;line-height:1.5}
 body:has(.ws){overflow:hidden auto}
-.ws .topbar{flex:none;display:flex;align-items:center;gap:var(--s5);background:var(--panel);border-bottom:1px solid var(--line-2);padding:0 var(--s5);height:56px;position:relative;z-index:5}
+/* The desk's sections each sit on their own surface with an --edge line
+   (3:1 against both sides) between them: top bar (chrome), tabs (panel),
+   column headers (panel-3). Cal, 2026-10-21: they "all blend into one". */
+.ws .topbar{flex:none;display:flex;align-items:center;gap:var(--s5);background:var(--chrome);border-bottom:1px solid var(--edge);padding:0 var(--s5);height:56px;position:relative;z-index:5}
 .ws .logo{display:flex;align-items:baseline;gap:var(--s3)}
 .ws .logo b{font-size:17px;font-weight:500;letter-spacing:.12em}
 .ws .logo span{font-family:var(--mono);font-size:10px;letter-spacing:.18em;color:var(--acc);border-left:1px solid var(--line-2);padding-left:var(--s3)}
 .ws .search{flex:1;max-width:440px;position:relative}
-.ws .search input{width:100%;background:var(--sunken);border:1px solid var(--line);border-radius:var(--r);padding:var(--s2) var(--s3);color:var(--text);font:inherit;font-size:13px}
+.ws .search input{width:100%;background:var(--panel);border:1px solid var(--line-2);border-radius:var(--r);padding:var(--s2) var(--s3);color:var(--text);font:inherit;font-size:13px}
 .ws .search input::placeholder{color:var(--text-3)}
 .ws .search kbd{position:absolute;right:10px;top:8px;font-family:var(--mono);font-size:10px;color:var(--text-3);border:1px solid var(--line-2);border-radius:2px;padding:1px 5px;pointer-events:none}
 .ws .results{position:absolute;top:40px;left:0;right:0;background:var(--panel);border:1px solid var(--line-2);box-shadow:0 8px 24px rgba(0,0,0,.12);max-height:380px;overflow:auto;z-index:7}
@@ -51,7 +54,7 @@ body:has(.ws){overflow:hidden auto}
 .ws .themebtn{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:13px;color:var(--text-2);border:1px solid var(--line);padding:4px 8px;min-height:0;border-radius:var(--r);margin:0;min-width:0}
 .ws .themebtn:hover{color:var(--acc);border-color:var(--acc)}
 .ws .attn-pop{position:absolute;right:24px;top:56px;width:440px;background:var(--panel);border:1px solid var(--alert);border-top:0;border-left-width:3px;box-shadow:0 12px 28px rgba(0,0,0,.14);z-index:6;max-height:70vh;overflow:auto}
-.ws .hnav{flex:none;display:flex;background:var(--panel);border-bottom:1px solid var(--line-2);padding:0 var(--s5)}
+.ws .hnav{flex:none;display:flex;background:var(--panel);border-bottom:1px solid var(--edge);padding:0 var(--s5)}
 .ws .hnav a{font-family:var(--sans);font-size:14px;color:var(--text-2);padding:var(--s3) var(--s4);border-bottom:2px solid transparent;display:flex;align-items:center;gap:var(--s2)}
 .ws .hnav a:hover{color:var(--text)}
 .ws .hnav a.on{color:var(--text);font-weight:500;border-bottom-color:var(--acc)}
@@ -193,9 +196,9 @@ body:has(.ws){overflow:hidden auto}
 .ws .cols{flex:1;min-height:0;display:grid;grid-template-columns:250px 400px 1fr}
 /* No project chosen: the office position on its own, full width. Its "Where each project stands" list is the project list. */
 .ws .cols[data-depth="1"]{grid-template-columns:1fr}
-.ws .col{min-height:0;overflow-y:auto;border-right:1px solid var(--line-2);background:var(--panel);display:flex;flex-direction:column;min-width:0}
+.ws .col{min-height:0;overflow-y:auto;border-right:1px solid var(--edge);background:var(--panel);display:flex;flex-direction:column;min-width:0}
 .ws .col:last-child{border-right:0;background:var(--sunken)}
-.ws .col-head{position:sticky;top:0;z-index:1;display:flex;align-items:baseline;gap:var(--s2);padding:var(--s3) var(--s4);border-bottom:2px solid var(--line-2);box-shadow:inset 0 -1px 0 var(--acc);background:var(--panel-3);font:inherit;letter-spacing:0;text-transform:none}
+.ws .col-head{position:sticky;top:0;z-index:1;display:flex;align-items:baseline;gap:var(--s2);padding:var(--s3) var(--s4);border-bottom:1px solid var(--edge);background:var(--panel-3);font:inherit;letter-spacing:0;text-transform:none}
 .ws .col-head :is(h2,h4){margin:0;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ws .col-head i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:auto;white-space:nowrap}
 .ws .col-head .col-back{display:none}
@@ -203,6 +206,12 @@ body:has(.ws){overflow:hidden auto}
 .ws .item{display:block;padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);border-left:2px solid transparent}
 .ws .item:hover{background:var(--sunken)}
 .ws .item.on{background:var(--acc-wash);border-left-color:var(--acc)}
+/* Projects column: each project is its own card on a sunken ground; the open one has a gold outline. */
+.ws .col-projects{background:var(--sunken)}
+.ws .col-projects .item{margin:var(--s2) var(--s2) 0;background:var(--panel);border:1px solid var(--line-2);border-left-width:3px;border-radius:var(--r)}
+.ws .col-projects .item:last-child{margin-bottom:var(--s2)}
+.ws .col-projects .item:hover{background:var(--panel-2);border-color:var(--edge)}
+.ws .col-projects .item.on{background:linear-gradient(var(--acc-wash),var(--acc-wash)) var(--panel-2);border-color:var(--acc);border-left-width:4px}
 .ws .item-top{display:flex;align-items:baseline;gap:var(--s2)}
 .ws .item-top .rowtitle{font-size:13px;flex:1;min-width:0}
 .ws .item-top .arrow{font-family:var(--mono);font-size:12px;color:var(--text-3)}
@@ -268,7 +277,7 @@ body:has(.ws){overflow:hidden auto}
   .ws .topbar-right .tbtn.tbtn-help{display:inline-flex;align-items:center}
   .ws .whoami{max-width:150px;overflow:hidden;text-overflow:ellipsis}
   .ws .attn-pop{position:fixed;left:8px;right:8px;top:auto;bottom:72px;width:auto;border-top:1px solid var(--alert);max-height:60vh}
-  .ws .hnav{position:fixed;left:0;right:0;bottom:0;z-index:20;border-bottom:0;border-top:1px solid var(--line-2);padding:0 4px calc(4px + env(safe-area-inset-bottom,0px));justify-content:space-around}
+  .ws .hnav{position:fixed;left:0;right:0;bottom:0;z-index:20;border-bottom:0;border-top:1px solid var(--edge);padding:0 4px calc(4px + env(safe-area-inset-bottom,0px));justify-content:space-around}
   .ws .hnav a{flex:1;flex-direction:column;gap:2px;padding:8px 2px 6px;font-size:12px;letter-spacing:0;border-bottom:0;border-top:2px solid transparent;justify-content:center;min-height:52px}
   .ws .hnav a.on{border-top-color:var(--acc)}
   .ws .hnav .adm{margin-left:0}
