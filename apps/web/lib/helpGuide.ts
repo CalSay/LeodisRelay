@@ -35,6 +35,8 @@ export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'office-add-variation', added: '2026-10-21', audience: 'office', title: 'Add a variation from the office',
     text: 'A variation the office hears about away from site, from a client email or a meeting, can now be added to the register with "Add variation" on the Variations tab or a project\'s sheet. It takes the project\'s next VO number and waits for a quote, like one raised on site.',
     link: { label: 'Open the office', href: '/office' } },
+  { id: 'came-back-to-update', added: '2026-10-21', audience: 'site', title: 'Straight to the update',
+    text: 'Tapping one of your issues under "Came back from the office" now opens it with "Add photograph" and "Put forward as fixed" on screen for most issues, while what is wrong and where stay in view; a very long description still needs a short scroll to the button. A long description now takes less room, so the buttons sit nearer the top. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'simpler-issue-list', added: '2026-10-21', audience: 'site', title: 'A shorter issues list',
     text: 'Each issue on the Issues tab now shows what is wrong, where, its status and who is fixing it by when, with a small photo beside it, so a phone screen holds several at once. The trade and who reported it are still on the issue itself, under "History". Checked in a phone-sized browser, not on a real phone.' },
   { id: 'sent-report-two-steps', added: '2026-10-21', audience: 'site', title: 'A sent report, at a glance',
