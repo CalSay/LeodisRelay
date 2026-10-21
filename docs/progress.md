@@ -4,6 +4,29 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Sixth release check (main at e2e84ff, #74 to #78)
+
+- Why: the coordinator's release check before a first deploy. Not a
+  `docs/tasks.json` task, so no status changed there.
+- Fresh checkout of e2e84ff: `npm ci`, `npm run typecheck`, `npm test`
+  (146 + 415), `npm run build` and all 63 browser checks, one after another.
+  62 passed. `verify-site-notes` failed every time (4 of 4): since #75 a first
+  visit to Help shows only the latest six What's new entries with "Show all"
+  under them, and Notes for the next visit is far below. RELAY is right, the
+  check was out of date. It now opens the full list first (clicking again if
+  the page was not ready), and so do the permits and toolbox talks checks,
+  which would have broken the same way once newer entries push theirs down
+  (the toolbox one also read the page without waiting). Each passed three
+  runs in a row.
+- Found and fixed separately in #79: SharePoint date-only fields read a day
+  early in summer, and a report started online just after midnight BST.
+- Deploy needs nothing new since #73: permits are a new kind of record in the
+  same table (no database change), no new settings, no SharePoint columns,
+  and the no-signal page is unchanged (`relay-public-v14`). Release notes in
+  the project files cover #2 to #80 except #28.
+- Not verified: building the Docker image (no Docker here), a real phone,
+  the live server and tenant.
+
 ## 2026-10-21 — SharePoint dates and visit dates in British Summer Time
 
 - Why: found by the sixth release check on main (e2e84ff), following the open

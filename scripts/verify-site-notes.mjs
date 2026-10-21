@@ -170,8 +170,16 @@ try {
   {
     const {context,page}=await open('Engineer','light',390);
     await page.goto(`${base}/help?for=site`);
-    // Help draws the latest few entries first and the rest once it knows this person has not seen them, so wait.
-    check(await page.getByRole('heading',{name:'Notes for the next visit',exact:true}).waitFor({timeout:5000}).then(()=>true,()=>false),'help: What\'s new lists Notes for the next visit');
+    // Help shows the latest few entries and the rest under "Show all" (a first visit marks none as new),
+    // so open the full list, again if the first click came before the page was ready.
+    const whatsNew=page.locator('#help-new'),entry=whatsNew.getByRole('heading',{name:'Notes for the next visit',exact:true}),more=whatsNew.getByRole('button',{name:/^Show all/});
+    let listed=false;
+    for(const until=Date.now()+8000;!listed&&Date.now()<until;){
+      if(await entry.count()){listed=true;break;}
+      if(await more.count())await more.click().catch(()=>{});
+      await page.waitForTimeout(200);
+    }
+    check(listed,'help: What\'s new lists Notes for the next visit');
     await context.close();
   }
   console.log(`Site notes check passed (${checks} checks): refused saves, engineer home row, leaving a note, kept after reload, retries, done with and put back, office from the project sheet, other and complete projects, no connection, axe, 390px light and 1440px dark.`);
