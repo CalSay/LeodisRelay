@@ -59,7 +59,7 @@ const pages={
     {path:'/office#/issues',has:['No issues have been raised yet.']},
     {path:'/office#/variations',has:['No variations have been raised yet.'],not:[/£0\.00/]},
     {path:`/projects/${P}`,has:['Nothing outstanding on this project.','No reports yet on this project.']},
-    {path:'/coverage',has:['No site has sent a report through RELAY yet.','no reports sent yet'],not:[/Gone quiet\n/,/no reports yet/i],
+    {path:'/coverage',has:['No site has sent a report through RELAY yet.','no reports sent yet'],not:[/no reports yet/i],
       after:async(page,label)=>check(!(await page.locator('.cov-quiet-list,.cov-quiet').count()),`${label}: no site is marked as gone quiet before any has started`)},
     {path:'/my-week',has:['Nothing recorded this week yet.'],after:async(page,label)=>check(!(await page.getByRole('button',{name:'Copy for my timesheet'}).isEnabled()),`${label}: nothing to copy for a timesheet`)},
     {path:'/companies',has:['No company or person has open issues']},
