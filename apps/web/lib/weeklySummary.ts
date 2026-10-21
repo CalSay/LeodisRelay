@@ -122,14 +122,25 @@ export interface WeekSources { reports: Report[]; issues: Issue[]; variations: V
  * its event happened, in UK time.
  */
 export function weeklySummary(sources: WeekSources, principal: Principal, projectId: string, monday: string, today: string): WeeklySummary {
-  const end = weekEnd(monday);
-  const inWeek = (ymd: string) => ymd >= monday && ymd <= end;
+  return periodSummary(sources, principal, projectId, monday, weekEnd(monday), today);
+}
 
-  // Only sent reports the person may read. A sent report whose correction has
-  // also been sent is replaced by that correction, so a visit is counted once.
-  const sent = sources.reports.filter(r => r.projectId === projectId && r.state === 'submitted' && canReadReport(principal, r));
+/**
+ * Only sent reports the person may read. A sent report whose correction has
+ * also been sent is replaced by that correction, so a visit is counted once.
+ */
+export function sentReports(reports: Report[], principal: Principal, projectId: string): Report[] {
+  const sent = reports.filter(r => r.projectId === projectId && r.state === 'submitted' && canReadReport(principal, r));
   const superseded = new Set(sent.map(r => r.corrects).filter((id): id is string => Boolean(id)));
-  const reports: WeekReport[] = sent.filter(r => !superseded.has(r.id) && inWeek(r.visitDate)).map(r => {
+  return sent.filter(r => !superseded.has(r.id));
+}
+
+/** The same summary for any run of days, `start` to `end` inclusive: a week, or a calendar month (lib/monthSummary.ts). */
+export function periodSummary(sources: WeekSources, principal: Principal, projectId: string, start: string, end: string, today: string): WeeklySummary {
+  const monday = start;
+  const inWeek = (ymd: string) => ymd >= start && ymd <= end;
+
+  const reports: WeekReport[] = sentReports(sources.reports, principal, projectId).filter(r => inWeek(r.visitDate)).map(r => {
     const kinds = emptyKinds();
     const places = new Map<string, string>();
     for (const o of r.observations) {

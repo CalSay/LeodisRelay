@@ -66,3 +66,59 @@
   .week-work li::before{background:#555;}
 }
 .week-total a{color:var(--brass);text-decoration:underline;text-underline-offset:3px;}
+
+/* Week or month, and the month's sheet (MonthSheet.tsx). */
+.week-period{display:flex;gap:0;flex:0 0 auto;}
+.week-period button{min-height:44px;padding:0 16px;border-radius:0;}
+.week-period button:first-child{border-radius:8px 0 0 8px;}
+.week-period button:last-child{border-radius:0 8px 8px 0;margin-left:-1px;}
+.week-period button[aria-pressed=true]{border-color:var(--brass);background:var(--brass-wash);color:var(--brass);font-weight:600;position:relative;}
+.month-sheet .week-section{border-top:2px solid var(--line-2);margin-top:28px;}
+.month-sheet .week-section h2{margin-top:14px;border-bottom:0;}
+.month-stats{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:8px;}
+.month-figure{color:var(--text);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:5px;text-decoration-color:var(--line-2);}
+.month-figure:hover,.month-figure:focus-visible{text-decoration-color:var(--brass);color:var(--brass);}
+.month-figure.late{color:var(--alert);}
+.month-weeks-wrap{overflow-x:auto;margin-top:6px;}
+.month-weeks{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums;}
+.month-weeks th,.month-weeks td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:right;}
+.month-weeks thead th{font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);vertical-align:bottom;}
+.month-weeks th[scope=row],.month-weeks thead th:first-child{text-align:left;font:600 14px var(--sans);letter-spacing:0;text-transform:none;color:var(--text);}
+.month-weeks thead th:first-child{font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--text-3);}
+.month-weeks th[scope=row] a{color:var(--brass);text-decoration:underline;text-underline-offset:3px;}
+.month-weeks th[scope=row]{white-space:nowrap;}
+.month-weeks th small{display:block;font-weight:400;font-size:12px;color:var(--text-3);}
+.month-weeks tfoot th,.month-weeks tfoot td{font-weight:700;border-top:2px solid var(--line-2);border-bottom:0;}
+.month-place{font-size:14px;}
+.month-extra{display:none !important;}
+.month-more{margin-top:8px;min-height:44px;padding:0 12px;font-size:13px;}
+.week-when.late{color:var(--alert);}
+.month-companies{list-style:none;margin:6px 0 0;padding:0;}
+.month-companies > li{border:1px solid var(--line);border-radius:8px;margin-top:8px;background:var(--panel-2);}
+.month-companies summary,.month-lists summary{display:flex;justify-content:space-between;gap:12px;align-items:center;min-height:44px;padding:8px 14px;cursor:pointer;font-size:15px;}
+.month-companies summary span{font-size:14px;color:var(--text-2);white-space:nowrap;}
+.month-companies summary .late{color:var(--alert);font-weight:600;}
+.month-companies details > .week-rows{padding:0 14px 6px;border-top:1px solid var(--line);}
+.month-photos{list-style:none;margin:8px 0 0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+.month-photos li{min-width:0;break-inside:avoid;}
+.month-photos a{display:block;border-radius:8px;overflow:hidden;border:1px solid var(--line);aspect-ratio:4/3;background:var(--panel-2);}
+.month-photos img{width:100%;height:100%;object-fit:cover;display:block;}
+.month-photos p{margin:4px 0 0;font-size:13px;overflow-wrap:anywhere;}
+.month-lists details{border:1px solid var(--line);border-radius:8px;margin-top:8px;}
+.month-lists summary span{font:600 15px var(--mono);}
+.month-lists details > .week-rows,.month-lists details > .week-none{padding:0 14px 6px;border-top:1px solid var(--line);}
+@media (max-width:640px){
+  .month-stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .month-photos{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .week-period{width:100%;}.week-period button{flex:1 1 0;}
+}
+@media print{
+  .month-stats{grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
+  .month-figure{text-decoration:none;color:#111;}
+  .month-extra{display:grid !important;}
+  .month-weeks th[scope=row] a{color:#111;text-decoration:none;}
+  .month-companies details > .week-rows{display:none;}
+  .month-companies > li{background:#fff;break-inside:avoid;}
+  .month-photos{grid-template-columns:repeat(4,minmax(0,1fr));}
+  .month-sheet .week-section{break-inside:auto;}
+}
