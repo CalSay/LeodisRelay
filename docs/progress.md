@@ -4,6 +4,65 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — An engineer's day, in plainer words
+
+- Why: Cal (2026-10-21 07:02) wants RELAY really easy for hands-on
+  engineers. A walk through an engineer's whole day on the simplified RELAY
+  at 390px (after #85, #87 and #88): sign in, today's site update with a
+  photograph and a variation, no signal for part of it, an unfinished report
+  from yesterday, sent reports and what the office did with them, a defect on
+  its own, issues and Help. Not a `docs/tasks.json` task, so no status changed.
+- Found and fixed (engineer screens only, no new features or fields):
+  - The big "Carry on with today's update" button opened a site update left
+    from an earlier day, so today's cards went on yesterday's visit. Decision:
+    the big button is always today's (a correction still carries on there);
+    an earlier day's update waits under "Unfinished reports" with its visit
+    day (`EngineerWorkspace.tsx`, `currentDraft`).
+  - The report the big buttons open was also listed under "Unfinished
+    reports". It is no longer listed twice, unless the list has something to
+    add (held on the phone, refused, signed).
+  - Every sent report on the home screen and the Reports tab carried "PM not
+    notified", which in the pilot is always true and told the engineer nothing.
+    Those rows now show the delivery tag only when it went wrong or the
+    project manager was emailed. The report's own steps still show Delivery.
+  - Plain words in place of IT ones: the Delivery step says "RELAY does not
+    email anyone yet. If it cannot wait, tell the project manager yourself."
+    (was "The pilot holds notification emails in a local outbox"; the office
+    sees the same step, as before); "View the document" is "See the full report";
+    "a correction is sent as a new revision" is "to put something right, make
+    a correction"; on Check & send "is emailed when the mailbox is live" is
+    "is emailed only once RELAY's email is switched on; until then, tell them
+    yourself", and "raise issues/variations" is "go on the issue list", "for
+    the office to price" (inspections: "go on the snag list"); the offline
+    page no longer says "server report" or "sync"; "No connection" is "No
+    signal", as on the rest of the home screen.
+  - A card just added showed a red "no description of what happened" and a
+    red "1" on Check & send before anything was typed. A blank card is left
+    off at Check & send anyway (#87), so it no longer counts as stopping it.
+  - Signing a site update is optional but looked required: the heading says
+    "Sign · optional" and the hint "You do not have to sign a site update:
+    your name is printed on it either way." (was "The client signs the paper
+    copy"). Inspections are unchanged.
+  - Defect on its own: "Individual defect" is "Defect", "Defect received" is
+    "Defect sent to the office", "awaiting confirmation … was not submitted"
+    is "on the project's issue list now … your site update has not been
+    sent"; the file-type line and "Your own trade remains recorded" went.
+  - Issues: "Project scope" is "Show", "Showing issues only for the selected
+    project" is "Issues on this project, from every trade"; on an issue,
+    "Submit as complete" is "Put forward as fixed" (the glossary's words; the
+    office sees the same button, and the printed snag list says it too), and
+    "Site observation"/"Individual defect" are "From a site update"/"Defect
+    flagged on its own". Projects tab: "All projects open to your role" is
+    "Pick the site you are on".
+  - Help: "What's new" line, the Delivery meaning and where an unfinished
+    update waits.
+- Verified: typecheck, `npm test`; new `scripts/verify-engineer-day.mjs`
+  (390px, light and dark, 35 checks); browser checks listed in the PR.
+  Screenshots before and after: project files
+  `ui-review/engineer-day-simplified/`.
+- Not verified: no real phone, no live tenant, no real engineer.
+- Proposals, not built: see the PR ("Bigger ideas").
+
 ## 2026-10-21 — Seventh release check (main at 3e470fc, #83 to #88)
 
 - Why: a release check before any deploy, asked for by the coordinator after

@@ -149,7 +149,7 @@ function deliveryStage(report: Report, pdf: Stage): Stage {
     const last = sent.at(-1)!;
     return { ...base, label: `Emailed to ${last.recipient.name || last.recipient.address}`, tone: 'sent', at: last.at };
   }
-  if (report.delivery === 'outbox' || issued) return { ...base, label: 'Not emailed', tone: 'draft', detail: 'The pilot holds notification emails in a local outbox. Nothing has been sent.' };
+  if (report.delivery === 'outbox' || issued) return { ...base, label: 'Not emailed', tone: 'draft', detail: 'RELAY does not email anyone yet. If it cannot wait, tell the project manager yourself.' };
   return { ...base, label: 'Waiting to send', tone: 'draft' };
 }
 

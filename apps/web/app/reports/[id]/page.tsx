@@ -35,7 +35,7 @@ import { toneClass } from '@/lib/status';
 import { SubmissionStages } from '@/components/SubmissionStages';
 import { useMarkSeen } from '@/components/useMarkSeen';
 import { CARD_TYPES, OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtures';
-import { placesToOffer, withoutBlankCards } from '@/lib/quickCards';
+import { isBlankCard, placesToOffer, withoutBlankCards } from '@/lib/quickCards';
 import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 import { whenShort } from '@/lib/dates';
 import { cardAtSameLocation, insertAfterSameLocation } from '@/lib/sameLocation';
@@ -955,7 +955,13 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   }
 
   const project = report.projectSnapshot ?? getProject(report.projectId);
-  const findings = reviewReport(report);
+  // A card added and not used yet is left off when the engineer goes to check
+  // and send (withoutBlankCards), so while writing cards it is not "stopping"
+  // anything: no red warning on a card that has only just been opened. On the
+  // check step (reached by the address too, without that tidy) it still
+  // stops sending, as the server would refuse it.
+  const blank = new Set(step === 'check' ? [] : report.observations.filter(isBlankCard).map(o => o.id));
+  const findings = reviewReport(report).filter(f => !blank.has(f.observationId));
   const stop = findings.filter((f) => f.blocking);
   // An inspection just started has every check unanswered: one line for them
   // all, opening the first, rather than a dozen identical stops.
@@ -1194,9 +1200,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             </p>
           )}
           <p style={{ margin: 0 }}>
-            Received by RELAY {fmtWhen(report.serverAcknowledgedAt)}. It can no longer be changed: a correction is sent as a new revision.{" "}
+            Received by RELAY {fmtWhen(report.serverAcknowledgedAt)}. It cannot be changed now; to put something right, make a correction.{" "}
             <Link href={withViewReturn(`/reports/${report.id}/preview`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))} style={{ color: "var(--brass)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-              View the document &rarr;
+              See the full report &rarr;
             </Link>
           </p>
           {/* Each step after sending, the same steps the office sees. */}
@@ -1296,14 +1302,14 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           <div className="sec"><h2 className="lbl">{checklist ? 'In this inspection' : 'In this report'}</h2></div>
           {checklist ? <dl className="eng-sum">
             <div><dt>Satisfactory</dt><dd>{answers.ok}</dd></div>
-            <div><dt>Action needed</dt><dd className={answers.action ? 'late' : ''}>{answers.action}<small>{answers.action ? (type.raisesRecords ? 'raise issues' : 'on the action list') : ''}</small></dd></div>
+            <div><dt>Action needed</dt><dd className={answers.action ? 'late' : ''}>{answers.action}<small>{answers.action ? (type.raisesRecords ? 'go on the snag list' : 'on the action list') : ''}</small></dd></div>
             <div><dt>Not applicable</dt><dd>{answers.na}</dd></div>
             <div><dt>To answer</dt><dd className={answers.open ? 'soon' : ''}>{answers.open}</dd></div>
           </dl> : <dl className="eng-sum">
             <div><dt>Progress</dt><dd>{counts.update}</dd></div>
-            <div><dt>Defects</dt><dd className={counts.defect ? 'late' : ''}>{counts.defect}<small>{counts.defect ? 'raise issues' : ''}</small></dd></div>
-            <div><dt>Variations</dt><dd className={counts.instruction ? 'soon' : ''}>{counts.instruction}<small>{counts.instruction ? 'raise variations' : ''}</small></dd></div>
-            <div><dt>Access</dt><dd>{counts.access}<small>{counts.access ? 'raise issues' : ''}</small></dd></div>
+            <div><dt>Defects</dt><dd className={counts.defect ? 'late' : ''}>{counts.defect}<small>{counts.defect ? 'go on the issue list' : ''}</small></dd></div>
+            <div><dt>Variations</dt><dd className={counts.instruction ? 'soon' : ''}>{counts.instruction}<small>{counts.instruction ? 'for the office to price' : ''}</small></dd></div>
+            <div><dt>Access</dt><dd>{counts.access}<small>{counts.access ? 'go on the issue list' : ''}</small></dd></div>
           </dl>}
 
           {checklist && <div className="eng-does">
@@ -1312,7 +1318,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               {type.raisesRecords
                 ? <div className="eng-row"><div className="main"><b>{answers.action ? issuesSaid(report.observations.filter(o => o.check?.answer === 'action')) : 'No issues to raise'}</b><span>{answers.action ? `${report.observations.some(o => o.check?.answer === 'action' && o.linkedIssueId) ? 'Linked ones add a sighting to the existing issue. ' : ''}Each action goes on the snag list with where it is, and is listed at the top of the PDF.` : 'Every check is satisfactory or does not apply: the area is ready to hand over.'}</span></div></div>
                 : <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} action${answers.action === 1 ? '' : 's'} listed on the inspection` : 'No actions to list'}</b><span>Printed at the top of the PDF with who is to do each one, and followed on Safety actions until a later inspection finds it put right. Nothing is added to the issue register.</span></div></div>}
-              <div className="eng-row"><div className="main"><b>Received the moment it lands</b><span>{project?.projectManager ?? 'The project manager'} is emailed when the mailbox is live; the office can read it straight away.</span></div></div>
+              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>{project?.projectManager ?? 'The project manager'} is emailed only once RELAY’s email is switched on; until then, tell them yourself if it cannot wait.</span></div></div>
             </div>
           </div>}
 
@@ -1321,13 +1327,13 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             <div className="eng-list" style={{ marginTop: 8 }}>
               {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{issuesSaid(report.observations.filter(o => o.type === 'defect' || o.type === 'access'))}</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Linked ones add a sighting to the existing issue. ' : ''}The office assigns them; you’ll see who and when on your home screen.</span></div></div>}
               {counts.instruction > 0 && <div className="eng-row"><div className="main"><b>{counts.instruction} variation{counts.instruction === 1 ? '' : 's'} raised · need a quote</b><span>{report.observations.some(o => o.type === 'instruction' && o.workDone) ? 'Marked as already done: the office gets the client’s sign-off before it is invoiced. ' : ''}The office prices it and puts it to the client.</span></div></div>}
-              <div className="eng-row"><div className="main"><b>Received the moment it lands</b><span>{project?.projectManager ?? 'The project manager'} is emailed when the mailbox is live; the office can read it straight away.</span></div></div>
+              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>{project?.projectManager ?? 'The project manager'} is emailed only once RELAY’s email is switched on; until then, tell them yourself if it cannot wait.</span></div></div>
             </div>
           </div>}
           </div>
 
           <div className="eng-check-sign">
-          <div className="sec"><h2 className="lbl">Sign</h2></div>
+          <div className="sec"><h2 className="lbl">{type.signatureRequired ? 'Sign' : 'Sign · optional'}</h2></div>
           {type.signatureRequired && <p className="hint eng-sign-hint">An inspection is signed by the person who carried it out: draw your signature, or type your name if you can’t draw.</p>}
 
           <section className="panel">

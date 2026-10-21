@@ -60,7 +60,7 @@ eq(await card.getByText('Choose a recent place').count(),await card.locator('.en
       const row=page.locator('.eng-slot.open .eng-cardrow');
       eq(await row.locator('.desc').count(),0,`${label}: the open card's row is only its heading`);
       ok(!/photo/.test(await row.innerText()),`${label}: the open row does not repeat the photo count`);
-      ok(/no description of what happened/.test(await row.innerText()),`${label}: the open row still says what would stop sending`);
+      ok(!/no description of what happened/.test(await row.innerText())&&!(await row.evaluate(r=>r.classList.contains('late'))),`${label}: a card just added is not marked as stopping it (it is left off at Check & send)`);
       eq(await row.locator('.eng-where').count(),1,`${label}: the open row still says whether the card is on the server`);
       eq(await card.locator('.eng-card > .head').count(),0,`${label}: no heading line holding only Remove`);
       ok(await card.getByRole('button',{name:'Remove card 1'}).isVisible(),`${label}: Remove is at the foot of the card`);
