@@ -89,10 +89,16 @@ export function issueRegister(principal: Principal, query: IssueQuery, day: stri
 
 /** Review is in use where the project asks for it or a sent report still waits on it (lib/reviewQueue.ts). */
 export function reviewOnFor(projectId: string): boolean {
-  return !!cachedProject(projectId)?.reviewRequired || projectsWaitingOnReview().has(projectId);
+  return reviewOnLookup()(projectId);
 }
+/** `reviewOnFor` for many issues at once: the reports waiting on review are looked up once, not once per issue. */
+export function reviewOnLookup(): (projectId: string) => boolean {
+  const waiting = projectsWaitingOnReview();
+  return projectId => !!cachedProject(projectId)?.reviewRequired || waiting.has(projectId);
+}
+// The summary holds the review state without the report's cards, so this reads far less than the full record.
 function projectsWaitingOnReview(): Set<string> {
-  return new Set(database().prepare("SELECT DISTINCT project FROM records WHERE kind='reports' AND json_extract(data,'$.state')='submitted' AND json_extract(data,'$.review')='pending'").all().map(row => String(row.project)));
+  return new Set(database().prepare("SELECT DISTINCT project FROM records WHERE kind='reports' AND state='submitted' AND json_extract(summary,'$.review')='pending'").all().map(row => String(row.project)));
 }
 
 export function getIssue(issueId: string): Issue | undefined {

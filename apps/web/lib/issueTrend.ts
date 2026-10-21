@@ -1,3 +1,4 @@
+import { naturalOrder } from './naturalOrder';
 import type { Issue } from './types';
 import { londonDay, shiftWeek, weekEnd, weekStart } from './weeklySummary';
 
@@ -95,7 +96,7 @@ export function issueTrend(issues: Issue[], projectId: string, today: string): I
   const durations = closedRows.map(r => Math.max(0, daysBetween(r.raised, r.closed))).sort((a, b) => a - b);
   const mid = durations.length >> 1;
   const median = durations.length ? (durations.length % 2 ? durations[mid]! : Math.round((durations[mid - 1]! + durations[mid]!) / 2)) : undefined;
-  const oldest = openOn(today).sort((a, b) => a.raised.localeCompare(b.raised) || a.issue.reference.localeCompare(b.issue.reference, 'en', { numeric: true }))[0];
+  const oldest = openOn(today).sort((a, b) => a.raised.localeCompare(b.raised) || naturalOrder(a.issue.reference, b.issue.reference))[0];
 
   return {
     projectId,

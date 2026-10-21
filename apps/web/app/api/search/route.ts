@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { jsonResponse } from '@/lib/jsonResponse';
 import { requireSession } from '@/lib/auth/guard';
 import { canAccessProject } from '@/lib/auth/access';
 import { listReports } from '@/lib/serverStore';
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
   const open = projects.filter(p => (sharePointMode() === 'off' || reportableProject(p)) && canAccessProject(guard.principal,p.id));
   const allowed = new Set(open.map(p => p.id));
   const scoped = <T extends { projectId: string }>(rows: T[]) => rows.filter(r => allowed.has(r.projectId));
-  return NextResponse.json(search(query, {
+  return jsonResponse(request, search(query, {
     reports:scoped(listReports()), issues:scoped(listIssues()), variations:scoped(listVariations()),
     projects:open.map(p => ({ id:p.id, projectName:p.projectName, projectNumber:p.projectNumber })),
   }, guard.principal, projectId));

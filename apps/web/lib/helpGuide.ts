@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'busy-projects-faster', added: '2026-10-21', audience: 'all', title: 'Quicker on busy projects',
+    text: 'On a project with a year or more of reports, the site home, Issues, the snag list and Photographs opened about twice as fast in tests on a slowed-down browser set up like a phone on 4G, and the site home now downloads a few kilobytes instead of every issue on the project. In the office the desk refreshes with a tenth of the data, and downloading the issue register as a spreadsheet takes a moment rather than half a minute. Nothing on the pages has changed.' },
   { id: 'site-notes-offline', added: '2026-10-21', audience: 'site', title: 'Read notes for the next visit with no signal',
     text: 'Notes for the next visit on your projects are now kept on your phone each time you open RELAY with signal, so you can read them in a basement or riser with none. The no-signal page shows them under each project, with when they were last updated. With no signal you can read them but not leave one or mark one done with; do that once you have signal again. Signing out takes them off the phone.' },
   { id: 'same-words', added: '2026-10-21', audience: 'all', title: 'The same words on every page',

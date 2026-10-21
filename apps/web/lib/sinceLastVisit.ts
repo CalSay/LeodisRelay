@@ -1,3 +1,4 @@
+import { naturalOrder } from './naturalOrder';
 import type { Principal } from '@relay/platform';
 import { canReadReport, ownsReport } from './auth/access';
 import { londonDay } from './weeklySummary';
@@ -46,7 +47,7 @@ export interface SinceLastVisit {
 export interface CatchUpSources { reports: Report[]; issues: Issue[]; variations: Variation[] }
 
 const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');
-const newestFirst = <T extends { at: string; reference: string }>(rows: T[]) => rows.sort((a, b) => b.at.localeCompare(a.at) || b.reference.localeCompare(a.reference, 'en', { numeric: true }));
+const newestFirst = <T extends { at: string; reference: string }>(rows: T[]) => rows.sort((a, b) => b.at.localeCompare(a.at) || naturalOrder(b.reference, a.reference));
 const ISSUE_EVENT: Partial<Record<Issue['events'][number]['kind'], IssueChange>> = { closure_submitted: 'fixed', verified: 'closed', reopened: 'reopened', assigned: 'assigned' };
 
 export function sinceLastVisit(sources: CatchUpSources, principal: Principal, projectId: string, now: Date): SinceLastVisit {

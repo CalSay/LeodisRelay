@@ -1,3 +1,4 @@
+import { naturalOrder } from './naturalOrder';
 import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import { ACTIVE_PROJECT_STATUS } from './projectGroups';
@@ -85,14 +86,14 @@ export function siteCoverage(projects: CoverageProjectSource[], reports: Report[
   const superseded = new Set(sent.map(r => r.corrects).filter((id): id is string => Boolean(id)));
   const visits = sent.filter(r => !superseded.has(r.id) && DAY.test(r.visitDate));
   const visit = (r: Report): CoverageVisit => ({ reportId: r.id, reference: r.reference, author: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}), revision: r.revision });
-  const order = (a: Report, b: Report) => (a.authorTrade ?? '~').localeCompare(b.authorTrade ?? '~') || a.author.localeCompare(b.author) || a.reference.localeCompare(b.reference, 'en', { numeric: true });
+  const order = (a: Report, b: Report) => (a.authorTrade ?? '~').localeCompare(b.authorTrade ?? '~') || a.author.localeCompare(b.author) || naturalOrder(a.reference, b.reference);
 
   return {
     start, end, today, days,
     projects: projects.map(p => {
       const mine = visits.filter(r => r.projectId === p.id);
       const inRange = mine.filter(r => r.visitDate >= start && r.visitDate <= end).sort(order);
-      const latest = mine.filter(r => r.visitDate <= today).sort((a, b) => b.visitDate.localeCompare(a.visitDate) || b.reference.localeCompare(a.reference, 'en', { numeric: true }))[0];
+      const latest = mine.filter(r => r.visitDate <= today).sort((a, b) => b.visitDate.localeCompare(a.visitDate) || naturalOrder(b.reference, a.reference))[0];
       const active = p.status === ACTIVE_PROJECT_STATUS;
       const workingDaysSince = latest ? workingDaysBetween(latest.visitDate, today) : -1;
       return {

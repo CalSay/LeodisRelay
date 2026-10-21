@@ -1,3 +1,4 @@
+import { naturalOrder } from './naturalOrder';
 import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import { isActiveIssue } from './officeActions';
@@ -91,7 +92,7 @@ export interface HandoverProject { id: string; projectNumber: string; projectNam
 
 const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');
 const placeKey = (text: string) => tidy(text).toLowerCase();
-const byRef = (a: { reference: string }, b: { reference: string }) => a.reference.localeCompare(b.reference, 'en', { numeric: true });
+const byRef = (a: { reference: string }, b: { reference: string }) => naturalOrder(a.reference, b.reference);
 /** Walk order: by place as written, no place last, then by reference. */
 const byPlace = (a: HandoverIssue, b: HandoverIssue) =>
   (a.location ? 0 : 1) - (b.location ? 0 : 1) || placeKey(a.location).localeCompare(placeKey(b.location), 'en', { numeric: true }) || byRef(a, b);

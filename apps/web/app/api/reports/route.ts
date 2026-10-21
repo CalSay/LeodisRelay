@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { jsonResponse } from '@/lib/jsonResponse';
 import { createReport, reportsFor, startedReport } from "@/lib/serverStore";
 import { isClientKey, visitDateProblem } from '@/lib/offlineStart';
 import { requireSession } from "@/lib/auth/guard";
@@ -8,6 +9,7 @@ import { sharePointMode } from '@/lib/sharepoint/config';
 import { inspectedName, isReportType, reportTypeOf, type ReportTypeId } from '@/lib/reportTypes';
 
 export const dynamic = "force-dynamic";
+const OFFICE_PAGE = 500;
 
 export async function GET(request: Request) {
   const guard = await requireSession();
@@ -18,8 +20,9 @@ export async function GET(request: Request) {
   if (!Number.isSafeInteger(offset) || offset < 0) return NextResponse.json({ reason:'Invalid page.' },{ status:400 });
   if (url.searchParams.get("view") === "office") {
     if (!canManage(guard.principal)) return NextResponse.json({reason:'Manager access required.'},{status:403});
-    const page = reportsFor(guard.principal,undefined,offset);
-    return NextResponse.json({
+    // The office desk reads every page in turn, so its pages are large: a busy year is a few calls, not sixty.
+    const page = reportsFor(guard.principal,undefined,offset,OFFICE_PAGE);
+    return jsonResponse(request, {
       awaitingReview:page.items.filter(r => r.state === 'submitted' && r.review === 'pending'),
       submitted:page.items.filter(r => r.state === 'submitted' && r.review !== 'pending'),
       drafts:page.items.filter(r => r.state === 'draft'),next:page.next,
@@ -28,7 +31,7 @@ export async function GET(request: Request) {
   const projectId = url.searchParams.get("projectId") ?? undefined;
   // Draft content belongs to its author; others get existence only.
   const page = reportsFor(guard.principal,projectId,offset);
-  return NextResponse.json({ reports:page.items, next:page.next });
+  return jsonResponse(request, { reports:page.items, next:page.next });
 }
 
 export async function POST(request: Request) {

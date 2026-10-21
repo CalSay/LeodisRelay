@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { jsonResponse } from '@/lib/jsonResponse';
 import { requireSession } from '@/lib/auth/guard';
 import { canAccessProject } from '@/lib/auth/access';
 import { listReports } from '@/lib/serverStore';
@@ -23,5 +24,5 @@ export async function GET(request: Request) {
   // The same project rule as the report, issue and variation lists.
   const project = projects.find(p => p.id === projectId && (sharePointMode() === 'off' || reportableProject(p)) && canAccessProject(guard.principal, p.id));
   if (!project) return NextResponse.json({ reason:'This project is not open to you.' },{ status:404 });
-  return NextResponse.json(photoLibrary({ reports:listReports(projectId), issues:listIssues(projectId), variations:listVariations(projectId) }, guard.principal, projectId));
+  return jsonResponse(request, photoLibrary({ reports:listReports(projectId), issues:listIssues(projectId), variations:listVariations(projectId) }, guard.principal, projectId));
 }
