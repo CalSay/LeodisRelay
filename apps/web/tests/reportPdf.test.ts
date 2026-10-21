@@ -92,3 +92,30 @@ test('a card of many short lines is not kept to one page and cut off', async () 
   for (let i = 0; i < 70; i += 1) assert.match(text, new RegExp(`Flat ${101 + i} sockets loose`));
   assert.match(text, /Tighten all of them\./);
 });
+
+test('an inspection says what was found wrong beside each action arising', async () => {
+  const check = (id: string, over: Partial<DocReport['observations'][number]>) =>
+    card(id, { typeLabel: 'Inspection check', location: '', whatHappened: '', check: { question: `Check ${id}`, answer: 'Action needed', tone: 'action' }, ...over });
+  const long = `Scaffold tie missing at the second lift ${'and the board beside it is split along its length '.repeat(5)}end.`;
+  const observations = [
+    check('a', { whatHappened: 'Open edge with only a strap across it.', actionNeeded: 'Fit an edge barrier.', owner: 'Main contractor' }),
+    check('b', { whatHappened: '', actionNeeded: 'Replace the lead.' }),
+    check('c', { whatHappened: long, actionNeeded: 'Tie it in.' }),
+  ];
+  const pages = await pageTexts(await renderReportPdf({ ...base, documentTitle: 'Site Safety Inspection', inspection: true, observations }));
+  const all = pages.join(' ');
+  const arising = all.slice(all.search(/A R I S I N G/), all.search(/R E S U L T S/));
+  assert.match(arising, /Found: Open edge with only a strap across it\. Fit an edge barrier\./);
+  // A check with no notes shows only its action, with nothing invented.
+  assert.match(arising, /Check b Replace the lead\./);
+  assert.equal(arising.match(/Found:/g)?.length, 2);
+  // Long notes are cut at a word and point to the full notes further on.
+  assert.match(arising, /Found: Scaffold tie missing at the second lift .*… \(see 03 below\) Tie it in\./);
+  assert.doesNotMatch(arising, /end\./);
+  assert.match(all, /along its length end\./);
+});
+
+test('a site update summary is unchanged: no Found line', async () => {
+  const text = (await pageTexts(await renderReportPdf({ ...base, observations: [card('1', { actionNeeded: 'Make good.', typeLabel: 'Defect', tone: 'defect' })] }))).join(' ');
+  assert.doesNotMatch(text, /Found:/);
+});

@@ -301,6 +301,9 @@ const s = StyleSheet.create({
   ownerLine: { marginTop: 3, fontSize: 8, color: MUTED },
   ownerLabel: { fontWeight: 600, color: INK },
 
+  /* What an inspection found wrong, above the action it led to in Actions arising. */
+  found: { fontSize: 8, color: MUTED, marginBottom: 3 },
+
 });
 
 /**
@@ -394,6 +397,20 @@ function leadHeight(o: { whatHappened: string; actionNeeded: string; location: s
 }
 
 /** A card is titled by where it is; a check by its question, and where, if the action says (a handover inspection's do). */
+const FOUND_LIMIT = 180;
+/**
+ * What was found wrong, for an inspection's Actions arising row: the notes
+ * as written, or their opening words and a pointer to the full notes below
+ * when they would make the row (which is kept on one page) too long.
+ */
+function foundLine(notes: string, number: number): string {
+  const text = notes.trim().replace(/\s+/g, " ");
+  if (text.length <= FOUND_LIMIT) return text;
+  const cut = text.slice(0, FOUND_LIMIT);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > FOUND_LIMIT / 2 ? cut.slice(0, space) : cut).replace(/[\s.,;:–—-]+$/, "")}… (see ${String(number).padStart(2, "0")} below)`;
+}
+
 const itemTitle = (o: { location: string; check?: { question: string } | undefined }): string =>
   o.check ? `${o.check.question}${o.location.trim() ? ` · ${o.location.trim()}` : ""}` : o.location || "Location not recorded";
 
@@ -511,9 +528,19 @@ export function ReportDocument({ report }: { report: DocReport }) {
               <View key={observation.id} style={s.tr} wrap={false}>
                 <Text style={[s.td, s.cNo]}>{String(number).padStart(2, "0")}</Text>
                 <Text style={[s.td, s.cItem]}>{itemTitle(observation)}</Text>
-                <Text style={[s.td, s.cAction]}>
-                  {observation.actionNeeded.trim() || "To be determined"}
-                </Text>
+                {inspection && observation.whatHappened.trim() ? (
+                  <View style={[s.td, s.cAction]}>
+                    <Text style={s.found}>
+                      <Text style={s.ownerLabel}>Found: </Text>
+                      {foundLine(observation.whatHappened, number)}
+                    </Text>
+                    <Text>{observation.actionNeeded.trim() || "To be determined"}</Text>
+                  </View>
+                ) : (
+                  <Text style={[s.td, s.cAction]}>
+                    {observation.actionNeeded.trim() || "To be determined"}
+                  </Text>
+                )}
                 <Text style={observation.owner.trim() ? [s.td, s.cOwner] : [s.td, s.cOwner, s.unknown]}>
                   {observation.owner.trim() || "Awaiting confirmation"}
                 </Text>

@@ -4,6 +4,39 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Inspection PDFs say what was found wrong
+
+- Why: the last open idea from the day walkthrough (#65). An inspection
+  PDF's first section, "Actions arising", listed the check, the action and
+  who is to do it, but not what was found: "Fit a proper edge barrier"
+  without "open edge with only a strap across it". A client or contractor
+  reading page one had to turn to the notes further on to know what the
+  action was about. Not a `docs/tasks.json` task, so no status changed
+  there. Checked against the backlog: not FE-2 (no photographs), not EXP-2
+  (nothing routed or sent), not EXP-4 (no locations).
+- Changed (packages/documents only): on an inspection, each Actions arising
+  row with notes now reads "Found: …" above the action, in smaller, quieter
+  type. Site updates' summary is unchanged.
+- Decisions (Claude's): the finding goes in the action cell, not a new
+  column, as five columns would squeeze the check and owner on A4. Notes
+  over 180 characters are cut at a word with "… (see 03 below)", because the
+  row is kept on one page and every action check is also shown in full in
+  Notes and photographs. A check with no notes shows only its action;
+  nothing is made up. PDFs already made do not change: sent PDFs are stored
+  by revision and served from the store, so only newly made PDFs (and draft
+  previews) show the line.
+- Help: What's new "Inspection PDFs say what was wrong".
+- Verified: `npm run typecheck`, `npm test` (2 new tests in
+  `apps/web/tests/reportPdf.test.ts`: the Found line, no line without notes,
+  long notes cut with a pointer and kept in full below, no Found line on a
+  site update). `scripts/render-sample-pdfs.mjs` before and after: safety,
+  handover and tower inspections gain the line with the same page count;
+  first fix and the site update PDFs have the same text as before. Before
+  and after PDFs and page images: `ui-review/pdfs/found-wrong/` in the
+  project files.
+- Not verified: printed on paper, Acrobat or a phone's PDF viewer (poppler
+  and pdf.js only), a real SharePoint-filed PDF.
+
 ## 2026-10-21 — Assign from the issue page
 
 - Why: the day walkthrough (#65) left four bigger ideas; #67 built the
