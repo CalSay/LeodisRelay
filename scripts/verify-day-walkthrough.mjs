@@ -67,6 +67,8 @@ await work();
 leaveNote({projectId:P,text:'Gate code changed to 4721. Site manager wants the level 2 riser fire stopping checked before Friday.',requestId:randomUUID()},manager);
 leaveNote({projectId:P,text:'Tower T3 has moved to the east stair.',requestId:randomUUID()},other);
 const port=4402,base=`http://127.0.0.1:${port}`;let output='';
+// A check server left running by an earlier run would answer in this one's place, with other data.
+assert.ok(await fetch(base+'/signin').then(()=>false,()=>true),`Port ${port} is already in use: stop the server an earlier run left behind.`);
 const server=spawn(process.execPath,[resolve('node_modules/next/dist/bin/next'),'start','-p',String(port),'-H','127.0.0.1'],{cwd:resolve('apps/web'),windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,NODE_ENV:'production',ENTRA_TENANT_ID:'00000000-0000-0000-0000-000000000001',ENTRA_CLIENT_ID:'00000000-0000-0000-0000-000000000002',ENTRA_CLIENT_SECRET:'synthetic-day-check',ENTRA_REDIRECT_URI:`${base}/api/auth/callback`}});
 server.stdout.on('data',d=>output+=d);server.stderr.on('data',d=>output+=d);
 let browser,checks=0;
@@ -191,7 +193,13 @@ try {
   open=page.locator('.eng-slot.open');
   await open.getByLabel('Where',{exact:true}).fill('Flat 2.04 kitchen');
   await open.getByLabel(/What’s wrong/).first().fill('Socket faceplate cracked');
-  await open.getByText('More for the office').click();
+  // Tapped low on the screen straight after typing, where the Send bar comes back once the keyboard
+  // goes: the tap still opens it (it used to land on the bar as it reappeared, and failed now and then).
+  const more=open.locator('summary',{hasText:'More for the office'});
+  await more.evaluate(s=>{const r=s.getBoundingClientRect();scrollBy(0,r.bottom-innerHeight+2);});
+  ok(await open.getByLabel(/What’s wrong/).first().evaluate(t=>t===document.activeElement),'site update: still typing when More for the office is tapped');
+  await more.click();
+  ok(await more.evaluate(s=>s.parentElement.open),'site update: a tap on More for the office, low on the screen while typing, opens it');
   await open.getByLabel(/What needs doing/).first().fill('Replace faceplate');
   // Signed out partway: the card is kept on the phone, and saves by itself once signed in again.
   const session=live=>putRecord('sessions',{id:sessions[engineer.oid],principal:engineer,issuedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+(live?7200000:-1000)).toISOString()});
