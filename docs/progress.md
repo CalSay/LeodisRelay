@@ -4,6 +4,38 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Came back from the office, straight to the update
+
+- Why: the second idea in PR #92. Cal (2026-10-21 07:02) wants RELAY easy
+  for hands-on engineers. Not a `docs/tasks.json` task; no status changed.
+- Measured first (new `scripts/verify-came-back-to-update.mjs`, 390x844):
+  from the Site page an engineer already put an issue forward as fixed in 4
+  taps (the issue, photograph, note, "Put forward as fixed"; the note is
+  optional). Decision: no tap can be cut without dropping the photograph or
+  the choice of button, so taps stay at 4 and the gain is what is on screen
+  on landing. With a one-line description everything was already in view.
+  With a realistic three-line description and "What needs doing", "Put
+  forward as fixed" sat 120px below the screen; with a very long one, the
+  photograph button 288px and "Put forward as fixed" 467px.
+- Found: the issue heading was meant to be 21px (#92) but `.eng-page h1`
+  (28px) won on specificity, so long descriptions took seven lines. Fixed
+  (`.eng-page .issue-eng-title`); this applies however the issue is opened.
+- Changed: rows for issues under "Came back from the office" link to
+  `/issues/<id>?update=1`. On the engineer's issue page that scrolls once,
+  only as far as needed to bring the photograph and the buttons into view,
+  and never so far that what is wrong goes under the app bar. Opened from
+  the Issues list or anywhere else, the page starts at the top as before.
+  The office's issue page ignores it. Help "What's new": "Straight to the
+  update".
+- After: 4 taps. Three-line description: lands 35px down, photograph, "Put
+  forward as fixed", what is wrong and where all in view. Very long one:
+  lands 93px down with the photograph button and what and where in view;
+  "Put forward as fixed" is 175px below (was 467px), because scrolling
+  further would hide what is wrong.
+- Checks: see the PR. Screenshots before and after: project files
+  `ui-review/came-back-to-update/`.
+- Not verified: no real phone, no real engineer, no live tenant.
+
 ## 2026-10-21 — Shorter issues list for engineers
 
 - Why: Cal (2026-10-21 07:02): engineers are hands-on people and want a
