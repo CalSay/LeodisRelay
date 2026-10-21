@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'long-project-names-phone', added: '2026-10-21', audience: 'office', title: 'Whole project names on a phone',
+    text: 'On a phone, the heading at the top of a project in the office now shows the whole project name, on a second line if it needs one, under "‹ Projects" and the counts. Before, a long name was cut off, such as "Register · Tetley Ha…".',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'project-on-a-phone', added: '2026-10-21', audience: 'office', title: 'A project at a glance on a phone',
     text: 'On a phone, opening a project in the office now starts with the same four figures as the desk: Last visit, Overdue actions, Fixed, to check and Variations, each opening what it counts. The Weekly summary, Site diary, Photographs and the project\'s other pages come straight after them, then Latest from site and the register. Before, those pages were at the very bottom, under every issue and variation. Checked in a phone-sized browser, not on a real phone.',
     link: { label: 'Open the office', href: '/office' } },

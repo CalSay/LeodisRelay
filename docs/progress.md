@@ -4,6 +4,31 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Whole project names on a phone
+
+- Why: after #111 a project opened in the office on a phone headed its
+  register "REGISTER · TETLEY HA…", so the office could not see at a glance
+  which site it was looking at. Cal (07:02) wants the office to get what it
+  needs plainly. Coordinator's pick; decided without asking Cal, per his
+  autonomy message. Not a `docs/tasks.json` task; no status changed.
+- Walked 16 phone screens at 390px, light and dark, with the project renamed
+  locally to "Tetley Hall - Block E, Phase 2 Residential" (not committed):
+  engineer home, Reports, Issues, Projects, Weekly summary, Site diary,
+  Photographs, project page, snag list, and the office overview, project,
+  report, issue, Weekly summary, Site diary and Photographs. For each element
+  showing the name it measured whether the text was cut or ran off screen.
+  Only the office column heading cut it; every other name already wrapped.
+- Changed (CSS only, phones up to 700px; the desk is unchanged): office
+  column headings wrap instead of ending in "…". Where a heading has a back
+  link ("‹ Projects", "‹ Register"), the link and the counts share the top
+  line and the heading has the line under it. The back link no longer breaks
+  over two lines. No wording, pages or routes changed. Help "What's new":
+  "Whole project names on a phone".
+- Checks: `verify-office-phone` now checks the register heading shows the
+  whole name on its own line under the back link at 320px and 390px (fails on
+  main at 320px light, passes with the change).
+- Not verified: a real phone, a screen reader, the live server.
+
 ## 2026-10-21 — A project at a glance on a phone
 
 - Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information

@@ -91,6 +91,11 @@ try {
       await page.waitForFunction(()=>scrollY===0);
       const head=await page.locator('.cols[data-depth="2"] > .col:nth-child(2) > .col-head').boundingBox();
       assert.ok(head.y>=0&&head.y<300,`${label}: the register opens at its top (${head.y})`);checks++;
+      // The project's name is shown in full: it wraps under the back link rather than being cut off.
+      const title=await page.locator('.cols[data-depth="2"] > .col:nth-child(2) > .col-head h2').evaluate(h=>{const r=h.getBoundingClientRect(),b=h.parentElement.querySelector('.col-back').getBoundingClientRect();return {cut:h.scrollWidth>h.clientWidth+1,right:r.right,below:r.top>=b.bottom-1};});
+      assert.ok(!title.cut&&title.right<=width,`${label}: the register heading shows the whole project name`);checks++;
+      assert.ok(title.below,`${label}: the heading has its own line under the back link`);checks++;
+      if(shot)await page.screenshot({path:join(shot,`office-phone-register-${width}-${colorScheme}.png`)});
       await phone.close();
     }
     const desk=await browser.newContext({viewport:{width:1440,height:900},colorScheme});await desk.addCookies([{name:'relay_session',value:session,url:base}]);
