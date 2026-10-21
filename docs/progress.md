@@ -35,11 +35,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   - A project name long enough to wrap printed its lines over each other
     (the page's 14pt line height reached the 21pt title) and pushed the
     reference past the margin. The title now takes the room the reference
-    leaves and has its own line height; for a name that fits on one line a
-    negative margin takes the extra height back, so it sits where it always
-    has (checked: every word on the tidy samples is where it was on main).
-    If the estimate of whether a name fits is wrong, the lines still do not
-    overlap; the rule under the title is only closer. A card's long place name ran
+    leaves and has its own line height, with a negative margin taking the
+    extra height back, so a one-line title sits where it always has (checked:
+    every word on the tidy samples is where it was on main). On a wrapped
+    name the rule under the title is as close to the last line as it always
+    was to a one-line title. A card's long place name ran
     under its type label; it now wraps short of it.
   - A title-block value on more than one line had its label level with the
     last line; labels are now set from the top, which puts them in the same
@@ -52,8 +52,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   - Labels, table heads, photograph dates and the footer's ACCREDITATIONS
     were #83868c: 3.6:1 on white and 3.3:1 on the table heads' wash, faint
     for 6pt type on paper. Now #6c6f75 (5.0:1 and 4.6:1).
-  - A run of more than 24 characters with no space breaks every 20 now, not
-    24: a 24-character name ran 5pt into the margin in the summary's owner
+  - A run of more than 20 characters with no space now breaks every 20, not
+    every 24: a 24-character name ran 5pt into the margin in the summary's owner
     column.
 - Decisions (Claude's): photographs stay at the app's 1,600-pixel PDF copy,
   about 330 KB each, so a 33-photograph report is about 10.7 MB. They are
@@ -81,7 +81,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   back with pdf.js: no block taller than a page, a footer and "Page n of N" on
   every page, no text off the page or into the footer, no line drawn over
   another, every long box there to its last words, no page ending on a
-  heading or card title (a title's line includes its number), photographs not stretched and at least 40pt, the
+  heading or card title (a card's head line holds its title, number and label), photographs not stretched and at least 40pt, the
   page count in range and the file no more than 400 KB beyond its
   photographs. It passes on this branch and fails 9 of 10 cases on main. The
   tidy samples (`scripts/render-sample-pdfs.mjs`) render pixel for pixel as

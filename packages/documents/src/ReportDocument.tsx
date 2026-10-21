@@ -150,11 +150,10 @@ const s = StyleSheet.create({
    * The page's line height reached the title as a fixed 14pt, less than the
    * title's own 21pt, so a name long enough to wrap had its lines drawn over
    * each other. It has its own line height now. Its line box grows downward
-   * by 11.25pt, so for a name that fits on one line the negative margin takes
-   * that back and the title sits exactly where it always has.
+   * by 11.25pt, which the negative margin takes back, so a title on one line
+   * sits exactly where it always has and the rule under it is where it was.
    */
-  docTitle: { fontSize: 21, fontWeight: 600, marginTop: 3, letterSpacing: -0.3, lineHeight: 1.2 },
-  docTitleOneLine: { marginBottom: -11.25 },
+  docTitle: { fontSize: 21, fontWeight: 600, marginTop: 3, letterSpacing: -0.3, lineHeight: 1.2, marginBottom: -11.25 },
   // The reference is a code, so it is set as one.
   docRef: { fontSize: 13, fontFamily: "PlexMono", fontWeight: 500, letterSpacing: 0.2 },
 
@@ -397,16 +396,6 @@ const signedWhen = (iso: string): string => {
   return p ? `${takenOn(iso)}${p.time ? `, ${p.time}` : ""}` : "";
 };
 
-/**
- * Whether the project name runs onto a second line beside the reference:
- * about 9.5pt a character for the 21pt title against what the reference
- * (8pt a character) or the draft stamp leaves of the 497pt measure. If it
- * guesses one line wrongly, the lines still do not overlap; the rule under
- * the title is only closer to the last of them.
- */
-const titleWraps = (report: { projectName: string; reference: string }): boolean =>
-  [...report.projectName].length * 9.5 > 497 - Math.max(105, [...report.reference].length * 8) - 10;
-
 /** A lead taller than this (points) may break across pages rather than leave most of one empty. */
 const LEAD_LIMIT = 360;
 
@@ -572,7 +561,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
         <View style={s.titleRow}>
           <View style={s.titleMain}>
             <Text style={s.docKind}>{(report.documentTitle ?? "Site Progress Report").toUpperCase()}</Text>
-            <Text style={titleWraps(report) ? s.docTitle : [s.docTitle, s.docTitleOneLine]}>{report.projectName}</Text>
+            <Text style={s.docTitle}>{report.projectName}</Text>
           </View>
           <View style={s.titleSide}>
             <Text style={s.docRef}>{report.reference}</Text>

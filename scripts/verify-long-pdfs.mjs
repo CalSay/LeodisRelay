@@ -158,14 +158,16 @@ for (const [name, report] of Object.entries(cases)) {
     // Nothing should end a page on a heading or a card's title, with what it heads
     // overleaf: the last few lines on the page are headings, with other words above
     // them. (A title as long as a page, typed into the place box, may run on.)
-    // A card's title shares its line with its 12pt number, set a fraction lower.
-    const heading = (item) => [H2_SIZE, CARD_TITLE_SIZE, CARD_NUMBER_SIZE].some(size => Math.abs(item.size - size) < 0.2);
+    // A section heading is a line of 7.5pt letters; a card's head is the line
+    // with its 11.5pt title and 12pt number (and its 6pt label beside them).
+    const near = (item, size) => Math.abs(item.size - size) < 0.2;
+    const heading = (line) => line.every(item => near(item, H2_SIZE)) || line.some(item => near(item, CARD_TITLE_SIZE) || near(item, CARD_NUMBER_SIZE));
     const lines = [];
     for (const item of page.items.filter(i => i.y >= BODY_BOTTOM - 4).sort((a, b) => a.y - b.y)) {
       const line = lines.at(-1);
       if (line && item.y - line[0].y < 1.5) line.push(item); else lines.push([item]);
     }
-    const trailing = lines.findIndex(line => !line.every(heading));
+    const trailing = lines.findIndex(line => !heading(line));
     if (n < pages.length && trailing > 0 && trailing <= 3) {
       fail(name, `page ${n} ends on a heading: "${lines.slice(0, trailing).reverse().map(line => line.map(item => item.str).join('')).join(' ')}"`);
     }
