@@ -1,3 +1,4 @@
+import { naturalOrder } from './naturalOrder';
 import type { Issue } from './types';
 import { issueTrade } from './snagList';
 import { londonDay } from './weeklySummary';
@@ -64,7 +65,7 @@ export function companyIssues(issues: Issue[], projects: ProjectNames[], today: 
   const since = addDays(today, -(RECENT_DAYS - 1));
   const named = new Map(projects.map(p => [p.id, p]));
   // Earliest first, so a company is labelled as its first issue spelled it, whatever order the register loads in.
-  const byAge = [...issues].sort((a, b) => a.raisedAt.localeCompare(b.raisedAt) || a.reference.localeCompare(b.reference, 'en', { numeric: true }));
+  const byAge = [...issues].sort((a, b) => a.raisedAt.localeCompare(b.raisedAt) || naturalOrder(a.reference, b.reference));
   const lines = new Map<string, CompanyLine & { tradeSet: Set<string>; byProject: Map<string, CompanyProject> }>();
   const unassigned = { toDo: 0, overdue: 0, fixed: 0 };
   for (const issue of byAge) {
@@ -99,7 +100,7 @@ export function companyIssues(issues: Issue[], projects: ProjectNames[], today: 
     .map(({ tradeSet, byProject, ...line }) => ({
       ...line,
       trades: [...tradeSet].sort((a, b) => TRADE_ORDER.indexOf(a) - TRADE_ORDER.indexOf(b)),
-      projects: [...byProject.values()].sort((a, b) => b.overdue - a.overdue || b.toDo - a.toDo || a.projectNumber.localeCompare(b.projectNumber, 'en', { numeric: true })),
+      projects: [...byProject.values()].sort((a, b) => b.overdue - a.overdue || b.toDo - a.toDo || naturalOrder(a.projectNumber, b.projectNumber)),
     }))
     // Most past target first, then most to put right, then those waiting on the office, then by name.
     .sort((a, b) => b.overdue - a.overdue || b.toDo - a.toDo || b.fixed - a.fixed || a.owner.localeCompare(b.owner));

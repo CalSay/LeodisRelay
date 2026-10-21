@@ -14,6 +14,7 @@ import { capturePhoto, uploadPhotos } from './localMedia';
 import { localSaveJournal } from './localSaveJournal';
 import { SaveConflict, saveWithJournal, type SaveRequest } from './saveRequest';
 import type { SinceLastVisit } from './sinceLastVisit';
+import type { CameBack } from './cameBack';
 import type { ReportTypeId } from './reportTypes';
 import type { ProjectSuggestions } from './suggestions';
 
@@ -234,8 +235,9 @@ export async function officeAll(): Promise<{ reports: ReportSummary[]; drafts: R
   return { reports: unique(reports), drafts: unique(drafts) };
 }
 
+/** Every issue for the office desk, each with its latest event only (lib/officeActions.ts `deskIssue`). */
 export async function allIssues(): Promise<Issue[]> {
-  const data = await parse<{ issues: Issue[] }>(await request('/api/issues', { cache: 'no-store' }));
+  const data = await parse<{ issues: Issue[] }>(await request('/api/issues?view=desk', { cache: 'no-store' }));
   return data.issues;
 }
 
@@ -281,6 +283,11 @@ export async function openIssues(projectId: string): Promise<Issue[]> {
 }
 
 /** Every issue on a project, filtered in the view rather than the request. */
+/** The engineer home's latest issues and variations the signed-in engineer raised, and the open issue count. */
+export async function cameBack(projectId: string): Promise<CameBack> {
+  return parse<CameBack>(await request(`/api/came-back?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
+}
+
 export async function projectIssues(projectId: string): Promise<Issue[]> {
   const data = await parse<{ issues: Issue[] }>(
     await request(`/api/issues?projectId=${encodeURIComponent(projectId)}`, { cache: "no-store" }),

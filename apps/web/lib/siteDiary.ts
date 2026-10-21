@@ -1,3 +1,4 @@
+import { naturalOrder } from './naturalOrder';
 import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import type { ObservationType } from './fixtures';
@@ -111,6 +112,14 @@ export function siteDiary(sources: DiarySources, principal: Principal, projectId
   const variations = sources.variations.filter(v => v.projectId === projectId);
   const terms = tidy(options.words).toLowerCase().split(' ').filter(Boolean);
   const kind = options.kind || '';
+  // Records by the report that raised them, keeping their place in the list, so
+  // finding a card's issue looks at that report's few records, not the whole register.
+  const byReport = <T extends { raisedByReport?: string }>(rows: T[]) => {
+    const index = new Map<string, { at: number; rec: T }[]>();
+    rows.forEach((rec, at) => { if (rec.raisedByReport) { const list = index.get(rec.raisedByReport); if (list) list.push({ at, rec }); else index.set(rec.raisedByReport, [{ at, rec }]); } });
+    return index;
+  };
+  const issuesByReport = byReport(issues), variationsByReport = byReport(variations);
 
   const entries: { day: string; entry: DiaryEntry }[] = [];
   for (const r of sent) {
@@ -125,6 +134,12 @@ export function siteDiary(sources: DiarySources, principal: Principal, projectId
     const fromChain = (rec: { raisedByReport?: string }) => Boolean(rec.raisedByReport && chainIds.has(rec.raisedByReport));
     const raisedHere = (rec: { raisedByReport?: string; raisedByObservation?: string; location: string; description: string }, o: Report['observations'][number]) =>
       fromChain(rec) && (rec.raisedByObservation ? rec.raisedByObservation === o.id : rec.location === o.location && rec.description === o.whatHappened);
+    // The first record in the list raised by this card: the same answer as `rows.find(rec => raisedHere(rec, o))`.
+    const firstRaisedHere = <T extends { raisedByReport?: string; raisedByObservation?: string; location: string; description: string }>(index: Map<string, { at: number; rec: T }[]>, o: Report['observations'][number]): T | undefined => {
+      let first: { at: number; rec: T } | undefined;
+      for (const id of chainIds) for (const candidate of index.get(id) ?? []) if ((!first || candidate.at < first.at) && raisedHere(candidate.rec, o)) first = candidate;
+      return first?.rec;
+    };
     const base = { reference: r.reference, author: tidy(r.author), ...(r.authorTrade ? { trade: r.authorTrade } : {}) };
     const type = reportTypeOf(r);
     const counts = type.checklist ? checkCounts(r.observations) : undefined;
@@ -133,10 +148,10 @@ export function siteDiary(sources: DiarySources, principal: Principal, projectId
       // A check keeps its link after a correction moves it off Action needed; it no longer speaks for the issue.
       const linked = o.linkedIssueId && (!o.check || o.check.answer === 'action') ? issueById.get(o.linkedIssueId) : undefined;
       // A correction points its copied defect at the issue the original raised: still "raised" here, not seen again.
-      const raised = (o.type === 'defect' || o.type === 'access' || raisesIssue(type, o) ? issues.find(i => raisedHere(i, o)) : undefined) ?? (linked && fromChain(linked) ? linked : undefined);
+      const raised = (o.type === 'defect' || o.type === 'access' || raisesIssue(type, o) ? firstRaisedHere(issuesByReport, o) : undefined) ?? (linked && fromChain(linked) ? linked : undefined);
       const seen = !raised ? linked : undefined;
       const issue = raised ?? seen;
-      const variation = o.type === 'instruction' ? variations.find(v => raisedHere(v, o)) : undefined;
+      const variation = o.type === 'instruction' ? firstRaisedHere(variationsByReport, o) : undefined;
       return {
         id: o.id, type: o.type, location: tidy(o.location), whatHappened: tidy(o.whatHappened), actionNeeded: tidy(o.actionNeeded), owner: tidy(o.owner),
         photos: o.photos.filter(p => p.dataUrl).map(p => ({ src: p.dataUrl, caption: tidy(p.caption) })),
@@ -158,7 +173,7 @@ export function siteDiary(sources: DiarySources, principal: Principal, projectId
   }
 
   // Newest day first; within a day, in the order the reports reached the office.
-  entries.sort((a, b) => b.day.localeCompare(a.day) || (a.entry.sentAt ?? '').localeCompare(b.entry.sentAt ?? '') || a.entry.reference.localeCompare(b.entry.reference, 'en', { numeric: true }));
+  entries.sort((a, b) => b.day.localeCompare(a.day) || (a.entry.sentAt ?? '').localeCompare(b.entry.sentAt ?? '') || naturalOrder(a.entry.reference, b.entry.reference));
   const allDays: DiaryDay[] = [];
   for (const { day, entry } of entries) {
     const last = allDays.at(-1);

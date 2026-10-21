@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { jsonResponse } from '@/lib/jsonResponse';
 import { requireSession } from '@/lib/auth/guard';
 import { canAccessProject } from '@/lib/auth/access';
 import { listReports } from '@/lib/serverStore';
@@ -26,5 +27,5 @@ export async function GET(request: Request) {
   if (!project) return NextResponse.json({ reason:'This project is not open to you.' },{ status:404 });
   const today = londonDay(new Date());
   const monday = weekStart(url.searchParams.get('week') ?? undefined, today);
-  return NextResponse.json(weeklySummary({ reports:listReports(projectId), issues:listIssues(projectId), variations:listVariations(projectId) }, guard.principal, projectId, monday, today));
+  return jsonResponse(request, weeklySummary({ reports:listReports(projectId), issues:listIssues(projectId), variations:listVariations(projectId) }, guard.principal, projectId, monday, today));
 }

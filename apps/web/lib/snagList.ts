@@ -1,3 +1,4 @@
+import { naturalOrder } from './naturalOrder';
 import type { Issue } from './types';
 
 /**
@@ -34,7 +35,7 @@ export function snagList(issues: Issue[], scope: SnagScope, day: string): SnagLi
     && (!scope.trade || issueTrade(i) === scope.trade));
   const groups = new Map<string, SnagGroup>();
   // A location is labelled as the earliest issue there wrote it, so the heading does not change with load order.
-  const byAge = [...picked].sort((a, b) => a.raisedAt.localeCompare(b.raisedAt) || a.reference.localeCompare(b.reference, 'en', { numeric: true }));
+  const byAge = [...picked].sort((a, b) => a.raisedAt.localeCompare(b.raisedAt) || naturalOrder(a.reference, b.reference));
   for (const issue of byAge) {
     const k = key(issue.location);
     const group = groups.get(k) ?? { location: issue.location.trim().replace(/\s+/g, ' ') || NO_LOCATION, rows: [] };
@@ -44,9 +45,9 @@ export function snagList(issues: Issue[], scope: SnagScope, day: string): SnagLi
   // Within a location: still to do before fixed, earliest target first, then by reference.
   const order = (a: SnagRow, b: SnagRow) => Number(a.fixed) - Number(b.fixed)
     || (a.issue.targetDate || '9999').localeCompare(b.issue.targetDate || '9999')
-    || a.issue.reference.localeCompare(b.issue.reference, 'en', { numeric: true });
+    || naturalOrder(a.issue.reference, b.issue.reference);
   const sorted = [...groups.entries()]
-    .sort(([a], [b]) => (a === '' ? 1 : 0) - (b === '' ? 1 : 0) || a.localeCompare(b, 'en', { numeric: true }))
+    .sort(([a], [b]) => (a === '' ? 1 : 0) - (b === '' ? 1 : 0) || naturalOrder(a, b))
     .map(([, g]) => ({ ...g, rows: g.rows.sort(order) }));
   const rows = sorted.flatMap(g => g.rows);
   return { groups: sorted, total: rows.length, overdue: rows.filter(r => r.overdue).length, fixed: rows.filter(r => r.fixed).length };

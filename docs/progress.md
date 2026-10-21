@@ -4,6 +4,78 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Speed on busy projects
+
+- Why: the pages added on 2026-10-20 add things up across every report, issue
+  and inspection on a project, and had only met small seed data. Asked for by
+  the coordinator under Cal's ask for a UI people are happy to use; what to
+  fix and how is Claude's decision. Not a `docs/tasks.json` task.
+- Data: `scripts/seed-busy-projects.mjs` (new) writes three projects with
+  fourteen months of weekday updates from three trades, weekly safety and
+  tower inspections, first fix and handover inspections, corrections and
+  drafts: 3,102 reports, 4,098 issues (20,421 events), 949 variations, about
+  25,000 photograph records, notes and chases.
+- Check: `scripts/verify-busy-projects.mjs` (new) seeds that, times 18 API
+  calls warm, 13 engineer pages on a throttled phone (4x slower processor,
+  Chrome's "Fast 4G": 9 Mbps, 60 ms) and 7 office pages on a 1440px desktop,
+  and fails when a time or a download size is over budget. Time budgets are
+  about twice today's; size budgets are tight, as they do not vary by machine.
+- Before and after, same machine and settings (main at 69db524, then this branch):
+
+  | Page or call | Before | After | API data over the network |
+  | --- | --- | --- | --- |
+  | Issue spreadsheet download (`/api/issues/export`) | 35,091 ms | 111 ms | |
+  | Engineer home, phone | 4,470 ms | 1,215 ms | 3,603 → 16 KB |
+  | Engineer issues, phone | 4,302 ms | 2,212 ms | 3,279 → 263 KB |
+  | Snag list, phone | 4,451 ms | 2,204 ms | 3,285 → 268 KB |
+  | Photographs, phone | 4,964 ms | 2,468 ms | 3,695 → 351 KB |
+  | Office desk, desktop | 2,837 ms | 1,132 ms | 12,376 → 680 KB, every 15 s |
+  | Office inbox, desktop | 5,498 ms | 2,181 ms | 12,376 → 680 KB |
+  | Weekly summary (API) | 287 ms | 75 ms | |
+  | Issues over time (API) | 213 ms | 30 ms | |
+  | Issues by company (API) | 288 ms | 79 ms | |
+  | Search (API) | 657 ms | 317 ms | |
+
+  The other pages were already quick and stay within 100 ms or so of before
+  (run-to-run noise); every number is in the PR.
+- Found and fixed (what the pages show is unchanged):
+  - The spreadsheet looked up "review in use" with a query over every report,
+    and read a whole report for its reference, once per issue row. Now once
+    per file, and the reference comes from the report's summary.
+  - API answers were sent uncompressed (Next compresses pages, not route
+    handlers). Large JSON answers are now gzipped when the browser accepts it
+    (`lib/jsonResponse.ts`): a project's 3.3 MB issue list is 263 KB.
+  - The engineer home fetched every issue and variation on the project to show
+    six rows and an open count. `/api/came-back` (new) returns just those.
+  - The office desk read reports 50 at a time (63 calls on this data, every
+    15 s) and every issue with its full history. Office pages are now 500
+    reports, and the desk's issues carry only their latest event
+    (`deskIssue`); the issue page still loads the whole history.
+  - Day and sort helpers made a new date formatter or collator on every call
+    (`toLocaleDateString` with a time zone, `localeCompare` with options).
+    One of each is now made once; results are identical (unit-tested,
+    including the clock changes).
+  - The site diary searched the whole issue list for each card; it now looks
+    only at the records raised by that report. Search ranks each hit once
+    rather than on every comparison, and skips records that cannot match.
+- Verified (Node 22 here; CI runs Node 24): `npm run typecheck`, `npm test`
+  (7 new tests in `apps/web/tests/busyProjects.test.ts`), the new check
+  twice in a row within budget, and 29 existing browser checks for the pages
+  touched (role access, engineer layout, search, office desk, diary, register,
+  export, since last visit, photos, snag list, weekly summary, issues over
+  time, by company, chases, my week, safety actions, before handover, home and
+  sheet, coverage, office actions, landing, registers, phone, review queue,
+  provenance, engineer nav, navigation, help, accessibility).
+- Not verified: a real phone (Chrome's throttling stands in for one), the live
+  server's own speed, or real site data, whose words repeat less than the
+  seed's, so gzip will save somewhat less than shown. The office inbox still
+  draws every received report in one list (2.2 s here), and the desk still
+  re-reads everything every 15 s; both would need a change to what the pages
+  show or how they refresh, so they are left for a separate decision.
+- Proposed, not done: `encode zstd gzip` in `deploy/Caddyfile` would compress
+  everything else too (pages are already gzipped by Next); it needs a deploy.
+  Add `verify-busy-projects.mjs` to the browser checks listed in `CLAUDE.md`.
+
 ## 2026-10-21 — Report and inspection PDFs
 
 - Why: the PDF is what the office sends a client and keeps as the compliance

@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ApiError, createReport, getReport, listReports, projectIssues, projectVariations } from '@/lib/api';
+import { ApiError, cameBack, createReport, getReport, listReports, projectIssues } from '@/lib/api';
+import { CAME_BACK_ROWS, raisedIssue } from '@/lib/cameBack';
 import { listHeld, type HeldDraft } from '@/lib/localDraft';
 import { offlineProjectsKey } from '@/lib/offlineStart';
 import { unfinishedReports, type UnfinishedReport } from '@/lib/unfinishedReports';
@@ -159,15 +160,16 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
     // What came back from the office on the things this engineer raised, in the office's words.
     if(view === 'home' && principal) {
       setBack(null);
-      Promise.all([listReports(projectId,0),projectIssues(projectId),projectVariations(projectId)]).then(([page,all,variations]) => {
+      // Only the few records the rows need, not every issue and variation on the project.
+      Promise.all([listReports(projectId,0),cameBack(projectId)]).then(([page,{ issues:all, variations, open }]) => {
         if(cancelled)return;
         const rows:Back[] = [];
         const returnTo = engineerReturn();
         for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) rows.push({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:withViewReturn(`/reports/${r.id}`,returnTo), title:`${reportTypeOf(r).name} ${r.reference.split("-").slice(1).join("-")}`, sub:`Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned' });
-        for (const i of all) if (i.reportedById === principal.id || i.events[0]?.actorId === principal.id) rows.push({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}`,returnTo), title:i.description, sub:`${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'} · you raised it ${fmtDay(i.raisedAt)}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed' });
+        for (const i of all) if (raisedIssue(i,principal.id)) rows.push({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}`,returnTo), title:i.description, sub:`${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'} · you raised it ${fmtDay(i.raisedAt)}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed' });
         for (const v of variations) if (v.raisedById === principal.id) rows.push({ at:v.events.at(-1)?.at ?? v.raisedAt, key:v.id, href:withViewReturn(`/variations/${v.id}`,returnTo), title:v.description, sub:`${v.reference.split('-').slice(1).join('-')} · ${v.location || 'no location'} · you raised it ${fmtDay(v.raisedAt)}`, tags:<VariationTags v={v}/>, late:v.workDone && v.instruction === 'pending' });
         rows.sort((a,b) => b.at.localeCompare(a.at));
-        setBack({ rows:rows.slice(0,6), open:all.filter(i => i.work !== 'closed' && i.confirmation !== 'withdrawn').length, reports:page.reports.filter(r => r.state === 'submitted').length });
+        setBack({ rows:rows.slice(0,CAME_BACK_ROWS), open, reports:page.reports.filter(r => r.state === 'submitted').length });
       }).catch(() => { if(!cancelled) setBack({ rows:[], open:0, reports:0 }); });
     }
     return () => {cancelled=true;};

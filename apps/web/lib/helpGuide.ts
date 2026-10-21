@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'busy-projects-faster', added: '2026-10-21', audience: 'all', title: 'Quicker on busy projects',
+    text: 'On a project with a year or more of reports, the site home, Issues, the snag list and Photographs now open about twice as fast on a phone, and the site home downloads a few kilobytes instead of every issue on the project. In the office the desk refreshes with a tenth of the data, and downloading the issue register as a spreadsheet takes a moment rather than half a minute. Nothing on the pages has changed.' },
   { id: 'tidier-pdfs', added: '2026-10-21', audience: 'all', title: 'Tidier report and inspection PDFs',
     text: 'Every page of a PDF now names the report, the project and, on a tower inspection, the tower. An inspection opens its results with a count of each result (say 12 checks: 10 satisfactory, 2 action needed), and its table headings carry on to the next page. Each action says who is to do it, the summary uses the same numbers as the updates, a correction says which revision it replaces and why, and a signature says whether it was drawn or typed and when. A card\'s words and its action, and the sign-off, now stay together on one page. PDFs already made stay as they were.' },
   { id: 'tower-inspection', added: '2026-10-20', audience: 'all', title: 'Tower inspection',

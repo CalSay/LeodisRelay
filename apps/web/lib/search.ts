@@ -50,7 +50,8 @@ const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'With t
 
 /** Lower case, no accents, and dashes read as spaces, so "Level-3" finds "level 3" and "VO 004" finds "VO-004". */
 function fold(text: string): string {
-  return text.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[-\u2010-\u2015]+/g, ' ').replace(/\s+/g, ' ');
+  // Plain ASCII has no accents to strip, and most site text is plain ASCII.
+  return (/[^\x00-\x7f]/.test(text) ? text.normalize('NFKD') : text).replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[-\u2010-\u2015]+/g, ' ').replace(/\s+/g, ' ');
 }
 export function searchWords(query: string): string[] {
   const words = query.split(/[\s,;]+/).map(w => fold(w.replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, '')).trim()).filter(Boolean);
@@ -59,7 +60,15 @@ export function searchWords(query: string): string[] {
 
 interface Field { label: string; text: string }
 function matches(fields: Field[], words: string[]): Field | null | undefined {
-  const all = fold(fields.map(f => f.text).join('\n'));
+  const joined = fields.map(f => f.text).join('\n');
+  // A quick no first. In plain ASCII, folding only lower-cases and turns dashes
+  // and spacing into one space, so every piece of a word is already in the
+  // lower-cased text wherever the folded text holds the word.
+  if (!/[^\x00-\x7f]/.test(joined)) {
+    const lower = joined.toLowerCase();
+    if (!words.every(w => w.split(' ').every(piece => lower.includes(piece)))) return undefined;
+  }
+  const all = fold(joined);
   if (!words.every(w => all.includes(w))) return undefined;
   // The snippet comes from the most telling field: the first one holding a word.
   return fields.find(f => f.label && words.some(w => fold(f.text).includes(w))) ?? null;
@@ -81,10 +90,13 @@ function rank(hit: SearchHit, phrase: string): number {
   return 1;
 }
 function group(hits: SearchHit[], phrase: string): SearchGroup {
-  hits.sort((a, b) => rank(b, phrase) - rank(a, phrase) || b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
+  // Ranked once per hit, not on every comparison of the sort.
+  const ranks = new Map(hits.map(h => [h, rank(h, phrase)]));
+  hits.sort((a, b) => ranks.get(b)! - ranks.get(a)! || b.at.localeCompare(a.at) || a.id.localeCompare(b.id));
   return { hits: hits.slice(0, SEARCH_LIMIT), total: hits.length };
 }
-const day = (iso: string) => iso ? new Date(iso).toLocaleDateString('en-GB', { timeZone: 'Europe/London', day: 'numeric', month: 'short', year: 'numeric' }) : '';
+const DAY = new Intl.DateTimeFormat('en-GB', { timeZone: 'Europe/London', day: 'numeric', month: 'short', year: 'numeric' });
+const day = (iso: string) => { if (!iso) return ''; const d = new Date(iso); return Number.isNaN(d.getTime()) ? 'Invalid Date' : DAY.format(d); };
 const history = (events: { note: string }[]) => events.map(e => e.note).filter(Boolean).join('\n');
 
 export function search(query: string, sources: SearchSources, principal: Principal, projectId?: string): SearchResults {
