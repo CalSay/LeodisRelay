@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'quicker-update-cards', added: '2026-10-21', audience: 'site', title: 'Straight back to typing, and smaller photos',
+    text: 'If you leave today\'s site update with an empty card, "Carry on with today’s update" now opens that card ready to type, instead of folded. Photos on a card are now small tiles, two to a row on a phone, with the caption box under each and Remove in the corner of the picture, so a few photos no longer push the next card far down. A green dot on a photo means it is on the server; one that is not there yet still says so in words. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'defect-recent-places', added: '2026-10-21', audience: 'site', title: 'Flag a defect: recent places, one less step',
     text: 'On "Flag a defect", the places used recently on the job now show as small buttons under "Where on site?", the same as on a site update card. Tap one to fill it, or type anything. The button at the bottom now sends the defect straight away and names the site it goes to, such as "Send defect to Tetley Hall - Block E", instead of opening a second screen that repeated what you had written. If there is no signal, RELAY keeps the defect on your phone and says "Defect not sent yet"; tap "Try again" when you have signal and it only goes once. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'first-day', added: '2026-10-21', audience: 'all', title: 'An easier first day',
