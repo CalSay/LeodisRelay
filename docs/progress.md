@@ -68,6 +68,40 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   figures and a row a week, progress grouped by place, behind or stuck, still
   open and with whom, a few photographs), built on these figures. Walk notes:
   project files `ui-review/monthly-progress/walk-notes.md`.
+## 2026-10-21 — Eleventh release check: main ready at 6def5e8
+
+- Why: eight merges since the tenth check (#119 to #126), with inspections
+  now moving on by themselves (#121) beside three offline sends (site update,
+  defect, inspection), and the office Inbox, overview and Team tab changed.
+- Checked main at f6fda15 (#124), then 261611e (#125) and 6def5e8 (#126) as
+  they merged: typecheck, `npm test` (146 + 524 at 6def5e8), build. All 91
+  browser check scripts one at a time at f6fda15: 90 pass first time;
+  `verify-day-walkthrough` timed out once on "What needs doing" under "More
+  for the office" and passed on both reruns (unchanged since #114). Rerun at
+  261611e: the 17 checks for the Team tab, office, Help, accessibility,
+  inspections and sending with no signal. Rerun at 6def5e8: My week (both),
+  Help, day walk-through, role access, engineer layout, signature reload,
+  search, PDF viewer. All pass. Clean Docker build (no cache) of 6def5e8:
+  healthy, /signin 200. No deploy change: no new settings, packages, data
+  change or offline store version (`relay-public-v14`).
+- A scratch walk (105 checks, not kept in the repo) at 261611e and 6def5e8:
+  a double tap on Satisfactory answers one check, not two; a mis-tap shows
+  on its row and changes in place; answers made with no signal survive a
+  reload; a signed inspection sent with no signal, with a second tab and
+  "Try now" as signal returned, arrives once with all 12 answers. One phone
+  holding a site update, a quick defect and an offline-signed inspection:
+  each arrives exactly once across two tabs and a reload. Office and engineer
+  pages at 390px and 1440px, light and dark: no errors, no sideways scroll.
+- No fault found, so no fix PR.
+- Seen, not changed: a site update sent with no signal goes by itself only
+  while its page is open (#105); a defect goes from any page (#116). Moving
+  on leaves the update on home as "Send today's update". Proposal: send it
+  from any page, like a defect.
+- Release notes updated in project files
+  (`releases/2026-10-20-release-notes.md`).
+- Not verified: real phones, real weak signal, a locked phone, screen
+  readers, printers, tablets.
+- Next: deploy 6def5e8 when Cal says so (deploy thread).
 
 ## 2026-10-21 — My week counts every issue raised, and says what happened to a fix
 
