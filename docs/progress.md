@@ -4,6 +4,68 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Report and inspection PDFs
+
+- Why: the PDF is what the office sends a client and keeps as the compliance
+  record, and it had been extended a type at a time (site updates, three
+  inspections, typed signatures, the tower inspection from #59). Asked for by
+  the coordinator under Cal's standing ask for a clear, professional output;
+  the changes below are Claude's decisions. Not a `docs/tasks.json` task, so
+  no status changed there.
+- Looked at: `scripts/render-sample-pdfs.mjs` (new) renders one PDF of every
+  kind from realistic data (site update with 12 photographs and a long
+  unbroken reference, draft, sent without review, correction, safety,
+  handover, first fix and tower inspections, drawn, typed and name-only
+  signatures). Before and after PDFs and side-by-side images:
+  `ui-review/pdfs/` in the project files.
+- Found and fixed (packages/documents, plus `correction` in documentModel):
+  - Pages after the first said nothing about what they belonged to. The
+    footer now reads "Site Progress Report · Tetley Hall Block E ·
+    011LME-SPR-004 · Revision 1 · Approved for issue" (and the tower, on a
+    tower inspection), shortened with an ellipsis before it meets the page
+    number. Characters the footer font lacks (Ł, emoji) fall back to plain
+    letters or are left out instead of stopping the PDF (the reference part
+    of the footer too).
+  - A long reference with no spaces ran off the right edge; runs over 24
+    characters may now break. react-pdf marks every such break with a
+    hyphen, and a break next to a hyphen already in the text can show as
+    "--" (a quirk of its line breaking, seen with a 90-character circuit
+    reference; not fixed).
+  - "Sign off" could end a page with its boxes on the next; they are one
+    block. A card's number, title, words and action are kept on one page
+    (only a card too long for that may break), so an action is not parted
+    from what it is about; photographs can still follow on the next page.
+  - An inspection's results table split with no column heads on the second
+    page; they now repeat, and the results open with a tally of each result
+    (12 checks; 9 satisfactory; 2 action needed; 1 not applicable).
+  - The summary numbered its rows 01, 02… while the updates were 02, 04…;
+    each row now carries its update's or check's number.
+  - The cards never said who was to act; the action box now ends "Owner:
+    …" or "Owner: Awaiting confirmation", as the summary does ("Owner" is
+    the office register's word too).
+  - A correction gave no sign it was one; it now says "Revision 2 · replaces
+    revision 1" and the reason given, under the title block.
+  - Drawn signatures were dated to the day, typed ones to the minute; all now
+    say how they were made and when ("Drawn signature · 19/10/2026, 16:32",
+    "Typed signature …", "Sent without a drawn signature …", "Not signed
+    yet"). The PDF's document title names the kind, reference and project.
+- Decisions: PDFs already made are kept as they are (they are keyed to the
+  sent revision), so only new ones change. Nothing about filing or delivery
+  changed. A two-card report whose sign-off no longer fits on page one now
+  puts the whole sign-off on page two, rather than its heading alone.
+- Verified (Node 22 here; CI runs Node 24): `npm run typecheck`, `npm test`
+  (7 new tests in `apps/web/tests/reportPdf.test.ts`, which read the
+  rendered text back with pdf.js: footer on every page, Ł and emoji, summary
+  numbers and owners, signature wording, tally, a card of 70 short lines
+  kept whole, correction from the stored
+  report), every sample rendered and looked at page by page.
+- Not verified: printed on paper; opened in Acrobat or on a phone's PDF
+  viewer (checked with poppler and pdf.js); a real SharePoint-filed PDF.
+  Real photographs were stand-ins of the same sizes.
+- Proposed: add `render-sample-pdfs.mjs` to the commands in `CLAUDE.md`; a
+  variation card could print who asked and why (not done: some of those
+  fields are pricing notes for the office, not the client).
+
 ## 2026-10-20 — Tower inspection (EXP-5, fourth report type)
 
 - Added a fourth checklist type, "Tower inspection" (Tower and Podium
