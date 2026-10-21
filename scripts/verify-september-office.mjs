@@ -62,6 +62,7 @@ try {
 
   // Only the Admin changes people: the server refuses a Manager, whatever the screen shows.
   eq((await api('Manager','/api/admin/people',{method:'POST',body:JSON.stringify({action:'rename',email:engineer.email,name:'Not Allowed'})})).status,403,'a manager cannot rename someone');
+  eq((await api('Manager','/api/admin/people',{method:'POST',body:JSON.stringify({action:'assignment',email:engineer.email,assignment:'Admin'})})).status,403,'a manager cannot change a role');
   eq((await api('Manager','/api/admin/people',{method:'POST',body:JSON.stringify({action:'add',email:'someone.new@leodisme.com',name:'Some One',assignment:'Manager'})})).status,403,'a manager cannot add someone');
 
   // A Manager reads the same Team tab, with nothing to change.

@@ -256,12 +256,16 @@ function siteItems(ctx: Ctx, s: ProjectStats) {
  * (model.ts `attention`), so the two always agree. Unassigned and fixed, to
  * check have their own groups above, so they are left out here.
  */
+/** A report, issue or variation line's record id; any other line's whole key. */
+const RECORD_KEYS = ['ne-', 'rv-', 'od-', 'dp-', 'vx-', 'vq-'];
+const recordOf = (key: string) => RECORD_KEYS.includes(key.slice(0, 3)) ? key.slice(3) : key;
 function AttentionList({ ctx, limit }: { ctx: Ctx; limit: number }) {
   const snap = ctx.snap;
   const shown = attention(ctx.stats, ctx.day, snap?.safety, officeReturn(ctx), snap?.permits, snap?.deliveries)
     .filter(i => !i.key.startsWith('vf-') && !i.key.startsWith('ua-'))
     // One line a record: a report that failed and waits for review, or an overdue issue that is also disputed, is listed once, under its first reason.
-    .filter((i, n, all) => all.findIndex(o => o.key.slice(3) === i.key.slice(3)) === n).slice(0, limit);
+    // Only those keys name a record; safety, permit and delivery lines are one a project, so each keeps its own line.
+    .filter((i, n, all) => all.findIndex(o => recordOf(o.key) === recordOf(i.key)) === n).slice(0, limit);
   return <div className="rmenu">{shown.length ? shown.map(i => i.go.startsWith('#')
     ? <a key={i.key} href={i.go}><div className="rt"><b>{i.title}</b><span>{i.sub}</span></div><Tag {...i.tag} /></a>
     : <Link key={i.key} href={i.go}><div className="rt"><b>{i.title}</b><span>{i.sub}</span></div><Tag {...i.tag} /></Link>) : <div className="empty" style={{ padding: 14 }}>Nothing needs attention.</div>}</div>;

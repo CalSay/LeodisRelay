@@ -96,7 +96,7 @@ try {
   await page.waitForFunction(()=>document.querySelector('.act[data-group="notAck"] .act-n')?.textContent==='0');
   assert.equal(await count(page,'notAck'),0,'opening it takes the report out of Not seen yet');checks++;
   await page.goto(`${base}/office#/inbox/show/new`);await page.getByRole('heading',{name:'Inbox'}).waitFor();
-  await page.waitForFunction(()=>/^New · 2$/.test(document.querySelector('.filters .chip.on')?.textContent??''),null,{timeout:20000}).catch(()=>{});
+  await page.locator('.filters .chip.on',{hasText:/^New · /}).waitFor();
   assert.match(await onChip(page),/^New · 2$/,'it stays among the Inbox\'s new reports');checks++;
   await ctx.close();
   assert.deepEqual(errors,[]);checks++;

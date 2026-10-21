@@ -32,7 +32,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   were browser-default and under 44px, caught once Admin opened there).
 - Kept: every September feature, #88's automatic Seen (no Acknowledge
   button), the Safety, permits and deliveries switch, off by default.
-- Checks: typecheck, `npm test` (146 + 467), build. All 74 browser checks
+- Checks: typecheck, `npm test` (146 + 467), build. All 75 browser checks
   run one at a time on this branch: 72 passed first time; verify-help (tab
   title race) and verify-company-chases (axe target size on /companies,
   untouched here) passed on rerun; verify-busy-projects missed only
