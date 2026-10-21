@@ -9,7 +9,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Why: the day walkthrough (#65) left four bigger ideas; #67 built the
   first. Of the other three, Claude chose "the office issue page shows Not
   yet assigned with no way to assign there". Issues reach the office from
-  search, reports, Issues by company, Before handover and the snag list, all
+  search, the register, Issues by company and Before handover, all
   of which open the issue page, and giving an issue an owner is the office's
   most common act on one; it meant going back to the desk and finding the
   issue again. The inspection PDF's action list leaving out what was wrong,
