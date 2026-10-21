@@ -175,19 +175,19 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
           {s.site.permits.length ? <ul className="week-rows">{s.site.permits.map(p => <li key={p.id}>
             <span className="week-when">{fmtDay(p.day)}</span>
             <div><p>{p.title} <span className={`tag ${p.closedDay ? 'tag-sent' : 'tag-draft'}`}>{p.closedDay ? `Closed ${fmtDay(p.closedDay)}` : 'Open'}</span></p>
-              <p className="week-desc">{p.work}</p><p className="week-meta">Held by {p.heldBy}</p></div>
+              <p className="week-desc">{p.work}</p><p className="week-meta">Held by {p.heldBy}{p.issued !== p.day ? ` · issued ${fmtDay(p.issued)}` : ''}</p></div>
           </li>)}</ul> : <p className="week-none">No permits issued or closed this week.</p>}
           <h3>Deliveries</h3>
           {s.site.deliveries.length ? <ul className="week-rows">{s.site.deliveries.map(d => <li key={d.id}>
             <span className="week-when">{fmtDay(d.day)}</span>
             <div><p>{d.supplier} <span className={`tag ${d.toSort ? 'tag-alert' : d.sortedDay ? 'tag-sent' : 'tag-draft'}`}>{d.toSort ? `${d.condition} · to sort` : d.sortedDay ? `${d.condition} · sorted ${fmtDay(d.sortedDay)}` : d.condition}</span></p>
-              <p className="week-desc">{d.items}</p>{d.problem && <p className="week-meta">{d.problem}</p>}</div>
+              <p className="week-desc">{d.items}</p>{(d.problem || d.arrived !== d.day) && <p className="week-meta">{[d.problem, d.arrived !== d.day ? `arrived ${fmtDay(d.arrived)}` : ''].filter(Boolean).join(' · ')}</p>}</div>
           </li>)}</ul> : <p className="week-none">No deliveries recorded this week.</p>}
           {siteCount > 0 && <p className="week-total week-noprint"><Link href={withViewReturn(`/toolbox-talks?${new URLSearchParams({ project: projectId })}`, here)}>Toolbox talks</Link> · <Link href={withViewReturn(`/permits?${new URLSearchParams({ project: projectId })}`, here)}>Permits to work</Link> · <Link href={withViewReturn(`/deliveries?${new URLSearchParams({ project: projectId })}`, here)}>Deliveries</Link></p>}
         </section>
 
         <footer className="week-foot">
-          <p>Made from site reports sent to the office, the issue and variation registers, and the toolbox talks, permits and deliveries recorded in RELAY. Reports are placed by their visit day; issues and variations by the day each change was recorded; talks, permits and deliveries by the day given, issued or taken in. A corrected report replaces the one it corrects. Reports still awaiting review or returned for changes are marked. &ldquo;Open now&rdquo; is as of {fmtDay(today, true)}. Prices are not shown.</p>
+          <p>Made from site reports sent to the office, the issue and variation registers, and the toolbox talks, permits and deliveries recorded in RELAY. Reports are placed by their visit day; issues and variations by the day each change was recorded; talks by the day given, permits and deliveries by the day issued or taken in, or closed or sorted when that was this week. A corrected report replaces the one it corrects. Reports still awaiting review or returned for changes are marked. &ldquo;Open now&rdquo; is as of {fmtDay(today, true)}. Prices are not shown.</p>
         </footer>
       </article>}
   </main>;

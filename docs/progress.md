@@ -113,7 +113,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   permits and deliveries; the register's "Needs action" (reports and issues)
   and the sheet's "Needs attention" could share one name; the Needs attention
   pop-up's "Issues →" link reads oddly when its lines are safety or deliveries.
-- Check: `npm run typecheck`, `npm test` (146 + 427; new tests in
+- Check: `npm run typecheck`, `npm test` (146 + 428; new tests in
   `tests/myWeek.test.ts` and `tests/weeklySummary.test.ts`).
   `scripts/verify-day-walkthrough.mjs` now also records the toolbox talk,
   permit and short delivery from the home rows, is signed out partway through
@@ -123,6 +123,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   spreadsheets and reads the Weekly summary (112 checks). Every
   `scripts/verify-*.mjs` was run against this branch's production build
   (results in the PR). Screenshots: project files `ui-review/day-walkthrough-2/`.
+- Fresh-context review: no correctness gaps; 5 smaller points, all fixed: My
+  week showed the time a record was typed against the day it happened (now
+  only when the same day); the Weekly summary dated a permit issued last week
+  outside the week (now the day it was closed, with "issued" beside it) and
+  left out a delivery sorted this week that arrived last week (now in, like
+  permits); a permit recorded and closed counted twice in My week's figure;
+  the Help line said "on a phone" though the register shows on a desktop too.
 - Not verified: a real phone or tablet, a live tenant or SharePoint, a real
   screen reader.
 

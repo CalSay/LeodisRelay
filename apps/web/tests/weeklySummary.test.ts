@@ -135,7 +135,13 @@ test('lists the week\'s toolbox talks, permits issued or closed and deliveries, 
     ],
   }, manager, 'p1', MONDAY, TODAY);
   assert.deepEqual(s.site.talks.map(t => [t.topic, t.attendees]), [['Safe isolation', 2]]);
-  assert.deepEqual(s.site.permits.map(p => [p.id, p.title, p.closedDay ?? '']), [['p-last', 'Hot works HW-1', '2026-10-12'], ['p-open', 'Electrical isolation', '']], 'issued last week and closed on Monday belongs to this week too');
+  assert.deepEqual(s.site.permits.map(p => [p.id, p.day, p.title, p.closedDay ?? '']), [['p-last', '2026-10-12', 'Hot works HW-1', '2026-10-12'], ['p-open', '2026-10-14', 'Electrical isolation', '']], 'issued last week and closed on Monday belongs to this week too');
   assert.deepEqual(s.site.deliveries.map(d => [d.supplier, d.condition, d.toSort]), [['City Plumbing', 'All there', false], ['Edmundson', 'Short', true]]);
   assert.deepEqual(weeklySummary(none, manager, 'p1', MONDAY, TODAY).site, { talks:[], permits:[], deliveries:[] });
+});
+
+test('a delivery taken in last week and sorted this week is dated the day it was sorted', () => {
+  const s = weeklySummary({ ...none, deliveries:[{ id:'d', projectId:'p1', supplier:'CEF', items:'Tray', day:'2026-10-09', receivedBy:'Sam', condition:'damaged', problem:'Bent', by:'Sam', byId:engineer.id, at:'2026-10-09T09:00:00Z',
+    sorted:{ by:'Sam', byId:engineer.id, at:'2026-10-13T10:00:00Z', note:'Replaced' } }] }, manager, 'p1', MONDAY, TODAY);
+  assert.deepEqual(s.site.deliveries.map(d => [d.day, d.arrived, d.sortedDay, d.toSort]), [['2026-10-13', '2026-10-09', '2026-10-13', false]]);
 });

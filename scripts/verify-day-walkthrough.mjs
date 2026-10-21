@@ -255,7 +255,7 @@ try {
   ok(await page.getByRole('button',{name:/Assigned to me/}).count()===0,'Issues: no unfinished "Assigned to me" button');
   await shot(page,'engineer-issues-light-390');
   await page.goto(`${base}/my-week?returnTo=${encodeURIComponent('/engineer?project='+P)}`);await page.locator('.mw-days').waitFor();
-  ok(/Reports sent\s*3\s*4 other site records/i.test(await page.locator('.mw-stats').innerText()),`My week: three reports sent today, and the talk, permit (recorded and closed) and delivery: ${await page.locator('.mw-stats').innerText()}`);
+  ok(/Reports sent\s*3\s*3 other site records/i.test(await page.locator('.mw-stats').innerText()),`My week: three reports sent today, and the talk, permit (recorded and closed) and delivery: ${await page.locator('.mw-stats').innerText()}`);
   const today=page.locator('.mw-today');
   for(const what of ['Toolbox talk: Safe isolation','Permit recorded: Hot works HW-0142','Permit closed: Hot works HW-0142','Delivery: Edmundson Electrical'])
     ok(await today.getByRole('link',{name:what}).count()===1,`My week: today lists "${what}"`);

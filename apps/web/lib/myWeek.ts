@@ -166,7 +166,8 @@ export function myWeek(projects: MyWeekProjectSource[], sources: MyWeekSources, 
       flagged: all.reduce((n, p) => n + p.issues.filter(i => i.kind === 'flagged').length, 0),
       issueUpdates: all.reduce((n, p) => n + p.issues.filter(i => i.kind !== 'flagged').length, 0),
       drafts: all.reduce((n, p) => n + p.drafts.length, 0),
-      records: all.reduce((n, p) => n + p.records.length, 0),
+      // A permit recorded and closed the same day is one record, as the timesheet copy counts it.
+      records: all.reduce((n, p) => n + new Set(p.records.map(r => r.id)).size, 0),
     },
   };
 }

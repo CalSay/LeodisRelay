@@ -63,8 +63,8 @@ export interface WeekReport {
 export interface WeekIssue { id: string; reference: string; location: string; description: string; owner: string; trade?: string; at: string; status: string }
 export interface WeekVariation { id: string; reference: string; location: string; description: string; at: string; status: string; workDone: boolean }
 export interface WeekTalk { id: string; day: string; topic: string; givenBy: string; attendees: number }
-export interface WeekPermit { id: string; day: string; title: string; work: string; heldBy: string; closedDay?: string }
-export interface WeekDelivery { id: string; day: string; supplier: string; items: string; condition: string; problem?: string; sortedDay?: string; toSort: boolean }
+export interface WeekPermit { id: string; day: string; issued: string; title: string; work: string; heldBy: string; closedDay?: string }
+export interface WeekDelivery { id: string; day: string; arrived: string; supplier: string; items: string; condition: string; problem?: string; sortedDay?: string; toSort: boolean }
 export interface WeeklySummary {
   projectId: string;
   start: string;
@@ -158,18 +158,22 @@ export function weeklySummary(sources: WeekSources, principal: Principal, projec
     return at && v.instruction === 'instructed' ? [weekVariation(v, at)] : [];
   });
 
+  // Dated in the week: one issued or taken in last week shows the day it was closed or sorted.
+  const shownDay = (day: string, then?: string) => inWeek(day) || !then ? day : then;
   const talks: WeekTalk[] = (sources.talks ?? []).filter(t => t.projectId === projectId && !t.withdrawn && inWeek(t.day))
     .map(t => ({ id: t.id, day: t.day, topic: t.topic, givenBy: t.givenBy, attendees: t.attendees.length }));
   // A permit belongs to the week it was issued or closed in, so one issued last Friday and closed on Monday is not lost.
   const permits: WeekPermit[] = (sources.permits ?? []).flatMap(p => {
     const closedDay = p.closed ? londonDay(p.closed.at) : undefined;
     if (p.projectId !== projectId || p.withdrawn || !(inWeek(p.day) || (closedDay && inWeek(closedDay)))) return [];
-    return [{ id: p.id, day: p.day, title: `${kindLabel(p.kind)}${p.reference ? ` ${p.reference}` : ''}`, work: tidy(p.work), heldBy: tidy(p.heldBy), ...(closedDay ? { closedDay } : {}) }];
+    return [{ id: p.id, day: shownDay(p.day, closedDay), issued: p.day, title: `${kindLabel(p.kind)}${p.reference ? ` ${p.reference}` : ''}`, work: tidy(p.work), heldBy: tidy(p.heldBy), ...(closedDay ? { closedDay } : {}) }];
   });
-  const deliveries: WeekDelivery[] = (sources.deliveries ?? []).filter(d => d.projectId === projectId && !d.withdrawn && inWeek(d.day)).map(d => {
+  // Likewise a delivery belongs to the week it arrived or was sorted in.
+  const deliveries: WeekDelivery[] = (sources.deliveries ?? []).flatMap(d => {
     const sortedDay = d.sorted ? londonDay(d.sorted.at) : undefined;
-    return { id: d.id, day: d.day, supplier: tidy(d.supplier), items: tidy(d.items), condition: conditionShort(d.condition), ...(d.problem ? { problem: tidy(d.problem) } : {}),
-      ...(sortedDay ? { sortedDay } : {}), toSort: d.condition !== 'complete' && !d.sorted };
+    if (d.projectId !== projectId || d.withdrawn || !(inWeek(d.day) || (sortedDay && inWeek(sortedDay)))) return [];
+    return [{ id: d.id, day: shownDay(d.day, sortedDay), arrived: d.day, supplier: tidy(d.supplier), items: tidy(d.items), condition: conditionShort(d.condition), ...(d.problem ? { problem: tidy(d.problem) } : {}),
+      ...(sortedDay ? { sortedDay } : {}), toSort: d.condition !== 'complete' && !d.sorted }];
   });
   const byDay = <T extends { day: string; id: string }>(rows: T[]) => rows.sort((a, b) => a.day.localeCompare(b.day) || a.id.localeCompare(b.id));
 

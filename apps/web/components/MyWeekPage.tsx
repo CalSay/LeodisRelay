@@ -122,7 +122,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
                     {i.location && <p className="mw-meta">{i.location}</p>}
                   </li>)}
                   {p.records.map(r => <li key={`${r.kind}-${r.id}`}>
-                    <p><Link className="mw-rec" href={withViewReturn(`${RECORD_PAGE[r.kind]}?${new URLSearchParams({ project: p.projectId })}`, here)}>{r.title}</Link><span className="mw-time">{fmtTime(r.at)}</span></p>
+                    <p><Link className="mw-rec" href={withViewReturn(`${RECORD_PAGE[r.kind]}?${new URLSearchParams({ project: p.projectId })}`, here)}>{r.title}</Link>{londonDay(r.at) === d.day && <span className="mw-time">{fmtTime(r.at)}</span>}</p>
                     {r.detail && <p className="mw-meta">{r.detail}</p>}
                   </li>)}
                   {p.drafts.map(r => <li key={r.id} className="mw-draft">

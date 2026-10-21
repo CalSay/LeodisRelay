@@ -128,7 +128,7 @@ test('lists the toolbox talks, permits and deliveries I recorded, closed or sort
   assert.equal(thu.projectId, 'p2');
   assert.deepEqual(thu.records.map(r => r.kind), ['delivery', 'delivery-sorted']);
   assert.equal(thu.records[0]!.detail, 'Short · 6 reels');
-  assert.deepEqual(w.totals, { days:3, projects:2, reports:0, flagged:0, issueUpdates:0, drafts:0, records:5 });
+  assert.deepEqual(w.totals, { days:3, projects:2, reports:0, flagged:0, issueUpdates:0, drafts:0, records:4 });
   const text = myWeekText(w, 'Sam Spark', TODAY);
   assert.match(text, /Tue 13 Oct: 011LME Tetley Hall \(1 toolbox talk, 1 permit\)/);
   assert.match(text, /Thu 15 Oct: 009LME Aire Court \(1 delivery\)/, 'recorded and sorted the same day is one delivery');
