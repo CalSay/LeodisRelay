@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'toolbox-talks', added: '2026-10-21', audience: 'all', title: 'Toolbox talks',
+    text: 'Record each safety briefing you give on site: the topic, the day, who gave it and the name of everyone who attended. Tap a topic to start from, or "Same people as the last talk" when the same gang is there. The page shows when the last talk was and how many there have been in four weeks, and downloads the whole record as a spreadsheet for an audit. A talk entered by mistake is withdrawn with a reason and stays listed. Toolbox talks are not part of any report and are not sent to anyone. Open it from "This project" on your home screen or from the office project sheet.',
+    link: { label: 'Open Toolbox talks', href: '/toolbox-talks' } },
   { id: 'safety-in-needs-attention', added: '2026-10-21', audience: 'all', title: 'Safety in Needs attention',
     text: 'In the office, Attention and the Needs attention lists now include safety: a tower or podium due its inspection, the safety actions still open on a project (one line per project, with how many and the oldest), and a weekly safety inspection that is due. They come straight after a report that could not be processed, ahead of overdue issues, and each opens that project\'s Safety actions. On site, the Safety actions row on the home screen has a red edge while anything is open or due.',
     link: { label: 'Open Safety actions', href: '/safety-actions' } },
@@ -158,6 +161,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Before handover', href: '/handover', audience: 'all', text: 'Everything still open on one project, as it nears completion.' },
   { label: 'Issues over time', href: '/issue-trend', audience: 'all', text: 'Whether a project\'s issue list is getting shorter, week by week.' },
   { label: 'Notes for the next visit', href: '/site-notes', audience: 'all', text: 'Word left on a project for whoever is on site next.' },
+  { label: 'Toolbox talks', href: '/toolbox-talks', audience: 'all', text: 'Safety briefings given on a project and who attended, ready for an audit.' },
   { label: 'My week', href: '/my-week', audience: 'all', text: 'Your own week across every project.' },
   { label: 'Site coverage', href: '/coverage', audience: 'office', text: 'Which live projects have gone quiet.' },
   { label: 'Issues by company', href: '/companies', audience: 'office', text: 'Who to chase, for what, and what they promised last time.' },

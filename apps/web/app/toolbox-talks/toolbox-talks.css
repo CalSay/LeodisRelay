@@ -1,0 +1,55 @@
+/* Toolbox talks: two figures, a form opened on demand and a list of talks on one project. */
+.tt-page{max-width:760px;}
+.tt-head h1{margin:4px 0 6px;}
+.tt-intro{margin:0 0 14px;font-size:15px;line-height:1.5;color:var(--text-2);max-width:62ch;}
+.tt-controls{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 16px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+.tt-controls label,.tt-field label,.tt-withdraw label,.tt-stats dt{font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
+.tt-controls select{flex:1 1 240px;min-height:44px;}
+.tt-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 14px;}
+.tt-stats>div{border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:12px 14px;min-width:0;}
+.tt-stats dd{margin:4px 0 0;display:flex;flex-direction:column;gap:2px;}
+.tt-stats dd b{font-size:20px;font-weight:600;}
+.tt-stats dd small{font-size:12.5px;color:var(--text-2);overflow-wrap:anywhere;}
+.tt-stats dd.tt-due b{color:var(--caution);}
+.tt-actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 18px;}
+.tt-actions .btn-primary{min-height:48px;}
+.tt-actions .eng-link-button,.tt-page .eng-panel .eng-link-button{margin:0;}
+.tt-form{display:flex;flex-direction:column;gap:14px;margin:0 0 18px;padding:14px;border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:10px;background:var(--panel);}
+.eng-page .tt-form h2{margin:0;font-size:17px;}
+.tt-field{display:flex;flex-direction:column;gap:6px;min-width:0;}
+.tt-field input,.tt-field textarea,.tt-withdraw input{width:100%;font:inherit;font-size:16px;color:var(--text);min-height:44px;}
+.tt-field textarea{resize:vertical;}
+.tt-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;}
+.tt-page .eng-chips{margin-top:2px;}
+.tt-page .eng-chip{width:auto;}
+.tt-optional{text-transform:none;letter-spacing:0;font-family:var(--sans,inherit);color:var(--text-3);}
+.tt-sub{margin:0;font-size:12.5px;color:var(--text-2);}
+.tt-sub.tt-over{color:var(--alert);font-weight:500;}
+.tt-same{align-self:flex-start;min-height:44px;}
+.tt-buttons{display:flex;flex-wrap:wrap;gap:10px;}
+.tt-buttons button{min-height:44px;}
+.tt-page .btn-danger{border:1px solid var(--alert);color:var(--alert);background:var(--panel);border-radius:var(--r);padding:0 16px;}
+.tt-section{margin-top:6px;}
+.eng-page .tt-section h2{margin:0 0 8px;font-size:17px;display:flex;align-items:center;gap:8px;}
+.tt-count{font:500 11px var(--mono);color:var(--text-3);}
+.tt-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;}
+.tt-talk{border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:8px;background:var(--panel);padding:12px 14px;display:flex;flex-direction:column;gap:4px;}
+.tt-talk p{margin:0;}
+.eng-page .tt-topic{margin:0;font-size:15.5px;font-weight:600;line-height:1.4;overflow-wrap:anywhere;display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+.tt-withdrawn{border-left-color:var(--line-2);}
+.tt-withdrawn .tt-topic-text{text-decoration:line-through;color:var(--text-2);}
+.tt-meta{font-size:12.5px;color:var(--text-2);overflow-wrap:anywhere;}
+.tt-quiet{color:var(--text-3);}
+.tt-notes{font-size:14.5px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere;}
+.tt-names summary{cursor:pointer;font-size:14px;font-weight:500;min-height:44px;display:flex;align-items:center;}
+.tt-names ul{margin:0 0 6px;padding-left:20px;font-size:14px;line-height:1.6;columns:2 200px;}
+.tt-withdraw{display:flex;flex-direction:column;gap:6px;margin-top:6px;padding-top:10px;border-top:1px solid var(--line);}
+.tt-withdraw-open{align-self:flex-start;min-height:44px;margin-top:4px;}
+.tt-more{margin-top:12px;min-height:44px;}
+.tt-none{margin:0;font-size:14px;color:var(--text-2);}
+.tt-foot{margin-top:20px;font-size:12.5px;color:var(--text-2);line-height:1.5;}
+@media (max-width:520px){
+  .tt-row{grid-template-columns:1fr;}
+  .tt-stats{grid-template-columns:1fr;}
+  .tt-actions .btn-primary,.tt-actions .eng-link-button{width:100%;justify-content:center;}
+}
