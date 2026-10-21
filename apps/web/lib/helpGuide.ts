@@ -390,7 +390,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     ] },
     { id: 'after-send', heading: 'After you send', ordered: false, steps: [
       'Defect and Access cards become issues on the project\'s register. Variation cards become variations for the office to price. Each "Action needed" on a handover or first fix inspection becomes an issue too.',
-      'Your home screen lists what came back from the office on the things you raised, in the office\'s words, just under the main buttons. Anything the office wrote on or sent back is at the top.',
+      'Your home screen lists what came back from the office on the things you raised, in the office\'s words, under the main buttons. Anything the office wrote on or sent back is at the top.',
       'The report itself shows each step it has reached: received, PDF, delivery and seen by the office. See "What the words mean" below.',
     ] },
     { id: 'signing', heading: 'Signing an inspection', ordered: false, steps: [
