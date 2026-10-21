@@ -7,6 +7,7 @@ import { confirmationLabel } from '@/lib/issueConfirmation';
 import { isActiveIssue, isUnassigned, isVerify, notAcknowledged } from '@/lib/officeActions';
 import { isDisputedIssue, isNotReviewedIssue, isOverdueIssue } from '@/lib/issueQuery';
 import { dateShort, dayLong, whenShort } from '@/lib/dates';
+import { safetyAttention, type SafetyActions } from '@/lib/safetyActions';
 
 export { isUnassigned, isVerify, notAcknowledged };
 
@@ -16,7 +17,11 @@ export { isUnassigned, isVerify, notAcknowledged };
  * rules stay testable. Nothing here invents a figure the store cannot answer.
  */
 
-export interface Snapshot { reports: ReportSummary[]; drafts: ReportSummary[]; issues: Issue[]; variations: Variation[]; loadedAt: string }
+export interface Snapshot {
+  reports: ReportSummary[]; drafts: ReportSummary[]; issues: Issue[]; variations: Variation[]; loadedAt: string;
+  /** Safety actions on the same projects; null when it could not be read, so no safety line is claimed either way. */
+  safety: SafetyActions | null;
+}
 
 /** Today in the office's calendar, as YYYY-MM-DD, so target dates compare as strings. */
 export const today = (): string => new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
@@ -184,8 +189,8 @@ export const shortRef = (reference: string): string => reference.split('-').slic
 
 /** Everything that needs a person, across the portfolio, most urgent first. */
 export interface AttentionItem { key: string; title: string; sub: string; tag: { label: string; cls: string }; go: string; action?: { label: string; primary?: boolean; kind: 'retry' | 'verify' | 'assign' | 'triage' | 'review' | 'chase' | 'confirm' | 'price' | 'instruct'; issue?: Issue; report?: ReportSummary; variation?: Variation } }
-export function attention(stats: ProjectStats[], day: string): AttentionItem[] {
-  const out: AttentionItem[] = [];
+export function attention(stats: ProjectStats[], day: string, safety?: SafetyActions | null, returnTo = '/office'): AttentionItem[] {
+  const out: AttentionItem[] = safetyItems(stats, safety, returnTo).map(s => ({ key: s.key, title: s.title, sub: s.sub, tag: s.tag, go: s.go }));
   for (const s of stats) {
     for (const r of s.failed) out.push({ key: `ne-${r.id}`, title: 'Report could not be processed', sub: `${r.reference} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}. ${r.deliveryError ?? 'The worker gave up on it.'}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${s.code}/report/${r.id}` });
     for (const r of s.pendingReview) out.push({ key: `rv-${r.id}`, title: 'Report awaiting review', sub: `${r.reference} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${s.code}/report/${r.id}`, action: { label: 'Review', kind: 'review', report: r } });
@@ -197,8 +202,23 @@ export function attention(stats: ProjectStats[], day: string): AttentionItem[] {
     for (const i of s.disputed) out.push({ key: `dp-${i.id}`, title: i.description, sub: `${s.project.projectName} · the report that raised it was returned · needs a decision`, tag: { label: 'Disputed', cls: 'tag-alert' }, go: `#/projects/${s.code}/issue/${i.id}`, action: { label: 'Triage', kind: 'triage', issue: i } });
     for (const v of s.unpricedVariations.filter(v => !v.workDone)) out.push({ key: `vq-${v.id}`, title: v.description, sub: `${s.project.projectName} · variation raised ${fmtDay(v.raisedAt)} by ${v.raisedBy} · no quote yet`, tag: { label: 'Needs a quote', cls: 'tag-caution' }, go: `#/projects/${s.code}/variation/${v.id}`, action: { label: 'Price', kind: 'price', variation: v } });
   }
-  const rank = (t: AttentionItem) => t.key.startsWith('ne') ? 0 : t.key.startsWith('od') ? 1 : t.key.startsWith('vx') ? 2 : t.key.startsWith('rv') ? 3 : t.key.startsWith('dp') ? 4 : t.key.startsWith('vf') ? 5 : t.key.startsWith('ua') ? 6 : 7;
+  // Safety comes straight after a report the worker gave up on: a tower due its inspection or a
+  // safety action open is a risk to people on site today, where an overdue issue is late work.
+  const order = ['ne', 'tw', 'sa', 'si', 'od', 'vx', 'rv', 'dp', 'vf', 'ua'];
+  const rank = (t: AttentionItem) => { const n = order.indexOf(t.key.slice(0, 2)); return n < 0 ? order.length : n; };
   return out.sort((a, b) => rank(a) - rank(b));
+}
+
+/**
+ * Safety actions' lines for Needs attention, on the projects in view, each
+ * linking to that project's Safety actions page. Towers due, open actions,
+ * then weekly inspections due (lib/safetyActions.ts `safetyAttention`).
+ */
+export function safetyItems(stats: ProjectStats[], safety: SafetyActions | null | undefined, returnTo: string) {
+  if (!safety) return [];
+  const shown = new Set(stats.map(s => s.code));
+  return safetyAttention(safety).filter(s => shown.has(s.projectId))
+    .map(s => ({ ...s, go: `/safety-actions?${new URLSearchParams({ project: s.projectId, returnTo })}` }));
 }
 
 /** Owners already used on a project, for the assignment dialog's suggestions. */

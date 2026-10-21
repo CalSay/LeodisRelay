@@ -197,3 +197,48 @@ export function safetyActions(projects: SafetyProjectSource[], reports: Report[]
     },
   };
 }
+
+/** One line for the office's Needs attention lists. */
+export interface SafetyAttention {
+  key: string;
+  kind: 'actions' | 'tower' | 'inspection';
+  projectId: string;
+  projectNumber: string;
+  title: string;
+  sub: string;
+  tag: { label: string; cls: string };
+}
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+const ago = (days: number) => days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`;
+
+/**
+ * What Safety actions has that needs someone, as Needs attention lines: one
+ * line per project with actions open (the page lists them; the office's next
+ * step is the same for all of them), one per tower or podium due its
+ * inspection, and one per project whose weekly safety inspection is due.
+ * Projects never inspected are left out, as the page counts them apart: a
+ * project may not use RELAY's inspections at all. Safety first: towers due,
+ * then open actions (oldest first), then weekly inspections due.
+ */
+export function safetyAttention(safety: Pick<SafetyActions, 'projects'>): SafetyAttention[] {
+  const towers: SafetyAttention[] = [], actions: SafetyAttention[] = [], inspections: SafetyAttention[] = [];
+  const byOldest = [...safety.projects].filter(p => p.open.length).sort((a, b) => b.open[0]!.days - a.open[0]!.days);
+  for (const p of byOldest) {
+    const oldest = p.open[0]!;
+    actions.push({ key: `sa-${p.projectId}`, kind: 'actions', projectId: p.projectId, projectNumber: p.projectNumber,
+      title: `${plural(p.open.length, 'safety action')} open`,
+      sub: `${p.projectName} · oldest found ${ago(oldest.days)}: ${oldest.found || oldest.question}`,
+      tag: { label: 'Safety', cls: 'tag-alert' } });
+  }
+  const due = safety.projects.flatMap(p => p.towers.filter(t => t.due).map(t => ({ p, t }))).sort((a, b) => b.t.sinceLast - a.t.sinceLast);
+  for (const { p, t } of due) towers.push({ key: `tw-${p.projectId}-${inspectedKey(t.name)}`, kind: 'tower', projectId: p.projectId, projectNumber: p.projectNumber,
+    title: `${t.name}: tower inspection due`,
+    sub: `${p.projectName} · last inspected ${ago(t.sinceLast)}${t.open ? ` · ${plural(t.open, 'action')} open` : ''}`,
+    tag: { label: 'Tower due', cls: 'tag-alert' } });
+  for (const p of safety.projects.filter(p => p.due).sort((a, b) => (b.sinceLast ?? 0) - (a.sinceLast ?? 0))) inspections.push({ key: `si-${p.projectId}`, kind: 'inspection', projectId: p.projectId, projectNumber: p.projectNumber,
+    title: 'Weekly safety inspection due',
+    sub: `${p.projectName} · last one ${ago(p.sinceLast ?? 0)}`,
+    tag: { label: 'Inspection due', cls: 'tag-caution' } });
+  return [...towers, ...actions, ...inspections];
+}

@@ -199,6 +199,7 @@ try {
   ok((await page.locator('#eng-project-title').locator('..').innerText()).includes(`${issues} open issues`),'home: This project agrees');
   await row('Safety actions').filter({hasText:/open/}).waitFor();
   ok(/2 open · 1 tower due/.test(await row('Safety actions').innerText()),`home: two safety actions now open: ${await row('Safety actions').innerText()}`);
+  ok(await row('Safety actions').evaluate(a=>a.classList.contains('late')),'home: the Safety actions row is marked while actions are open');
   ok(/Socket faceplate cracked/.test(await page.locator('.eng-list').filter({hasText:'you raised it'}).innerText()),'home: the new issue came back from the office list');
   await noSideways(page,'home');
   await shot(page,'engineer-home-afternoon-light-390');
@@ -263,6 +264,30 @@ try {
     const week=await p.locator('dl.tb').filter({hasText:'Received this week'}).locator('dd').first().innerText();
     const [received,pending]=[Number(week.match(/^\d+/)[0]),Number(week.match(/(\d+) PM notification/)?.[1]??0)];
     ok(pending<=received,`${label}: no more notifications pending than reports received this week: ${JSON.stringify(week)}`);
+    // Needs attention: the podium due and the two open actions, one line for the project, ahead of overdue issues.
+    const also=p.locator('.sheet > .rmenu').last();
+    await also.getByText('2 safety actions open').waitFor();checks++;
+    ok(await also.getByText('Podium P1, plant room: tower inspection due').count()===1,`${label}: Also needs attention has the podium due`);
+    const bell=p.getByRole('button',{name:/^Attention \d+$/});
+    await bell.click();
+    const pop=p.locator('.attn-pop');
+    const titles=await pop.locator('.mini b').allInnerTexts();
+    const tower=titles.indexOf('Podium P1, plant room: tower inspection due'),actions=titles.indexOf('2 safety actions open');
+    ok(tower===0&&actions===1,`${label}: Attention leads with the podium due, then the open actions: ${JSON.stringify(titles.slice(0,4))}`);
+    ok(!titles.includes('Weekly safety inspection due'),`${label}: no weekly inspection due, one was sent today`);
+    ok(Number((await bell.innerText()).match(/\d+/)[0])===titles.length,`${label}: the Attention count is the number of lines`);
+    await pop.getByRole('link',{name:'2 safety actions open'}).click();
+    await p.waitForURL(/\/safety-actions\?project=/);await p.locator('.sa-stats').waitFor();
+    ok(/Open actions\s*2/i.test(await p.locator('.sa-stats').innerText())&&/Towers due\s*1/i.test(await p.locator('.sa-stats').innerText()),`${label}: the line opens the project's Safety actions, with the same counts`);
+    await p.getByRole('link',{name:/Back to Office/}).first().click();
+    await safetyButton.waitFor();checks++;
+    if(width===1440){
+      // The project's own sheet: the same two lines under its Needs attention.
+      await p.goto('about:blank');await p.goto(`${base}/office#/projects/${P}`);
+      const sheetAttn=p.locator('.sheet > .rmenu').first();
+      await sheetAttn.getByText('2 safety actions open').waitFor();checks++;
+      ok(await sheetAttn.getByText('Podium P1, plant room: tower inspection due').count()===1,`${label}: the project sheet's Needs attention has the podium due`);
+    }
     await noSideways(p,`${label} overview`);
     await shot(p,`office-overview-${scheme}-${width}`);
     // Inbox: the site update, read in the reader.

@@ -13,10 +13,9 @@ import { confirmationNote } from '@/lib/issueConfirmation';
 import type { Issue, Report, ReportSummary, Variation } from '@/lib/types';
 import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
-import type { SafetyActions } from '@/lib/safetyActions';
 import { dialogFor } from './OfficeDesk';
 import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, Found, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
-import { WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, shortRef, toneTag, type ProjectStats } from './model';
+import { WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
 import { signatureMethod } from '@/lib/signature';
 
 /* --------------------------------------------------------------- columns */
@@ -141,20 +140,6 @@ function foundWords(r: ReportSummary): string {
   return parts.join(', ');
 }
 
-/** Open safety actions across the office's projects, for the Safety actions button; null until known. */
-function useSafetyTotals(): SafetyActions['totals'] | null {
-  const [totals, setTotals] = useState<SafetyActions['totals'] | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    fetch('/api/safety-actions', { cache: 'no-store' })
-      .then(r => r.ok ? r.json() as Promise<SafetyActions> : null)
-      .then(body => { if (!cancelled && body?.totals) setTotals(body.totals); })
-      .catch(() => {});
-    return () => { cancelled = true; };
-  }, []);
-  return totals;
-}
-
 /** "2 PM notifications pending · 3 older", never "notified" while any is waiting. */
 function notNotifiedWords(week: number, older: number, received: number): string {
   const parts = [];
@@ -174,7 +159,8 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const openIssues = snap.issues.filter(isActive).length;
   // This week's apart from older ones: "7 pending" under "6 received" read as nonsense, but an older one still waiting must not vanish.
   const thisWeekIds = new Set(thisWeek.map(r => r.id)), pendingThisWeek = notNotified.filter(r => thisWeekIds.has(r.id));
-  const safety = useSafetyTotals();
+  // Read with the rest of the desk, so the button, the bell and Needs attention count from one answer.
+  const safety = snap.safety?.totals;
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h3>Office position</h3><div className="rowsub">{ctx.projects.length} reportable project{ctx.projects.length === 1 ? '' : 's'} · {snap.reports.length} report{snap.reports.length === 1 ? '' : 's'} received · {openIssues} open issue{openIssues === 1 ? '' : 's'} · {pendingVariations.length} variation{pendingVariations.length === 1 ? '' : 's'} awaiting instruction · {fmtDate(snap.loadedAt)}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link><Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions{safety ? ` · ${safety.open} open` : ''}</Link></div></div>
@@ -190,8 +176,11 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
 }
 
 function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectStats; limit: number; skipActions?: boolean }) {
-  const items = (s ? [s] : ctx.stats).flatMap(st => [
-    ...st.failed.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Report could not be processed', sub: `${st.project.projectName} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${st.code}/report/${r.id}` })),
+  const scope = s ? [s] : ctx.stats;
+  const failed = scope.flatMap(st => st.failed.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Report could not be processed', sub: `${st.project.projectName} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${st.code}/report/${r.id}` })));
+  // Safety lines go straight after a failed report, as in the Attention list (model.ts `attention`).
+  const safety = safetyItems(scope, ctx.snap?.safety, officeReturn(ctx)).map(i => ({ key: i.key, ref: i.projectNumber, b: i.title, sub: i.sub, tag: i.tag, go: i.go }));
+  const items = [...failed, ...safety, ...scope.flatMap(st => [
     ...st.pendingReview.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Awaiting review', sub: `${st.project.projectName} · ${r.author}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${st.code}/report/${r.id}` })),
     ...st.overdue.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · ${i.owner || 'unassigned'} · target ${fmtDay(i.targetDate)}`, tag: { label: `${daysLate(i.targetDate, ctx.day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
     ...st.exposedVariations.map(v => ({ key: v.id, ref: shortRef(v.reference), b: v.description, sub: `${st.project.projectName} · work done, no written instruction`, tag: { label: 'Not instructed', cls: 'tag-alert' }, go: `#/projects/${st.code}/variation/${v.id}` })),
@@ -200,7 +189,7 @@ function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectSt
     ...(skipActions ? [] : st.verify).map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · closure by ${i.closureSubmittedBy ?? 'unknown'}`, tag: { label: 'Fixed, to check', cls: 'tag-caution' }, go: `#/projects/${st.code}/issue/${i.id}` })),
     ...(skipActions ? [] : st.unassigned).map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · nobody owns it · raised ${fmtDay(i.raisedAt)}`, tag: { label: 'Unassigned', cls: 'tag-caution' }, go: `#/projects/${st.code}/issue/${i.id}` })),
     ...st.unpricedVariations.filter(v => !v.workDone).map(v => ({ key: v.id, ref: shortRef(v.reference), b: v.description, sub: `${st.project.projectName} · variation, no quote yet · raised ${fmtDay(v.raisedAt)}`, tag: { label: 'Needs a quote', cls: 'tag-caution' }, go: `#/projects/${st.code}/variation/${v.id}` })),
-  ]);
+  ])];
   const shown = [...new Map(items.map(i => [i.key, i])).values()].slice(0, limit);
   return <div className="rmenu">{shown.length ? shown.map(i => <a key={i.key} href={i.go}><span className="ref">{i.ref}</span><div className="rt"><b>{i.b}</b><span>{i.sub}</span></div><Tag {...i.tag} /></a>) : <div className="empty" style={{ padding: 14 }}>Nothing needs attention.</div>}</div>;
 }
