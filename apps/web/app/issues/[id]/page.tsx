@@ -104,6 +104,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         return;
       }
       setIssue(body);
+      setAssigning(false);
       setNote("");
       setPhotos([]);
     } catch {
@@ -174,7 +175,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   const canClose = issue.work === "awaiting_verification";
   const isClosed = issue.work === "closed";
   const isWithdrawn = issue.confirmation === "withdrawn";
-  // The server's rule: only open, assigned or in-progress work can be given an owner.
+  // The server's rule: only open, assigned or in-progress work can be given an owner. A withdrawn issue is left alone too, as on the rest of this page.
   const canAssign = manager && !isWithdrawn && (issue.work === "open" || issue.work === "assigned" || issue.work === "in_progress");
   const assignLabel = issue.owner.trim() ? "Reassign" : "Assign";
 
@@ -244,13 +245,13 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
                 </div>
                 <div className="field">
                   <label htmlFor="assign-target">Target date</label>
-                  <input id="assign-target" type="date" value={target} min={todayInLondon()} onChange={(e) => setTarget(e.target.value)} />
+                  <input id="assign-target" type="date" value={target} min={issue.targetDate && issue.targetDate < todayInLondon() ? issue.targetDate : todayInLondon()} onChange={(e) => setTarget(e.target.value)} />
                 </div>
                 <div className="field">
                   <label htmlFor="assign-note">Instruction</label>
                   <textarea id="assign-note" value={instruction} onChange={(e) => setInstruction(e.target.value)} placeholder="What is expected, access arrangements, who to call on site" />
                 </div>
-                <p className="eng-help" style={{ marginTop: 0 }}>Owners are names or companies, not accounts. The engineer who reported it is not changed.</p>
+                <p className="eng-help" style={{ marginTop: 0 }}>Leave the date empty for no target date. Owners are names or companies, not accounts. The engineer who reported it is not changed.</p>
                 {assignError && <div className="note note-bad" role="alert">{assignError}</div>}
                 <div className="btn-row">
                   <button type="submit" className="btn-primary" disabled={busy}>{busy ? "Recording…" : assignLabel}</button>

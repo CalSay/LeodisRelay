@@ -23,18 +23,21 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
     progress issue, with Assign or Reassign, Responsible (the companies
     already named on the project suggested, free text as everywhere), Target
     date and Instruction. It sends the same `assign` command as the desk.
-    Not shown on an issue fixed and waiting to be checked, closed or
-    withdrawn, as the server refuses those; engineers never see it.
+    Not shown on an issue fixed and waiting to be checked or closed, as the
+    server refuses those, nor on a withdrawn one, as the rest of the page
+    hides its actions there; engineers never see it. Clearing the date
+    removes the target date, as on the desk.
   - The issue's title block shows its target date for everyone.
   - Assignments now record who they went to and the date on the history
     event (`to`, `targetDate`), so the history reads "To Northbank
-    Electrical, by 28 Oct 2026" from the desk and the issue page alike.
+    Electrical, by 28 Oct 2026" on the issue page and on the desk's issue
+    history, whichever assigned it.
     Older assignments have neither and show as before.
   - The server refuses an assignment that names nobody (it used to clear the
     owner while marking the issue assigned), and trims the owner.
 - Help: What's new "Assign from the issue itself"; the office day guide
   mentions Assign on the issue.
-- Check: `scripts/verify-issue-assign.mjs` (46 checks): manager at 390px
+- Check: `scripts/verify-issue-assign.mjs` (48 checks, incl. the desk history): manager at 390px
   light and 1440px dark assigns, sees owner, target date and history update
   in place, Reassign starts from the current values, an empty owner is
   refused, axe finds nothing in the open form; no Assign on an issue fixed

@@ -95,6 +95,11 @@ try {
     await panel.getByRole('button',{name:'Reassign'}).waitFor();
     eq(listIssues('proj-011lme').find(i=>i.id===issue.id).owner,'Northbank Electrical',`${tag}: the record on the server has the owner`);
     if(screenshot)await page.screenshot({path:join(screenshot,`assign-after-${scheme}-${width}.png`),fullPage:true});
+    // The desk's issue history says the same.
+    await page.goto(`${base}/office#/projects/proj-011lme/issue/${issue.id}`);
+    const hist=page.locator('.hist').filter({hasText:'To Northbank Electrical'});
+    await hist.first().waitFor();
+    ok((await hist.first().innerText()).includes('Access via the east stair'),`${tag}: the desk's history names who it went to, with the instruction`);
     // Fixed and waiting to be checked: no Assign, as the server would refuse it.
     await page.goto(`${base}/issues/${fixed.id}`);
     await page.locator('.reg .row').first().waitFor();
