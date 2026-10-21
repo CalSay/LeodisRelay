@@ -30,6 +30,17 @@ export function cameBack(issues: readonly Issue[], variations: readonly Variatio
   };
 }
 
+/**
+ * The order of the home's rows: anything the office wrote on, or sent back
+ * (a returned report, an issue not accepted as fixed), comes first, newest
+ * first; then the rest, newest first. So the engineer's own new defect or a
+ * report the office has only received never pushes an answer down the list.
+ */
+export function waitingOnYouFirst(a: { at: string; word?: unknown; sentBack?: boolean }, b: { at: string; word?: unknown; sentBack?: boolean }): number {
+  const waits = (row: typeof a) => (row.word || row.sentBack ? 1 : 0);
+  return waits(b) - waits(a) || b.at.localeCompare(a.at);
+}
+
 /** Who wrote to the engineer on a record they raised, when, and what. */
 export interface OfficeWord { by: string; at: string; note: string }
 type Written = { at: string; actor: string; actorId?: string; kind: string; note: string; correctionId?: string; source?: unknown };

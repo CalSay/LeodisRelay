@@ -4,6 +4,49 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — The office's answers first on the engineer's home
+
+- Why: walked one engineer's whole visit at 390px on main a3bbb55 (open
+  RELAY, pick the site, a two-card site update with three photos, a quick
+  defect, fix an issue the office sent back, send, leave): 26 taps, with no
+  wasted screens left after #105-#115. The weak spot was the home screen:
+  "Came back from the office" started at 1,012px, below the first screen
+  (775px above the bottom bar), under the two inspection tiles, and the
+  office's question was the third of four rows, behind the engineer's own new
+  defect and a report the office had only received. Cal (07:02) wants an easy
+  system that gets the office the information it needs; an answer the
+  engineer does not see is not acted on. Coordinator agreed the pick; decided
+  without asking Cal, per his autonomy message. Not a `docs/tasks.json` task;
+  no status changed.
+- Change (`EngineerWorkspace.tsx`, `lib/cameBack.ts`): "Came back from the
+  office" now sits straight under "Flag a defect" and "Request a variation",
+  above Inspections, in the page order (so screen readers and the keyboard
+  meet it there too). Rows the office wrote on, or sent back (a returned
+  report, an issue not accepted as fixed), come first, newest first; the rest
+  follow newest first (`waitingOnYouFirst`). The line under the tiles ("A
+  defect goes to the office as soon as you send it. Your site update stays a
+  draft until you sign and send it.") is gone: the tiles already say both, it
+  said nothing about no signal, and signing a site update is optional now. On
+  a desktop the section moves from the top of the right-hand column to under
+  the buttons on the left (still on the first screen, 631px); Since your last
+  visit now heads the right-hand column. Help "What's new" line and the
+  "After you send" guide updated. Taps unchanged; what changes is scrolling
+  and reading past rows.
+- Checks: typecheck, `npm test`, build. New `scripts/verify-came-back-first.mjs`
+  (30 checks, 390px light and dark, 1440px dark; `RELAY_MEASURE_ONLY=1` gives
+  main's numbers): before Inspections in page order; the answered issue is
+  the first row, its title and the office's words on the first screen (words
+  end 740px, screen ends 775px; on main the row was 1,012-1,110px and third);
+  the rest newest first; no help line; rows 48px+; no sideways scroll; tapping
+  it opens the issue ready to update. Reran the home and came-back checks
+  (listed in the PR). Screenshots before and after: project files
+  `ui-review/site-visit-pass/`.
+- Not changed: `/api/came-back` still sends the engineer's six newest issues
+  and variations, so an office question on an older issue, behind six newer
+  ones of theirs, still does not show (as before). An assignment's note is
+  still not shown as the office writing (by design since #110).
+- Not verified: a real phone, a screen reader.
+
 ## 2026-10-21 — Whole project names on a phone
 
 - Why: after #111 a project opened in the office on a phone headed its
