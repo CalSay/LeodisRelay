@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { isNewReport, previousWorkingDay, sinceWords } from '@/lib/officeActions';
 import type { ReportSummary } from '@/lib/types';
 import type { Ctx } from './ctx';
-import { BtnQ, DeliveryTag, Found, ReviewTag, Tag } from './bits';
+import { DeliveryTag, Found, ReviewTag, Tag } from './bits';
 import { ReportReader } from './ProjectsView';
-import { awaitingReview, byReceived, fmtWhen, notAcknowledged, processingFailed, returned, shortRef } from './model';
+import { awaitingReview, byReceived, fmtReceived, fmtWhen, notAcknowledged, processingFailed, returned, shortRef } from './model';
 
 type Filter = 'all' | 'new' | 'notAck' | 'review' | 'returned' | 'failed' | 'drafts';
 const FILTERS: [Filter, string, boolean][] = [['all', 'All', false], ['new', 'New', false], ['notAck', 'Not seen yet', false], ['review', 'To review', true], ['returned', 'Returned', false], ['failed', 'Processing failed', true], ['drafts', 'Drafts on site', false]];
@@ -55,14 +55,15 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
     {filter === 'drafts' ? <div className="panel"><table className="reg cards"><thead><tr><th>Reference</th><th>Project</th><th>Engineer</th><th>Visit</th><th>Saved</th><th>Sections</th><th><span className="sr">Action</span></th></tr></thead><tbody>
       {drafts.length ? drafts.map(r => <tr key={r.id}><td className="c-ref"><span className="ref">{r.reference}</span>{r.revision > 1 && <div className="rowsub">rev {r.revision}</div>}</td><td data-label="Project">{name(r.projectId)}</td><td data-label="Engineer">{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due" data-label="Visit">{r.visitDate}</td><td className="due" data-label="Saved">{fmtWhen(r.lastSavedAt)}</td><td className="num" data-label="Sections">{r.observationCount}</td><td data-label="State"><Tag label={r.corrects ? 'Correction' : 'Draft'} cls="tag-caution" /></td></tr>) : <tr><td colSpan={7} className="empty">{EMPTY.drafts}{narrowed ? ' for these filters' : ''}.</td></tr>}
     </tbody></table><div className="panel-foot">Draft contents are private until submitted. Work held only on an engineer’s device is not visible here.</div></div>
-    : <div className="two-wide">
-      <div className="panel"><table className="reg cards"><thead><tr><th>Reference</th><th>Project</th><th>Engineer</th><th>Received</th><th>Found</th><th>Status</th></tr></thead><tbody>
+    // With no report open the list has the page to itself; the reader comes in beside it once one is picked.
+    : <div className={selected ? 'two-wide' : undefined}>
+      <div className="panel"><table className="reg cards inbox-list"><thead><tr><th>Reference</th><th>Project</th><th>Engineer</th><th>Received</th><th>Found</th><th>Status</th></tr></thead><tbody>
         {shown.length ? shown.map(r => <tr key={r.id} className={`clickable ${selected === r.id ? 'sel' : ''}`} onClick={() => ctx.go(`#/inbox/${r.id}`)}>
-          <td className="c-ref"><span className="ref">{r.reference}</span>{r.revision > 1 && <div className="rowsub">rev {r.revision}</div>}</td><td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{name(r.projectId)}</div></td><td data-label="Engineer">{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due" data-label="Received">{fmtWhen(r.serverAcknowledgedAt)}</td><td data-label="Found"><Found r={r} /></td>
+          <td className="c-ref"><span className="ref">{r.reference}</span>{r.revision > 1 && <div className="rowsub">rev {r.revision}</div>}</td><td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{name(r.projectId)}</div></td><td data-label="Engineer"><span className="who">{r.author}</span><div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due" data-label="Received">{fmtReceived(r.serverAcknowledgedAt, ctx.day)}</td><td data-label="Found"><Found r={r} /></td>
           <td data-label="Status"><div className="found">{r.review === 'pending' || r.review === 'returned' ? <ReviewTag r={r} /> : <DeliveryTag r={r} />}{r.acknowledged && <Tag label="Seen" cls="tag-ok" />}</div></td></tr>) : <tr><td colSpan={6} className="empty">{snap.reports.length === 0 && !narrowed ? FIRST : <>{filter === 'new' ? `No reports received ${sinceWords(since, ctx.day)}` : EMPTY[filter]}{narrowed ? ' for these filters' : ''}.</>}{narrowed && <> <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button></>}</td></tr>}
-      </tbody></table><div className="panel-foot">Newest first. “Found” says what the visit raised. Opening a report marks it seen.</div></div>
-      <div className="panel"><div className="panel-head"><h3>Reader</h3>{selected && <a className="more" href={`#/projects/${code(shown.find(r => r.id === selected)?.projectId ?? snap.reports.find(r => r.id === selected)?.projectId ?? '')}/report/${selected}`}>In its project →</a>}</div>
-        <div style={{ padding: 12 }}>{selected ? <ReportReader ctx={ctx} id={selected} crumbsHome="#/inbox" /> : <div className="empty">{shown.length ? <>Select a report to read it here.<br /><BtnQ className="btn-sm" style={{ marginTop: 12 }} onClick={() => ctx.go(`#/inbox/${shown[0].id}`)}>Open the newest</BtnQ></> : 'Nothing to read in this list.'}</div>}</div></div>
+      </tbody></table><div className="panel-foot">Newest first. Pick a report to read it; opening it marks it seen. “Found” says what the visit raised.</div></div>
+      {selected && <div className="panel"><div className="panel-head"><h3>Reader</h3><a className="more" href={`#/projects/${code(shown.find(r => r.id === selected)?.projectId ?? snap.reports.find(r => r.id === selected)?.projectId ?? '')}/report/${selected}`}>In its project →</a></div>
+        <div style={{ padding: 12 }}><ReportReader ctx={ctx} id={selected} crumbsHome="#/inbox" /></div></div>}
     </div>}
   </div>;
 }

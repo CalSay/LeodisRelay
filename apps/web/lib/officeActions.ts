@@ -58,7 +58,7 @@ export interface OfficeActions {
   since: string;
   /** Newest first. */
   newReports: ReportSummary[];
-  /** Oldest first: the longest wait comes first. */
+  /** Newest first, like the Inbox it opens, so today's reports are never behind older ones. */
   notRead: ReportSummary[];
   /** Oldest raised first. */
   unassigned: Issue[];
@@ -71,7 +71,7 @@ export function officeActions(reports: ReportSummary[], issues: Issue[], day: st
   return {
     since,
     newReports: reports.filter(r => isNewReport(r, since)).sort((a, b) => received(b).localeCompare(received(a))),
-    notRead: reports.filter(notAcknowledged).sort((a, b) => received(a).localeCompare(received(b))),
+    notRead: reports.filter(notAcknowledged).sort((a, b) => received(b).localeCompare(received(a))),
     unassigned: issues.filter(isUnassigned).sort((a, b) => a.raisedAt.localeCompare(b.raisedAt)),
     verify: issues.filter(isVerify).sort((a, b) => lastEvent(a).localeCompare(lastEvent(b))),
   };

@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-inbox-tidy', added: '2026-10-21', audience: 'office', title: 'A roomier Inbox, newest first',
+    text: 'In the office, the Inbox list now uses the whole width until you open a report, so each row reads across on one line instead of project names wrapping; the reader comes in beside the list when you pick one. A report received today says "Today" with the time. "Not seen yet" on the office position now lists the newest first, like the Inbox, so today\'s reports are at the top rather than behind older ones. Checked in a desktop browser, light and dark, and a phone-sized window.',
+    link: { label: 'Open the Inbox', href: '/office#/inbox' } },
   { id: 'came-back-first', added: '2026-10-21', audience: 'site', title: 'The office\'s answers first',
     text: '"Came back from the office" now sits under "Flag a defect" and "Request a variation" on the home screen (and under any unfinished reports), above Inspections, so on a phone you usually see it without scrolling. Anything the office wrote on, or sent back to you (an issue marked not finished, a report returned to correct), is at the top of it; your new defects and reports the office has only received come after. Checked in a phone-sized browser, not on a real phone.',
     link: { label: 'Open your home screen', href: '/engineer' } },

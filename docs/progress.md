@@ -4,6 +4,49 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Office Inbox tidy-up
+
+- Why: the office walk-through for #118 (1440px, dark and light, weeks of
+  reports from three engineers on three sites) found three Inbox problems.
+  Coordinator queued them as one PR; decided without asking Cal, per his
+  autonomy message and his 07:02 ask for less on screen. Not a
+  `docs/tasks.json` task; no status changed.
+- Inbox with nothing open (`InboxView.tsx`): the empty Reader panel (440px,
+  "Select a report to read it here", "Open the newest") has gone, so the list
+  has the whole width (1,392px at 1440, was 928px). Project and engineer names
+  stay on one line at a desk (`.inbox-list`, above 700px); "Found" wraps
+  instead. Picking a report brings the reader in beside the list as before.
+  With busy reports (defects, a variation, access, progress) rows were up to
+  85px with names on two lines; now 65px with nothing open and 72px with a
+  report open, names on one line. On a phone the empty reader under the list
+  has gone too.
+- "Not seen yet" order (`lib/officeActions.ts`): the office position's group
+  listed oldest first. That came from #15 (four action groups), when "Not yet
+  read" was a queue worked through with an Acknowledge button, so the longest
+  wait went first. Since #88 opening a report is what marks it seen, so there
+  is no queue to work through; and with four rows shown, an old unopened
+  report could push today's newest out of view altogether (it did in the
+  check's data: today's Tetley Hall report was missing). The group's "Show
+  all" opened the Inbox, which was already newest first, so the two orders
+  disagreed. Decision: newest first, the same as the Inbox. Older unopened
+  reports still count in the group's number and are a click away.
+- Today: a report received today says "Today, 14:05" in the Inbox and in
+  "Not seen yet" (`fmtReceived` in `office/model.ts`, London day). No "Today"
+  filter: with newest first, today's reports are the top rows and say so, and
+  the existing New filter (since the last working day) covers "what came in";
+  another chip would be one more control for what the list already shows.
+- Light theme `--access` (#5f7a9c to #4c6585): the "1 access" tag was below
+  4.5:1 on the panel (axe colour-contrast on the Inbox), now passes.
+- Checks: typecheck, `npm test` (146 + 513; `officeActions` test now expects
+  newest first), build. New `scripts/verify-office-inbox.mjs` (44, 1440px dark
+  and light, 390px light; `RELAY_REPORT_ONLY=1` measures older builds): no
+  reader with nothing open, list width, names on one line, rows at most
+  72px, newest first in the Inbox and both "Not seen yet" lists, "Today" with
+  the time, reader beside the list once opened with its edge, axe, no
+  sideways scroll. Help "What's new" line added. Screenshots before and after:
+  project files `ui-review/office-inbox/`.
+- Not verified: a real phone or tablet, a screen reader.
+
 ## 2026-10-21 — Everyone who was on site, on the office overview
 
 - Why: walked an office manager's end-of-day check at the desk (1440px, dark
