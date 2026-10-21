@@ -166,6 +166,15 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [typing,setTyping] = useState(false);
   /** Side-by-side cards and editor from 900px, as in engineer.css; folded cards below that. */
   const wide = useMediaQuery('(min-width: 900px)');
+  // Side by side a long list of checks scrolls in its own column: keep the open one in sight there.
+  useEffect(() => {
+    if (!wide) return;
+    const rail = document.querySelector<HTMLElement>('.eng-rail'), row = rail?.querySelector<HTMLElement>('[aria-current="true"]');
+    if (!rail || !row) return;
+    const r = row.getBoundingClientRect(), b = rail.getBoundingClientRect();
+    // To the middle, which leaves room for the row to grow as the check is answered.
+    if (r.top < b.top || r.bottom > b.bottom) rail.scrollTop += r.top - b.top - (b.height - r.height) / 2;
+  }, [wide, selectedSection, step]);
   /** The card or photograph just removed, offered back with Undo. One at a time: a second removal replaces it. */
   const [removed,setRemoved] = useState<{ item: Removed; title: string; detail: string } | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -917,8 +926,14 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     removed: Object.keys(onServer.cards).filter(cardId => !whereOf.has(cardId)).length,
     signature: report.state === 'draft' && signatureCopy(report) !== onServer.signature && !(onServer.signature === undefined && !report.draftSignature),
     noun: type.checklist ? 'check' : 'card',
+    saving: saveState === 'saving',
   });
   const kindOf = (o: Observation) => OBSERVATION_TYPES.find(t => t.value === o.type);
+  /** What sending does to issues: a card linked to one already raised adds to it rather than raising another. */
+  const issuesSaid = (raising: Observation[]) => {
+    const linked = raising.filter(o => o.linkedIssueId).length, fresh = raising.length - linked;
+    return [fresh && `${fresh} issue${fresh === 1 ? '' : 's'} raised`, linked && `${linked} added to ${linked === 1 ? 'an issue' : 'issues'} already raised`].filter(Boolean).join(' · ') + ' · not yet reviewed';
+  };
   const extras = (o: Observation) => [o.affectedTrade && `Trade: ${o.affectedTrade}`, o.variationReason, o.workDone && 'already carried out', o.askedBy && `asked for by ${o.askedBy}`, o.roughSize && ({ 'half-day': 'about half a day', day: 'about a day', 'two-days': 'about two days', more: 'more than two days' })[o.roughSize], o.partsEstimate !== undefined && `parts about £${o.partsEstimate}`].filter(Boolean).join(' · ');
 
   /** Open a card on the cards step and bring it into view. */
@@ -1188,6 +1203,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
         {step === 'check' && <div id="report-check" className="eng-check">
           <h2 id="report-check-title" className="eng-sr" tabIndex={-1}>Check and send</h2>
+          {/* Side by side on a wide screen: what is being sent, then signing it. */}
+          <div className="eng-check-main">
           {findings.length === 0 ? (
             <div className="note note-ok">Everything needed is here.</div>
           ) : (
@@ -1219,7 +1236,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             <span className="lbl">What sending does</span>
             <div className="eng-list" style={{ marginTop: 8 }}>
               {type.raisesRecords
-                ? <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} issue${answers.action === 1 ? '' : 's'} raised · not yet reviewed` : 'No issues to raise'}</b><span>{answers.action ? `${report.observations.some(o => o.check?.answer === 'action' && o.linkedIssueId) ? 'Linked ones add a sighting to the existing issue. ' : ''}Each action goes on the snag list with where it is, and is listed at the top of the PDF.` : 'Every check is satisfactory or does not apply: the area is ready to hand over.'}</span></div></div>
+                ? <div className="eng-row"><div className="main"><b>{answers.action ? issuesSaid(report.observations.filter(o => o.check?.answer === 'action')) : 'No issues to raise'}</b><span>{answers.action ? `${report.observations.some(o => o.check?.answer === 'action' && o.linkedIssueId) ? 'Linked ones add a sighting to the existing issue. ' : ''}Each action goes on the snag list with where it is, and is listed at the top of the PDF.` : 'Every check is satisfactory or does not apply: the area is ready to hand over.'}</span></div></div>
                 : <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} action${answers.action === 1 ? '' : 's'} listed on the inspection` : 'No actions to list'}</b><span>Printed at the top of the PDF with who is to do each one, and followed on Safety actions until a later inspection finds it put right. Nothing is added to the issue register.</span></div></div>}
               <div className="eng-row"><div className="main"><b>Received the moment it lands</b><span>{project?.projectManager ?? 'The project manager'} is emailed when the mailbox is live; the office can read it straight away.</span></div></div>
             </div>
@@ -1228,12 +1245,14 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           {!checklist && report.observations.length > 0 && <div className="eng-does">
             <span className="lbl">What sending does</span>
             <div className="eng-list" style={{ marginTop: 8 }}>
-              {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{counts.defect + counts.access} issue{counts.defect + counts.access === 1 ? '' : 's'} raised · not yet reviewed</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Linked ones add a sighting to the existing issue. ' : ''}The office assigns them; you’ll see who and when on your home screen.</span></div></div>}
+              {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{issuesSaid(report.observations.filter(o => o.type === 'defect' || o.type === 'access'))}</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Linked ones add a sighting to the existing issue. ' : ''}The office assigns them; you’ll see who and when on your home screen.</span></div></div>}
               {counts.instruction > 0 && <div className="eng-row"><div className="main"><b>{counts.instruction} variation{counts.instruction === 1 ? '' : 's'} raised · need a quote</b><span>{report.observations.some(o => o.type === 'instruction' && o.workDone) ? 'Marked as already done: the office gets the client’s sign-off before it is invoiced. ' : ''}The office prices it and puts it to the client.</span></div></div>}
               <div className="eng-row"><div className="main"><b>Received the moment it lands</b><span>{project?.projectManager ?? 'The project manager'} is emailed when the mailbox is live; the office can read it straight away.</span></div></div>
             </div>
           </div>}
+          </div>
 
+          <div className="eng-check-sign">
           <div className="sec"><h2 className="lbl">Sign</h2></div>
           {type.signatureRequired && <p className="hint eng-sign-hint">An inspection is signed by the person who carried it out: draw your signature, or type your name if you can’t draw.</p>}
 
@@ -1252,6 +1271,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               />
             </div>
           </section>
+          </div>
         </div>}
 
         {submitError && (

@@ -65,7 +65,7 @@ const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
  * One line for the check step: is everything with the office, and if not, what is still to go up.
  * `others`: changes outside the cards on screen that also wait for a save.
  */
-export function reportWhere(cards: readonly CardWhere[], offline: boolean, others: { removed: number; signature: boolean; noun?: 'card' | 'check' } = { removed: 0, signature: false }): { where: Where; text: string } {
+export function reportWhere(cards: readonly CardWhere[], offline: boolean, others: { removed: number; signature: boolean; noun?: 'card' | 'check'; saving?: boolean } = { removed: 0, signature: false }): { where: Where; text: string } {
   // An inspection's cards are its checks, and the engineer knows them by that name.
   const noun = others.noun ?? 'card';
   const photos = cards.reduce((n, c) => n + c.photos, 0);
@@ -81,6 +81,8 @@ export function reportWhere(cards: readonly CardWhere[], offline: boolean, other
   const sentence = parts.charAt(0).toUpperCase() + parts.slice(1);
   const many = left + leftPhotos + others.removed + (others.signature ? 1 : 0) > 1;
   if (cards.some(c => c.where === 'uploading')) return { where: 'uploading', text: `${sentence} ${many ? 'are' : 'is'} still uploading.` };
+  // A save already under way: say so, rather than that the work is missing from the server.
+  if (others.saving && !offline) return { where: 'uploading', text: `${sentence} ${many ? 'are' : 'is'} being saved to the server.` };
   return offline
     ? { where: 'phone', text: `${sentence} ${many ? 'are' : 'is'} only on this phone. ${many ? 'They go up by themselves' : 'It goes up by itself'} when the server can be reached.` }
     : { where: 'pending', text: `${sentence} ${many ? 'are' : 'is'} not yet on the server.` };
