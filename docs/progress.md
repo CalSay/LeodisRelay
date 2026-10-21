@@ -4,6 +4,59 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — A month on one page
+
+- Why: the monthly progress walk (project files
+  `ui-review/monthly-progress/walk-notes.md`) found RELAY has no month: October
+  on Tetley Hall was five weekly summaries, the first starting 28 Sep, added up
+  by hand. Built on #128's figures. Decided without asking Cal (his autonomy
+  message); not a `docs/tasks.json` task, so no status changed.
+- Added a Week / Month choice on the Weekly summary (`?period=month&month=YYYY-MM`,
+  `/api/monthly-summary`, `lib/monthSummary.ts`, `components/MonthSheet.tsx`).
+  One calendar month of one project: figures (days on site, site reports,
+  issues raised and closed, variations raised and instructed), a row a week
+  cut to the month's days so rows add up to the month; "Where work moved on"
+  (one line a place, newest progress line, trade, date, how many updates);
+  "Behind or stuck" (issues past target, places with access problems on more
+  than one day); "Still open, with whom" (each company's open and past-target
+  issues, each company opening its list); up to eight photographs, the newest
+  progress photograph from each place. Every figure opens a list on the page
+  with exactly that many records (#108's rule). Prints like the weekly one; the
+  lists behind the figures stay off paper.
+- Decisions: the month counts with the weekly page's own code
+  (`weeklySummary.ts` now has `periodSummary` and `sentReports`), so a record
+  counts the same on its week and its month. Month-end standing uses the same
+  per-issue rules as Issues over time (`issueTrend.ts` now exports `isOpenOn`,
+  `isLateOn`, `isToCheckOn`, which its own figures use); for the month in
+  progress they are the register's rules (`isActiveIssue`, `isOverdueIssue`),
+  so they match the project sheet. Safety inspections, toolbox talks, permits
+  and deliveries never appear, even switched on. Photographs are plain display
+  of existing progress photos. Week rows link to the full weekly page; Back
+  returns to the month (week rows are full page loads, as the page keeps its
+  choice in state).
+  An issue closed twice in a month counts once, in the week it was last closed.
+- Checks: typecheck; `npm test` (146 + 535; new `monthSummary.test.ts`, 10
+  tests, incl. October 2026 starting on a Thursday, BST/GMT month end, figures
+  equal to `issueFigures` today); build. New `scripts/verify-month-summary.mjs`
+  (73 checks): last month seeded across week boundaries with safety records on;
+  every figure opens exactly that many rows; each week row equals the weekly
+  page's records on those days (from `/api/weekly-summary`) and a full week's
+  page shows the same figures; places, behind or stuck, Acme 3 open / 2 past
+  target (a fixed-to-check issue past target is not), eight photographs
+  loaded; axe light and dark; print hides controls and lists, every place
+  printed, white sheet from dark mode, A4 PDF; 390px no sideways scroll.
+  Screenshots and print preview in project files `ui-review/monthly-progress/month-*`.
+  Also passed: weekly-summary, issue-trend, issue-figures, help, office-links,
+  home-and-sheet, role-access, navigation, photo-library, accessibility.
+  Fresh review found two things, both fixed: this month's open count missed an
+  issue with no recorded raise date (now the register's own rule today), and a
+  page that followed its address could flip back on a late router update
+  (removed; week rows load the page afresh).
+- Not verified: a live tenant, real SharePoint registers, a real phone, a
+  printer (PDF only), a screen reader.
+- Next: nothing left from the walk's pick; ideas only: a month choice on
+  Photographs.
+
 ## 2026-10-21 — Office issue figures agree
 
 - Why: a walk of an office manager preparing a monthly progress meeting (1440px,

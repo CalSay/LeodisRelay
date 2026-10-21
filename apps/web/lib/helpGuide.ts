@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'monthly-summary', added: '2026-10-21', audience: 'all', title: 'A month on one page',
+    text: 'The Weekly summary now has a Month choice: one calendar month of one project, for the monthly progress meeting. It gives the month\'s figures (days on site, site reports, issues raised and closed, variations raised and instructed) with a row for each week, cut to the days in the month, so they add up. "Where work moved on" lists each place once with the newest progress written about it. "Behind or stuck" lists issues past their target and places with access problems on more than one day. "Still open, with whom" gives each company\'s open and past-target issues at the end of the month, and "A few photographs" shows the newest progress photograph from up to eight places. Tap a figure to see the records it counts. It prints like the weekly one. Health and safety records are not on it. Checked in a desktop browser, light and dark, and a phone-sized window.',
+    link: { label: 'Open the Weekly summary', href: '/weekly-summary?period=month' } },
   { id: 'issue-figures-agree', added: '2026-10-21', audience: 'office', title: 'Issue figures that agree',
     text: 'Open, overdue and fixed, to check now mean the same everywhere in the office: the project list, a project\'s figures, "Where each project stands", the Issues register, Issues by company, snag lists, Before handover, the Weekly summary and Issues over time. Open is every issue not yet closed or withdrawn. Overdue is past its target date and not yet put forward as fixed. Fixed, to check is waiting for someone to check it and is never counted as overdue, because the company has done its part. Before, the project list could say "55 overdue" with nothing to check while the figures beside it said 22 were fixed, to check.',
     link: { label: 'Open the office', href: '/office' } },
@@ -474,7 +477,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'Where review is off, issues read "As reported" and stand until someone confirms or withdraws them.',
     ] },
     { id: 'meetings', heading: 'For the site meeting', ordered: false, steps: [
-      'Weekly summary puts a project\'s week on one page. "Last week\'s summary" under each project on the office overview opens last week\'s straight away. Snag lists print the open issues for one company or trade. Site diary reads back every visit.',
+      'Weekly summary puts a project\'s week on one page; its Month choice puts one calendar month on a page for the monthly progress meeting. "Last week\'s summary" under each project on the office overview opens last week\'s straight away. Snag lists print the open issues for one company or trade. Site diary reads back every visit.',
       'Issues by company is the chase list; Site coverage shows which live projects have gone quiet.',
       'A project\'s own pages (Weekly summary, Site diary, Photographs, Notes for the next visit, Issues over time, Before handover) are on its project sheet, under its reports. On a phone they come after the project\'s register.',
     ], safetySteps: [

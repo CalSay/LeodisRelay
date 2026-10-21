@@ -71,6 +71,37 @@ function putForwardOn(issue: Issue, day: string): boolean {
   return last?.kind === 'closure_submitted';
 }
 
+/**
+ * Open at the end of `day`: raised by then, not withdrawn, and not closed by
+ * then. A closure with no recorded day is never open. On today this is the
+ * register's open (lib/officeActions.ts `isActiveIssue`).
+ */
+export function isOpenOn(issue: Issue, day: string): boolean {
+  if (issue.confirmation === 'withdrawn') return false;
+  const raised = londonDay(issue.raisedAt);
+  if (!raised || raised > day) return false;
+  if (issue.work !== 'closed') return true;
+  const closed = closedOn(issue);
+  return Boolean(closed) && closed > day;
+}
+
+/**
+ * Past target at the end of `day`, as the office counts it (lib/officeActions.ts
+ * `isOverdueIssue`): open, past its target date, and not put forward as fixed
+ * by then (or sent back or checked since). On today it is the register's rule
+ * itself, so the figure always matches the project sheet.
+ */
+export function isLateOn(issue: Issue, day: string, today: string): boolean {
+  if (day === today) return isOverdueIssue(issue, today);
+  if (!isOpenOn(issue, day)) return false;
+  return isDay(issue.targetDate) && issue.targetDate < day && !putForwardOn(issue, day);
+}
+
+/** Open and put forward as fixed at the end of `day`, waiting for the office to check it: "fixed, to check" on that day. */
+export function isToCheckOn(issue: Issue, day: string, today: string): boolean {
+  return isOpenOn(issue, day) && (day === today ? issue.work === 'awaiting_verification' : putForwardOn(issue, day));
+}
+
 /** `today` is YYYY-MM-DD in the office calendar. Issues from other projects are ignored. */
 export function issueTrend(issues: Issue[], projectId: string, today: string): IssueTrend {
   const thisWeek = weekStart(today, today);
@@ -81,12 +112,9 @@ export function issueTrend(issues: Issue[], projectId: string, today: string): I
     .map(i => ({ issue: i, raised: londonDay(i.raisedAt), closed: closedOn(i), undated: i.work === 'closed' && !closedOn(i) }))
     .filter(r => r.raised);
 
-  // Open at the end of `day`: raised by then and not closed by then. An undated closure is never open.
-  const openOn = (day: string) => rows.filter(r => r.raised <= day && !r.undated && !(r.closed && r.closed <= day));
-  // Past target as the office counts it (lib/officeActions.ts `isOverdueIssue`): an issue put forward as fixed by the end of `day`, and not
-  // sent back or checked since, is waiting on the office, not late. Today this is the same count as the project sheet's Overdue actions.
-  // Today uses the register's rule itself, so the figure always matches the sheet.
-  const lateOn = (day: string) => openOn(day).filter(r => day === today ? isOverdueIssue(r.issue, today) : isDay(r.issue.targetDate) && r.issue.targetDate < day && !putForwardOn(r.issue, day)).length;
+  // The same rules the monthly summary reads its month-end figures with.
+  const openOn = (day: string) => rows.filter(r => isOpenOn(r.issue, day));
+  const lateOn = (day: string) => rows.filter(r => isLateOn(r.issue, day, today)).length;
 
   const weeks: TrendWeek[] = mondays.map(monday => {
     const end = monday === thisWeek ? today : weekEnd(monday);
