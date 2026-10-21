@@ -4,6 +4,59 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Sent with no signal, it goes by itself
+
+- Why: Cal (2026-10-21 07:02) wants RELAY easy for hands-on engineers and
+  the office to get the information. Walking an engineer's day at 390px on
+  main 34ff4ef (site gate, progress with photos, a defect and a variation,
+  sending in a basement, the next morning), the worst moment was sending
+  with no signal: "Send to office" said "try again when you have signal",
+  nothing happened when signal came back, and the home screen still said
+  "Carry on with today's update". An engineer who pocketed the phone
+  thought it had gone; the office never got it. Chosen over trimming Recent
+  places (the hint and three full-width rows put "Take a photo" about
+  1,040px down a new card), which stays the next idea. Not a
+  `docs/tasks.json` task; no status changed.
+- Built on what was there, not a second outbox: the report's held copy on
+  the phone (localDraft.ts) is the work; `lib/sendOnSignal.ts` only notes,
+  per device and person, that Send was tapped. The send is the editor's own
+  (save, then submit), which the server already makes safe to repeat: a
+  submit whose answer was lost returns the sent report, and a save whose
+  answer was lost comes back as the same cards.
+- Changed: with no signal (or the server not answering, not when signed
+  out) Check & send says "Waiting for signal. It goes to the office by
+  itself as soon as this phone has signal, while RELAY is open", with
+  "Don't send yet"; the button reads "Try now". It tries on the browser's
+  online event, on coming back into view, on focus and every 15 s (no
+  background sync, which many phones lack). Sent, it says "Sent to the
+  office by itself". Closed first, the home's big button says "Send today's
+  update · Not sent yet" (no second Unfinished row for it) and opening it
+  with signal sends it at once. Only what the blocking checks allow goes.
+- Decisions: going back to the cards (button or the phone's Back),
+  changing the signature, or another version arriving from elsewhere stops
+  it going by itself, so nothing goes that the engineer did not see on
+  Check & send; Check & send then sends the latest version. It only sends
+  while RELAY is open (said on screen and in Help); the no-signal page's
+  own sending is unchanged.
+- Checks: typecheck, `npm test` (146 + 477; new `sendOnSignal.test.ts`),
+  build. New `scripts/verify-send-on-signal.mjs` (69 checks, 390px light
+  and dark, 1440px dark): open page waits then sends once (one report, one
+  issue, one variation, all cards and photos); closed then reopened from
+  home sends within 8 s; Don't send yet, signature change, Cards and the
+  phone's Back stop it; a lost answer to the submit, and to its save, make
+  one report. Also passing, one at a time: offline-capture, engineer-day,
+  report-editor, editor-usability, fewest-taps, signature-reload,
+  engineer-layout, role-access, help, simpler-home, unfinished-reports,
+  sent-elsewhere, draft-conflict, offline-drafts, offline-sign,
+  submission-stages, error-messages, day-walkthrough, search, lighter-card,
+  one-caption-line, editor-wide, accessibility (584). A fresh-context
+  review found five gaps (phone Back, signature change, conflicts, a slow
+  resume, a lost save answer), all fixed and covered by the new check.
+  Screenshots: project files `ui-review/send-on-signal/`.
+- Not verified: a real phone, real weak signal (the browser's offline
+  switch and cut responses only), a phone that suspends the page while
+  locked.
+
 ## 2026-10-21 — Clearer edges on the office desk
 
 - Why: Cal (2026-10-21 12:59, with a screenshot of the dark office desk, a
