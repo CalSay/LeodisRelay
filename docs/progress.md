@@ -24,16 +24,20 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
     011LME-SPR-004 · Revision 1 · Approved for issue" (and the tower, on a
     tower inspection), shortened with an ellipsis before it meets the page
     number. Characters the footer font lacks (Ł, emoji) fall back to plain
-    letters or are left out instead of stopping the PDF.
+    letters or are left out instead of stopping the PDF (the reference part
+    of the footer too).
   - A long reference with no spaces ran off the right edge; runs over 24
-    characters may now break.
+    characters may now break. react-pdf marks every such break with a
+    hyphen, and a break next to a hyphen already in the text can show as
+    "--" (a quirk of its line breaking, seen with a 90-character circuit
+    reference; not fixed).
   - "Sign off" could end a page with its boxes on the next; they are one
     block. A card's number, title, words and action are kept on one page
     (only a card too long for that may break), so an action is not parted
     from what it is about; photographs can still follow on the next page.
   - An inspection's results table split with no column heads on the second
-    page; they now repeat, and the results open with a tally ("12 checks,
-    9 satisfactory, 2 action needed, 1 not applicable").
+    page; they now repeat, and the results open with a tally of each result
+    (12 checks; 9 satisfactory; 2 action needed; 1 not applicable).
   - The summary numbered its rows 01, 02… while the updates were 02, 04…;
     each row now carries its update's or check's number.
   - The cards never said who was to act; the action box now ends "Owner:
@@ -50,9 +54,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   changed. A two-card report whose sign-off no longer fits on page one now
   puts the whole sign-off on page two, rather than its heading alone.
 - Verified (Node 22 here; CI runs Node 24): `npm run typecheck`, `npm test`
-  (6 new tests in `apps/web/tests/reportPdf.test.ts`, which read the
+  (7 new tests in `apps/web/tests/reportPdf.test.ts`, which read the
   rendered text back with pdf.js: footer on every page, Ł and emoji, summary
-  numbers and owners, signature wording, tally, correction from the stored
+  numbers and owners, signature wording, tally, a card of 70 short lines
+  kept whole, correction from the stored
   report), every sample rendered and looked at page by page.
 - Not verified: printed on paper; opened in Acrobat or on a phone's PDF
   viewer (checked with poppler and pdf.js); a real SharePoint-filed PDF.

@@ -57,12 +57,24 @@ Font.register({
 // Hyphenation off: breaking "containment" across a line reads as a typo in a
 // technical document, and the measure is wide enough not to need it. The one
 // exception is a run with no spaces longer than any real word (a circuit
-// reference, a pasted link): unbroken it runs off the edge of the page, so it
-// is offered break points every LONG_RUN characters.
+// reference, a pasted link): unbroken it runs off the edge of the page. Such
+// a run may break every LONG_RUN characters or so. The layout marks each
+// break with a hyphen, as ordinary hyphenation does, so a break is never put
+// next to a hyphen already in the text, where it would read as part of it.
 const LONG_RUN = 24;
-Font.registerHyphenationCallback((word) =>
-  word.length <= LONG_RUN ? [word] : (word.match(new RegExp(`.{1,${LONG_RUN}}`, "gu")) ?? [word]),
-);
+Font.registerHyphenationCallback((word) => {
+  const chars = [...word];
+  if (chars.length <= LONG_RUN) return [word];
+  const parts: string[] = [];
+  let rest = chars;
+  while (rest.length > LONG_RUN) {
+    let cut = LONG_RUN;
+    while (cut > LONG_RUN / 2 && (rest[cut - 1] === "-" || rest[cut] === "-")) cut -= 1;
+    parts.push(rest.slice(0, cut).join(""));
+    rest = rest.slice(cut);
+  }
+  return [...parts, rest.join("")];
+});
 
 const INK = "#16171a";
 const MUTED = "#4e5158";
@@ -337,19 +349,25 @@ function formatVisitDate(iso: string): string {
 const signedWhen = (iso: string): string =>
   new Date(iso).toLocaleString("en-GB", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" });
 
-/**
- * Roughly how tall a card's title, words and action box are, in points. An
- * estimate (about 95 characters a line at 9pt across the card), used only to
- * decide whether the lead is short enough to keep on one page.
- */
 /** A lead taller than this (points) may break across pages rather than leave most of one empty. */
 const LEAD_LIMIT = 360;
 
-function leadHeight(o: { whatHappened: string; actionNeeded: string }): number {
-  const lines = (text: string, perLine: number) => Math.max(1, Math.ceil(text.trim().length / perLine));
-  const words = 26 + lines(o.whatHappened, 95) * 14;
-  const action = o.actionNeeded.trim() ? 42 + lines(o.actionNeeded, 88) * 14 : 0;
-  return words + action;
+/**
+ * Roughly how tall a card's title, words and action box are, in points, used
+ * only to decide whether the lead is short enough to keep on one page. Each
+ * typed line counts at least once (a list of flats is many short lines), at
+ * about 95 characters a line at 9pt across the card, 60 for the 11.5pt title.
+ * Errs tall: an estimate too low would keep together a lead longer than a
+ * page, and the end of it would be lost.
+ */
+function leadHeight(o: { whatHappened: string; actionNeeded: string; location: string; check?: { question: string } | undefined }): number {
+  const lines = (text: string, perLine: number) =>
+    text.trim().split("\n").reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / perLine)), 0);
+  const title = 8 + lines(itemTitle(o), 60) * 18;
+  const words = 7 + lines(o.whatHappened || "-", 95) * 14;
+  // Label, the action itself, the owner line and the box's padding.
+  const action = o.actionNeeded.trim() ? 44 + lines(o.actionNeeded, 88) * 14 : 0;
+  return title + words + action;
 }
 
 /** A card is titled by where it is; a check by its question, and where, if the action says (a handover inspection's do). */

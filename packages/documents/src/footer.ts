@@ -129,8 +129,9 @@ export async function stampFooter(pdf: Uint8Array, text: FooterText): Promise<Ui
     const pageLabel = `Page ${index + 1} of ${total}`;
     const measure = (t: string) => regular.widthOfTextAtSize(t, 7);
     const separator = " · ";
-    const room = right - MARGIN - measure(pageLabel) - 18 - measure(text.left) - measure(separator);
-    const line = text.title && room > 40 ? `${fitText(encodable(text.title), room, measure)}${separator}${text.left}` : text.left;
+    const left = encodable(text.left);
+    const room = right - MARGIN - measure(pageLabel) - 18 - measure(left) - measure(separator);
+    const line = text.title && room > 40 ? `${fitText(encodable(text.title), room, measure)}${separator}${left}` : left;
     page.drawText(line, { x: MARGIN, y: 20, size: 7, font: regular, color: INK });
 
     page.drawText(pageLabel, {

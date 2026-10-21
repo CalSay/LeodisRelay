@@ -85,3 +85,10 @@ test('a correction says which revision it replaces and why, from the report itse
   // Letter-spaced labels read back a letter at a time, so compare without spaces.
   assert.match(first!.replace(/\s/g, ''), /REVISION3·REPLACESREVISION2Reason:Wronglevelontheriserdefect\./);
 });
+
+test('a card of many short lines is not kept to one page and cut off', async () => {
+  const flats = Array.from({ length: 70 }, (_, i) => `Flat ${101 + i} sockets loose`).join('\n');
+  const text = (await pageTexts(await renderReportPdf({ ...base, observations: [card('1', { whatHappened: flats, actionNeeded: 'Tighten all of them.' })] }))).join(' ');
+  for (let i = 0; i < 70; i += 1) assert.match(text, new RegExp(`Flat ${101 + i} sockets loose`));
+  assert.match(text, /Tighten all of them\./);
+});
