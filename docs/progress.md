@@ -23,7 +23,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Deploy needs nothing new since #73: permits are a new kind of record in the
   same table (no database change), no new settings, no SharePoint columns,
   and the no-signal page is unchanged (`relay-public-v14`). Release notes in
-  the project files cover #2 to #80 except #28.
+  the project files cover everything merged up to this PR except #28.
 - Not verified: building the Docker image (no Docker here), a real phone,
   the live server and tenant.
 
