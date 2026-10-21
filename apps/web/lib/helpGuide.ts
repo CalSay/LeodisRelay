@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-simpler-day', added: '2026-10-21', audience: 'office', title: 'A simpler office',
+    text: 'Report lists in the office no longer say "PM not notified" on every row: there is no delivery tag unless there is a problem with it, and each report still shows every step when you open it. A project\'s sheet no longer repeats the Needs action list and the reports that sit in the column beside it. The Team tab is in plain words (who can sign in, their role and whether they are signed in now), the top bar\'s "Companies" is now "Switch company", and Admin no longer shows a "Planned" button that did nothing.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'engineer-day-plainer', added: '2026-10-21', audience: 'site', title: 'Plainer words on site',
     text: 'The big button on the Site page is always today’s update now: a site update left from an earlier day waits under "Unfinished reports" instead of being reopened as today’s, and a report the big buttons already open is not listed twice. Your sent reports no longer carry "PM not notified" on every row; the report itself says plainly that RELAY does not email anyone yet, so tell the project manager yourself if something cannot wait. A card you have just added no longer shows a red warning before you have typed anything, and signing a site update is marked optional. On an issue, "Submit as complete" is now "Put forward as fixed", the same words as everywhere else. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'seen-by-office', added: '2026-10-21', audience: 'all', title: 'Seen by the office',
