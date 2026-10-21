@@ -74,7 +74,7 @@ try {
     const rowText=await row.locator('.main>span').innerText();
     check(rowText==='Last: Hot works on the roof plant deck · 9 days ago',`engineer: the home row shows the last talk and how long ago: ${JSON.stringify(rowText)}`);
     check(await row.locator('.main>span').evaluate(e=>e.getBoundingClientRect().height<=40),'engineer: the home row stays within two lines');
-    check(await row.evaluate(e=>e.closest('[role="group"]')?.querySelector('h3')?.textContent==='Issues and safety'),'engineer: the row is under Issues and safety');
+    check(await row.evaluate(e=>e.closest('[role="group"]')?.querySelector('h3')?.textContent==='Safety, permits and deliveries'),'engineer: the row is under Safety, permits and deliveries');
     await row.click();await page.waitForURL(new RegExp(`/toolbox-talks\\?project=${P}&returnTo=`));
     await talks(page).first().waitFor();
     await page.waitForFunction(()=>document.title.startsWith('Toolbox talks'),null,{timeout:5000}).catch(()=>{});

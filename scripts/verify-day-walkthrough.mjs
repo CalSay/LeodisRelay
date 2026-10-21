@@ -174,7 +174,7 @@ try {
   const before=openIssues();
   const riser=records('issues',P).find(i=>/Fire stopping/.test(i.description));
   await page.goto(home);
-  await page.getByRole('button',{name:/Start a site update/}).click();await page.waitForURL(/\/reports\//);
+  await page.getByRole('button',{name:/Start today’s site update/}).click();await page.waitForURL(/\/reports\//);
   const updateId=page.url().split('/reports/')[1].split(/[?#]/)[0];
   await page.getByRole('button',{name:/Something wrong/}).click();
   let open=page.locator('.eng-slot.open');

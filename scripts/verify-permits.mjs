@@ -81,7 +81,7 @@ try {
     const rowText=await row.locator('.main>span').innerText();
     check(rowText==='1 open · 1 past its end time',`engineer: the home row says what is open and past its time: ${JSON.stringify(rowText)}`);
     check(await row.evaluate(e=>e.classList.contains('late')),'engineer: the home row has the red edge while a permit is past its end time');
-    check(await row.evaluate(e=>e.closest('[role="group"]')?.querySelector('h3')?.textContent==='Issues and safety'),'engineer: the row is under Issues and safety');
+    check(await row.evaluate(e=>e.closest('[role="group"]')?.querySelector('h3')?.textContent==='Safety, permits and deliveries'),'engineer: the row is under Safety, permits and deliveries');
     await row.click();await page.waitForURL(new RegExp(`/permits\\?project=${P}&returnTo=`));
     await permits(page).first().waitFor();
     await page.waitForFunction(()=>document.title.startsWith('Permits to work'),null,{timeout:5000}).catch(()=>{});

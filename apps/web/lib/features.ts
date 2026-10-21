@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
 import type { Principal } from '@relay/platform';
 import { atomic, getRecord, putRecord } from './storage';
-import { SWITCHED_OFF_REASON } from './featureSwitch';
+import { SWITCHED_OFF_REASON, isSafetyRecordType } from './featureSwitch';
+import type { ReportTypeId } from './reportTypes';
 
 /**
  * The office's feature switches, kept in the local store (kind `settings`,
@@ -34,4 +35,14 @@ export function setSafetyRecords(principal: Principal, on: boolean, now = new Da
 /** The refusal for a route behind the switch while it is off, or null when it is on. */
 export function safetyRecordsRefusal(): NextResponse | null {
   return safetyRecordsOn() ? null : NextResponse.json({ reason: SWITCHED_OFF_REASON, switchedOff: true }, { status: 404 });
+}
+
+/**
+ * Reports with any sent safety or tower inspection left out while the switch
+ * is off, for the pages that gather a person's or a project's week and for
+ * Search. The reports stay on file and in the report lists, Inbox and site
+ * diary, which are the record of what was sent.
+ */
+export function withoutSafetyReports<T extends { reportType?: ReportTypeId | undefined }>(reports: T[]): T[] {
+  return safetyRecordsOn() ? reports : reports.filter(r => !isSafetyRecordType(r.reportType));
 }

@@ -50,7 +50,7 @@ try {
 
     try {
     // A site update: progress with two photographs, then a defect.
-    await page.goto(`${base}/engineer`);await tap(page.getByText('Start a site update'));
+    await page.goto(`${base}/engineer`);await tap(page.getByText('Start today’s site update'));
     await page.waitForURL(/\/reports\//);await page.locator('.eng-tile').first().waitFor();
     await shot('update-new');
     await tap(page.locator('.eng-tile').first());

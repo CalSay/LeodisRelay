@@ -62,7 +62,7 @@ try {
     const tile=page.getByRole('button',{name:/Do a tower inspection/});
     await tile.waitFor();
     ok(/12 checks on one mobile tower or podium/.test(await tile.innerText())&&/Safety actions/.test(await tile.innerText()),`${label}: the tile says what it asks and where actions go`);
-    for(const other of ['Do a safety inspection','Do a handover inspection','Do a first fix inspection','Start a site update'])ok(await page.getByRole('button',{name:new RegExp(other)}).isVisible(),`${label}: "${other}" is still there`);
+    for(const other of ['Do a safety inspection','Do a handover inspection','Do a first fix inspection','Start today’s site update'])ok(await page.getByRole('button',{name:new RegExp(other)}).isVisible(),`${label}: "${other}" is still there`);
     await tile.click();
     const input=page.getByLabel('Which tower or podium?');
     await input.waitFor();checks++;

@@ -73,6 +73,8 @@ try {
     const res=await page.request.get(`${base}/api/before-handover?projectId=proj-missing`);
     check(res.status()===404,`engineer: a project that does not exist is refused (${res.status()})`);
     await page.goto(`${base}/engineer?project=proj-011lme`);
+    // The Site page keeps it under "More on this project", folded until opened.
+    await page.locator('details.eng-more-pages summary').click();
     const link=page.getByRole('link',{name:/^Before handover/});await link.waitFor();
     check(true,'engineer: home offers Before handover');
     await link.click();await page.waitForURL(/\/handover\?project=proj-011lme/);await page.locator('.ho-sheet').waitFor();

@@ -106,7 +106,7 @@ async function editorStates(scheme,width,phone){
   const open=phone?()=>page.locator('.eng-slot.open'):()=>page.locator('#card-editor > div:not([hidden])');
   const checkStep=async()=>{await page.locator('.actionbar').getByRole('button',{name:/Check & send/}).click();await page.locator('#report-check').waitFor();};
   // A site update: the cards, an open card with a photo, the check step, sent.
-  await page.goto(`${base}/engineer?project=${P}`);await page.getByText('Start a site update').click();
+  await page.goto(`${base}/engineer?project=${P}`);await page.getByText('Start today’s site update').click();
   await page.waitForURL(/\/reports\//);await page.locator('.eng-tile').first().waitFor();
   await state('update-new');
   await page.locator('.eng-tile').first().click();await open().getByLabel('Where',{exact:true}).waitFor();

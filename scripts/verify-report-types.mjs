@@ -53,7 +53,7 @@ try {
     const tile=page.getByRole('button',{name:/Do a safety inspection/});
     await tile.waitFor();
     ok(/12 checks/.test(await tile.innerText()),`${label}: the tile says what an inspection asks`);
-    ok(await page.getByRole('button',{name:/Start a site update/}).isVisible(),`${label}: the site update is still there`);
+    ok(await page.getByRole('button',{name:/Start today’s site update/}).isVisible(),`${label}: the site update is still there`);
     eq(await overflow(),false,`${label}: home has no sideways scroll`);
     await shot(page,`home-${scheme}-${width}`);
     await tile.click();

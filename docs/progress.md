@@ -48,7 +48,17 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   switch on from the Admin tab, a Manager refused, data kept).
   `verify-home-and-sheet.mjs` rewritten for the new home and sheet in both
   states. Every check that uses the hidden records now turns the switch on
-  first. RESULTS
+  first; `verify-first-time-use` and `verify-help` expect a first day with
+  it off; checks that tapped "Start a site update" or a folded page now tap
+  "Start today's site update" or open "More on this project" first. All 65
+  browser checks passed against this branch's build (simpler-home 56,
+  home-and-sheet 254, accessibility 584, first-time-use 364, day-walkthrough
+  112, help 36 and the rest), plus `npm test` (146 + 428).
+- Search, My week and the weekly summary also leave out sent safety and
+  tower inspections while the switch is off; they stay in report lists, the
+  Inbox and the site diary, which are the record of what was sent (found by
+  the fresh-context review). A safety draft carried on while off still says
+  its actions go on Safety actions; left, as such drafts are rare.
 - Not verified: a physical phone, screen readers, the live server.
 - Proposed, not built: remove the hidden records entirely if Cal says so;
   shorter inspection blurbs (they repeat "actions go on the snag list").

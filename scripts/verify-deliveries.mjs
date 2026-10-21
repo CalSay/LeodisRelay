@@ -81,7 +81,7 @@ try {
     await row.locator('span',{hasText:/in the last 7 days/}).waitFor();
     const rowText=await row.locator('.main>span').innerText();
     check(rowText==='1 in the last 7 days',`engineer: the home row says how many came this week: ${JSON.stringify(rowText)}`);
-    check(await row.evaluate(e=>e.closest('[role="group"]')?.querySelector('h3')?.textContent==='Reports and records'),'engineer: the row is under Reports and records');
+    check(await row.evaluate(e=>e.closest('[role="group"]')?.querySelector('h3')?.textContent==='Safety, permits and deliveries'),'engineer: the row is under Safety, permits and deliveries');
     await row.click();await page.waitForURL(new RegExp(`/deliveries\\?project=${P}&returnTo=`));
     await cards(page).first().waitFor();
     await page.waitForFunction(()=>document.title.startsWith('Deliveries'),null,{timeout:10000}).catch(()=>{});
