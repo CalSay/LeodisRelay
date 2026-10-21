@@ -53,15 +53,17 @@
   try { types = JSON.parse(localStorage.getItem('relay-offline-types') || '[]'); } catch {}
   types = Array.isArray(types) ? types.filter(t => t && typeof t.id === 'string' && typeof t.name === 'string' && Array.isArray(t.checklist) && t.checklist.length
     && t.checklist.every(c => c && typeof c.item === 'string' && typeof c.question === 'string')) : [];
-  const TYPE_NAMES = { 'safety-inspection': 'Safety inspection', 'handover-inspection': 'Handover inspection', 'first-fix-inspection': 'First fix inspection' };
+  const TYPE_NAMES = { 'safety-inspection': 'Safety inspection', 'handover-inspection': 'Handover inspection', 'first-fix-inspection': 'First fix inspection', 'tower-inspection': 'Tower inspection' };
   for (const t of types) TYPE_NAMES[t.id] = t.name;
   const typeOf = d => d.report?.reportType || d.started?.reportType;
   const inspection = d => Boolean(TYPE_NAMES[typeOf(d)]) || d.observations.some(o => o.check);
   const typeName = d => TYPE_NAMES[typeOf(d)] || (inspection(d) ? 'Inspection' : 'Site update');
   const raisesIssues = d => { const t = types.find(x => x.id === typeOf(d)); return t ? t.raisesIssues === true : ['handover-inspection', 'first-fix-inspection'].includes(typeOf(d)); };
   const hintFor = (d, item) => types.find(x => x.id === typeOf(d))?.checklist.find(c => c.item === item)?.hint || '';
-  const label = d => d.started ? `New ${typeName(d).toLowerCase()} · ${d.started.projectName}`
-    : `${d.report?.reference || d.reportId}${aside(d) ? ' (copy kept while choosing between two versions)' : ''}`;
+  // What a tower inspection is of, named when it was started.
+  const inspectedOf = d => d.report?.inspected || d.started?.inspected || '';
+  const label = d => d.started ? `New ${typeName(d).toLowerCase()}${inspectedOf(d) ? ` of ${inspectedOf(d)}` : ''} · ${d.started.projectName}`
+    : `${d.report?.reference || d.reportId}${inspectedOf(d) ? ` · ${inspectedOf(d)}` : ''}${aside(d) ? ' (copy kept while choosing between two versions)' : ''}`;
   const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
   // Ticked to sign by typing a name. Must match TYPED_STATEMENT in lib/signature.ts (tests/typedSignature.test.ts).
   const TYPED_STATEMENT = 'I carried out this inspection and this record is accurate. Typing my name and ticking this box is my signature.';
@@ -529,9 +531,21 @@
       for (const [i, t] of choices.entries()) {
         const choice = element('label', '', $('start-choices'), 'choice');
         const radio = element('input', '', choice); radio.type = 'radio'; radio.name = 'start-type'; radio.value = t.id; radio.checked = i === 0;
+        radio.onchange = () => inspects();
         const words = element('span', '', choice); element('strong', t.name, words); if (t.blurb) element('small', t.blurb, words);
       }
     }
+    // A type about one thing (a tower inspection's tower) asks for its name before it starts.
+    const chosenType = () => types.find(t => t.id === (document.querySelector('input[name="start-type"]:checked')?.value || 'progress'));
+    function inspects() {
+      const about = chosenType()?.inspects;
+      $('start-inspects').hidden = !about;
+      if (!about) return;
+      $('start-inspects-label').textContent = about.label;
+      $('start-inspected').placeholder = about.placeholder || '';
+      $('start-inspects-hint').textContent = about.hint || '';
+    }
+    inspects();
     $('start').hidden = false;
     $('start-go').onclick = async () => {
       const project = projects.find(p => p.id === select.value);
@@ -539,14 +553,18 @@
       const chosen = document.querySelector('input[name="start-type"]:checked')?.value || 'progress';
       const type = types.find(t => t.id === chosen);
       if (!date.value || date.value > date.max || date.value < date.min) { fail(new Error('Choose a visit date in the last 30 days.')); return; }
+      // Tidied and checked as the server will (inspectedName in lib/reportTypes.ts).
+      const inspected = type?.inspects ? $('start-inspected').value.trim().replace(/\s+/g, ' ') : '';
+      if (type?.inspects && !inspected) { fail(new Error(`Say which ${type.inspects.label.toLowerCase()} you are inspecting.`)); $('start-inspected').focus(); return; }
+      if (inspected.length > 120) { fail(new Error(`Keep the ${type.inspects.label.toLowerCase()} to 120 characters.`)); return; }
       await chain;
       if (dirty || blocked) { fail(new Error('Export your unsaved changes before starting another report.')); return; }
       const clientKey = uuid();
       // An inspection starts with every check, unanswered, as the server starts one (startingCards).
       const observations = type ? type.checklist.map(c => ({ id: `obs-check-${c.item}`, type: 'check', location: '', whatHappened: '', actionNeeded: '', owner: '', photos: [], check: { item: c.item, question: c.question } })) : [];
       const record = { key: `${principal}::new::${clientKey}`, reportId: `new:${clientKey}`, principalId: principal, seq: uuid(), observations, heldAt: new Date().toISOString(),
-        started: { clientKey, projectId: project.id, projectName: project.projectName, projectNumber: project.projectNumber, visitDate: date.value, startedAt: new Date().toISOString(), ...(type ? { reportType: type.id } : {}) } };
-      try { await put(record); await show(record); status.textContent = type ? 'Started on this phone. Answer the first check.' : 'Started on this phone. Add your first card.'; } catch (e) { fail(e); }
+        started: { clientKey, projectId: project.id, projectName: project.projectName, projectNumber: project.projectNumber, visitDate: date.value, startedAt: new Date().toISOString(), ...(type ? { reportType: type.id } : {}), ...(inspected ? { inspected } : {}) } };
+      try { await put(record); $('start-inspected').value = ''; await show(record); status.textContent = type ? 'Started on this phone. Answer the first check.' : 'Started on this phone. Add your first card.'; } catch (e) { fail(e); }
     };
   }
   // Is the server there? `navigator.onLine` says only that a network exists.

@@ -2,7 +2,7 @@ import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
 import type { ObservationType } from './fixtures';
 import type { Issue, Report, Variation } from './types';
-import { checkCounts, reportTypeOf } from './reportTypes';
+import { checkCounts, reportName, reportTypeOf } from './reportTypes';
 
 /**
  * A project's week on one page: who was on site, what they reported, which
@@ -118,7 +118,7 @@ export function weeklySummary(sources: WeekSources, principal: Principal, projec
     const checks = type.checklist ? checkCounts(r.observations) : undefined;
     return { id: r.id, reference: r.reference, visitDate: r.visitDate, author: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}), revision: r.revision, review: r.review, kinds,
       photos: r.observations.reduce((n, o) => n + o.photos.length, 0), locations: [...places.values()],
-      ...(checks ? { inspection: { name: type.name, ok: checks.ok, action: checks.action, na: checks.na } } : {}) };
+      ...(checks ? { inspection: { name: reportName(r), ok: checks.ok, action: checks.action, na: checks.na } } : {}) };
   }).sort((a, b) => a.visitDate.localeCompare(b.visitDate) || byRef(a, b));
   const kinds = emptyKinds();
   for (const r of reports) for (const k of Object.keys(kinds) as ObservationType[]) kinds[k] += r.kinds[k];

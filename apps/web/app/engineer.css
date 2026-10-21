@@ -356,6 +356,13 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-tile.eng-tile-wide .kind{margin:0;}
 .eng-tile.eng-tile-wide>div{flex:1;min-width:0;}
 .eng-tile.eng-tile-wide .arrow{font-family:var(--mono);color:var(--brass);}
+/* An inspection of one thing asks its name on the tile before it starts. */
+.eng-tile.eng-tile-form{align-items:flex-start;}
+.eng-tile-form label{display:block;margin-bottom:6px;}
+.eng-tile-form input{width:100%;min-height:48px;}
+.eng-tile-form small{display:block;margin-top:6px;}
+.eng-tile-form .eng-tile-problem{color:var(--alert);font-weight:500;}
+.eng-tile-form .btn-row{margin-top:10px;}
 
 /* Work held on this phone has gone up, or could not (HeldWork.tsx). */
 .held-send{max-width:1200px;margin:16px auto 0;padding:0 16px;display:grid;gap:8px;}
@@ -380,3 +387,13 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 /* Home screen: the project's pages in two small groups, each under a label. */
 .eng-group-title{font-family:var(--mono);font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--text-2);margin:14px 0 6px;}
 .eng-section-title+[role=group]>.eng-group-title{margin-top:0;}
+
+/* What an inspection of one thing is about (a tower inspection's tower), under the title. */
+.eng-inspected{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;margin-top:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--panel);}
+.eng-inspected p{margin:0;font-size:15px;overflow-wrap:anywhere;min-width:0;}
+.eng-inspected p .lbl{margin-right:6px;}
+.eng-inspected-form{display:block;}
+.eng-inspected-form input{display:block;width:100%;min-height:48px;margin-top:6px;}
+.eng-inspected-form .hint{margin:6px 0 0;}
+.eng-inspected-form .btn-row{margin-top:10px;}
+.eng-inspected-problem{color:var(--alert);font-weight:500;}

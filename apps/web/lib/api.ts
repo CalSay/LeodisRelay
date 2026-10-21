@@ -83,21 +83,29 @@ export async function getReport(reportId: string): Promise<Report | undefined> {
   return parse<Report>(response);
 }
 
-export async function createReport(projectId: string, author: string, reportType?: ReportTypeId): Promise<Report> {
+/** `inspected`: on a type that inspects one thing, its name (a tower inspection's tower). */
+export async function createReport(projectId: string, author: string, reportType?: ReportTypeId, inspected?: string): Promise<Report> {
   return parse<Report>(
     await request("/api/reports", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ projectId, author, ...(reportType && reportType !== 'progress' ? { reportType } : {}) }),
+      body: JSON.stringify({ projectId, author, ...(reportType && reportType !== 'progress' ? { reportType } : {}), ...(inspected !== undefined ? { inspected } : {}) }),
     }),
   );
 }
 
 /** Start, on the server, a report begun on a phone with no connection. Retrying with the same key returns the same report. */
-export async function startHeldReport(projectId: string, clientKey: string, visitDate: string, reportType?: ReportTypeId): Promise<Report> {
+export async function startHeldReport(projectId: string, clientKey: string, visitDate: string, reportType?: ReportTypeId, inspected?: string): Promise<Report> {
   return parse<Report>(await request('/api/reports', {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ projectId, clientKey, visitDate, ...(reportType ? { reportType } : {}) }),
+    body: JSON.stringify({ projectId, clientKey, visitDate, ...(reportType ? { reportType } : {}), ...(inspected !== undefined ? { inspected } : {}) }),
+  }));
+}
+
+/** Rename what a draft inspection is about. Not a save of its checks: the draft's version is unchanged. */
+export async function renameInspected(reportId: string, inspected: string): Promise<Report> {
+  return parse<Report>(await request(`/api/reports/${reportId}`, {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action: 'rename', inspected }),
   }));
 }
 

@@ -1,5 +1,5 @@
 /* Safety actions: open and recently cleared actions from the weekly safety
-   inspections. Follows the theme on screen; printed it is black on white
+   and tower inspections, and towers due their next inspection. Follows the theme on screen; printed it is black on white
    with the controls left off and the cleared list opened. */
 .sa-page{max-width:900px;}
 .sa-head h1{margin:4px 0 6px;}
@@ -7,7 +7,7 @@
 .sa-controls{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 16px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
 .sa-controls label{font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
 .sa-controls select{flex:1 1 240px;min-height:44px;}
-.sa-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:0 0 18px;}
+.sa-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:0 0 18px;}
 .sa-stats div{border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--panel);min-width:0;}
 .sa-stats div.sa-stat-alert{border-color:color-mix(in srgb,var(--alert) 45%,transparent);background:var(--alert-wash);}
 .sa-stats div.sa-stat-due{border-color:color-mix(in srgb,var(--caution) 45%,transparent);background:var(--caution-wash);}
@@ -21,6 +21,14 @@
 .sa-project h2 .ref{color:var(--text-3);font-size:12px;margin-right:4px;}
 .sa-last{margin:6px 0 0;font-size:13px;color:var(--text-2);overflow-wrap:anywhere;}
 .sa-last.sa-due{color:var(--caution);font-weight:500;}
+.sa-towers{margin:10px 0 0;padding:8px 12px;border-radius:8px;background:var(--panel-2);}
+.eng-page .sa-towers h3{margin:0 0 4px;}
+.sa-towers ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:13.5px;line-height:1.45;}
+.sa-towers li{overflow-wrap:anywhere;color:var(--text-2);}
+.sa-towers li b{color:var(--text);font-weight:600;}
+.sa-towers li.sa-due span{color:var(--caution);font-weight:500;}
+.sa-tower{font-size:14px;font-weight:600;margin-bottom:2px !important;overflow-wrap:anywhere;}
+.sa-tower .lbl{margin-right:6px;}
 .sa-none{margin:10px 0 0;font-size:13.5px;color:var(--text-2);}
 .sa-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:8px;}
 .sa-action{padding:10px 0 10px 12px;border-left:3px solid var(--alert);}

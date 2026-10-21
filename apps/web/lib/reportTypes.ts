@@ -12,7 +12,7 @@ import type { CheckAnswer, Observation, Report } from './types';
  * A report with no `reportType` is a site progress report: every report
  * written before types existed is one.
  */
-export type ReportTypeId = 'progress' | 'safety-inspection' | 'handover-inspection' | 'first-fix-inspection';
+export type ReportTypeId = 'progress' | 'safety-inspection' | 'handover-inspection' | 'first-fix-inspection' | 'tower-inspection';
 
 export interface ChecklistItem {
   /** Stable key, kept on the card so a later change of wording never moves an answer. */
@@ -49,6 +49,13 @@ export interface ReportTypeDef {
    * raises an issue, so it says where and joins the snag list.
    */
   raisesRecords: boolean;
+  /**
+   * The one thing an inspection of this type is about, named when it is
+   * started ("Tower T3, level 2 east corridor"). Absent: the report is about
+   * the project as a whole. Printed on the document and kept on the report
+   * as `inspected`; free text, never picked from a list (EXP-4).
+   */
+  inspects?: { label: string; placeholder: string; hint: string };
 }
 
 /**
@@ -117,11 +124,38 @@ export const FIRST_FIX_CHECKLIST: readonly ChecklistItem[] = [
   { item: 'clear', question: 'Void clear of offcuts, packaging and tools', hint: 'Nothing left inside that should not be closed in.' },
 ];
 
+/**
+ * A mobile tower or podium, checked after it is put up or moved and at least
+ * every seven days while it stays up, as the Work at Height Regulations 2005
+ * expect, and before use if anything may have affected it. Each inspection is
+ * of one tower, named when it is started, so its actions follow that tower on
+ * Safety actions until a later inspection of it finds them put right. Like
+ * the safety inspection it raises no issues: a tower that is not safe is
+ * tagged out of use, not snagged. The checks are a first draft for the office
+ * to change.
+ */
+export const TOWER_CHECKLIST: readonly ChecklistItem[] = [
+  { item: 'tag', question: 'Inspection tag in place and up to date', hint: 'Shows when it was last inspected and by whom. If it fails, take the tag insert out so nobody uses it.' },
+  { item: 'built', question: 'Built by a trained person to the maker’s instructions', hint: 'Manual on site, and the tower built as it shows for this height and use.' },
+  { item: 'ground', question: 'Standing on firm, level ground or a sound floor', hint: 'No holes, slopes, soft ground, cables or loose boards under the wheels or base plates.' },
+  { item: 'base', question: 'Castors locked and adjustable legs set level', hint: 'Every brake on. Legs adjusted so the tower is level, and not wound out past their limit.' },
+  { item: 'stabilisers', question: 'Stabilisers or outriggers fitted where the instructions need them', hint: 'Set out evenly, feet on the ground, clamps tight. Not applicable on most podiums.' },
+  { item: 'braces', question: 'Frames and braces all fitted, in the right places and locked', hint: 'Every brace the instructions show, hooks and claws closed, nothing missing.' },
+  { item: 'components', question: 'No damaged parts: nothing bent, cracked, split or worn', hint: 'Tubes, welds, castors, platforms, hatches and guardrails.' },
+  { item: 'platform', question: 'Platform complete, locked down and level', hint: 'Wind locks on, trapdoor closes, nothing laid across as a makeshift platform.' },
+  { item: 'guardrails', question: 'Guardrails and toe boards on the working platform', hint: 'Top and middle guardrails on every open side, toe boards all round, podium gates closing.' },
+  { item: 'access', question: 'Safe way up on the inside', hint: 'The built-in ladder, stairway or steps. Nobody climbing the outside or the braces.' },
+  { item: 'surroundings', question: 'Clear of overhead hazards, edges, openings and traffic', hint: 'Live cables, open edges and holes nearby, doors, vehicles. Area below barriered off if needed.' },
+  { item: 'loading', question: 'Within its height and safe working load', hint: 'Platform height allowed indoors or outdoors by the instructions; no heavy materials stored on it.' },
+];
+
 export const REPORT_TYPES: readonly ReportTypeDef[] = [
   { id: 'progress', name: 'Site update', tag: 'Site update', document: 'Site Progress Report', code: 'SPR', blurb: 'Progress, defects, variations and access, one card at a time', signatureRequired: false, raisesRecords: true },
   { id: 'safety-inspection', name: 'Safety inspection', tag: 'Safety', document: 'Site Safety Inspection', code: 'SSI', blurb: `${SAFETY_CHECKLIST.length} checks, each satisfactory, action needed or not applicable`, checklist: SAFETY_CHECKLIST, actionPrompt: 'What has to happen to make it safe', signatureRequired: true, raisesRecords: false },
   { id: 'handover-inspection', name: 'Handover inspection', tag: 'Handover', document: 'Pre-Handover Inspection', code: 'PHI', blurb: `${HANDOVER_CHECKLIST.length} checks on an area before handover; actions go on the snag list`, checklist: HANDOVER_CHECKLIST, actionPrompt: 'What has to happen before handover', signatureRequired: true, raisesRecords: true },
   { id: 'first-fix-inspection', name: 'First fix inspection', tag: 'First fix', document: 'First Fix Inspection', code: 'FFI', blurb: `${FIRST_FIX_CHECKLIST.length} checks on an area before ceilings and walls are closed; actions go on the snag list`, checklist: FIRST_FIX_CHECKLIST, actionPrompt: 'What has to happen before it is closed in', signatureRequired: true, raisesRecords: true },
+  { id: 'tower-inspection', name: 'Tower inspection', tag: 'Tower', document: 'Tower and Podium Inspection', code: 'TPI', blurb: `${TOWER_CHECKLIST.length} checks on one mobile tower or podium; actions go on Safety actions`, checklist: TOWER_CHECKLIST, actionPrompt: 'What has to happen before it is used again', signatureRequired: true, raisesRecords: false,
+    inspects: { label: 'Tower or podium', placeholder: 'Tag number and where it stands, e.g. T3, level 2 east corridor', hint: 'One inspection for each tower or podium. Its actions follow it by this name.' } },
 ];
 
 /** The report types started from a checklist, one home screen tile each. */
@@ -130,6 +164,31 @@ export const CHECKLIST_TYPES: readonly ReportTypeDef[] = REPORT_TYPES.filter(t =
 /** Whether this check raises an issue when its report is sent: an action on a checklist that raises records. */
 export const raisesIssue = (type: ReportTypeDef, o: Pick<Observation, 'check'>): boolean =>
   Boolean(type.checklist && type.raisesRecords && o.check?.answer === 'action');
+
+/** The longest name for what an inspection is about. */
+export const INSPECTED_MAX = 120;
+const tidyName = (value: string) => value.trim().replace(/\s+/g, ' ');
+
+/**
+ * The name of what this report is about, tidied, or why it is refused.
+ * Required on a type that `inspects` one thing, refused on any other.
+ */
+export function inspectedName(type: ReportTypeDef, value: unknown): { ok: true; value: string | undefined } | { ok: false; reason: string } {
+  if (!type.inspects) return value === undefined ? { ok: true, value: undefined } : { ok: false, reason: `A ${type.name.toLowerCase()} does not name one thing inspected.` };
+  if (typeof value !== 'string' || !tidyName(value)) return { ok: false, reason: `Say which ${type.inspects.label.toLowerCase()} you are inspecting.` };
+  const name = tidyName(value);
+  if (name.length > INSPECTED_MAX) return { ok: false, reason: `Keep the ${type.inspects.label.toLowerCase()} to ${INSPECTED_MAX} characters.` };
+  return { ok: true, value: name };
+}
+
+/** Two names for the same tower: "T3, Level 2" and "t3,  level 2" are one. */
+export const inspectedKey = (value: string): string => tidyName(value).toLowerCase();
+
+/** The type's name, and what it inspected if it names one thing: "Tower inspection · T3, level 2". */
+export const reportName = (report: { reportType?: ReportTypeId | undefined; inspected?: string | undefined }): string => {
+  const type = reportTypeOf(report);
+  return type.inspects && report.inspected ? `${type.name} · ${report.inspected}` : type.name;
+};
 
 export const isReportType = (value: unknown): value is ReportTypeId => REPORT_TYPES.some(t => t.id === value);
 export const reportTypeOf = (report: { reportType?: ReportTypeId | undefined }): ReportTypeDef =>
