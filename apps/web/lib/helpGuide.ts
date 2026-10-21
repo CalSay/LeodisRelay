@@ -29,6 +29,9 @@ export interface WhatsNew {
 export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'editor-wide-screens', added: '2026-10-21', audience: 'all', title: 'Reports and inspections on a tablet or computer',
     text: 'On a tablet or a computer, the last buttons on a report or inspection are no longer hidden behind the bar at the bottom. The bar lines up with the page, and the check step puts signing beside what is being sent, with a larger box to sign in. A long list of checks scrolls in its own column and keeps the open check in sight. On every screen, a defect linked to an issue already raised takes that issue\'s trade, the check step says how many issues are new and how many add to ones already raised, and while changes are still being saved it says "being saved" rather than "not yet on the server".' },
+  { id: 'start-from-safety-actions', added: '2026-10-21', audience: 'site', title: 'Start the inspection that is due from Safety actions',
+    text: 'On Safety actions, each project now has "Do a safety inspection", and each tower or podium has "Inspect", gold when it is due. It starts the inspection on that project, with the tower already named as it was last time, so its actions follow it. If you already have a safety inspection in draft on the project, the page carries on with it instead; with a tower inspection in draft, it offers to carry on with that one, and Inspect comes back once it is sent. When you are done, Back brings you to Safety actions. With no signal, start it from the Site page as before.',
+    link: { label: 'Open Safety actions', href: '/safety-actions' } },
   { id: 'day-walkthrough', added: '2026-10-21', audience: 'all', title: 'Smoother from one page to the next',
     text: 'The site home and the office overview now say how many safety actions are open, and on site whether a tower or the weekly safety inspection is due. With no signal the site home no longer shows "0 open issues": it says it cannot check with the office, and Notes for the next visit shows the copy kept on your phone. The office\'s "Received this week" keeps this week\'s notifications still to go apart from older ones, and the unfinished "Assigned to me" button has gone from Issues.',
     link: { label: 'Open Safety actions', href: '/safety-actions' } },
@@ -282,7 +285,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     { id: 'tower', heading: 'A tower or podium', ordered: false, steps: [
       'Inspect each mobile tower or podium after it is put up or moved, and at least every seven days while it stays up. Tap "Do a tower inspection" and say which one: its tag number and where it stands, such as "T3, level 2 east corridor". Use the same name each time, so its actions follow it.',
       'If the name is wrong, tap "Rename" under the title before you send. One tower inspection is open at a time: send it before you start the next.',
-      'Safety actions lists each tower inspected in the last four weeks and when it is due again. If a tower fails, take the insert out of its tag so nobody uses it, and say what needs doing on the check.',
+      'Safety actions lists each tower inspected in the last four weeks and when it is due again, with "Inspect" to start its next inspection under the same name. If a tower fails, take the insert out of its tag so nobody uses it, and say what needs doing on the check.',
     ] },
     { id: 'defect', heading: 'A defect on its own', ordered: false, steps: [
       '"Flag a defect" sends a photograph and a short note straight away, without a site update. Use it when something needs fixing before you finish the day.',
