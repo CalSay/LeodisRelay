@@ -419,6 +419,37 @@ a {
   text-underline-offset: 2px;
 }
 
+/* Assigning on the issue page: the office's Assign, beside the facts it changes. */
+.issue-assign {
+  margin: var(--s4) 0 var(--s5);
+}
+.issue-assign-title {
+  font-size: 15px;
+  margin: 0 0 var(--s3);
+}
+.issue-assign-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+  flex-wrap: wrap;
+}
+/* The date box matches the text boxes; elsewhere date inputs are styled by their own page. */
+.issue-assign input[type="date"] {
+  width: 100%;
+  min-height: var(--touch);
+  background: var(--ground);
+  border: 1px solid var(--line-2);
+  border-radius: var(--r);
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  padding: 12px 13px;
+}
+.issue-assign input[type="date"]:focus {
+  border-color: var(--brass-2);
+}
+
 .row-meta .sep {
   color: var(--text-3);
   padding: 0 6px;

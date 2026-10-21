@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'assign-on-issue', added: '2026-10-21', audience: 'office', title: 'Assign from the issue itself',
+    text: 'An issue opened from a search, a report or Issues by company now has "Who puts it right", with Assign or Reassign, a target date and an instruction, so you no longer go back to the desk to give it an owner. The companies already named on the project are suggested as you type. The issue now shows its target date, and its history says who each assignment went to and by when.' },
   { id: 'start-from-safety-actions', added: '2026-10-21', audience: 'site', title: 'Start the inspection that is due from Safety actions',
     text: 'On Safety actions, each project now has "Do a safety inspection", and each tower or podium has "Inspect", gold when it is due. It starts the inspection on that project, with the tower already named as it was last time, so its actions follow it. If you already have a safety inspection in draft on the project, the page carries on with it instead; with a tower inspection in draft, it offers to carry on with that one, and Inspect comes back once it is sent. When you are done, Back brings you to Safety actions. With no signal, start it from the Site page as before.',
     link: { label: 'Open Safety actions', href: '/safety-actions' } },
@@ -312,7 +314,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'Office opens on the office position: new reports, reports not yet read, unassigned issues and issues fixed and waiting to be checked, across every project.',
       'Open a report and "Acknowledge" it once you have read it. That is the only thing that marks it read; receipt and delivery do not.',
       'A report\'s signature line says whether it was drawn or typed. A typed signature shows the statement the person ticked and who was signed in when it was sent.',
-      'Give each new issue an owner and a target date. Overdue issues and work done without an instruction are listed under "Also needs attention".',
+      'Give each new issue an owner and a target date, from the desk or with "Assign" on the issue itself. Overdue issues and work done without an instruction are listed under "Also needs attention".',
       'Chase companies with late work from Issues by company, and log each chase there with what they promised, so the next person to ring them knows.',
       'Leave word for the engineers on a project under "Notes for the next visit" on its project sheet, and read what they left each other.',
       'Price variations, then record the client\'s instruction with their reference, or decline. Nothing is deleted.',

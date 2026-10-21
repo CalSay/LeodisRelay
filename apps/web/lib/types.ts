@@ -218,6 +218,9 @@ export interface IssueEvent {
   photos: Photo[];
   /** Absent on changes made on the issue itself, and on events recorded before FE-6b. */
   source?: IssueEventSource;
+  /** An assignment's owner and target date, so the history says who it went to. Absent on older assignments. */
+  to?: string;
+  targetDate?: string;
 }
 
 export interface Issue {

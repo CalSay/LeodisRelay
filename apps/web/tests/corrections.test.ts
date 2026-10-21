@@ -67,6 +67,11 @@ test('corrections, acknowledgement and the draft allowlist marry the engineer si
       assert.equal(after.value.owner,'Northbank');
       assert.equal(after.value.targetDate,'2026-09-30');
       assert.equal(after.value.events.at(-1)!.kind,'assigned');
+      assert.equal(after.value.events.at(-1)!.to,'Northbank','the history says who it went to');
+      assert.equal(after.value.events.at(-1)!.targetDate,'2026-09-30','and by when');
+      const blank = applyCommand(issue.id,{kind:'assign',actor:manager.name,actorId:manager.id,note:'',owner:'   '});
+      assert.equal(blank.ok,false,'an assignment must name someone');
+      assert.equal(listIssues('proj-011lme')[0]!.owner,'Northbank','and a refused one leaves the owner as it was');
       const closed = applyCommand(issue.id,{kind:'submit_closure',actor:engineer.name,actorId:engineer.id,note:'done'});
       assert.equal(closed.ok,true);
       const refused = applyCommand(issue.id,{kind:'assign',actor:manager.name,actorId:manager.id,note:'',owner:'Anyone'});

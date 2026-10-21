@@ -326,8 +326,13 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
         return { ok: false, status: 422, reason: `An issue that is ${issue.work.replaceAll('_', ' ')} cannot be reassigned. Reopen it first.` };
       }
       next.owner = command.owner ?? issue.owner;
+      next.owner = next.owner.trim();
+      // An assignment with nobody named would mark the issue assigned with no owner.
+      if (!next.owner) return { ok: false, status: 422, reason: "Name who is responsible." };
       next.targetDate = command.targetDate ?? issue.targetDate;
       event.kind = "assigned";
+      event.to = next.owner;
+      if (next.targetDate) event.targetDate = next.targetDate;
       break;
     }
 
