@@ -15,11 +15,15 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   "Select a report to read it here", "Open the newest") has gone, so the list
   has the whole width (1,392px at 1440, was 928px). Project and engineer names
   stay on one line at a desk (`.inbox-list`, above 700px); "Found" wraps
-  instead. Picking a report brings the reader in beside the list as before.
+  instead. Picking a report brings the reader in beside the list as before;
+  then the list leaves "Found" to the reader (it shows it for the open
+  report) and names may wrap, so a laptop never scrolls sideways (the review
+  caught 102px of sideways scroll at 1200px with names kept on one line).
   With busy reports (defects, a variation, access, progress) rows were up to
-  85px with names on two lines; now 65px with nothing open and 72px with a
-  report open, names on one line. On a phone the empty reader under the list
-  has gone too.
+  85px with names on two lines at 1440 (four lines at 1280 with a report
+  open); now 65px, names on one line, at 1440 and 1280 open or not, and two
+  lines at most at 1200 with a report open. On a phone the empty reader under
+  the list has gone too.
 - "Not seen yet" order (`lib/officeActions.ts`): the office position's group
   listed oldest first. That came from #15 (four action groups), when "Not yet
   read" was a queue worked through with an Acknowledge button, so the longest
@@ -38,10 +42,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Light theme `--access` (#5f7a9c to #4c6585): the "1 access" tag was below
   4.5:1 on the panel (axe colour-contrast on the Inbox), now passes.
 - Checks: typecheck, `npm test` (146 + 513; `officeActions` test now expects
-  newest first), build. New `scripts/verify-office-inbox.mjs` (44, 1440px dark
-  and light, 390px light; `RELAY_REPORT_ONLY=1` measures older builds): no
-  reader with nothing open, list width, names on one line, rows at most
-  72px, newest first in the Inbox and both "Not seen yet" lists, "Today" with
+  newest first), build. New `scripts/verify-office-inbox.mjs` (80, 1440px dark
+  and light, 1280px dark, 1200px light, 390px light; `RELAY_REPORT_ONLY=1`
+  measures older builds; sideways scroll measured on the page and the desk's
+  own scrolling view): no reader with nothing open, list width, names on one
+  line, rows at most 72px, Found left to the reader once one is open, newest first in the Inbox and both "Not seen yet" lists, "Today" with
   the time, reader beside the list once opened with its edge, axe, no
   sideways scroll. Help "What's new" line added. Screenshots before and after:
   project files `ui-review/office-inbox/`.

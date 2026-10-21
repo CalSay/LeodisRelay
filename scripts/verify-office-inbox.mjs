@@ -5,7 +5,7 @@
 // the reader in beside the list; the list and "Not seen yet" (Inbox filter and
 // the office position's group) are newest first, and a report received today
 // says "Today" with its time. Section edges stay visible, axe finds nothing,
-// no sideways scroll. 1440px dark and light, 390px light.
+// no sideways scroll. 1440px dark and light, 1280 and 1200px laptops, 390px light.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 // RELAY_SCREENSHOT_DIR=<dir> saves the Inbox and the office position.
 // RELAY_REPORT_ONLY=1 prints the measurements without failing (for "before" shots on an older build).
@@ -44,7 +44,8 @@ for(let n=21;n>=1;n--){const day=addDays(today,-n);const wd=new Date(`${day}T12:
   crew.forEach(([person,project],i)=>sent(project,person,day,`${day}T${String(14+i).padStart(2,'0')}:00:00.000Z`,{acknowledged:seen,...(i===0||n%3===0?busy():{})}));}
 // Two older reports nobody has opened, and three received today (newest last here), none opened.
 const oldUnseen=[sent('proj-014lme',hana,addDays(today,-12),`${addDays(today,-12)}T16:30:00.000Z`),sent('proj-009lcp',pat,addDays(today,-9),`${addDays(today,-9)}T16:30:00.000Z`)];
-const ago=m=>new Date(Date.now()-m*60000).toISOString();
+// Today's three are a few seconds old, so the check works at any time of day bar the first seconds after midnight.
+const ago=m=>new Date(Date.now()-m*1000).toISOString();
 const todays=[sent('proj-009lcp',pat,today,ago(3),busy()),sent('proj-014lme',hana,today,ago(2),{revision:2,...busy()}),sent('proj-011lme',sam,today,ago(1),busy())];
 const newest=todays.at(-1);
 const unseenCount=oldUnseen.length+todays.length;
@@ -56,7 +57,8 @@ const reportOnly=!!process.env.RELAY_REPORT_ONLY;
 let browser,checks=0;const failed=[];
 const check=(value,message)=>{if(reportOnly){if(!value)failed.push(message);return;}assert.ok(value,message);checks++;};
 const shot=process.env.RELAY_SCREENSHOT_DIR;if(shot)mkdirSync(shot,{recursive:true});
-const overflow=page=>page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth);
+// The page and the desk's own scrolling view (.view scrolls inside the page), whichever spills more.
+const overflow=page=>page.evaluate(()=>Math.max(...[document.documentElement,...document.querySelectorAll('.view')].map(e=>e.scrollWidth-e.clientWidth)));
 const axe=async(page,label)=>{await page.evaluate(()=>scrollTo(0,0));await page.evaluate(axeSource);const found=await page.evaluate(async()=>(await window.axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa','best-practice']}})).violations.map(v=>`${v.id}: ${v.nodes.map(n=>n.target.join(' ')).slice(0,4).join(', ')}`));check(!found.length,`${label}: axe finds nothing\n  ${found.join('\n  ')}`);};
 // How many lines each row's project name takes, and each row's height.
 const measure=page=>page.locator('table.reg tbody tr.clickable').evaluateAll(rows=>rows.map(tr=>{const t=tr.querySelector('.c-title .rowtitle');const lh=parseFloat(getComputedStyle(t).lineHeight)||parseFloat(getComputedStyle(t).fontSize)*1.4;return {lines:Math.round(t.getBoundingClientRect().height/lh),height:Math.round(tr.getBoundingClientRect().height),text:t.textContent};}));
@@ -65,7 +67,7 @@ try {
   let ready=false;for(let n=0;n<60;n++){if(server.exitCode!==null)throw Error(output);try{if((await fetch(base+'/signin')).ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,500));}assert.ok(ready,output);
   browser=await chromium.launch({headless:true,...(process.env.RELAY_BROWSER_PATH?{executablePath:process.env.RELAY_BROWSER_PATH}:{})});
   const errors=[];
-  for(const [scheme,width,height] of [['dark',1440,900],['light',1440,900],['light',390,844]]){
+  for(const [scheme,width,height] of [['dark',1440,900],['light',1440,900],['dark',1280,800],['light',1200,800],['light',390,844]]){
     const label=`${scheme} ${width}px`,phone=width<700;
     const context=await browser.newContext({viewport:{width,height},colorScheme:scheme,...(phone?{isMobile:true,hasTouch:true}:{})});
     await context.addCookies([{name:'relay_session',value:session,url:base}]);
@@ -127,6 +129,7 @@ try {
       const bg=await page.locator('.view').evaluate(e=>getComputedStyle(e).backgroundColor);
       check(edge!==bg&&!/rgba\(0, 0, 0, 0\)/.test(edge),`${label}: the reader panel keeps its edge (${edge} on ${bg})`);
       check(Math.max(...openRows.map(r=>r.lines))<=2,`${label}: with a report open, project names still on two lines at most`);
+      check(!(await page.locator('table.reg thead th.c-found').isVisible()),`${label}: with the reader open, Found is left to the reader`);
     }else{
       check(readerBox.y>listBox.y,`${label}: on a phone the reader is under the list`);
     }
@@ -136,7 +139,7 @@ try {
   }
   check(errors.length===0,`no page errors: ${errors}`);
   if(reportOnly)console.log(`Report only. Would fail:\n  ${failed.join('\n  ')||'nothing'}`);
-  else console.log(`Passed ${checks} office Inbox checks (1440px dark and light, 390px light).`);
+  else console.log(`Passed ${checks} office Inbox checks (1440px dark and light, 1280px dark, 1200px light, 390px light).`);
 } finally {
   await browser?.close();
   server.kill();if(server.exitCode===null)await once(server,'exit');

@@ -385,9 +385,13 @@ body:has(.ws){overflow:hidden auto}
    own step rather than running over the next one. */
 .ws .stages .tag{white-space:normal;max-width:100%;overflow-wrap:anywhere}
 .ws .filters .phone-sort{display:none}
-/* Inbox at a desk: a project or engineer name stays on one line, so a row
-   reads across; "Found" wraps instead. */
-@media (min-width:701px){.ws table.inbox-list .c-title .rowtitle,.ws table.inbox-list .who{white-space:nowrap}}
+/* Inbox at a desk with nothing open: the list has the width, so a project or
+   engineer name stays on one line and "Found" wraps instead. With the reader
+   open the names may wrap, so a laptop screen never scrolls sideways. */
+@media (min-width:701px){.ws table.inbox-list.wide .c-title .rowtitle,.ws table.inbox-list.wide .who{white-space:nowrap}}
+/* With the reader open beside it, the list leaves "Found" to the reader (it
+   says the same for the open report), so names keep the room they need. */
+@media (min-width:701px){.ws table.inbox-list:not(.wide) .c-found{display:none}}
 @media (max-width:700px){
   .ws table.reg.cards{display:block;min-width:0}
   .ws table.reg.cards thead{display:none}
