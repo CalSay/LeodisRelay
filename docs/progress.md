@@ -19,8 +19,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   have shown a day early from April to October.
 - Fix: one helper, `sharePointDay` in `lib/sharepoint/issues.ts`, reads either
   storage as the UK day, and both list reads and the readback check use it.
-  It is right for a site time zone anywhere from UTC-11 to UK time; a site set
-  to a zone east of the UK would still be a day out in winter.
+  It is right for a site time zone anywhere from UTC-12 to UK time; a site set
+  to a zone east of the UK would still be a day out all year.
 - Also: a report started online between midnight and 01:00 BST was dated the
   day before (the server used the UTC day). It now uses the UK day, as reports
   started offline already did.
