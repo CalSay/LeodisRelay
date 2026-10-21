@@ -2,7 +2,7 @@
 // Last visit opens that report and Overdue actions, Fixed, to check and
 // Variations open their register on that project and filter; a figure with
 // nothing to open is not a link; "And N more in the report" opens the report;
-// on a phone the register's last visit line opens that report. In the Weekly
+// on a phone the same four figures lead the register and open the same. In the Weekly
 // summary a visit's "N photographs" opens Photographs on that day with only
 // that report's photographs, and an office person's "fixed and waiting to be
 // checked" opens the Issues register on the project ("past target" stays
@@ -75,16 +75,18 @@ try {
     const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
     const sheet=async code=>{await page.goto(`${base}/office#/projects/${code}`);await page.locator(phone?'.register-standing':'.col-main .sheet dl.tb').first().waitFor();};
 
-    if(!phone){
+    // The sheet's four figures: beside the register on a desk, at the top of the register on a phone.
+    const figuresAt=phone?'.register-standing dl.tb':'.col-main .sheet dl.tb';
+    {
       await sheet(P);
-      const figures=page.locator('.col-main .sheet dl.tb').first().locator('> div');
-      await page.locator('.col-main .from-site-visit').first().waitFor();
+      const figures=page.locator(figuresAt).first().locator('> div');
+      await page.locator(phone?'.register-standing .from-site-visit':'.col-main .from-site-visit').first().waitFor();
       const links=figures.locator('a.tb-go');
       check(await links.count()===4,`${label}: all four figures open something on a busy project (${await links.count()})`);
       check((await links.evaluateAll(as=>as.map(a=>a.getAttribute('href')))).join(' ')===`#/projects/${P}/report/${hvac.id} #/issues/show/overdue/${P} #/issues/show/verify/${P} #/variations/show/pending/${P}`,`${label}: each figure opens what it counts`);
       for(let n=0;n<4;n++){const b=await links.nth(n).boundingBox();check(b.height>=44,`${label}: figure ${n+1} is big enough to tap (${Math.round(b.height)}px)`);}
       check(await figures.first().locator('dd').evaluate(d=>getComputedStyle(d.querySelector('a')).textDecorationLine)==='none',`${label}: the figures stay calm, not underlined until hovered`);
-      await axe(page,`${label}, project sheet`);
+      await axe(page,`${label}, ${phone?'phone register':'project sheet'}`);
       if(shot)await page.screenshot({path:join(shot,`office-links-sheet-${scheme}-${width}.png`),fullPage:true});
       // Last visit: that report.
       await links.nth(0).click();await hash(page,`#/projects/${P}/report/${hvac.id}`);check(true,`${label}: Last visit opens the last visit's report`);
@@ -116,7 +118,7 @@ try {
       check(await projectChoice(page).inputValue()===P&&!(await page.locator('table.reg').innerText()).includes('Kirkstall variation'),`${label}: Variations opens awaiting instruction on Tetley Hall`);
       // A project with nothing to open has figures, not links.
       await sheet('proj-009lcp');
-      check(await page.locator('.col-main .sheet dl.tb').first().locator('a').count()===0,`${label}: a project with nothing to open has no figure links`);
+      check(await page.locator(figuresAt).first().locator('a').count()===0,`${label}: a project with nothing to open has no figure links`);
     }
 
     // Latest from site: "And N more in the report" opens it (four lines on a desk, two on a phone).
@@ -125,14 +127,9 @@ try {
     const more=scope.locator('.from-site-visit').filter({hasText:'Electrical'}).locator('a.from-site-more');await more.waitFor();
     check(await more.innerText()===`And ${phone?5:3} more in the report`,`${label}: the left-out lines are a link (${await more.innerText()})`);
     if(phone){
-      const meta=scope.locator('a.meta-go');
-      check(/^Last visit today · HVAC$/.test(await meta.innerText()),`${label}: the register's last visit line is a link (${await meta.innerText()})`);
-      for(const [name,l] of [['last visit',meta],['more',more]]){const b=await l.boundingBox();check(b.height>=44,`${label}: ${name} link big enough to tap (${Math.round(b.height)}px)`);}
-      await axe(page,`${label}, phone register`);
+      const b=await more.boundingBox();check(b.height>=44,`${label}: more link big enough to tap (${Math.round(b.height)}px)`);
       if(shot)await page.screenshot({path:join(shot,`office-links-register-${scheme}-${width}.png`),fullPage:true});
       check(await overflow(page)<=0,`${label}: no sideways scroll on the register`);
-      await meta.click();await hash(page,`#/projects/${P}/report/${hvac.id}`);check(true,`${label}: the last visit line opens that report`);
-      await sheet(P);await scope.locator('a.from-site-more').first().waitFor();
     }
     await scope.locator('.from-site-visit').filter({hasText:'Electrical'}).locator('a.from-site-more').click();
     await hash(page,`#/projects/${P}/report/${elec.id}`);check(true,`${label}: "more in the report" opens the report`);
