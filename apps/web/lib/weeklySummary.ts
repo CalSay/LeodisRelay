@@ -5,6 +5,9 @@ import type { ObservationType } from './fixtures';
 import type { Issue, Report, Variation } from './types';
 import { checkCounts, reportName, reportTypeOf } from './reportTypes';
 import { ISSUE_WORK as WORK } from './status';
+import type { ToolboxTalk } from './toolboxTalks';
+import { kindLabel, type Permit } from './permits';
+import { conditionShort, type Delivery } from './deliveries';
 
 /**
  * A project's week on one page: who was on site, what they reported, which
@@ -59,6 +62,9 @@ export interface WeekReport {
 }
 export interface WeekIssue { id: string; reference: string; location: string; description: string; owner: string; trade?: string; at: string; status: string }
 export interface WeekVariation { id: string; reference: string; location: string; description: string; at: string; status: string; workDone: boolean }
+export interface WeekTalk { id: string; day: string; topic: string; givenBy: string; attendees: number }
+export interface WeekPermit { id: string; day: string; title: string; work: string; heldBy: string; closedDay?: string }
+export interface WeekDelivery { id: string; day: string; supplier: string; items: string; condition: string; problem?: string; sortedDay?: string; toSort: boolean }
 export interface WeeklySummary {
   projectId: string;
   start: string;
@@ -76,6 +82,8 @@ export interface WeeklySummary {
   openNow: { total: number; pastTarget: number; toCheck: number };
   variationsRaised: WeekVariation[];
   variationsInstructed: WeekVariation[];
+  /** Toolbox talks given, permits issued or closed, and deliveries taken in this week. Withdrawn ones were entered by mistake and are left out. */
+  site: { talks: WeekTalk[]; permits: WeekPermit[]; deliveries: WeekDelivery[] };
 }
 
 const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined' };
@@ -95,7 +103,9 @@ function weekVariation(v: Variation, at: string): WeekVariation {
   return { id: v.id, reference: v.reference, location: tidy(v.location), description: v.description, at, status: INSTRUCTION[v.instruction], workDone: v.workDone };
 }
 
-export interface WeekSources { reports: Report[]; issues: Issue[]; variations: Variation[] }
+export interface WeekSources { reports: Report[]; issues: Issue[]; variations: Variation[];
+  /** Site records; left out, the week has none. */
+  talks?: ToolboxTalk[]; permits?: Permit[]; deliveries?: Delivery[] }
 
 /**
  * `monday` is the first day of the week; `today` is today in the office
@@ -148,6 +158,21 @@ export function weeklySummary(sources: WeekSources, principal: Principal, projec
     return at && v.instruction === 'instructed' ? [weekVariation(v, at)] : [];
   });
 
+  const talks: WeekTalk[] = (sources.talks ?? []).filter(t => t.projectId === projectId && !t.withdrawn && inWeek(t.day))
+    .map(t => ({ id: t.id, day: t.day, topic: t.topic, givenBy: t.givenBy, attendees: t.attendees.length }));
+  // A permit belongs to the week it was issued or closed in, so one issued last Friday and closed on Monday is not lost.
+  const permits: WeekPermit[] = (sources.permits ?? []).flatMap(p => {
+    const closedDay = p.closed ? londonDay(p.closed.at) : undefined;
+    if (p.projectId !== projectId || p.withdrawn || !(inWeek(p.day) || (closedDay && inWeek(closedDay)))) return [];
+    return [{ id: p.id, day: p.day, title: `${kindLabel(p.kind)}${p.reference ? ` ${p.reference}` : ''}`, work: tidy(p.work), heldBy: tidy(p.heldBy), ...(closedDay ? { closedDay } : {}) }];
+  });
+  const deliveries: WeekDelivery[] = (sources.deliveries ?? []).filter(d => d.projectId === projectId && !d.withdrawn && inWeek(d.day)).map(d => {
+    const sortedDay = d.sorted ? londonDay(d.sorted.at) : undefined;
+    return { id: d.id, day: d.day, supplier: tidy(d.supplier), items: tidy(d.items), condition: conditionShort(d.condition), ...(d.problem ? { problem: tidy(d.problem) } : {}),
+      ...(sortedDay ? { sortedDay } : {}), toSort: d.condition !== 'complete' && !d.sorted };
+  });
+  const byDay = <T extends { day: string; id: string }>(rows: T[]) => rows.sort((a, b) => a.day.localeCompare(b.day) || a.id.localeCompare(b.id));
+
   const byTime = <T extends { at: string; reference: string }>(rows: T[]) => rows.sort((a, b) => a.at.localeCompare(b.at) || byRef(a, b));
   return {
     projectId, start: monday, end, current: inWeek(today),
@@ -155,5 +180,6 @@ export function weeklySummary(sources: WeekSources, principal: Principal, projec
     siteDays: [...new Set(reports.map(r => r.visitDate))].sort(), kinds,
     issuesRaised: byTime(issuesRaised), issuesFixed: byTime(issuesFixed), issuesClosed: byTime(issuesClosed), openNow,
     variationsRaised: byTime(variationsRaised), variationsInstructed: byTime(variationsInstructed),
+    site: { talks: byDay(talks), permits: byDay(permits), deliveries: byDay(deliveries) },
   };
 }

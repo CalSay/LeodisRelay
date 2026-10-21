@@ -70,6 +70,62 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   delivery note (would need judging against FE-2 first); deliveries still to
   sort on the weekly summary.
 
+## 2026-10-21 — Second day-on-site walkthrough
+
+- Why: asked for by the coordinator after #71 to #80 added safety actions in
+  Needs attention, toolbox talks, the security changes, empty pages, permits
+  to work, registers and downloads, failure messages, SharePoint dates and
+  deliveries. Like #65, a whole day was played in the browser: an engineer on
+  a 390px phone (toolbox talk, a hot works permit opened and closed, a short
+  delivery, a site update with a linked defect, photographs, signed out once,
+  a card added with no signal, safety and tower inspections), then the office
+  at 390px and 1440px picking it up. Not a `docs/tasks.json` task, so no
+  status changed there.
+- What did not join up, and what changed (decisions Claude's):
+  - My week said "Nothing recorded this week yet" on a day the engineer had
+    given a toolbox talk, recorded and closed a permit and taken in a delivery.
+    It now lists the talks, permits (recorded or closed) and deliveries
+    (recorded or sorted) the person made themselves, each linking to its page,
+    and the timesheet copy counts them ("1 toolbox talk, 1 permit, 1
+    delivery"). Withdrawn records are left out (`lib/myWeek.ts`).
+  - The Weekly summary, "for the site meeting", left out the week's toolbox
+    talks, permits and deliveries. It has a new section for them: talks given,
+    permits issued or closed in the week (one issued last Friday and closed on
+    Monday counts), and deliveries with any still to sort (`lib/weeklySummary.ts`).
+  - The office on a phone sees a project as its register, whose "Needs action"
+    said 0 and "No report needs attention" while the project had a tower due,
+    open safety actions and a short delivery (the desktop sheet showed them).
+    The register now lists the project's safety, permit and delivery lines
+    under Needs action and counts them in its chip.
+  - The engineer's Deliveries row now turns red while a delivery is to sort,
+    as Permits to work does for a permit past its time and as the office's
+    Needs attention flags it.
+  - Help: one "What's new" line; the meetings guide names Toolbox talks,
+    Permits to work and Deliveries among a project's pages.
+- Looked at and left (fine together): the home screen and project sheet with
+  every row (grouping from #54 holds), counts on the home screen, Safety
+  actions, Before handover, snag list and register download (all agree, the
+  check compares them), sign-out and no-signal messages on the permit and
+  delivery forms (both keep what was typed).
+- Proposals, not built: Search covers reports, issues and variations only,
+  so a delivery or permit cannot be found by supplier or permit number; the
+  Site diary is made from reports only and could show the day's talks,
+  permits and deliveries; the register's "Needs action" (reports and issues)
+  and the sheet's "Needs attention" could share one name; the Needs attention
+  pop-up's "Issues →" link reads oddly when its lines are safety or deliveries.
+- Check: `npm run typecheck`, `npm test` (146 + 427; new tests in
+  `tests/myWeek.test.ts` and `tests/weeklySummary.test.ts`).
+  `scripts/verify-day-walkthrough.mjs` now also records the toolbox talk,
+  permit and short delivery from the home rows, is signed out partway through
+  the site update and saves once back, closes the permit, reads My week, and
+  in the office checks Needs attention and the phone register, sorts the
+  delivery from Needs attention, downloads the permit and delivery
+  spreadsheets and reads the Weekly summary (112 checks). Every
+  `scripts/verify-*.mjs` was run against this branch's production build
+  (results in the PR). Screenshots: project files `ui-review/day-walkthrough-2/`.
+- Not verified: a real phone or tablet, a live tenant or SharePoint, a real
+  screen reader.
+
 ## 2026-10-21 — SharePoint dates and visit dates in British Summer Time
 
 - Why: found by the sixth release check on main (e2e84ff), following the open

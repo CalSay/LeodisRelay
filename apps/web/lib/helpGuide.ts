@@ -27,6 +27,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'site-records-join-up', added: '2026-10-21', audience: 'all', title: 'Talks, permits and deliveries in your week',
+    text: 'My week now lists the toolbox talks, permits and deliveries you recorded, closed or sorted, day by day, and the copy for your timesheet counts them. The Weekly summary has a section for the week\'s toolbox talks, permits issued or closed, and deliveries, with any still to sort. On your home screen the Deliveries row is marked while one is still to sort, as Permits to work is for a permit past its end time. In the office on a phone, a project\'s register now lists its safety actions, permits past their time and deliveries to sort under Needs action, and counts them, as the project sheet does on a desktop.',
+    link: { label: 'Open My week', href: '/my-week' } },
   { id: 'deliveries-to-site', added: '2026-10-21', audience: 'all', title: 'Deliveries',
     text: 'Record what arrives on site: the supplier, what came, the day, who took it in, where it was put and the delivery note number. Say whether it was all there and in good order; one that came short, damaged or wrong stays under "To sort" until someone on the project says how it was sorted, for example that the rest arrived. The office sees each project\'s deliveries still to sort in Needs attention, so the supplier can be chased while the delivery note is to hand. Your recent suppliers are one tap. RELAY sends nothing to the supplier or anyone else; the spreadsheet download has every delivery.',
     link: { label: 'Open Deliveries', href: '/deliveries' } },
@@ -353,9 +356,9 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'Where review is off, issues read "As reported" and stand until someone confirms or withdraws them.',
     ] },
     { id: 'meetings', heading: 'For the site meeting', ordered: false, steps: [
-      'Weekly summary puts a project\'s week on one page. Snag lists print the open issues for one company or trade. Site diary reads back every visit.',
+      'Weekly summary puts a project\'s week on one page, toolbox talks, permits and deliveries included. Snag lists print the open issues for one company or trade. Site diary reads back every visit.',
       'Issues by company is the chase list; Site coverage shows which live projects have gone quiet.',
-      'A project\'s own pages (Safety actions, Issues over time, Before handover, Site diary, Weekly summary, Photographs, Notes for the next visit) are on its project sheet, under its figures. On a phone they are at the top of the project\'s register.',
+      'A project\'s own pages (Safety actions, Toolbox talks, Permits to work, Issues over time, Before handover, Site diary, Weekly summary, Photographs, Notes for the next visit, Deliveries) are on its project sheet, under its figures. On a phone they are at the top of the project\'s register.',
     ] },
   ],
 };

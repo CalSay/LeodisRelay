@@ -1,14 +1,17 @@
 // Browser check for a working day across RELAY, end to end, where features
 // built separately meet. An engineer on a phone opens the site home, reads the
-// notes for the next visit, records the morning toolbox talk, does a weekly safety inspection (signed by typing)
+// notes for the next visit, records the morning toolbox talk, a hot works permit
+// and a delivery that came short, does a weekly safety inspection (signed by typing)
 // and a tower inspection (each with one action), sends a site update with a
-// defect linked to an existing issue, a new defect and a progress card added
-// with no signal, then checks the home screen, My week and Safety actions (starting the
-// podium's inspection from there), and
-// the home screen with no signal. The office, on a phone and a desktop, reads
-// the overview, the Inbox and the report, the new issue, Safety actions, Before
-// handover and the snag list, logs a chase, downloads the issue register and
-// opens the PDF. Counts are compared between pages.
+// defect linked to an existing issue, a new defect (signed out partway and back
+// in) and a progress card added with no signal, closes the permit, then checks
+// the home screen, My week and Safety actions (starting the podium's inspection
+// from there), and the home screen with no signal. The office, on a phone and a
+// desktop, reads the overview and Needs attention, the project's register, the
+// Inbox and the report, the new issue, Safety actions, Before handover and the
+// snag list, the Weekly summary, logs a chase, sorts the short delivery, downloads
+// the issue, permit and delivery spreadsheets and opens the PDF. Counts are
+// compared between pages.
 // npm test && npm run build; set RELAY_SCREENSHOT_DIR=<dir> to save screenshots.
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -101,6 +104,29 @@ try {
   await page.getByRole('link',{name:'← Back to Site'}).click();await page.waitForURL(home);
   await row('Toolbox talks').filter({hasText:'Last: Safe isolation · today'}).waitFor();
   ok(true,'home: the toolbox talk row shows this morning\'s briefing');
+  // The hot works permit the site manager issued for the riser, recorded from the home screen.
+  await row('Permits to work').filter({hasText:/None recorded yet/}).waitFor();
+  await row('Permits to work').click();await page.getByRole('button',{name:'Record a permit'}).click();
+  await page.getByText('Hot works',{exact:true}).click();
+  await page.getByLabel('The work and where').fill('Brazing LTHW flow and return, level 3 riser');
+  await page.getByLabel('Issued by').fill('Dana Reid, Northbank Construction');
+  await page.getByLabel(/^Permit number/).fill('HW-0142');
+  await page.getByRole('button',{name:'Save permit'}).click();await page.locator('.pt-permit').first().waitFor();
+  ok(records('permits',P).length===1&&records('permits',P)[0].byId===engineer.id,'permit: the hot works permit is kept under the engineer');
+  await page.getByRole('link',{name:'← Back to Site'}).click();await page.waitForURL(home);
+  await row('Permits to work').locator('.main>span',{hasText:/^1 open$/}).waitFor();checks++;
+  // The cable comes two reels short: recorded, and the home screen marks it until it is sorted.
+  await row('Deliveries').click();await page.getByRole('button',{name:'Record a delivery'}).click();
+  await page.getByLabel('Supplier',{exact:true}).fill('Edmundson Electrical');
+  await page.getByLabel('What arrived').fill('6 x 100m reels 2.5mm T&E');
+  await page.getByText('Short or part delivery',{exact:true}).click();
+  await page.getByLabel('What was short?').fill('2 reels short, rest promised Thursday');
+  await page.getByRole('button',{name:'Save delivery'}).click();await page.locator('.dl-delivery').first().waitFor();
+  ok(records('deliveries',P).length===1&&records('deliveries',P)[0].condition==='short','delivery: the short delivery is kept');
+  await page.getByRole('link',{name:'← Back to Site'}).click();await page.waitForURL(home);
+  await row('Deliveries').filter({hasText:'1 to sort'}).waitFor();
+  ok(await row('Deliveries').evaluate(a=>a.classList.contains('late')),'home: the Deliveries row is marked while one is to sort');
+  await shot(page,'engineer-home-records-light-390');
 
   // 2. A weekly safety inspection, then a tower inspection, each with one action.
   const card=()=>page.locator('.eng-slot.open .eng-card');
@@ -162,6 +188,18 @@ try {
   await open.getByLabel('Where',{exact:true}).fill('Flat 2.04 kitchen');
   await open.getByLabel(/What’s wrong/).first().fill('Socket faceplate cracked');
   await open.getByLabel(/What needs doing/).first().fill('Replace faceplate');
+  // Signed out partway: the card is kept on the phone, and saves by itself once signed in again.
+  const session=live=>putRecord('sessions',{id:sessions[engineer.oid],principal:engineer,issuedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+(live?7200000:-1000)).toISOString()});
+  session(false);
+  await open.getByLabel(/What’s wrong/).first().fill('Socket faceplate cracked, kitchen side');
+  await page.evaluate(()=>document.activeElement?.blur());
+  const saveState=page.locator('.savestate b');
+  await saveState.filter({hasText:/Signed out/}).waitFor({timeout:15000});
+  ok(/kept on this phone/i.test(await page.evaluate(()=>document.body.innerText))&&await page.getByRole('link',{name:/Sign in again/}).count()>0,'site update: signed out, it says the card is kept and offers to sign in again');
+  await shot(page,'engineer-signed-out-light-390');
+  session(true);await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
+  await saveState.filter({hasText:'Saved on server'}).waitFor({timeout:40000});
+  ok(getRecord('reports',updateId).observations.some(o=>o.whatHappened==='Socket faceplate cracked, kitchen side'),'site update: once signed in again the card saved by itself');
   await open.locator('input[type=file]').first().setInputFiles({name:'socket.jpg',mimeType:'image/jpeg',buffer:await jpeg('#aa3333')});
   await open.getByText('On the server').last().waitFor({timeout:15000});
   await open.getByRole('button',{name:'Done with this card'}).click();
@@ -189,6 +227,15 @@ try {
   await work();
   ok(openIssues()===before+1,`site update: one new issue, the linked one adds to ${riser.reference} (${before} -> ${openIssues()})`);
   ok(getRecord('issues',riser.id).events.length===2,'site update: the linked defect is a second entry on the existing issue');
+  // The brazing is done and the fire watch kept: the permit is closed.
+  await page.goto(`${base}/permits?project=${P}&returnTo=${encodeURIComponent('/engineer?project='+P)}`);
+  const permit=page.locator('.pt-permit',{hasText:'Brazing LTHW'});
+  await permit.getByRole('button',{name:/^Close permit/}).click();
+  await permit.locator('.pt-check input').check();
+  await permit.getByLabel(/^Closing note/).fill('Fire watch by Jo until 15:10');
+  await permit.getByRole('button',{name:'Close permit',exact:true}).click();
+  await permit.locator('.tag',{hasText:'Closed'}).waitFor();
+  ok(records('permits',P)[0].closed?.byId===engineer.id,'permit: closed with the fire watch confirmed');
   assert.deepEqual(errors,[],'engineer: page errors');
 
   // 4. Afternoon: the home screen, My week and Safety actions agree.
@@ -208,7 +255,14 @@ try {
   ok(await page.getByRole('button',{name:/Assigned to me/}).count()===0,'Issues: no unfinished "Assigned to me" button');
   await shot(page,'engineer-issues-light-390');
   await page.goto(`${base}/my-week?returnTo=${encodeURIComponent('/engineer?project='+P)}`);await page.locator('.mw-days').waitFor();
-  ok(/Reports sent\s*3/i.test(await page.locator('.mw-stats').innerText()),'My week: three reports sent today');
+  ok(/Reports sent\s*3\s*4 other site records/i.test(await page.locator('.mw-stats').innerText()),`My week: three reports sent today, and the talk, permit (recorded and closed) and delivery: ${await page.locator('.mw-stats').innerText()}`);
+  const today=page.locator('.mw-today');
+  for(const what of ['Toolbox talk: Safe isolation','Permit recorded: Hot works HW-0142','Permit closed: Hot works HW-0142','Delivery: Edmundson Electrical'])
+    ok(await today.getByRole('link',{name:what}).count()===1,`My week: today lists "${what}"`);
+  await today.getByRole('link',{name:'Delivery: Edmundson Electrical'}).click();await page.waitForURL(/\/deliveries\?project=/);
+  await page.getByRole('link',{name:'← Back to My week'}).first().click();await page.waitForURL(/\/my-week/);
+  await page.locator('.mw-days').waitFor();checks++;
+  await shot(page,'engineer-my-week-light-390');
   await page.goto(`${base}/safety-actions?project=${P}`);await page.locator('.sa-stats').waitFor();
   const saStats=await page.locator('.sa-stats').innerText();
   ok(/Open actions\s*2/i.test(saStats)&&/Towers due\s*1/i.test(saStats),`Safety actions: matches the home screen: ${JSON.stringify(saStats)}`);
@@ -276,12 +330,43 @@ try {
     ok(tower===0&&actions===1,`${label}: Attention leads with the podium due, then the open actions: ${JSON.stringify(titles.slice(0,4))}`);
     ok(!titles.includes('Weekly safety inspection due'),`${label}: no weekly inspection due, one was sent today`);
     ok(Number((await bell.innerText()).match(/\d+/)[0])===titles.length,`${label}: the Attention count is the number of lines`);
+    const SHORT='Short delivery from Edmundson Electrical, not sorted yet';
+    ok(titles.includes(SHORT),`${label}: Attention has the short delivery`);
+    ok(!titles.some(t=>/permit/i.test(t)),`${label}: no permit line, the permit was closed in time`);
     await pop.getByRole('link',{name:'2 safety actions open'}).click();
     await p.waitForURL(/\/safety-actions\?project=/);await p.locator('.sa-stats').waitFor();
     ok(/Open actions\s*2/i.test(await p.locator('.sa-stats').innerText())&&/Towers due\s*1/i.test(await p.locator('.sa-stats').innerText()),`${label}: the line opens the project's Safety actions, with the same counts`);
     await p.getByRole('link',{name:/Back to Office/}).first().click();
     await safetyButton.waitFor();checks++;
+    if(width===390){
+      // On a phone the project opens as its register: Needs action has the same safety and delivery lines, and counts them.
+      await p.goto('about:blank');await p.goto(`${base}/office#/projects/${P}`);
+      const group=p.locator('.grp',{hasText:'Safety, permits and deliveries'});await group.waitFor();
+      const lines=await p.locator('.col').filter({has:group}).locator('a.arow[href^="/safety-actions"], a.arow[href^="/permits"], a.arow[href^="/deliveries"]').allInnerTexts();
+      ok(lines.length===3&&Number(await group.locator('i').innerText())===3&&lines.some(l=>l.includes(SHORT))&&lines.some(l=>l.includes('Podium P1, plant room: tower inspection due')),`${label}: the register lists the podium, the safety actions and the delivery: ${JSON.stringify(lines)}`);
+      const chip=await p.getByRole('button',{name:/^Needs action · \d+$/}).innerText();
+      ok(Number(chip.match(/\d+/)[0])>=3,`${label}: Needs action counts them: ${chip}`);
+      await noSideways(p,`${label} register`);
+      await shot(p,`office-register-${scheme}-${width}`);
+    }
     if(width===1440){
+      // The short delivery, picked up from Needs attention: sorted with a note, and the line goes.
+      await bell.click();await p.locator('.attn-pop').getByRole('link',{name:SHORT}).click();
+      await p.waitForURL(/\/deliveries\?project=/);
+      const edm=p.locator('.dl-delivery',{hasText:'Edmundson Electrical'});
+      await edm.getByRole('button',{name:/^Mark sorted/}).click();
+      await edm.getByLabel('How was it sorted?').fill('Rang Edmundson: the 2 reels come Thursday');
+      await edm.getByRole('button',{name:'Mark sorted',exact:true}).click();
+      await edm.locator('.tag',{hasText:'sorted'}).waitFor();checks++;
+      const [dl]=await Promise.all([p.waitForEvent('download'),p.getByRole('link',{name:'Download spreadsheet'}).click()]);
+      ok(/Edmundson Electrical/.test(readFileSync(await dl.path(),'utf8'))&&/2 reels come Thursday/.test(readFileSync(await dl.path(),'utf8')),`${label}: the deliveries spreadsheet has the delivery and how it was sorted`);
+      await p.getByRole('link',{name:/Back to Office/}).first().click();await safetyButton.waitFor();
+      await bell.click();await p.locator('.attn-pop .mini').first().waitFor();
+      ok(!(await p.locator('.attn-pop .mini b').allInnerTexts()).includes(SHORT),`${label}: the delivery has left Attention once sorted`);
+      await bell.click();
+      await p.goto(`${base}/permits?project=${P}`);await p.locator('.pt-permit').first().waitFor();
+      const [pf]=await Promise.all([p.waitForEvent('download'),p.getByRole('link',{name:'Download spreadsheet'}).click()]);
+      ok(/HW-0142/.test(readFileSync(await pf.path(),'utf8'))&&/Fire watch by Jo/.test(readFileSync(await pf.path(),'utf8')),`${label}: the permits spreadsheet has the permit and its closing note`);
       // The project's own sheet: the same two lines under its Needs attention.
       await p.goto('about:blank');await p.goto(`${base}/office#/projects/${P}`);
       const sheetAttn=p.locator('.sheet > .rmenu').first();
@@ -315,6 +400,12 @@ try {
     ok(tile('Safety actions')===2&&tile('Our snags')+tile('Other trades')===issues,`${label}: Before handover agrees: ${tile('Our snags')} + ${tile('Other trades')} issues, ${tile('Safety actions')} safety actions`);
     await p.goto(`${base}/issues/snag-list?project=${P}`);
     await p.getByText(`${issues} to put right`).waitFor();checks++;
+    // The Weekly summary for the site meeting has the day's talk, permit and delivery.
+    await p.goto(`${base}/weekly-summary?project=${P}`);
+    const siteWeek=p.locator('.week-section',{has:p.getByRole('heading',{name:/^Toolbox talks, permits and deliveries/})});await siteWeek.waitFor();
+    const said=await siteWeek.innerText();
+    ok(/Safe isolation/.test(said)&&/Hot works HW-0142\s*Closed/i.test(said)&&new RegExp(width===390?'Short · to sort':'Short · sorted','i').test(said),`${label}: the Weekly summary lists the talk, the closed permit and the delivery: ${JSON.stringify(said)}`);
+    await shot(p,`office-weekly-summary-${scheme}-${width}`);
     // A chase to the company that owns the old riser issue.
     if(width===390){
       await p.goto(`${base}/companies`);
@@ -340,7 +431,7 @@ try {
     assert.deepEqual(errs,[],`${label}: page errors`);
     await context.close();
   }
-  console.log(`Day walkthrough check passed (${checks} checks): engineer home, notes, safety and tower inspections, site update with a linked defect and a card added with no signal, My week, Safety actions, home with no signal; office overview, Inbox, issue, register download, Safety actions, Before handover, snag list, chase, PDF and summary, at 390px and 1440px.`);
+  console.log(`Day walkthrough check passed (${checks} checks): engineer home, notes, toolbox talk, permit opened and closed, short delivery, safety and tower inspections, site update with a linked defect, signed out and back, a card added with no signal, My week, Safety actions, home with no signal; office overview, Needs attention, register on a phone, delivery sorted, Inbox, the new issue, issue, permit and delivery spreadsheets, Safety actions, Before handover, snag list, Weekly summary, chase and PDF, at 390px and 1440px.`);
 } finally {
   await browser?.close();server.kill();if(server.exitCode===null)await once(server,'exit');database().close();rmSync(root,{recursive:true,force:true});
 }

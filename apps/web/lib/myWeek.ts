@@ -4,6 +4,9 @@ import type { Principal } from '@relay/platform';
 import { canReadReport, ownsReport } from './auth/access';
 import type { ObservationType } from './fixtures';
 import type { Issue, Report } from './types';
+import type { ToolboxTalk } from './toolboxTalks';
+import { kindLabel, type Permit } from './permits';
+import { conditionShort, type Delivery } from './deliveries';
 import { londonDay, weekEnd } from './weeklySummary';
 
 /**
@@ -13,7 +16,9 @@ import { londonDay, weekEnd } from './weeklySummary';
  *
  * It only reads what the person already recorded: reports they sent (placed
  * on the visit day they gave), defects they flagged on their own, and updates
- * or fixes they recorded on an issue page. Drafts for the week are listed
+ * or fixes they recorded on an issue page, and the site records they made
+ * themselves: toolbox talks, permits recorded or closed, and deliveries taken
+ * in or sorted. Drafts for the week are listed
  * apart as not sent yet. Nothing is stored or entered, and RELAY knows no
  * hours: a day with records is not a claim about time on site.
  */
@@ -34,6 +39,9 @@ export interface MyWeekDraft { id: string; reference: string; cards: number; cor
   typeName: string }
 export type MyWeekIssueKind = 'flagged' | 'progress' | 'fixed';
 export interface MyWeekIssue { id: string; reference: string; description: string; location: string; at: string; kind: MyWeekIssueKind }
+/** A site record this person made: a toolbox talk, a permit recorded or closed, a delivery recorded or sorted. */
+export type MyWeekRecordKind = 'talk' | 'permit' | 'permit-closed' | 'delivery' | 'delivery-sorted';
+export interface MyWeekRecord { id: string; kind: MyWeekRecordKind; at: string; title: string; detail: string }
 export interface MyWeekProject {
   projectId: string;
   projectNumber: string;
@@ -41,6 +49,7 @@ export interface MyWeekProject {
   reports: MyWeekReport[];
   drafts: MyWeekDraft[];
   issues: MyWeekIssue[];
+  records: MyWeekRecord[];
 }
 export interface MyWeekDay { day: string; projects: MyWeekProject[] }
 export interface MyWeek {
@@ -50,11 +59,13 @@ export interface MyWeek {
   current: boolean;
   /** Every day of the week, Monday first, each with the projects that have records that day. */
   days: MyWeekDay[];
-  totals: { days: number; projects: number; reports: number; flagged: number; issueUpdates: number; drafts: number };
+  totals: { days: number; projects: number; reports: number; flagged: number; issueUpdates: number; drafts: number; records: number };
 }
 
 export interface MyWeekProjectSource { id: string; projectNumber: string; projectName: string }
-export interface MyWeekSources { reports: Report[]; issues: Issue[] }
+export interface MyWeekSources { reports: Report[]; issues: Issue[];
+  /** Site records; left out, the week is made from reports and issues alone. */
+  talks?: ToolboxTalk[]; permits?: Permit[]; deliveries?: Delivery[] }
 
 const addDays = (ymd: string, n: number) => { const d = new Date(`${ymd}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const tidy = (text: string) => text.trim().replace(/\s+/g, ' ');
@@ -76,7 +87,7 @@ export function myWeek(projects: MyWeekProjectSource[], sources: MyWeekSources, 
     const project = known.get(projectId), byProject = slots.get(day);
     if (!project || !byProject) return undefined;
     let entry = byProject.get(projectId);
-    if (!entry) { entry = { projectId, projectNumber: project.projectNumber, projectName: project.projectName, reports: [], drafts: [], issues: [] }; byProject.set(projectId, entry); }
+    if (!entry) { entry = { projectId, projectNumber: project.projectNumber, projectName: project.projectName, reports: [], drafts: [], issues: [], records: [] }; byProject.set(projectId, entry); }
     return entry;
   };
 
@@ -121,12 +132,31 @@ export function myWeek(projects: MyWeekProjectSource[], sources: MyWeekSources, 
     });
   }
 
+  // Site records this person made. A withdrawn one was entered by mistake, so it is not a record of the day.
+  const record = (day: string, projectId: string, r: MyWeekRecord) => { if (inWeek(day)) slot(day, projectId)?.records.push(r); };
+  for (const t of sources.talks ?? []) {
+    if (t.withdrawn || t.byId !== principal.id) continue;
+    record(t.day, t.projectId, { id: t.id, kind: 'talk', at: t.at, title: `Toolbox talk: ${t.topic}`, detail: `${t.attendees.length} attended` });
+  }
+  for (const p of sources.permits ?? []) {
+    if (p.withdrawn) continue;
+    const title = `${kindLabel(p.kind)}${p.reference ? ` ${p.reference}` : ''}`;
+    if (p.byId === principal.id) record(p.day, p.projectId, { id: p.id, kind: 'permit', at: p.at, title: `Permit recorded: ${title}`, detail: tidy(p.work) });
+    if (p.closed?.byId === principal.id) record(londonDay(p.closed.at), p.projectId, { id: p.id, kind: 'permit-closed', at: p.closed.at, title: `Permit closed: ${title}`, detail: tidy(p.work) });
+  }
+  for (const d of sources.deliveries ?? []) {
+    if (d.withdrawn) continue;
+    if (d.byId === principal.id) record(d.day, d.projectId, { id: d.id, kind: 'delivery', at: d.at, title: `Delivery: ${d.supplier}`, detail: `${conditionShort(d.condition)} · ${tidy(d.items)}` });
+    if (d.sorted?.byId === principal.id) record(londonDay(d.sorted.at), d.projectId, { id: d.id, kind: 'delivery-sorted', at: d.sorted.at, title: `Delivery sorted: ${d.supplier}`, detail: tidy(d.sorted.note) });
+  }
+
   const order = (a: MyWeekProject, b: MyWeekProject) => naturalOrder(a.projectNumber, b.projectNumber) || a.projectName.localeCompare(b.projectName);
   const out = days.map(day => ({ day, projects: [...slots.get(day)!.values()].sort(order).map(p => ({
     ...p, reports: p.reports.sort(byRef), drafts: p.drafts.sort(byRef), issues: p.issues.sort((a, b) => a.at.localeCompare(b.at) || byRef(a, b)),
+    records: p.records.sort((a, b) => a.at.localeCompare(b.at)),
   })) }));
   const all = out.flatMap(d => d.projects);
-  const recorded = (p: MyWeekProject) => p.reports.length + p.issues.length > 0;
+  const recorded = (p: MyWeekProject) => p.reports.length + p.issues.length + p.records.length > 0;
   return {
     start: monday, end, current: inWeek(today), days: out,
     totals: {
@@ -136,8 +166,20 @@ export function myWeek(projects: MyWeekProjectSource[], sources: MyWeekSources, 
       flagged: all.reduce((n, p) => n + p.issues.filter(i => i.kind === 'flagged').length, 0),
       issueUpdates: all.reduce((n, p) => n + p.issues.filter(i => i.kind !== 'flagged').length, 0),
       drafts: all.reduce((n, p) => n + p.drafts.length, 0),
+      records: all.reduce((n, p) => n + p.records.length, 0),
     },
   };
+}
+
+/** "1 toolbox talk", "2 permits", "1 delivery": a permit or delivery is counted once a day, however many times it was touched. */
+function recordWords(records: MyWeekRecord[]): string[] {
+  const count = (kinds: MyWeekRecordKind[]) => new Set(records.filter(r => kinds.includes(r.kind)).map(r => r.id)).size;
+  const words: string[] = [];
+  const talks = count(['talk']), permits = count(['permit', 'permit-closed']), deliveries = count(['delivery', 'delivery-sorted']);
+  if (talks) words.push(`${talks} toolbox talk${talks === 1 ? '' : 's'}`);
+  if (permits) words.push(`${permits} permit${permits === 1 ? '' : 's'}`);
+  if (deliveries) words.push(`${deliveries} deliver${deliveries === 1 ? 'y' : 'ies'}`);
+  return words;
 }
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -165,13 +207,14 @@ const isWeekend = (ymd: string) => new Date(`${ymd}T12:00:00Z`).getUTCDay() % 6 
 export function myWeekText(week: MyWeek, name: string, today: string): string {
   const lines = [`${name} · ${fmtDay(week.start)} to ${fmtDay(week.end)} ${week.end.slice(0, 4)}`];
   for (const d of week.days) {
-    const projects = d.projects.filter(p => p.reports.length + p.issues.length > 0);
+    const projects = d.projects.filter(p => p.reports.length + p.issues.length + p.records.length > 0);
     if (d.day > today || (!projects.length && isWeekend(d.day))) continue;
     const said = projects.map(p => {
       const what = [
         ...p.reports.map(r => r.reference),
         ...(() => { const n = p.issues.filter(i => i.kind === 'flagged').length; return n ? [`${n} defect${n === 1 ? '' : 's'} flagged`] : []; })(),
         ...(() => { const n = p.issues.filter(i => i.kind !== 'flagged').length; return n ? [`${n} issue update${n === 1 ? '' : 's'}`] : []; })(),
+        ...recordWords(p.records),
       ];
       return `${p.projectNumber} ${p.projectName} (${what.join(', ')})`;
     });
