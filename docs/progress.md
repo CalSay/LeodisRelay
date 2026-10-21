@@ -4,6 +4,22 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Report's actions readable on an office phone
+
+- Found by the eighth release check (walkthrough on main 0e56592): on a
+  390px phone, the office report reader's "Actions and decisions" rows put
+  the words, the reference and the tag side by side, so a variation's words
+  ran one or two to a line ("Variation / to / instruct / · Plant / room").
+  Not a `docs/tasks.json` task; no status changed.
+- Changed (`app/workspace.css`, phone widths only): those rows wrap, so the
+  words take the full width and the reference and tag sit underneath, as
+  Needs attention already does. Desktop unchanged. A layout fix, not a new
+  feature, so no Help "What's new" line.
+- Checks: `npm run typecheck`, `npm test`, `npm run build`; a phone report
+  with a photo, a defect and a variation, read in the office at 390px light
+  and 1440px dark (26 checks, screenshots before and after); verify-office-phone,
+  verify-office-desk, verify-seen-by-office, verify-office-progress.
+- Not verified: a real phone.
 ## 2026-10-21 — Came back from the office, straight to the update
 
 - Why: the second idea in PR #92. Cal (2026-10-21 07:02) wants RELAY easy
@@ -45,22 +61,6 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `ui-review/came-back-to-update/`.
 - Not verified: no real phone, no real engineer, no live tenant.
 
-## 2026-10-21 — Report's actions readable on an office phone
-
-- Found by the eighth release check (walkthrough on main 0e56592): on a
-  390px phone, the office report reader's "Actions and decisions" rows put
-  the words, the reference and the tag side by side, so a variation's words
-  ran one or two to a line ("Variation / to / instruct / · Plant / room").
-  Not a `docs/tasks.json` task; no status changed.
-- Changed (`app/workspace.css`, phone widths only): those rows wrap, so the
-  words take the full width and the reference and tag sit underneath, as
-  Needs attention already does. Desktop unchanged. A layout fix, not a new
-  feature, so no Help "What's new" line.
-- Checks: `npm run typecheck`, `npm test`, `npm run build`; a phone report
-  with a photo, a defect and a variation, read in the office at 390px light
-  and 1440px dark (26 checks, screenshots before and after); verify-office-phone,
-  verify-office-desk, verify-seen-by-office, verify-office-progress.
-- Not verified: a real phone.
 ## 2026-10-21 — A shorter card in the site update
 
 - Why: Cal (2026-10-21 07:02) wants RELAY simple for engineers. Every open
