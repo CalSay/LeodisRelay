@@ -4,6 +4,49 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Safety in the office's Needs attention
+
+- Why: the last of the day walkthrough's (#65) bigger ideas still open
+  besides the inspection PDF: open safety actions and towers due were only
+  visible on Safety actions and as a count on one button, so the office's
+  Attention list and Needs attention said nothing about a blocked fire exit
+  or a tower overdue its seven-day inspection. Not a `docs/tasks.json` task,
+  so no status changed there. Checked against the backlog: not EXP-2
+  (nothing is routed or sent to anyone; it lists what Safety actions already
+  holds), not FE-2 (no photographs), not EXP-4 (tower names stay free text).
+  No report editor change.
+- Decisions (Claude's):
+  - Where: the office's Attention list (the bell), the Office position's
+    "Also needs attention" and a project sheet's "Needs attention". The site
+    home has no such list; its Safety actions row already says "2 open · 1
+    tower due" (#65), and now has the red edge of a late row while anything
+    is open or due.
+  - What makes a line: one per project with safety actions open ("3 safety
+    actions open", with the oldest and what was wrong), not one per action,
+    because a weekly inspection can find a dozen and the office's next step
+    is the same for all of them (open the project's Safety actions); one per
+    tower or podium due; one per project whose weekly safety inspection is
+    due. A project never inspected gets no line: the page counts those apart,
+    and not every project may use RELAY's inspections.
+  - Order: straight after a report the worker gave up on, ahead of overdue
+    issues: towers due, then open actions (oldest first), then weekly
+    inspections due. A tower due or an open safety action is a risk to
+    people on site today; an overdue issue is late work.
+  - Counts: the desk now reads `/api/safety-actions` with its other records
+    on every refresh, so the Safety actions button, the bell and the lists
+    count from one answer. The lines add up to the page's totals (unit test).
+    If that read fails, the desk keeps the last answer and claims nothing
+    new; it never stops the rest of the desk loading.
+  - Links: each line opens that project's Safety actions with Back to Office.
+- Help: What's new "Safety in Needs attention".
+- Check: `verify-day-walkthrough.mjs` now checks, at 390px and 1440px, that
+  Also needs attention and the bell show the podium due and "2 safety actions
+  open" first, that the bell's count is its number of lines, that the line
+  opens Safety actions with the same 2 open and 1 tower due and comes Back to
+  Office, that the project sheet shows both (1440px), and that the site home
+  row is marked. Unit tests for `safetyAttention` in `safetyActions.test.ts`.
+- Not verified: a physical phone, a live tenant, screen readers.
+
 ## 2026-10-21 — Inspection PDFs say what was found wrong
 
 - Why: the last open idea from the day walkthrough (#65). An inspection
@@ -126,49 +169,6 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the API refuses them. Unit test for the event fields and the empty owner.
 - Not verified: a physical phone, a live tenant (the owner reaches
   SharePoint by the existing issue sync, not changed here), screen readers.
-
-## 2026-10-21 — Safety in the office's Needs attention
-
-- Why: the last of the day walkthrough's (#65) bigger ideas still open
-  besides the inspection PDF: open safety actions and towers due were only
-  visible on Safety actions and as a count on one button, so the office's
-  Attention list and Needs attention said nothing about a blocked fire exit
-  or a tower overdue its seven-day inspection. Not a `docs/tasks.json` task,
-  so no status changed there. Checked against the backlog: not EXP-2
-  (nothing is routed or sent to anyone; it lists what Safety actions already
-  holds), not FE-2 (no photographs), not EXP-4 (tower names stay free text).
-  No report editor change.
-- Decisions (Claude's):
-  - Where: the office's Attention list (the bell), the Office position's
-    "Also needs attention" and a project sheet's "Needs attention". The site
-    home has no such list; its Safety actions row already says "2 open · 1
-    tower due" (#65), and now has the red edge of a late row while anything
-    is open or due.
-  - What makes a line: one per project with safety actions open ("3 safety
-    actions open", with the oldest and what was wrong), not one per action,
-    because a weekly inspection can find a dozen and the office's next step
-    is the same for all of them (open the project's Safety actions); one per
-    tower or podium due; one per project whose weekly safety inspection is
-    due. A project never inspected gets no line: the page counts those apart,
-    and not every project may use RELAY's inspections.
-  - Order: straight after a report the worker gave up on, ahead of overdue
-    issues: towers due, then open actions (oldest first), then weekly
-    inspections due. A tower due or an open safety action is a risk to
-    people on site today; an overdue issue is late work.
-  - Counts: the desk now reads `/api/safety-actions` with its other records
-    on every refresh, so the Safety actions button, the bell and the lists
-    count from one answer. The lines add up to the page's totals (unit test).
-    If that read fails, the desk keeps the last answer and claims nothing
-    new; it never stops the rest of the desk loading.
-  - Links: each line opens that project's Safety actions with Back to Office.
-- Help: What's new "Safety in Needs attention".
-- Check: `verify-day-walkthrough.mjs` now checks, at 390px and 1440px, that
-  Also needs attention and the bell show the podium due and "2 safety actions
-  open" first, that the bell's count is its number of lines, that the line
-  opens Safety actions with the same 2 open and 1 tower due and comes Back to
-  Office, that the project sheet shows both (1440px), and that the site home
-  row is marked. Unit tests for `safetyAttention` in `safetyActions.test.ts`.
-- Not verified: a physical phone, a live tenant, screen readers.
 
 ## 2026-10-21 — Start the inspection that is due from Safety actions
 
