@@ -113,9 +113,9 @@ try {
     if(on)check((await group(2)).join('|')==='Safety actions|Toolbox talks|Permits to work|Deliveries',`${at}: safety, permits and deliveries (${await group(2)})`);
     for(const path of [...pages,...(on?safetyPages:[])]){const href=await more.locator(`a[href^="${path}?"]`).getAttribute('href');check(href&&new URLSearchParams(href.split('?')[1]).get('project')==='proj-011lme',`${at}: the project links go to ${path} for the project`);}
     if(!on)for(const path of safetyPages)check(await page.locator(`a[href^="${path}"]`).count()===0,`${at}: no link to ${path}`);
-    // Where the project stands, what site said and what needs the office come first; the project's other pages after them.
+    // Where the project stands and what site said come first (what needs the office is in the register beside it); the project's other pages after them.
     if(phone)check(await page.evaluate(()=>{const nav=[...document.querySelectorAll('.sheet-links')].find(e=>e.offsetParent),chips=[...document.querySelectorAll('.filters')].find(e=>e.offsetParent);return !!nav&&!!chips&&!!(chips.compareDocumentPosition(nav)&Node.DOCUMENT_POSITION_FOLLOWING);}),`${at}: the links come after the register`);
-    else check(await page.evaluate(()=>{const nav=[...document.querySelectorAll('.sheet-links')].find(e=>e.offsetParent),h=[...document.querySelectorAll('.sec-h')].find(e=>/Needs attention/.test(e.textContent));return !!nav&&!!h&&!!(h.compareDocumentPosition(nav)&Node.DOCUMENT_POSITION_FOLLOWING);}),`${at}: the links come after Needs attention`);
+    else check(await page.evaluate(()=>{const nav=[...document.querySelectorAll('.sheet-links')].find(e=>e.offsetParent),h=[...document.querySelectorAll('.sec-h')].find(e=>/Latest from site/.test(e.textContent));return !!nav&&!!h&&!!(h.compareDocumentPosition(nav)&Node.DOCUMENT_POSITION_FOLLOWING);}),`${at}: the links come after Latest from site`);
     check(await page.evaluate(()=>[...document.querySelectorAll('.sheet-links a')].filter(a=>a.offsetParent).every(a=>a.getBoundingClientRect().height>=(innerWidth<600?44:24))),`${at}: every link is a comfortable size`);
     check(await page.evaluate(()=>[...document.querySelectorAll('.sheet,.cols .col')].filter(e=>e.offsetParent).every(e=>e.scrollWidth<=e.clientWidth)),`${at}: nothing scrolls sideways inside the desk`);
     await noSideways(page,at);

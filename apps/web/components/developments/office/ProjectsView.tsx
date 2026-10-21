@@ -16,7 +16,7 @@ import type { Issue, Report, ReportSummary, Variation } from '@/lib/types';
 import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, signedCopyLink, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
-import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, Found, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
+import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
 import { WORK_LABEL, notAcknowledged, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
 import { signatureMethod } from '@/lib/signature';
 import { LATEST_DAYS, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
@@ -113,7 +113,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   const attnReports = [...s.failed, ...s.pendingReview, ...s.returned];
   const attnIssues = [...new Map([...s.overdue, ...s.disputed, ...s.verify, ...s.unassigned].map(i => [i.id, i])).values()];
   const attnVariations = [...new Map([...s.exposedVariations, ...s.unpricedVariations].map(v => [v.id, v])).values()];
-  // Safety, permits and deliveries for this project, the same lines as the sheet's Needs attention, so a phone (which shows this column, not the sheet) sees them too.
+  // Safety, permits and deliveries for this project, the overview's lines for this project; the sheet beside this column does not repeat them, and a phone shows this column, not the sheet.
   const onSite = siteItems(ctx, s);
   const closed = s.issues.filter(i => !isActive(i));
   const settled = s.variations.filter(v => v.instruction !== 'pending');
@@ -190,7 +190,7 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
     <ActionGroups groups={groups} />
     <SecH right={<a href="#/issues">All →</a>}>Also needs attention</SecH>
     <AttentionList ctx={ctx} limit={6} skipActions />
-    <p className="rowsub" style={{ marginTop: 16 }}>A report is <b>received</b> when the server has it and on file from then on. The email to the project manager is a notification that it came in, and <b>seen</b> means someone in the office has opened it: opening a report is all it takes. Choose a project to drill in.</p>
+    <p className="rowsub" style={{ marginTop: 16 }}>Opening a report marks it seen by the office. Choose a project to see where it stands.</p>
   </div>;
 }
 
@@ -246,8 +246,8 @@ function siteItems(ctx: Ctx, s: ProjectStats) {
   return [...safety.filter(i => i.kind !== 'inspection'), ...permitItems([s], ctx.snap?.permits, officeReturn(ctx)), ...safety.filter(i => i.kind === 'inspection'), ...deliveryItems([s], ctx.snap?.deliveries, officeReturn(ctx))];
 }
 
-function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectStats; limit: number; skipActions?: boolean }) {
-  const scope = s ? [s] : ctx.stats;
+function AttentionList({ ctx, limit, skipActions }: { ctx: Ctx; limit: number; skipActions?: boolean }) {
+  const scope = ctx.stats;
   const failed = scope.flatMap(st => st.failed.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Report could not be processed', sub: `${st.project.projectName} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${st.code}/report/${r.id}` })));
   // Safety lines go straight after a failed report, as in the Attention list (model.ts `attention`).
   // Permits past their end time come after open safety actions, as in model.ts `attention`.
@@ -312,12 +312,6 @@ function ActionGroups({ groups }: { groups: ActionGroup[] }) {
   </section>)}</div>;
 }
 
-function LatestReports({ ctx, reports }: { ctx: Ctx; reports: ReportSummary[] }) {
-  return <table className="reg tight"><thead><tr><th>Ref</th><th>Engineer</th><th>Received</th><th>Found</th><th>Status</th></tr></thead><tbody>
-    {reports.length ? reports.map(r => <tr key={r.id} className="clickable" onClick={() => ctx.go(`#/projects/${r.projectId}/report/${r.id}`)}><td><span className="ref">{shortRef(r.reference)}</span></td><td>{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due">{r.serverAcknowledgedAt ? fmtWhen(r.serverAcknowledgedAt) : '—'}</td><td><Found r={r} /></td><td>{r.review === 'pending' ? <Tag label="To review" cls="tag-caution" /> : r.review === 'returned' ? <Tag label="Returned" cls="tag-alert" /> : r.acknowledged ? <Tag label="Seen" cls="tag-ok" /> : <DeliveryTag r={r} />}</td></tr>) : <tr><td colSpan={5} className="empty">No reports received yet.</td></tr>}
-  </tbody></table>;
-}
-
 /**
  * The project's own pages: its reports and records first, then issues. The
  * safety, permits and deliveries pages only while the office has them on
@@ -344,17 +338,14 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   const month = Date.now() - 30 * 86400000;
   const engineers = [...new Set(s.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > month).map(r => r.author))];
   const v = lastVisitWords(s.standing, ctx.day);
-  // Where it stands, then what site said, then what needs the office; the project's other pages and its details after them.
+  // Where it stands, then what site said; the project's other pages and its details after them. What needs the office
+  // and every report are in the register column beside the sheet (a phone shows that column instead), so not repeated here.
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link></div></div>
     <dl className="tb"><div><dt>Last visit</dt><dd className={`big ${v.quiet ? 'late' : ''}`}>{v.when}<small>{v.quiet ? `${v.quiet} · ` : ''}{v.who} · {count(s.standing.thisWeek, 'visit')} this week</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'} · {s.active.length} open</small></dd></div><div><dt>Fixed, to check</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `put forward ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing waiting to be checked'}</small></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></dd></div></dl>
     <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
     {!phone && <LatestFromSite ctx={ctx} s={s} />}
-    <SecH>Needs attention</SecH>
-    <AttentionList ctx={ctx} s={s} limit={6} />
-    <SecH right={<span className="r">{s.reports.length} on file</span>}>Latest reports</SecH>
-    <LatestReports ctx={ctx} reports={s.reports.slice(0, 5)} />
     {s.drafts.length > 0 && <p className="rowsub" style={{ marginTop: 12 }}>{s.drafts.length} draft{s.drafts.length === 1 ? '' : 's'} in progress on site. Contents stay private until sent.</p>}
     <ProjectLinks ctx={ctx} projectId={p.id} />
     <dl className="tb" style={{ marginTop: 12 }}><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>

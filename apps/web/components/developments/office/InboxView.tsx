@@ -5,14 +5,14 @@ import type { ReportSummary } from '@/lib/types';
 import type { Ctx } from './ctx';
 import { BtnQ, DeliveryTag, Found, ReviewTag, Tag } from './bits';
 import { ReportReader } from './ProjectsView';
-import { awaitingReview, byReceived, fmtWhen, notAcknowledged, notNotified, processingFailed, returned, shortRef } from './model';
+import { awaitingReview, byReceived, fmtWhen, notAcknowledged, processingFailed, returned, shortRef } from './model';
 
-type Filter = 'all' | 'new' | 'notAck' | 'review' | 'returned' | 'notNotified' | 'failed' | 'drafts';
-const FILTERS: [Filter, string, boolean][] = [['all', 'All', false], ['new', 'New', false], ['notAck', 'Not seen yet', false], ['review', 'To review', true], ['returned', 'Returned', false], ['notNotified', 'PM not notified', false], ['failed', 'Processing failed', true], ['drafts', 'Drafts on site', false]];
+type Filter = 'all' | 'new' | 'notAck' | 'review' | 'returned' | 'failed' | 'drafts';
+const FILTERS: [Filter, string, boolean][] = [['all', 'All', false], ['new', 'New', false], ['notAck', 'Not seen yet', false], ['review', 'To review', true], ['returned', 'Returned', false], ['failed', 'Processing failed', true], ['drafts', 'Drafts on site', false]];
 // What an empty list means, in words, for each filter.
 /** Before anything has come in: what arrives here. */
 const FIRST = 'No reports have come in yet. Each report arrives here when an engineer signs and sends it from site; drafts still being written on site show under Drafts on site.';
-const EMPTY: Record<Filter, string> = { all: 'No reports received yet', new: 'No new reports', notAck: 'Every report has been seen', review: 'No report is waiting for review', returned: 'No report has been returned', notNotified: 'Every project manager has been notified', failed: 'No report failed processing', drafts: 'No drafts saved to the server' };
+const EMPTY: Record<Filter, string> = { all: 'No reports received yet', new: 'No new reports', notAck: 'Every report has been seen', review: 'No report is waiting for review', returned: 'No report has been returned', failed: 'No report failed processing', drafts: 'No drafts saved to the server' };
 
 /** Every report received, newest first, with the reader beside it. */
 export function InboxView({ ctx }: { ctx: Ctx }) {
@@ -31,13 +31,13 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
   const scoped = (r: ReportSummary) => (!project || r.projectId === project) && (!trade || r.authorTrade === trade);
   const reports = snap.reports.filter(scoped).sort(byReceived);
   const drafts = snap.drafts.filter(scoped);
-  const counts: Record<Filter, number> = { all: reports.length, new: reports.filter(r => isNewReport(r, since)).length, notAck: reports.filter(notAcknowledged).length, review: reports.filter(awaitingReview).length, returned: reports.filter(returned).length, notNotified: reports.filter(notNotified).length, failed: reports.filter(processingFailed).length, drafts: drafts.length };
+  const counts: Record<Filter, number> = { all: reports.length, new: reports.filter(r => isNewReport(r, since)).length, notAck: reports.filter(notAcknowledged).length, review: reports.filter(awaitingReview).length, returned: reports.filter(returned).length, failed: reports.filter(processingFailed).length, drafts: drafts.length };
   // The review filters only exist where review is used, for the project in view; it is off by default.
   const reviewOn = project ? !!ctx.statOf(project)?.reviewOn : ctx.reviewOn;
   const filters = reviewOn ? FILTERS : FILTERS.filter(([k]) => k !== 'review' && k !== 'returned');
   // A chosen filter that is no longer offered falls back to all, rather than an empty list with nothing selected.
   const filter = filters.some(([k]) => k === chosen) ? chosen : 'all';
-  const shown = filter === 'new' ? reports.filter(r => isNewReport(r, since)) : filter === 'notNotified' ? reports.filter(notNotified) : filter === 'failed' ? reports.filter(processingFailed) : filter === 'notAck' ? reports.filter(notAcknowledged) : filter === 'review' ? reports.filter(awaitingReview) : filter === 'returned' ? reports.filter(returned) : reports;
+  const shown = filter === 'new' ? reports.filter(r => isNewReport(r, since)) : filter === 'failed' ? reports.filter(processingFailed) : filter === 'notAck' ? reports.filter(notAcknowledged) : filter === 'review' ? reports.filter(awaitingReview) : filter === 'returned' ? reports.filter(returned) : reports;
   const week = Date.now() - 7 * 86400000;
   const narrowed = !!(project || trade);
   const clear = () => { setProject(''); setTrade(''); };
@@ -60,7 +60,7 @@ export function InboxView({ ctx }: { ctx: Ctx }) {
         {shown.length ? shown.map(r => <tr key={r.id} className={`clickable ${selected === r.id ? 'sel' : ''}`} onClick={() => ctx.go(`#/inbox/${r.id}`)}>
           <td className="c-ref"><span className="ref">{r.reference}</span>{r.revision > 1 && <div className="rowsub">rev {r.revision}</div>}</td><td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{name(r.projectId)}</div></td><td data-label="Engineer">{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due" data-label="Received">{fmtWhen(r.serverAcknowledgedAt)}</td><td data-label="Found"><Found r={r} /></td>
           <td data-label="Status"><div className="found">{r.review === 'pending' || r.review === 'returned' ? <ReviewTag r={r} /> : <DeliveryTag r={r} />}{r.acknowledged && <Tag label="Seen" cls="tag-ok" />}</div></td></tr>) : <tr><td colSpan={6} className="empty">{snap.reports.length === 0 && !narrowed ? FIRST : <>{filter === 'new' ? `No reports received ${sinceWords(since, ctx.day)}` : EMPTY[filter]}{narrowed ? ' for these filters' : ''}.</>}{narrowed && <> <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button></>}</td></tr>}
-      </tbody></table><div className="panel-foot">Newest first. “Found” says what the visit raised, not how many cards were typed. A report is on file once received; the email to the project manager is only a notification that it came in.</div></div>
+      </tbody></table><div className="panel-foot">Newest first. “Found” says what the visit raised. Opening a report marks it seen.</div></div>
       <div className="panel"><div className="panel-head"><h3>Reader</h3>{selected && <a className="more" href={`#/projects/${code(shown.find(r => r.id === selected)?.projectId ?? snap.reports.find(r => r.id === selected)?.projectId ?? '')}/report/${selected}`}>In its project →</a>}</div>
         <div style={{ padding: 12 }}>{selected ? <ReportReader ctx={ctx} id={selected} crumbsHome="#/inbox" /> : <div className="empty">{shown.length ? <>Select a report to read it here.<br /><BtnQ className="btn-sm" style={{ marginTop: 12 }} onClick={() => ctx.go(`#/inbox/${shown[0].id}`)}>Open the newest</BtnQ></> : 'Nothing to read in this list.'}</div>}</div></div>
     </div>}
