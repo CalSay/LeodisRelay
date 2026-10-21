@@ -25,12 +25,17 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   defects, 1 access problem"); only defects flagged on their own get a row, as
   before. `totals.flagged` became `totals.raised`. A "Put forward as fixed" row
   now adds "Since then the office sent it back as not finished." (reopened
-  after it) or "Since then the office checked it and closed it." (verified and
-  closed now). The footnote says what the count covers. Help "What's new" line
-  `my-week-issues-raised`.
+  first), "Since then the office checked it and closed it." (verified first,
+  or closed in SharePoint with no decision recorded here), or "Since then the
+  office closed it, then opened it again." The footnote says what the count
+  covers. Help "What's new" line `my-week-issues-raised`.
 - Edge: a report sent this week for last week's visit is listed under last
   week, but its issues count in the week they were raised, as on the Weekly
-  summary.
+  summary; the footnote says so. Duplicates the office withdraws still count,
+  as on the Weekly summary.
+- Fresh-context review: no correctness bugs; three low findings fixed (the
+  footnote line above, "closed, then opened again" instead of "sent back",
+  SharePoint closures say closed).
 - Checks: typecheck, `npm test` (146 + 521; two new `myWeek.test.ts` cases),
   build. New `scripts/verify-my-week-counts.mjs` (13 checks): seeds through the
   real code a site update with two defects and an access problem, a later

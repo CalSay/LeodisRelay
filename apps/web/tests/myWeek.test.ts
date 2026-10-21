@@ -160,7 +160,9 @@ test('a fix put forward says what the office did since: sent back, closed, or no
     issue({ id:'closed', work:'closed', events:[ev('raised', '2026-10-01T09:00:00Z', other), fixed, ev('verified', '2026-10-16T09:00:00Z', office)] }),
     issue({ id:'again', work:'closed', events:[ev('raised', '2026-10-01T09:00:00Z', other), fixed, ev('reopened', '2026-10-15T12:00:00Z', office),
       ev('closure_submitted', '2026-10-16T09:00:00Z'), ev('verified', '2026-10-16T12:00:00Z', office)] }),
+    issue({ id:'later', work:'in_progress', events:[ev('raised', '2026-10-01T09:00:00Z', other), ev('closure_submitted', '2026-10-17T09:00:00Z'), ev('verified', '2026-10-17T10:00:00Z', office), ev('reopened', '2026-10-17T11:00:00Z', office)] }),
+    issue({ id:'in-sharepoint', work:'closed', events:[ev('raised', '2026-10-01T09:00:00Z', other), ev('closure_submitted', '2026-10-18T09:00:00Z')] }),
   ] }, engineer, MONDAY, TODAY);
   const rows = w.days.flatMap(d => d.projects.flatMap(p => p.issues.map(i => `${i.id}@${i.at.slice(8, 10)}:${i.since ?? '-'}`)));
-  assert.deepEqual(rows.sort(), ['again@15:sent-back', 'again@16:closed', 'back@15:sent-back', 'closed@15:closed', 'waiting@15:-']);
+  assert.deepEqual(rows.sort(), ['again@15:sent-back', 'again@16:closed', 'back@15:sent-back', 'closed@15:closed', 'in-sharepoint@18:closed', 'later@17:reopened', 'waiting@15:-']);
 });

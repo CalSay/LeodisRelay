@@ -40,7 +40,7 @@ export interface MyWeekDraft { id: string; reference: string; cards: number; cor
   typeName: string }
 export type MyWeekIssueKind = 'flagged' | 'progress' | 'fixed';
 /** What the office has done since with an issue put forward as fixed: sent it back, or checked it and closed it. */
-export type MyWeekFixOutcome = 'sent-back' | 'closed';
+export type MyWeekFixOutcome = 'sent-back' | 'closed' | 'reopened';
 export interface MyWeekIssue { id: string; reference: string; description: string; location: string; at: string; kind: MyWeekIssueKind;
   /** Only on a fix the office has since sent back or closed; absent while it waits to be checked. */
   since?: MyWeekFixOutcome }
@@ -190,16 +190,18 @@ export function myWeek(projects: MyWeekProjectSource[], sources: MyWeekSources, 
 }
 
 /**
- * What the office did after the fix put forward at `events[n]`: sent back if
- * the issue was reopened at any point after it (a later fix put forward has a
- * row of its own), closed if it was checked and is closed now. Nothing while
- * it waits to be checked.
+ * What the office did after the fix put forward at `events[n]`, from its first
+ * decision after it: sent it back (reopened), or checked and closed it, and
+ * opened it again later if so. A later fix put forward has a row of its own.
+ * An issue closed in SharePoint has no decision here, so closed now says
+ * closed. Nothing while it waits to be checked.
  */
 function since(i: Issue, n: number): { since?: MyWeekFixOutcome } {
   const after = i.events.slice(n + 1);
-  if (after.some(e => e.kind === 'reopened')) return { since: 'sent-back' };
-  if (i.work === 'closed' && after.some(e => e.kind === 'verified')) return { since: 'closed' };
-  return {};
+  const first = after.findIndex(e => e.kind === 'reopened' || e.kind === 'verified');
+  if (first >= 0 && after[first]!.kind === 'reopened') return { since: 'sent-back' };
+  if (first >= 0) return { since: after.slice(first + 1).some(e => e.kind === 'reopened') ? 'reopened' : 'closed' };
+  return i.work === 'closed' ? { since: 'closed' } : {};
 }
 
 /** "1 toolbox talk", "2 permits", "1 delivery": a permit or delivery is counted once a day, however many times it was touched. */

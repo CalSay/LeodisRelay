@@ -28,7 +28,7 @@ const isWeekend = (ymd: string) => new Date(`${ymd}T12:00:00Z`).getUTCDay() % 6 
 const KIND_WORD: Record<string, [string, string]> = { update: ['progress update', 'progress updates'], defect: ['defect', 'defects'], instruction: ['variation required', 'variations required'], access: ['access problem', 'access problems'] };
 const ISSUE_WORD: Record<MyWeekIssueKind, string> = { flagged: 'Flagged a defect', progress: 'Recorded an update', fixed: 'Put forward as fixed' };
 /** A fix put forward that the office has since dealt with, said plainly so the old tag is not read as where it stands now. */
-const SINCE_WORD: Record<MyWeekFixOutcome, string> = { 'sent-back': 'Since then the office sent it back as not finished.', closed: 'Since then the office checked it and closed it.' };
+const SINCE_WORD: Record<MyWeekFixOutcome, string> = { 'sent-back': 'Since then the office sent it back as not finished.', closed: 'Since then the office checked it and closed it.', reopened: 'Since then the office closed it, then opened it again.' };
 const recorded = (p: MyWeekProject) => p.reports.length + p.issues.length + p.records.length > 0;
 /** The project page a site record lives on. */
 const RECORD_PAGE: Record<MyWeekRecordKind, string> = { talk: '/toolbox-talks', permit: '/permits', 'permit-closed': '/permits', delivery: '/deliveries', 'delivery-sorted': '/deliveries' };
@@ -139,7 +139,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
               </section>)}
           </li>)}
         </ol>
-        <p className="mw-foot">Made from what you recorded in RELAY: reports you sent, placed on the visit day you gave; defects you flagged on their own; updates you added on an issue{safetyRecords ? '; and toolbox talks, permits and deliveries you recorded, closed or sorted' : ''}. Issues raised counts each defect, access problem or inspection action you raised this week once, whether it came from a report or you flagged it on its own: the same count the office sees. A corrected report replaces the one it corrects. RELAY does not know your hours, so check the times before you send a timesheet.</p>
+        <p className="mw-foot">Made from what you recorded in RELAY: reports you sent, placed on the visit day you gave; defects you flagged on their own; updates you added on an issue{safetyRecords ? '; and toolbox talks, permits and deliveries you recorded, closed or sorted' : ''}. Issues raised counts each defect, access problem or inspection action you raised this week once, whether it came from a report or you flagged it on its own: the same count the office sees. It counts on the day the issue reached the office, so a report sent a day or more after the visit can have its issues in the next week. A corrected report replaces the one it corrects. RELAY does not know your hours, so check the times before you send a timesheet.</p>
       </>}
   </main>;
 }
