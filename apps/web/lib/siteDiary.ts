@@ -88,7 +88,7 @@ export interface DiaryOptions { kind?: ObservationType | ''; words?: string; bef
 export interface DiarySources { reports: Report[]; issues: Issue[]; variations: Variation[] }
 
 const tidy = (text: string | undefined) => (text ?? '').trim().replace(/\s+/g, ' ');
-const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined' };
+const INSTRUCTION: Record<Variation['instruction'], string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined', within_contract: 'Within contract' };
 const issueStatus = (i: Issue) => i.confirmation === 'withdrawn' ? 'Withdrawn' : WORK[i.work];
 
 export const isDiaryKind = (v: string): v is ObservationType => DIARY_KINDS.some(k => k.value === v);

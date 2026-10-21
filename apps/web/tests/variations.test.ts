@@ -8,7 +8,7 @@ import {correctReport,createReport,saveDraft,submitReport} from '../lib/serverSt
 import {applyVariationCommand,listVariations} from '../lib/variationStore';
 import {canVariationCommand} from '../lib/auth/access';
 import {database} from '../lib/storage';
-import {estimatedMargin,expectedCost,marginPct,readCosting,suggestedQuote} from '../lib/variations';
+import {INSTRUCTION_CHOICE,INSTRUCTION_LABEL,estimatedMargin,expectedCost,instructionFromChoice,isCharged,marginPct,readCosting,suggestedQuote,variationValue} from '../lib/variations';
 import type {Observation,Report,Variation} from '../lib/types';
 
 const engineer:Principal = {id:'entra:engineer' as never,oid:'engineer',name:'G. Stephenson',email:'g@example.test',role:'Engineer',trade:'Electrical'};
@@ -98,6 +98,48 @@ test('variations are raised at submission and worked by the office in step with 
       assert.equal(declined.instruction,'declined');
       assert.equal(declined.events.at(-1)?.kind,'declined');
       assert.equal(declined.events.length,raised.events.length + 5,'every act is an event; nothing is overwritten silently');
+    });
+
+    await t.test('within contract is its own state: from awaiting instruction only, reason optional, and reopenable',async () => {
+      const report = await sent(createReport('proj-014lme',engineer.name,engineer),[{...variation,id:'obs-vo-wc'}]);
+      const v = listVariations('proj-014lme').find(x => x.raisedByReport === report.id)!;
+      ok(applyVariationCommand(v.id,{kind:'price',actor:manager.name,actorId:manager.id,note:'',costing:{quotedValue:900}}));
+      const within = ok(applyVariationCommand(v.id,{kind:'within_contract',actor:manager.name,actorId:manager.id,note:''}));
+      assert.equal(within.instruction,'within_contract');
+      assert.equal(within.events.at(-1)?.kind,'within_contract');
+      assert.match(within.events.at(-1)!.note,/Not chargeable/,'a default note when no reason is given');
+      assert.equal(applyVariationCommand(v.id,{kind:'within_contract',actor:manager.name,note:''}).ok,false,'only from awaiting instruction');
+      const declineAgain = applyVariationCommand(v.id,{kind:'decline',actor:manager.name,note:'No'});
+      assert.equal(declineAgain.ok,false);
+      assert.match((declineAgain as {reason:string}).reason,/already within contract/);
+      assert.equal(applyVariationCommand(v.id,{kind:'reopen',actor:manager.name,note:''}).ok,false,'reopening still needs a reason');
+      const reopened = ok(applyVariationCommand(v.id,{kind:'reopen',actor:manager.name,actorId:manager.id,note:'Spec clause does not cover it'}));
+      assert.equal(reopened.instruction,'pending');
+      const withReason = ok(applyVariationCommand(v.id,{kind:'within_contract',actor:manager.name,actorId:manager.id,note:'Clause 4.2 covers the sockets'}));
+      assert.equal(withReason.events.at(-1)?.note,'Clause 4.2 covers the sockets');
+      assert.equal(canVariationCommand(engineer,'within_contract'),false);
+      assert.equal(canVariationCommand(manager,'within_contract'),true);
+    });
+
+    await t.test('within contract and declined variations are not charged',() => {
+      const costing = {labourHours:10,labourRate:50,partsCost:100,quotedValue:1000,instructedValue:1200};
+      assert.equal(variationValue({...costing,instruction:'pending'}),1000);
+      assert.equal(variationValue({...costing,instruction:'instructed'}),1200);
+      for (const instruction of ['within_contract','declined'] as const) {
+        assert.equal(isCharged({instruction}),false,instruction);
+        assert.equal(variationValue({...costing,instruction}),undefined,instruction);
+        assert.equal(estimatedMargin({...costing,instruction}),undefined,instruction);
+        assert.equal(marginPct({...costing,instruction}),undefined,instruction);
+      }
+      assert.equal(INSTRUCTION_LABEL.within_contract,'Within contract');
+    });
+
+    await t.test('the SharePoint Instruction choice maps both ways, including Within contract',() => {
+      assert.equal(INSTRUCTION_CHOICE.within_contract,'Within contract');
+      for (const instruction of ['pending','instructed','declined','within_contract'] as const) {
+        assert.equal(instructionFromChoice(INSTRUCTION_CHOICE[instruction]),instruction);
+      }
+      assert.equal(instructionFromChoice('Cancelled'),undefined,'an unknown choice is refused, not guessed');
     });
 
     await t.test('details are the office\'s to correct, within the register\'s choices; work done without an instruction is a fact of its own',() => {

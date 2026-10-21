@@ -1,7 +1,7 @@
 import type { Issue, Variation } from './types';
 import { confirmationLabel } from './issueConfirmation';
 import { VERIFICATION_LABEL, isOverdueIssue, verificationOf } from './issueQuery';
-import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, marginPct, variationValue } from './variations';
+import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, isCharged, marginPct, variationValue } from './variations';
 import { sheetDay, type Cell } from './sheet';
 
 export { toCsv, registerFileName, type Cell } from './sheet';
@@ -65,14 +65,15 @@ export const VARIATION_COLUMNS = ['Reference', 'Project number', 'Project', 'Var
 /**
  * One row per variation, in the order given. Money is written as plain
  * numbers so the sheet can add it up; margin uses the register's own
- * arithmetic (lib/variations.ts) and is left blank for a declined variation,
+ * arithmetic (lib/variations.ts) and is left blank for a declined or within-contract variation,
  * as on screen.
  */
 export function variationRows(variations: readonly Variation[], context: ExportContext): Cell[][] {
   const round = (n: number | undefined, places = 2) => n === undefined ? undefined : Number(n.toFixed(places));
   return [[...VARIATION_COLUMNS], ...variations.map(v => {
     const p = context.project(v.projectId);
-    const declined = v.instruction === 'declined';
+    // Declined and within-contract variations are not charged, so they carry no margin.
+    const declined = !isCharged(v);
     const pct = declined ? undefined : marginPct(v);
     const from = v.raisedByReport ? context.reportReference(v.raisedByReport) ?? 'Report' : v.source === 'office' ? 'Raised in the office' : undefined;
     return [

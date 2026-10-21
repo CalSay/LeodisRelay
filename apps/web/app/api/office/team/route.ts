@@ -3,8 +3,8 @@ import { NextResponse } from 'next/server';
 import type { Session } from '@relay/platform';
 import { requireSession } from '@/lib/auth/guard';
 import { canManage, isAdmin } from '@/lib/auth/access';
-import { INITIAL_ROSTER } from '@/lib/auth/roster';
-import { database, records } from '@/lib/storage';
+import { peopleChecklist, type PersonLogEntry } from '@/lib/people';
+import { database, getRecord, records } from '@/lib/storage';
 import { listReports } from '@/lib/serverStore';
 
 export const dynamic = 'force-dynamic';
@@ -13,7 +13,16 @@ export interface TeamMember {
   email: string;
   /** The Microsoft app role on the assignment checklist, or what the session carried for an account not on it. */
   assignment: string;
+  /** The name shown in Relay: the Relay name, else the Microsoft name. */
   name?: string;
+  /** Set by an Admin in Relay. */
+  relayName?: string;
+  /** The display name Microsoft gave at the latest sign-in. */
+  microsoftName?: string;
+  /** Changes made to this person in Relay. Admin only. */
+  log?: PersonLogEntry[];
+  /** Put on the checklist in Relay rather than the initial roster. */
+  addedByRelay?: boolean;
   role?: string;
   trade?: string;
   /** Latest session issued for this account, if any. */
@@ -45,13 +54,25 @@ export async function GET() {
     const key = s.principal.email.toLowerCase();
     byEmail.set(key, [...(byEmail.get(key) ?? []), s]);
   }
-  const describe = (email: string, assignment: string, onChecklist: boolean): TeamMember => {
+  const admin = isAdmin(guard.principal);
+  // Stored sessions and identities keep the Microsoft name; the Relay name is layered on here.
+  const identities = records<{ id: string; email?: string; name?: string; microsoftName?: string }>('identities');
+  const describe = (email: string, assignment: string, onChecklist: boolean, person?: { relayName?: string; log?: PersonLogEntry[] }, addedByRelay?: boolean): TeamMember => {
     const own = (byEmail.get(email.toLowerCase()) ?? []).sort((a, b) => b.issuedAt.localeCompare(a.issuedAt));
     const latest = own[0];
+    const identity = identities.find(i => latest && i.id === latest.principal.id) ?? identities.find(i => i.email?.toLowerCase() === email.toLowerCase());
+    const microsoftName = identity?.microsoftName ?? identity?.name ?? latest?.principal.name;
+    const relayName = person?.relayName;
+    const name = relayName ?? microsoftName;
     return {
       email, assignment, onChecklist,
+      ...(name ? { name } : {}),
+      ...(relayName ? { relayName } : {}),
+      ...(microsoftName ? { microsoftName } : {}),
+      ...(admin && person?.log?.length ? { log: person.log } : {}),
+      ...(addedByRelay ? { addedByRelay: true } : {}),
       ...(latest ? {
-        name: latest.principal.name, id: latest.principal.id,
+        id: latest.principal.id,
         ...(latest.principal.role ? { role: latest.principal.role } : {}),
         ...(latest.principal.trade ? { trade: latest.principal.trade } : {}),
         lastSignedIn: latest.issuedAt,
@@ -59,18 +80,21 @@ export async function GET() {
       } : { session: 'never' as const }),
     };
   };
-  const listed = new Set(INITIAL_ROSTER.map(u => u.email.toLowerCase()));
+  const checklist = peopleChecklist();
+  const listed = new Set(checklist.map(u => u.email.toLowerCase()));
   const members: TeamMember[] = [
-    ...INITIAL_ROSTER.map(u => describe(u.email, u.assignment, true)),
+    ...checklist.map(u => describe(u.email, u.assignment, true, u.person ?? (u.relayName ? { relayName: u.relayName } : undefined), u.addedByRelay)),
     // Accounts that signed in without being on the checklist (local development
-    // identities, or someone assigned in Microsoft after the list was written).
+    // identities, someone assigned in Microsoft after the list was written, or
+    // someone an Admin removed from it).
     ...[...byEmail.keys()].filter(e => !listed.has(e)).map(e => {
       const p = byEmail.get(e)![0]!.principal;
-      return describe(p.email, p.role ? (p.trade ? `${p.role}.${p.trade.replace('&', '')}` : p.role) : 'Unknown', false);
+      const person = getRecord<{ relayName?: string; log?: PersonLogEntry[] }>('people', e);
+      return describe(p.email, p.role ? (p.trade ? `${p.role}.${p.trade.replace('&', '')}` : p.role) : 'Unknown', false, person);
     }),
   ];
 
-  if (!isAdmin(guard.principal)) return NextResponse.json({ members });
+  if (!admin) return NextResponse.json({ members });
 
   const legacyDrafts = listReports().filter(r => r.state === 'draft' && !r.authorId).map(r => ({ id: r.id, reference: r.reference, author: r.author, lastSavedAt: r.lastSavedAt }));
   const jobs = database().prepare('SELECT kind, status, count(*) AS n FROM jobs GROUP BY kind, status').all() as { kind: string; status: string; n: number }[];

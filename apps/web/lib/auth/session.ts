@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { expiryFrom, isExpired, type Principal, type Session } from "@relay/platform";
 import { atomic, database, getRecord, putRecord } from '../storage';
 import { hasRole } from './access';
+import { relayNameForEmail } from '../people';
 
 /**
  * Server-side sessions with an opaque cookie.
@@ -62,6 +63,21 @@ export async function takeSignInState(): Promise<{ state?: string; returnTo?: st
   return { ...(state ? { state } : {}), ...(returnTo ? { returnTo } : {}) };
 }
 
+/**
+ * The principal as Relay shows it: a name an Admin set in Relay replaces the
+ * Microsoft display name, so records created from here on carry it. Ids, email
+ * and roles are untouched, and the stored session and identity keep the
+ * Microsoft name.
+ */
+function withRelayName(session: Session): Session {
+  const name = relayNameForEmail(session.principal.email);
+  return name && name !== session.principal.name ? { ...session, principal: { ...session.principal, name } } : session;
+}
+
+function identityOf(principal: Principal) {
+  return { id: principal.id, email: principal.email, oid: principal.oid, name: principal.name, microsoftName: principal.name };
+}
+
 export async function createSession(principal: Principal): Promise<Session> {
   const issuedAt = new Date();
   const session: Session = {
@@ -74,7 +90,7 @@ export async function createSession(principal: Principal): Promise<Session> {
   atomic(() => {
     database().prepare("DELETE FROM records WHERE kind='sessions' AND json_extract(data,'$.expiresAt')<=?").run(issuedAt.toISOString());
     putRecord('sessions',session);
-    putRecord('identities',{id:principal.id,email:principal.email,oid:principal.oid,name:principal.name});
+    putRecord('identities',identityOf(principal));
   });
 
   const jar = await cookies();
@@ -83,7 +99,7 @@ export async function createSession(principal: Principal): Promise<Session> {
     expires: new Date(session.expiresAt),
   });
 
-  return session;
+  return withRelayName(session);
 }
 
 /** The signed-in person, or null. Expiry is enforced here, not at the cookie. */
@@ -97,8 +113,8 @@ export async function currentSession(): Promise<Session | null> {
   if (isExpired(session, new Date())) return null;
   // Pre-role sessions must reauthenticate; never silently promote existing users.
   if (!hasRole(session.principal)) return null;
-  if (!getRecord('identities',session.principal.id)) putRecord('identities',{id:session.principal.id,email:session.principal.email,oid:session.principal.oid,name:session.principal.name});
-  return session;
+  if (!getRecord('identities',session.principal.id)) putRecord('identities',identityOf(session.principal));
+  return withRelayName(session);
 }
 
 export async function currentPrincipal(): Promise<Principal | null> {

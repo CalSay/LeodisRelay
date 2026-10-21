@@ -50,6 +50,7 @@ const EVENT_LABEL: Record<string, string> = {
   reopened: "Reopened",
   confirmation: "Confirmation",
   assigned: "Assigned",
+  note: "Note",
 };
 // The engineer's history uses the words on the engineer's buttons.
 const ENGINEER_EVENT_LABEL: Record<string, string> = { ...EVENT_LABEL, closure_submitted: "Put forward as fixed", verified: "Checked and closed" };

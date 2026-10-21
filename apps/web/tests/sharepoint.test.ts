@@ -235,3 +235,46 @@ test('unknown transfer hosts are refused before any preauthenticated upload', as
   const client = new GraphClient((async()=>{throw Error('No network');}) as typeof fetch);
   await assert.rejects(client.transfer('https://attacker.invalid/upload',{method:'PUT'}),/Unexpected SharePoint transfer host/);
 });
+test('the connection check makes no calls when SharePoint is off', async () => {
+  const { runReadChecks } = await import('../lib/sharepoint/check');
+  process.env.RELAY_SHAREPOINT_MODE = 'off';
+  const result = await runReadChecks((async () => { throw Error('No network'); }) as typeof fetch);
+  assert.equal(result.mode, 'off');
+  assert.deepEqual(result.checks.map(c => c.ok), [false]);
+});
+test('the connection check only reads and reports short reasons', async () => {
+  const { runReadChecks, pilotFolder, filedPdfColumnIsText, CHECK_LABELS } = await import('../lib/sharepoint/check');
+  assert.equal(filedPdfColumnIsText([{name:'RelayPdfUrl',text:{}}]), true);
+  assert.equal(filedPdfColumnIsText([{name:'RelayPdfUrl'}]), false);
+  assert.equal(pilotFolder('not json'), 'Folder configuration is invalid');
+  assert.match(String(pilotFolder('{}')), /No folder configured/);
+  const client = process.env.ENTRA_CLIENT_ID;
+  process.env.ENTRA_CLIENT_ID = '495fc6e5-eae8-4fab-9b37-abd5f7e96601';
+  process.env.RELAY_SHAREPOINT_MODE = 'read';
+  process.env.RELAY_SHAREPOINT_ARCHIVE_FOLDERS = JSON.stringify({'102':{driveId:'drive',itemId:'folder'}});
+  const methods: string[] = [];
+  try {
+    const fake = (overrides: (url: string) => Response | undefined) => (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input); if (!url.includes('/oauth2/')) methods.push(init?.method ?? 'GET');
+      assert.equal(init?.redirect, 'error');
+      if (url.includes('/oauth2/')) return json({access_token:'test-token',expires_in:3600});
+      const o = overrides(url); if (o) return o;
+      if (url.includes('/columns')) return json({value:[{name:'RelayPdfUrl',text:{}}]});
+      if (url.includes('/items/102')) return json({id:'102',fields:{Title:'Tetley Hall - Block E'}});
+      if (url.includes('/items/folder')) return json({id:'folder',folder:{childCount:1}});
+      return json({id:'x',value:[{id:'1'}]});
+    }) as typeof fetch;
+    const pass = await runReadChecks(fake(() => undefined));
+    assert.deepEqual(pass.checks.map(c => c.label), [...CHECK_LABELS]);
+    assert.ok(pass.checks.every(c => c.ok));
+    const fail = await runReadChecks(fake(url => url.includes('/items/folder') ? json({id:'folder',file:{}}) : url.includes(OPERATIONS.clients) ? json({}, 403) : undefined));
+    assert.deepEqual(fail.checks.filter(c => !c.ok).map(c => [c.label, c.detail]), [['Client Database records','HTTP 403'],['Reports folder','Expected a folder']]);
+    assert.ok(!JSON.stringify(fail).includes('test-token'));
+    const denied = await runReadChecks((async (input: RequestInfo | URL) => String(input).includes('/oauth2/') ? json({}, 401) : json({})) as typeof fetch);
+    assert.deepEqual(denied.checks[0], {label:'App authentication', ok:false, detail:'HTTP 401'});
+    assert.ok(methods.every(m => m === 'GET'));
+  } finally {
+    process.env.ENTRA_CLIENT_ID = client;
+    delete process.env.RELAY_SHAREPOINT_ARCHIVE_FOLDERS;
+  }
+});

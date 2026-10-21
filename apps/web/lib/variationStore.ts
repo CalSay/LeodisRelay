@@ -81,7 +81,7 @@ export function raiseVariationsFromReport(report: Report): Variation[] {
 }
 
 export interface VariationCommand {
-  kind: 'details' | 'price' | 'instruct' | 'decline' | 'reopen' | 'note';
+  kind: 'details' | 'price' | 'instruct' | 'decline' | 'within_contract' | 'reopen' | 'note';
   actor: string;
   actorId?: string;
   note: string;
@@ -90,11 +90,25 @@ export interface VariationCommand {
   instruction?: { reference?: string; by?: string; on?: string; value?: unknown; signedInstruction?: string };
 }
 
-export function applyVariationCommand(id: string, command: VariationCommand): VariationOutcome {
+/**
+ * Server-side facts attached to a command by trusted callers (office
+ * corrections). Never read from a request body.
+ */
+export interface VariationCommandContext {
+  sourceReportId?: string;
+  correctionId?: string;
+  /** Recorded on the variation when it is declined as a duplicate. */
+  duplicateOf?: string;
+}
+
+const STATE_WORDS: Record<Variation['instruction'], string> = { pending: 'awaiting instruction', instructed: 'instructed', declined: 'declined', within_contract: 'within contract' };
+
+export function applyVariationCommand(id: string, command: VariationCommand, context: VariationCommandContext = {}): VariationOutcome {
   return atomic(() => {
     const current = getVariation(id);
     if (!current) return refuse('No such variation.', 404);
-    const event: VariationEvent = { at: new Date().toISOString(), actor: command.actor, ...(command.actorId ? { actorId: command.actorId } : {}), kind: 'note', note: command.note.trim(), photos: [] };
+    const event: VariationEvent = { at: new Date().toISOString(), actor: command.actor, ...(command.actorId ? { actorId: command.actorId } : {}), kind: 'note', note: command.note.trim(), photos: [],
+      ...(context.sourceReportId ? { sourceReportId: context.sourceReportId } : {}), ...(context.correctionId ? { correctionId: context.correctionId } : {}) };
     let next: Variation = { ...current };
     const money = (n: number | undefined) => n === undefined ? 'no figure' : new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format(n);
 
@@ -129,7 +143,7 @@ export function applyVariationCommand(id: string, command: VariationCommand): Va
       }
 
       case 'instruct': {
-        if (current.instruction !== 'pending') return refuse(`This variation is already ${current.instruction}.`);
+        if (current.instruction !== 'pending') return refuse(`This variation is already ${STATE_WORDS[current.instruction]}.`);
         const i = command.instruction ?? {};
         const reference = (i.reference ?? '').trim(), by = (i.by ?? '').trim(), on = (i.on ?? '').trim();
         if (!reference) return refuse("Record the client's instruction reference.");
@@ -148,10 +162,20 @@ export function applyVariationCommand(id: string, command: VariationCommand): Va
       }
 
       case 'decline':
-        if (current.instruction !== 'pending') return refuse(`This variation is already ${current.instruction}.`);
+        if (current.instruction !== 'pending') return refuse(`This variation is already ${STATE_WORDS[current.instruction]}.`);
         if (!event.note) return refuse('Say why it was declined. The reason is recorded on the variation.');
         next.instruction = 'declined';
+        if (context.duplicateOf) next.duplicateOf = context.duplicateOf;
         event.kind = 'declined';
+        break;
+
+      // The work is already in Leodis's contract: not chargeable, and not the
+      // same fact as the client refusing it. The reason is welcome, not required.
+      case 'within_contract':
+        if (current.instruction !== 'pending') return refuse(`This variation is already ${STATE_WORDS[current.instruction]}.`);
+        next.instruction = 'within_contract';
+        event.kind = 'within_contract';
+        if (!event.note) event.note = 'Within contract. Not chargeable.';
         break;
 
       case 'reopen':
@@ -175,7 +199,7 @@ export function applyVariationCommand(id: string, command: VariationCommand): Va
   });
 }
 
-/** Instructed value across a project, for the register's project totals. */
+/** Instructed value across a project, for the register's project totals. Within-contract and declined variations are never counted. */
 export function projectInstructedValue(projectId: string): number {
   return Number(database().prepare("SELECT COALESCE(SUM(json_extract(data,'$.instructedValue')),0) AS n FROM records WHERE kind='variations' AND project=? AND json_extract(data,'$.instruction')='instructed'").get(projectId)!.n);
 }

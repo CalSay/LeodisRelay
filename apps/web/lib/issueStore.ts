@@ -271,7 +271,7 @@ export type IssueOutcome =
 export interface IssueCommand {
   expectedEtag?: string;
   actorId?: string;
-  kind: "progress" | "submit_closure" | "verify" | "reopen" | "confirm" | "withdraw" | "assign";
+  kind: "progress" | "submit_closure" | "verify" | "reopen" | "confirm" | "withdraw" | "assign" | "note";
   actor: string;
   note: string;
   photos?: Photo[];
@@ -279,11 +279,22 @@ export interface IssueCommand {
   targetDate?: string;
 }
 
-/** Map a user-facing command onto the platform's transition vocabulary. */
-export function applyCommand(issueId: string, command: IssueCommand): IssueOutcome {
-  return atomic(() => applyIssueCommand(issueId,command));
+/**
+ * Server-side facts attached to a command by trusted callers (office
+ * corrections). Never read from a request body.
+ */
+export interface IssueCommandContext {
+  sourceReportId?: string;
+  correctionId?: string;
+  /** Recorded on the issue when it is withdrawn as a duplicate. */
+  duplicateOf?: string;
 }
-function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome {
+
+/** Map a user-facing command onto the platform's transition vocabulary. */
+export function applyCommand(issueId: string, command: IssueCommand, context: IssueCommandContext = {}): IssueOutcome {
+  return atomic(() => applyIssueCommand(issueId,command,context));
+}
+function applyIssueCommand(issueId: string, command: IssueCommand, context: IssueCommandContext): IssueOutcome {
   const issue = getIssue(issueId);
   if (!issue) return { ok: false, status: 404, reason: "No such issue." };
   const event: IssueEvent = {
@@ -293,11 +304,21 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
     kind: "progress",
     note: command.note,
     photos: command.photos ?? [],
+    ...(context.sourceReportId ? {sourceReportId:context.sourceReportId}:{}),
+    ...(context.correctionId ? {correctionId:context.correctionId}:{}),
   };
 
   let next = { ...issue };
 
   switch (command.kind) {
+    case "note":
+      // An office note: history only, no state change. The SharePoint fields
+      // are unchanged, so the queued operation writes nothing to the list.
+      if (!command.note.trim() || command.note.length > 4000) return { ok: false, status: 422, reason: "Write the note in 1–4,000 characters." };
+      event.kind = "note";
+      event.note = command.note.trim();
+      break;
+
     case "progress":
       // A note with no state change still belongs in the history.
       if (issue.work === "open") {
@@ -392,9 +413,13 @@ function applyIssueCommand(issueId: string, command: IssueCommand): IssueOutcome
       );
       if (!moved.ok) return { ok: false, status: 422, reason: moved.reason };
       next.confirmation = moved.issue.confirmation as typeof next.confirmation;
+      if (command.kind === "withdraw" && context.duplicateOf) next.duplicateOf = context.duplicateOf;
       event.kind = "confirmation";
       break;
     }
+
+    default:
+      return { ok: false, status: 422, reason: "Unknown issue action." };
   }
 
   next = { ...next, events: [...issue.events, event] };

@@ -60,6 +60,7 @@ function IssueTags({i}:{i:Issue}) {
 export function VariationTags({v}:{v:Variation}) {
   if (v.instruction === 'instructed') return <><span className="tag tag-sent">Instructed</span><span>{v.instructionReference} · {fmtMoney(variationValue(v))}</span></>;
   if (v.instruction === 'declined') return <span className="tag tag-draft">Declined</span>;
+  if (v.instruction === 'within_contract') return <><span className="tag tag-draft">Within contract</span><span>not charged</span></>;
   if (v.workDone) return <><span className="tag tag-alert">Done, not instructed</span><span>the office is getting the client’s sign-off</span></>;
   if (v.quotedValue !== undefined) return <><span className="tag tag-draft">Quoted {fmtMoney(v.quotedValue)}</span><span>awaiting the client</span></>;
   return <><span className="tag tag-draft">With the office</span><span>not yet priced</span></>;

@@ -1,11 +1,11 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { SharePointStatus } from '@/components/SharePointStatus';
-import type { TeamMember } from '@/lib/api';
+import { adminPeople, type PersonLogEntry, type RelayPerson, type TeamMember } from '@/lib/api';
 import { InstallRelay } from '@/components/InstallRelay';
 import { toast } from '@/components/workspace/hooks';
 import type { Ctx } from './ctx';
-import { BtnQ, Tag } from './bits';
+import { Btn, BtnQ, Tag } from './bits';
 import { fmtWhen } from './model';
 import { useFeatures } from '@/components/FeaturesContext';
 import { SAFETY_RECORDS_COVERS, SAFETY_RECORDS_NAME } from '@/lib/featureSwitch';
@@ -51,17 +51,18 @@ export function AdminView({ ctx }: { ctx: Ctx }) {
   if (!ctx.me.admin) return <div className="view"><div className="pagehead"><div><h2>Administration</h2><p>Admin role only</p></div></div><div className="empty">Administration is for the Admin role. Managers see the Team tab.</div></div>;
   const legacy = team?.legacyDrafts ?? [];
   const processing = team?.processing;
+  const unnamed = (team?.members ?? []).filter(m => m.onChecklist && !m.name).length;
   return <div className="view">
     <div className="pagehead"><div><h2>Administration</h2><p>Access, older drafts and processing for Leodis Developments · signed in through Microsoft{team ? ` · ${team.members.length} accounts on the checklist` : ''}</p></div>
       <div className="actions"><a className="btn btn-q" href="https://entra.microsoft.com" target="_blank" rel="noreferrer">Open Microsoft Entra ↗</a></div></div>
     <div className="filters">
-      <a className={`chip ${section === 'roles' ? 'on' : ''}`} href="#/admin/roles">Roles &amp; access{team ? ` · ${team.members.length}` : ''}</a>
+      <a className={`chip ${unnamed ? 'warn' : ''} ${section === 'roles' ? 'on' : ''}`} href="#/admin/roles">People{team ? ` · ${team.members.filter(m => m.onChecklist).length}` : ''}</a>
       <a className={`chip ${legacy.length ? 'warn' : ''} ${section === 'drafts' ? 'on' : ''}`} href="#/admin/drafts">Older drafts · {legacy.length}</a>
       <a className={`chip ${processing?.outbox.some(o => o.delivery === 'failed') ? 'warn' : ''} ${section === 'delivery' ? 'on' : ''}`} href="#/admin/delivery">Notifications &amp; processing</a>
       <a className={`chip ${section === 'features' ? 'on' : ''}`} href="#/admin/features">Site records</a>
       <a className={`chip ${section === 'help' ? 'on' : ''}`} href="#/admin/help">Install &amp; help</a>
     </div>
-    {section === 'roles' && <RosterTable members={team?.members ?? null} />}
+    {section === 'roles' && <People ctx={ctx} />}
     {section === 'drafts' && <LegacyDrafts ctx={ctx} />}
     {section === 'features' && <SiteRecords />}
     {section === 'delivery' && <div className="adm-grid">
@@ -82,6 +83,147 @@ export function AdminView({ ctx }: { ctx: Ctx }) {
     {section === 'help' && <div className="two"><div className="panel"><div className="panel-head"><h3>Install Relay</h3></div><InstallRelay alwaysShow /></div>
       <div className="panel"><div className="panel-head"><h3>Where things are</h3></div><div style={{ padding: 16, fontSize: 13 }}><p style={{ margin: '0 0 8px' }}><b>Engineer view</b> is for site updates and individual defects. Managers and Admins can open it to test; authorship stays with the signed-in account.</p><p style={{ margin: '0 0 8px' }}><b>Inbox</b> holds every submitted report; drafts appear as summaries only. <b>Issues</b> is the register across projects; assignment, verification, confirmation and withdrawal are recorded against the signed-in person.</p><p style={{ margin: 0 }}>Roles are set in Microsoft Entra. Company selection on the hub is navigation, not access control.</p></div></div></div>}
   </div>;
+}
+
+const ROLE_OPTS: [string, string][] = [['Admin', 'Admin'], ['Manager', 'Manager'], ['Engineer.Electrical', 'Engineer · Electrical'], ['Engineer.HVAC', 'Engineer · HVAC'], ['Engineer.PH', 'Engineer · P&H']];
+const localPart = (email: string) => email.split('@')[0] ?? email;
+const cleanName = (s: string) => s.trim().replace(/\s+/g, ' ');
+const nameOk = (s: string) => { const c = cleanName(s); return c.length >= 2 && c.length <= 80; };
+const WORK_EMAIL = /^[^@\s]+@leodisme\.com$/i;
+const NAME_RULE = 'Enter a name between 2 and 80 characters.';
+
+function logWords(e: PersonLogEntry): string {
+  switch (e.action) {
+    case 'added': return `Added as ${roleWords(e.to ?? '')}`;
+    case 'restored': return `Back on the checklist as ${roleWords(e.to ?? '')}`;
+    case 'renamed': return e.from ? `Name changed from ${e.from} to ${e.to}` : `Name set to ${e.to}`;
+    case 'assignment': return `Role on the checklist changed from ${roleWords(e.from ?? 'not set')} to ${roleWords(e.to ?? '')}`;
+    case 'removed': return 'Removed from the checklist';
+  }
+}
+
+/**
+ * Admin > People: the name RELAY shows for each person and the role they are
+ * listed against. Neither grants access; the app role in Microsoft Entra does.
+ * Every change is logged on the person.
+ */
+function People({ ctx }: { ctx: Ctx }) {
+  const members = ctx.team?.members ?? null;
+  const [sel, setSel] = useState<string | null>(null);
+  const [adding, setAdding] = useState(false);
+  const listed = (members ?? []).filter(m => m.onChecklist || m.session !== 'never');
+  const selected = listed.find(m => m.email.toLowerCase() === sel);
+  const unnamed = listed.filter(m => m.onChecklist && !m.name);
+  const saved = () => { ctx.loadTeam(); void ctx.refresh(); };
+  return <div className="two-wide">
+    <div className="panel"><div className="panel-head"><h3>People</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{unnamed.length ? `${unnamed.length} need${unnamed.length === 1 ? 's' : ''} a name` : 'Names shown across RELAY'}</span><Btn className="btn-sm" onClick={() => { setAdding(true); setSel(null); }}>Add person</Btn></div>
+      <table className="reg cards"><thead><tr><th>Person</th><th>Role on the checklist</th><th>Now</th></tr></thead><tbody>
+        {!members && <tr><td colSpan={3} className="loading" style={{ minHeight: 0, padding: 24 }}>Loading the roster</td></tr>}
+        {members && !listed.length && <tr><td colSpan={3} className="empty">Nobody on the checklist and nobody signed in.</td></tr>}
+        {listed.map(m => <tr key={m.email} className={`clickable ${selected?.email === m.email ? 'sel' : ''}`} onClick={() => { setSel(m.email.toLowerCase()); setAdding(false); }}>
+          <td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{m.name ?? localPart(m.email)}{!m.name && m.onChecklist && <> <Tag label="Name needed" cls="tag-caution" /></>}</div><div className="rowsub num">{m.email}</div></td>
+          <td data-label="Role">{m.onChecklist ? roleWords(m.assignment) : <span className="rowsub">Not on the checklist</span>}</td>
+          <td data-label="Now">{m.session === 'active' ? <Tag label="Signed in" cls="tag-ok" /> : m.session === 'expired' ? <Tag label="Session expired" cls="tag-quiet" /> : <span className="fine">No session</span>}</td>
+        </tr>)}
+      </tbody></table>
+      <div className="panel-foot">Choose someone to set the name RELAY shows for them on reports, issues and the Inbox. Nothing here grants access: roles come from Microsoft Entra at sign-in, and a change takes effect the next time they sign in.</div></div>
+    {adding ? <AddPerson members={listed} onCancel={() => setAdding(false)} onSaved={p => { setAdding(false); setSel(p.email.toLowerCase()); saved(); }} />
+      : selected ? <PersonPanel key={selected.email} ctx={ctx} m={selected} onSaved={saved} />
+      : <div className="panel"><div className="empty">Choose a person to change their name or role, or add someone to the checklist.</div></div>}
+  </div>;
+}
+
+function PersonPanel({ ctx, m, onSaved }: { ctx: Ctx; m: TeamMember; onSaved: (p: RelayPerson) => void }) {
+  const [name, setName] = useState(m.relayName ?? '');
+  const [assignment, setAssignment] = useState(m.assignment);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [confirmRemove, setConfirmRemove] = useState(false);
+  useEffect(() => { setName(m.relayName ?? ''); setAssignment(m.assignment); }, [m.relayName, m.assignment]);
+  const nameChanged = cleanName(name) !== (m.relayName ?? '');
+  const roleChanged = m.onChecklist && assignment !== m.assignment;
+  const nameValid = !nameChanged || nameOk(name);
+  const canSave = (nameChanged || roleChanged) && nameValid && !busy;
+  const suggestion = m.microsoftName ? cleanName(m.microsoftName.split('|')[0] ?? '') : '';
+  async function save() {
+    setBusy(true); setError('');
+    try {
+      let person: RelayPerson | undefined;
+      if (nameChanged) person = await adminPeople({ action: 'rename', email: m.email, name: cleanName(name) });
+      if (roleChanged) person = await adminPeople({ action: 'assignment', email: m.email, assignment });
+      if (person) onSaved(person);
+      const who = person?.relayName ?? m.name ?? m.email;
+      toast(roleChanged ? `Saved. Change ${who}'s app role in Microsoft Entra to match.` : `Saved. RELAY now shows ${who}.`);
+    } catch (e) { setError(e instanceof Error ? e.message : 'That change was not saved.'); }
+    finally { setBusy(false); }
+  }
+  async function change(action: 'remove' | 'restore') {
+    setBusy(true); setError('');
+    try {
+      const person = await adminPeople({ action, email: m.email });
+      onSaved(person); setConfirmRemove(false);
+      toast(action === 'remove' ? `${m.name ?? m.email} taken off the checklist.` : `${m.name ?? m.email} is back on the checklist.`);
+    } catch (e) { setError(e instanceof Error ? e.message : 'That change was not saved.'); }
+    finally { setBusy(false); }
+  }
+  return <div className="panel"><div className="panel-head"><h3>{m.name ?? localPart(m.email)}</h3><span className="rowsub" style={{ marginLeft: 'auto' }}>{m.email}</span></div>
+    <form style={{ padding: 16, display: 'grid', gap: 12 }} onSubmit={e => { e.preventDefault(); if (canSave) void save(); }}>
+      <div className="f"><label htmlFor="person-name">Name in RELAY</label><input id="person-name" value={name} onChange={e => setName(e.target.value)} placeholder="First and last name" maxLength={120} autoComplete="off" />
+        {nameChanged && !nameValid && cleanName(name) && <p className="rowsub late">{NAME_RULE}</p>}
+        {nameChanged && !cleanName(name) && m.relayName && <p className="rowsub late">A name set in RELAY can be changed but not cleared.</p>}
+        {suggestion && nameOk(suggestion) && suggestion !== cleanName(name) && <button type="button" className="btn btn-q btn-sm" style={{ alignSelf: 'flex-start' }} onClick={() => setName(suggestion)}>Use {suggestion} (their Microsoft name)</button>}</div>
+      {m.onChecklist && <div className="f"><label htmlFor="person-role">Role on the checklist</label><select id="person-role" value={assignment} onChange={e => setAssignment(e.target.value)}>
+        {!ROLE_OPTS.some(([k]) => k === m.assignment) && <option value={m.assignment}>{m.assignment}</option>}
+        {ROLE_OPTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select>
+        {roleChanged && <p className="rowsub">Change their app role in Microsoft Entra to match.</p>}</div>}
+      {error && <div className="note bad" role="alert"><span>{error}</span></div>}
+      <div className="actions"><Btn type="submit" disabled={!canSave}>{busy ? 'Saving…' : 'Save changes'}</Btn></div>
+    </form>
+    <dl className="tb two" style={{ margin: '0 16px 12px' }}>
+      <div><dt>Microsoft name</dt><dd>{m.microsoftName ?? <span className="fine">Known after they sign in</span>}</dd></div>
+      <div><dt>Signed in</dt><dd>{m.lastSignedIn ? fmtWhen(m.lastSignedIn) : <span className="fine">Not yet</span>}</dd></div>
+    </dl>
+    <div style={{ padding: '0 16px 16px' }}>
+      <p className="rowsub">PDFs already made keep the name they were made with. Everything else in RELAY shows the current name.</p>
+      <h4 style={{ margin: '12px 0 4px', fontSize: 13 }}>Changes</h4>
+      {m.log?.length ? <ul className="rowsub" style={{ margin: 0, paddingLeft: 18 }}>{m.log.map((e, n) => <li key={n}>{logWords(e)} · {ctx.nameOf(e.actorId, e.actor)} · {fmtWhen(e.at)}</li>)}</ul> : <p className="rowsub">No changes yet.</p>}
+      {m.onChecklist ? <div style={{ marginTop: 12 }}>{confirmRemove
+        ? <div className="note warn"><span>Take {m.name ?? m.email} off the checklist? Their Microsoft access is not changed, and their past records stay.</span><span className="actions"><Btn className="btn-sm" disabled={busy} onClick={() => void change('remove')}>{busy ? 'Saving…' : 'Take off'}</Btn><BtnQ className="btn-sm" disabled={busy} onClick={() => setConfirmRemove(false)}>Keep</BtnQ></span></div>
+        : <BtnQ className="btn-sm" onClick={() => setConfirmRemove(true)}>Take off the checklist</BtnQ>}</div>
+        : m.log?.some(e => e.action === 'removed') && <div style={{ marginTop: 12 }}><BtnQ className="btn-sm" disabled={busy} onClick={() => void change('restore')}>Put back on the checklist</BtnQ></div>}
+    </div></div>;
+}
+
+function AddPerson({ members, onCancel, onSaved }: { members: TeamMember[]; onCancel: () => void; onSaved: (p: RelayPerson) => void }) {
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [assignment, setAssignment] = useState('Engineer.Electrical');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const typed = email.trim().toLowerCase();
+  const exists = members.some(m => m.onChecklist && m.email.toLowerCase() === typed);
+  const emailOk = WORK_EMAIL.test(email.trim()) && !exists;
+  const canSave = emailOk && nameOk(name) && !busy;
+  async function add() {
+    setBusy(true); setError('');
+    try {
+      const person = await adminPeople({ action: 'add', email: typed, name: cleanName(name), assignment });
+      onSaved(person);
+      toast(`${person.relayName ?? typed} added. Give them the ${roleWords(assignment)} app role in Microsoft Entra so they can sign in.`);
+    } catch (e) { setError(e instanceof Error ? e.message : 'They were not added.'); }
+    finally { setBusy(false); }
+  }
+  return <div className="panel"><div className="panel-head"><h3>Add a person</h3></div>
+    <form style={{ padding: 16, display: 'grid', gap: 12 }} onSubmit={e => { e.preventDefault(); if (canSave) void add(); }}>
+      <div className="f"><label htmlFor="add-email">Work email</label><input id="add-email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="name@leodisme.com" autoComplete="off" autoFocus />
+        <p className="rowsub late" aria-live="polite">{email.trim() && !emailOk ? (exists ? 'Already on the checklist.' : 'Use a @leodisme.com address.') : ''}</p></div>
+      <div className="f"><label htmlFor="add-name">Name in RELAY</label><input id="add-name" value={name} onChange={e => setName(e.target.value)} placeholder="First and last name" maxLength={120} autoComplete="off" />
+        {cleanName(name) && !nameOk(name) && <p className="rowsub late">{NAME_RULE}</p>}</div>
+      <div className="f"><label htmlFor="add-role">Role</label><select id="add-role" value={assignment} onChange={e => setAssignment(e.target.value)}>{ROLE_OPTS.map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
+      <div className="note info"><span><b>This does not give them access on its own.</b> They also need the matching app role in Microsoft Entra.</span></div>
+      {error && <div className="note bad" role="alert"><span>{error}</span></div>}
+      <div className="actions"><Btn type="submit" disabled={!canSave}>{busy ? 'Adding…' : 'Add person'}</Btn><BtnQ onClick={onCancel}>Cancel</BtnQ></div>
+    </form></div>;
 }
 
 function LegacyDrafts({ ctx }: { ctx: Ctx }) {

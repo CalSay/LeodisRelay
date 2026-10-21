@@ -31,11 +31,13 @@ export function canReadReport(p: Principal, r: { projectId: string; state: strin
 export function canIssueCommand(p: Principal, kind: string): boolean {
   if (!hasRole(p)) return false;
   if (kind === 'progress' || kind === 'submit_closure') return true;
-  return canManage(p) && ['assign','verify','reopen','confirm','withdraw'].includes(kind);
+  return canManage(p) && ['assign','verify','reopen','confirm','withdraw','note'].includes(kind);
 }
-/** Anyone on the project can add a note to a variation; pricing, instructing, declining and reopening are office acts. */
+/** Anyone on the project can add a note to a variation; pricing, instructing, declining, calling it within contract and reopening are office acts. */
+/** Office corrections to a sent report (within contract, already raised, notes) are Manager/Admin acts. */
+export function canCorrectReport(p: Principal): boolean { return canManage(p); }
 export function canVariationCommand(p: Principal, kind: string): boolean {
   if (!hasRole(p)) return false;
   if (kind === 'note') return true;
-  return canManage(p) && ['details','price','instruct','decline','reopen'].includes(kind);
+  return canManage(p) && ['details','price','instruct','decline','within_contract','reopen'].includes(kind);
 }

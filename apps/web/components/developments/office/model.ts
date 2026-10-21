@@ -169,6 +169,7 @@ export function confirmTag(i: Issue, reviewOn: boolean): { label: string; cls: s
 export function instructionTag(v: Variation): { label: string; cls: string } {
   if (v.instruction === 'instructed') return { label: 'Instructed', cls: 'tag-ok' };
   if (v.instruction === 'declined') return { label: 'Declined', cls: 'tag-quiet' };
+  if (v.instruction === 'within_contract') return { label: INSTRUCTION_LABEL.within_contract, cls: 'tag-quiet' };
   if (v.workDone) return { label: 'Done, not instructed', cls: 'tag-alert' };
   if (v.quotedValue === undefined) return { label: 'Needs a quote', cls: 'tag-caution' };
   return { label: INSTRUCTION_LABEL.pending, cls: 'tag-acc' };

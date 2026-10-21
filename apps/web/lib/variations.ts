@@ -12,7 +12,16 @@ import type { Instruction, Variation, VariationReason, VariationTrade } from './
 
 export const VARIATION_TRADES: readonly VariationTrade[] = ['Electrical', 'HVAC', 'P&H', 'Multi'];
 export const VARIATION_REASONS: readonly VariationReason[] = ['Client instruction', 'Design change', 'Site condition', 'Damage by others', 'Omission', 'Spec change'];
-export const INSTRUCTION_LABEL: Record<Instruction, string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined' };
+export const INSTRUCTION_LABEL: Record<Instruction, string> = { pending: 'Awaiting instruction', instructed: 'Instructed', declined: 'Declined', within_contract: 'Within contract' };
+
+/** RELAY instruction ↔ the Variation Register's Instruction choice. The SharePoint list must offer every value here. */
+export const INSTRUCTION_CHOICE = { pending: 'Pending', instructed: 'Instructed', declined: 'Declined', within_contract: 'Within contract' } as const satisfies Record<Instruction, string>;
+export function instructionFromChoice(choice: unknown): Instruction | undefined {
+  return (Object.entries(INSTRUCTION_CHOICE) as [Instruction, string][]).find(([, display]) => display === choice)?.[0];
+}
+
+/** Declined and within-contract variations are never charged, whatever was quoted. */
+export const isCharged = (v: { instruction: Instruction }): boolean => v.instruction !== 'declined' && v.instruction !== 'within_contract';
 
 /** The money and hours on a variation. Every figure is optional until the office prices it. */
 export type Costing = Pick<Variation, 'labourHours' | 'labourRate' | 'partsCost' | 'plantSubcontract' | 'upliftPct' | 'quotedValue' | 'instructedValue'>;
@@ -26,8 +35,12 @@ export function expectedCost(c: Costing): number | undefined {
   return round2((c.labourHours ?? 0) * (c.labourRate ?? 0) + (c.partsCost ?? 0) + (c.plantSubcontract ?? 0));
 }
 
-/** What the variation is worth: the instructed value once instructed, the quote until then. */
+/**
+ * What the variation is worth: the instructed value once instructed, the quote
+ * until then, and nothing once declined or found to be within contract.
+ */
 export function variationValue(v: Costing & { instruction: Instruction }): number | undefined {
+  if (!isCharged(v)) return undefined;
   return v.instruction === 'instructed' ? (v.instructedValue ?? v.quotedValue) : v.quotedValue;
 }
 
