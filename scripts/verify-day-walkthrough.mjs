@@ -177,7 +177,7 @@ try {
   await page.getByRole('button',{name:/Start today’s site update/}).click();await page.waitForURL(/\/reports\//);
   const updateId=page.url().split('/reports/')[1].split(/[?#]/)[0];
   // A new update opens on a progress card; this one is a defect.
-  await page.locator('.eng-slot.open .kindrow').getByRole('button',{name:/Defect/}).click();
+  await page.locator('.eng-add-kinds').getByRole('button',{name:/^\+ Defect$/}).click();
   let open=page.locator('.eng-slot.open');
   await open.getByLabel('Where',{exact:true}).fill('Level 2 riser');
   await open.getByRole('button',{name:/Fire stopping missing round pipework/}).click();
