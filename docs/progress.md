@@ -70,6 +70,35 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   delivery note (would need judging against FE-2 first); deliveries still to
   sort on the weekly summary.
 
+## 2026-10-21 — SharePoint dates and visit dates in British Summer Time
+
+- Why: found by the sixth release check on main (e2e84ff), following the open
+  risk #77 recorded. Not a `docs/tasks.json` task, so no status changed there.
+- How SharePoint dates go (decision Claude's, from the code and Microsoft's
+  documented behaviour): SharePoint keeps every date and time column in UTC
+  and turns a date-only value into midnight in the site's own time zone, so a
+  day typed into the live list in summer on a UK site comes back from Graph
+  as 23:00Z the day before. A day RELAY writes as `YYYY-MM-DD` may come back
+  as 00:00Z instead. RELAY's readback check after a write already compared
+  UK days, but the list reads cut the first 10 characters, so an issue's
+  target date and a variation's instructed date entered in SharePoint would
+  have shown a day early from April to October.
+- Fix: one helper, `sharePointDay` in `lib/sharepoint/issues.ts`, reads either
+  storage as the UK day, and both list reads and the readback check use it.
+  It is right for a site time zone anywhere from UTC-12 to UK time; a site set
+  to a zone east of the UK would still be a day out all year.
+- Also: a report started online between midnight and 01:00 BST was dated the
+  day before (the server used the UTC day). It now uses the UK day, as reports
+  started offline already did.
+- Checks: `npm run typecheck`, `npm test` (146 + 418). New tests
+  `tests/sharepointDates.test.ts` (both storages, either side of both clock
+  changes, a list read through mocked Graph for issues and variations; the
+  read test failed before the fix) and `tests/visitDate.test.ts` (00:30 BST
+  and 23:30 GMT). No browser check: nothing on screen changed.
+- Not verified: the live lists (no live tenant). After deploy, compare one
+  summer target date in SharePoint with RELAY, and confirm the Operations
+  site's regional time zone is London.
+
 ## 2026-10-21 — What people see when something goes wrong
 
 - Why: a cross-app quality pass asked for by the coordinator. Each feature
