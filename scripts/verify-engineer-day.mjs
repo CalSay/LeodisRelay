@@ -120,7 +120,10 @@ try {
       while(await runOneJob());
     }
     // A sent report says where it has got to in plain words.
-    await page.goto(`${base}/reports/${notSeen}`);await page.locator('ol.stages').waitFor();
+    await page.goto(`${base}/reports/${notSeen}`);await page.locator('ol.stages').first().waitFor();
+    // The PDF and delivery steps are folded until the engineer opens them.
+    ok(!/RELAY does not email anyone yet/.test(await main()),`${scheme} sent report: delivery folded away`);
+    await page.locator('details.stages-more summary').click();
     const sent=await main();
     ok(!/local outbox|new revision|View the document/.test(sent),`${scheme} sent report: no "local outbox" or "new revision"`);
     ok(/RELAY does not email anyone yet/.test(sent)&&await page.getByRole('link',{name:'See the full report'}).count()===1,`${scheme} sent report: says nobody is emailed, and links the full report`);

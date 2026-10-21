@@ -75,7 +75,7 @@ try {
     const eng=await contextFor('engineer',view);const epage=await eng.newPage();epage.on('pageerror',e=>errors.push(e.message));
     check(!/Seen by the office/.test(await homeTags(epage,first)),`${label}: engineer home, nothing claims the office has seen it yet`);
     if(shot&&view[1]===390)await epage.screenshot({path:join(shot,`before-engineer-home-${name(view)}.png`),fullPage:true});
-    await epage.goto(`${base}/reports/${first.id}`);await epage.locator('ol.stages').waitFor();
+    await epage.goto(`${base}/reports/${first.id}`);await epage.locator('ol.stages').first().waitFor();
     check((await epage.locator('ol.stages li[data-stage="read"] .tag').textContent())==='Not seen yet',`${label}: engineer report, "Not seen yet"`);
     await eng.close();
   }
@@ -114,9 +114,9 @@ try {
     check(!/Seen by the office/.test(await homeTags(epage,second)),`${label}: engineer home, not on the one nobody opened`);
     check(await overflow(epage)<=0,`${label}: engineer home, no horizontal scroll`);
     if(shot&&view[1]===390)await epage.screenshot({path:join(shot,`after-engineer-home-${name(view)}.png`),fullPage:true});
-    await epage.goto(`${base}/reports/${first.id}`);await epage.locator('ol.stages').waitFor();
+    await epage.goto(`${base}/reports/${first.id}`);await epage.locator('ol.stages').first().waitFor();
     check((await epage.locator('ol.stages li[data-stage="read"] .tag').textContent())==='Seen by the office',`${label}: engineer report, "Seen by the office"`);
-    if(shot&&view[1]===390)await epage.locator('ol.stages').screenshot({path:join(shot,`after-engineer-report-stages-${name(view)}.png`)});
+    if(shot&&view[1]===390)await epage.locator('ol.stages').first().screenshot({path:join(shot,`after-engineer-report-stages-${name(view)}.png`)});
     await eng.close();
   }
   check(getRecord('reports',second.id).acknowledged===undefined,'a report nobody opened stays not seen');

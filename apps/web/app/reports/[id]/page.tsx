@@ -30,7 +30,7 @@ import { heldSendBusy, heldSendSettled } from '@/lib/heldSend';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { useRouter } from 'next/navigation';
 import { correctReport as requestCorrection } from '@/lib/api';
-import { ownsReport } from '@/lib/auth/access';
+import { canManage, ownsReport } from '@/lib/auth/access';
 import { toneClass } from '@/lib/status';
 import { SubmissionStages } from '@/components/SubmissionStages';
 import { useMarkSeen } from '@/components/useMarkSeen';
@@ -1200,13 +1200,15 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             </p>
           )}
           <p style={{ margin: 0 }}>
-            Received by RELAY {fmtWhen(report.serverAcknowledgedAt)}. It cannot be changed now; to put something right, make a correction.{" "}
+            It cannot be changed now; to put something right, make a correction.{" "}
             <Link href={withViewReturn(`/reports/${report.id}/preview`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))} style={{ color: "var(--brass)", textDecoration: "underline", textUnderlineOffset: 3 }}>
               See the full report &rarr;
             </Link>
           </p>
-          {/* Each step after sending, the same steps the office sees. */}
-          <SubmissionStages report={report} tagClass={toneClass} when={fmtWhen} />
+          {/* Each step after sending, the same steps the office sees. An
+              engineer sees received and seen, with the PDF and delivery folded
+              away unless one went wrong; the office sees every step open. */}
+          <SubmissionStages report={report} tagClass={toneClass} when={fmtWhen} fold={!principal || !canManage(principal)} />
           {mine && !correcting && !sentAway && (
             <div className="btn-row" style={{ marginTop: 12 }}>
               <button className="btn-sm" onClick={() => setCorrecting(true)}>
