@@ -39,16 +39,34 @@ export function KindPicker({ onPick }: { onPick: (type: ObservationType) => void
 }
 
 /** Chips for words typed on this job before. Picking one fills the box; typing anything else is always fine. */
-export function Suggestions({ title, fewer, values, current, onPick }: { title: string; fewer: string; values: string[]; current: string; onPick: (value: string) => void }) {
+export function Suggestions({ title, fewer, values, current, compact = false, onPick }: {
+  title: string; fewer: string; values: string[]; current: string;
+  /**
+   * The light version under a card's Where box (2026-10-21): no boxed panel or
+   * count, chips as wide as their words, "Show more" on the same rows, and no
+   * chip for the place already in the box.
+   */
+  compact?: boolean;
+  onPick: (value: string) => void;
+}) {
   const [showAll, setShowAll] = useState(false);
-  if (values.length === 0) return null;
-  const visible = showAll ? values : values.slice(0, 3);
-  const hidden = values.length - visible.length;
   const chosen = current.trim().replace(/\s+/g, ' ').toLowerCase();
+  const offered = compact ? values.filter(v => v.toLowerCase() !== chosen) : values;
+  if (offered.length === 0) return null;
+  // Typing a place into the box can leave three or fewer, with nothing left to show or fold.
+  const all = showAll && offered.length > 3;
+  const visible = all ? offered : offered.slice(0, 3);
+  const hidden = offered.length - visible.length;
+  const toggle = offered.length > 3 && <button type="button" className="eng-suggestions-toggle" onClick={() => setShowAll(value => !value)}>{all ? fewer : `Show ${hidden} more`}</button>;
+  const chips = visible.map(v => <button key={v} type="button" className="eng-chip" aria-pressed={compact ? undefined : chosen === v.toLowerCase()} onClick={() => onPick(v)}>{v}</button>);
+  if (compact) return <div className="eng-suggestions compact" role="group" aria-label={title}>
+    <div className="eng-suggestions-head" aria-hidden="true"><span>{title}</span></div>
+    <div className="eng-chips">{chips}{toggle}</div>
+  </div>;
   return <div className="eng-suggestions">
-    <div className="eng-suggestions-head"><span>{title}</span><span>{values.length}</span></div>
-    <div className="eng-chips">{visible.map(v => <button key={v} type="button" className="eng-chip" aria-pressed={chosen === v.toLowerCase()} onClick={() => onPick(v)}>{v}</button>)}</div>
-    {(hidden > 0 || showAll) && <button type="button" className="eng-suggestions-toggle" onClick={() => setShowAll(value => !value)}>{showAll ? fewer : `Show ${hidden} more`}</button>}
+    <div className="eng-suggestions-head"><span>{title}</span><span>{offered.length}</span></div>
+    <div className="eng-chips">{chips}</div>
+    {toggle}
   </div>;
 }
 
@@ -129,8 +147,7 @@ export function ObservationEditor({
   const where = <div className="field">
     <label htmlFor={`loc-${id}`}>Where</label>
     <input id={`loc-${id}`} type="text" value={observation.location} onChange={(e) => set("location", e.target.value)} placeholder="Level 2 — Riser" autoComplete="off" />
-    <Suggestions title="Recent places" fewer="Show fewer places" values={locations} current={observation.location} onPick={l => set("location", l)} />
-    {locations.length > 0 && <p className="hint">Choose a recent place or type anything; it does not have to match.</p>}
+    <Suggestions compact title="Recent places" fewer="Show fewer places" values={locations} current={observation.location} onPick={l => set("location", l)} />
   </div>;
 
   const alreadyRaised = raisesIssue && openIssues.length > 0 && <div className="field">

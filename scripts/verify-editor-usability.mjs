@@ -53,7 +53,8 @@ try {
     await card.getByLabel('Where',{exact:true}).waitFor();
     eq(await card.locator('.eng-card .head .kind').count(),0,`${label}: the open card does not repeat its kind in a tag`);
     // The light run is first on the project, so it has no recent places; the dark run has the light run's.
-eq(await card.getByText('Choose a recent place').count(),await card.locator('.eng-suggestions').count(),`${label}: the hint about recent places only when there are some`);
+    // The hint under recent places went in 2026-10-21 (the chips sit under a free-text box; scripts/verify-recent-places.mjs).
+    eq(await card.getByText('Choose a recent place').count(),0,`${label}: no hint line under recent places`);
     if(scheme==='light')eq(await card.locator('.eng-suggestions').count(),0,`${label}: no recent places yet on the first visit`);
     eq(await page.getByRole('button',{name:/Check & send/}).filter({visible:true}).count()-(await page.locator('.eng-steps button:visible',{hasText:'Check & send'}).count()),1,`${label}: one "Check & send" button besides the step tab`);
     if(phone){
