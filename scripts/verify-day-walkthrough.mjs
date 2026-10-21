@@ -113,6 +113,8 @@ try {
   await page.getByLabel('The work and where').fill('Brazing LTHW flow and return, level 3 riser');
   await page.getByLabel('Issued by').fill('Dana Reid, Northbank Construction');
   await page.getByLabel(/^Permit number/).fill('HW-0142');
+  // After 17:00 UK the form leaves "Runs until" empty on purpose (PermitsPage defaultEnds), so give it: noon tomorrow, UK time.
+  await page.getByLabel('Runs until').fill(`${new Intl.DateTimeFormat('en-CA',{timeZone:'Europe/London'}).format(new Date(Date.now()+86400000))}T12:00`);
   await page.getByRole('button',{name:'Save permit'}).click();await page.locator('.pt-permit').first().waitFor();
   ok(records('permits',P).length===1&&records('permits',P)[0].byId===engineer.id,'permit: the hot works permit is kept under the engineer');
   await page.getByRole('link',{name:'← Back to Site'}).click();await page.waitForURL(home);
