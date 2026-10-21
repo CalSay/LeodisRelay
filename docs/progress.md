@@ -20,19 +20,27 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   with a report open the Inbox heading, filters and list step aside, so the
   report is at the top of the screen. "‹ Inbox" (44px tall) in the reader's
   heading, and the phone's own Back, return to the list at the place it was
-  scrolled to, with the same filter (the bare `#/inbox` route used to reset
-  the filter to All; it now keeps it when coming back from a report, and
-  the Inbox tab still opens on All). A report opened by its address has
-  "‹ Inbox" go to the list. Opening still marks it seen (#88). The desk keeps
-  the list and reader side by side (1440 and 1280 checked).
+  scrolled to, with the same filter. How: picking a report notes the filter
+  and scroll position on the list's own history entry (`replaceState`), and
+  the list reads it back when that entry comes back. A popstate flag did not
+  work: the router re-renders before a second listener runs. The Inbox tab
+  pushes a fresh entry with no note, so it still opens on All at the top,
+  even with a report open. A report opened by its address has "‹ Inbox" go
+  to the list. Leaving the Inbox for another tab and coming back by Back
+  restores the list too; "‹ Inbox" after that opens it on All. Opening still
+  marks it seen (#88). "Drafts on site" with a report in the address keeps
+  its filters on screen. The button's spoken name is "Back to Inbox". The
+  desk keeps the list and reader side by side (1440 and 1280 checked).
 - Same screen: inspection tags ("Tower inspection · Podium P3, plant room")
   were cut off at the right edge of phone rows; `.kind` tags now wrap in
   phone cards like `.tag` does. An empty "Status" label (a report nobody has
   opened) no longer shows on phone rows.
 - Checks: typecheck, `npm test` (146 + 513), build. New
-  `scripts/verify-inbox-phone.mjs` (50): report at the top, list hidden,
+  `scripts/verify-inbox-phone.mjs` (58): report at the top, list hidden,
   Seen by the office, "‹ Inbox" and Back return within 40px of the place,
-  "Not seen yet" kept (count one fewer), Inbox tab opens on All, no tag cut,
+  "Not seen yet" kept (count one fewer), the Inbox tab pressed with a report
+  open goes to All at the top, Back after turning the phone sideways keeps
+  the filter, Drafts on site keeps its filters, no tag cut,
   no sideways scroll, desk side by side at 1440 dark and 1280 light.
   `verify-office-inbox` now expects the report on its own on a phone (was
   "the reader is under the list"). Also run and passing: verify-office-inbox
@@ -40,7 +48,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   verify-office-sections, verify-office-links, verify-role-access,
   verify-accessibility (584), verify-day-walkthrough, verify-first-time-use,
   verify-office-actions, verify-office-desk, verify-office-registers,
-  verify-review-queue, verify-september-office.
+  verify-review-queue, verify-september-office. verify-day-walkthrough
+  failed once and passed on a rerun on the same build (no Inbox step failed).
+- A fresh-context review found no blocking bugs and five smaller points:
+  the Inbox tab and the phone turned sideways (both fixed as above), Drafts
+  on site (fixed), the "‹" read aloud (fixed), and a check that did not test
+  the tab (now it does).
 - Screenshots: project files `ui-review/manager-phone-pass/` (before: a
   tapped report with nothing visible changing, a cut tag; after: the report
   open, the list, the desk).

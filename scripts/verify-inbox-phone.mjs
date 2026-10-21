@@ -66,7 +66,7 @@ try {
     assert.equal(await page.locator('.view.inbox-reading > .filters').isVisible(),false,`${label}: so do the filters`);checks++;
     assert.match(await page.locator('.sheet-title .rowsub .ref').first().textContent(),new RegExp(ref),`${label}: the report picked is the one shown`);checks++;
     await page.locator('.stages [data-stage="read"]').getByText('Seen by the office').waitFor();checks++;
-    const back=page.getByRole('button',{name:'‹ Inbox'});
+    const back=page.getByRole('button',{name:'Back to Inbox'});
     assert.ok(await back.isVisible(),`${label}: "‹ Inbox" on the report`);checks++;
     assert.ok((await back.boundingBox()).height>=44,`${label}: "‹ Inbox" is big enough to tap`);checks++;
     assert.ok(await overflow(page)<=0,`${label}: no sideways scroll on the report`);checks++;
@@ -89,9 +89,28 @@ try {
     assert.equal(await page.getByRole('button',{name:/^Not seen yet · /}).getAttribute('aria-pressed'),'true',`${label}: Back keeps "Not seen yet"`);checks++;
     await page.waitForFunction(n=>document.querySelector('button[aria-pressed="true"]')?.textContent.endsWith(` ${n}`),notSeen-1);checks++;
     assert.ok(Math.abs(await scrollY(page)-before2)<=40,`${label}: Back returns to the same place (${await scrollY(page)}px, was ${before2}px)`);checks++;
-    // The Inbox tab itself still starts from All.
-    await page.goto(`${base}/office#/projects`);await page.goto(`${base}/office#/inbox`);await rows(page).first().waitFor();
+    // The Inbox tab, pressed with a report open, starts again from All at the top.
+    assert.equal(await page.getByRole('button',{name:/^Not seen yet · /}).getAttribute('aria-pressed'),'true');
+    await rows(page).nth(2).tap();await reader(page).waitFor();
+    await page.locator('.hnav a',{hasText:'Inbox'}).tap();
+    await page.waitForFunction(()=>location.hash==='#/inbox');await rows(page).first().waitFor();
     assert.equal(await page.getByRole('button',{name:/^All · /}).getAttribute('aria-pressed'),'true',`${label}: the Inbox tab opens on All`);checks++;
+    assert.ok(await scrollY(page)<200,`${label}: the Inbox tab opens at the top (${await scrollY(page)}px)`);checks++;
+    // Turned sideways (desk width) and back: Back from a report still lands on the list, and the tab still opens on All.
+    await page.getByRole('button',{name:/^Not seen yet · /}).tap();
+    await rows(page).nth(1).tap();await reader(page).waitFor();
+    await page.setViewportSize({width:844,height:390});await page.goBack();await rows(page).first().waitFor();
+    await page.setViewportSize({width:390,height:844});
+    assert.equal(await page.getByRole('button',{name:/^Not seen yet · /}).getAttribute('aria-pressed'),'true',`${label}: turned sideways, Back keeps the filter`);checks++;
+    await rows(page).first().tap();await reader(page).waitFor();
+    // (A real tap here lands on the report under the bar in a resized test browser, so click it directly.)
+    await page.locator('.hnav a',{hasText:'Inbox'}).evaluate(a=>a.click());await page.waitForFunction(()=>location.hash==='#/inbox');await rows(page).first().waitFor();
+    assert.equal(await page.getByRole('button',{name:/^All · /}).getAttribute('aria-pressed'),'true',`${label}: after turning the phone, the Inbox tab still opens on All`);checks++;
+    // Drafts on site with a report in the address keeps the filters on screen.
+    await rows(page).first().tap();await reader(page).waitFor();await page.goBack();await rows(page).first().waitFor();
+    await page.getByRole('button',{name:/^Drafts on site · /}).tap();await page.goForward();
+    await page.waitForFunction(()=>/#\/inbox\/[^/]+$/.test(location.hash));
+    assert.ok(await page.getByRole('button',{name:/^All · /}).isVisible(),`${label}: Drafts on site keeps its filters on screen`);checks++;
     await phone.close();
   }
   for(const [width,colorScheme] of [[1440,'dark'],[1280,'light']]){
@@ -102,7 +121,7 @@ try {
     await rows(page).nth(3).click();await reader(page).waitFor();
     const list=await page.locator('.inbox-list-panel').boundingBox(),read=await reader(page).locator('xpath=ancestor::div[contains(@class,"panel")][1]').boundingBox();
     assert.ok(list&&read&&read.x>=list.x+list.width-1&&Math.abs(read.y-list.y)<2,`${label}: list and reader side by side`);checks++;
-    assert.equal(await page.getByRole('button',{name:'‹ Inbox'}).isVisible(),false,`${label}: no "‹ Inbox" on the desk`);checks++;
+    assert.equal(await page.getByRole('button',{name:'Back to Inbox'}).isVisible(),false,`${label}: no "‹ Inbox" on the desk`);checks++;
     assert.ok(await page.locator('.view > .filters').isVisible(),`${label}: filters stay on the desk`);checks++;
     assert.ok(await overflow(page)<=0,`${label}: no sideways scroll`);checks++;
     if(shot)await page.screenshot({path:join(shot,`inbox-desk-${colorScheme}-${width}.png`)});
@@ -114,7 +133,7 @@ try {
   const direct=records('reports').find(r=>r.state==='submitted'&&!r.reportType)?.id;
   assert.ok(direct,'a report to open by address');
   await page.goto(`${base}/office#/inbox/${direct}`);await reader(page).waitFor();
-  await page.getByRole('button',{name:'‹ Inbox'}).tap();await rows(page).first().waitFor();
+  await page.getByRole('button',{name:'Back to Inbox'}).tap();await rows(page).first().waitFor();
   assert.equal(new URL(page.url()).hash,'#/inbox','opened by address: "‹ Inbox" opens the list');checks++;
   await phone.close();
   assert.deepEqual(errors,[]);checks++;
