@@ -6,7 +6,8 @@ export default function manifest(): MetadataRoute.Manifest {
     id: '/',
     short_name: "Relay",
     description: "Site reporting for Leodis Developments.",
-    start_url: "/",
+    // Opens the company picked last time (app/page.tsx); the hub itself stays at "/".
+    start_url: "/?open=app",
     scope: "/",
     display: "standalone",
     background_color: "#F2F3F1",

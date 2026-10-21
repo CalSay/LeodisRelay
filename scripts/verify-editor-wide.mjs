@@ -37,6 +37,8 @@ try {
     const label=`${scheme} ${width}`;
     const context=await browser.newContext({viewport:{width,height},colorScheme:scheme,hasTouch:touch,isMobile:touch});
     await context.addCookies([{name:'relay_session',value:sessionFor(`${scheme}-${width}`),url:base}]);
+    // A returning engineer on Tetley Hall, so home opens there rather than asking "Which site are you on?".
+    await context.addInitScript(id=>{try{if(!localStorage.getItem(`relay-project:${id}`))localStorage.setItem(`relay-project:${id}`,'proj-011lme');}catch{}},`entra:wide-${scheme}-${width}`);
     const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
     const shot=async(name,full=false)=>{if(screenshot){await page.waitForTimeout(350);await page.screenshot({path:join(screenshot,`${name}-${scheme}-${width}.png`),fullPage:full});}};
     const overflow=()=>page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);

@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'first-day', added: '2026-10-21', audience: 'all', title: 'An easier first day',
+    text: 'The first time an engineer opens RELAY with more than one site, it asks "Which site are you on?" instead of putting them on the first site in the list, and remembers the answer on that phone. In the office, the Admin\'s Team tab has a welcome message to copy for anyone added who has not signed in yet: the link, putting RELAY on the home screen, signing in and finding their site. RELAY does not send it; send it by text, Teams or email. RELAY\'s home screen icon now opens the company you picked last time, and the sign-in and home screen steps are in plainer words. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'office-words-came-back', added: '2026-10-21', audience: 'site', title: 'What the office wrote, where you look',
     text: 'When the office sends back an issue you put forward as fixed, with a question, or writes on a variation you raised, "Came back from the office" on the home screen now shows who wrote, when, and the first line or two of what they said. So does a note the office leaves on a report you sent. Opening the issue shows it at the top, above "Put forward as fixed", instead of folded away in History (a long note shows its first lines, with "Show all of it"); a variation shows it under the office\'s answer. Once you add anything to it, it counts as answered and stays in the history. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'counts-lead-somewhere', added: '2026-10-21', audience: 'office', title: 'Figures that open what they count',
@@ -365,7 +367,7 @@ export interface GuideSection { id: string; heading: string; intro?: string; ste
 export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
   site: [
     { id: 'first-update', heading: 'Your first site update', ordered: true, steps: [
-      'On your home screen, check the current project. "Change" picks another.',
+      'If you work on more than one site, the first time RELAY asks "Which site are you on?": tap yours and it is remembered on your phone. After that, check the current project on your home screen. "Change" picks another.',
       'Tap "Start today’s site update". It opens on a progress card: say where, what happened, and take a photograph. To start with something else, tap "+ Defect", "+ Variation" or "+ Access" under the card and the empty card becomes that; "Change kind", next to "Remove" on the card, changes it once you have started. For the next thing, tap "+ Progress", "+ Defect", "+ Variation" or "+ Access" under the cards; a place you have already used is one tap under "Where".',
       'It saves as you go, on the server and on your phone. Leave it whenever you like; "Carry on with today’s update" opens it again. One left from an earlier day waits under "Unfinished reports", and the big button starts today’s.',
       'When you are done, tap "Check & send", then "Send to office". It is then on file and cannot be changed, only corrected.',
