@@ -4,9 +4,9 @@ import type { Tone } from '@/lib/status';
 import { INSTRUCTION_LABEL } from '@/lib/variations';
 import { reviewInUse } from '@/lib/reviewQueue';
 import { confirmationLabel } from '@/lib/issueConfirmation';
-import { isActiveIssue, isUnassigned, isVerify, notAcknowledged } from '@/lib/officeActions';
+import { isActiveIssue, isUnassigned, isVerify, londonDay, notAcknowledged } from '@/lib/officeActions';
 import { isDisputedIssue, isNotReviewedIssue, isOverdueIssue } from '@/lib/issueQuery';
-import { dateShort, dayLong, whenShort } from '@/lib/dates';
+import { dateShort, dayLong, timeOf, whenShort } from '@/lib/dates';
 import { safetyAttention, type SafetyActions } from '@/lib/safetyActions';
 import { permitAttention, type PermitsAll } from '@/lib/permits';
 import { deliveryAttention, type DeliveriesAll } from '@/lib/deliveries';
@@ -187,6 +187,10 @@ export function daysSince(iso: string | undefined, now = Date.now()): number {
 /** "Wed 21 Oct, 14:05", in the words of lib/dates.ts like every other page. */
 export function fmtWhen(iso?: string): string {
   return whenShort(iso) || 'Not recorded';
+}
+/** "Today, 14:05" for a report received today (`day`, London), so today's stand out in a list; otherwise as fmtWhen. */
+export function fmtReceived(iso: string | undefined, day: string): string {
+  return iso && londonDay(iso) === day ? `Today, ${timeOf(iso)}` : fmtWhen(iso);
 }
 /** "21 Oct" (with the year when not this year), for a time or a calendar day such as a target date. */
 export function fmtDay(iso?: string): string {

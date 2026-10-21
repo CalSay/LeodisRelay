@@ -45,7 +45,7 @@ test('the four groups pick and order what each one means', () => {
   const a = officeActions(reports, issues, '2026-10-20');
   assert.equal(a.since, '2026-10-19');
   assert.deepEqual(a.newReports.map(r => r.id), ['new-read', 'new-unread']);
-  assert.deepEqual(a.notRead.map(r => r.id), ['old-unread', 'new-unread']);
+  assert.deepEqual(a.notRead.map(r => r.id), ['new-unread', 'old-unread']);
   assert.deepEqual(a.unassigned.map(i => i.id), ['unowned-old', 'unowned-new']);
   assert.deepEqual(a.verify.map(i => i.id), ['verify-waiting', 'verify-recent']);
 });
