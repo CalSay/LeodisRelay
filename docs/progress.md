@@ -30,9 +30,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   row, Remove 48px on the picture and clear of the caption, "On the server"
   read out but a dot, a photo added with no signal says so in words, a
   caption saves, Remove works, no sideways scroll. Also rerun, one at a time
-  (results in the PR): one-caption-line, send-on-signal, recent-places,
+  all passing: one-caption-line, send-on-signal, recent-places,
   fewest-taps, lighter-card, offline-capture, photo-uploads, undo-remove,
-  editor-wide, engineer-layout, help, report-types, accessibility.
+  editor-wide, engineer-layout, help, report-types, accessibility (its
+  first run caught Remove's focus ring drawn on the label, not the button;
+  fixed). A fresh-context review passed; its one note (the `?add=` guard
+  never fired) is fixed.
   Screenshots before and after: project files `ui-review/quicker-update/`.
 - Not verified: a real phone, a screen reader.
 

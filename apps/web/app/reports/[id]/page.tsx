@@ -938,7 +938,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   useEffect(() => {
     if (!report || wide || step !== 'cards' || report.state !== 'draft' || openedBlank.current === report.id || reportTypeOf(report).checklist) return;
     openedBlank.current = report.id;
-    try { if (new URLSearchParams(window.location.search).has('add')) return; } catch {}
+    // A link that adds a card ("?add=") picks the card itself.
+    if (addedFromLink.current) return;
     const last = report.observations.at(-1);
     if (selectedSection !== null || !last || !isBlankCard(last)) return;
     setSelectedSection(last.id);

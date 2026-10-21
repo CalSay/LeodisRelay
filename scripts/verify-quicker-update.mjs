@@ -134,6 +134,9 @@ try {
       const tiles=card.locator('.shot');
       await tiles.nth(3).locator('img').waitFor();
       await card.locator('.shot .eng-where').first().waitFor();
+      // Every picture loaded, so the tiles have their final size before they are measured.
+      await page.waitForFunction(()=>[...document.querySelectorAll('.shots .shot img')].every(i=>i.complete&&i.naturalWidth>0),null,{timeout:20000});
+      await page.waitForTimeout(300);
       const boxes=await tiles.evaluateAll(ts=>ts.map(t=>{const r=t.getBoundingClientRect();return {top:Math.round(r.top+scrollY),h:Math.round(r.height),x:r.x,w:r.width};}));
       const tallest=Math.max(...boxes.map(b=>b.h)),rows=new Set(boxes.map(b=>b.top)).size;
       const block=await card.locator('.shots').evaluate(e=>Math.round(e.getBoundingClientRect().height));
