@@ -1,3 +1,5 @@
+import { sheetDay, sheetTime, type Cell } from './sheet';
+
 /**
  * Toolbox talks: the short safety briefing given on site before work starts
  * ("Working at height on the level 3 slab edge", "Safe isolation before
@@ -161,24 +163,10 @@ export function topicStarters(talks: readonly ToolboxTalk[], max = 8): string[] 
   return out;
 }
 
-export const TALK_COLUMNS = ['Day', 'Topic', 'Given by', 'Attendees', 'Number attending', 'Notes', 'Recorded by', 'Recorded at', 'Withdrawn', 'Withdrawn because'] as const;
+export const TALK_COLUMNS = ['Project number', 'Project', 'Topic', 'Given on', 'Given by', 'Attendees', 'Number attending', 'Status', 'Notes', 'Recorded at', 'Recorded by', 'Withdrawn on', 'Withdrawn by', 'Withdrawn because'] as const;
 
-const LONDON = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
-/** "2026-10-21 08:14", UK time, which Excel reads as a date and time. */
-export function londonStamp(iso: string): string {
-  const at = new Date(iso);
-  if (Number.isNaN(at.getTime())) return '';
-  const p = Object.fromEntries(LONDON.formatToParts(at).map(x => [x.type, x.value]));
-  return `${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute}`;
-}
-
-/** One spreadsheet row per talk, attendees in one cell separated by semicolons, times in UK time. */
-export function talkRows(talks: readonly ToolboxTalk[]): (string | number | undefined)[][] {
-  return talks.map(t => [t.day, t.topic, t.givenBy, t.attendees.join('; '), t.attendees.length, t.notes, t.by, londonStamp(t.at), t.withdrawn ? londonStamp(t.withdrawn.at).slice(0, 10) : undefined, t.withdrawn?.reason]);
-}
-
-/** `relay-toolbox-talks-011LME-2026-10-21.csv`. */
-export function talkFileName(day: string, projectNumber?: string): string {
-  const scope = projectNumber?.replace(/[^A-Za-z0-9-]+/g, '') || '';
-  return `relay-toolbox-talks${scope ? `-${scope}` : ''}-${day}.csv`;
+/** One spreadsheet row per talk, in the house column order (`lib/sheet.ts`), attendees in one cell separated by semicolons, times in UK time. */
+export function talkRows(talks: readonly ToolboxTalk[], project: { projectNumber: string; projectName: string }): Cell[][] {
+  return talks.map(t => [project.projectNumber, project.projectName, t.topic, t.day, t.givenBy, t.attendees.join('; '), t.attendees.length, t.withdrawn ? 'Withdrawn' : 'Given', t.notes,
+    sheetTime(t.at), t.by, sheetDay(t.withdrawn?.at), t.withdrawn?.by, t.withdrawn?.reason]);
 }

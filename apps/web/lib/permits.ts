@@ -1,3 +1,5 @@
+import { sheetDay, sheetTime, type Cell } from './sheet';
+
 /**
  * Permits to work: the hot works, isolation and other permits that let a
  * risky job go ahead on site, kept while the work is under way and closed
@@ -265,20 +267,13 @@ export function permitRepeats(permits: readonly Permit[], max = 3): Permit[] {
   return out;
 }
 
-export const PERMIT_COLUMNS = ['Kind', 'Permit number', 'Work and where', 'Issued by', 'Held by', 'Issued on', 'Runs until', 'Status', 'Closed by', 'Closed at', 'Closing check', 'Closing note', 'Notes', 'Recorded by', 'Recorded at', 'Withdrawn', 'Withdrawn because'] as const;
+export const PERMIT_COLUMNS = ['Permit number', 'Project number', 'Project', 'Kind', 'Work and where', 'Issued on', 'Issued by', 'Held by', 'Runs until', 'Status', 'Closed at', 'Closed by', 'Closing check', 'Closing note', 'Notes', 'Recorded at', 'Recorded by', 'Withdrawn on', 'Withdrawn by', 'Withdrawn because'] as const;
 
 const STATE_WORDS: Record<PermitState, string> = { open: 'Open', overdue: 'Open, past its end time', closed: 'Closed', withdrawn: 'Withdrawn' };
-const stamp = (iso: string) => londonMinute(iso).replace('T', ' ');
 
-/** One spreadsheet row per permit, times in UK time as Excel reads them. */
-export function permitRows(permits: readonly Permit[], now: string): (string | number | undefined)[][] {
-  return permits.map(p => [kindLabel(p.kind), p.reference, p.work, p.issuedBy, p.heldBy, p.day, p.ends.replace('T', ' '), STATE_WORDS[permitState(p, now)],
-    p.closed?.by, p.closed ? stamp(p.closed.at) : undefined, p.closed ? closeCheck(p.kind) : undefined, p.closed?.note, p.notes,
-    p.by, stamp(p.at), p.withdrawn ? stamp(p.withdrawn.at).slice(0, 10) : undefined, p.withdrawn?.reason]);
-}
-
-/** `relay-permits-011LME-2026-10-21.csv`. */
-export function permitFileName(day: string, projectNumber?: string): string {
-  const scope = projectNumber?.replace(/[^A-Za-z0-9-]+/g, '') || '';
-  return `relay-permits${scope ? `-${scope}` : ''}-${day}.csv`;
+/** One spreadsheet row per permit, in the house column order (`lib/sheet.ts`), times in UK time as Excel reads them. */
+export function permitRows(permits: readonly Permit[], now: string, project: { projectNumber: string; projectName: string }): Cell[][] {
+  return permits.map(p => [p.reference, project.projectNumber, project.projectName, kindLabel(p.kind), p.work, p.day, p.issuedBy, p.heldBy, p.ends.replace('T', ' '), STATE_WORDS[permitState(p, now)],
+    sheetTime(p.closed?.at), p.closed?.by, p.closed ? closeCheck(p.kind) : undefined, p.closed?.note, p.notes,
+    sheetTime(p.at), p.by, sheetDay(p.withdrawn?.at), p.withdrawn?.by, p.withdrawn?.reason]);
 }

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import type { Issue } from '@/lib/types';
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
-import { Btn, BtnQ, ConfirmTag, WorkTag } from './bits';
+import { Btn, BtnQ, ConfirmTag, SortHead, WorkTag } from './bits';
 import { daysLate, fmtDay, isActive, isOverdue, shortRef } from './model';
 import type { SortDirection } from '@/lib/tableSorting';
 import { issueRegister } from '@/lib/api';
@@ -20,11 +20,6 @@ const TRADES = ['Electrical', 'HVAC', 'P&H', 'Other / non-Leodis'];
 const SORT_NAME: Record<IssueSort, string> = { reference: 'reference', issue: 'issue', project: 'project', raised: 'date raised', owner: 'owner', target: 'target date', work: 'work', confirmation: 'confirmation' };
 // On a phone the column headings are hidden, so the orders people use most are offered as one list.
 const PHONE_ORDERS: [string, string][] = [['', 'Priority'], ['target:ascending', 'Target date, earliest first'], ['raised:descending', 'Raised, newest first'], ['raised:ascending', 'Raised, oldest first'], ['owner:ascending', 'Owner, A to Z'], ['project:ascending', 'Project, A to Z'], ['reference:ascending', 'Reference']];
-
-function SortHead({ label, column, sort, change }: { label: string; column: IssueSort; sort: SortState; change: (column: IssueSort) => void }) {
-  const active = sort?.key === column;
-  return <th aria-sort={active ? sort.direction : 'none'}><button type="button" className={active ? 'sort-head on' : 'sort-head'} onClick={() => change(column)}>{label}<span aria-hidden="true">{active ? sort.direction === 'ascending' ? '↑' : '↓' : '↕'}</span></button></th>;
-}
 
 /** Typed text settles for a moment before it is sent, so each key press is not a request. */
 function useSettled(value: string, ms = 300): string {
@@ -110,12 +105,13 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
       </select></label>
     </div>
     <div className="filters issue-search" role="search" aria-label="Filter the issue register">
+      {/* Project and trade first, as on every register; then what only issues have. */}
+      <label>Project <select value={project} onChange={e => setProject(e.target.value)}><option value="">All projects</option>{ctx.projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}</select></label>
+      <label>Trade <select value={trade} onChange={e => setTrade(e.target.value)}><option value="">All trades</option>{TRADES.map(t => <option key={t} value={t}>{t}</option>)}</select></label>
       <label>Location <input type="search" value={locationText} onChange={e => setLocationText(e.target.value)} placeholder="e.g. riser 2" /></label>
       <label>Company <input type="search" value={companyText} onChange={e => setCompanyText(e.target.value)} placeholder="Who has to respond" list="issue-owners" /></label>
       <datalist id="issue-owners">{result.owners.map(o => <option key={o} value={o} />)}</datalist>
       <label>Verification <select value={verification} onChange={e => setVerification(e.target.value as Verification | '')}><option value="">Any</option>{VERIFICATION.map(v => <option key={v} value={v}>{VERIFICATION_LABEL[v]}</option>)}</select></label>
-      <label>Project <select value={project} onChange={e => setProject(e.target.value)}><option value="">All projects</option>{ctx.projects.map(p => <option key={p.id} value={p.id}>{p.projectName}</option>)}</select></label>
-      <label>Trade <select value={trade} onChange={e => setTrade(e.target.value)}><option value="">All trades</option>{TRADES.map(t => <option key={t} value={t}>{t}</option>)}</select></label>
       {narrowed && <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button>}
     </div>
     {failed && <div className="note bad" role="alert"><span>{failed} Showing the last results.</span></div>}

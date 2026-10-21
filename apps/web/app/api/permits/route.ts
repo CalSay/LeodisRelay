@@ -4,8 +4,8 @@ import { canAccessProject } from '@/lib/auth/access';
 import { refreshProjects, reportableProject } from '@/lib/projects';
 import { noteProject } from '@/lib/siteNoteRoute';
 import { permitsAcross, permitsFor, recordPermit } from '@/lib/permitStore';
-import { PERMIT_COLUMNS, isPermitKind, londonMinute, permitFileName, permitRepeats, permitRows } from '@/lib/permits';
-import { toCsv } from '@/lib/registerExport';
+import { PERMIT_COLUMNS, isPermitKind, londonMinute, permitRepeats, permitRows } from '@/lib/permits';
+import { registerFileName, toCsv } from '@/lib/sheet';
 import { londonDay } from '@/lib/weeklySummary';
 
 export const dynamic = 'force-dynamic';
@@ -33,8 +33,8 @@ export async function GET(request: Request) {
   if ('response' in found) return found.response;
   const all = permitsFor(projectId);
   if (params.get('format') === 'csv') {
-    const csv = toCsv([[...PERMIT_COLUMNS], ...permitRows(all.permits, londonMinute(new Date()))]);
-    const name = permitFileName(londonDay(new Date()), found.project.projectNumber);
+    const csv = toCsv([[...PERMIT_COLUMNS], ...permitRows(all.permits, londonMinute(new Date()), found.project)]);
+    const name = registerFileName('permits', londonDay(new Date()), found.project.projectNumber);
     return new NextResponse(csv, { headers: { 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="${name}"`, 'cache-control': 'no-store' } });
   }
   if (params.get('summary') === '1') return NextResponse.json({ projectId, summary: all.summary });

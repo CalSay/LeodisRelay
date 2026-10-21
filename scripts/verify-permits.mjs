@@ -167,7 +167,7 @@ try {
     const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('link',{name:'Download spreadsheet'}).click()]);
     check(/^relay-permits-011LME-\d{4}-\d{2}-\d{2}\.csv$/.test(download.suggestedFilename()),`engineer: the spreadsheet is named for the project (${download.suggestedFilename()})`);
     const csv=readFileSync(await download.path(),'utf8');
-    check(csv.startsWith('﻿Kind,Permit number,Work and where')&&csv.split('\r\n').filter(Boolean).length===4,'engineer: the spreadsheet has a header and every permit, withdrawn included');
+    check(csv.startsWith('﻿Permit number,Project number,Project,Kind,Work and where')&&csv.split('\r\n').filter(Boolean).length===4,'engineer: the spreadsheet has a header and every permit, withdrawn included');
     check(csv.includes('Fire watch by Chris until 18:10')&&csv.includes('Recorded by mistake while testing')&&csv.includes('ISO-077'),'engineer: the closing note, the withdrawal reason and the number');
 
     await page.goto(`${base}/engineer?project=${P}`);
