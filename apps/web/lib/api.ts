@@ -59,7 +59,7 @@ async function request(input: string, init?: RequestInit): Promise<Response> {
   } catch {
     // fetch rejects on network failure rather than resolving with a status,
     // so this is the only place a lost connection can be caught.
-    throw new ApiError("No connection. Your work is on this phone and will send when there is signal.", true);
+    throw new ApiError("No signal. Your work is on this phone and will send when there is signal.", true);
   }
 }
 

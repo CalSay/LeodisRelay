@@ -64,7 +64,7 @@ try {
       if(view.who==='office'){assert.match(await page.locator('ol.stages li[data-stage="read"] small').textContent(),/Opened by Office Manager/,`${label}: says who opened it`);checks++;}
       if(name==='outbox'){
         assert.equal(await page.locator('ol.stages').getByText(/emailed to/i).count(),0,`${label}: a local outbox file is not shown as an email`);checks++;
-        assert.match(await page.locator('ol.stages li[data-stage="delivery"]').textContent(),/Nothing has been sent/,`${label}: says nothing was sent`);checks++;
+        assert.match(await page.locator('ol.stages li[data-stage="delivery"]').textContent(),/does not email anyone yet/,`${label}: says nothing was sent`);checks++;
       }
       if(name==='pdfFailed'){assert.match(await page.locator('ol.stages li[data-stage="pdf"]').textContent(),/Renderer crashed/,`${label}: the PDF step says why`);checks++;}
       if(name==='mailFailed'){assert.equal(await page.locator('ol.stages li[data-stage="delivery"]').getAttribute('data-tone'),'alert',`${label}: a failed email is an alert on the delivery step`);checks++;}

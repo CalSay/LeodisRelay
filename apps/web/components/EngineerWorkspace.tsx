@@ -31,11 +31,15 @@ import { useWhatsNew } from './useWhatsNew';
 import { useFeatures } from './FeaturesContext';
 import { isSafetyRecordType } from '@/lib/featureSwitch';
 import { dateShort, dayShort, whenShort } from '@/lib/dates';
+import { londonDay } from '@/lib/weeklySummary';
 
 /**
  * The same words the office uses. A report is received when the server has
- * it, reviewed when a person decided, and delivered when the email went; an
- * engineer who can only see "Received" assumes the project manager has it.
+ * it, reviewed when a person decided, and seen when the office opened it.
+ * Delivery shows here only when it went wrong or the project manager was
+ * emailed: in the pilot every report said "PM not notified", which told the
+ * engineer nothing new. The report's own page still shows every step, with
+ * what to do when nobody has been emailed.
  */
 function ReportTags({r}:{r:ReportSummary}) {
   if (r.state === 'draft') return <span className="tag tag-draft">{r.corrects ? 'Correction draft' : 'Your draft'}</span>;
@@ -44,7 +48,7 @@ function ReportTags({r}:{r:ReportSummary}) {
     <span className="tag tag-sent">Received</span>
     {review && review.label !== 'No review required' && <span className={toneClass(review.tone)}>{review.label}</span>}
     {ack && r.acknowledged && <span className={toneClass(ack.tone)}>{ack.label}</span>}
-    {delivery && <span className={toneClass(delivery.tone)}>{delivery.label}</span>}
+    {delivery && (delivery.tone !== 'draft') && <span className={toneClass(delivery.tone)}>{delivery.label}</span>}
   </>;
 }
 function IssueTags({i}:{i:Issue}) {
@@ -111,9 +115,13 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   const [held,setHeld] = useState<{ copies: HeldDraft[]; deviceOnly: Set<string> }>({ copies: [], deviceOnly: new Set() });
   const project = projects.find(p => p.id === projectId);
   const ownDrafts = drafts.filter(r => r.projectId === projectId);
-  // The site update in progress, and any inspection in progress, kept apart so
-  // "Request a variation" never lands on an inspection's checklist.
-  const currentDraft = ownDrafts.find(r => reportTypeOf(r).id === 'progress');
+  // Today's site update (or a correction) in progress, and any inspection in
+  // progress, kept apart so "Request a variation" never lands on an
+  // inspection's checklist. An update left from an earlier day is not
+  // "today's": it waits under Unfinished reports, and the big button starts
+  // today's, so today's cards never go on yesterday's visit.
+  const today = londonDay(new Date());
+  const currentDraft = ownDrafts.find(r => reportTypeOf(r).id === 'progress' && (!!r.corrects || r.visitDate === today));
   // The safety, permits and deliveries records only while the office has them on (lib/featureSwitch.ts).
   const { safetyRecords } = useFeatures();
   // One tile per checklist type: carry on with its draft, or start one. The safety and
@@ -152,7 +160,11 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
     return () => {cancelled=true;};
   },[principal,drafts]);
   const { count: newToYou, newcomer } = useWhatsNew('site');
-  const unfinished = unfinishedReports(drafts, held.copies, projects, held.deviceOnly);
+  // A draft the big buttons above already open is not listed again, unless
+  // the list has something to say about it (held on the phone, refused, signed).
+  const onTiles = new Set([currentDraft?.id, ...inspections.map(i => i.draft?.id)].filter(Boolean));
+  const unfinished = unfinishedReports(drafts, held.copies, projects, held.deviceOnly)
+    .filter(r => !onTiles.has(r.id) || r.device || r.problem || r.signed);
 
   useEffect(() => {
     if (!ready || !projectId) return;
@@ -290,9 +302,9 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
           </section>
         </div></div>
       </>}
-      {view==='projects' && <><div className="eng-heading"><h1>Choose your project</h1><p>All projects open to your role. Existing drafts stay with their original project.</p></div><div className="eng-project-groups">{projectStatusGroups(projects).map(group=><section key={group.status} className={`eng-project-group eng-project-group-${group.tone}`}><div className="eng-section-title"><h2>{group.label}</h2><span className="r">{group.projects.length}</span></div><div className="eng-project-list">{group.projects.map(p=><button key={p.id} className="eng-panel" onClick={()=>selectProject(p.id)} aria-pressed={p.id===projectId}><strong>{p.projectName}</strong><small>{p.projectNumber} · {p.projectManager}</small><span>{p.id===projectId?'Current project':'Select project →'}</span></button>)}</div></section>)}</div></>}
+      {view==='projects' && <><div className="eng-heading"><h1>Choose your project</h1><p>Pick the site you are on. Anything you have started stays with its own project.</p></div><div className="eng-project-groups">{projectStatusGroups(projects).map(group=><section key={group.status} className={`eng-project-group eng-project-group-${group.tone}`}><div className="eng-section-title"><h2>{group.label}</h2><span className="r">{group.projects.length}</span></div><div className="eng-project-list">{group.projects.map(p=><button key={p.id} className="eng-panel" onClick={()=>selectProject(p.id)} aria-pressed={p.id===projectId}><strong>{p.projectName}</strong><small>{p.projectNumber} · {p.projectManager}</small><span>{p.id===projectId?'Current project':'Select project →'}</span></button>)}</div></section>)}</div></>}
       {view==='reports' && <><div className="eng-heading"><h1>Reports</h1><p>Your drafts and the reports every trade has sent on this project.</p></div><div className="eng-actions"><button onClick={()=>void startReport('update')} disabled={creating}>{creating?'Starting…':'Start another site update'}</button></div><nav className="eng-more" aria-label="More from these reports"><span className="lbl">Also on this project</span><div><Link className="eng-link-button" href={`/diary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Site diary</Link><Link className="eng-link-button" href={`/weekly-summary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Weekly summary</Link><Link className="eng-link-button" href={`/photos?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Photographs</Link>{safetyRecords && <Link className="eng-link-button" href={`/safety-actions?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Safety actions</Link>}<Link className="eng-link-button" href={`/my-week?${new URLSearchParams({ returnTo: engineerReturn('reports') })}`}>My week</Link></div></nav>{reports===null ? !error && <p role="status">Loading reports…</p> : <section className="eng-panel">{reports.length ? reports.map(r=><Link className="eng-report-link" href={withViewReturn(`/reports/${r.id}`,engineerReturn('reports'))} key={r.id}><span><strong>{r.reference}</strong><small>{r.author} · {r.authorTrade ?? 'Trade not recorded'} · visit {fmtVisit(r.visitDate)}</small></span><span style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}><ReportTags r={r}/></span></Link>) : <p className="eng-empty">{offset ? 'No reports on this page.' : 'No reports yet on this project. Reports you and other trades send show here.'}</p>}</section>}<div className="btn-row">{offset>0 && <button onClick={()=>setOffset(Math.max(0,offset-50))}>Newer reports</button>}{next!==null && <button onClick={()=>setOffset(next)}>Older reports</button>}</div></>}
-      {view==='issues' && <><div className="eng-heading"><h1>Issues{scope==='all'?' · All projects':''}</h1><p>{scope==='all'?'Each issue group names its project.':'Showing issues only for the selected project.'}</p><div className="eng-actions"><button onClick={()=>navigate('defect')}>Flag a defect</button><Link className="eng-link-button" href={`/issues/snag-list?${new URLSearchParams({ project: projectId, ...(principal?.trade ? { trade: principal.trade } : {}), returnTo: engineerReturn('issues') })}`}>Snag list{principal?.trade ? ` · ${principal.trade}` : ''}</Link></div></div><div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Project scope<select id="eng-issue-scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="current">{project.projectName}</option><option value="all">All projects</option></select></label></div>{issues===null ? !error && <p role="status">Loading issues…</p> : (scope==='all'?projects: [project]).map(p=><section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList issues={issues.filter(i=>i.projectId===p.id)} projectName={p.projectName} returnTo={engineerReturn('issues')}/></section>)}</>}
+      {view==='issues' && <><div className="eng-heading"><h1>Issues{scope==='all'?' · All projects':''}</h1><p>{scope==='all'?'Each issue group names its project.':'Issues on this project, from every trade.'}</p><div className="eng-actions"><button onClick={()=>navigate('defect')}>Flag a defect</button><Link className="eng-link-button" href={`/issues/snag-list?${new URLSearchParams({ project: projectId, ...(principal?.trade ? { trade: principal.trade } : {}), returnTo: engineerReturn('issues') })}`}>Snag list{principal?.trade ? ` · ${principal.trade}` : ''}</Link></div></div><div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Show<select id="eng-issue-scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="current">This project: {project.projectName}</option><option value="all">All projects</option></select></label></div>{issues===null ? !error && <p role="status">Loading issues…</p> : (scope==='all'?projects: [project]).map(p=><section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList issues={issues.filter(i=>i.projectId===p.id)} projectName={p.projectName} returnTo={engineerReturn('issues')}/></section>)}</>}
       {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues')} returnTo={engineerReturn('issues')}/>}
     </>}
   </main>;

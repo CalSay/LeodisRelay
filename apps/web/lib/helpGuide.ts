@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'engineer-day-plainer', added: '2026-10-21', audience: 'site', title: 'Plainer words on site',
+    text: 'The big button on the Site page is always today’s update now: a site update left from an earlier day waits under "Unfinished reports" instead of being reopened as today’s, and a report the big buttons already open is not listed twice. Your sent reports no longer carry "PM not notified" on every row; the report itself says plainly that RELAY does not email anyone yet, so tell the project manager yourself if something cannot wait. A card you have just added no longer shows a red warning before you have typed anything, and signing a site update is marked optional. On an issue, "Submit as complete" is now "Put forward as fixed", the same words as everywhere else. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'seen-by-office', added: '2026-10-21', audience: 'all', title: 'Seen by the office',
     text: 'When someone in the office opens a report you sent, it now says "Seen by the office" on your report, so you know it landed. Nobody in the office has to press anything: opening it is enough, and the "Acknowledge" button has gone. In the office, "Where each project stands" says how many of each project\'s reports nobody has opened yet, and "Not seen yet" lists them.' },
   { id: 'fewer-taps-site-update', added: '2026-10-21', audience: 'site', title: 'Fewer taps for a site update',
@@ -210,7 +212,7 @@ export const GLOSSARY: readonly GuideGroup[] = [
     { term: 'Received', meaning: 'On file in RELAY. It cannot be changed now, only corrected.' },
     { term: 'To review', meaning: 'Only on projects set up to need a review; review is off by default. Someone in the office approves it or sends it back with a reason.' },
     { term: 'PDF', meaning: 'RELAY makes the PDF of the report. "Ready" means it is made, not that anyone has it yet.' },
-    { term: 'Delivery', meaning: 'Filed in SharePoint for SharePoint projects. In this pilot nothing is emailed: notifications are held in an outbox and the step says "Not emailed".' },
+    { term: 'Delivery', meaning: 'Filed in SharePoint for SharePoint projects. RELAY does not email anyone yet, so the step says "Not emailed": if something cannot wait, tell the project manager yourself.' },
     { term: 'Seen', meaning: 'Someone in the office has opened the report. Until then it says "Not seen yet". Nobody has to press anything: opening it is enough.' },
   ] },
   { heading: 'An issue', terms: [
@@ -324,7 +326,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     { id: 'first-update', heading: 'Your first site update', ordered: true, steps: [
       'On your home screen, check the current project. "Change" picks another.',
       'Tap "Start today’s site update". It opens on a progress card: say where, what happened, and take a photograph. Tap Defect, Variation or Access at the top of the card to make it one of those instead. For the next thing, tap "+ Progress", "+ Defect", "+ Variation" or "+ Access" under the cards; a place you have already used is one tap under "Where".',
-      'It saves as you go, on the server and on your phone. Leave it whenever you like; it waits under "Unfinished reports".',
+      'It saves as you go, on the server and on your phone. Leave it whenever you like; "Carry on with today’s update" opens it again. One left from an earlier day waits under "Unfinished reports", and the big button starts today’s.',
       'When you are done, tap "Check & send", then "Send to office". It is then on file and cannot be changed, only corrected.',
     ] },
     { id: 'after-send', heading: 'After you send', ordered: false, steps: [

@@ -22,7 +22,8 @@ const session=randomUUID();
 putRecord('sessions',{id:session,principal,issuedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+600000).toISOString()});
 const card=()=>({id:randomUUID(),type:'update',location:'Riser 2',whatHappened:'Containment fixed',actionNeeded:'',owner:'',photos:[]});
 const tetley=createReport('proj-011lme',principal.name,principal);
-putRecord('reports',{...tetley,observations:[card()],lastSavedAt:'2026-10-20T08:15:00.000Z'});
+// An earlier day's update: today's would be opened from the big button and not listed again (verify-engineer-day.mjs).
+putRecord('reports',{...tetley,observations:[card()],visitDate:'2026-10-20',lastSavedAt:'2026-10-20T08:15:00.000Z'});
 const kirkstall=createReport('proj-014lme',principal.name,principal);
 putRecord('reports',{...kirkstall,observations:[card(),card()],lastSavedAt:'2026-10-19T16:40:00.000Z'});
 // Not this engineer's, and already sent: neither belongs on the list.

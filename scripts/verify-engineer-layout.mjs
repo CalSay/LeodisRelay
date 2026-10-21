@@ -66,7 +66,7 @@ try {
   await page.route('**/api/issues',async route=>{if(route.request().method()==='POST'){await route.fetch();await route.abort();}else await route.continue();},{times:1});
   await page.getByRole('button',{name:'Send defect',exact:true}).click();
   await page.getByRole('button',{name:'Retry submission',exact:true}).click();
-  await page.getByRole('heading',{name:'Defect received',exact:true}).waitFor();
+  await page.getByRole('heading',{name:'Defect sent to the office',exact:true}).waitFor();
   const received=await context.request.get(base+'/api/issues?projectId=proj-011lme').then(r=>r.json());
   const individual=received.issues.filter(i=>i.description==='Missing HVAC support');
   assert.equal(individual.length,1);assert.equal(individual[0].events.length,1);assert.equal(individual[0].affectedTrade,'HVAC');assert.equal(individual[0].reporterTrade,'Electrical');
@@ -79,7 +79,7 @@ try {
   assert.equal(await page.locator('a[href^="/issues/layout-issue-1"]').count(),0);
   // No dead "Assigned to me · Coming soon" button: owners are companies, not accounts.
   assert.equal(await page.getByRole('button',{name:/Assigned to me/}).count(),0);
-  await page.getByLabel('Project scope').selectOption('all');
+  await page.locator('#eng-issue-scope').selectOption('all');
   await page.locator('a[href^="/issues/layout-issue-1"]').waitFor();
   await page.goto(base+`/reports/${own.id}`);
   await page.locator('.eng-add-kinds').getByRole('button',{name:'+ Progress'}).click();
