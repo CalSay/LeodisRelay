@@ -83,9 +83,78 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   permits page uses the same failure words and download. After the merge,
   `verify-error-messages`, `-permits`, `-first-time-use`, `-help`,
   `-accessibility`, `-home-and-sheet` and `-issue-trend` passed.
+- Merged main again after #77 (register spreadsheets): `verify-error-messages`,
+  `-register-export`, `-toolbox-talks` and `-help` passed. `verify-permits` failed
+  once on the tab title being read before it changed (its 5 s wait), then
+  passed three runs in a row; not changed here.
 - Not verified: a real phone, a live tenant or SharePoint, the live server
   behind Caddy (its own 502 page is simulated in the check), a real screen
   reader.
+## 2026-10-21 — Registers and spreadsheet downloads as one set
+
+- Why: a cross-app quality pass (coordinator, under Cal's ask for a clear,
+  professional UI). The registers and their downloads were built one feature
+  at a time (issues and variations under FE-5, permits #76, toolbox talks
+  #72) and had drifted. Not a `docs/tasks.json` task, so no status changed
+  there. Not FE-2, EXP-2 or EXP-4: layout, ordering and file shape only,
+  nothing new is stored or sent.
+- Audited with a busy project (months of reports, 1,694 issues, 415
+  variations, 60 permits and 60 talks with accents, typed formulas and
+  withdrawn records) at 390px light and 1440px dark: office Issues and
+  Variations, snag list, Safety actions, Site diary, Toolbox talks, Permits
+  to work, Issues by company. Before and after screenshots:
+  `ui-review/registers/` in the project files.
+- Downloads (decisions Claude's):
+  - One shared module, `lib/sheet.ts`: cell writing with #73's formula
+    protection, the byte-order mark, one file name rule
+    (`relay-<register>[-<project number>]-<day>.csv`), and days and times.
+  - House column order: the record's reference, `Project number`, `Project`,
+    what it is, then each event as "<event> on" before "<event> by", then
+    status; a withdrawn record keeps its row with `Withdrawn on`,
+    `Withdrawn by`, `Withdrawn because` last. Permits and talks gained the
+    project columns, a status (talks: Given or Withdrawn) and who withdrew;
+    permits lead with the permit number; "Day" is now "Given on".
+  - Days were the UTC day of the moment (an issue raised at 00:30 BST showed
+    the day before); now the UK day, as on screen. Times stay UK time.
+    Not reached: a variation's Instructed on and an issue's target date are
+    cut to their first 10 characters when read from SharePoint, so if a live
+    list stores a summer day as 23:00 UTC the day before, both would be a day
+    early on screen and in the file. Untested (no live tenant); worth a look
+    once RELAY reads the live lists.
+  - The issue file's "Responsible company" is now "Owner", the heading on the
+    register it comes from. Variations: "Instructed on" before "Instructed by".
+  - Download error messages left to the error-messages thread.
+- Registers: Variations now orders by any column heading on a desk and from
+  an Order list on a phone, exactly as Issues does (heading component shared
+  in `bits.tsx`), with "Sort: priority" and a foot saying the order; the
+  download keeps it. Both registers now have status chips and sort on one
+  row, and Project, Trade, then their own filters on a second; Issues used to
+  start with Location. Variations says "in this search" when filtered, as
+  Issues does. Withdrawn on screen was already alike (tag plus "Withdrawn by
+  … · when: why" on permits and talks); left alone. Card-style project pages
+  (permits, talks, safety actions, diary) stay cards: they are read on a
+  phone on site, not a desk register.
+- Checks: `npm run typecheck`, `npm test` (146 + 402). New
+  `scripts/verify-register-downloads.mjs` (100 checks): downloads issues,
+  variations, permits and talks through their pages as the office at 1440px
+  dark and 390px light and as an engineer at 390px, and checks the file name,
+  BOM and CRLF, headings (house order and every heading the register shows),
+  rows as on screen in the screen's order (Variations sorted by Quoted on a
+  desk and Raised on a phone), days and times, accents, and no typed cell
+  starting with a formula sign. Also passed: verify-register-export,
+  office-desk (its chip locator now skips the sort chip), office-registers,
+  office-phone, office-actions, issue-register, accessibility,
+  first-time-use, day-walkthrough, busy-projects, help, permits (header
+  updated), toolbox-talks (header updated), role-access.
+- Opened the four files from a 420-day busy data set (4,098 issues, 949
+  variations) in LibreOffice 7 headless (CSV to xlsx) and read them back with
+  openpyxl, and with pandas: every day and time column is a real date, no
+  formula cells, accents intact. A typed "-Cut riser sleeve" shows as
+  `'-Cut riser sleeve` in LibreOffice: the price of #73's protection, kept.
+- Not verified: Microsoft Excel itself, a physical phone, a live tenant.
+- Proposed, not built: a spreadsheet of a project's safety actions for an
+  audit, in the same house order.
+
 ## 2026-10-21 — Permits to work
 
 - Why: a new feature chosen by Claude for site and office (Cal's go-ahead to

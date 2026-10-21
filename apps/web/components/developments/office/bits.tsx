@@ -1,5 +1,6 @@
 'use client';
 import type { ReactNode } from 'react';
+import type { SortDirection } from '@/lib/tableSorting';
 import { IssueSyncStatus } from '@/components/SharePointStatus';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import { deliveryStatus, reviewStatus } from '@/lib/status';
@@ -43,3 +44,9 @@ export const BarKey = () => <div className="cbar-key"><span className="k-ok">clo
 export const SecH = ({ children, right }: { children: ReactNode; right?: ReactNode }) => <div className="sec-h">{children}{right}</div>;
 export const Btn = (p: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button type="button" {...p} className={`btn ${p.className ?? ''}`} />;
 export const BtnQ = (p: React.ButtonHTMLAttributes<HTMLButtonElement>) => <button type="button" {...p} className={`btn btn-q ${p.className ?? ''}`} />;
+
+/** A register column heading that orders the rows by it; pressed again, the other way. Shared by Issues and Variations so both sort alike. */
+export function SortHead<K extends string>({ label, column, sort, change, className }: { label: string; column: K; sort: { key: K; direction: SortDirection } | null; change: (column: K) => void; className?: string }) {
+  const active = sort?.key === column;
+  return <th className={className} aria-sort={active ? sort.direction : 'none'}><button type="button" className={active ? 'sort-head on' : 'sort-head'} onClick={() => change(column)}>{label}<span aria-hidden="true">{active ? sort.direction === 'ascending' ? '↑' : '↓' : '↕'}</span></button></th>;
+}

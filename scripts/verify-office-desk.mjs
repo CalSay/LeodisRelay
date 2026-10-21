@@ -73,7 +73,7 @@ try {
     await page.locator('.filters').getByRole('button',{name:'Clear filters'}).click();
     assert.equal(await page.locator('table.reg tbody tr.clickable').count(),3,`${label}: Clear filters shows every variation again`);checks++;
     await page.goto(`${base}/office#/variations/show/declined`);await page.locator('table.reg td.empty').waitFor();
-    assert.equal(await page.locator('.filters .chip.on').innerText(),'Declined · 0',`${label}: #/variations/show/declined opens on that filter`);checks++;
+    assert.equal(await page.locator('.filters .chip.on:not(.sort-chip)').innerText(),'Declined · 0',`${label}: #/variations/show/declined opens on that filter`);checks++;
     await page.locator('.hnav a',{hasText:'Variations'}).click();
     await page.locator('.filters .chip.on',{hasText:/^Awaiting instruction/}).waitFor();checks++;
 
