@@ -46,8 +46,10 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
   const linked = ctx.route.a === 'show' ? FILTERS.find(([k]) => k === ctx.route.b)?.[0] : undefined;
   const [filter, setFilter] = useState<Filter>(linked ?? 'pending');
   const bare = !ctx.route.a;
-  useEffect(() => { if (linked) setFilter(linked); else if (bare) setFilter('pending'); }, [linked, bare]);
-  const [project, setProject] = useState('');
+  // #/variations/show/<filter>/<project> also narrows it to one project, from a project's own counts; without one it is every project.
+  const linkedProject = linked && ctx.route.c && ctx.projects.some(p => p.id === ctx.route.c) ? ctx.route.c : '';
+  const [project, setProject] = useState(linkedProject);
+  useEffect(() => { if (linked) { setFilter(linked); setProject(linkedProject); } else if (bare) { setFilter('pending'); setProject(''); } }, [linked, linkedProject, bare]);
   const [trade, setTrade] = useState('');
   const [reason, setReason] = useState('');
   const [sort, setSort] = useState<SortState>(null);

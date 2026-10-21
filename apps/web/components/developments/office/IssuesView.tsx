@@ -41,8 +41,10 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   const [chosen, setFilter] = useState<Filter>(linked ?? 'open');
   // The tab itself (no record or filter in the route) starts again from open.
   const bare = !ctx.route.a;
-  useEffect(() => { if (linked) setFilter(linked); else if (bare) setFilter('open'); }, [linked, bare]);
-  const [project, setProject] = useState('');
+  // #/issues/show/<filter>/<project> also narrows it to one project, from a project's own counts; without one it is every project.
+  const linkedProject = linked && ctx.route.c && ctx.projects.some(p => p.id === ctx.route.c) ? ctx.route.c : '';
+  const [project, setProject] = useState(linkedProject);
+  useEffect(() => { if (linked) { setFilter(linked); setProject(linkedProject); } else if (bare) { setFilter('open'); setProject(''); } }, [linked, linkedProject, bare]);
   const [trade, setTrade] = useState('');
   const [locationText, setLocationText] = useState('');
   const [companyText, setCompanyText] = useState('');

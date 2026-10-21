@@ -114,6 +114,9 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
   const issuesMoved = s ? s.issuesRaised.length + s.issuesFixed.length + s.issuesClosed.length : 0;
   const siteCount = s ? s.site.talks.length + s.site.permits.length + s.site.deliveries.length : 0;
   const snagHref = `/issues/snag-list?${new URLSearchParams({ project: projectId, returnTo: here })}`;
+  // The office's issue register on this project, waiting to be checked; the snag list is the engineer's way in.
+  // "Past target" stays words: it leaves out issues already put forward as fixed, which the register's Overdue keeps.
+  const officeVerify = `/office#/issues/show/verify/${encodeURIComponent(projectId)}`;
 
   return <main className="eng-page week-page">
     <Link href={back} className="back week-noprint">&larr; {backLabel(back)}</Link>
@@ -160,7 +163,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
             <div><p><Link className="ref" href={withViewReturn(`/reports/${r.id}`, here)}>{r.reference}</Link>{r.revision > 1 && <span className="tag tag-draft">Rev {r.revision}</span>}
               {r.review === 'pending' && <span className="tag tag-draft">Awaiting review</span>}{r.review === 'returned' && <span className="tag tag-alert">Returned for changes</span>}</p>
               <p className="week-desc">{r.author}{r.trade ? ` · ${r.trade}` : ''}</p>
-              <p className="week-meta">{r.inspection ? inspectionLine(r.inspection) : kindLine(r.kinds)}{r.photos ? ` · ${plural(r.photos, 'photograph')}` : ''}</p>
+              <p className="week-meta">{r.inspection ? inspectionLine(r.inspection) : kindLine(r.kinds)}{r.photos > 0 && <> · <Link href={withViewReturn(`/photos?${new URLSearchParams({ project: projectId, day: r.visitDate, q: r.reference })}`, here)} aria-label={`${plural(r.photos, 'photograph')} from ${r.reference}`}>{plural(r.photos, 'photograph')}</Link></>}</p>
               {/* Where the work was is in the work lines; the places list stays for a visit with no progress written. */}
               {r.work.length ? <WorkDone r={r} /> : r.locations.length > 0 && <p className="week-meta">{r.locations.join(' · ')}</p>}</div>
           </li>)}</ul> : <p className="week-none">No site reports were sent for visits this week.</p>}
@@ -172,7 +175,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, returnTo }: { i
           <h3>Raised</h3><IssueRows rows={s.issuesRaised} empty="No issues raised this week." here={here} />
           <h3>Put forward as fixed</h3><IssueRows rows={s.issuesFixed} empty="Nothing put forward as fixed this week." here={here} />
           <h3>Checked and closed</h3><IssueRows rows={s.issuesClosed} empty="No issues closed this week." here={here} />
-          <p className="week-total">Open now: <b>{s.openNow.total}</b>{s.openNow.pastTarget > 0 && <> · <span className="late">{s.openNow.pastTarget} past target</span></>}{s.openNow.toCheck > 0 && <> · {s.openNow.toCheck} fixed and waiting to be checked</>}.
+          <p className="week-total">Open now: <b>{s.openNow.total}</b>{s.openNow.pastTarget > 0 && <> · <span className="late">{s.openNow.pastTarget} past target</span></>}{s.openNow.toCheck > 0 && <> · {manager ? <a href={officeVerify}>{s.openNow.toCheck} fixed and waiting to be checked</a> : `${s.openNow.toCheck} fixed and waiting to be checked`}</>}.
             {s.openNow.total > 0 && <> <Link className="week-noprint" href={snagHref}>Open the snag list</Link></>}</p>
         </section>
 
