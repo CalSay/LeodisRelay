@@ -140,7 +140,8 @@ try {
     await retry.getByRole('button',{name:'Withdraw record'}).click();
     await retry.locator('.tag',{hasText:'Withdrawn'}).waitFor();
     check(/Withdrawn by Sam Spark · .*: Recorded by mistake while testing/.test(await retry.innerText()),'engineer: the withdrawn talk says who, when and why');
-    check(await page.evaluate(()=>document.activeElement?.classList.contains('tt-topic')&&document.activeElement.textContent.includes('Retry talk')),'engineer: focus goes to the withdrawn talk');
+    // Focus moves on the frame after the Withdrawn tag is drawn, so wait for it rather than reading at once.
+    check(await page.waitForFunction(()=>document.activeElement?.classList.contains('tt-topic')&&document.activeElement.textContent.includes('Retry talk'),null,{timeout:2000}).then(()=>true,()=>false),'engineer: focus goes to the withdrawn talk');
     check(await retry.locator('.tt-topic-text').evaluate(e=>getComputedStyle(e).textDecorationLine.includes('line-through')),'engineer: the withdrawn topic is struck through');
     check(/Talks given\s*2/.test(await page.locator('#tt-list-title').innerText()),'engineer: the count leaves out the withdrawn talk');
     check(records('toolbox-talks').find(t=>t.topic==='Retry talk').withdrawn?.reason==='Recorded by mistake while testing','engineer: the withdrawal is kept with its reason');

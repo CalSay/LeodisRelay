@@ -4,6 +4,41 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Fifth release check (main at 2cbf367, #2–#73 minus #28)
+
+- Why: integration and release check after the security review, asked for
+  by the coordinator. Not a `docs/tasks.json` task, so no status changed
+  there. Release notes refreshed in the project files
+  (`releases/2026-10-20-release-notes.md`).
+- Checked on a fresh checkout of main at 2cbf367 (Node 22): `npm ci`,
+  `npm run typecheck`, `npm test` (146 package + 389 app tests), `npm run
+  build`, then all 59 `scripts/verify-*.mjs` checks one after another
+  against that build. 57 passed first time, `verify-pdf-navigation`
+  included. No fault in RELAY was found.
+- Two checks failed once and passed on rerun; both were the check reading
+  the page a moment too early, so the checks are fixed, not RELAY:
+  - `verify-toolbox-talks`: after a withdrawal, focus moves to the talk on
+    the next frame, after the Withdrawn tag is drawn. It now waits up to 2 s.
+  - `verify-site-notes`: Help draws the latest few What's new entries first
+    and the rest once it has read what this person has seen. With seven
+    entries added since, "Notes for the next visit" is below the first few,
+    so it now waits for the heading.
+  Each passed three runs in a row after the change.
+- Deploy needs, read from the code (nothing run against the live server):
+  no new settings or environment variables, no database change (toolbox
+  talks are a new kind of record in the existing store; assignments carry
+  two new optional fields), no SharePoint change. Microsoft sign-in still
+  comes back by a GET (`response_mode=query`), so the cross-site check never
+  sees it; sign-in is a link, not a form, so `form-action 'self'` does not
+  touch it. Against a production build with Caddy-style headers (Host and
+  X-Forwarded-Host `app.relaybyleodis.com`, Origin `https://…`), a change
+  from RELAY's own address passes the check with or without
+  `Sec-Fetch-Site`, and one from another site or subdomain is refused (403).
+  No page frames RELAY, so `frame-ancestors 'none'` breaks nothing.
+  `deploy/upgrade-pilot.sh` still covers the deploy unchanged.
+- Not verified: the Docker image build (no Docker daemon in this session),
+  the live server behind Caddy, a live tenant, a real phone.
+
 ## 2026-10-21 — Security and permissions review before the first deploy
 
 - Why: 70 PRs merged and none deployed; asked for by the coordinator as a
