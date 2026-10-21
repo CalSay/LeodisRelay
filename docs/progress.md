@@ -28,7 +28,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   no new settings or environment variables, no database change (toolbox
   talks are a new kind of record in the existing store; assignments carry
   two new optional fields), no SharePoint change. Microsoft sign-in still
-  comes back by a GET (`response_mode=query`), so the cross-site check never
+  comes back by a GET (msal's default `response_mode=query`), so the cross-site check never
   sees it; sign-in is a link, not a form, so `form-action 'self'` does not
   touch it. Against a production build with Caddy-style headers (Host and
   X-Forwarded-Host `app.relaybyleodis.com`, Origin `https://…`), a change
