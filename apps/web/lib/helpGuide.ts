@@ -23,29 +23,33 @@ export interface WhatsNew {
   text: string;
   /** Where to try it, if it has a page of its own. */
   link?: { label: string; href: string };
+  /** About the safety, permits and deliveries records: shown only while the office has them on (featureSwitch.ts). */
+  safetyRecords?: true;
 }
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
-  { id: 'site-records-join-up', added: '2026-10-21', audience: 'all', title: 'Talks, permits and deliveries in your week',
+  { id: 'simpler-for-engineers', added: '2026-10-21', audience: 'all', title: 'A simpler RELAY, built round the site report',
+    text: 'The Site page now opens on the job: start or carry on today\'s site update, flag a defect or request a variation, with big buttons at the top. Handover and first fix inspections sit together under them, and the project\'s pages are down to the four used most (issues, reports, notes for the next visit and photographs), with the rest under "More on this project". Toolbox talks, permits to work, deliveries, the weekly safety and tower inspections and Safety actions are now off unless the office turns them on from the Admin tab. While they are off they do not appear on the Site page, the office desk, My week, the weekly summary, Before handover or this Help page, and nothing recorded is deleted.' },
+  { id: 'site-records-join-up', safetyRecords: true, added: '2026-10-21', audience: 'all', title: 'Talks, permits and deliveries in your week',
     text: 'My week now lists the toolbox talks, permits and deliveries you recorded, closed or sorted, day by day, and the copy for your timesheet counts them. The Weekly summary has a section for the week\'s toolbox talks, permits issued or closed, and deliveries, with any still to sort. On your home screen the Deliveries row is marked while one is still to sort, as Permits to work is for a permit past its end time. In the office, a project\'s register now lists its towers and safety inspections due, open safety actions, permits past their time and deliveries to sort under Needs action, and counts them, so they are seen on a phone too, where the register stands in for the project sheet.',
     link: { label: 'Open My week', href: '/my-week' } },
-  { id: 'deliveries-to-site', added: '2026-10-21', audience: 'all', title: 'Deliveries',
+  { id: 'deliveries-to-site', safetyRecords: true, added: '2026-10-21', audience: 'all', title: 'Deliveries',
     text: 'Record what arrives on site: the supplier, what came, the day, who took it in, where it was put and the delivery note number. Say whether it was all there and in good order; one that came short, damaged or wrong stays under "To sort" until someone on the project says how it was sorted, for example that the rest arrived. The office sees each project\'s deliveries still to sort in Needs attention, so the supplier can be chased while the delivery note is to hand. Your recent suppliers are one tap. RELAY sends nothing to the supplier or anyone else; the spreadsheet download has every delivery.',
     link: { label: 'Open Deliveries', href: '/deliveries' } },
   { id: 'clearer-problems', added: '2026-10-21', audience: 'all', title: 'Clearer messages when something goes wrong',
     text: 'When something goes wrong, RELAY now says what happened, whether your work is safe and what to do, without codes. Signed out partway through a report: it says so, keeps your work on the phone, offers "Sign in again" in a new tab, and saves by itself once you are back. The server not answering or slow: your work stays on the phone and RELAY keeps trying. Photographs of the wrong type or over 20 MB are named and the others still added; a photograph the server will not take names its card. A box over 10,000 characters is pointed out on the card, and nothing is cut off. A spreadsheet or PDF that will not download says so beside the button, and a missing page or a broken one has a plain page with a way home. Work signed on the phone with no signal keeps its signature if the server is down when it goes up.' },
   { id: 'registers-one-set', added: '2026-10-21', audience: 'all', title: 'Spreadsheets that match',
-    text: 'The issue, variation, permit and toolbox talk spreadsheets now read as one set: each starts with its reference (where it has one), project number and project; days are written as dates and times in UK time so Excel can sort them; each event gives its date before who did it; and a withdrawn permit or talk keeps its row, saying when, by whom and why. The issue file calls the company that has to respond "Owner", as the register does. Files are named relay, the register, the project number when the file is for one project, and the day. In the office, Variations can now be ordered by any column, as Issues can (on a phone, from the Order list), and the download keeps that order; Issues lists its Project and Trade filters first, as Variations does. Opened in LibreOffice and a spreadsheet library in testing, not yet in Excel itself.' },
-  { id: 'permits-to-work', added: '2026-10-21', audience: 'all', title: 'Permits to work',
+    text: 'The register spreadsheets now read as one set: each starts with its reference (where it has one), project number and project; days are written as dates and times in UK time so Excel can sort them; each event gives its date before who did it; and a withdrawn record keeps its row, saying when, by whom and why. The issue file calls the company that has to respond "Owner", as the register does. Files are named relay, the register, the project number when the file is for one project, and the day. In the office, Variations can now be ordered by any column, as Issues can (on a phone, from the Order list), and the download keeps that order; Issues lists its Project and Trade filters first, as Variations does. Opened in LibreOffice and a spreadsheet library in testing, not yet in Excel itself.' },
+  { id: 'permits-to-work', safetyRecords: true, added: '2026-10-21', audience: 'all', title: 'Permits to work',
     text: 'Record each hot works, isolation, roof or confined space permit when it is issued: the work and where, who issued it, who holds it and when it runs until. It stays under "Open now" until someone on the project closes it, ticking the closing check for its kind (for hot works, that the fire watch was kept for at least 60 minutes). A permit still open past its end time is marked red on your home screen and appears in the office\'s Needs attention. "Start from a recent one" fills in yesterday\'s permit again. The closing checks are a first draft, not yet read over by a site manager. RELAY does not issue permits and sends nothing to anyone; the spreadsheet download has every permit for an audit.',
     link: { label: 'Open Permits to work', href: '/permits' } },
   { id: 'first-day-pages', added: '2026-10-21', audience: 'all', title: 'Clearer on your first day',
     text: 'Pages with nothing on them yet now say so plainly and say what fills them. Issues over time no longer draws an empty chart and twelve weeks of noughts, Site coverage no longer calls every site "gone quiet" before any has sent a report, and the office overview says "Nothing has come in from site yet" and "No reports received yet" rather than "Every report has been read"; the Inbox, Issues and Variations say where their records will come from. If you have never opened Help, it now opens with How it works, nothing is marked new, and on site the link to it says "Start here". A draft with nothing on it says so in its preview and PDF.' },
-  { id: 'toolbox-talks', added: '2026-10-21', audience: 'all', title: 'Toolbox talks',
+  { id: 'toolbox-talks', safetyRecords: true, added: '2026-10-21', audience: 'all', title: 'Toolbox talks',
     text: 'Record each safety briefing you give on site: the topic, the day, who gave it and the name of everyone who attended. Tap a topic to start from, or "Same people as the last talk" when the same gang is there. The page shows when the last talk was and how many there have been in four weeks, and downloads the whole record as a spreadsheet for an audit. A talk entered by mistake is withdrawn with a reason and stays listed. Toolbox talks are not part of any report and are not sent to anyone. Open it from "This project" on your home screen or from the office project sheet.',
     link: { label: 'Open Toolbox talks', href: '/toolbox-talks' } },
-  { id: 'safety-in-needs-attention', added: '2026-10-21', audience: 'all', title: 'Safety in Needs attention',
+  { id: 'safety-in-needs-attention', safetyRecords: true, added: '2026-10-21', audience: 'all', title: 'Safety in Needs attention',
     text: 'In the office, Attention and the Needs attention lists now include safety: a tower or podium due its inspection, the safety actions still open on a project (one line per project, with how many and the oldest), and a weekly safety inspection that is due. They come straight after a report that could not be processed, ahead of overdue issues, and each opens that project\'s Safety actions. On site, the Safety actions row on the home screen has a red edge while anything is open or due.',
     link: { label: 'Open Safety actions', href: '/safety-actions' } },
   { id: 'inspection-pdf-found', added: '2026-10-21', audience: 'all', title: 'Inspection PDFs say what was wrong',
@@ -54,12 +58,11 @@ export const WHATS_NEW: readonly WhatsNew[] = [
     text: 'On a tablet or a computer, the last buttons on a report or inspection are no longer hidden behind the bar at the bottom. The bar lines up with the page, and the check step puts signing beside what is being sent, with a larger box to sign in. A long list of checks scrolls in its own column and keeps the open check in sight. On every screen, a defect linked to an issue already raised takes that issue\'s trade, the check step says how many issues are new and how many add to ones already raised, and while changes are still being saved it says "being saved" rather than "not yet on the server".' },
   { id: 'assign-on-issue', added: '2026-10-21', audience: 'office', title: 'Assign from the issue itself',
     text: 'An issue opened from a search, a report or Issues by company now has "Who puts it right", with Assign or Reassign, a target date and an instruction, so you no longer go back to the desk to give it an owner. The companies already named on the project are suggested as you type. The issue now shows its target date, and its history says who each assignment went to and by when.' },
-  { id: 'start-from-safety-actions', added: '2026-10-21', audience: 'site', title: 'Start the inspection that is due from Safety actions',
+  { id: 'start-from-safety-actions', safetyRecords: true, added: '2026-10-21', audience: 'site', title: 'Start the inspection that is due from Safety actions',
     text: 'On Safety actions, each project now has "Do a safety inspection", and each tower or podium has "Inspect", gold when it is due. It starts the inspection on that project, with the tower already named as it was last time, so its actions follow it. If you already have a safety inspection in draft on the project, the page carries on with it instead; with a tower inspection in draft, it offers to carry on with that one, and Inspect comes back once it is sent. When you are done, Back brings you to Safety actions. With no signal, start it from the Site page as before.',
     link: { label: 'Open Safety actions', href: '/safety-actions' } },
   { id: 'day-walkthrough', added: '2026-10-21', audience: 'all', title: 'Smoother from one page to the next',
-    text: 'The site home and the office overview now say how many safety actions are open, and on site whether a tower or the weekly safety inspection is due. With no signal the site home no longer shows "0 open issues": it says it cannot check with the office, and Notes for the next visit shows the copy kept on your phone. The office\'s "Received this week" keeps this week\'s notifications still to go apart from older ones, and the unfinished "Assigned to me" button has gone from Issues.',
-    link: { label: 'Open Safety actions', href: '/safety-actions' } },
+    text: 'With no signal the site home no longer shows "0 open issues": it says it cannot check with the office, and Notes for the next visit shows the copy kept on your phone. The office\'s "Received this week" keeps this week\'s notifications still to go apart from older ones, and the unfinished "Assigned to me" button has gone from Issues.' },
   { id: 'same-words-reports', added: '2026-10-21', audience: 'all', title: 'The same words in reports and inspections',
     text: 'The report screen and the no-signal page now write dates the way the rest of RELAY does ("Wed 21 Oct, 14:05", no stray commas), count photographs as "photographs", and say "Back to …" naming where Back goes. On the no-signal page an inspection check asks the same questions as in RELAY: "What’s wrong", "What needs doing" and "Who is to do it" for an action, otherwise "Notes". In the PDF, photographs are dated "21 Oct 2026", signatures "21 Oct 2026, 14:05", and the visit date names the day.' },
   { id: 'busy-projects-faster', added: '2026-10-21', audience: 'all', title: 'Quicker on busy projects',
@@ -69,8 +72,8 @@ export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'same-words', added: '2026-10-21', audience: 'all', title: 'The same words on every page',
     text: 'Pages built at different times now use the same words. An issue put forward as fixed reads "Fixed, to check" everywhere, where it was also "Ready for verification", "Awaiting verification" or "Verify". Dates read one way, such as "Wed 21 Oct", with a time where it matters. Project lists name each project by its number and name, issue and project pages have the same header as the rest of RELAY, and every Back link says where it goes.' },
   { id: 'tidier-pdfs', added: '2026-10-21', audience: 'all', title: 'Tidier report and inspection PDFs',
-    text: 'Every page of a PDF now names the report, the project and, on a tower inspection, the tower. An inspection opens its results with a count of each result (say 12 checks: 10 satisfactory, 2 action needed), and its table headings carry on to the next page. Each action says who is to do it, the summary uses the same numbers as the updates, a correction says which revision it replaces and why, and a signature says whether it was drawn or typed and when. A card\'s words and its action, and the sign-off, now stay together on one page. PDFs already made stay as they were.' },
-  { id: 'tower-inspection', added: '2026-10-20', audience: 'all', title: 'Tower inspection',
+    text: 'Every page of a PDF now names the report and the project, and on an inspection of one area or item, what was inspected. An inspection opens its results with a count of each result (say 12 checks: 10 satisfactory, 2 action needed), and its table headings carry on to the next page. Each action says who is to do it, the summary uses the same numbers as the updates, a correction says which revision it replaces and why, and a signature says whether it was drawn or typed and when. A card\'s words and its action, and the sign-off, now stay together on one page. PDFs already made stay as they were.' },
+  { id: 'tower-inspection', safetyRecords: true, added: '2026-10-20', audience: 'all', title: 'Tower inspection',
     text: 'Inspect a mobile tower or podium after it is put up or moved, and at least every seven days while it stays up. Tap "Do a tower inspection", say which tower (its tag number and where it stands) and answer 12 checks, from its tag to its guardrails and safe working load. Each "Action needed" goes on Safety actions under that tower until a later inspection of the same tower finds it put right, and Safety actions shows when each tower is due its next inspection. It works with no signal like the other inspections. The checks are a first draft and may change.',
     link: { label: 'Open Safety actions', href: '/safety-actions' } },
   { id: 'site-notes', added: '2026-10-20', audience: 'all', title: 'Notes for the next visit',
@@ -96,7 +99,7 @@ export const WHATS_NEW: readonly WhatsNew[] = [
   { id: 'offline-sign', added: '2026-10-20', audience: 'site', title: 'Sign an inspection with no signal',
     text: 'With no signal, once every check is answered you can sign an inspection on the phone. It is marked "Signed · not sent yet" and goes to the office by itself the next time RELAY opens with signal, and RELAY tells you when it has gone. If anything changed after you signed, it is not sent: you check it and sign again.' },
   { id: 'before-handover', added: '2026-10-20', audience: 'all', title: 'Before handover',
-    text: 'One page per project with everything RELAY still has open: snags on our work by trade, fixes waiting to be checked, handover inspections and their open actions, other trades\' issues, variations not yet instructed and open safety actions. Ready to print for the handover meeting.',
+    text: 'One page per project with everything RELAY still has open: snags on our work by trade, fixes waiting to be checked, handover inspections and their open actions, other trades\' issues, and variations not yet instructed. Ready to print for the handover meeting.',
     link: { label: 'Open Before handover', href: '/handover' } },
   { id: 'easier-to-read', added: '2026-10-20', audience: 'all', title: 'Easier to read and to tap',
     text: 'Grey text is darker in the light theme and lighter in the dark theme, so it is easier to read outdoors or on a dim screen. On a phone, buttons, filters, tabs and Back links are at least a fingertip tall, and screen readers can now find the heading and main part of every office page.' },
@@ -111,10 +114,10 @@ export const WHATS_NEW: readonly WhatsNew[] = [
     link: { label: 'Go to your home screen', href: '/engineer' } },
   { id: 'offline-start', added: '2026-10-20', audience: 'site', title: 'Start a site update with no signal',
     text: 'With no signal, RELAY opens a page where you can start a site update, add cards and take photos. They stay on the phone, marked "Only on this phone", and go up by themselves once you open RELAY with signal again. Nothing is sent to the office until you sign and send.' },
-  { id: 'safety-actions', added: '2026-10-20', audience: 'all', title: 'Safety actions',
+  { id: 'safety-actions', safetyRecords: true, added: '2026-10-20', audience: 'all', title: 'Safety actions',
     text: 'Every "Action needed" from the weekly safety inspections, kept open until a later inspection finds it put right, with when each project is due another inspection.',
     link: { label: 'Open Safety actions', href: '/safety-actions' } },
-  { id: 'safety-inspection', added: '2026-10-20', audience: 'site', title: 'Weekly safety inspection',
+  { id: 'safety-inspection', safetyRecords: true, added: '2026-10-20', audience: 'site', title: 'Weekly safety inspection',
     text: 'A report of its own with 12 checks, each answered Satisfactory, Action needed or Not applicable, signed and sent like a site update. Start it from "Do a safety inspection" on your home screen.',
     link: { label: 'Go to your home screen', href: '/engineer' } },
   { id: 'my-week', added: '2026-10-20', audience: 'all', title: 'My week',
@@ -161,30 +164,31 @@ export const WHATS_NEW: readonly WhatsNew[] = [
     link: { label: 'Open Search', href: '/search' } },
 ];
 
-export interface GuideLink { label: string; href: string; audience: HelpAudience; text: string }
+export interface GuideLink { label: string; href: string; audience: HelpAudience; text: string; safetyRecords?: true }
 
 /** "Where to find things": every page someone might be looking for, by tab. */
 export const GUIDE_LINKS: readonly GuideLink[] = [
-  { label: 'Your home screen', href: '/engineer', audience: 'site', text: 'Start a site update, flag a defect, do a safety inspection, and see what came back from the office.' },
+  { label: 'Your home screen', href: '/engineer', audience: 'site', text: 'Start a site update, flag a defect, request a variation, and see what came back from the office.' },
   { label: 'Office', href: '/office', audience: 'office', text: 'The office position first, then Inbox, Issues, Variations and Team.' },
   { label: 'Search', href: '/search', audience: 'all', text: 'The words in every report, issue and variation.' },
   { label: 'Site diary', href: '/diary', audience: 'all', text: 'Each project day by day, from the reports sent.' },
   { label: 'Photographs', href: '/photos', audience: 'all', text: 'Every photograph on a project, by location.' },
   { label: 'Weekly summary', href: '/weekly-summary', audience: 'all', text: 'A project\'s week on one page, for the site meeting.' },
   { label: 'Snag list', href: '/issues/snag-list', audience: 'all', text: 'Open issues for one company or trade, to print.' },
-  { label: 'Safety actions', href: '/safety-actions', audience: 'all', text: 'What the safety and tower inspections found, until it is put right, and which towers are due.' },
+  { label: 'Safety actions', href: '/safety-actions', audience: 'all', safetyRecords: true, text: 'What the safety and tower inspections found, until it is put right, and which towers are due.' },
   { label: 'Before handover', href: '/handover', audience: 'all', text: 'Everything still open on one project, as it nears completion.' },
   { label: 'Issues over time', href: '/issue-trend', audience: 'all', text: 'Whether a project\'s issue list is getting shorter, week by week.' },
   { label: 'Notes for the next visit', href: '/site-notes', audience: 'all', text: 'Word left on a project for whoever is on site next.' },
-  { label: 'Toolbox talks', href: '/toolbox-talks', audience: 'all', text: 'Safety briefings given on a project and who attended, ready for an audit.' },
-  { label: 'Permits to work', href: '/permits', audience: 'all', text: 'Hot works and isolation permits open on a project, until they are closed.' },
-  { label: 'Deliveries', href: '/deliveries', audience: 'all', text: 'Materials taken in on a project, and any short or damaged still to sort.' },
+  { label: 'Toolbox talks', href: '/toolbox-talks', audience: 'all', safetyRecords: true, text: 'Safety briefings given on a project and who attended, ready for an audit.' },
+  { label: 'Permits to work', href: '/permits', audience: 'all', safetyRecords: true, text: 'Hot works and isolation permits open on a project, until they are closed.' },
+  { label: 'Deliveries', href: '/deliveries', audience: 'all', safetyRecords: true, text: 'Materials taken in on a project, and any short or damaged still to sort.' },
   { label: 'My week', href: '/my-week', audience: 'all', text: 'Your own week across every project.' },
   { label: 'Site coverage', href: '/coverage', audience: 'office', text: 'Which live projects have gone quiet.' },
   { label: 'Issues by company', href: '/companies', audience: 'office', text: 'Who to chase, for what, and what they promised last time.' },
 ];
 
-export interface GuideTerm { term: string; meaning: string }
+/** `safetyRecords`: said after the meaning only while the office has those records on. */
+export interface GuideTerm { term: string; meaning: string; safetyRecords?: string }
 export interface GuideGroup { heading: string; terms: readonly GuideTerm[] }
 
 /**
@@ -219,7 +223,8 @@ export const GLOSSARY: readonly GuideGroup[] = [
   ] },
   { heading: 'An inspection check', terms: [
     { term: 'Satisfactory', meaning: 'Checked and fine.' },
-    { term: 'Action needed', meaning: 'Say what is wrong and what needs doing. On a safety inspection it stays on Safety actions until a later inspection finds it Satisfactory or Not applicable; on a tower inspection, until a later inspection of the same tower does. On a handover or first fix inspection it becomes an issue on the snag list.' },
+    { term: 'Action needed', meaning: 'Say what is wrong and what needs doing. On a handover or first fix inspection it becomes an issue on the snag list.',
+      safetyRecords: 'On a safety inspection it stays on Safety actions until a later inspection finds it Satisfactory or Not applicable; on a tower inspection, until a later inspection of the same tower does.' },
     { term: 'Not applicable', meaning: 'Nothing of this kind to check.' },
   ] },
 ];
@@ -235,13 +240,25 @@ export function readTab(raw: string | undefined, role: string | undefined): Help
 
 const forTab = (audience: HelpAudience, tab: HelpTab) => audience === 'all' || audience === tab;
 
-export function whatsNewFor(tab: HelpTab, entries: readonly WhatsNew[] = WHATS_NEW): WhatsNew[] {
-  return entries.filter(e => forTab(e.audience, tab));
+/** Whether something about the safety, permits and deliveries records shows, given the office's switch. */
+const switchedOn = (item: { safetyRecords?: unknown }, safetyRecords: boolean) => safetyRecords || !item.safetyRecords;
+
+/** `safetyRecords`: whether the office has those records on (featureSwitch.ts); off, their entries are left out. */
+export function whatsNewFor(tab: HelpTab, entries: readonly WhatsNew[] = WHATS_NEW, safetyRecords = true): WhatsNew[] {
+  return entries.filter(e => forTab(e.audience, tab) && switchedOn(e, safetyRecords));
 }
 
-export function linksFor(tab: HelpTab, links: readonly GuideLink[] = GUIDE_LINKS): GuideLink[] {
-  return links.filter(l => forTab(l.audience, tab));
+export function linksFor(tab: HelpTab, links: readonly GuideLink[] = GUIDE_LINKS, safetyRecords = true): GuideLink[] {
+  return links.filter(l => forTab(l.audience, tab) && switchedOn(l, safetyRecords));
 }
+
+/** A tab's guide with the safety, permits and deliveries parts only while they are on. */
+export function guideFor(tab: HelpTab, safetyRecords = true): GuideSection[] {
+  return GUIDE[tab].filter(g => switchedOn(g, safetyRecords)).map(g => ({ ...g, steps: [...g.steps, ...(safetyRecords ? g.safetySteps ?? [] : [])] }));
+}
+
+/** What a word means, with the part about the safety records only while they are on. */
+export const termMeaning = (t: GuideTerm, safetyRecords = true): string => safetyRecords && t.safetyRecords ? `${t.meaning} ${t.safetyRecords}` : t.meaning;
 
 /** Pages only Managers and Admins can open; an engineer reading the office tab is not sent to them. */
 const OFFICE_ONLY = ['/office', '/coverage', '/companies'];
@@ -269,8 +286,8 @@ export function readSeen(raw: string | null | undefined): Set<string> {
  * The entries for a tab this person has not seen. Someone who has never
  * opened Help has seen none, so everything for their tab counts as new.
  */
-export function unseen(tab: HelpTab, seen: ReadonlySet<string>, entries: readonly WhatsNew[] = WHATS_NEW): WhatsNew[] {
-  return whatsNewFor(tab, entries).filter(e => !seen.has(e.id));
+export function unseen(tab: HelpTab, seen: ReadonlySet<string>, entries: readonly WhatsNew[] = WHATS_NEW, safetyRecords = true): WhatsNew[] {
+  return whatsNewFor(tab, entries, safetyRecords).filter(e => !seen.has(e.id));
 }
 
 /**
@@ -289,7 +306,8 @@ export function addedLabel(added: string, today: string): string {
   return added.slice(0, 4) === today.slice(0, 4) ? label : `${label} ${added.slice(0, 4)}`;
 }
 
-export interface GuideSection { id: string; heading: string; intro?: string; steps: readonly string[]; ordered: boolean }
+/** `safetyRecords` on a section: shown only while the office has those records on; `safetySteps`: said after the steps only then. */
+export interface GuideSection { id: string; heading: string; intro?: string; steps: readonly string[]; ordered: boolean; safetyRecords?: true; safetySteps?: readonly string[] }
 
 /** How the day's work goes, in the order people do it. Button names match the screens. */
 export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
@@ -310,7 +328,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'If you can\'t draw one, choose "Type my name instead", type your full name and tick the statement. It counts as your signature, and the office and the PDF show it as typed, with the time it was sent and who was signed in.',
       'A site update needs no drawing: your name is printed on it either way.',
     ] },
-    { id: 'tower', heading: 'A tower or podium', ordered: false, steps: [
+    { id: 'tower', heading: 'A tower or podium', ordered: false, safetyRecords: true, steps: [
       'Inspect each mobile tower or podium after it is put up or moved, and at least every seven days while it stays up. Tap "Do a tower inspection" and say which one: its tag number and where it stands, such as "T3, level 2 east corridor". Use the same name each time, so its actions follow it.',
       'If the name is wrong, tap "Rename" under the title before you send. One tower inspection is open at a time: send it before you start the next.',
       'Safety actions lists each tower inspected in the last four weeks and when it is due again, with "Inspect" to start its next inspection under the same name. If a tower fails, take the insert out of its tag so nobody uses it, and say what needs doing on the check.',
@@ -356,9 +374,11 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'Where review is off, issues read "As reported" and stand until someone confirms or withdraws them.',
     ] },
     { id: 'meetings', heading: 'For the site meeting', ordered: false, steps: [
-      'Weekly summary puts a project\'s week on one page, toolbox talks, permits and deliveries included. Snag lists print the open issues for one company or trade. Site diary reads back every visit.',
+      'Weekly summary puts a project\'s week on one page. Snag lists print the open issues for one company or trade. Site diary reads back every visit.',
       'Issues by company is the chase list; Site coverage shows which live projects have gone quiet.',
-      'A project\'s own pages (Safety actions, Toolbox talks, Permits to work, Issues over time, Before handover, Site diary, Weekly summary, Photographs, Notes for the next visit, Deliveries) are on its project sheet, under its figures. On a phone they are at the top of the project\'s register.',
+      'A project\'s own pages (Weekly summary, Site diary, Photographs, Notes for the next visit, Issues over time, Before handover) are on its project sheet, under its figures. On a phone they are at the top of the project\'s register.',
+    ], safetySteps: [
+      'Safety actions, Toolbox talks, Permits to work and Deliveries are on the project sheet too, in their own group, and the weekly summary has a section for the week\'s talks, permits and deliveries.',
     ] },
   ],
 };

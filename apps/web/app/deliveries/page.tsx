@@ -1,6 +1,9 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { currentPrincipal } from '@/lib/auth/session';
+import { isAdmin } from '@/lib/auth/access';
+import { safetyRecordsOn } from '@/lib/features';
+import { SwitchedOff } from '@/components/SwitchedOff';
 import { DeliveriesPage } from '@/components/DeliveriesPage';
 import './deliveries.css';
 
@@ -13,5 +16,7 @@ export default async function Deliveries({ searchParams }: { searchParams: Promi
   const query = await searchParams;
   const kept = new URLSearchParams(Object.entries(query).filter((e): e is [string, string] => typeof e[1] === 'string'));
   if (!principal) redirect(`/signin?returnTo=${encodeURIComponent(`/deliveries${kept.size ? `?${kept}` : ''}`)}`);
+  // Behind the office's switch, off by default (lib/featureSwitch.ts).
+  if (!safetyRecordsOn()) return <SwitchedOff page="Deliveries" returnTo={query.returnTo} admin={isAdmin(principal)} />;
   return <DeliveriesPage initialProject={query.project ?? ''} returnTo={query.returnTo} />;
 }

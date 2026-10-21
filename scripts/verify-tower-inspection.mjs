@@ -19,6 +19,8 @@ const {chromium}=require(process.env.RELAY_PLAYWRIGHT_MODULE || 'playwright');
 const root=mkdtempSync(join(tmpdir(),'relay-tower-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,getRecord,records,database}=require('../apps/web/.test-build/lib/storage.js');
+// Safety, permits and deliveries are off unless the office turns them on (lib/featureSwitch.ts); this check needs them on. verify-simpler-home.mjs covers both states.
+putRecord('settings',{id:'features',safetyRecords:true});
 const {TOWER_CHECKLIST,startingCards,REPORT_TYPES}=require('../apps/web/.test-build/lib/reportTypes.js');
 const {reviewReport}=require('../apps/web/.test-build/lib/review.js');
 const engineer={id:'entra:tower-engineer',oid:'tower-engineer',name:'Toni Tower',email:'toni@example.test',role:'Engineer',trade:'Electrical'};

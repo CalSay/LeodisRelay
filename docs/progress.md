@@ -4,6 +4,55 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Simpler RELAY for site engineers
+
+- Why: Cal, 07:02 today: too much health and safety and checking of outside
+  factors that are not site auditing of project progress; engineers are
+  hands-on people, not IT people, and need an easy system that gets the
+  office what it needs. Not a `docs/tasks.json` task; EXP-5's notes record
+  that its safety and tower types are now behind the switch.
+- Decision (Claude's, Cal was asked whether to delete instead): hide, don't
+  delete. One office switch, "Safety, permits and deliveries", off by
+  default, on the Admin tab under Site records (Admin only, audited). It
+  covers toolbox talks, permits to work, deliveries, the weekly safety and
+  tower inspections and Safety actions. Off: no row, tile, link, count or
+  Needs attention line for them on the Site page, Reports, the office
+  overview, project sheet or phone register; My week, the weekly summary and
+  Before handover leave them out; Help drops their What's new entries, guide
+  section, page links and glossary sentences. Their four pages say plainly
+  they are not in use with a way back, their API answers 404, and a safety
+  or tower inspection cannot be started online or from the no-signal page.
+  One already started with no signal is still accepted, and a draft already
+  open still shows, so no work is stranded. Stored data is untouched;
+  turning the switch on brings everything back.
+- Decision: pre-handover and first fix inspections stay. Walking the Site
+  page, they did not get in the way once grouped under "Inspections" below
+  the main buttons; they are quality checks on our own work whose actions go
+  on the snag list, which is progress and snags, not health and safety.
+- The engineer's Site page, tidied round the site report: one big gold
+  "Start today's site update" (or "Carry on with today's update") button,
+  then Flag a defect and Request a variation; Unfinished reports only when
+  there are some; Came back from the office ahead of Since your last visit;
+  This project down to Site issues, Reports, Notes for the next visit and
+  Photographs, with Weekly summary, Site diary, Before handover and Issues
+  over time folded under "More on this project"; rows at least 56px tall on
+  a phone. On a 390px phone the page is 2,436px tall, down from 3,241px, and
+  the big button sits in the first screen. The office keeps its view of
+  progress, issues and variations; its project sheet groups pages as
+  Reports and records, then Issues.
+- Screenshots: `ui-review/simpler-for-engineers/` in the project files,
+  before and after, phone 390px light and desktop 1440px dark, plus the
+  Site page with the switch on.
+- Checks: `npm run typecheck`, `npm test`, `npm run build`. New
+  `scripts/verify-simpler-home.mjs` (both states, the Admin turning the
+  switch on from the Admin tab, a Manager refused, data kept).
+  `verify-home-and-sheet.mjs` rewritten for the new home and sheet in both
+  states. Every check that uses the hidden records now turns the switch on
+  first. RESULTS
+- Not verified: a physical phone, screen readers, the live server.
+- Proposed, not built: remove the hidden records entirely if Cal says so;
+  shorter inspection blurbs (they repeat "actions go on the snag list").
+
 ## 2026-10-21 — Sixth release check (main at e2e84ff, #74 to #78)
 
 - Why: the coordinator's release check before a first deploy. Not a

@@ -26,6 +26,8 @@ const root=mkdtempSync(join(tmpdir(),'relay-busy-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const storagePath=require.resolve('../apps/web/.test-build/lib/storage.js');
 const {putRecord}=require(storagePath);
+// Safety, permits and deliveries are off unless the office turns them on (lib/featureSwitch.ts); this check needs them on. verify-simpler-home.mjs covers both states.
+putRecord('settings',{id:'features',safetyRecords:true});
 const {londonDay}=require('../apps/web/.test-build/lib/weeklySummary.js');
 const today=londonDay(new Date());
 const seeded=seedBusyProjects({storagePath,today});

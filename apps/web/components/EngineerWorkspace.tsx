@@ -28,6 +28,8 @@ import { projectStatusGroups } from '@/lib/projectGroups';
 import { withViewReturn } from '@/lib/viewNavigation';
 import { CHECKLIST_TYPES, INSPECTED_MAX, inspectedName, reportTypeOf, type ReportTypeDef, type ReportTypeId } from '@/lib/reportTypes';
 import { useWhatsNew } from './useWhatsNew';
+import { useFeatures } from './FeaturesContext';
+import { isSafetyRecordType } from '@/lib/featureSwitch';
 import { dateShort, dayShort, whenShort } from '@/lib/dates';
 
 /**
@@ -112,8 +114,13 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   // The site update in progress, and any inspection in progress, kept apart so
   // "Request a variation" never lands on an inspection's checklist.
   const currentDraft = ownDrafts.find(r => reportTypeOf(r).id === 'progress');
-  // One tile per checklist type: carry on with its draft, or start one.
-  const inspections = CHECKLIST_TYPES.map(type => ({ type, draft: ownDrafts.find(r => reportTypeOf(r).id === type.id) }));
+  // The safety, permits and deliveries records only while the office has them on (lib/featureSwitch.ts).
+  const { safetyRecords } = useFeatures();
+  // One tile per checklist type: carry on with its draft, or start one. The safety and
+  // tower inspections are behind the office's switch; a draft of one already started
+  // still shows, so work is never stranded.
+  const inspections = CHECKLIST_TYPES.map(type => ({ type, draft: ownDrafts.find(r => reportTypeOf(r).id === type.id) }))
+    .filter(({ type, draft }) => safetyRecords || draft || !isSafetyRecordType(type.id));
   const preference = `relay-project:${principal?.id}`;
   const engineerReturn = (target: View = 'home') => `/engineer?project=${encodeURIComponent(projectId)}${target === 'home' ? '' : `&view=${target}`}`;
 
@@ -209,30 +216,35 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
       {view!=='home' && view!=='projects' && <div className="eng-project-context"><div><small>CURRENT PROJECT</small><strong>{project.projectName}</strong></div></div>}
       {error && <div className="note note-bad" role="alert">{error} <button onClick={()=>{setError('');setRetry(n=>n+1);}}>Retry</button></div>}
       {view==='home' && <>
-        <div className="eng-heading"><p className="lbl">On site</p><h1>{principal?.name}</h1><p>{principal?.trade ? `${principal.trade} Engineer` : principal?.role} · {fmtDay(new Date().toISOString())}</p></div>
+        <div className="eng-heading eng-heading-home"><p className="lbl">On site</p><h1>{principal?.name}</h1><p>{principal?.trade ? `${principal.trade} engineer` : principal?.role} · {fmtDay(new Date().toISOString())}</p></div>
         <div className="eng-home-grid"><div>
           <section className="eng-band"><span className="lbl">Current project</span><h2>{project.projectName}</h2><p><span className="ref" style={{color:'inherit'}}>{project.projectNumber}</span> · {project.projectManager}, project manager · <button type="button" onClick={()=>navigate('projects')}>Change ›</button></p></section>
-          <div className="eng-tiles">
+          {/* The job: a site update with photographs, issues and variations, sent to the office. One big button, then the two quick ones. */}
+          <div className="eng-tiles eng-tiles-main">
             {currentDraft
-              ? <Link className="eng-tile big" href={withViewReturn(`/reports/${currentDraft.id}`,engineerReturn())}><span className="kind tone-neutral">Site update</span><div><b>{currentDraft.corrects ? 'Continue the correction' : 'Continue today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'on server'}</small></div><span className="arrow">→</span></Link>
-              : <button type="button" className="eng-tile big" onClick={()=>void startReport()} disabled={creating}><span className="kind tone-neutral">Site update</span><div><b>{creating?'Starting…':'Start a site update'}</b><small>Progress, defects, variations and access, one card at a time</small></div><span className="arrow">→</span></button>}
-            <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo + a short note · sent on its own</small></div></button>
-            <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work needing instruction · goes in your site update</small></div></button>
-            {inspections.map(({ type, draft }) => draft
-              ? <Link key={type.id} className="eng-tile eng-tile-wide" href={withViewReturn(`/reports/${draft.id}`,engineerReturn())}><span className="kind answer-ok">{type.tag}</span><div><b>{draft.corrects ? `Continue the ${type.name.toLowerCase()} correction` : `Continue the ${type.name.toLowerCase()}`}{draft.inspected ? ` of ${draft.inspected}` : ''}</b><small>{draft.checks ? `${draft.checks.ok + draft.checks.action + draft.checks.na} of ${draft.observationCount} checks answered` : `${draft.observationCount} checks`} · saved {fmtWhen(draft.lastSavedAt) || 'on server'}</small></div><span className="arrow">→</span></Link>
-              : type.inspects ? <NameThenStart key={type.id} type={type} creating={creating} onStart={name=>void startReport(undefined,type.id,name)} />
-              : <button key={type.id} type="button" className="eng-tile eng-tile-wide" onClick={()=>void startReport(undefined,type.id)} disabled={creating}><span className="kind answer-ok">{type.tag}</span><div><b>Do a {type.name.toLowerCase()}</b><small>{type.blurb} · signed and sent as its own report</small></div><span className="arrow">→</span></button>)}
+              ? <Link className="eng-tile big eng-tile-main" href={withViewReturn(`/reports/${currentDraft.id}`,engineerReturn())}><div><b>{currentDraft.corrects ? 'Carry on with the correction' : 'Carry on with today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'on server'}</small></div><span className="arrow" aria-hidden="true">→</span></Link>
+              : <button type="button" className="eng-tile big eng-tile-main" onClick={()=>void startReport()} disabled={creating}><div><b>{creating?'Starting…':'Start today’s site update'}</b><small>Progress, photographs, defects and variations, then sign and send to the office</small></div><span className="arrow" aria-hidden="true">→</span></button>}
+            <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo and a short note, sent straight away</small></div></button>
+            <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work that needs an instruction</small></div></button>
           </div>
-          <p className="eng-help">Defects flagged here are sent on their own. Everything else stays a draft until you sign and send.</p>
-          <section aria-labelledby="eng-unfinished-title">
+          <p className="eng-help">A defect goes to the office as soon as you send it. Your site update stays a draft until you sign and send it.</p>
+          {unfinished.length > 0 && <section aria-labelledby="eng-unfinished-title">
             <div className="eng-section-title"><h2 id="eng-unfinished-title">Unfinished reports</h2><span className="r">{unfinished.length}</span></div>
             <div className="eng-list">
-              {unfinished.length ? unfinished.map(r => r.started ? <a key={r.id} href="/offline.html" className="eng-row late"><div className="main"><b>New {r.typeName.toLowerCase()} · {r.projectName}</b><span>No reference yet · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></a> : <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : r.typeName} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></Link>)
-                : <div className="eng-empty">Nothing unfinished. A report you start stays here, on every project, until you sign and send it.</div>}
+              {unfinished.map(r => r.started ? <a key={r.id} href="/offline.html" className="eng-row late"><div className="main"><b>New {r.typeName.toLowerCase()} · {r.projectName}</b><span>No reference yet · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></a> : <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : r.typeName} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r}/></div></div><span className="chev">›</span></Link>)}
+            </div>
+          </section>}
+          <section aria-labelledby="eng-inspections-title" className="eng-inspections">
+            <div className="eng-section-title"><h2 id="eng-inspections-title">Inspections</h2></div>
+            <p className="eng-section-note">A walk round one area with a checklist, signed and sent as its own report.</p>
+            <div className="eng-tiles">
+              {inspections.map(({ type, draft }) => draft
+                ? <Link key={type.id} className="eng-tile eng-tile-wide" href={withViewReturn(`/reports/${draft.id}`,engineerReturn())}><span className="kind answer-ok">{type.tag}</span><div><b>{draft.corrects ? `Carry on with the ${type.name.toLowerCase()} correction` : `Carry on with the ${type.name.toLowerCase()}`}{draft.inspected ? ` of ${draft.inspected}` : ''}</b><small>{draft.checks ? `${draft.checks.ok + draft.checks.action + draft.checks.na} of ${draft.observationCount} checks answered` : `${draft.observationCount} checks`} · saved {fmtWhen(draft.lastSavedAt) || 'on server'}</small></div><span className="arrow" aria-hidden="true">→</span></Link>
+                : type.inspects ? <NameThenStart key={type.id} type={type} creating={creating} onStart={name=>void startReport(undefined,type.id,name)} />
+                : <button key={type.id} type="button" className="eng-tile eng-tile-wide" onClick={()=>void startReport(undefined,type.id)} disabled={creating}><span className="kind answer-ok">{type.tag}</span><div><b>Do a {type.name.toLowerCase()}</b><small>{type.blurb}</small></div><span className="arrow" aria-hidden="true">→</span></button>)}
             </div>
           </section>
         </div><div>
-          <SinceLastVisit key={project.id} projectId={project.id} returnTo={engineerReturn()}/>
           <div className="eng-section-title"><h2>Came back from the office</h2><span className="r">{back && !back.failed ? back.rows.length : back ? '' : '…'}</span></div>
           <div className="eng-list">
             {!back ? <div className="eng-empty">Checking with the office…</div>
@@ -240,30 +252,33 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
               : back.rows.length ? back.rows.map(row => <Link key={row.key} href={row.href} className={`eng-row ${row.late ? 'late' : ''}`}><div className="main"><b>{row.title}</b><span>{row.sub}</span><div className="stat">{row.tags}</div></div><span className="chev">›</span></Link>)
               : <div className="eng-empty">Nothing on this project yet. Reports you send, defects you flag and variations you request show here with the office’s answer.</div>}
           </div>
+          <SinceLastVisit key={project.id} projectId={project.id} returnTo={engineerReturn()}/>
           <section aria-labelledby="eng-project-title">
             <div className="eng-section-title"><h2 id="eng-project-title">This project</h2><span className="r">{back && !back.failed ? `${back.open} open issue${back.open===1?'':'s'}` : ''}</span></div>
-            <div role="group" aria-labelledby="eng-project-issues">
-              <h3 id="eng-project-issues" className="eng-group-title">Issues and safety</h3>
+            <div className="eng-list">
+              <button type="button" className="eng-row" onClick={()=>navigate('issues')}><div className="main"><b>Site issues</b><span>{back && !back.failed ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
+              <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back && !back.failed ? `${back.reports} on file · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
+              <SiteNotesRow key={projectId} projectId={projectId} href={`/site-notes?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
+              {projectPage('/photos','Photographs','Every photograph, by location')}
+            </div>
+            <details className="eng-more-pages">
+              <summary>More on this project<span>Weekly summary, site diary, before handover, issues over time</span></summary>
               <div className="eng-list">
-                <button type="button" className="eng-row" onClick={()=>navigate('issues')}><div className="main"><b>Site issues</b><span>{back && !back.failed ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
+                {projectPage('/weekly-summary','Weekly summary','The week on one page, for the site meeting')}
+                {projectPage('/diary','Site diary','Every visit, day by day')}
+                {projectPage('/handover','Before handover','Everything still open, on one page')}
+                {projectPage('/issue-trend','Issues over time','Raised, closed and still open, week by week')}
+              </div>
+            </details>
+            {safetyRecords && <div role="group" aria-labelledby="eng-project-safety">
+              <h3 id="eng-project-safety" className="eng-group-title">Safety, permits and deliveries</h3>
+              <div className="eng-list">
                 <SafetyActionsRow key={projectId} projectId={projectId} href={`/safety-actions?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
                 <ToolboxTalksRow key={`tt-${projectId}`} projectId={projectId} href={`/toolbox-talks?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
                 <PermitsRow key={`pt-${projectId}`} projectId={projectId} href={`/permits?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
-                {projectPage('/issue-trend','Issues over time','Raised, closed and still open, week by week')}
-                {projectPage('/handover','Before handover','Everything still open, on one page')}
-              </div>
-            </div>
-            <div role="group" aria-labelledby="eng-project-records">
-              <h3 id="eng-project-records" className="eng-group-title">Reports and records</h3>
-              <div className="eng-list">
-                <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back && !back.failed ? `${back.reports} on file · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
-                <SiteNotesRow key={projectId} projectId={projectId} href={`/site-notes?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
                 <DeliveriesRow key={`dl-${projectId}`} projectId={projectId} href={`/deliveries?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
-                {projectPage('/diary','Site diary','Every visit, day by day')}
-                {projectPage('/weekly-summary','Weekly summary','The week on one page, for the site meeting')}
-                {projectPage('/photos','Photographs','Every photograph, by location')}
               </div>
-            </div>
+            </div>}
           </section>
           <section aria-labelledby="eng-you-title">
             <div className="eng-section-title"><h2 id="eng-you-title">Your week and help</h2></div>
@@ -275,7 +290,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
         </div></div>
       </>}
       {view==='projects' && <><div className="eng-heading"><h1>Choose your project</h1><p>All projects open to your role. Existing drafts stay with their original project.</p></div><div className="eng-project-groups">{projectStatusGroups(projects).map(group=><section key={group.status} className={`eng-project-group eng-project-group-${group.tone}`}><div className="eng-section-title"><h2>{group.label}</h2><span className="r">{group.projects.length}</span></div><div className="eng-project-list">{group.projects.map(p=><button key={p.id} className="eng-panel" onClick={()=>selectProject(p.id)} aria-pressed={p.id===projectId}><strong>{p.projectName}</strong><small>{p.projectNumber} · {p.projectManager}</small><span>{p.id===projectId?'Current project':'Select project →'}</span></button>)}</div></section>)}</div></>}
-      {view==='reports' && <><div className="eng-heading"><h1>Reports</h1><p>Your drafts and the reports every trade has sent on this project.</p></div><div className="eng-actions"><button onClick={()=>void startReport()} disabled={creating}>{creating?'Starting…':'Start another site update'}</button></div><nav className="eng-more" aria-label="More from these reports"><span className="lbl">Also on this project</span><div><Link className="eng-link-button" href={`/diary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Site diary</Link><Link className="eng-link-button" href={`/weekly-summary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Weekly summary</Link><Link className="eng-link-button" href={`/photos?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Photographs</Link><Link className="eng-link-button" href={`/safety-actions?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Safety actions</Link><Link className="eng-link-button" href={`/my-week?${new URLSearchParams({ returnTo: engineerReturn('reports') })}`}>My week</Link></div></nav>{reports===null ? !error && <p role="status">Loading reports…</p> : <section className="eng-panel">{reports.length ? reports.map(r=><Link className="eng-report-link" href={withViewReturn(`/reports/${r.id}`,engineerReturn('reports'))} key={r.id}><span><strong>{r.reference}</strong><small>{r.author} · {r.authorTrade ?? 'Trade not recorded'} · visit {fmtVisit(r.visitDate)}</small></span><span style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}><ReportTags r={r}/></span></Link>) : <p className="eng-empty">{offset ? 'No reports on this page.' : 'No reports yet on this project. Reports you and other trades send show here.'}</p>}</section>}<div className="btn-row">{offset>0 && <button onClick={()=>setOffset(Math.max(0,offset-50))}>Newer reports</button>}{next!==null && <button onClick={()=>setOffset(next)}>Older reports</button>}</div></>}
+      {view==='reports' && <><div className="eng-heading"><h1>Reports</h1><p>Your drafts and the reports every trade has sent on this project.</p></div><div className="eng-actions"><button onClick={()=>void startReport()} disabled={creating}>{creating?'Starting…':'Start another site update'}</button></div><nav className="eng-more" aria-label="More from these reports"><span className="lbl">Also on this project</span><div><Link className="eng-link-button" href={`/diary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Site diary</Link><Link className="eng-link-button" href={`/weekly-summary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Weekly summary</Link><Link className="eng-link-button" href={`/photos?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Photographs</Link>{safetyRecords && <Link className="eng-link-button" href={`/safety-actions?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Safety actions</Link>}<Link className="eng-link-button" href={`/my-week?${new URLSearchParams({ returnTo: engineerReturn('reports') })}`}>My week</Link></div></nav>{reports===null ? !error && <p role="status">Loading reports…</p> : <section className="eng-panel">{reports.length ? reports.map(r=><Link className="eng-report-link" href={withViewReturn(`/reports/${r.id}`,engineerReturn('reports'))} key={r.id}><span><strong>{r.reference}</strong><small>{r.author} · {r.authorTrade ?? 'Trade not recorded'} · visit {fmtVisit(r.visitDate)}</small></span><span style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}><ReportTags r={r}/></span></Link>) : <p className="eng-empty">{offset ? 'No reports on this page.' : 'No reports yet on this project. Reports you and other trades send show here.'}</p>}</section>}<div className="btn-row">{offset>0 && <button onClick={()=>setOffset(Math.max(0,offset-50))}>Newer reports</button>}{next!==null && <button onClick={()=>setOffset(next)}>Older reports</button>}</div></>}
       {view==='issues' && <><div className="eng-heading"><h1>Issues{scope==='all'?' · All projects':''}</h1><p>{scope==='all'?'Each issue group names its project.':'Showing issues only for the selected project.'}</p><div className="eng-actions"><button onClick={()=>navigate('defect')}>Flag a defect</button><Link className="eng-link-button" href={`/issues/snag-list?${new URLSearchParams({ project: projectId, ...(principal?.trade ? { trade: principal.trade } : {}), returnTo: engineerReturn('issues') })}`}>Snag list{principal?.trade ? ` · ${principal.trade}` : ''}</Link></div></div><div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Project scope<select id="eng-issue-scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="current">{project.projectName}</option><option value="all">All projects</option></select></label></div>{issues===null ? !error && <p role="status">Loading issues…</p> : (scope==='all'?projects: [project]).map(p=><section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList issues={issues.filter(i=>i.projectId===p.id)} projectName={p.projectName} returnTo={engineerReturn('issues')}/></section>)}</>}
       {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues')} returnTo={engineerReturn('issues')}/>}
     </>}
@@ -297,7 +312,7 @@ function NameThenStart({ type, creating, onStart }: { type: ReportTypeDef; creat
   const moved = useRef(false);
   const about = type.inspects!;
   useEffect(() => { if (open) input.current?.focus(); else if (moved.current) opener.current?.focus(); moved.current = true; }, [open]);
-  if (!open) return <button ref={opener} type="button" className="eng-tile eng-tile-wide" onClick={()=>setOpen(true)} disabled={creating} aria-expanded={false}><span className="kind answer-ok">{type.tag}</span><div><b>Do a {type.name.toLowerCase()}</b><small>{type.blurb} · signed and sent as its own report</small></div><span className="arrow">→</span></button>;
+  if (!open) return <button ref={opener} type="button" className="eng-tile eng-tile-wide" onClick={()=>setOpen(true)} disabled={creating} aria-expanded={false}><span className="kind answer-ok">{type.tag}</span><div><b>Do a {type.name.toLowerCase()}</b><small>{type.blurb}</small></div><span className="arrow" aria-hidden="true">→</span></button>;
   function start(e: React.FormEvent) {
     e.preventDefault();
     const named = inspectedName(type, name);

@@ -10,6 +10,7 @@ import { refreshIssues } from '@/lib/sharepoint/issues';
 import { refreshVariations } from '@/lib/sharepoint/variations';
 import { sharePointMode } from '@/lib/sharepoint/config';
 import { londonDay, weekStart, weeklySummary } from '@/lib/weeklySummary';
+import { safetyRecordsOn } from '@/lib/features';
 import { talksFor } from '@/lib/toolboxTalkStore';
 import { permitsFor } from '@/lib/permitStore';
 import { deliveriesFor } from '@/lib/deliveryStore';
@@ -31,5 +32,6 @@ export async function GET(request: Request) {
   const today = londonDay(new Date());
   const monday = weekStart(url.searchParams.get('week') ?? undefined, today);
   return jsonResponse(request, weeklySummary({ reports:listReports(projectId), issues:listIssues(projectId), variations:listVariations(projectId),
-    talks:talksFor(projectId).talks, permits:permitsFor(projectId).permits, deliveries:deliveriesFor(projectId).deliveries }, guard.principal, projectId, monday, today));
+    // Talks, permits and deliveries only while the office has them on (featureSwitch.ts).
+    ...(safetyRecordsOn() ? { talks:talksFor(projectId).talks, permits:permitsFor(projectId).permits, deliveries:deliveriesFor(projectId).deliveries } : {}) }, guard.principal, projectId, monday, today));
 }

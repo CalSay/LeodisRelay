@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { safetyRecordsRefusal } from '@/lib/features';
 import { requireSession } from '@/lib/auth/guard';
 import { noteProject } from '@/lib/siteNoteRoute';
 import { getTalk, withdrawTalk } from '@/lib/toolboxTalkStore';
@@ -9,6 +10,9 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request, context: { params: Promise<{ id: string }> }) {
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
+  // Behind the office's switch, off by default (lib/featureSwitch.ts).
+  const off = safetyRecordsRefusal();
+  if (off) return off;
   const { id } = await context.params;
   const body = await request.json().catch(() => null) as Record<string, unknown> | null;
   if (!body || typeof body.reason !== 'string' || body.reason.length > 2000) return NextResponse.json({ reason: 'Invalid withdrawal.' }, { status: 422 });

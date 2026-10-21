@@ -18,6 +18,8 @@ const sharp=require('sharp');
 const root=mkdtempSync(join(tmpdir(),'relay-offline-inspection-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,records}=require('../apps/web/.test-build/lib/storage.js');
+// Safety, permits and deliveries are off unless the office turns them on (lib/featureSwitch.ts); this check needs them on. verify-simpler-home.mjs covers both states.
+putRecord('settings',{id:'features',safetyRecords:true});
 const {getReport}=require('../apps/web/.test-build/lib/serverStore.js');
 const principal={id:'entra:offline-inspector',oid:'offline-inspector',name:'Ivy Offline',email:'ivy@example.test',role:'Engineer',trade:'Electrical'};
 const newSession=()=>{const id=randomUUID();putRecord('sessions',{id,principal,issuedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+3600000).toISOString()});return id;};

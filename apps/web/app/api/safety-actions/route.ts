@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { safetyRecordsRefusal } from '@/lib/features';
 import { jsonResponse } from '@/lib/jsonResponse';
 import { requireSession } from '@/lib/auth/guard';
 import { canAccessProject } from '@/lib/auth/access';
@@ -15,6 +16,9 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: Request) {
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
+  // Behind the office's switch, off by default (lib/featureSwitch.ts).
+  const off = safetyRecordsRefusal();
+  if (off) return off;
   let projects;
   try { projects = await refreshProjects(); }
   catch { return NextResponse.json({ reason:'SharePoint could not be reached, so the project list might be out of date. Please retry.' },{ status:503 }); }

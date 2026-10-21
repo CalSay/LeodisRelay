@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { usePrincipal } from './PrincipalContext';
 import { canManage } from '@/lib/auth/access';
-import { GLOSSARY, GUIDE, addedLabel, canOpen, linksFor, markSeen, seenKey, whatsNewFor, type HelpTab } from '@/lib/helpGuide';
+import { GLOSSARY, addedLabel, canOpen, guideFor, linksFor, markSeen, seenKey, termMeaning, whatsNewFor, type HelpTab } from '@/lib/helpGuide';
+import { useFeatures } from './FeaturesContext';
 import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 import { SEEN_EVENT, loadSeen, newToRelay } from './useWhatsNew';
 
@@ -34,7 +35,9 @@ export function HelpPage({ initialTab, returnTo }: { initialTab: HelpTab; return
   const back = safeViewReturn(returnTo, manager ? '/office' : '/engineer');
 
   useEffect(() => { setNewcomer(newToRelay(principal?.id)); setSeenBefore(loadSeen(principal?.id)); }, [principal?.id]);
-  const entries = whatsNewFor(tab);
+  // The safety, permits and deliveries parts only while the office has them on (lib/featureSwitch.ts).
+  const { safetyRecords } = useFeatures();
+  const entries = whatsNewFor(tab, undefined, safetyRecords);
   useEffect(() => {
     if (!principal || !seenBefore) return;
     try {
@@ -81,7 +84,7 @@ export function HelpPage({ initialTab, returnTo }: { initialTab: HelpTab; return
   const howItWorks = <section id="help-how" className="help-section" aria-labelledby="help-how-title">
     <div className="help-section-title"><h2 id="help-how-title">How it works</h2></div>
     <div className="help-guide">
-      {GUIDE[tab].map(s => <article key={s.id} className="help-card">
+      {guideFor(tab, safetyRecords).map(s => <article key={s.id} className="help-card">
         <h3>{s.heading}</h3>
         {s.ordered
           ? <ol className="help-steps">{s.steps.map(step => <li key={step}>{step}</li>)}</ol>
@@ -116,7 +119,7 @@ export function HelpPage({ initialTab, returnTo }: { initialTab: HelpTab; return
       <div className="help-glossary">
         {GLOSSARY.map(g => <article key={g.heading} className="help-card">
           <h3>{g.heading}</h3>
-          <dl>{g.terms.map(t => <div key={t.term}><dt>{t.term}</dt><dd>{t.meaning}</dd></div>)}</dl>
+          <dl>{g.terms.map(t => <div key={t.term}><dt>{t.term}</dt><dd>{termMeaning(t, safetyRecords)}</dd></div>)}</dl>
         </article>)}
       </div>
     </section>
@@ -124,7 +127,7 @@ export function HelpPage({ initialTab, returnTo }: { initialTab: HelpTab; return
     <section id="help-where" className="help-section" aria-labelledby="help-where-title">
       <div className="help-section-title"><h2 id="help-where-title">Where to find things</h2></div>
       <div className="help-links">
-        {linksFor(tab).filter(l => canOpen(l.href, manager)).map(l => <Link key={l.href} href={go(l.href)} className="help-link"><b>{l.label}</b><span>{l.text}</span></Link>)}
+        {linksFor(tab, undefined, safetyRecords).filter(l => canOpen(l.href, manager)).map(l => <Link key={l.href} href={go(l.href)} className="help-link"><b>{l.label}</b><span>{l.text}</span></Link>)}
       </div>
     </section>
 

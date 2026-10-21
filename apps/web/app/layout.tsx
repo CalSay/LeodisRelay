@@ -19,6 +19,8 @@ import { SignedOutPrompt } from '@/components/SignedOutPrompt';
 import { ProjectContext } from '@/components/ProjectContext';
 import { refreshProjects, reportableProject, type ConnectedProject } from '@/lib/projects';
 import { sharePointMode } from '@/lib/sharepoint/config';
+import { safetyRecordsOn } from '@/lib/features';
+import { FeaturesContext } from '@/components/FeaturesContext';
 
 /**
  * Archivo is a grotesque with an industrial, signage register — it sits
@@ -126,7 +128,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
         <InstallRelay /></WorkspaceChrome>
         <SignedOutPrompt />
-        <PrincipalContext principal={principal}><HeldWork /><ProjectContext projects={projects} error={projectError}>{children}</ProjectContext></PrincipalContext>
+        <FeaturesContext features={{ safetyRecords: safetyRecordsOn() }}><PrincipalContext principal={principal}><HeldWork /><ProjectContext projects={projects} error={projectError}>{children}</ProjectContext></PrincipalContext></FeaturesContext>
       </body>
     </html>
   );

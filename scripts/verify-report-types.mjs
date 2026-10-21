@@ -17,6 +17,8 @@ const {chromium}=require(process.env.RELAY_PLAYWRIGHT_MODULE || 'playwright');
 const root=mkdtempSync(join(tmpdir(),'relay-report-types-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,getRecord,records,database}=require('../apps/web/.test-build/lib/storage.js');
+// Safety, permits and deliveries are off unless the office turns them on (lib/featureSwitch.ts); this check needs them on. verify-simpler-home.mjs covers both states.
+putRecord('settings',{id:'features',safetyRecords:true});
 const {SAFETY_CHECKLIST}=require('../apps/web/.test-build/lib/reportTypes.js');
 const engineer={id:'entra:inspect-engineer',oid:'inspect-engineer',name:'Ivy Inspector',email:'ivy@example.test',role:'Engineer',trade:'Electrical'};
 const manager={id:'entra:inspect-manager',oid:'inspect-manager',name:'Morgan Office',email:'morgan@example.test',role:'Manager'};

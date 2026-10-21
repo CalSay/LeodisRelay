@@ -15,6 +15,8 @@ const {chromium}=require(process.env.RELAY_PLAYWRIGHT_MODULE || 'playwright');
 const root=mkdtempSync(join(tmpdir(),'relay-before-handover-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,database}=require('../apps/web/.test-build/lib/storage.js');
+// Safety, permits and deliveries are off unless the office turns them on (lib/featureSwitch.ts); this check needs them on. verify-simpler-home.mjs covers both states.
+putRecord('settings',{id:'features',safetyRecords:true});
 const {londonDay}=require('../apps/web/.test-build/lib/weeklySummary.js');
 const engineer={id:'entra:ho-engineer',oid:'ho-engineer',name:'Hand Over',email:'ho@example.test',role:'Engineer',trade:'Electrical'};
 const manager={id:'entra:ho-manager',oid:'ho-manager',name:'Office Manager',email:'manager@example.test',role:'Manager'};

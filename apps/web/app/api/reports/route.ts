@@ -6,6 +6,8 @@ import { requireSession } from "@/lib/auth/guard";
 import { canManage } from '@/lib/auth/access';
 import { cachedProject, refreshProjects, reportableProject } from '@/lib/projects';
 import { sharePointMode } from '@/lib/sharepoint/config';
+import { safetyRecordsOn } from '@/lib/features';
+import { SWITCHED_OFF_REASON, isSafetyRecordType } from '@/lib/featureSwitch';
 import { inspectedName, isReportType, reportTypeOf, type ReportTypeId } from '@/lib/reportTypes';
 
 export const dynamic = "force-dynamic";
@@ -44,6 +46,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ reason: "projectId is required." }, { status: 400 });
   }
   if (body.reportType !== undefined && !isReportType(body.reportType)) return NextResponse.json({ reason: 'Unknown report type.' }, { status: 422 });
+  // Safety and tower inspections are behind the office's switch (featureSwitch.ts). One
+  // already started on a phone with no signal is still taken, so work done is never lost.
+  if (isSafetyRecordType(body.reportType as ReportTypeId | undefined) && body.clientKey === undefined && !safetyRecordsOn()) return NextResponse.json({ reason: SWITCHED_OFF_REASON, switchedOff: true }, { status: 422 });
   // A tower inspection names its tower from the start, so every save and signature is about that one.
   // A report started on a phone may come without one (an offline page from before tower
   // inspections offered the type but not the name): it starts unnamed, is named with

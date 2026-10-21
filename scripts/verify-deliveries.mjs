@@ -19,6 +19,8 @@ const axeSource=readFileSync(require.resolve('axe-core/axe.min.js'),'utf8');
 const root=mkdtempSync(join(tmpdir(),'relay-deliveries-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,records,database}=require('../apps/web/.test-build/lib/storage.js');
+// Safety, permits and deliveries are off unless the office turns them on (lib/featureSwitch.ts); this check needs them on. verify-simpler-home.mjs covers both states.
+putRecord('settings',{id:'features',safetyRecords:true});
 const engineer={id:'entra:dl-engineer',oid:'dl-engineer',name:'Sam Spark',email:'sam@example.test',role:'Engineer',trade:'Electrical'};
 const plumber={id:'entra:dl-plumber',oid:'dl-plumber',name:'Pat Plumb',email:'pat@example.test',role:'Engineer',trade:'P&H'};
 const manager={id:'entra:dl-manager',oid:'dl-manager',name:'Office Manager',email:'manager@example.test',role:'Manager'};
