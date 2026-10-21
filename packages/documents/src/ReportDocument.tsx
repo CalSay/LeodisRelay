@@ -61,7 +61,9 @@ Font.register({
 // a run may break every LONG_RUN characters or so. The layout marks each
 // break with a hyphen, as ordinary hyphenation does, so a break is never put
 // next to a hyphen already in the text, where it would read as part of it.
-const LONG_RUN = 24;
+// 20 rather than 24: a 24-character run at 9pt is wider than the summary's
+// owner column, and ran 5pt into the margin.
+const LONG_RUN = 20;
 Font.registerHyphenationCallback((word) => {
   const chars = [...word];
   if (chars.length <= LONG_RUN) return [word];
@@ -78,7 +80,10 @@ Font.registerHyphenationCallback((word) => {
 
 const INK = "#16171a";
 const MUTED = "#4e5158";
-const FAINT = "#83868c";
+// Labels, captions' dates and table heads are small, so their grey is dark
+// enough to read in print: 5:1 on white, 4.6:1 on the wash behind table
+// heads. It was #83868c, 3.6:1 and 3.3:1: too faint for 6pt type on paper.
+const FAINT = "#6c6f75";
 const RULE = "#d9d9d4";
 const HAIR = "#eceae4";
 const BRASS = "#8a6d1f";
@@ -136,8 +141,20 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "flex-end",
   },
+  /* The title takes the room the reference leaves, so a long project name
+     wraps under itself instead of running into the reference or off the page. */
+  titleMain: { flex: 1, paddingRight: 14 },
+  titleSide: { flexShrink: 0, alignItems: "flex-end" },
   docKind: { fontSize: 7, letterSpacing: 2.2, color: BRASS, fontWeight: 600 },
-  docTitle: { fontSize: 21, fontWeight: 600, marginTop: 3, letterSpacing: -0.3 },
+  /*
+   * The page's line height reached the title as a fixed 14pt, less than the
+   * title's own 21pt, so a name long enough to wrap had its lines drawn over
+   * each other. It has its own line height now. Its line box grows downward
+   * by 11.25pt, so for a name that fits on one line the negative margin takes
+   * that back and the title sits exactly where it always has.
+   */
+  docTitle: { fontSize: 21, fontWeight: 600, marginTop: 3, letterSpacing: -0.3, lineHeight: 1.2 },
+  docTitleOneLine: { marginBottom: -11.25 },
   // The reference is a code, so it is set as one.
   docRef: { fontSize: 13, fontFamily: "PlexMono", fontWeight: 500, letterSpacing: 0.2 },
 
@@ -172,7 +189,9 @@ const s = StyleSheet.create({
   tbGroup: { width: "50%", paddingRight: 18 },
   /** One thing inspected, across the full width under the title block. */
   tbWide: { width: "100%", paddingRight: 18 },
-  tbRow: { flexDirection: "row", alignItems: "baseline", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: HAIR },
+  /* From the top, not the baseline: the same place for a value on one line, and
+     level with the first line, not the last, for a value on more than one. */
+  tbRow: { flexDirection: "row", alignItems: "flex-start", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: HAIR },
   /* Sized to its own text, not the column, so a short label is a small box. */
   /* Fixed width, so every value in the group starts on the same line. */
   tbLabel: { width: 92, paddingRight: 8, fontSize: 5.8, letterSpacing: 1.2, color: FAINT, fontWeight: 500 },
@@ -211,7 +230,8 @@ const s = StyleSheet.create({
   gutterNo: { fontSize: 12, fontWeight: 600, letterSpacing: 0.2 },
   obsBody: { flex: 1, borderLeftWidth: 2, paddingLeft: 12, paddingBottom: 4 },
   obsHead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 5 },
-  obsTitle: { fontSize: 11.5, fontWeight: 600, flexShrink: 1, paddingRight: 12, letterSpacing: -0.15 },
+  // flex: 1 so a long title wraps short of the chip; shrinking alone let it run under the chip.
+  obsTitle: { fontSize: 11.5, fontWeight: 600, flex: 1, paddingRight: 12, letterSpacing: -0.15 },
   /*
    * A box with the label centred in it, rather than text with padding.
    * Text sits on its own line box, so padding alone leaves it riding high;
@@ -226,7 +246,7 @@ const s = StyleSheet.create({
    * padding against a line height of 1 puts the text in the middle of the box
    * just as reliably, and actually shows it.
    */
-  chip: { borderWidth: 1, paddingHorizontal: 7, paddingVertical: 4 },
+  chip: { borderWidth: 1, paddingHorizontal: 7, paddingVertical: 4, flexShrink: 0 },
   chipText: { fontSize: 6, letterSpacing: 1.1, fontWeight: 500, textAlign: "center", lineHeight: 1 },
   narrative: { marginBottom: 7 },
   action: {
@@ -248,6 +268,8 @@ const s = StyleSheet.create({
   figFull: { width: "100%", marginBottom: 9 },
   img: { borderWidth: 1, borderColor: RULE, objectFit: "contain", backgroundColor: "#ffffff", height: 126 },
   imgFull: { borderWidth: 1, borderColor: RULE, objectFit: "contain", backgroundColor: "#ffffff", height: 192 },
+  /* A riser shot top to bottom: in a 126pt frame it was a sliver a finger wide. */
+  imgTall: { borderWidth: 1, borderColor: RULE, objectFit: "contain", backgroundColor: "#ffffff", height: 320 },
   capNo: { fontSize: 6, letterSpacing: 1.1, color: BRASS, marginTop: 4, fontWeight: 600 },
   cap: { fontSize: 7.5, color: MUTED, lineHeight: 1.4 },
   capDate: { fontSize: 6.5, color: FAINT },
@@ -375,6 +397,16 @@ const signedWhen = (iso: string): string => {
   return p ? `${takenOn(iso)}${p.time ? `, ${p.time}` : ""}` : "";
 };
 
+/**
+ * Whether the project name runs onto a second line beside the reference:
+ * about 9.5pt a character for the 21pt title against what the reference
+ * (8pt a character) or the draft stamp leaves of the 497pt measure. If it
+ * guesses one line wrongly, the lines still do not overlap; the rule under
+ * the title is only closer to the last of them.
+ */
+const titleWraps = (report: { projectName: string; reference: string }): boolean =>
+  [...report.projectName].length * 9.5 > 497 - Math.max(105, [...report.reference].length * 8) - 10;
+
 /** A lead taller than this (points) may break across pages rather than leave most of one empty. */
 const LEAD_LIMIT = 360;
 
@@ -386,14 +418,79 @@ const LEAD_LIMIT = 360;
  * Errs tall: an estimate too low would keep together a lead longer than a
  * page, and the end of it would be lost.
  */
-function leadHeight(o: { whatHappened: string; actionNeeded: string; location: string; check?: { question: string } | undefined }): number {
-  const lines = (text: string, perLine: number) =>
-    text.trim().split("\n").reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / perLine)), 0);
-  const title = 8 + lines(itemTitle(o), 60) * 18;
+function leadHeight(o: { whatHappened: string; actionNeeded: string; owner: string; location: string; check?: { question: string } | undefined }): number {
+  const title = titleHeight(o);
   const words = 7 + lines(o.whatHappened || "-", 95) * 14;
   // Label, the action itself, the owner line and the box's padding.
-  const action = o.actionNeeded.trim() ? 44 + lines(o.actionNeeded, 88) * 14 : 0;
+  const action = o.actionNeeded.trim() ? actionHeight(o) : 0;
   return title + words + action;
+}
+
+const lines = (text: string, perLine: number) =>
+  text.trim().split("\n").reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / perLine)), 0);
+
+/**
+ * Roughly how tall a card's action box is: label, action, owner line and
+ * padding. The owner counts too: a box kept on one page that is taller than
+ * a page runs under the footer and off the paper.
+ */
+function actionHeight(o: { actionNeeded: string; owner: string }): number {
+  return 30 + lines(o.actionNeeded, 88) * 14 + lines(o.owner.trim() || "-", 95) * 13;
+}
+
+/** A card's title (where it is) longer than this many points may break across pages. */
+const titleHeight = (o: Parameters<typeof itemTitle>[0]): number => 8 + lines(itemTitle(o), 60) * 18;
+
+/**
+ * The summary keeps each row on one page, so a cell longer than this is
+ * shortened there, as "Found:" is, and points to the card that has it all.
+ * Short text, line breaks and all, is printed as written.
+ */
+const SUMMARY_LIMIT = { item: 160, action: 400, owner: 160 } as const;
+function summaryCell(text: string, limit: number, number: number): string {
+  if (Array.from(text.trim()).length <= limit && text.trim().split("\n").length <= 6) return text.trim();
+  return cutWithPointer(text, limit, number);
+}
+
+/** A caption longer than this many characters may part from its photograph. */
+const CAPTION_LIMIT = 600;
+
+/** The pixel size of a JPEG or PNG data URL, or undefined if it cannot be read. */
+function imageSize(dataUrl: string): { width: number; height: number } | undefined {
+  const comma = dataUrl.indexOf(",");
+  if (!dataUrl.startsWith("data:") || comma < 0) return undefined;
+  // The size is near the start of the file; 64 KB of it is ample.
+  const bytes = Buffer.from(dataUrl.slice(comma + 1, comma + 1 + 87_384), "base64");
+  if (bytes[0] === 0x89 && bytes.toString("ascii", 1, 4) === "PNG") return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return undefined;
+  let at = 2;
+  while (at + 9 < bytes.length) {
+    if (bytes[at] !== 0xff) return undefined;
+    const marker = bytes[at + 1]!;
+    // Start of frame (any kind but DHT, JPG and DAC) carries height, then width.
+    if (marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc) {
+      return { height: bytes.readUInt16BE(at + 5), width: bytes.readUInt16BE(at + 7) };
+    }
+    at += 2 + bytes.readUInt16BE(at + 2);
+  }
+  return undefined;
+}
+
+/**
+ * How a photograph is framed. Most share a row of two. One far wider than
+ * tall (a corridor panorama) or far taller than wide (a riser top to bottom)
+ * takes a row of its own, or it is too small to read: a panorama at the
+ * height it needs across the page, a tall one in a taller frame.
+ */
+type Framing = { kind: "pair" | "full" | "wide" | "tall"; height?: number };
+const MEASURE = 469; // the card's width: page, less margins, gutter, rule and padding
+function framing(dataUrl: string): Framing | undefined {
+  const size = imageSize(dataUrl);
+  if (!size || !size.width || !size.height) return undefined;
+  const aspect = size.width / size.height;
+  if (aspect >= 2.5) return { kind: "wide", height: Math.max(48, Math.round(MEASURE / aspect)) };
+  if (aspect <= 0.4) return { kind: "tall" };
+  return undefined;
 }
 
 const FOUND_LIMIT = 180;
@@ -403,13 +500,18 @@ const FOUND_LIMIT = 180;
  * when they would make the row (which is kept on one page) too long.
  */
 function foundLine(notes: string, number: number): string {
+  return cutWithPointer(notes, FOUND_LIMIT, number);
+}
+
+/** `text` on one line, cut at a word near `limit` characters with a pointer to card `number`. */
+function cutWithPointer(text: string, limit: number, number: number): string {
   // By character, so an emoji is never split in two.
-  const chars = Array.from(notes.trim().replace(/\s+/g, " "));
-  if (chars.length <= FOUND_LIMIT) return chars.join("");
-  let cut = chars.slice(0, FOUND_LIMIT).join("");
+  const chars = Array.from(text.trim().replace(/\s+/g, " "));
+  if (chars.length <= limit) return chars.join("");
+  let cut = chars.slice(0, limit).join("");
   // End on a whole word: drop a part word, unless the cut fell between words.
   const space = cut.lastIndexOf(" ");
-  if (chars[FOUND_LIMIT] !== " " && space > cut.length / 2) cut = cut.slice(0, space);
+  if (chars[limit] !== " " && space > cut.length / 2) cut = cut.slice(0, space);
   return `${cut.replace(/[\s.,;:–—(\[{"'‘“…-]+$/, "")}… (see ${String(number).padStart(2, "0")} below)`;
 }
 
@@ -468,11 +570,11 @@ export function ReportDocument({ report }: { report: DocReport }) {
         </View>
 
         <View style={s.titleRow}>
-          <View>
+          <View style={s.titleMain}>
             <Text style={s.docKind}>{(report.documentTitle ?? "Site Progress Report").toUpperCase()}</Text>
-            <Text style={s.docTitle}>{report.projectName}</Text>
+            <Text style={titleWraps(report) ? s.docTitle : [s.docTitle, s.docTitleOneLine]}>{report.projectName}</Text>
           </View>
-          <View style={{ alignItems: "flex-end" }}>
+          <View style={s.titleSide}>
             <Text style={s.docRef}>{report.reference}</Text>
             {!report.approved && !report.submittedWithoutReview && (
               <View style={s.stamp}>
@@ -501,7 +603,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
         )}
 
         {report.correction ? (
-          <View style={s.correction} wrap={false}>
+          <View style={s.correction} wrap={lines(report.correction.reason, 95) * 14 + 24 > LEAD_LIMIT}>
             <Text style={s.correctionLabel}>
               {`REVISION ${report.revision} · REPLACES REVISION ${report.correction.replacesRevision}`}
             </Text>
@@ -530,22 +632,22 @@ export function ReportDocument({ report }: { report: DocReport }) {
             {actions.map(({ observation, number }) => (
               <View key={observation.id} style={s.tr} wrap={false}>
                 <Text style={[s.td, s.cNo]}>{String(number).padStart(2, "0")}</Text>
-                <Text style={[s.td, s.cItem]}>{itemTitle(observation)}</Text>
+                <Text style={[s.td, s.cItem]}>{summaryCell(itemTitle(observation), SUMMARY_LIMIT.item, number)}</Text>
                 {inspection && observation.whatHappened.trim() ? (
                   <View style={[s.td, s.cAction]}>
                     <Text style={s.found}>
                       <Text style={s.ownerLabel}>Found: </Text>
                       {foundLine(observation.whatHappened, number)}
                     </Text>
-                    <Text>{observation.actionNeeded.trim() || "To be determined"}</Text>
+                    <Text>{summaryCell(observation.actionNeeded, SUMMARY_LIMIT.action, number) || "To be determined"}</Text>
                   </View>
                 ) : (
                   <Text style={[s.td, s.cAction]}>
-                    {observation.actionNeeded.trim() || "To be determined"}
+                    {summaryCell(observation.actionNeeded, SUMMARY_LIMIT.action, number) || "To be determined"}
                   </Text>
                 )}
                 <Text style={observation.owner.trim() ? [s.td, s.cOwner] : [s.td, s.cOwner, s.unknown]}>
-                  {observation.owner.trim() || "Awaiting confirmation"}
+                  {summaryCell(observation.owner, SUMMARY_LIMIT.owner, number) || "Awaiting confirmation"}
                 </Text>
               </View>
             ))}
@@ -599,6 +701,15 @@ export function ReportDocument({ report }: { report: DocReport }) {
 
         {detailed.map(({ observation, number }) => {
           const single = observation.photos.length === 1;
+          // Two to a row, from the left; a photograph framed on its own row starts the next pair afresh.
+          let column = 0;
+          const frames = observation.photos.map((photo) => {
+            const framed = framing(photo.dataUrl);
+            if (framed) { column = 0; return framed; }
+            if (single) return { kind: "full" } as Framing;
+            column = 1 - column;
+            return { kind: "pair", last: column === 0 } as Framing & { last?: boolean };
+          });
           const tone = observation.check ? (observation.check.tone === "action" ? TONES.defect : TONES.neutral) : TONES[observation.tone] ?? TONES.neutral;
           const chip = observation.check ? observation.check.answer : observation.typeLabel;
           return (
@@ -615,7 +726,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
                 */}
                 <View style={s.lead} wrap={leadHeight(observation) > LEAD_LIMIT}>
                   <Text style={[s.gutterNo, s.leadNo, { color: tone.ink }]}>{String(number).padStart(2, "0")}</Text>
-                  <View style={s.obsHead} wrap={false}>
+                  <View style={s.obsHead} wrap={titleHeight(observation) > LEAD_LIMIT}>
                     <Text style={s.obsTitle}>{itemTitle(observation)}</Text>
                     <View style={[s.chip, { borderColor: tone.rule, width: labelWidth(chip, 6, 1.1) }]}>
                       <Text style={[s.chipText, { color: tone.ink }]}>{chip.toUpperCase()}</Text>
@@ -627,7 +738,7 @@ export function ReportDocument({ report }: { report: DocReport }) {
                   </Text>
 
                   {observation.actionNeeded.trim() ? (
-                    <View style={s.action} wrap={false}>
+                    <View style={s.action} wrap={actionHeight(observation) > LEAD_LIMIT}>
                       <Text style={s.actionLabel}>ACTION REQUIRED</Text>
                       <Text>{observation.actionNeeded}</Text>
                       <Text style={s.ownerLine}>
@@ -642,10 +753,16 @@ export function ReportDocument({ report }: { report: DocReport }) {
                   <View style={s.figs}>
                     {observation.photos.map((photo, photoIndex) => {
                       figureNumber += 1;
-                      const style = single ? s.figFull : photoIndex % 2 === 1 ? s.figLast : s.fig;
+                      const frame = frames[photoIndex]! as Framing & { last?: boolean };
+                      const style = frame.kind === "pair" ? (frame.last ? s.figLast : s.fig) : s.figFull;
+                      const image =
+                        frame.kind === "pair" ? s.img
+                        : frame.kind === "tall" ? s.imgTall
+                        : frame.kind === "wide" ? [s.imgFull, { height: Math.min(192, frame.height ?? 192) }]
+                        : s.imgFull;
                       return (
-                        <View key={photo.id} style={style} wrap={false}>
-                          <Image style={single ? s.imgFull : s.img} src={photo.dataUrl} />
+                        <View key={photo.id} style={style} wrap={Array.from(photo.caption).length > CAPTION_LIMIT}>
+                          <Image style={image} src={photo.dataUrl} />
                           <Text style={s.capNo}>PHOTOGRAPH {String(figureNumber).padStart(2, "0")}</Text>
                           <Text style={s.cap}>{photo.caption.trim() || "No caption recorded"}</Text>
                           <Text style={s.capDate}>Taken {takenOn(photo.capturedAt)}</Text>
