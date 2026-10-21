@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'editor-wide-screens', added: '2026-10-21', audience: 'all', title: 'Reports and inspections on a tablet or computer',
+    text: 'On a tablet or a computer, the last buttons on a report or inspection are no longer hidden behind the bar at the bottom. The bar lines up with the page, and the check step puts signing beside what is being sent, with a larger box to sign in. A long list of checks scrolls in its own column and keeps the open check in sight. On every screen, a defect linked to an issue already raised takes that issue\'s trade, the check step says how many issues are new and how many add to ones already raised, and while changes are still being saved it says "being saved" rather than "not yet on the server".' },
   { id: 'assign-on-issue', added: '2026-10-21', audience: 'office', title: 'Assign from the issue itself',
     text: 'An issue opened from a search, a report or Issues by company now has "Who puts it right", with Assign or Reassign, a target date and an instruction, so you no longer go back to the desk to give it an owner. The companies already named on the project are suggested as you type. The issue now shows its target date, and its history says who each assignment went to and by when.' },
   { id: 'start-from-safety-actions', added: '2026-10-21', audience: 'site', title: 'Start the inspection that is due from Safety actions',

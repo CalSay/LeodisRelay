@@ -94,3 +94,19 @@ test('a removed card or a changed signature keeps the summary from going green',
     '1 card, 2 removed cards and the signature are not yet on the server.');
   assert.equal(reportWhere([], false, { removed:1, signature:false }).where, 'pending');
 });
+
+test('checks changed while a save is under way are being saved, not missing from the server', () => {
+  const saved = card({ type:'check', check:{ item:'tidy', question:'Tidy', answer:'ok' } } as Partial<Observation>);
+  const now = { ...saved, whatHappened:'Swept' };
+  const where = cardWhere(now, savedCopy(saved), none, false);
+  const others = { removed:0, signature:false, noun:'check' as const };
+  assert.deepEqual(reportWhere([where, where], false, { ...others, saving:true }), { where:'uploading', text:'2 checks are being saved to the server.' });
+  assert.equal(reportWhere([where, where], false, others).text, '2 checks are not yet on the server.');
+  // With no signal the save cannot be under way: the phone holds them.
+  assert.equal(reportWhere([where], true, { ...others, saving:true }).where, 'phone');
+});
+
+test('a save under way changes nothing once everything is on the server', () => {
+  const c = card();
+  assert.equal(reportWhere([cardWhere(c, savedCopy(c), none, false)], false, { removed:0, signature:false, saving:true }).text, 'The card is on the server.');
+});
