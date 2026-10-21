@@ -44,25 +44,25 @@ export function InstallRelay({alwaysShow=false}: {alwaysShow?:boolean} = {}) {
     try {
       await prompt.prompt();
       const choice = await prompt.userChoice;
-      setMessage(choice.outcome === 'accepted' ? 'Follow your browser’s installation steps, then open RELAY from its app icon.' : 'Installation cancelled. You can continue using RELAY here.');
-    } catch {setMessage('Use the browser instructions below to install RELAY.');}
+      setMessage(choice.outcome === 'accepted' ? 'Follow your phone’s steps, then open RELAY from its new icon.' : 'Not added. You can keep using RELAY here.');
+    } catch {setMessage('Use the steps below instead.');}
     finally {setPrompt(null);setBusy(false);}
   }
   if (!alwaysShow && (installed || !['/','/signin'].includes(pathname))) return null;
-  return <aside className="install-help" aria-label="Install RELAY">
+  return <aside className="install-help" aria-label="Put RELAY on your home screen">
     <details>
-      <summary>Install RELAY on your phone</summary>
+      <summary>Put RELAY on your home screen</summary>
       <div className="install-help-body">
-        <p>Add RELAY to your home screen and open it like an app. Use your usual Leodis Microsoft account.</p>
-        {prompt && <button className="btn-primary" disabled={busy} onClick={install}>{busy ? 'Opening installer…' : 'Install RELAY'}</button>}
+        <p>Do this once, and RELAY opens from an icon like any other app. Sign in with the same Leodis Microsoft account you use for work email.</p>
+        {prompt && <button className="btn-primary" disabled={busy} onClick={install}>{busy ? 'Opening…' : 'Install RELAY'}</button>}
         <p role="status" aria-live="polite">{message}</p>
-        <h3>iPhone or iPad</h3>
-        <ol><li>Open this website in Safari.</li><li>Open the Share menu (it may be inside the More menu).</li><li>Choose <strong>Add to Home Screen</strong>. Keep <strong>Open as Web App</strong> enabled if shown, then tap <strong>Add</strong>.</li></ol>
-        <h3>Android</h3>
-        <ol><li>Open this website in Chrome.</li><li>Tap <strong>Install RELAY</strong> above if available, or open Chrome’s three-dot menu.</li><li>Choose <strong>Install app</strong> or <strong>Add to Home screen</strong> and follow the prompts. Wording varies by phone.</li></ol>
-        <p>If you opened RELAY inside Teams or an email app, open the link in Safari or Chrome first. On a computer, look for the browser’s install option.</p>
-        <p>Installation does not enable full offline working. Connect to sign in, upload photographs and submit reports. Offline recovery currently covers previously retained draft text.</p>
-        <p>Updates come from RELAY’s website. Save your work before closing and reopening the app; do not uninstall it or clear browser data while work is waiting to save.</p>
+        <h2>iPhone</h2>
+        <ol><li>Open this page in Safari.</li><li>Tap Share, the square with an arrow. It may be under the <strong>⋯</strong> button.</li><li>Tap <strong>Add to Home Screen</strong>, then <strong>Add</strong>.</li></ol>
+        <h2>Android</h2>
+        <ol><li>Open this page in Chrome.</li><li>Tap <strong>Install RELAY</strong> above if you see it. If not, tap Chrome’s <strong>⋮</strong> menu.</li><li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>. The words differ a little between phones.</li></ol>
+        <p>Opened the link from Teams or an email? Open it in Safari or Chrome first.</p>
+        <p>No signal on site? Open RELAY once with signal so it knows your sites. After that, with no signal you can still start your site update and take photos: they stay on your phone. Open RELAY again with signal to sign and send it. If the signal drops after you tap “Send to office”, RELAY keeps it and sends it by itself when signal comes back, while RELAY is open.</p>
+        <p>Don’t clear your browser’s data or remove RELAY while something is waiting to send.</p>
       </div>
     </details>
   </aside>;

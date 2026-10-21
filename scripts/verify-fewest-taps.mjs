@@ -41,6 +41,8 @@ try {
   const screenshot=process.env.RELAY_SCREENSHOT_DIR;if(screenshot)mkdirSync(screenshot,{recursive:true});
   const context=await browser.newContext({viewport:{width:390,height:844},colorScheme:'light',hasTouch:true,isMobile:true});
   await context.addCookies([{name:'relay_session',value:sessionFor('phone'),url:base}]);
+  // A returning engineer on Tetley Hall, so home opens there rather than asking "Which site are you on?".
+  await context.addInitScript(id=>{try{if(!localStorage.getItem(`relay-project:${id}`))localStorage.setItem(`relay-project:${id}`,'proj-011lme');}catch{}},'entra:taps-phone');
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   const shot=async name=>{if(screenshot){await page.waitForTimeout(300);await page.screenshot({path:join(screenshot,`${name}-light-390.png`),fullPage:true});}};
   const taps=[];const small=new Map();

@@ -47,6 +47,54 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   scrolled back into view), fixed and checked.
 - Not verified: a real phone, real weak signal, a screen reader.
 
+## 2026-10-21 — An engineer's first day
+
+- Why: Cal's 07:02 direction (engineers are hands-on people, not IT people).
+  If the first ten minutes confuse them, they won't use RELAY. Walked a new
+  engineer's path on main at 390px, light and dark: the office adds them, then
+  sign-in, home screen icon, finding the site, first update. Decided without
+  asking Cal, per his autonomy message. Not a `docs/tasks.json` task; no status
+  changed.
+- Worst problem found: a new engineer was put on the first project in the
+  list without being asked. Their first update could go to the wrong site
+  unless they spotted "Change ›". Now, with more than one site and nothing
+  started, RELAY asks "Which site are you on?" once (one tap) and remembers
+  the answer. It does not ask with one site, with a draft, with a project in
+  the link, with work waiting to send, or when RELAY was used on that phone
+  before (it keeps the sites for no signal).
+- Also changed:
+  - The Admin's Team tab gives a copy-only welcome message for someone who has
+    never signed in (checked against identities, which are kept, not sessions):
+    the link straight to `/developments`, putting RELAY on the home screen,
+    signing in with their work email, and finding their site. RELAY sends
+    nothing.
+  - The home screen icon opens `/?open=app`, which goes to the company picked
+    last time (an httpOnly `relay-company` cookie set by middleware when
+    `/developments` or `/compliance` is opened, not on prefetch). The hub at
+    `/` still asks.
+  - Sign-in says which account to use and where it leads. A missing RELAY
+    role reads "Ask the office to sort it", not Entra words. The home screen
+    steps are plainer, and the out-of-date line saying offline working was not
+    possible is gone. It now matches what RELAY does today (start with no
+    signal; send by itself when signal returns, #105).
+  - Help "What's new" line and the first Help step.
+- Checked: typecheck, `npm test` (146 + 497), build. New
+  `scripts/verify-first-day.mjs` (94 checks: 390px light and dark, office at
+  1440px dark and 390px light). On the final build, one at a time: help,
+  first-time-use, engineer-day, offline-capture, accessibility,
+  came-back-to-update, simpler-home, engineer-layout, office-registers,
+  september-office, navigation, role-access, day-walkthrough. Also
+  editor-usability, editor-wide, fewest-taps and lighter-card: these opened
+  bare `/engineer` as brand-new engineers, and now set a saved site first.
+  handover-offline, offline-inspection, offline-sign, site-notes-offline,
+  typed-signature, signature-reload and search passed on the build before the
+  review fixes, which only make the question rarer.
+  Screenshots: project files `ui-review/first-day/`.
+- Not verified: real phones (whether iPhone honours the manifest
+  `start_url`, and the separate sign-in an iPhone home screen app needs), the
+  live tenant, a real Microsoft sign-in. No Entra or SharePoint setting was
+  changed. `docs/phone-installation-checks.md` lists the steps to try on a
+  phone.
 ## 2026-10-21 — A project at a glance on a phone
 
 - Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information

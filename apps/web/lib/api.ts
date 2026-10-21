@@ -291,6 +291,8 @@ export interface TeamMember {
   name?: string; relayName?: string; microsoftName?: string;
   role?: string; trade?: string;
   lastSignedIn?: string; session: 'active' | 'expired' | 'never'; id?: string; onChecklist: boolean;
+  /** Signed in at least once, even if every session has since gone. */
+  everSignedIn?: boolean;
   /** Changes made in Relay; sent to Admins only. */
   log?: PersonLogEntry[];
   addedByRelay?: boolean;
