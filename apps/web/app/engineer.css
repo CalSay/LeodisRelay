@@ -467,3 +467,18 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-more-pages .eng-list{border:0;border-top:1px solid var(--line);border-radius:0 0 9px 9px;margin:0;}
 .eng-home-grid>div>.eng-section-title:first-child{margin-top:0;}
 .eng-home-grid .eng-since{margin-top:22px;}
+
+/* One issue, for the engineer: what, where, what to do, who; then the photograph and the buttons; history folded. */
+.issue-eng-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:8px;}
+.issue-eng-title{font-size:21px;line-height:1.3;margin:8px 0 12px;overflow-wrap:anywhere;}
+.issue-eng-facts{margin:0 0 12px;display:grid;gap:8px;}
+.issue-eng-facts>div{display:grid;grid-template-columns:8.5em 1fr;gap:10px;align-items:baseline;}
+.issue-eng-facts dt{color:var(--text-2);font-size:13px;}
+.issue-eng-facts dd{margin:0;font-size:15px;overflow-wrap:anywhere;}
+.issue-eng-update{margin-top:8px;}
+.issue-eng-update h2{font-size:16px;margin:0 0 10px;}
+.issue-eng-update .field{margin-top:12px;}
+.issue-eng-update textarea{min-height:64px;}
+.issue-eng-update .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.issue-eng-update .btn-row button{min-height:48px;width:100%;}
+.issue-more .issue-eng-facts{margin-top:4px;}

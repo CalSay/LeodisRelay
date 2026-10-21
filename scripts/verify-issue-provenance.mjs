@@ -47,7 +47,9 @@ try {
     const context=await browser.newContext({viewport:{width,height:900},colorScheme:scheme});await context.addCookies([{name:'relay_session',value:session,url:base}]);
     const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
     const tag=`${scheme} ${width}px`;
-    await page.goto(`${base}/issues/${issue.id}`);
+    // An engineer's history is folded under "History" (simpler issue page, 2026-10-21).
+    const openHistory=async()=>{const fold=page.locator('details.issue-more summary');await fold.waitFor();await fold.click();};
+    await page.goto(`${base}/issues/${issue.id}`);await openHistory();
     const rows=page.locator('.reg .row');
     await rows.first().waitFor();
     eq(await rows.count(),3,`${tag}: raised, corrected sighting and assignment`);
@@ -64,7 +66,7 @@ try {
       await link(1).click();
       await page.waitForURL(`${base}/reports/${correction.id}`);
       ok(true,`${tag}: following the link opens the correction`);
-      await page.goto(`${base}/issues/${legacy.id}`);
+      await page.goto(`${base}/issues/${legacy.id}`);await openHistory();
       await rows.first().waitFor();
       eq(await link(0).innerText(),'From the report that raised it',`${tag}: older history still links its raising report`);
     }
