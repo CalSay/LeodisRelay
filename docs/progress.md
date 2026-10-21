@@ -47,6 +47,54 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   scrolled back into view), fixed and checked.
 - Not verified: a real phone, real weak signal, a screen reader.
 
+## 2026-10-21 — A project at a glance on a phone
+
+- Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information
+  it needs. Walked an office Manager's questions on main b4d2b24 at 390px,
+  light and dark, with six weeks of seeded busy-project records
+  (`seed-busy-projects.mjs`, 42 days). "What's waiting on me?" (overview count
+  tiles), "Was anyone on site today?" (Latest from site, Last visit) and "Which
+  variations are new this week?" (Variations, order "Raised, newest first")
+  each took one to three taps. The slow ones were "How is Tetley Hall going?"
+  and "Show me today's photos": on a phone a project opened on the register
+  alone. The sheet's four figures (Last visit, Overdue actions, Fixed, to
+  check, Variations), which the desk shows and #108 made open what they
+  count, were not shown at all, and Weekly summary, Site diary and
+  Photographs sat about 10,900px down, under 57 issues and every variation.
+  Decided without asking Cal, per his autonomy message. Not a
+  `docs/tasks.json` task; no status changed.
+- Changed (office project on a phone only; desk unchanged): the register
+  starts with the sheet's four figures (one shared `SheetFigures`, so the
+  same links as the desk), then the project's pages (Reports and records,
+  Issues, Project page; the Safety group only while the switch is on), then
+  Latest from site, then the register's filters and lists. The project pages
+  are no longer repeated at the bottom. The register's "Last visit today ·
+  Electrical" line is gone (the Last visit figure says it and opens the same
+  report). No new pages, counts or routes. Help "What's new": "A project at a
+  glance on a phone".
+- Measured on the seeded data: Photographs link 10,928px → 539px down a
+  project at 390px (on the first screen); the four figures on the first
+  screen; page height about the same (11,303px → 11,493px).
+- Checks: typecheck, `npm test` (146 + 493 after rebasing on #110), build.
+  `verify-office-progress` (77; now expects the figures first, the project
+  pages before Latest from site and on the first screen, listed once),
+  `verify-office-links` (65; the four figures' links now checked on the
+  phone too) and `verify-home-and-sheet` (254; phone links now before Latest
+  from site and the register). Then one at a time: verify-september-office
+  (43), verify-accessibility (584), verify-office-phone (91),
+  verify-first-time-use (366), verify-help (36; failed once on its known
+  tab-title race, passed twice on rerun), and before the rebase
+  verify-office-sections, -desk, -landing, -registers, -actions,
+  role-access, day-walkthrough, before-handover, issue-trend, site-notes,
+  seen-by-office, error-messages, simpler-home, photo-library, issue-assign,
+  review-queue, submission-stages, unfinished-reports. A fresh-context
+  review found two points, both fixed: #108's Help line still described the
+  removed last-visit link, and a phone CSS rule was left unused.
+  Screenshots: project files `ui-review/project-on-phone/`.
+- Not verified: a real phone, a screen reader, the live server.
+- Runner-up, not built: the phone's register heading cuts the project name
+  ("REGISTER · TETLEY HA…"); a plain project name at the top would help.
+
 ## 2026-10-21 — What the office wrote, where the engineer looks
 
 - Why: Cal's 07:02 direction (simple for hands-on engineers, the office gets
