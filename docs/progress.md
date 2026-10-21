@@ -4,6 +4,31 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — One caption line before sending
+
+- Why: Cal (2026-10-21 07:02) wants RELAY easy for hands-on engineers.
+  Walking an engineer's day at 390px, "Check & send" listed "a photograph has
+  no caption" once for every photograph without one. Most photographs never
+  get a caption (the card already says where and what), so a site update with
+  six photographs opened on six Optional lines, mixed in among the notes the
+  office needs (a variation with no photograph, nobody named who asked for
+  it). Chosen over the Recent places ideas left in #98, which save less.
+  Not a `docs/tasks.json` task; no status changed.
+- Decision: keep the nudge, as one line (the coordinator pointed out captions
+  do help the office read photographs), rather than drop it. `lib/review.ts`
+  now gives one non-blocking finding, "6 photographs have no caption", after
+  every other note, opening the first card with a photograph to caption.
+  Inspections get the same one line. Nothing that stops sending changed, and
+  the caption box under each photograph is unchanged. Help "What's new": "A
+  shorter list before sending".
+- Measured (new `scripts/verify-one-caption-line.mjs`, four cards, seven
+  photographs, one captioned, a variation done on a say-so): on main 1b27cc6
+  8 lines, list 610px tall, "In this report" 724px down the step at 390px;
+  now 3 lines, 203px, 317px (1440px: 430px to 158px).
+- Checks: `npm run typecheck`, `npm test` (146 + 472, new
+  `captionLine.test.ts`), `npm run build`; browser checks listed in the PR.
+  Screenshots before and after: project files `ui-review/one-caption-line/`.
+- Not verified: a real phone, a real engineer, the live server or tenant.
 ## 2026-10-21 — Simpler office screens: one place for each thing
 
 - Why: Cal's 07:02 direction (RELAY gets the office the information it
