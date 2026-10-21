@@ -19,7 +19,7 @@
 .ws .loading{min-height:40vh;display:grid;place-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-3)}
 
 /* ---------------------------------------------------------------- shell */
-.ws{position:relative;height:100dvh;min-width:1180px;display:flex;flex-direction:column;font-family:var(--sans);font-size:14px;line-height:1.5}
+.ws{position:relative;height:100dvh;display:flex;flex-direction:column;font-family:var(--sans);font-size:14px;line-height:1.5}
 body:has(.ws){overflow:hidden auto}
 /* The desk's sections each sit on their own surface with an --edge line
    (3:1 against both sides) between them: top bar (chrome), tabs (panel),
@@ -202,6 +202,8 @@ body:has(.ws){overflow:hidden auto}
 .ws .col-head :is(h2,h4){margin:0;font-family:var(--mono);font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.12em;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ws .col-head i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--text-3);margin-left:auto;white-space:nowrap}
 .ws .col-head .col-back{display:none}
+/* The register heading carries the project's name, so it wraps rather than being cut short. */
+.ws .cols>.col:nth-child(2) .col-head :is(h2,h4){white-space:normal;overflow-wrap:anywhere}
 .ws .col:last-child .col-head{background:var(--panel-3)}
 .ws .item{display:block;padding:var(--s3) var(--s4);border-bottom:1px solid var(--line);border-left:2px solid transparent}
 .ws .item:hover{background:var(--sunken)}
@@ -276,6 +278,43 @@ body:has(.ws){overflow:hidden auto}
 .ws .install-help summary{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--acc);padding:var(--s3) var(--s4);min-height:0}
 .ws .install-help-body{border:0;border-top:1px solid var(--line);border-radius:0;background:none;font-size:13px}
 .ws .install-help-body h2{font-size:14px;margin:16px 0 6px}
+
+/* ---------------------------------------------------- narrower desk */
+/* A small laptop or a tablet on its side (701-1179px). The desk used to be
+   held at 1180px, so the whole page scrolled sideways. Now it fits: the top
+   bar takes two rows (who you are, Attention and Help on the first; search,
+   Engineer view and Switch company on the second), and with a project open
+   the register and details share the width while "‹ Projects" goes back to
+   the project list. A table wider than its panel scrolls inside the panel. */
+@media (min-width:701px) and (max-width:1179px){
+  .ws .topbar{height:auto;flex-wrap:wrap;row-gap:0;column-gap:var(--s4);padding:var(--s2) var(--s5)}
+  .ws .topbar-right{display:contents}
+  .ws .topbar-right>*{order:1}
+  .ws .topbar-right>.bell{margin-left:auto}
+  .ws .topbar::after{content:'';order:2;flex-basis:100%}
+  .ws .search{order:3;max-width:none;margin:var(--s2) 0 0}
+  .ws .topbar-right>a.tbtn{order:4;margin-top:var(--s2);white-space:nowrap}
+  .ws .whoami{max-width:220px;overflow:hidden;text-overflow:ellipsis}
+  .ws .attn-pop{top:100%}
+  .ws .cols:is([data-depth="2"],[data-depth="3"]){grid-template-columns:minmax(0,2fr) minmax(0,3fr)}
+  .ws .cols:is([data-depth="2"],[data-depth="3"])>.col:first-child{display:none}
+  .ws .cols:is([data-depth="2"],[data-depth="3"])>.col:nth-child(2) .col-back{display:inline-flex;font-family:var(--mono);font-size:11px;color:var(--acc);letter-spacing:.04em;margin-right:var(--s2);white-space:nowrap}
+  .ws .panel:has(>table.reg){overflow-x:auto;position:relative}
+  .ws .arow{padding-left:var(--s3);padding-right:var(--s3)}
+  /* The register heading wraps under "‹ Projects" rather than cutting the project's name. */
+  .ws .cols>.col:nth-child(2) .col-head{flex-wrap:wrap;row-gap:var(--s1)}
+  .ws .cols>.col:nth-child(2) .col-head :is(h2,h4){order:1;flex-basis:100%}
+}
+@media (min-width:701px) and (max-width:900px){
+  .ws .whoami{max-width:150px}
+}
+/* A project's figures two by two when the details column is narrow. */
+@media (min-width:701px) and (max-width:1023px){
+  .ws .cols:not([data-depth="1"]) .tb:not(.two){grid-template-columns:1fr 1fr}
+  .ws .cols:not([data-depth="1"]) .tb:not(.two)>div:nth-child(2n){border-right:0}
+  .ws .cols:not([data-depth="1"]) .tb:not(.two)>div{border-bottom:1px solid var(--line)}
+  .ws .cols:not([data-depth="1"]) .tb:not(.two)>div:nth-last-child(-n+2){border-bottom:0}
+}
 
 /* ------------------------------------------------------------------ phone */
 @media (max-width:700px){
@@ -415,7 +454,9 @@ body:has(.ws){overflow:hidden auto}
   .ws .view.inbox-reading>.pagehead,.ws .view.inbox-reading>.filters,.ws .view.inbox-reading .inbox-list-panel{display:none}
   .ws .inbox-back{display:inline-flex;align-items:center;min-height:44px;margin:-10px 0;padding:0 var(--s2) 0 0;background:none;border:0;font-family:var(--mono);font-size:12px;color:var(--acc);letter-spacing:.04em;cursor:pointer;white-space:nowrap}
 }
-@media (max-width:700px){
+/* Registers: one card per row on a phone, and on a tablet or narrow window
+   too, where a table's columns would not fit beside each other. */
+@media (max-width:1023px){
   .ws table.reg.cards{display:block;min-width:0}
   .ws table.reg.cards thead{display:none}
   .ws table.reg.cards tbody,.ws table.reg.cards tfoot{display:block}
@@ -443,12 +484,16 @@ body:has(.ws){overflow:hidden auto}
   .ws table.reg.cards tfoot tr{background:var(--panel-2);border-top:1px solid var(--line-2)}
   .ws table.reg.cards tfoot td{background:none;border:0;padding:0}
   .ws .panel:has(> table.reg.cards){overflow-x:visible}
+  /* With no column headings to press, the sort is a menu among the filters. */
+  .ws .filters .sort-chip{display:none}
+  .ws .filters .phone-sort{display:flex}
+}
+@media (max-width:700px){
+  .ws .filters .phone-sort{display:grid}
   /* Filters stack as aligned rows, each control wide enough to tap. */
   .ws .filters label{display:grid;grid-template-columns:6.5rem minmax(0,1fr);flex:1 1 100%}
   .ws .filters label>input,.ws .filters label>select{width:100%;min-width:0;min-height:44px}
   .ws .filters .spacer{display:none}
-  .ws .filters .sort-chip{display:none}
-  .ws .filters .phone-sort{display:grid}
 }
 .ws .results a.results-all{color:var(--acc);font-weight:500;justify-content:flex-start}
 
@@ -532,4 +577,17 @@ body:has(.ws){overflow:hidden auto}
   .ws .register-standing .sheet-links{margin-top:var(--s3)}
   .ws .from-site{grid-template-columns:1fr}
   .ws .from-site-more{display:inline-flex;align-items:center;min-height:44px}
+}
+/* A desk narrower than 1366px: registers keep their columns by packing them
+   closer, wrapping tags and stacking a row's buttons, so the
+   Verify and Not finished buttons stay on screen instead of off to the right. */
+@media (min-width:701px) and (max-width:1365px){
+  .ws table.reg th,.ws table.reg td{padding-left:var(--s3);padding-right:var(--s3)}
+  .ws table.reg .tag{white-space:normal}
+  .ws table.reg td.due .rowsub{min-width:7em}
+  .ws table.reg td.c-actions .actions{flex-wrap:wrap}
+  .ws .adm-grid{grid-template-columns:minmax(0,1fr) 360px}
+}
+@media (min-width:701px) and (max-width:1100px){
+  .ws table.reg th,.ws table.reg td{padding-left:var(--s2);padding-right:var(--s2)}
 }
