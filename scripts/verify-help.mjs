@@ -58,7 +58,7 @@ try {
     const text=await page.locator('main').innerText();
     check(text.includes('Start a site update with no signal')&&!text.includes('Issues by company'),'engineer: site entries, no office-only entries or links');
     check(text.includes('Your first site update')&&text.includes('Send to office')&&text.includes('Make a correction'),'engineer: the guide names the real buttons');
-    check(text.includes('Ready for verification')&&text.includes('Action needed')&&text.includes('Not emailed'),'engineer: the words explained');
+    check(text.includes('Fixed, to check')&&text.includes('Action needed')&&text.includes('Not emailed'),'engineer: the words explained');
     check((await page.locator('.help-steps li').count())===4,'engineer: four steps to a first update');
     await noSideways(page,390,'engineer');
     if(screenshot)await page.screenshot({path:join(screenshot,'help-site-light-390.png'),fullPage:true});

@@ -11,6 +11,8 @@ import type { Issue, ReportSummary } from "@/lib/types";
 import { usePrincipal } from '@/components/PrincipalContext';
 import { ownsReport } from '@/lib/auth/access';
 import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
+import { receiptStatus } from '@/lib/status';
+import { dayShort } from '@/lib/dates';
 
 export default function ProjectPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
   const getProject = useProjectLookup();
@@ -46,7 +48,7 @@ export default function ProjectPage({ params, searchParams }: { params: Promise<
 
   if (!project) {
     return (
-      <main className="wrap">
+      <main className="wrap eng-page">
         <Link href={returnTo} className="back">
           &larr; {backLabel(returnTo, 'Projects')}
         </Link>
@@ -56,7 +58,7 @@ export default function ProjectPage({ params, searchParams }: { params: Promise<
   }
 
   return (
-    <main className="wrap">
+    <main className="wrap eng-page">
       <PageTitle title={project.projectName} />
       <Link href={returnTo} className="back">
         &larr; {backLabel(returnTo, 'Projects')}
@@ -93,7 +95,7 @@ export default function ProjectPage({ params, searchParams }: { params: Promise<
 
       <div style={{ marginTop: 24 }}>
         <button className="btn-primary btn-wide" onClick={startReport} disabled={creating}>
-          {creating ? "Starting…" : "Start a site report"}
+          {creating ? "Starting…" : "Start a site update"}
         </button>
       </div>
 
@@ -116,17 +118,17 @@ export default function ProjectPage({ params, searchParams }: { params: Promise<
               <Link key={report.id} href={report.state === 'draft' && (!principal || !ownsReport(principal,report)) ? '/office' : withViewReturn(`/reports/${report.id}`, returnTo)} className="row">
                 <span className="row-code">{report.reference.split("-").slice(1).join("-")}</span>
                 <span className="row-main">
-                  <p className="row-title">Visit {report.visitDate}</p>
+                  <p className="row-title">Visit {dayShort(report.visitDate) || report.visitDate}</p>
                   <p className="row-meta">
                     {report.author}
                     <span className="sep">/</span>
-                    {report.observationCount} observation
+                    {report.observationCount} card
                     {report.observationCount === 1 ? "" : "s"}
                   </p>
                 </span>
                 <span className="row-end">
                   <span className={report.state === "submitted" ? "tag tag-sent" : "tag tag-draft"}>
-                    {report.state === "submitted" ? "Submitted" : "Draft"}
+                    {receiptStatus(report).label}
                   </span>
                 </span>
               </Link>

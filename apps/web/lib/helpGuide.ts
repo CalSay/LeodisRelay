@@ -27,6 +27,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'same-words', added: '2026-10-21', audience: 'all', title: 'The same words on every page',
+    text: 'Pages built at different times now use the same words. An issue put forward as fixed reads "Fixed, to check" everywhere, where it was also "Ready for verification", "Awaiting verification" or "Verify". Dates read one way, such as "Wed 21 Oct", with a time where it matters. Project lists name each project by its number and name, issue and project pages have the same header as the rest of RELAY, and every Back link says where it goes.' },
   { id: 'site-notes', added: '2026-10-20', audience: 'all', title: 'Notes for the next visit',
     text: 'Leave word on a project for whoever is on site next: where a key is, an area that is locked, what is coming up. Anyone on the project can leave a note or mark one done with, and each shows who left it and when. Notes are not part of any report and are not sent to anyone. Open it from "This project" on your home screen or from the office project sheet.',
     link: { label: 'Open Notes for the next visit', href: '/site-notes' } },
@@ -155,7 +157,7 @@ export const GLOSSARY: readonly GuideGroup[] = [
     { term: 'Open', meaning: 'Raised and not yet given to anyone.' },
     { term: 'Assigned', meaning: 'A company or person is down to put it right, usually with a target date.' },
     { term: 'In progress', meaning: 'Work has been recorded on an open issue, or a fix was put forward and sent back.' },
-    { term: 'Ready for verification', meaning: 'Put forward as fixed; the office desk tags it "Verify". Someone other than the person who put it forward checks it.' },
+    { term: 'Fixed, to check', meaning: 'Put forward as fixed and waiting to be checked. Someone other than the person who put it forward checks it and verifies it, which closes it.' },
     { term: 'Closed', meaning: 'Checked and found put right.' },
     { term: 'As reported', meaning: 'Stands as the engineer reported it. On a project that uses review it reads "Not reviewed" until the report is reviewed.' },
     { term: 'Confirmed', meaning: 'The office confirmed the observation was right.' },
@@ -283,7 +285,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
   ],
   office: [
     { id: 'office-day', heading: 'Your day in the office', ordered: true, steps: [
-      'Office opens on the office position: new reports, reports not yet read, unassigned issues and issues ready to verify, across every project.',
+      'Office opens on the office position: new reports, reports not yet read, unassigned issues and issues fixed and waiting to be checked, across every project.',
       'Open a report and "Acknowledge" it once you have read it. That is the only thing that marks it read; receipt and delivery do not.',
       'A report\'s signature line says whether it was drawn or typed. A typed signature shows the statement the person ticked and who was signed in when it was sent.',
       'Give each new issue an owner and a target date. Overdue issues and work done without an instruction are listed under "Also needs attention".',
@@ -292,7 +294,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'Price variations, then record the client\'s instruction with their reference, or decline. Nothing is deleted.',
     ] },
     { id: 'verify', heading: 'Closing an issue', ordered: false, steps: [
-      'Whoever does the work puts it forward as fixed. The issue then reads "Ready for verification".',
+      'Whoever does the work puts it forward as fixed. The issue then reads "Fixed, to check" on every page.',
       'Someone else checks it and verifies it, which closes it, or reopens it with a reason. RELAY does not let the person who put it forward verify their own work.',
     ] },
     { id: 'review', heading: 'Review', ordered: false, steps: [

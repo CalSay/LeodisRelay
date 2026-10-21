@@ -43,6 +43,8 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
   </div>;
 }
 
+/** "1 report", "3 issues". */
+const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
 function officeReturn(ctx: Ctx): string {
   const route = [ctx.route.tab, ctx.route.a, ctx.route.b, ctx.route.c].filter((part): part is string => !!part);
   return `/office#/${route.join('/')}`;
@@ -78,7 +80,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   </a>;
   const issueRow = (i: Issue) => <a key={i.id} className={`arow ${kind === 'issue' && id === i.id ? 'on' : ''}`} href={`#/projects/${s.code}/issue/${i.id}`}>
     <span className="ref">{shortRef(i.reference)}</span>
-    <span className="nm">{i.description}<small>{i.location || 'no location'} · {i.owner || 'unassigned'}{i.targetDate ? ` · target ${i.targetDate}` : ''}</small></span>
+    <span className="nm">{i.description}<small>{i.location || 'no location'} · {i.owner || 'unassigned'}{i.targetDate ? ` · target ${fmtDay(i.targetDate)}` : ''}</small></span>
     <WorkTag i={i} day={day} />
   </a>;
   const variationRow = (v: Variation) => <a key={v.id} className={`arow ${kind === 'variation' && id === v.id ? 'on' : ''}`} href={`#/projects/${s.code}/variation/${v.id}`}>
@@ -86,14 +88,14 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
     <span className="nm">{v.description}<small>{v.location || 'no location'} · {v.instruction === 'instructed' ? `${fmtMoney(variationValue(v))} · ${v.instructionReference}` : v.quotedValue !== undefined ? `quoted ${fmtMoney(v.quotedValue)}` : 'not priced'}{v.workDone && v.instruction === 'pending' ? ' · work done' : ''}</small></span>
     <InstructionTag v={v} />
   </a>;
-  const draftRow = (r: ReportSummary) => <div key={r.id} className="arow"><span className="ref fine">DRAFT</span><span className="nm">{r.author}{r.authorTrade ? ` · ${r.authorTrade}` : ''} · visit {r.visitDate}<small>Saved {fmtWhen(r.lastSavedAt)} · {r.observationCount} section{r.observationCount === 1 ? '' : 's'} · {r.corrects ? 'correction in progress' : 'contents private until sent'}</small></span><Tag label="Draft" cls="tag-caution" /></div>;
+  const draftRow = (r: ReportSummary) => <div key={r.id} className="arow"><span className="ref fine">DRAFT</span><span className="nm">{r.author}{r.authorTrade ? ` · ${r.authorTrade}` : ''} · visit {r.visitDate}<small>Saved {fmtWhen(r.lastSavedAt)} · {r.observationCount} card{r.observationCount === 1 ? '' : 's'} · {r.corrects ? 'correction in progress' : 'contents private until sent'}</small></span><Tag label="Draft" cls="tag-caution" /></div>;
   const attnReports = [...s.failed, ...s.pendingReview, ...s.returned];
   const attnIssues = [...new Map([...s.overdue, ...s.disputed, ...s.verify, ...s.unassigned].map(i => [i.id, i])).values()];
   const attnVariations = [...new Map([...s.exposedVariations, ...s.unpricedVariations].map(v => [v.id, v])).values()];
   const closed = s.issues.filter(i => !isActive(i));
   const settled = s.variations.filter(v => v.instruction !== 'pending');
   return <div className="col">
-    <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h2>Register · {s.project.projectName}</h2><i>{s.reports.length} reports · {s.active.length} open</i></div>
+    <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h2>Register · {s.project.projectName}</h2><i>{s.reports.length} report{s.reports.length === 1 ? '' : 's'} · {s.active.length} open</i></div>
     {/* A phone shows this column in place of the project sheet, so the project's pages come with it. */}
     <div className="phone-only"><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /></div>
     <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
@@ -103,7 +105,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
       <div className="grp">Reports needing attention<i>{attnReports.length}</i></div>
       {attnReports.length ? attnReports.map(reportRow) : <div className="empty" style={{ padding: 14 }}>{s.reviewOn ? 'Nothing waits for review or correction.' : 'No report needs attention.'}</div>}
       <div className="grp">Issues needing action<i>{attnIssues.length} of {s.active.length}</i></div>
-      {attnIssues.length ? attnIssues.map(issueRow) : <div className="empty" style={{ padding: 14 }}>Nothing overdue, unassigned, disputed or waiting to be verified.</div>}
+      {attnIssues.length ? attnIssues.map(issueRow) : <div className="empty" style={{ padding: 14 }}>Nothing overdue, unassigned, disputed or waiting to be checked.</div>}
       {attnVariations.length > 0 && <><div className="grp">Variations needing a quote or an instruction<i>{attnVariations.length} of {s.pendingVariations.length}</i></div>{attnVariations.map(variationRow)}</>}
       {s.drafts.length > 0 && <><div className="grp">Drafts on site<i>{s.drafts.length}</i></div>{s.drafts.map(draftRow)}</>}
     </>}
@@ -121,7 +123,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
       {settled.length ? settled.map(variationRow) : <div className="empty" style={{ padding: 14 }}>No variations instructed or declined yet.</div>}
     </>}
     {filter === 'drafts' && (s.drafts.length ? s.drafts.map(draftRow) : <div className="empty">No drafts saved to the server on this project.</div>)}
-    <div className="colpad sticky-foot"><div className="rowsub">{filter === 'action' ? `Needs action hides ${s.reports.length - attnReports.length} reports, ${s.issues.length - attnIssues.length} issues and ${s.variations.length - attnVariations.length} variations that need nobody.` : ''} Reports, issues and variations share one column because the office reads them as one stream. Work held only on an engineer’s device is not visible here.</div></div>
+    <div className="colpad sticky-foot"><div className="rowsub">{filter === 'action' ? `Needs action hides ${count(s.reports.length - attnReports.length, 'report')}, ${count(s.issues.length - attnIssues.length, 'issue')} and ${count(s.variations.length - attnVariations.length, 'variation')} that need nobody.` : ''} Reports, issues and variations share one column because the office reads them as one stream. Work held only on an engineer’s device is not visible here.</div></div>
   </div>;
 }
 
@@ -129,7 +131,7 @@ function foundWords(r: ReportSummary): string {
   // An inspection says what it is and how many checks need action.
   if (r.checks) return `${reportTypeOf(r).name.toLowerCase()}, ${r.checks.action ? `${r.checks.action} action${r.checks.action === 1 ? '' : 's'}` : 'no actions'}`;
   const k = r.kindCounts;
-  if (!k) return r.defectCount ? `${r.defectCount} raising an issue` : `${r.observationCount} section${r.observationCount === 1 ? '' : 's'}`;
+  if (!k) return r.defectCount ? `${r.defectCount} raising an issue` : `${r.observationCount} card${r.observationCount === 1 ? '' : 's'}`;
   const parts: string[] = [];
   if (k.defect) parts.push(`${k.defect} defect${k.defect === 1 ? '' : 's'}`);
   if (k.instruction) parts.push(`${k.instruction} variation${k.instruction === 1 ? '' : 's'}`);
@@ -165,7 +167,7 @@ function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectSt
   const items = (s ? [s] : ctx.stats).flatMap(st => [
     ...st.failed.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Report could not be processed', sub: `${st.project.projectName} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${st.code}/report/${r.id}` })),
     ...st.pendingReview.map(r => ({ key: r.id, ref: shortRef(r.reference), b: 'Awaiting review', sub: `${st.project.projectName} · ${r.author}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${st.code}/report/${r.id}` })),
-    ...st.overdue.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · ${i.owner || 'unassigned'} · target ${i.targetDate}`, tag: { label: `${daysLate(i.targetDate, ctx.day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
+    ...st.overdue.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · ${i.owner || 'unassigned'} · target ${fmtDay(i.targetDate)}`, tag: { label: `${daysLate(i.targetDate, ctx.day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
     ...st.exposedVariations.map(v => ({ key: v.id, ref: shortRef(v.reference), b: v.description, sub: `${st.project.projectName} · work done, no written instruction`, tag: { label: 'Not instructed', cls: 'tag-alert' }, go: `#/projects/${st.code}/variation/${v.id}` })),
     ...st.disputed.map(i => ({ key: i.id, ref: shortRef(i.reference), b: i.description, sub: `${st.project.projectName} · disputed at review`, tag: { label: 'Triage', cls: 'tag-alert' }, go: `#/projects/${st.code}/issue/${i.id}` })),
     // The office position lists verification and unassigned issues in their own groups above.
@@ -177,7 +179,7 @@ function AttentionList({ ctx, s, limit, skipActions }: { ctx: Ctx; s?: ProjectSt
   return <div className="rmenu">{shown.length ? shown.map(i => <a key={i.key} href={i.go}><span className="ref">{i.ref}</span><div className="rt"><b>{i.b}</b><span>{i.sub}</span></div><Tag {...i.tag} /></a>) : <div className="empty" style={{ padding: 14 }}>Nothing needs attention.</div>}</div>;
 }
 
-/** New, not yet read, unassigned and to verify: what a project manager acts on, each with its count. */
+/** New, not yet read, unassigned and fixed, to check: what a project manager acts on, each with its count. */
 function OfficeActionGroups({ ctx }: { ctx: Ctx }) {
   const a = officeActions(ctx.stats.flatMap(s => s.reports), ctx.stats.flatMap(s => s.issues), ctx.day);
   const project = (id: string) => ctx.statOf(id)?.project.projectName ?? id;
@@ -191,7 +193,7 @@ function OfficeActionGroups({ ctx }: { ctx: Ctx }) {
       rows: a.notRead.slice(0, 4).map(r => reportRow(r, <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'acknowledge', report: r })}>Acknowledge</BtnQ>)) },
     { key: 'unassigned', title: 'Unassigned issues', sub: 'Open, nobody owns the action', n: a.unassigned.length, tone: 'soon', all: '#/issues/show/unassigned', empty: 'Every open issue has an owner.',
       rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)) },
-    { key: 'verify', title: 'Ready to verify', sub: 'Closure submitted, needs a second pair of eyes', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be verified.',
+    { key: 'verify', title: 'Fixed, to check', sub: 'Put forward as fixed; someone else checks it', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be checked.',
       rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · waiting ${daysSince(i.events.at(-1)?.at)} days`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i })}>Verify</Btn>)) },
   ];
   // On a phone the groups stack, so their counts are gathered at the top, each a tap from its group.
@@ -214,7 +216,7 @@ function OfficeActionGroups({ ctx }: { ctx: Ctx }) {
 function LatestReports({ ctx, reports, showProject }: { ctx: Ctx; reports: ReportSummary[]; showProject?: boolean }) {
   const code = (r: ReportSummary) => ctx.projects.find(p => p.id === r.projectId)?.id ?? '';
   return <table className="reg tight"><thead><tr><th>Ref</th>{showProject && <th>Project</th>}<th>Engineer</th><th>Received</th><th>Found</th><th>Status</th></tr></thead><tbody>
-    {reports.length ? reports.map(r => <tr key={r.id} className="clickable" onClick={() => ctx.go(`#/projects/${code(r)}/report/${r.id}`)}><td><span className="ref">{shortRef(r.reference)}</span></td>{showProject && <td>{ctx.projects.find(p => p.id === r.projectId)?.projectName ?? r.projectId}</td>}<td>{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due">{fmtDay(r.serverAcknowledgedAt)} {r.serverAcknowledgedAt ? new Date(r.serverAcknowledgedAt).toLocaleTimeString('en-GB', { timeZone: 'Europe/London', hour: '2-digit', minute: '2-digit' }) : ''}</td><td><Found r={r} /></td><td>{r.review === 'pending' ? <Tag label="To review" cls="tag-caution" /> : r.review === 'returned' ? <Tag label="Returned" cls="tag-alert" /> : r.acknowledged ? <Tag label="Read" cls="tag-ok" /> : <DeliveryTag r={r} />}</td></tr>) : <tr><td colSpan={showProject ? 6 : 5} className="empty">No reports received yet.</td></tr>}
+    {reports.length ? reports.map(r => <tr key={r.id} className="clickable" onClick={() => ctx.go(`#/projects/${code(r)}/report/${r.id}`)}><td><span className="ref">{shortRef(r.reference)}</span></td>{showProject && <td>{ctx.projects.find(p => p.id === r.projectId)?.projectName ?? r.projectId}</td>}<td>{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due">{r.serverAcknowledgedAt ? fmtWhen(r.serverAcknowledgedAt) : '—'}</td><td><Found r={r} /></td><td>{r.review === 'pending' ? <Tag label="To review" cls="tag-caution" /> : r.review === 'returned' ? <Tag label="Returned" cls="tag-alert" /> : r.acknowledged ? <Tag label="Read" cls="tag-ok" /> : <DeliveryTag r={r} />}</td></tr>) : <tr><td colSpan={showProject ? 6 : 5} className="empty">No reports received yet.</td></tr>}
   </tbody></table>;
 }
 
@@ -240,7 +242,7 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link></div></div>
-    <dl className="tb"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{s.reports.length ? `${s.reports.length} on file` : 'none yet'}{s.notNotified.length ? ` · ${s.notNotified.length} PM notification${s.notNotified.length === 1 ? '' : 's'} pending` : ''}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Ready to verify</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `closure submitted ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing awaiting verification'}</small></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></dd></div></dl>
+    <dl className="tb"><div><dt>Received this week</dt><dd className="big">{thisWeek.length}<small>{s.reports.length ? `${s.reports.length} on file` : 'none yet'}{s.notNotified.length ? ` · ${s.notNotified.length} PM notification${s.notNotified.length === 1 ? '' : 's'} pending` : ''}</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'}</small></dd></div><div><dt>Fixed, to check</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `put forward ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing waiting to be checked'}</small></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></dd></div></dl>
     <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
     <dl className="tb" style={{ marginTop: 12 }}><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
     <ProjectLinks ctx={ctx} projectId={p.id} />

@@ -21,7 +21,7 @@ export const VERIFICATION = ['not_put_forward', 'awaiting', 'verified'] as const
 export type Verification = typeof VERIFICATION[number];
 export const VERIFICATION_LABEL: Record<Verification, string> = {
   not_put_forward: 'Not put forward as fixed',
-  awaiting: 'Waiting for verification',
+  awaiting: 'Fixed, to check',
   verified: 'Verified and closed',
 };
 

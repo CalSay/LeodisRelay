@@ -6,6 +6,7 @@ import { reviewInUse } from '@/lib/reviewQueue';
 import { confirmationLabel } from '@/lib/issueConfirmation';
 import { isActiveIssue, isUnassigned, isVerify, notAcknowledged } from '@/lib/officeActions';
 import { isDisputedIssue, isNotReviewedIssue, isOverdueIssue } from '@/lib/issueQuery';
+import { dateShort, dayLong, whenShort } from '@/lib/dates';
 
 export { isUnassigned, isVerify, notAcknowledged };
 
@@ -134,12 +135,12 @@ export const KIND: Record<ObservationType, { one: string; many: string; tone: st
   check: { one: 'check', many: 'checks', tone: 'tone-neutral' },
 };
 
-export const WORK_LABEL: Record<Issue['work'], string> = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Verify', closed: 'Closed' };
+export const WORK_LABEL: Record<Issue['work'], string> = { open: 'Open', assigned: 'Assigned', in_progress: 'In progress', awaiting_verification: 'Fixed, to check', closed: 'Closed' };
 export function workTag(i: Issue, day: string): { label: string; cls: string } {
   if (i.confirmation === 'withdrawn') return { label: 'Withdrawn', cls: 'tag-quiet' };
   if (i.work === 'closed') return { label: 'Closed', cls: 'tag-ok' };
   if (isOverdue(i, day)) return { label: `${daysLate(i.targetDate, day)}d overdue`, cls: 'tag-alert' };
-  if (i.work === 'awaiting_verification') return { label: 'Verify', cls: 'tag-caution' };
+  if (i.work === 'awaiting_verification') return { label: 'Fixed, to check', cls: 'tag-caution' };
   return { label: WORK_LABEL[i.work], cls: i.work === 'open' ? 'tag-quiet' : 'tag-acc' };
 }
 /** Where the project does not use review, a provisional issue reads "As reported", not "Not reviewed". */
@@ -167,15 +168,16 @@ export function daysSince(iso: string | undefined, now = Date.now()): number {
   return iso ? Math.floor((now - Date.parse(iso)) / 86400000) : 0;
 }
 
-const LONDON = { timeZone: 'Europe/London' } as const;
+/** "Wed 21 Oct, 14:05", in the words of lib/dates.ts like every other page. */
 export function fmtWhen(iso?: string): string {
-  return iso ? new Date(iso).toLocaleString('en-GB', { ...LONDON, weekday: 'short', day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Not recorded';
+  return whenShort(iso) || 'Not recorded';
 }
+/** "21 Oct" (with the year when not this year), for a time or a calendar day such as a target date. */
 export function fmtDay(iso?: string): string {
-  return iso ? new Date(iso).toLocaleDateString('en-GB', { ...LONDON, day: '2-digit', month: 'short' }) : '—';
+  return dateShort(iso, 'auto') || iso || '—';
 }
 export function fmtDate(iso?: string): string {
-  return iso ? new Date(iso).toLocaleDateString('en-GB', { ...LONDON, weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : 'Not recorded';
+  return dayLong(iso) || 'Not recorded';
 }
 /** "011LME-SPR-014" → "SPR-014": the project is already known in its column. */
 export const shortRef = (reference: string): string => reference.split('-').slice(1).join('-') || reference;
@@ -187,7 +189,7 @@ export function attention(stats: ProjectStats[], day: string): AttentionItem[] {
   for (const s of stats) {
     for (const r of s.failed) out.push({ key: `ne-${r.id}`, title: 'Report could not be processed', sub: `${r.reference} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}. ${r.deliveryError ?? 'The worker gave up on it.'}`, tag: { label: 'Processing', cls: 'tag-alert' }, go: `#/projects/${s.code}/report/${r.id}` });
     for (const r of s.pendingReview) out.push({ key: `rv-${r.id}`, title: 'Report awaiting review', sub: `${r.reference} · ${r.author} · received ${fmtDay(r.serverAcknowledgedAt)}`, tag: { label: 'Review', cls: 'tag-caution' }, go: `#/projects/${s.code}/report/${r.id}`, action: { label: 'Review', kind: 'review', report: r } });
-    for (const i of s.overdue) out.push({ key: `od-${i.id}`, title: i.description, sub: `${s.project.projectName} · ${i.owner || 'unassigned'} · target ${i.targetDate}`, tag: { label: `${daysLate(i.targetDate, day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${s.code}/issue/${i.id}` });
+    for (const i of s.overdue) out.push({ key: `od-${i.id}`, title: i.description, sub: `${s.project.projectName} · ${i.owner || 'unassigned'} · target ${fmtDay(i.targetDate)}`, tag: { label: `${daysLate(i.targetDate, day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${s.code}/issue/${i.id}` });
     // Work done on a say-so with nothing in writing: every day it waits is a day harder to invoice.
     for (const v of s.exposedVariations) out.push({ key: `vx-${v.id}`, title: v.description, sub: `${s.project.projectName} · work done, no written instruction · ${v.quotedValue === undefined ? 'not yet priced' : 'quoted, awaiting instruction'}`, tag: { label: 'Not instructed', cls: 'tag-alert' }, go: `#/projects/${s.code}/variation/${v.id}`, action: v.quotedValue === undefined ? { label: 'Price', kind: 'price', primary: true, variation: v } : { label: 'Instruct', kind: 'instruct', primary: true, variation: v } });
     for (const i of s.verify) out.push({ key: `vf-${i.id}`, title: i.description, sub: `${s.project.projectName} · closure by ${i.closureSubmittedBy ?? 'unknown'} · waiting ${daysSince(i.events.at(-1)?.at)} days`, tag: { label: 'Verify', cls: 'tag-caution' }, go: `#/projects/${s.code}/issue/${i.id}`, action: { label: 'Verify', kind: 'verify', primary: true, issue: i } });

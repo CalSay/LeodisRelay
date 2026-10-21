@@ -12,6 +12,8 @@ body:has(.eng-workspace) .appbar .appbar-inner,body:has(.eng-report-editor) .app
 body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,body:has(.eng-page) .appbar .nav{width:auto;flex-wrap:nowrap;}
 .eng-workspace,.eng-report-editor,.eng-page{width:100%;max-width:1120px;margin:auto;padding:24px;}
 .eng-workspace button,.eng-workspace a,.eng-report-editor button,.eng-page button{min-height:48px;}
+/* Buttons that sit together on a detail page (an issue, a variation, a project) wrap with a gap rather than touching. */
+.eng-page .btn-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;}
 .eng-workspace h1,.eng-page h1{font-size:28px;line-height:1.2;margin:8px 0;}
 .eng-workspace h2,.eng-page h2{font-size:18px;margin:0 0 12px;}
 .eng-navigation{display:flex;gap:8px;border-bottom:1px solid var(--line);margin-bottom:24px;flex-wrap:wrap;}

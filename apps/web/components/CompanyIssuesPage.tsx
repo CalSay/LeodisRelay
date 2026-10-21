@@ -7,6 +7,7 @@ import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation'
 import { RECENT_DAYS, companyKey, matchCompanies, type CompanyIssues, type CompanyLine } from '@/lib/companyIssues';
 import { NOTE_MAX, standingPromise, type Chase, type CompanyChases } from '@/lib/companyChases';
 import { clientId } from '@/lib/clientId';
+import { dateShort, whenShort } from '@/lib/dates';
 
 /**
  * Open issues by company, for the office: who still has work to put right
@@ -18,13 +19,11 @@ import { clientId } from '@/lib/clientId';
  * `lib/companyIssues.ts` and `lib/companyChases.ts`.
  */
 
-const LONDON = { timeZone: 'Europe/London' } as const;
-const fmtDay = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', { ...LONDON, day: 'numeric', month: 'short', year: 'numeric' });
+const fmtDay = (ymd: string) => dateShort(ymd);
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const ageWords = (days: number) => days === 0 ? 'raised today' : days === 1 ? 'raised yesterday' : `${days} days`;
 /** The year only when it is not this year, so last October's chase does not read as this month's. */
-const fmtWhen = (iso: string) => { const d = new Date(iso); const year = d.toLocaleDateString('en-GB', { ...LONDON, year: 'numeric' }) !== new Date().toLocaleDateString('en-GB', { ...LONDON, year: 'numeric' });
-  return d.toLocaleString('en-GB', { ...LONDON, day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}), hour: '2-digit', minute: '2-digit' }); };
+const fmtWhen = (iso: string) => whenShort(iso);
 const PROMISE_WORDS = { due: 'Promised', met: 'Promise met', missed: 'Promise missed' } as const;
 const PROMISE_TAG = { due: 'tag-draft', met: 'tag-sent', missed: 'tag-alert' } as const;
 type WithChases = CompanyIssues & { chases: Record<string, CompanyChases> };
@@ -184,7 +183,7 @@ export function CompanyIssuesPage({ initialQuery, returnTo }: { initialQuery: st
     <Link href={back} className="back">&larr; {backLabel(back)}</Link>
     <header className="co-head">
       <p className="lbl">Leodis Developments · Office</p>
-      <h1>Open issues by company</h1>
+      <h1>Issues by company</h1>
       <p className="eng-help">What each company or person still has to put right across every project, with the oldest first to chase. Open a snag list to hand it over or walk the site with them, and log each chase so the office knows who rang whom and what was promised.</p>
     </header>
 

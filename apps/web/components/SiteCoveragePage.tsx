@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { QUIET_WORKING_DAYS, fortnightStart, isWeekend, shiftFortnight, type CoverageProject, type CoverageVisit, type SiteCoverage } from '@/lib/siteCoverage';
 import { londonDay } from '@/lib/weeklySummary';
+import { dayShort } from '@/lib/dates';
 
 /**
  * Site coverage, for the office: every reportable project against a
@@ -14,9 +15,8 @@ import { londonDay } from '@/lib/weeklySummary';
  * changes nothing. Rules in `lib/siteCoverage.ts`.
  */
 
-const LONDON = { timeZone: 'Europe/London' } as const;
-const fmtDay = (ymd: string, year = false) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', { ...LONDON, weekday: 'short', day: 'numeric', month: 'short', ...(year ? { year: 'numeric' } : {}) });
-const weekdayOf = (ymd: string) => new Date(`${ymd}T12:00:00Z`).toLocaleDateString('en-GB', { ...LONDON, weekday: 'short' });
+const fmtDay = (ymd: string, year = false) => dayShort(ymd, year);
+const weekdayOf = (ymd: string) => dayShort(ymd, false).slice(0, 3);
 const dateOf = (ymd: string) => Number(ymd.slice(8));
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const TRADE_SHORT: Record<string, string> = { Electrical: 'Elec', HVAC: 'HVAC', 'P&H': 'P&H' };
