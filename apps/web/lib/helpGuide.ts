@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'defect-send-on-signal', added: '2026-10-21', audience: 'site', title: 'A defect sent with no signal goes by itself',
+    text: 'Send a defect with no signal and RELAY says "Defect not sent yet" and "Waiting for signal": it is kept on your phone and goes to the office by itself as soon as there is signal, while RELAY is open, the same as a site update. You can carry on with other things in RELAY: it says when the defect has gone, with a link to it. If you closed RELAY, opening it again with signal sends it. "Try again" still sends it straight away, and it only ever goes once. Checked in a phone-sized browser with its signal switched off, not on a real phone.',
+    link: { label: 'Open your home screen', href: '/engineer' } },
   { id: 'quicker-update-cards', added: '2026-10-21', audience: 'site', title: 'Straight back to typing, and smaller photos',
     text: 'If you leave today\'s site update with an empty card, "Carry on with today’s update" now opens that card ready to type, instead of folded. Photos on a card are now small tiles, two to a row on a phone, with the caption box under each and Remove in the corner of the picture, so a few photos no longer push the next card far down. A green dot on a photo means it is on the server; one that is not there yet still says so in words. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'defect-recent-places', added: '2026-10-21', audience: 'site', title: 'Flag a defect: recent places, one less step',
@@ -401,6 +404,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
       'RELAY still opens. You can start a site update or an inspection, add cards or answer checks, and take photographs; they are marked "Only on this phone".',
       'An inspection can be signed on the phone, drawn or by typing your name, once every check is answered. Signing locks it and marks it "Signed · not sent yet". To change anything before RELAY starts sending it, take your signature back and sign again.',
       'Tapped "Send to office" on the report screen with no signal? It says "Waiting for signal" and goes to the office by itself once there is signal, as long as RELAY stays open. If RELAY was closed, open it again: the home screen says "Send today\'s update", and opening it with signal sends it.',
+      'Sent a defect with no signal? It says "Defect not sent yet" and goes to the office by itself once there is signal, while RELAY is open (not the "No signal" page), then says it has gone. If RELAY was closed, opening it again with signal sends it.',
       'When you have signal again, open RELAY and the work goes up by itself. A signed inspection goes to the office, and RELAY says when it has gone; if it changed after you signed, it stays a draft for you to sign again. Work from the no-signal page stays a draft until you send it.',
       'Notes for the next visit on your projects show on the no-signal page too, as they were the last time RELAY opened with signal, and say when that was. You can read them there but not leave or mark one until you have signal.',
       'If you share a phone, sign out at the end of the day. Work held on the phone belongs to whoever was last signed in, and signing out takes your notes off it.',

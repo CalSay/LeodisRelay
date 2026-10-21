@@ -126,15 +126,24 @@ try {
     await context.setOffline(true);
     await tap(sendButton());
     await page.getByRole('heading',{name:'Defect not sent yet',exact:true}).waitFor();
-    ok(await page.getByText('it will only go once').isVisible(),`${label}: no signal says it will only go once`);
+    ok(await page.getByText(/it will only go once/).isVisible(),`${label}: no signal says it will only go once`);
     eq((await page.locator('.eng-defect [role=alert]').innerText()).trim(),'No signal, or no answer from RELAY. Your defect is kept on this phone.',`${label}: no signal in plain words`);
     eq((await held()).pending,true,`${label}: the unsent defect is held on the device`);
     await shot('no-signal');
+    // Reloaded with RELAY still out of reach for uploads (it would otherwise go by itself, verify-defect-send-on-signal).
+    // Uploads stay cut off until the tap, then only the tap's own goes through.
+    let cut=true;
+    await context.route('**/api/issues',route=>route.request().method()==='POST'&&cut?route.abort('internetdisconnected'):route.continue());
     await context.setOffline(false);
     await page.reload();
     await page.getByRole('heading',{name:'Defect not sent yet',exact:true}).waitFor();
     ok(true,`${label}: still "not sent yet" after a reload`);
-    await tap(page.getByRole('button',{name:'Try again',exact:true}));
+    const again=page.getByRole('button',{name:'Try again',exact:true});
+    await again.evaluate(e=>e.scrollIntoView({block:'center'}));
+    cut=false;
+    // Signal is back, so it may go by itself a moment before the tap lands: either way it goes once.
+    await Promise.race([(wide?again.click():again.tap()).catch(()=>{}),page.getByRole('heading',{name:'Defect sent to the office',exact:true}).waitFor()]);
+    await context.unroute('**/api/issues');
     await page.getByRole('heading',{name:'Defect sent to the office',exact:true}).waitFor();
     eq((await issuesNamed(offlineText)).length,1,`${label}: sent once when signal is back`);
 
@@ -145,9 +154,14 @@ try {
     await page.getByLabel('Defect photographs',{exact:true}).setInputFiles({name:'defect.png',mimeType:'image/png',buffer:png});
     await page.getByRole('button',{name:'Remove photo 1',exact:true}).waitFor();
     await describe().fill(lostText);await where().fill('Level 2 corridor');
-    await page.route('**/api/issues',async route=>{if(route.request().method()==='POST'){await route.fetch();await route.abort();}else await route.continue();},{times:1});
+    // The first upload reaches RELAY but its answer is lost; later ones are cut off until "Try again",
+    // so it does not go by itself first (verify-defect-send-on-signal covers that).
+    let lost=0,hold=true;
+    await page.route('**/api/issues',async route=>{if(route.request().method()!=='POST')return route.continue();if(!lost++){await route.fetch();return route.abort();}return hold?route.abort('internetdisconnected'):route.continue();});
     await tap(sendButton());
-    await tap(page.getByRole('button',{name:'Try again',exact:true}));
+    await page.getByRole('heading',{name:'Defect not sent yet',exact:true}).waitFor();
+    hold=false;
+    await Promise.race([tap(page.getByRole('button',{name:'Try again',exact:true})).catch(()=>{}),page.getByRole('heading',{name:'Defect sent to the office',exact:true}).waitFor()]);
     await page.getByRole('heading',{name:'Defect sent to the office',exact:true}).waitFor();
     eq((await issuesNamed(lostText)).length,1,`${label}: a lost receipt tried again is still one issue`);
 
