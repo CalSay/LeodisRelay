@@ -2,7 +2,7 @@
 // engineers on three sites: with no report open the list has the page to
 // itself (no empty reader beside it), so each row reads on one or two lines
 // and project names do not wrap onto three or four; opening a report brings
-// the reader in beside the list; the list and "Not seen yet" (Inbox filter and
+// the reader in beside the list (on a phone, the report on its own); the list and "Not seen yet" (Inbox filter and
 // the office position's group) are newest first, and a report received today
 // says "Today" with its time. Section edges stay visible, axe finds nothing,
 // no sideways scroll. 1440px dark and light, 1280 and 1200px laptops, 390px light.
@@ -120,10 +120,10 @@ try {
     await page.waitForURL(/#\/inbox\/[^/]+$/);
     const openReader=page.locator('.panel:has(> .panel-head h3:text-is("Reader"))');await openReader.waitFor();
     await openReader.locator('.empty, h1, h2, h3, h4').first().waitFor();
-    const openRows=await measure(page);
     const listBox=await page.locator('.view .panel').first().boundingBox(),readerBox=await openReader.boundingBox();
-    console.log(`${label} Inbox, report open: list ${Math.round(listBox.width)}px, reader ${Math.round(readerBox.width)}px, project name up to ${Math.max(...openRows.map(r=>r.lines))} lines, rows up to ${Math.max(...openRows.map(r=>r.height))}px`);
     if(!phone){
+      const openRows=await measure(page);
+      console.log(`${label} Inbox, report open: list ${Math.round(listBox.width)}px, reader ${Math.round(readerBox.width)}px, project name up to ${Math.max(...openRows.map(r=>r.lines))} lines, rows up to ${Math.max(...openRows.map(r=>r.height))}px`);
       check(Math.abs(listBox.y-readerBox.y)<4&&readerBox.x>listBox.x+listBox.width-1,`${label}: the reader opens beside the list`);
       const edge=await openReader.evaluate(e=>getComputedStyle(e).borderLeftColor);
       const bg=await page.locator('.view').evaluate(e=>getComputedStyle(e).backgroundColor);
@@ -131,7 +131,8 @@ try {
       check(Math.max(...openRows.map(r=>r.lines))<=2,`${label}: with a report open, project names still on two lines at most`);
       check(!(await page.locator('table.reg thead th.c-found').isVisible()),`${label}: with the reader open, Found is left to the reader`);
     }else{
-      check(readerBox.y>listBox.y,`${label}: on a phone the reader is under the list`);
+      // On a phone the report has the screen to itself (verify-inbox-phone checks the way back).
+      check(listBox===null&&readerBox.y<300,`${label}: on a phone the report opens at the top, the list steps aside (reader at ${Math.round(readerBox.y)}px)`);
     }
     check(await overflow(page)<=0,`${label}: no sideways scroll with a report open`);
     if(shot)await page.screenshot({path:join(shot,`inbox-open-${scheme}-${width}.png`)});
