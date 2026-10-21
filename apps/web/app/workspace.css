@@ -426,7 +426,6 @@ body:has(.ws){overflow:hidden auto}
 @media (max-width:700px){
   .ws .sheet-links{grid-template-columns:1fr}
   .ws .phone-only{display:block;border-bottom:1px solid var(--line)}
-  .ws .phone-only .sheet-links{margin:0;border:0;padding:12px 16px}
 }
 
 /* Where each project stands (office position): one row per project on the
@@ -483,7 +482,7 @@ body:has(.ws){overflow:hidden auto}
   .ws .register-standing>.tb{margin-top:var(--s1)}
   .ws .register-standing .tb dd.big{font-size:24px}
   .ws .register-standing .tb-go{min-height:44px}
-  .ws .phone-only.register-standing .sheet-links{margin-top:var(--s3);padding:var(--s3);border:1px solid var(--line)}
+  .ws .register-standing .sheet-links{margin-top:var(--s3)}
   .ws .from-site{grid-template-columns:1fr}
   .ws .from-site-more{display:inline-flex;align-items:center;min-height:44px}
 }
