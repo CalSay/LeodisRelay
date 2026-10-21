@@ -4,6 +4,49 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Quick defect: recent places, no check screen
+
+- Why: Cal's 07:02 direction (simple for hands-on engineers). The #110
+  walk-through found "Flag a defect" had no recent places, so the engineer
+  typed a place already used on the job; and its "Check defect" screen only
+  repeated the form before "Send defect". Decided without asking Cal, per his
+  autonomy message. Not a `docs/tasks.json` task; no status changed.
+- Change (`components/IndividualDefect.tsx`): "Where on site?" shows #107's
+  compact Recent places chips (`Suggestions compact`, unchanged), from the
+  same `projectSuggestions` list a site update card uses. Free text stays; no
+  list of places. The form's button sends straight away and names the site
+  ("Send defect to Tetley Hall - Block E"), as the coordinator asked after
+  #112's wrong-site fix. The check screen is gone; its useful parts stay: the
+  site name is on the button and above the form, the sharing note is a line
+  under the button, photos still block the button while they are prepared.
+  A send with no receipt shows "Defect not sent yet" with what was written
+  and "Try again" (same request id, so it only goes once); "Failed to fetch"
+  became "No signal, or no answer from RELAY. Your defect is kept on this
+  phone." A reason it can't send is scrolled into view, since the button is
+  at the bottom. Help "What's new" line.
+- Taps from the Site page to a sent defect with a photo: tile, photo,
+  Check defect, Send defect (4) plus typing the place; now tile, photo, a
+  place chip, send (4) with nothing to type for the place, or 3 when the place
+  is typed.
+- Limit, unchanged from before: a defect with no signal does not go by
+  itself when signal returns (site updates do since #105); the engineer taps
+  "Try again". Possible later task.
+- Checks: typecheck, `npm test` (146 + 493), build. New
+  `scripts/verify-defect-recent-places.mjs` (87 checks, 390px light and dark,
+  1440px dark): chips under Where from yesterday's update, a tap fills and is
+  held on the device, the place in the box not offered, free text kept, none
+  on an empty project, one tap sends with the chip's place on the issue,
+  nothing sent without a description (reason in view, again on a second tap),
+  no signal held through
+  a reload and sent once with "Try again", a lost receipt still one issue,
+  48px, no sideways scroll. `verify-engineer-layout` updated for the new
+  buttons. Also passing: recent-places (site update cards unchanged, 109),
+  help, engineer-day, home-and-sheet, accessibility (584), role-access.
+  Screenshots: project files `ui-review/defect-recent-places/`.
+- Review: a fresh-context review found one point (a repeated reason was not
+  scrolled back into view), fixed and checked.
+- Not verified: a real phone, real weak signal, a screen reader.
+
 ## 2026-10-21 — What the office wrote, where the engineer looks
 
 - Why: Cal's 07:02 direction (simple for hands-on engineers, the office gets
