@@ -25,6 +25,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
     source, trade affected, who reported it, the disputed note and the full
     history with its report links. History says "Put forward as fixed" and
     "Checked and closed" for the engineer.
+  - A disputed issue keeps its red tag and says in one line that the office
+    is checking whether it needs fixing; the full note is in History. A
+    withdrawn issue says nothing about the office checking it.
+  - The first-screen measurement uses a one-line description; a long
+    description or "What needs doing" can push the buttons a little lower.
 - Measured (new `scripts/verify-simpler-issue-page.mjs`, 390x844): taps from
   the Site page to put an issue forward as fixed with a photograph and a note
   stay at 5 (Issues, the issue, photograph, note, the button; the note is

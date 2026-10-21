@@ -275,7 +275,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         <IssueSyncStatus issue={issue} />
         <div className="issue-eng-head">
           <span className="lbl">{issue.reference}</span>
-          <span className={isClosed ? "tag tag-sent" : "tag tag-draft"}>{isWithdrawn ? "Withdrawn" : WORK_LABEL[issue.work]}</span>
+          <span className={isClosed ? "tag tag-sent" : issue.confirmation === "disputed" ? "tag tag-alert" : "tag tag-draft"}>{isWithdrawn ? "Withdrawn" : WORK_LABEL[issue.work]}</span>
         </div>
         <h1 className="issue-eng-title">{issue.description}</h1>
         <dl className="issue-eng-facts">
@@ -284,8 +284,9 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
           <div><dt>Who is fixing it</dt><dd>{owner ? `${owner}${issue.targetDate ? `, by ${dateShort(issue.targetDate)}` : ""}` : "Nobody yet. The office will say who."}</dd></div>
         </dl>
 
-        {canClose && <p className="note" role="status">Put forward as fixed. It is waiting for the office to check it.</p>}
-        {isClosed && <p className="note" role="status">The office checked the work and closed this issue.</p>}
+        {issue.confirmation === "disputed" && <p className="note note-bad" role="status">The office is checking whether this needs fixing. Open History for why.</p>}
+        {canClose && !isWithdrawn && <p className="note" role="status">Put forward as fixed. It is waiting for the office to check it.</p>}
+        {isClosed && !isWithdrawn && <p className="note" role="status">The office checked the work and closed this issue.</p>}
 
         {!isWithdrawn && !isClosed && (
           <section className="eng-panel issue-eng-update" aria-labelledby="issue-update-title">
