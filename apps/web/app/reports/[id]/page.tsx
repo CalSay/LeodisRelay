@@ -264,11 +264,29 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
   useEffect(() => {
     const typed = (el: EventTarget | null) => el instanceof HTMLTextAreaElement || (el instanceof HTMLInputElement && !['file', 'checkbox', 'radio', 'button', 'submit'].includes(el.type));
-    const onIn = (e: FocusEvent) => setTyping(typed(e.target));
-    const onOut = (e: FocusEvent) => { if (!typed(e.relatedTarget)) setTyping(false); };
+    // A tap that leaves a text box changes the bar only once the tap is over. Shown mid-tap, the bar
+    // came back under the finger, so a tap low on the screen (on "More for the office", say) went nowhere.
+    let pressed = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const settle = () => { pressed = false; clearTimeout(timer); setTyping(typed(document.activeElement)); };
+    // Five seconds at most, in case the finger lifts somewhere the page never hears of.
+    const onDown = () => { pressed = true; clearTimeout(timer); timer = setTimeout(settle, 5000); };
+    // On a phone the focus moves after the finger lifts, so wait for the click; a press that ends in none (a long press) settles shortly after.
+    const onUp = () => { if (pressed) { clearTimeout(timer); timer = setTimeout(settle, 500); } };
+    const onDone = () => { if (pressed) { clearTimeout(timer); timer = setTimeout(settle, 0); } };
+    const onIn = (e: FocusEvent) => { if (!pressed) setTyping(typed(e.target)); };
+    const onOut = (e: FocusEvent) => { if (!pressed && !typed(e.relatedTarget)) setTyping(false); };
     document.addEventListener('focusin', onIn);
     document.addEventListener('focusout', onOut);
-    return () => { document.removeEventListener('focusin', onIn); document.removeEventListener('focusout', onOut); };
+    document.addEventListener('pointerdown', onDown, true);
+    document.addEventListener('pointerup', onUp, true);
+    document.addEventListener('click', onDone, true);
+    document.addEventListener('pointercancel', onDone, true);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('focusin', onIn); document.removeEventListener('focusout', onOut);
+      document.removeEventListener('pointerdown', onDown, true); document.removeEventListener('pointerup', onUp, true); document.removeEventListener('click', onDone, true); document.removeEventListener('pointercancel', onDone, true);
+    };
   }, []);
 
   useEffect(() => {

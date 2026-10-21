@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'tap-after-typing', added: '2026-10-22', audience: 'site', title: 'A tap after typing no longer goes missing',
+    text: 'While you type on a card, the bar with Check & send hides to make room. When you then tapped something low on the screen, such as "More for the office", the bar could come back under your finger and the tap did nothing. The bar now waits until your tap is finished. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'check-fixes', added: '2026-10-21', audience: 'office', title: 'Check fixes one after another',
     text: 'In the office, Verify and "Not finished" on a fix waiting to be checked now show the photo of the defect beside the photo sent with the fix, with the engineer\'s note, who put it forward and when, and the target date. Tap a photo to open it full size. After you verify it or send it back, the next fix on the same list opens by itself ("4 of 25"): from the overview, the Issues register in its current order and filters, or "Verify the oldest", oldest first. Skip moves on without changing anything, and Stop or Esc closes it. Sending a fix back now needs a reason, so the engineer always sees why it came back. Checked in a desktop browser, light and dark, and a phone-sized window.',
     link: { label: 'Open the fixes to check', href: '/office#/issues/show/verify' } },
