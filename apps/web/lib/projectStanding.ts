@@ -35,7 +35,8 @@ export interface ProjectStanding {
 
 const addDays = (ymd: string, n: number) => { const d = new Date(`${ymd}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
-const newest = (a: ReportSummary, b: ReportSummary) => b.visitDate.localeCompare(a.visitDate) || (b.serverAcknowledgedAt ?? '').localeCompare(a.serverAcknowledgedAt ?? '') || naturalOrder(b.reference, a.reference);
+// The same order as Site coverage's latest visit, so both name the same person on a busy day.
+const newest = (a: ReportSummary, b: ReportSummary) => b.visitDate.localeCompare(a.visitDate) || naturalOrder(b.reference, a.reference);
 
 export function projectStanding(project: { status: string }, reports: ReportSummary[], today: string): ProjectStanding {
   const sent = reports.filter(r => r.state === 'submitted');
@@ -46,7 +47,8 @@ export function projectStanding(project: { status: string }, reports: ReportSumm
   const monday = weekStart(today, today);
   const week = visits.filter(r => r.visitDate >= monday);
   // Progress is in site updates; an inspection answers its checklist instead.
-  const from = addDays(today, -LATEST_DAYS);
+  // Today and the thirteen days before it.
+  const from = addDays(today, -(LATEST_DAYS - 1));
   const latest: ReportSummary[] = [];
   for (const r of visits) {
     if (r.checks || (r.reportType && r.reportType !== 'progress') || r.visitDate < from) continue;

@@ -52,8 +52,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   stands".
 - Checks: `npm run typecheck`, `npm test` (146 + 436; new
   `tests/projectStanding.test.ts`), `npm run build`. New
-  `scripts/verify-office-progress.mjs` (72 checks: the five answers per
-  project, quiet and defects liability sites, a correction counted once,
+  `scripts/verify-office-progress.mjs` (74 checks: the five answers per
+  project and the count matching the register, quiet and defects liability sites, a correction counted once,
   inspections left out of Latest from site, words of the correction not the
   original, what is left out said, the row and trade headings opening the
   right pages, a report that will not load, a project with no recent update,

@@ -81,12 +81,13 @@ try {
     const names=await rows.locator('.glance-name b').allInnerTexts();
     check(names.length===3&&(await page.locator('.glance-group .grp').allInnerTexts()).map(t=>t.split('\n')[0].trim().toLowerCase()).join('|')==='active|defects liability period',`${label}: grouped Active, then Defects liability period`);
     const tetley=await cells(rows.filter({hasText:'011LME'}));
-    check(Object.keys(tetley).join('|')==='Last visit|This week|Open issues|Variations waiting|For the office',`${label}: the five questions, in order: ${Object.keys(tetley)}`);
+    check(Object.keys(tetley).join('|')==='Last visit|This week|Open issues|Variations waiting|Needs action',`${label}: the five questions, in order: ${Object.keys(tetley)}`);
     check(/^Today /.test(tetley['Last visit'].text)&&!tetley['Last visit'].late,`${label}: Tetley Hall last visited today: ${tetley['Last visit'].text}`);
     check(tetley['This week'].text==='3 visits Electrical, HVAC',`${label}: the correction counts once, the inspection counts as a visit, trades named: ${tetley['This week'].text}`);
     check(tetley['Open issues'].text==='2 1 overdue'&&tetley['Open issues'].late,`${label}: open issues and the overdue one: ${tetley['Open issues'].text}`);
     check(tetley['Variations waiting'].text==='1 1 done, not instructed'&&tetley['Variations waiting'].late,`${label}: the variation done without an instruction: ${tetley['Variations waiting'].text}`);
-    check(/^\d+ to act on$/.test(tetley['For the office'].text),`${label}: the office's count: ${tetley['For the office'].text}`);
+    const needs=tetley['Needs action'].text.match(/^(\d+) for the office · \d+ reports not read$/);
+    check(needs,`${label}: the office's count, with the reports not read: ${tetley['Needs action'].text}`);
     const kirkstall=await cells(rows.filter({hasText:'014LME'}));
     check(kirkstall['Last visit'].late&&kirkstall['Last visit'].text.endsWith(`No report for ${quietDays} working days`),`${label}: Kirkstall Gate has gone quiet: ${kirkstall['Last visit'].text}`);
     check(kirkstall['This week'].text==='0 visits nobody yet',`${label}: nobody this week: ${kirkstall['This week'].text}`);
@@ -114,6 +115,8 @@ try {
     await page.waitForFunction(()=>location.hash==='#/projects/proj-011lme');check(true,`${label}: the row opens the project`);
     const scope=phone?page.locator('.register-standing'):page.locator('.col-main .sheet');
     const visits=scope.locator('.from-site-visit');await visits.first().waitFor();
+    const chip=await page.locator('.filters .chip').first().innerText();
+    check(chip===`Needs action · ${needs[1]}`,`${label}: the row's count is the register's (${chip})`);
     if(phone){
       check(/^last visit today · /i.test(await scope.locator(".meta").innerText()),`${label}: the register starts with the last visit`);
       const filters=await page.locator('.filters').boundingBox(),standing=await scope.boundingBox();check(standing.y<filters.y,`${label}: where it stands comes before the register's lists`);
@@ -125,15 +128,15 @@ try {
     }
     check(await visits.count()===2,`${label}: one site update for each trade, no inspection`);
     const trades=await visits.locator('.from-site-h b').allInnerTexts();
-    check(trades.join('|')==='Electrical|HVAC',`${label}: trades newest first by the time sent: ${trades}`);
-    const e=visits.first();const shown=phone?2:4;
+    check(trades.join('|')==='HVAC|Electrical',`${label}: trades newest first, a busy day by reference as Site coverage orders it: ${trades}`);
+    const e=visits.filter({hasText:'Electrical'});const shown=phone?2:4;
     const lines=await e.locator('li').allInnerTexts();
     check(lines.length===shown,`${label}: ${shown} progress lines shown (${lines.length})`);
     check(/Level 1 corridor — Containment installed along the full run/.test(lines[0]),`${label}: the correction's words, not the report it replaced: ${lines[0]}`);
     check(!(await e.innerText()).includes('Cracked faceplate'),`${label}: defects are counted, not repeated`);
     check(new RegExp(`And ${6-shown} more in the report\\. Also raised 1 defect\\.`).test(await e.innerText()),`${label}: what is left out is said`);
     if(!phone)check(/^access/i.test(lines[2])&&await e.locator('li .kind.tone-access').count()===1,`${label}: an access line is marked as access`);
-    check(/Also raised 1 variation\./.test(await visits.nth(1).innerText()),`${label}: HVAC's variation is counted`);
+    check(/Also raised 1 variation\./.test(await visits.filter({hasText:'HVAC'}).innerText()),`${label}: HVAC's variation is counted`);
     check(!(await scope.innerText()).includes('Month old progress'),`${label}: a month-old update is not latest`);
     await axe(page,`${label}, project`);
     if(shot)await page.screenshot({path:join(shot,`office-progress-project-${scheme}-${width}.png`),fullPage:true});
@@ -144,7 +147,7 @@ try {
     // A report that will not load says so, and points to the list that still works.
     await page.route('**/api/reports/*',r=>r.request().resourceType()==='fetch'&&r.request().url().endsWith(hvac.id)?r.abort():r.continue());
     await page.goto(`${base}/office#/projects/proj-014lme`);await page.goto(`${base}/office#/projects/proj-011lme`);
-    await scope.getByText('The latest reports could not be loaded.').waitFor();check(true,`${label}: a report that will not load is said plainly`);
+    await scope.getByText('The latest reports could not be loaded just now.').waitFor();check(true,`${label}: a report that will not load is said plainly`);
     await page.unroute('**/api/reports/*');
     // A project with no site update in the fortnight says so.
     await page.goto(`${base}/office#/projects/proj-014lme`);

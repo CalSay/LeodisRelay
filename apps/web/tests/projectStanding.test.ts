@@ -11,6 +11,8 @@ const sent = (r: Partial<ReportSummary>): ReportSummary => ({ id: `r${++n}`, pro
   authorTrade: 'Electrical', state: 'submitted', version: 1, revision: 1, review: 'not_required', observationCount: 1, photoCount: 0, defectCount: 0, serverAcknowledgedAt: `${r.visitDate ?? TODAY}T16:00:00.000Z`, ...r } as ReportSummary);
 
 test('the last visit is the newest visit day, and a draft or a future day does not count', () => {
+  const sameDay = projectStanding(ACTIVE, [sent({ id: 'b', reference: '011LME-SPR-010', author: 'Hana Duct', authorTrade: 'HVAC', serverAcknowledgedAt: `${TODAY}T08:00:00.000Z` }), sent({ id: 'a', reference: '011LME-SPR-009', serverAcknowledgedAt: `${TODAY}T17:00:00.000Z` })], TODAY);
+  assert.equal(sameDay.last?.reportId, 'b', 'on a busy day, the highest reference, as Site coverage has it');
   const st = projectStanding(ACTIVE, [
     sent({ id: 'old', visitDate: '2026-10-19', author: 'Hana Duct', authorTrade: 'HVAC' }),
     sent({ id: 'new', visitDate: '2026-10-20' }),
@@ -56,6 +58,8 @@ test('latest from site is each trade\'s newest site update in the last fortnight
   ], TODAY);
   assert.equal(LATEST_DAYS, 14);
   assert.deepEqual(st.latest.map(r => r.id), ['h', 'e-new'], 'P&H last sent an update more than a fortnight ago');
+  const edge = projectStanding(ACTIVE, [sent({ id: 'in', visitDate: '2026-10-08' }), sent({ id: 'out', visitDate: '2026-10-07', author: 'Hana Duct', authorTrade: 'HVAC' })], TODAY);
+  assert.deepEqual(edge.latest.map(r => r.id), ['in'], 'fourteen days: today and the thirteen before it');
   assert.equal(projectStanding(ACTIVE, [sent({ visitDate: '2026-10-19' }), sent({ id: 'insp', visitDate: TODAY, reportType: 'safety-inspection' })], TODAY).last?.reportId, 'insp', 'an inspection still counts as a visit');
 });
 

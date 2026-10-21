@@ -16,7 +16,7 @@ import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, f
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, Found, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
-import { WORK_LABEL, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
+import { WORK_LABEL, notAcknowledged, daysLate, daysSince, fmtDate, fmtDay, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
 import { signatureMethod } from '@/lib/signature';
 import { LATEST_DAYS, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
 
@@ -221,6 +221,8 @@ function ProjectGlance({ ctx }: { ctx: Ctx }) {
         const s = ctx.statOf(p.id); if (!s) return null;
         const v = lastVisitWords(s.standing, day);
         const exposed = s.exposedVariations.length, unpriced = s.unpricedVariations.length;
+        // The same count as the project register's Needs action chip; reports not yet read are said beside it.
+        const action = s.needsAction + siteItems(ctx, s).length, unread = s.reports.filter(notAcknowledged).length;
         return <li key={p.id}><a className="glance-row" href={`#/projects/${p.id}`}>
           <span className="glance-name"><b>{p.projectName}</b><span className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager}</span></span>
           <dl className="glance-cells">
@@ -228,7 +230,7 @@ function ProjectGlance({ ctx }: { ctx: Ctx }) {
             <div><dt>This week</dt><dd>{count(s.standing.thisWeek, 'visit')}<small>{s.standing.tradesThisWeek.join(', ') || 'nobody yet'}</small></dd></div>
             <div><dt>Open issues</dt><dd className={s.overdue.length ? 'late' : ''}>{s.active.length}<small>{s.overdue.length ? `${s.overdue.length} overdue` : 'none overdue'}</small></dd></div>
             <div><dt>Variations waiting</dt><dd className={exposed ? 'late' : unpriced ? 'soon' : ''}>{s.pendingVariations.length}<small>{exposed ? `${exposed} done, not instructed` : unpriced ? `${unpriced} to price` : s.pendingVariations.length ? 'priced, with the client' : 'none waiting'}</small></dd></div>
-            <div><dt>For the office</dt><dd className={s.needsAction ? 'soon' : ''}>{s.needsAction}<small>{s.needsAction ? 'to act on' : 'nothing to act on'}</small></dd></div>
+            <div><dt>Needs action</dt><dd className={action ? 'soon' : ''}>{action}<small>{action ? 'for the office' : 'nothing for the office'}{unread ? ` · ${count(unread, 'report')} not read` : ''}</small></dd></div>
           </dl>
           <span className="arrow" aria-hidden="true">›</span>
         </a></li>;
@@ -335,6 +337,8 @@ function ProjectLinks({ ctx, projectId, heading: H = 'h4', projectPage }: { ctx:
 
 function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   const p = s.project;
+  // A phone hides the sheet behind the register, which shows Latest from site itself.
+  const phone = usePhone();
   const month = Date.now() - 30 * 86400000;
   const engineers = [...new Set(s.reports.filter(r => r.serverAcknowledgedAt && Date.parse(r.serverAcknowledgedAt) > month).map(r => r.author))];
   const v = lastVisitWords(s.standing, ctx.day);
@@ -344,7 +348,7 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
       <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link></div></div>
     <dl className="tb"><div><dt>Last visit</dt><dd className={`big ${v.quiet ? 'late' : ''}`}>{v.when}<small>{v.quiet ? `${v.quiet} · ` : ''}{v.who} · {count(s.standing.thisWeek, 'visit')} this week</small></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'} · {s.active.length} open</small></dd></div><div><dt>Fixed, to check</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}>{s.verify.length}<small>{s.verify.length ? `put forward ${fmtDay(s.verify[0]!.events.at(-1)?.at)}` : 'nothing waiting to be checked'}</small></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></dd></div></dl>
     <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
-    <LatestFromSite ctx={ctx} s={s} />
+    {!phone && <LatestFromSite ctx={ctx} s={s} />}
     <SecH>Needs attention</SecH>
     <AttentionList ctx={ctx} s={s} limit={6} />
     <SecH right={<span className="r">{s.reports.length} on file</span>}>Latest reports</SecH>
@@ -368,6 +372,8 @@ function LatestFromSite({ ctx, s, shown = LINES_SHOWN }: { ctx: Ctx; s: ProjectS
   const ids = latest.map(r => r.id).join(',');
   const [loaded, setLoaded] = useState<{ ids: string; reports: Map<string, Report> } | null>(null);
   const [failed, setFailed] = useState('');
+  // A load that failed is tried again with the desk's next refresh.
+  const retry = failed === ids ? ctx.snap?.loadedAt : '';
   useEffect(() => {
     if (!ids) return;
     let stopped = false; setFailed('');
@@ -375,9 +381,9 @@ function LatestFromSite({ ctx, s, shown = LINES_SHOWN }: { ctx: Ctx; s: ProjectS
       .then(rs => { if (!stopped) setLoaded({ ids, reports: new Map(rs.filter((r): r is Report => !!r).map(r => [r.id, r])) }); })
       .catch(() => { if (!stopped) setFailed(ids); });
     return () => { stopped = true; };
-  }, [ids]);
+  }, [ids, retry]);
   const body = !latest.length ? <div className="empty" style={{ padding: 14 }}>No site update in the last {LATEST_DAYS} days.</div>
-    : failed === ids ? <div className="empty" style={{ padding: 14 }}>The latest reports could not be loaded. They are listed under Latest reports.</div>
+    : failed === ids ? <div className="empty" style={{ padding: 14 }}>The latest reports could not be loaded just now. RELAY will try again; each one also opens from the project’s reports.</div>
     : loaded?.ids !== ids ? <div className="loading" style={{ minHeight: 80 }}>Loading what site said</div>
     : <div className="from-site">{latest.map(r => {
       const full = loaded.reports.get(r.id); const lines = full ? progressLines(full) : [];
@@ -385,7 +391,7 @@ function LatestFromSite({ ctx, s, shown = LINES_SHOWN }: { ctx: Ctx; s: ProjectS
       return <article key={r.id} className="from-site-visit">
         <a className="from-site-h" href={`#/projects/${s.code}/report/${r.id}`}><b>{r.authorTrade ?? 'Trade not recorded'}</b><span>{r.author} · {visitDay(r.visitDate, ctx.day)} · <span className="ref">{shortRef(r.reference)}</span></span><span className="arrow" aria-hidden="true">›</span></a>
         {lines.length ? <ul>{lines.slice(0, shown).map(l => <li key={l.id}>{l.kind === 'access' && <span className="kind tone-access">Access</span>}<b>{l.location || 'No location'}</b>{l.text ? ` — ${l.text}` : ''}</li>)}</ul>
-          : <p className="rowsub">No progress written on this visit.</p>}
+          : <p className="rowsub">{full ? 'No progress written on this visit.' : 'This report could not be opened here.'}</p>}
         {(lines.length > shown || others) && <p className="rowsub">{lines.length > shown ? `And ${lines.length - shown} more in the report.` : ''}{lines.length > shown && others ? ' ' : ''}{others ? `Also raised ${others}.` : ''}</p>}
       </article>;
     })}</div>;
