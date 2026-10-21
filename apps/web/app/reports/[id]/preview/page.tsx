@@ -4,6 +4,7 @@ import { useProjectLookup } from "@/components/ProjectContext";
 import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { getReport } from "@/lib/api";
+import { useMarkSeen } from "@/components/useMarkSeen";
 import { OBSERVATION_TYPES } from "@/lib/fixtures";
 import { answerLabel, reportTypeOf } from "@/lib/reportTypes";
 import type { Report } from "@/lib/types";
@@ -40,6 +41,8 @@ export default function PreviewPage({ params, searchParams }: { params: Promise<
   useEffect(() => {
     getReport(id).then((found) => (found ? setReport(found) : setMissing(true)));
   }, [id]);
+  // The office opening the document counts as seeing it, as in the office reader.
+  useMarkSeen(report, (seen) => setReport((r) => (r && r.id === seen.id ? { ...r, acknowledged: seen.acknowledged } : r)));
 
   if (missing) {
     return (

@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'seen-by-office', added: '2026-10-21', audience: 'all', title: 'Seen by the office',
+    text: 'When someone in the office opens a report you sent, it now says "Seen by the office" on your report, so you know it landed. Nobody in the office has to press anything: opening it is enough, and the "Acknowledge" button has gone. In the office, "Where each project stands" says how many of each project\'s reports nobody has opened yet, and "Not seen yet" lists them.' },
   { id: 'fewer-taps-site-update', added: '2026-10-21', audience: 'site', title: 'Fewer taps for a site update',
     text: 'A new site update now opens on its first card, a progress card, ready for where, what happened and a photograph; tap Defect, Variation or Access on the card to change it. Under the cards there is a button for each kind ("+ Defect", "+ Variation" and so on), so a new card is one tap instead of two. Places already used on today\'s update are the first ones offered under "Where". The questions the office can do without, such as who should respond to a defect or a variation\'s rough size, are folded under "More for the office", and open by themselves once anything is in them. A card you added and never used is left off when you go to check and send, rather than stopping it. Buttons in the report are bigger, for gloved hands. Sending a site update with a progress card, a defect and a variation took 16 taps on our test phone screen and now takes 14. Tried in a phone-sized browser, not yet on a real phone on site.' },
   { id: 'office-project-progress', added: '2026-10-21', audience: 'office', title: 'Where each project stands',
@@ -209,7 +211,7 @@ export const GLOSSARY: readonly GuideGroup[] = [
     { term: 'To review', meaning: 'Only on projects set up to need a review; review is off by default. Someone in the office approves it or sends it back with a reason.' },
     { term: 'PDF', meaning: 'RELAY makes the PDF of the report. "Ready" means it is made, not that anyone has it yet.' },
     { term: 'Delivery', meaning: 'Filed in SharePoint for SharePoint projects. In this pilot nothing is emailed: notifications are held in an outbox and the step says "Not emailed".' },
-    { term: 'Read', meaning: 'Someone in the office has acknowledged it. Until then it says "Not yet read".' },
+    { term: 'Seen', meaning: 'Someone in the office has opened the report. Until then it says "Not seen yet". Nobody has to press anything: opening it is enough.' },
   ] },
   { heading: 'An issue', terms: [
     { term: 'Open', meaning: 'Raised and not yet given to anyone.' },
@@ -328,7 +330,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     { id: 'after-send', heading: 'After you send', ordered: false, steps: [
       'Defect and Access cards become issues on the project\'s register. Variation cards become variations for the office to price. Each "Action needed" on a handover or first fix inspection becomes an issue too.',
       'Your home screen lists what came back from the office on the things you raised, in the office\'s words.',
-      'The report itself shows each step it has reached: received, PDF, delivery and read. See "What the words mean" below.',
+      'The report itself shows each step it has reached: received, PDF, delivery and seen by the office. See "What the words mean" below.',
     ] },
     { id: 'signing', heading: 'Signing an inspection', ordered: false, steps: [
       'An inspection is signed by the person who carried it out. Draw your signature in the box with a finger, pen or mouse.',
@@ -364,9 +366,9 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
   ],
   office: [
     { id: 'office-day', heading: 'Your day in the office', ordered: true, steps: [
-      'Office opens on the office position. "Where each project stands" gives every project\'s last visit, its visits this week and by which trades, its open and overdue issues, its variations waiting and how much needs the office; a site with no report for three working days is marked. Under it: new reports, reports not yet read, unassigned issues and issues fixed and waiting to be checked.',
+      'Office opens on the office position. "Where each project stands" gives every project\'s last visit, its visits this week and by which trades, its open and overdue issues, its variations waiting and how much needs the office; a site with no report for three working days is marked. Under it: new reports, reports nobody in the office has opened yet, unassigned issues and issues fixed and waiting to be checked.',
       'Open a project to read "Latest from site": each trade\'s newest site update from the last fortnight, in the engineer\'s own words, with what else it raised.',
-      'Open a report and "Acknowledge" it once you have read it. That is the only thing that marks it read; receipt and delivery do not.',
+      'Opening a report marks it "Seen" with your name and the time, and the engineer sees "Seen by the office" on it. There is nothing to press. Receipt and delivery do not count, and nor does opening a report you wrote yourself.',
       'A report\'s signature line says whether it was drawn or typed. A typed signature shows the statement the person ticked and who was signed in when it was sent.',
       'Give each new issue an owner and a target date, from the desk or with "Assign" on the issue itself. Overdue issues and work done without an instruction are listed under "Also needs attention".',
       'Chase companies with late work from Issues by company, and log each chase there with what they promised, so the next person to ring them knows.',

@@ -50,7 +50,7 @@ try {
       const page=await desk.newPage();page.on('pageerror',e=>errors.push(e.message));
       await page.goto(`${base}/office#/projects`);await group(page,'verify').waitFor();
       const label=`${colorScheme} ${width}px`;
-      assert.deepEqual(await page.locator('.act h4').allTextContents(),['New reports','Not yet read','Unassigned issues','Fixed, to check'],`${label}: four groups in order`);checks++;
+      assert.deepEqual(await page.locator('.act h4').allTextContents(),['New reports','Not seen yet','Unassigned issues','Fixed, to check'],`${label}: four groups in order`);checks++;
       assert.deepEqual([await count(page,'new'),await count(page,'notAck'),await count(page,'unassigned'),await count(page,'verify')],[2,2,1,1],`${label}: each group's count`);checks++;
       assert.equal(await group(page,'notAck').locator('.rmenu > div').first().locator('b').textContent().then(t=>t.includes('Site Engineer')),true,`${label}: unread rows name the engineer`);checks++;
       assert.equal(await group(page,'unassigned').getByText('Missing fire stopping').count(),1,`${label}: the unassigned issue is listed`);checks++;
@@ -72,23 +72,32 @@ try {
   assert.match(await onChip(page),/^New · 2$/,'new reports open the Inbox on New');checks++;
   assert.equal(await page.locator('table.reg tbody tr.clickable').count(),2,'the Inbox lists the two new reports');checks++;
   await open('notAck');await page.getByRole('heading',{name:'Inbox'}).waitFor();
-  assert.match(await onChip(page),/^Not yet read · 2$/,'not yet read opens the Inbox on Not yet read');checks++;
+  assert.match(await onChip(page),/^Not seen yet · 2$/,'not seen yet opens the Inbox on Not seen yet');checks++;
   await page.locator('table.reg tbody tr.clickable').first().click();await page.getByText('Loading report').waitFor({state:'detached'});
-  assert.match(await onChip(page),/^Not yet read/,'opening a report keeps the filter');checks++;
+  assert.match(await onChip(page),/^Not seen yet/,'opening a report keeps the filter');checks++;
+  // Opening it is what marks it seen: no button, and the count follows.
+  await page.locator('.stages [data-stage="read"]').getByText('Seen by the office').waitFor();
+  assert.match(await page.locator('.stages [data-stage="read"] small').textContent(),/Opened by Office Manager/,'the reader says who opened it');checks++;
+  await page.waitForFunction(()=>/^Not seen yet · 1$/.test(document.querySelector('.filters .chip.on')?.textContent??''),null,{timeout:20000}).catch(()=>{});
+  assert.match(await onChip(page),/^Not seen yet · 1$/,'opening a report takes it out of Not seen yet');checks++;
+  assert.equal(await page.getByRole('button',{name:'Acknowledge'}).count(),0,'there is no Acknowledge button');checks++;
   await open('unassigned');await page.getByRole('heading',{name:'Issues'}).waitFor();
   assert.match(await onChip(page),/^Unassigned · 1$/,'unassigned opens Issues on Unassigned');checks++;
   await open('verify');await page.getByRole('heading',{name:'Issues'}).waitFor();
   assert.match(await onChip(page),/^Fixed, to check · 1$/,'fixed, to check opens Issues on Fixed, to check');checks++;
-  // Acknowledging from the group takes the report out of it.
+  // Opening the other one from the group takes it out of the group too.
   await page.goto(`${base}/office#/projects`);await group(page,'notAck').waitFor();
-  await group(page,'notAck').getByRole('button',{name:'Acknowledge'}).first().click();
-  await page.locator('.ws-dialog').getByRole('button',{name:'Acknowledge'}).click();
-  await page.waitForFunction(()=>document.querySelector('.act[data-group="notAck"] .act-n')?.textContent==='1');
-  assert.equal(await count(page,'notAck'),1,'acknowledging takes the report out of Not yet read');checks++;
+  assert.equal(await count(page,'notAck'),1,'one report is still not seen');checks++;
+  assert.equal(await group(page,'notAck').getByRole('button').count(),0,'its row is a link, with no button');checks++;
+  await group(page,'notAck').locator('a.rt').first().click();
+  await page.locator('.stages [data-stage="read"]').getByText('Seen by the office').waitFor();
+  await page.goto(`${base}/office#/projects`);await group(page,'notAck').waitFor();
+  await page.waitForFunction(()=>document.querySelector('.act[data-group="notAck"] .act-n')?.textContent==='0');
+  assert.equal(await count(page,'notAck'),0,'opening it takes the report out of Not seen yet');checks++;
   assert.equal(await count(page,'new'),2,'it stays among the new reports');checks++;
   await ctx.close();
   assert.deepEqual(errors,[]);checks++;
-  console.log(`Passed ${checks} office action checks (1440px and 1200px, light and dark; filtered lists; acknowledge).`);
+  console.log(`Passed ${checks} office action checks (1440px and 1200px, light and dark; filtered lists; opening marks seen).`);
 } finally {
   await browser?.close();
   server.kill();if(server.exitCode===null)await once(server,'exit');

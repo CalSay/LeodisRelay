@@ -123,7 +123,7 @@ try {
     await page.getByRole('link',{name:/How RELAY works and what’s new/}).click();await page.waitForURL(/\/help\?/);await page.locator('.help-new li').first().waitFor();
     check(new URL(page.url()).searchParams.get('for')==='office','manager: opens on the office tab');
     const text=await page.locator('main').innerText();
-    check(text.includes('Your day in the office')&&text.includes('Acknowledge')&&text.includes('Site coverage'),'manager: the office guide and office links');
+    check(text.includes('Your day in the office')&&text.includes('Seen by the office')&&text.includes('Site coverage'),'manager: the office guide and office links');
     if(screenshot)await page.screenshot({path:join(screenshot,'help-office-dark-1440.png'),fullPage:true});
     await page.locator('.help-links').getByRole('link',{name:/^Issues by company/}).click();await page.waitForURL(/\/companies\?/);
     await page.getByRole('link',{name:'← Back to Help'}).click();await page.waitForURL(/\/help\?for=office/);

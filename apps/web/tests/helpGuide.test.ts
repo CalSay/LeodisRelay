@@ -80,7 +80,7 @@ test('the words Help explains are the words the screens use', () => {
   const words = new Set(GLOSSARY.flatMap(g => g.terms.map(t => t.term)));
   for (const label of Object.values(ISSUE_WORK)) assert.ok(words.has(label), `issue status "${label}" is explained`);
   for (const a of CHECK_ANSWERS) assert.ok(words.has(a.label), `check answer "${a.label}" is explained`);
-  for (const w of ['Received', 'Read', 'Awaiting instruction', 'Instructed', 'Declined', 'As reported']) assert.ok(words.has(w), w);
+  for (const w of ['Received', 'Seen', 'Awaiting instruction', 'Instructed', 'Declined', 'As reported']) assert.ok(words.has(w), w);
 });
 
 test('dates say the day, and the year only when it is not this year', () => {

@@ -27,7 +27,8 @@ test('received, PDF, delivery and read are separate steps, in order, with review
   assert.equal(of(queued,'received')!.at,at);
   assert.equal(of(queued,'pdf')!.label,'Being prepared');
   assert.equal(of(queued,'delivery')!.label,'Waiting for the PDF');
-  assert.equal(of(queued,'read')!.label,'Not yet read');
+  assert.equal(of(queued,'read')!.label,'Not seen yet');
+  assert.equal(of(queued,'read')!.title,'Seen');
 });
 
 test('a ready PDF is not delivery, and a local outbox file is never an email',() => {
@@ -75,7 +76,9 @@ test('SharePoint projects are filed, not emailed',() => {
 test('read is its own step, apart from review and delivery',() => {
   const read = stages({delivery:'outbox',review:'approved',reviewedBy:'Tom',acknowledged:{by:'Office Manager',at}});
   assert.equal(of(read,'review')!.label,'Approved');
-  assert.equal(of(read,'read')!.label,'Read by Office Manager');
+  assert.equal(of(read,'read')!.label,'Seen by the office');
+  assert.equal(of(read,'read')!.detail,'Opened by Office Manager','who opened it is kept for the office');
+  assert.equal(of(stages({acknowledged:{by:'Tom',at,note:'Chasing'}}),'read')!.detail,'Opened by Tom: Chasing','an older note still shows');
   assert.equal(of(read,'delivery')!.label,'Not emailed');
 });
 

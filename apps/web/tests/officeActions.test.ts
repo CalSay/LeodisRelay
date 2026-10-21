@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isNewReport, officeActions, previousWorkingDay, sinceWords } from '../lib/officeActions';
+import { isNewReport, officeActions, opensAsSeen, previousWorkingDay, sinceWords } from '../lib/officeActions';
 import type { Issue, ReportSummary } from '../lib/types';
 
 const report = (id: string, over: Partial<ReportSummary>): ReportSummary => ({ id, state: 'submitted', projectId: 'proj-a', reference: `A-SPR-${id}`, author: 'Sam', serverAcknowledgedAt: '2026-10-20T09:00:00Z', ...over }) as ReportSummary;
@@ -54,4 +54,15 @@ test('an unassigned issue waiting for verification counts in both groups', () =>
   const a = officeActions([], [issue('x', { work: 'awaiting_verification', owner: ' ' })], '2026-10-20');
   assert.equal(a.unassigned.length, 1);
   assert.equal(a.verify.length, 1);
+});
+
+test('opening a sent report marks it seen only for the office, never for its author', () => {
+  const sent = report('1', { authorId: 'sam' });
+  const manager = { id: 'pat', role: 'Manager' }, admin = { id: 'ada', role: 'Admin' };
+  assert.equal(opensAsSeen(sent, manager), true);
+  assert.equal(opensAsSeen(sent, admin), true);
+  assert.equal(opensAsSeen(sent, { id: 'eng', role: 'Engineer' }), false, 'an engineer reading it is not the office');
+  assert.equal(opensAsSeen(sent, { id: 'sam', role: 'Manager' }), false, 'nor is the author, even in the office');
+  assert.equal(opensAsSeen(report('2', { state: 'draft' }), manager), false, 'a draft is never seen');
+  assert.equal(opensAsSeen(report('3', { acknowledged: { by: 'Pat', at: '2026-10-20T10:00:00Z' } }), admin), false, 'once is enough');
 });

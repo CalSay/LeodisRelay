@@ -6,6 +6,7 @@ import { getReport, getVariation } from '@/lib/api';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
 import { answerLabel, reportTypeOf } from '@/lib/reportTypes';
 import { SubmissionStages } from '@/components/SubmissionStages';
+import { useMarkSeen } from '@/components/useMarkSeen';
 import { useFeatures } from '@/components/FeaturesContext';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { officeActions, sinceWords } from '@/lib/officeActions';
@@ -189,7 +190,7 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
     <ActionGroups groups={groups} />
     <SecH right={<a href="#/issues">All →</a>}>Also needs attention</SecH>
     <AttentionList ctx={ctx} limit={6} skipActions />
-    <p className="rowsub" style={{ marginTop: 16 }}>A report is <b>received</b> when the server has it and on file from then on. The email to the project manager is a notification that it came in, and <b>read</b> means someone in the office acknowledged it. Choose a project to drill in.</p>
+    <p className="rowsub" style={{ marginTop: 16 }}>A report is <b>received</b> when the server has it and on file from then on. The email to the project manager is a notification that it came in, and <b>seen</b> means someone in the office has opened it: opening a report is all it takes. Choose a project to drill in.</p>
   </div>;
 }
 
@@ -221,8 +222,8 @@ function ProjectGlance({ ctx }: { ctx: Ctx }) {
         const s = ctx.statOf(p.id); if (!s) return null;
         const v = lastVisitWords(s.standing, day);
         const exposed = s.exposedVariations.length, unpriced = s.unpricedVariations.length;
-        // The same count as the project register's Needs action chip; reports not yet read are said beside it.
-        const action = s.needsAction + siteItems(ctx, s).length, unread = s.reports.filter(notAcknowledged).length;
+        // The same count as the project register's Needs action chip; reports nobody in the office has opened are said beside it.
+        const action = s.needsAction + siteItems(ctx, s).length, unseen = s.reports.filter(notAcknowledged).length;
         return <li key={p.id}><a className="glance-row" href={`#/projects/${p.id}`}>
           <span className="glance-name"><b>{p.projectName}</b><span className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager}</span></span>
           <dl className="glance-cells">
@@ -230,7 +231,7 @@ function ProjectGlance({ ctx }: { ctx: Ctx }) {
             <div><dt>This week</dt><dd>{count(s.standing.thisWeek, 'visit')}<small>{s.standing.tradesThisWeek.join(', ') || 'nobody yet'}</small></dd></div>
             <div><dt>Open issues</dt><dd className={s.overdue.length ? 'late' : ''}>{s.active.length}<small>{s.overdue.length ? `${s.overdue.length} overdue` : 'none overdue'}</small></dd></div>
             <div><dt>Variations waiting</dt><dd className={exposed ? 'late' : unpriced ? 'soon' : ''}>{s.pendingVariations.length}<small>{exposed ? `${exposed} done, not instructed` : unpriced ? `${unpriced} to price` : s.pendingVariations.length ? 'priced, with the client' : 'none waiting'}</small></dd></div>
-            <div><dt>Needs action</dt><dd className={action ? 'soon' : ''}>{action}<small>{action ? 'for the office' : 'nothing for the office'}{unread ? ` · ${count(unread, 'report')} not read` : ''}</small></dd></div>
+            <div><dt>Needs action</dt><dd className={action ? 'soon' : ''}>{action}<small>{action ? 'for the office' : 'nothing for the office'}{unseen ? ` · ${count(unseen, 'report')} not seen yet` : ''}</small></dd></div>
           </dl>
           <span className="arrow" aria-hidden="true">›</span>
         </a></li>;
@@ -283,9 +284,10 @@ function actionGroups(ctx: Ctx): ActionGroup[] {
   const issueRow = (i: Issue, sub: string, action?: ReactNode) => <div key={i.id}><a className="rt" href={`#/projects/${i.projectId}/issue/${i.id}`}><b>{i.description}</b><span>{project(i.projectId)} · {sub}</span></a>{action}</div>;
   return [
     { key: 'new', title: 'New reports', sub: `Received ${sinceWords(a.since, ctx.day)}`, n: a.newReports.length, tone: '', all: '#/inbox/show/new', empty: `No reports received ${sinceWords(a.since, ctx.day)}.`,
-      rows: a.newReports.slice(0, 4).map(r => reportRow(r, r.acknowledged ? <Tag label="Read" cls="tag-ok" /> : <DeliveryTag r={r} />)) },
-    { key: 'notAck', title: 'Not yet read', sub: 'Received, nobody has acknowledged it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: anyReports ? 'Every report has been read.' : 'No reports received yet.',
-      rows: a.notRead.slice(0, 4).map(r => reportRow(r, <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'acknowledge', report: r })}>Acknowledge</BtnQ>)) },
+      rows: a.newReports.slice(0, 4).map(r => reportRow(r, r.acknowledged ? <Tag label="Seen" cls="tag-ok" /> : <DeliveryTag r={r} />)) },
+    // Opening a report marks it seen, so each row is a link and nothing more.
+    { key: 'notAck', title: 'Not seen yet', sub: 'Received, nobody in the office has opened it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: anyReports ? 'Every report has been seen.' : 'No reports received yet.',
+      rows: a.notRead.slice(0, 4).map(r => reportRow(r)) },
     { key: 'unassigned', title: 'Unassigned issues', sub: 'Open, nobody owns the action', n: a.unassigned.length, tone: 'soon', all: '#/issues/show/unassigned', empty: anyOpen ? 'Every open issue has an owner.' : 'No open issues.',
       rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)) },
     { key: 'verify', title: 'Fixed, to check', sub: 'Put forward as fixed; someone else checks it', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be checked.',
@@ -312,7 +314,7 @@ function ActionGroups({ groups }: { groups: ActionGroup[] }) {
 
 function LatestReports({ ctx, reports }: { ctx: Ctx; reports: ReportSummary[] }) {
   return <table className="reg tight"><thead><tr><th>Ref</th><th>Engineer</th><th>Received</th><th>Found</th><th>Status</th></tr></thead><tbody>
-    {reports.length ? reports.map(r => <tr key={r.id} className="clickable" onClick={() => ctx.go(`#/projects/${r.projectId}/report/${r.id}`)}><td><span className="ref">{shortRef(r.reference)}</span></td><td>{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due">{r.serverAcknowledgedAt ? fmtWhen(r.serverAcknowledgedAt) : '—'}</td><td><Found r={r} /></td><td>{r.review === 'pending' ? <Tag label="To review" cls="tag-caution" /> : r.review === 'returned' ? <Tag label="Returned" cls="tag-alert" /> : r.acknowledged ? <Tag label="Read" cls="tag-ok" /> : <DeliveryTag r={r} />}</td></tr>) : <tr><td colSpan={5} className="empty">No reports received yet.</td></tr>}
+    {reports.length ? reports.map(r => <tr key={r.id} className="clickable" onClick={() => ctx.go(`#/projects/${r.projectId}/report/${r.id}`)}><td><span className="ref">{shortRef(r.reference)}</span></td><td>{r.author}<div className="rowsub">{r.authorTrade ?? 'Trade not recorded'}</div></td><td className="due">{r.serverAcknowledgedAt ? fmtWhen(r.serverAcknowledgedAt) : '—'}</td><td><Found r={r} /></td><td>{r.review === 'pending' ? <Tag label="To review" cls="tag-caution" /> : r.review === 'returned' ? <Tag label="Returned" cls="tag-alert" /> : r.acknowledged ? <Tag label="Seen" cls="tag-ok" /> : <DeliveryTag r={r} />}</td></tr>) : <tr><td colSpan={5} className="empty">No reports received yet.</td></tr>}
   </tbody></table>;
 }
 
@@ -419,6 +421,8 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
     getReport(id).then(r => { if (stopped) return; if (r && r.state === 'submitted') { setReport(r); setLoadedId(id); } else setError(r ? 'This is a draft. Its contents are private to the author until it is sent.' : 'That report could not be found.'); }).catch(e => { if (!stopped) setError(e.message); });
     return () => { stopped = true; };
   }, [id, ctx.snap?.loadedAt]);
+  // Opening it here is what tells the engineer the office has seen it.
+  useMarkSeen(report && loadedId === id ? report : null, seen => { setReport(r => r && r.id === seen.id ? { ...r, acknowledged: seen.acknowledged } : r); void ctx.refresh(); });
   if (error && loadedId !== id) return <div className="sheet"><div className="empty">{error}</div></div>;
   if (!report || loadedId !== id) return <div className="sheet"><div className="loading" style={{ minHeight: 160 }}>Loading report</div></div>;
   const project = ctx.projects.find(p => p.id === report.projectId);
@@ -444,8 +448,7 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
   return <div className="sheet">
     <div className="sheet-title"><div><div className="crumbs"><a href={crumbsHome ?? `#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>{reportTypeOf(report).document}</div><h3>Visit {fmtDate(report.visitDate)}</h3>{report.inspected && reportTypeOf(report).inspects && <div className="rowsub sheet-inspected">{reportTypeOf(report).inspects!.label}: <b>{report.inspected}</b></div>}<div className="rowsub"><span className="ref">{report.reference}</span><span className="sep">/</span>{report.author}{report.authorTrade ? ` · ${report.authorTrade}` : ''}<span className="sep">/</span>Rev {report.revision}</div></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/preview`, officeReturn(ctx))}>Full report</Link><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/pdf`, officeReturn(ctx))}>PDF</Link>
-        {canReview ? <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'review', report: summary })}>Review</Btn>
-          : !report.acknowledged ? <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'acknowledge', report: summary })}>Acknowledge</Btn> : null}
+        {canReview && <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'review', report: summary })}>Review</Btn>}
         {ctx.me.admin && report.sharepoint?.status === 'failed' && <Btn className="btn-sm" disabled={retryingSharePoint} onClick={() => void retrySharePoint()}>{retryingSharePoint ? 'Queuing…' : 'Retry SharePoint'}</Btn>}</div></div>
     <SubmissionStages report={report} tagClass={t => `tag ${toneTag(t)}`} when={fmtWhen} />
     {sharePointRetry && <div className="note"><span>{sharePointRetry}</span></div>}
