@@ -4,6 +4,80 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-21 — Engineer's end of week: "Yours" on the Issues tab
+
+- Why: a walk of an engineer's Friday afternoon on main at 390px, light and
+  dark (three sites, three weeks of their own reports, defects for their trade
+  and others', one sent back by the office with a question, two unsent drafts).
+  My week, Unfinished reports and the Weekly summary did their job: both unsent
+  drafts were called out. The hunt was "what is still mine to do on each
+  site?": Issues opened on one project with every trade's open issues mixed in;
+  seeing every site meant "All projects" in a dropdown (two taps), then about
+  2,800px of every trade's issues, each site with its own Open / Reported by me
+  / All buttons; and Back from an issue reset the dropdown to "This project",
+  so the next site's issue had gone. Putting two issues on two sites forward as
+  fixed took 11 taps from home. Decided without asking Cal (his autonomy
+  message, and his 07:02 ask for an easy system). Not a `docs/tasks.json` task;
+  no status changed.
+- Now (`EngineerWorkspace.tsx`, `EngineerIssueList.tsx`, `lib/yourIssues.ts`):
+  the Issues tab opens on "Yours": on every site the engineer works on, the
+  open issues they raised, added to, or that are for their trade, a section
+  per site (the one they are on first) with "N to do". Sent back or written on
+  by the office comes first, marked "Sent back" with what the office wrote (the
+  #110 two-line word); then newest first. Put forward as fixed waits on the
+  office, so it leaves the list and the site says "N put forward as fixed,
+  waiting for the office to check". One row of buttons for every site: Yours /
+  Open / All issues ("Reported by me" folded into Yours); the project dropdown
+  shows only for Open and All. The choice is kept in the address (`show`,
+  `scope`), so Back from an issue returns to the same list. Cards are the #94
+  short cards.
+- Trade: RELAY records the company fixing an issue, not a person, so trade is
+  the nearest thing to "assigned to me". An engineer with no trade set still
+  gets what they raised or added to. Nothing open says so ("Nothing open for
+  you on any of your N sites") with one tap to "See all issues".
+- After: two issues on two sites put forward in 7 taps from home (was 11);
+  the Yours page in the check's data is 1,791px at 390px, against 2,817px for
+  every trade on all projects.
+- Checks: typecheck, `npm test` (146 + 518; new `yourIssues.test.ts`), build.
+  New `scripts/verify-issues-yours.mjs` (43 checks: 390px light whole flow
+  with tap count, 390px and 1440px dark, no trade, nothing open, Open/All keep
+  the project choice after Back, 48px targets, no sideways scroll). Updated for
+  the new default: `verify-simpler-issue-list` (Yours replaces Reported by me),
+  `verify-engineer-day`, `verify-engineer-layout` and `verify-day-walkthrough`
+  (press Open, or `show=open`, where they check every trade),
+  `verify-first-time-use` (Yours empty message, and Open's).
+  Also run and passing: verify-navigation, verify-engineer-nav,
+  verify-came-back-first, verify-came-back-to-update, verify-simpler-issue-page,
+  verify-snag-list, verify-help, verify-accessibility, verify-role-access,
+  verify-search, verify-signature-reload, verify-my-week, verify-office-words,
+  verify-issue-trend, verify-office-actions, verify-review-queue,
+  verify-weekly-summary, verify-busy-projects.
+- The home's "Site issues" row counts every trade's open issues on the
+  project, so it opens "Open" on that project; the Issues button opens Yours.
+- Speed: the first build loaded every trade's issues on every site for Yours,
+  and `verify-busy-projects` caught it (Engineer issues 790 KB, budget 400).
+  Yours now asks the server for the engineer's own open issues only
+  (`GET /api/issues?only=yours`, same `isYours` rule, access-checked per
+  project): 130 KB, 2.1 s against a 4.5 s budget.
+- Fresh-context review found four things, all fixed: the old one-project list
+  could flash under Yours when tapping Issues again (the list now clears
+  whenever its source changes: Yours, one project or all projects); the
+  home's "Site issues" row said "every trade" but opened Yours (it now opens
+  Open); site headings read "Tetley Hall3 to do" to a screen reader (space
+  added); the heading mentioned a trade for engineers with none, and the empty
+  state's "See all issues" showed one project (now every project).
+  A second review found two more, fixed: the defect receipt's "View project
+  issues" opened Yours (it now opens Open on the project, and
+  verify-engineer-layout checks it), and the empty Yours line mentioned a
+  trade for engineers with none.
+- Help: "What's new" line `issues-yours`.
+- Screenshots: `ui-review/end-of-week-pass/` in project files.
+- Not verified: real phones, screen readers, an engineer working across
+  trades (RELAY keeps one trade per person).
+- Seen, not changed: My week's "Defects flagged 0" counts only defects flagged
+  on their own, so a week of defects raised from site updates reads as none;
+  My week shows "Put forward as fixed" for an issue the office has since sent
+  back or closed. Both are small My week wording jobs.
 ## 2026-10-21 — Last week's summary from the office overview
 
 - Why: walked an office manager's Monday look back at last week on main

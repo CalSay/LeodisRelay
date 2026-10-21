@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'issues-yours', added: '2026-10-21', audience: 'site', title: 'Your issues on every site, in one list',
+    text: 'The Issues tab now opens on "Yours": the open issues you raised or added to, or that are for your trade, on every site you work on, a section per site with how many are still to do. Anything the office sent back comes first, with what they wrote. Once you put one forward as fixed it leaves the list and the site says how many are waiting for the office to check. "Open" and "All issues" still show every trade on a project, and after you open an issue, Back brings you to the same list. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open your issues', href: '/engineer?view=issues' } },
   { id: 'office-last-week-summary', added: '2026-10-21', audience: 'office', title: 'Last week\'s summary from the office overview',
     text: 'Each project in "Where each project stands" now has "Last week\'s summary" under its name. It opens that project\'s Weekly summary on last Monday to Sunday, ready for a Monday look back or to print for the client. Pick another project at the top of the summary and it keeps the same week; Back returns to the overview. The summary\'s heading says "last week" beside the dates, so it is not mistaken for this week.',
     link: { label: 'Open the office overview', href: '/office' } },

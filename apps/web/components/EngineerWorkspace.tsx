@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ApiError, cameBack, createReport, getReport, listReports, projectIssues } from '@/lib/api';
+import { ApiError, cameBack, createReport, getReport, listReports, projectIssues, yourOpenIssues } from '@/lib/api';
 import { CAME_BACK_ROWS, issueWord, raisedIssue, reportWord, variationWord, waitingOnYouFirst, issueReopened, type OfficeWord } from '@/lib/cameBack';
 import { listHeld, type HeldDraft } from '@/lib/localDraft';
 import { offlineProjectsKey } from '@/lib/offlineStart';
@@ -15,7 +15,8 @@ import { usePrincipal } from './PrincipalContext';
 import { waitingToSend } from '@/lib/sendOnSignal';
 import { SafetyActionsRow } from './SafetyActionsRow';
 import { ownsReport } from '@/lib/auth/access';
-import { EngineerIssueList } from './EngineerIssueList';
+import { EngineerIssueList, WordLine, isOpen } from './EngineerIssueList';
+import { yourIssues } from '@/lib/yourIssues';
 import { IndividualDefect } from './IndividualDefect';
 import { SinceLastVisit } from './SinceLastVisit';
 import { SiteNotesRow } from './SiteNotesRow';
@@ -73,13 +74,17 @@ const fmtVisit = (day: string) => dayShort(day) || day;
 const fmtDay = (iso?: string) => dayShort(iso);
 
 type View = 'home' | 'projects' | 'issues' | 'reports' | 'defect';
+/**
+ * Which issues the Issues tab shows: "Yours" (every site, what is the engineer's
+ * to see to, lib/yourIssues.ts), or a project's open or all issues. Kept in the
+ * address with the project choice, so Back from an issue comes back to the same list.
+ */
+type IssueShow = 'yours' | 'open' | 'all';
+const ISSUE_SHOWS: [IssueShow, string][] = [['yours','Yours'],['open','Open'],['all','All issues']];
+const showOf = (value?:string):IssueShow => value === 'open' || value === 'all' ? value : 'yours';
 const viewOf = (value?:string):View => ['projects','issues','reports','defect'].includes(value ?? '') ? value as View : 'home';
 const VIEW_TITLES: Record<View, string> = { home: 'Site', projects: 'Projects', issues: 'Issues', reports: 'Reports', defect: 'Flag a defect' };
 interface Back { at: string; key: string; href: string; title: string; sub: string; tags: ReactNode; late?: boolean; word?: OfficeWord; sentBack?: boolean }
-/** What someone wrote back, who and when, in a line or two; the record's own page has the rest. */
-export function WordLine({word}:{word:OfficeWord}) {
-  return <p className="eng-word"><span>{word.by}{word.at ? ` wrote on ${fmtDay(word.at)}` : ' wrote'}:</span> {word.note}</p>;
-}
 
 /** Where an unfinished report stands, in words an engineer can act on. */
 function UnfinishedTags({r,waiting=false}:{r:UnfinishedReport;waiting?:boolean}) {
@@ -101,15 +106,19 @@ const navIcons = {
   search: navIcon(<><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></>),
 };
 
-export function EngineerWorkspace({projects,drafts,initialProject,initialView}: {
-  projects:FixtureProject[]; drafts:ReportSummary[]; initialProject?:string; initialView?:string;
+export function EngineerWorkspace({projects,drafts,initialProject,initialView,initialShow,initialScope}: {
+  projects:FixtureProject[]; drafts:ReportSummary[]; initialProject?:string; initialView?:string; initialShow?:string; initialScope?:string;
 }) {
   const principal = usePrincipal();
   const router = useRouter();
   const [projectId,setProjectId] = useState(projects.find(p => p.id === initialProject)?.id ?? drafts[0]?.projectId ?? projects[0]?.id ?? '');
   const [view,setView] = useState<View>(viewOf(initialView));
   const [ready,setReady] = useState(false);
-  const [scope,setScope] = useState('current');
+  const [scope,setScope] = useState(initialScope === 'all' ? 'all' : 'current');
+  const [show,setShow] = useState<IssueShow>(showOf(initialShow));
+  // Where the list comes from: the engineer's own on every site, every project, or this one.
+  const sourceOf = (s: IssueShow, sc: string) => s === 'yours' ? 'yours' : sc === 'all' ? 'all' : 'one';
+  const issueSource = sourceOf(show, scope);
   const [reports,setReports] = useState<ReportSummary[] | null>(null);
   const [issues,setIssues] = useState<Issue[] | null>(null);
   // `failed`: the office could not be asked (no signal), so there are no counts to show, not zero.
@@ -140,7 +149,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   const inspections = CHECKLIST_TYPES.map(type => ({ type, draft: ownDrafts.find(r => reportTypeOf(r).id === type.id) }))
     .filter(({ type, draft }) => safetyRecords || draft || !isSafetyRecordType(type.id));
   const preference = `relay-project:${principal?.id}`;
-  const engineerReturn = (target: View = 'home') => `/engineer?project=${encodeURIComponent(projectId)}${target === 'home' ? '' : `&view=${target}`}`;
+  const engineerReturn = (target: View = 'home') => `/engineer?project=${encodeURIComponent(projectId)}${target === 'home' ? '' : `&view=${target}`}${target === 'issues' ? `${show === 'yours' ? '' : `&show=${show}`}${show !== 'yours' && scope === 'all' ? '&scope=all' : ''}` : ''}`;
 
   // `firstChoice`: a first day on this phone, with more than one site and nothing
   // started, so the engineer picks their site rather than being put on the first
@@ -201,9 +210,10 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
       }).catch(e => {if(!cancelled)setError(e instanceof Error?e.message:'Unable to load reports.');});
     }
     if(view === 'issues') {
+      // "Yours" asks the server for this engineer's issues only, so a busy site's other trades are not downloaded.
       const targets = scope === 'all' ? projects : projects.filter(p => p.id === projectId);
-      Promise.all(targets.map(p => projectIssues(p.id))).then(groups => {
-        if(!cancelled)setIssues(groups.flat());
+      (show === 'yours' ? yourOpenIssues() : Promise.all(targets.map(p => projectIssues(p.id))).then(groups => groups.flat())).then(all => {
+        if(!cancelled)setIssues(all);
       }).catch(e => {if(!cancelled)setError(e instanceof Error?e.message:'Unable to load issues.');});
     }
     // What came back from the office on the things this engineer raised, in the office's words.
@@ -222,9 +232,18 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
       }).catch(e => { if(!cancelled) setBack({ rows:[], open:0, reports:0, failed:true, offline:e instanceof ApiError && e.offline }); });
     }
     return () => {cancelled=true;};
-  },[view,projectId,scope,offset,retry,ready,projects,principal]);
+  },[view,projectId,issueSource,offset,retry,ready,projects,principal]);
 
-  function navigate(to:View) {setView(to);setOffset(0);setError('');if(to==='issues')setScope('current');}
+  // A change between one project and every site clears the list at once, so it never shows the old one while the new one loads.
+  function pickIssues(nextShow:IssueShow, nextScope = scope) {
+    if (sourceOf(nextShow, nextScope) !== issueSource) setIssues(null);
+    setShow(nextShow);setScope(nextScope);
+  }
+  // The Issues tab opens on Yours; the home's "Site issues" row, which counts every trade on this project, opens Open.
+  function navigate(to:View, issueShow:IssueShow = 'yours') {
+    if (to==='issues' && sourceOf(issueShow, 'current') !== issueSource) setIssues(null);
+    setView(to);setOffset(0);setError('');if(to==='issues'){setScope('current');setShow(issueShow);}
+  }
   function selectProject(id:string) {
     setFirstChoice(false);setProjectId(id);setOffset(0);setScope('current');setView('home');
     try{localStorage.setItem(preference,id);}catch{}
@@ -296,7 +315,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
           <section aria-labelledby="eng-project-title">
             <div className="eng-section-title"><h2 id="eng-project-title">This project</h2><span className="r">{back && !back.failed ? `${back.open} open issue${back.open===1?'':'s'}` : ''}</span></div>
             <div className="eng-list">
-              <button type="button" className="eng-row" onClick={()=>navigate('issues')}><div className="main"><b>Site issues</b><span>{back && !back.failed ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
+              <button type="button" className="eng-row" onClick={()=>navigate('issues','open')}><div className="main"><b>Site issues</b><span>{back && !back.failed ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
               <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back && !back.failed ? `${back.reports} on file · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
               <SiteNotesRow key={projectId} projectId={projectId} href={`/site-notes?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
               {projectPage('/photos','Photographs','Every photograph, by location')}
@@ -331,10 +350,36 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
       </>}
       {view==='projects' && <>{firstChoice ? <div className="eng-heading"><p className="lbl">Welcome to RELAY</p><h1>Which site are you on?</h1><p>Tap your site. RELAY remembers it on this phone, and you can change it any time under Projects.</p></div> : <div className="eng-heading"><h1>Choose your project</h1><p>Pick the site you are on. Anything you have started stays with its own project.</p></div>}<div className="eng-project-groups">{projectStatusGroups(projects).map(group=><section key={group.status} className={`eng-project-group eng-project-group-${group.tone}`}><div className="eng-section-title"><h2>{group.label}</h2><span className="r">{group.projects.length}</span></div><div className="eng-project-list">{group.projects.map(p=><button key={p.id} className="eng-panel" onClick={()=>selectProject(p.id)} aria-pressed={p.id===projectId && !firstChoice}><strong>{p.projectName}</strong><small>{p.projectNumber} · {p.projectManager}</small><span>{p.id===projectId && !firstChoice?'Current project':'Select project →'}</span></button>)}</div></section>)}</div></>}
       {view==='reports' && <><div className="eng-heading"><h1>Reports</h1><p>Your drafts and the reports every trade has sent on this project.</p></div><div className="eng-actions"><button onClick={()=>void startReport('update')} disabled={creating}>{creating?'Starting…':'Start another site update'}</button></div><nav className="eng-more" aria-label="More from these reports"><span className="lbl">Also on this project</span><div><Link className="eng-link-button" href={`/diary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Site diary</Link><Link className="eng-link-button" href={`/weekly-summary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Weekly summary</Link><Link className="eng-link-button" href={`/photos?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Photographs</Link>{safetyRecords && <Link className="eng-link-button" href={`/safety-actions?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Safety actions</Link>}<Link className="eng-link-button" href={`/my-week?${new URLSearchParams({ returnTo: engineerReturn('reports') })}`}>My week</Link></div></nav>{reports===null ? !error && <p role="status">Loading reports…</p> : <section className="eng-panel">{reports.length ? reports.map(r=><Link className="eng-report-link" href={withViewReturn(`/reports/${r.id}`,engineerReturn('reports'))} key={r.id}><span><strong>{r.reference}</strong><small>{r.author} · {r.authorTrade ?? 'Trade not recorded'} · visit {fmtVisit(r.visitDate)}</small></span><span style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}><ReportTags r={r}/></span></Link>) : <p className="eng-empty">{offset ? 'No reports on this page.' : 'No reports yet on this project. Reports you and other trades send show here.'}</p>}</section>}<div className="btn-row">{offset>0 && <button onClick={()=>setOffset(Math.max(0,offset-50))}>Newer reports</button>}{next!==null && <button onClick={()=>setOffset(next)}>Older reports</button>}</div></>}
-      {view==='issues' && <><div className="eng-heading"><h1>Issues{scope==='all'?' · All projects':''}</h1><p>{scope==='all'?'Each issue group names its project.':'Issues on this project, from every trade.'}</p><div className="eng-actions"><button onClick={()=>navigate('defect')}>Flag a defect</button><Link className="eng-link-button" href={`/issues/snag-list?${new URLSearchParams({ project: projectId, ...(principal?.trade ? { trade: principal.trade } : {}), returnTo: engineerReturn('issues') })}`}>Snag list{principal?.trade ? ` · ${principal.trade}` : ''}</Link></div></div><div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Show<select id="eng-issue-scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="current">This project: {project.projectName}</option><option value="all">All projects</option></select></label></div>{issues===null ? !error && <p role="status">Loading issues…</p> : (scope==='all'?projects: [project]).map(p=><section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList issues={issues.filter(i=>i.projectId===p.id)} projectName={p.projectName} returnTo={engineerReturn('issues')}/></section>)}</>}
-      {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues')} returnTo={engineerReturn('issues')}/>}
+      {view==='issues' && <><div className="eng-heading"><h1>Issues{show!=='yours'&&scope==='all'?' · All projects':''}</h1><p>{show==='yours'?`On every site you work on: issues you raised or added to${principal?.trade ? `, or for your trade (${principal.trade})` : ''}, still to do.`:scope==='all'?'Each issue group names its project.':'Issues on this project, from every trade.'}</p><div className="eng-actions"><button onClick={()=>navigate('defect')}>Flag a defect</button><Link className="eng-link-button" href={`/issues/snag-list?${new URLSearchParams({ project: projectId, ...(principal?.trade ? { trade: principal.trade } : {}), returnTo: engineerReturn('issues') })}`}>Snag list{principal?.trade ? ` · ${principal.trade}` : ''}</Link></div></div>
+        <div className="eng-issue-tabs" role="group" aria-label="Which issues to show">{ISSUE_SHOWS.map(([id,label])=><button key={id} type="button" aria-pressed={show===id} onClick={()=>pickIssues(id)}>{label}</button>)}</div>
+        {show!=='yours' && <div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Show<select id="eng-issue-scope" value={scope} onChange={e=>pickIssues(show,e.target.value)}><option value="current">This project: {project.projectName}</option><option value="all">All projects</option></select></label></div>}
+        {issues===null ? !error && <p role="status">Loading issues…</p>
+          : show==='yours' ? <YourIssues projects={projects} issues={issues} projectId={projectId} returnTo={engineerReturn('issues')} onAll={()=>pickIssues('all','all')}/>
+          : (scope==='all'?projects:[project]).map(p=>{const here=issues.filter(i=>i.projectId===p.id);const rows=(show==='open'?here.filter(isOpen):here).map(issue=>({issue}));return <section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList rows={rows} empty={show==='open'?'No open issues on this project.':'No issues have been raised on this project.'} returnTo={engineerReturn('issues')}/></section>;})}</>}
+      {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues','open')} returnTo={engineerReturn('issues')}/>}
     </>}
   </main>;
+}
+
+/**
+ * "Yours" on the Issues tab: a section per site with something still to do for
+ * this engineer, the site they are on first. Put forward as fixed is counted, not
+ * listed, as it waits on the office. Never quietly empty: it says so, with one
+ * tap to every issue.
+ */
+function YourIssues({projects,issues,projectId,returnTo,onAll}:{projects:FixtureProject[];issues:Issue[];projectId:string;returnTo:string;onAll:()=>void}) {
+  const principal = usePrincipal();
+  if (!principal) return null;
+  const sites = [...projects].sort((a,b) => Number(b.id === projectId) - Number(a.id === projectId))
+    .map(p => ({ p, ...yourIssues(issues.filter(i => i.projectId === p.id), principal) }))
+    .filter(s => s.toDo.length || s.waiting);
+  const waitingLine = (n:number) => `${n} put forward as fixed, waiting for the office to check`;
+  if (!sites.length) return <section className="eng-panel eng-yours-empty"><p className="eng-help">Nothing open for you on {projects.length === 1 ? 'this site' : `any of your ${projects.length} sites`}. Issues you raise{principal.trade ? ', or that are for your trade,' : ''} show here until they are fixed.</p><button type="button" onClick={onAll}>See all issues</button></section>;
+  return <>{sites.map(({p,toDo,waiting}) => <section className="eng-panel" key={p.id} aria-labelledby={`yours-${p.id}`}>
+    <h2 id={`yours-${p.id}`}>{p.projectName}{' '}<span className="eng-yours-count">{toDo.length} to do</span></h2>
+    {waiting > 0 && <p className="eng-help eng-yours-waiting">{waitingLine(waiting)}</p>}
+    <EngineerIssueList rows={toDo} empty={waiting ? '' : 'Nothing left to do here.'} returnTo={returnTo}/>
+  </section>)}</>;
 }
 
 /**

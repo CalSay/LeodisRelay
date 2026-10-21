@@ -72,8 +72,11 @@ try {
   assert.equal((await context.request.get(base+`/api/reports/${own.id}`).then(r=>r.json())).state,'draft');
   await page.getByRole('button',{name:'View project issues',exact:true}).click();
   await page.locator(`a[href^="/issues/${individual[0].id}"]`).waitFor();
+  // The receipt promises the project's issue list, so it opens Open on this project, not Yours.
+  assert.equal(await page.getByRole('button',{name:'Open',exact:true}).getAttribute('aria-pressed'),'true');
   if(screenshot)await page.screenshot({path:join(screenshot,'issues-landscape.png'),fullPage:true});
   await page.getByRole('navigation',{name:'Site companion navigation'}).getByRole('button',{name:'Issues',exact:true}).click();
+  await page.getByRole('button',{name:'Open',exact:true}).click();
   await page.getByRole('link').filter({hasText:'Layout scope evidence'}).first().waitFor();
   assert.equal(await page.locator('a[href^="/issues/layout-issue-1"]').count(),0);
   // No dead "Assigned to me · Coming soon" button: owners are companies, not accounts.

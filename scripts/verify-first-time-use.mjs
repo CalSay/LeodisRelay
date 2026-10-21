@@ -34,7 +34,8 @@ const P='proj-011lme';
 const pages={
   Engineer:[
     {path:`/engineer?project=${P}`,has:['Start today’s site update','Nothing new from anyone else','Nothing on this project yet.','Start here'],not:[/new to you/i]},
-    {path:`/engineer?project=${P}&view=issues`,has:['No open issues on this project.']},
+    {path:`/engineer?project=${P}&view=issues`,has:['Nothing open for you on any of your']},
+    {path:`/engineer?project=${P}&view=issues&show=open`,has:['No open issues on this project.']},
     {path:`/engineer?project=${P}&view=reports`,has:['No reports yet on this project.']},
     {path:`/issues/snag-list?project=${P}`,has:['Nothing open on this project.']},
     {path:'/search?q=fire',has:['Nothing matches']},

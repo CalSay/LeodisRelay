@@ -134,7 +134,7 @@ try {
     ok(/Sent on its own, straight away/.test(defect)&&!/JPEG|Not submitted|remains recorded/.test(defect),`${scheme} defect: plain words, no file types`);
     await shot('defect');
     // Issues and an issue.
-    await goHome();await page.getByRole('button',{name:'Issues',exact:true}).first().click();await page.locator('#eng-issue-scope').waitFor();
+    await goHome();await page.getByRole('button',{name:'Issues',exact:true}).first().click();await page.getByRole('button',{name:'Open',exact:true}).click();await page.locator('#eng-issue-scope').waitFor();
     ok(!/Project scope|Showing issues only/.test(await main()),`${scheme} issues: no "Project scope"`);
     await page.locator('a.eng-issue-card').first().click();await page.waitForURL(/\/issues\/iss-/);
     await page.getByRole('button',{name:'Put forward as fixed'}).waitFor();
