@@ -142,10 +142,22 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
   const preference = `relay-project:${principal?.id}`;
   const engineerReturn = (target: View = 'home') => `/engineer?project=${encodeURIComponent(projectId)}${target === 'home' ? '' : `&view=${target}`}`;
 
+  // `firstChoice`: a first day on this phone, with more than one site and nothing
+  // started, so the engineer picks their site rather than being put on the first
+  // in the list, where their first update could go to the wrong site.
+  // Asked once, on arrival: a refresh after held work is sent must not bring it back.
+  // RELAY used on this phone before (it keeps the sites for no signal) or
+  // work waiting to send means it is not a first day.
+  const [firstChoice,setFirstChoice] = useState(false);
+  const arrived = useRef(false);
   useEffect(() => {
     if (!initialProject) {
-      try { const saved = localStorage.getItem(preference); if(projects.some(p => p.id === saved))setProjectId(saved!); } catch {}
+      let saved: string | null = null, usedBefore = false;
+      try { saved = localStorage.getItem(preference); usedBefore = !!principal && localStorage.getItem(offlineProjectsKey(principal.id)) !== null; } catch { usedBefore = true; }
+      if (projects.some(p => p.id === saved)) setProjectId(saved!);
+      else if (!arrived.current && !initialView && !drafts.length && projects.length > 1 && !usedBefore && !(principal && waitingToSend(principal.id).length)) { setFirstChoice(true); setView('projects'); }
     }
+    arrived.current = true;
     setReady(true);
   },[initialProject,preference,projects]);
   // The offline page offers these when a report is started with no signal (offlineStart.ts).
@@ -214,7 +226,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
 
   function navigate(to:View) {setView(to);setOffset(0);setError('');if(to==='issues')setScope('current');}
   function selectProject(id:string) {
-    setProjectId(id);setOffset(0);setScope('current');setView('home');
+    setFirstChoice(false);setProjectId(id);setOffset(0);setScope('current');setView('home');
     try{localStorage.setItem(preference,id);}catch{}
   }
   // A new site update opens on its first card, a progress card, rather than a picker: the kind can be changed on the card.
@@ -315,7 +327,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView}: 
           </section>
         </div></div>
       </>}
-      {view==='projects' && <><div className="eng-heading"><h1>Choose your project</h1><p>Pick the site you are on. Anything you have started stays with its own project.</p></div><div className="eng-project-groups">{projectStatusGroups(projects).map(group=><section key={group.status} className={`eng-project-group eng-project-group-${group.tone}`}><div className="eng-section-title"><h2>{group.label}</h2><span className="r">{group.projects.length}</span></div><div className="eng-project-list">{group.projects.map(p=><button key={p.id} className="eng-panel" onClick={()=>selectProject(p.id)} aria-pressed={p.id===projectId}><strong>{p.projectName}</strong><small>{p.projectNumber} · {p.projectManager}</small><span>{p.id===projectId?'Current project':'Select project →'}</span></button>)}</div></section>)}</div></>}
+      {view==='projects' && <>{firstChoice ? <div className="eng-heading"><p className="lbl">Welcome to RELAY</p><h1>Which site are you on?</h1><p>Tap your site. RELAY remembers it on this phone, and you can change it any time under Projects.</p></div> : <div className="eng-heading"><h1>Choose your project</h1><p>Pick the site you are on. Anything you have started stays with its own project.</p></div>}<div className="eng-project-groups">{projectStatusGroups(projects).map(group=><section key={group.status} className={`eng-project-group eng-project-group-${group.tone}`}><div className="eng-section-title"><h2>{group.label}</h2><span className="r">{group.projects.length}</span></div><div className="eng-project-list">{group.projects.map(p=><button key={p.id} className="eng-panel" onClick={()=>selectProject(p.id)} aria-pressed={p.id===projectId && !firstChoice}><strong>{p.projectName}</strong><small>{p.projectNumber} · {p.projectManager}</small><span>{p.id===projectId && !firstChoice?'Current project':'Select project →'}</span></button>)}</div></section>)}</div></>}
       {view==='reports' && <><div className="eng-heading"><h1>Reports</h1><p>Your drafts and the reports every trade has sent on this project.</p></div><div className="eng-actions"><button onClick={()=>void startReport('update')} disabled={creating}>{creating?'Starting…':'Start another site update'}</button></div><nav className="eng-more" aria-label="More from these reports"><span className="lbl">Also on this project</span><div><Link className="eng-link-button" href={`/diary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Site diary</Link><Link className="eng-link-button" href={`/weekly-summary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Weekly summary</Link><Link className="eng-link-button" href={`/photos?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Photographs</Link>{safetyRecords && <Link className="eng-link-button" href={`/safety-actions?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Safety actions</Link>}<Link className="eng-link-button" href={`/my-week?${new URLSearchParams({ returnTo: engineerReturn('reports') })}`}>My week</Link></div></nav>{reports===null ? !error && <p role="status">Loading reports…</p> : <section className="eng-panel">{reports.length ? reports.map(r=><Link className="eng-report-link" href={withViewReturn(`/reports/${r.id}`,engineerReturn('reports'))} key={r.id}><span><strong>{r.reference}</strong><small>{r.author} · {r.authorTrade ?? 'Trade not recorded'} · visit {fmtVisit(r.visitDate)}</small></span><span style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}><ReportTags r={r}/></span></Link>) : <p className="eng-empty">{offset ? 'No reports on this page.' : 'No reports yet on this project. Reports you and other trades send show here.'}</p>}</section>}<div className="btn-row">{offset>0 && <button onClick={()=>setOffset(Math.max(0,offset-50))}>Newer reports</button>}{next!==null && <button onClick={()=>setOffset(next)}>Older reports</button>}</div></>}
       {view==='issues' && <><div className="eng-heading"><h1>Issues{scope==='all'?' · All projects':''}</h1><p>{scope==='all'?'Each issue group names its project.':'Issues on this project, from every trade.'}</p><div className="eng-actions"><button onClick={()=>navigate('defect')}>Flag a defect</button><Link className="eng-link-button" href={`/issues/snag-list?${new URLSearchParams({ project: projectId, ...(principal?.trade ? { trade: principal.trade } : {}), returnTo: engineerReturn('issues') })}`}>Snag list{principal?.trade ? ` · ${principal.trade}` : ''}</Link></div></div><div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Show<select id="eng-issue-scope" value={scope} onChange={e=>setScope(e.target.value)}><option value="current">This project: {project.projectName}</option><option value="all">All projects</option></select></label></div>{issues===null ? !error && <p role="status">Loading issues…</p> : (scope==='all'?projects: [project]).map(p=><section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList issues={issues.filter(i=>i.projectId===p.id)} projectName={p.projectName} returnTo={engineerReturn('issues')}/></section>)}</>}
       {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues')} returnTo={engineerReturn('issues')}/>}

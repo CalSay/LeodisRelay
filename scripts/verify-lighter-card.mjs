@@ -62,6 +62,8 @@ try {
     const label=`${scheme} ${width}`,wide=width>=900;
     const context=await browser.newContext({viewport:{width,height:wide?900:844},colorScheme:scheme,...(wide?{}:{hasTouch:true,isMobile:true})});
     await context.addCookies([{name:'relay_session',value:sessionFor(`${scheme}-${width}`),url:base}]);
+    // A returning engineer on Tetley Hall, so home opens there rather than asking "Which site are you on?".
+    await context.addInitScript(id=>{try{if(!localStorage.getItem(`relay-project:${id}`))localStorage.setItem(`relay-project:${id}`,'proj-011lme');}catch{}},`${engineer.id}-${scheme}-${width}`);
     const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
     const shot=async name=>{if(shots){await page.waitForTimeout(300);await page.screenshot({path:join(shots,`${prefix}-${name}-${scheme}-${width}.png`),fullPage:true});}};
     const card=()=>page.locator(wide?'.eng-card-body:not([hidden]) .eng-card':'.eng-slot.open .eng-card');

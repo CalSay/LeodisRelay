@@ -6,7 +6,7 @@ Use dummy reports. Do not clear browser data or uninstall while unsent work exis
 ## Install
 
 Open https://app.relaybyleodis.com in Safari on iPhone or Chrome on Android.
-Expand “Install RELAY on your phone” below the header. On supported Android
+Expand “Put RELAY on your home screen” below the sign-in button. On supported Android
 browsers the native install button appears when the browser offers installation;
 otherwise use the manual instructions. On iPhone use Share > Add to Home Screen,
 keeping Open as Web App enabled where shown. Open the new RELAY icon.
@@ -18,6 +18,10 @@ keeping Open as Web App enabled where shown. Open the new RELAY icon.
 3. Sign in with an assigned Microsoft account. Confirm the correct role/trade
    screen; close/reopen and verify access is still correct. Note if Microsoft
    opens in the external browser rather than returning to the installed app.
+   Since 21 October the icon opens `/?open=app`: the first time it shows
+   "Select your company"; after Developments is picked once, it should open
+   straight on the site page. A new engineer with more than one site should be
+   asked "Which site are you on?" once. Record both on each phone.
 4. Create a dummy report. Test camera capture and choosing an existing JPEG/PNG
    photo if the current phone picker offers it. Record HEIC/unsupported-format
    errors honestly; installation does not add camera formats or new controls.

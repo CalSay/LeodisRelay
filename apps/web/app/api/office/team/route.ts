@@ -27,6 +27,8 @@ export interface TeamMember {
   trade?: string;
   /** Latest session issued for this account, if any. */
   lastSignedIn?: string;
+  /** Signed in at least once, even if every session has since gone (identities are kept). */
+  everSignedIn: boolean;
   session: 'active' | 'expired' | 'never';
   /** Stable principal ID, present once the account has signed in. */
   id?: string;
@@ -71,6 +73,8 @@ export async function GET() {
       ...(microsoftName ? { microsoftName } : {}),
       ...(admin && person?.log?.length ? { log: person.log } : {}),
       ...(addedByRelay ? { addedByRelay: true } : {}),
+      // Sessions are deleted when they expire or on signing out; identities are kept, so this stays true.
+      everSignedIn: !!latest || !!identity,
       ...(latest ? {
         id: latest.principal.id,
         ...(latest.principal.role ? { role: latest.principal.role } : {}),
