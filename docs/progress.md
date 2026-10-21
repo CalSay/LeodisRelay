@@ -42,8 +42,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the first row, its title and the office's words on the first screen (words
   end 740px, screen ends 775px; on main the row was 1,012-1,110px and third);
   the rest newest first; no help line; rows 48px+; no sideways scroll; tapping
-  it opens the issue ready to update. Reran the home and came-back checks
-  (listed in the PR). Screenshots before and after: project files
+  it opens the issue ready to update. Reran, all passing: office-words,
+  came-back-to-update, simpler-home, engineer-layout, home-and-sheet (its
+  section order updated to the new one), help, accessibility, first-time-use,
+  since-last-visit, seen-by-office, first-day, role-access,
+  unfinished-reports, engineer-nav. `verify-day-walkthrough` fails at saving
+  a permit to work (`.pt-permit` never shows), the same on main a3bbb55, so
+  not this change; left for the next release check. Screenshots before and after: project files
   `ui-review/site-visit-pass/`.
 - The first-screen measurement is with no unfinished reports; with some, the
   section starts lower.
