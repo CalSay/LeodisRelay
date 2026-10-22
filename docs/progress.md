@@ -61,7 +61,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   office-weekly-review, my-week, issue-trend, site-coverage, before-handover,
   check-fixes, issue-figures, help, role-access, accessibility.
   `verify-site-coverage` fails at "a draft is not a visit", the same on main
-  e3138df (the check's dates near the fortnight's end; PR #142 fixes it).
+  e3138df without this change (not looked into here).
 - Not verified: a real phone or printer; a page left open over New Year.
 - Next: "N days past target" on the work tag and Attention once #154 is
   settled.
