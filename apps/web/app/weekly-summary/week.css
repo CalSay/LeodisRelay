@@ -91,6 +91,7 @@
 .month-weeks tfoot th,.month-weeks tfoot td{font-weight:700;border-top:2px solid var(--line-2);border-bottom:0;}
 .month-place{font-size:14px;}
 .month-extra{display:none !important;}
+.month-print-only{display:none;}
 .month-more{margin-top:8px;min-height:44px;padding:0 12px;font-size:13px;}
 .week-when.late{color:var(--alert);}
 .month-companies{list-style:none;margin:6px 0 0;padding:0;}
@@ -116,6 +117,8 @@
   .month-stats{grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
   .month-figure{text-decoration:none;color:#111;}
   .month-extra{display:grid !important;}
+  .month-extra.month-late-extra{display:none !important;}
+  .month-print-only{display:block;}
   .month-weeks th[scope=row] a{color:#111;text-decoration:none;}
   .month-companies details > .week-rows{display:none;}
   .month-companies > li{background:#fff;break-inside:avoid;}
