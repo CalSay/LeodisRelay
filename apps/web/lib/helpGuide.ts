@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'coverage-one-mark', added: '2026-10-22', audience: 'office', title: 'Site coverage: one mark for each person on site',
+    text: 'On Site coverage, each mark on a day is now one person who reported from that site, however many reports they sent. Before, an engineer who sent a site update and a first fix inspection on the same day showed as two marks, which looked like two people of that trade on site. Now two "Elec" marks always mean two electricians, the same count of visits as the office overview. Selecting a mark opens that person\'s site update, and pointing at it names every report they sent that day. Checked in a desktop browser, light and dark, and a phone-sized window, not on a real phone.',
+    link: { label: 'Open Site coverage', href: '/coverage' } },
   { id: 'assign-by-trade', added: '2026-10-22', audience: 'office', title: 'Unassigned issues say whose work it is',
     text: 'When an engineer flags a defect that is another trade\'s work, such as an electrician spotting a plumber\'s leak, the office can now see whose it is straight away. Each row under "Unassigned issues" on the office overview gives the trade the engineer chose, and so do the Assign box on the office desk and "Who puts it right" on the issue page. They also offer, as one-tap choices, the companies the office has already given that trade\'s work on the project. Tapping one only fills in Responsible, so the office still chooses and presses Assign. A defect marked "Other" offers no company, because "Other" covers many trades. Checked in a desktop browser and a phone-sized window, not on a real phone.' },
   { id: 'office-lists-first', added: '2026-10-22', audience: 'office', title: 'What needs you, straight under the projects',

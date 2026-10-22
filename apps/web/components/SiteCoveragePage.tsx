@@ -23,6 +23,8 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? o
 const TRADE_SHORT: Record<string, string> = { Electrical: 'Elec', HVAC: 'HVAC', 'P&H': 'P&H' };
 const short = (v: CoverageVisit) => (v.trade && TRADE_SHORT[v.trade]) || 'Other';
 const who = (v: CoverageVisit) => `${v.author}${v.trade ? `, ${v.trade}` : ''}`;
+/** The reports behind a mark: one person may send a site update and an inspection on the same day. */
+const refs = (v: CoverageVisit) => [`${v.reference}${v.revision > 1 ? ` rev ${v.revision}` : ''}`, ...v.references.slice(1)].join(', ');
 
 function sinceWords(p: CoverageProject, today: string): string {
   if (!p.last) return 'No report sent from this site yet';
@@ -89,8 +91,8 @@ export function SiteCoveragePage({ initialStart, returnTo }: { initialStart: str
       <span className="cov-sub"><span className="ref">{p.projectNumber}</span>{p.projectManager ? ` · ${p.projectManager}` : ''}</span>
     </th>
     {s!.days.map((d, i) => <td key={d} className={`${isWeekend(d) ? 'cov-weekend' : ''} ${d === s!.today ? 'cov-today' : ''} ${d > s!.today ? 'cov-future' : ''}`}>
-      {p.days[i]!.length > 0 && <ul className="cov-visits" aria-label={`${fmtDay(d)}: ${plural(p.days[i]!.length, 'report')}`}>{p.days[i]!.map(v => <li key={v.reportId}>
-        <Link className="cov-chip" href={withViewReturn(`/reports/${v.reportId}`, here)} title={`${v.reference}${v.revision > 1 ? ` rev ${v.revision}` : ''} · ${who(v)}`} aria-label={`${v.reference}, ${who(v)}`}>{short(v)}</Link>
+      {p.days[i]!.length > 0 && <ul className="cov-visits" aria-label={`${fmtDay(d)}: ${plural(p.days[i]!.length, 'person', 'people')} on site`}>{p.days[i]!.map(v => <li key={v.reportId}>
+        <Link className="cov-chip" href={withViewReturn(`/reports/${v.reportId}`, here)} title={`${who(v)} · ${refs(v)}`} aria-label={`${who(v)}, ${refs(v)}`}>{short(v)}</Link>
       </li>)}</ul>}
     </td>)}
     <td className="cov-last">
@@ -154,7 +156,7 @@ export function SiteCoveragePage({ initialStart, returnTo }: { initialStart: str
           </div>}
 
         <footer className="cov-foot">
-          <p><b>Elec</b> Electrical · <b>HVAC</b> HVAC · <b>P&amp;H</b> Plumbing and heating · <b>Other</b> trade not recorded. Each mark is one report sent from site, on the visit day the engineer gave; select it to open the report. Select a project for its weekly summary.</p>
+          <p><b>Elec</b> Electrical · <b>HVAC</b> HVAC · <b>P&amp;H</b> Plumbing and heating · <b>Other</b> trade not recorded. Each mark is one person who sent a report from site that day, on the visit day the engineer gave, so two Elec marks are two electricians. Select a mark to open their report: their site update, if they also sent an inspection that day. Select a project for its weekly summary.</p>
           <p>Made from reports sent to the office; drafts and work still on an engineer&rsquo;s phone are not shown. A corrected report replaces the one it corrects. Working days are Monday to Friday; bank holidays are not known, so they count. Defects liability sites are never marked as quiet, because visits there are occasional.</p>
         </footer>
       </>}
