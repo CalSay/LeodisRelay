@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'not-seen-two-weeks', added: '2026-10-22', audience: 'office', title: 'Not seen yet means the last two weeks',
+    text: '"Not seen yet" in the office now counts the reports received in the last two weeks that nobody in the office has opened, so it can come down to nought once you have read what came in. Older reports nobody opened are no longer counted; the Inbox says how many there are and "List them too" shows them. A report that a correction has replaced is not counted either: open the correction. Nothing is marked seen for you, so an engineer still sees "Seen by the office" only when someone opened it. Checked in a desktop browser and a phone-sized window, not on a real phone.',
+    link: { label: 'Open the Inbox', href: '/office#/inbox/show/notAck' } },
   { id: 'project-figures-laptop', added: '2026-10-22', audience: 'office', title: 'A project\'s figures on a laptop',
     text: 'On a laptop screen up to about 1400 pixels wide, a project\'s four figures ("Last visit", "Overdue actions", "Fixed, to check" and "Variations") now sit two by two instead of four in a row, so each label fits on one line and the words under each figure take one or two lines instead of up to six. The project\'s details further down, and the four facts at the top of an issue or a variation, sit the same way. Wider screens and phones look as before. Checked in a desktop browser, light and dark, with and without scrollbars showing.',
     link: { label: 'Open the office', href: '/office' } },
@@ -355,7 +358,7 @@ export const GLOSSARY: readonly GuideGroup[] = [
     { term: 'To review', meaning: 'Only on projects set up to need a review; review is off by default. Someone in the office approves it or sends it back with a reason.' },
     { term: 'PDF', meaning: 'RELAY makes the PDF of the report. "Ready" means it is made, not that anyone has it yet.' },
     { term: 'Delivery', meaning: 'Filed in SharePoint for SharePoint projects. RELAY does not email anyone yet, so the step says "Not emailed": if something cannot wait, tell the project manager yourself.' },
-    { term: 'Seen', meaning: 'Someone in the office has opened the report. Until then it says "Not seen yet". Nobody has to press anything: opening it is enough.' },
+    { term: 'Seen', meaning: 'Someone in the office has opened the report. Until then it says "Not seen yet". In the office, "Not seen yet" counts the last two weeks. Nobody has to press anything: opening it is enough.' },
   ] },
   { heading: 'An issue', terms: [
     { term: 'Open', meaning: 'Raised and not yet given to anyone.' },

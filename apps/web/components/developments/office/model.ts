@@ -4,7 +4,7 @@ import type { Tone } from '@/lib/status';
 import { INSTRUCTION_LABEL } from '@/lib/variations';
 import { reviewInUse } from '@/lib/reviewQueue';
 import { confirmationLabel } from '@/lib/issueConfirmation';
-import { isActiveIssue, isOverdueIssue, isUnassigned, isVerify, issueFigures, londonDay, notAcknowledged } from '@/lib/officeActions';
+import { isActiveIssue, isOverdueIssue, isUnassigned, isVerify, issueFigures, londonDay, notAcknowledged, notSeen } from '@/lib/officeActions';
 import { isDisputedIssue, isNotReviewedIssue } from '@/lib/issueQuery';
 import { dateShort, dayLong, timeOf, whenShort } from '@/lib/dates';
 import { byPutForward, waitingWords } from '@/lib/checkFix';
@@ -13,7 +13,7 @@ import { permitAttention, type PermitsAll } from '@/lib/permits';
 import { deliveryAttention, type DeliveriesAll } from '@/lib/deliveries';
 import { projectStanding, type ProjectStanding } from '@/lib/projectStanding';
 
-export { isUnassigned, isVerify, notAcknowledged };
+export { isUnassigned, isVerify, notAcknowledged, notSeen };
 
 /**
  * What the office desk derives from the records it loads. Pure functions over

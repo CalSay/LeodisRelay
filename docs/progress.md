@@ -4,6 +4,50 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — "Not seen yet" counts the last two weeks
+
+- Why: a walk of an office manager at 1440 and 390px on main 199503f (busy
+  example data from `scripts/seed-busy-projects.mjs`) working through the
+  Inbox's "Not seen yet". The overview, the Inbox filter and its heading said
+  1,542. Checked against the records: 1,223 of those (79%) arrived more than
+  90 days ago and only 53 in the last 14 days. Opening a report is the only
+  way to clear one, so the figure could only grow and did not tell the office
+  what to read today. It also counted 14 originals already replaced by a sent
+  correction (both the original and the correction were listed). Cal's 21 Oct
+  ask: the office should see progress clearly. Not a `docs/tasks.json` task
+  (out-of-queue work under Cal's 20 Oct go-ahead to decide); no status changed.
+- Changed: `notSeen` in `lib/officeActions.ts` splits unopened sent reports at
+  14 calendar days back (London, counting today) and leaves out any report a
+  sent correction replaces. The office overview's "Not seen yet" group (sub
+  now "Received in the last two weeks, nobody in the office has opened it"),
+  each project's "N reports not seen yet" under Needs action, and the Inbox
+  filter and heading all count the recent part. Under the Inbox's "Not seen
+  yet" list a line says how many older reports were never opened and "are not
+  counted", with "List them too" to show them after the newer ones (the figure
+  stays the last two weeks). Help: a "What's new" line, and the "Seen" word
+  explained says the office counts the last two weeks.
+- Decided (Claude): two weeks, because the busy data's unopened reports from
+  the last fortnight (about 50) are a list someone can work through, and a
+  report older than that has been overtaken by later visits from the same
+  site. Did not add "mark all as seen": it would tell engineers "Seen by the
+  office" for reports nobody opened, and change records. No data changes; an
+  engineer's own report still says "Not seen yet" until someone opens it.
+- Verified: typecheck, `npm test` (146 + 552, new unit test for the split,
+  London midnight and corrections), build. New
+  `scripts/verify-not-seen-pile.mjs` (58 checks, busy seed, 1440px light and
+  dark, 390px light): overview group, phone count strip, each project's Needs
+  action, Inbox chip, heading and rows match figures worked out from the
+  records; the older line and List them too / Hide them; opening a report
+  takes exactly one off; axe and no sideways scroll. On main the overview
+  shows 1,542 where the records give 53, so the first check fails. Also
+  passed: office-inbox, office-actions, office-phone, seen-by-office,
+  inbox-phone, office-progress, issue-figures, submission-stages,
+  role-access, help, office-links, office-desk, office-landing,
+  office-sections, office-words, today-from-site, search. Screens: project
+  files `ui-review/not-seen-pile/before|after`.
+- Not verified: a real phone or laptop, browsers other than Chromium 141.
+- Next: none from this walk.
+
 ## 2026-10-22 — A project's figures on a laptop
 
 - Why: the office laptop walk (PR #145) found a project sheet's four figures
