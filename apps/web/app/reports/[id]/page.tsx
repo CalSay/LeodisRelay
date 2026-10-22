@@ -199,6 +199,17 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const pushedCheck = useRef(false);
   /** A text field has the keyboard: on the phone the action bar steps aside so it never covers it. A list does not, so it is left out. */
   const [typing,setTyping] = useState(false);
+  /** The page always ends clear of the Send bar, however tall its notes make it (2026-10-22): a fixed
+      gap left the end of "What sending does" under the bar once a note or Undo was showing. While a
+      field has the keyboard the bar is hidden; the last height is kept so the page does not jump. */
+  const barWatch = useRef<ResizeObserver | null>(null);
+  const actionBar = useCallback((bar: HTMLDivElement | null) => {
+    barWatch.current?.disconnect(); barWatch.current = null;
+    const page = bar?.closest('main');
+    if (!bar || !page || typeof ResizeObserver === 'undefined') return;
+    const fit = () => { const height = bar.getBoundingClientRect().height; if (height > 0) page.style.setProperty('--actionbar-space', `${Math.ceil(height) + 32}px`); };
+    fit(); barWatch.current = new ResizeObserver(fit); barWatch.current.observe(bar);
+  }, []);
   /** Side-by-side cards and editor from 900px, as in engineer.css; folded cards below that. */
   const wide = useMediaQuery('(min-width: 900px)');
   // Side by side a long list of checks scrolls in its own column: keep the open one in sight there.
@@ -1511,7 +1522,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             it so the two are never read separately. On the phone it steps
             aside while a field has the keyboard, so it never covers the
             field being typed in. */}
-        <div className={`actionbar ${typing ? 'is-typing' : ''}`}>
+        <div ref={actionBar} className={`actionbar ${typing ? 'is-typing' : ''}`}>
           {/* Said to a screen reader as it happens; the bar below is for the eye and hand. */}
           <span className="eng-undo-said" aria-live="polite">{undoSaid}</span>
           {removed && <div className="eng-undo" onFocus={() => holdUndo(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) holdUndo(false); }} onPointerEnter={() => holdUndo(true)} onPointerLeave={() => holdUndo(false)}>

@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'receipt-back-to-site', added: '2026-10-22', audience: 'site', title: 'Back to Site after a defect, and nothing under the Send bar',
+    text: 'After you flag a defect, "Defect sent to the office" now has a "Back to Site" button first, then "Open issue" and "View project issues". On a site update or an inspection, the page now always ends clear of the bar with Send to office, even when the bar is taller because it says "Waiting for signal" or offers Undo: scroll to the end and everything above the bar can be read and tapped. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open your home screen', href: '/engineer' } },
   { id: 'already-raised-here', added: '2026-10-22', audience: 'site', title: 'Defects ask only about issues in the same place',
     text: 'On a defect or access card, "Is this something already raised?" now lists only the open issues at the place you put under Where, or in a part of it (Flat 2 and Flat 2.04 count as the same place; Level 1 and Level 12 do not). When there are none it says so in one line, so "What\'s wrong" sits just under Where. To link an issue somewhere else, tap "Link to an issue somewhere else". On the home screen, the number beside "Came back from the office" now counts only the records the office has done something on, not the reports and defects you have just sent.',
     link: { label: 'Open your home screen', href: '/engineer' } },
