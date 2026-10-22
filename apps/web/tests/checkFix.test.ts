@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {applyCommand,getIssue} from '../lib/issueStore';
 import {database,putRecord} from '../lib/storage';
-import {SEND_BACK_REASON,byPutForward,fixEvidence,putForwardAt} from '../lib/checkFix';
+import {SEND_BACK_REASON,byPutForward,daysWaiting,fixEvidence,putForwardAt,waitingWords} from '../lib/checkFix';
 import type {Issue,IssueEvent,Photo} from '../lib/types';
 
 const shot=(id:string):Photo=>({id,dataUrl:`/api/media/${id}`,caption:'',capturedAt:'2026-10-20T10:00:00Z'});
@@ -60,4 +60,20 @@ test('a fix waits from when it was last put forward, not from a note added since
   assert.equal(putForwardAt(b),'2026-10-12T09:00:00Z','the latest time it was put forward');
   assert.equal(putForwardAt(c),'2026-10-01T09:00:00Z','no history: when it was raised');
   assert.deepEqual([b,a,c].sort(byPutForward).map(i=>i.reference),['R-3','R-2','R-1'],'longest waiting first, though R-2 was raised first');
+});
+
+test('a fix waits in calendar days, as the date it was put forward reads',()=>{
+  const put=(at:string)=>({raisedAt:'2026-09-01T09:00:00Z',events:[ev('raised','2026-09-01T09:00:00Z'),ev('closure_submitted',at)]});
+  // Put forward at 17:00 yesterday and read at 09:00: one day, not the 0 whole 24 hours would say.
+  assert.equal(daysWaiting(put('2026-10-21T16:00:00Z'),'2026-10-22'),1);
+  assert.equal(waitingWords(put('2026-10-21T16:00:00Z'),'2026-10-22'),'waiting 1 day');
+  assert.equal(waitingWords(put('2026-10-22T07:00:00Z'),'2026-10-22'),'waiting since today');
+  assert.equal(waitingWords(put('2026-10-19T08:00:00Z'),'2026-10-22'),'waiting 3 days');
+  // London's day: 23:30 UTC in summer time is already the next day in London.
+  assert.equal(daysWaiting(put('2026-10-20T23:30:00Z'),'2026-10-22'),1);
+  // A year back, counted the same way as "put forward 9 Sep 2025".
+  assert.equal(daysWaiting(put('2025-09-09T14:00:00Z'),'2026-10-22'),408);
+  // A note after it was put forward does not restart the wait.
+  const noted=put('2026-10-19T08:00:00Z');noted.events.push(ev('note','2026-10-22T08:00:00Z','Photo added'));
+  assert.equal(daysWaiting(noted,'2026-10-22'),3);
 });

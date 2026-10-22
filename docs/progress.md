@@ -52,6 +52,108 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   each screen in project files `ui-review/plain-words/` (before = main).
 - Not verified: real phones, screen readers.
 
+## 2026-10-22 — A shorter printed month
+
+- Why: a walk of an office manager at 1440px (latest main, busy example data
+  from `scripts/seed-busy-projects.mjs`) printing Tetley Hall's Weekly summary
+  as a PDF to share progress: last week, this week and September (screens and
+  PDFs in project files `ui-review/weekly-pdf/`). The figures matched the
+  records: the month's week rows add up to its totals, the 196 past target
+  equal the companies' past-target figures, and the 354 still open equal the
+  companies' open issues. The week printed cleanly in 7 pages. The month did
+  not: it came to 28 A4 pages, 22 of them the "Issues past their target" list,
+  because print showed every one of the 196. Asked for by the coordinator as
+  the walk's one pick; not a `docs/tasks.json` task, so no status changed.
+  Decided without asking Cal (his autonomy message), within his 07:02
+  direction (the office's view of progress).
+- Changed: on paper "Behind or stuck" shows the ten longest-late issues, the
+  same ten as the screen, then "And 186 more past their target on Wed 30 Sep
+  2026, each no more days late than these. Each company's open and past-target figures are
+  under “Still open, with whom”." (`MonthSheet.tsx`, `week.css`
+  `.month-late-extra`, `.month-print-only`). With "Show all" open on screen,
+  print still gives every one. Every place under "Where work moved on" still
+  prints. The screen is unchanged. September now prints in 7 pages.
+- Decisions (Claude): ten, because it is what the screen already shows and the
+  company figures that print below account for the rest. Kept "Show all" as
+  the way to print the full list rather than adding a print option.
+- Checks: typecheck, `npm test` (146 + 551), build. New
+  `scripts/verify-month-print.mjs` (32 checks, light and dark 1440 on the busy
+  data: ten printed in the API's order, the "more" line and its count, every
+  place, each company, white sheet, eight A4 pages or fewer, Show all prints
+  every one with no "more" line, screen unchanged). It fails on main ("ten
+  late issues printed (196)"). Also passed: month-summary, weekly-summary,
+  help.
+- Not verified: a real printer or another browser's print dialog (PDFs are
+  Chromium's); a live tenant; a real phone.
+
+## 2026-10-22 — Today from site on the office overview
+
+- Why: a walk of an office manager reading the end of the day's site updates at
+  1440px (busy example data from `scripts/seed-busy-projects.mjs`: three
+  projects, nine site updates and an inspection sent today; screens in project
+  files `ui-review/office-reading/`). The overview's figures all matched the
+  records. The read did not: to see what every site did today, what held it up
+  and what needs an answer, the office opened each project's Latest from site
+  in turn, or each report in the Inbox, where every defect and access problem
+  is listed twice. Asked for by the coordinator as the walk's one pick; not a
+  `docs/tasks.json` task, so no status changed. Decided without asking Cal
+  (his autonomy message), within his 07:02 direction (the office's view of
+  progress).
+- Changed: the overview has "Today from site" under "Where each project
+  stands" (`ProjectsView.tsx` `TodayFromSite`). One edged block a project with
+  a site update whose visit date is today, in the overview's project order. Its bar names the
+  project (opens its sheet) and what the day found: site updates and
+  inspections, access problems (marked red) and the defects and variations
+  raised (marked amber). Under it, every site update for today's visit (not only each
+  trade's newest, so two electricians are both read), by trade and then as
+  sent, with the same cards as Latest from site (`FromSiteVisits`, shared)
+  saying when each was sent; access problems come first so the ones the bar
+  counts come before "and N more" (a report with more access problems than
+  lines shown still folds the rest into it). Three lines a card on a desk, two on
+  a phone. A day with nothing yet says so. Rules in `lib/projectStanding.ts`
+  (`today`, `inspectionsToday`, `dayFound`), read from the report summaries the
+  desk already holds; each card reads its report for the lines, as Latest from
+  site does.
+- Fixed (a wrong number): "waiting N days" on a fix to check counted whole
+  24-hour periods, so a fix put forward at 5pm yesterday said "waiting 0 days"
+  at 9am, and the overview said 407 days where the project's figure said put
+  forward 9 Sep 2025 (408 calendar days). It now counts London calendar days
+  in one helper (`daysWaiting`/`waitingWords`, `lib/checkFix.ts`) used by the
+  overview's Fixed, to check rows, the Attention list and the issue sheet, and
+  says "waiting 1 day" and "waiting since today". `daysSince` is gone.
+- Decisions (Claude): the section goes after the project list and before the
+  action groups, so the read runs "where it stands", "what happened today",
+  "what needs you". Kept "Access" and "variations" (the words the cards and
+  the Weekly summary already use) instead of new ones. Inspections are counted
+  on the bar, not shown as cards: they answer a checklist, not progress.
+  Defects and variations on the bar are not links, because the registers they
+  would open list every open one, not today's.
+- Checks: typecheck, `npm test` (146 + 550; new tests in
+  `projectStanding.test.ts` and `checkFix.test.ts`), build. New
+  `scripts/verify-today-from-site.mjs` (46 checks, light and dark 1440 and
+  light 390: the section's day and count, one block a project with an update
+  today in order, each bar's words and marks, every update by trade then as
+  sent, access first, yesterday and the inspection's checks left out, an
+  update opens its report and a name its sheet, three lines a card on a desk
+  and two on a phone, the fix's calendar-day wait, no sideways scroll, no
+  page errors, axe). Not run against main: the section does not exist there.
+  Also passed: office-progress, office-landing, office-sections,
+  home-and-sheet, fix-waiting, check-fixes, office-top-bar, help, office-phone,
+  office-desk, issue-figures, accessibility, role-access, engineer-layout and
+  busy-projects (Office desk 1.5 s and 760 KB, budgets 2.5 s and 1200 KB).
+- A fresh-context review found no crash or wrong figure in the normal case.
+  From its notes: the Help text said "sent today" where the rule is today's
+  visit date (now says "for today's visit"); "never cut off" was overstated
+  (now says what happens); the phone's two-line limit is now checked; the
+  known limits are listed below.
+- Known limits: it goes by the visit date the engineer gave, as the rest of
+  the overview does, so an update sent today for yesterday's visit is not in
+  it. The bar counts every access card; one with only photos has no line under
+  it. A report saved before RELAY kept card counts counts its access problems
+  as defects, as Latest from site already does. Scope: not a `docs/tasks.json`
+  task; built under the project instructions' freedom to add features, which
+  CLAUDE.md's "approved scope" rule predates.
+- Not verified: a live tenant, a real phone, a screen reader, a printer.
 ## 2026-10-22 — Straight on to the next issue after putting a fix forward
 
 - Why: a walk of an electrician on a 390px phone (latest main, local example

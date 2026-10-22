@@ -17,7 +17,11 @@ import { PhotoImage } from './PhotoImage';
 
 const range = (from: string, to: string) => from === to ? fmtDay(from) : `${fmtDay(from)} to ${fmtDay(to)}`;
 
-/** Lines shown on screen before "Show all"; print always shows every one. */
+/**
+ * Lines shown on screen before "Show all". Print shows every place, but only
+ * the longest-late issues unless "Show all" is open: on a busy project the
+ * whole list ran to twenty pages, and each company's count prints below it.
+ */
 const PLACES_SHOWN = 12, LATE_SHOWN = 10;
 
 type ListKey = 'days' | 'reports' | 'raised' | 'closed' | 'vraised' | 'vinstructed';
@@ -29,7 +33,7 @@ function ShowAll({ total, shown, all, onToggle, what }: { total: number; shown: 
 }
 
 function LateRows({ rows, here, all }: { rows: MonthLateIssue[]; here: string; all: boolean }) {
-  return <ul className="week-rows">{rows.map((i, n) => <li key={i.id} className={!all && n >= LATE_SHOWN ? 'month-extra' : undefined}>
+  return <ul className="week-rows">{rows.map((i, n) => <li key={i.id} className={!all && n >= LATE_SHOWN ? 'month-extra month-late-extra' : undefined}>
     <span className="week-when late">{plural(i.daysLate, 'day')} late</span>
     <div><p><Link className="ref" href={withViewReturn(`/issues/${i.id}`, here)}>{i.reference}</Link> <span className="tag tag-alert">Target {fmtDay(i.targetDate, true)}</span></p>
       <p className="week-desc">{i.description}</p>
@@ -120,6 +124,7 @@ export function MonthSheet({ m, project, today, thisMonth, here, manager }: { m:
       <h3>Issues past their target {when}</h3>
       {pastTargetTotal ? <LateRows rows={m.pastTarget} here={here} all={allLate} /> : <p className="week-none">No open issues were past their target {when}.</p>}
       <ShowAll total={pastTargetTotal} shown={LATE_SHOWN} all={allLate} onToggle={() => setAllLate(a => !a)} what="issues" />
+      {!allLate && pastTargetTotal > LATE_SHOWN && <p className="week-total month-print-only">And {pastTargetTotal - LATE_SHOWN} more past their target {when}, each no more days late than these. Each company&rsquo;s open and past-target figures are under &ldquo;Still open, with whom&rdquo;.</p>}
       <h3>Access problems on more than one day</h3>
       {m.access.length ? <ul className="week-rows">{m.access.map(a => <li key={a.place}>
         <span className="week-when">{plural(a.days.length, 'day')}</span>
