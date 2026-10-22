@@ -1,4 +1,5 @@
 import type { Issue, ReportSummary } from './types';
+import { byPutForward } from './checkFix';
 
 /**
  * The four things a project manager acts on from the office position: reports
@@ -37,14 +38,17 @@ export const opensAsSeen = (r: Pick<ReportSummary, 'state' | 'acknowledged' | 'a
 
 /**
  * An issue as the office desk's registers and totals use it: every field, and
- * only its latest event (for "waiting N days"), without its note or
- * photographs. The issue's own page loads its whole history. On a busy
+ * only its latest event, without its note or photographs. A fix waiting to be
+ * checked also keeps its latest "put forward as fixed", so "waiting N days"
+ * counts from then and not from a note added since (lib/checkFix.ts). The issue's own page loads its whole history. On a busy
  * register the full histories were most of a 10 MB answer, fetched every
  * 15 seconds.
  */
 export const deskIssue = (i: Issue): Issue => {
   const last = i.events.at(-1);
-  return { ...i, events: last ? [{ ...last, note: '', photos: [] }] : [] };
+  const put = i.work === 'awaiting_verification' ? [...i.events].reverse().find(e => e.kind === 'closure_submitted') : undefined;
+  const kept = put && put !== last ? [put, last!] : last ? [last] : [];
+  return { ...i, events: kept.map(e => ({ ...e, note: '', photos: [] })) };
 };
 
 const LONDON_DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/London' });
@@ -67,7 +71,6 @@ export const isNewReport = (r: ReportSummary, since: string): boolean =>
   r.state === 'submitted' && !!r.serverAcknowledgedAt && londonDay(r.serverAcknowledgedAt) >= since;
 
 const received = (r: ReportSummary): string => r.serverAcknowledgedAt ?? '';
-const lastEvent = (i: Issue): string => i.events.at(-1)?.at ?? i.raisedAt;
 
 export interface OfficeActions {
   /** First day counted as new, YYYY-MM-DD. */
@@ -89,7 +92,7 @@ export function officeActions(reports: ReportSummary[], issues: Issue[], day: st
     newReports: reports.filter(r => isNewReport(r, since)).sort((a, b) => received(b).localeCompare(received(a))),
     notRead: reports.filter(notAcknowledged).sort((a, b) => received(b).localeCompare(received(a))),
     unassigned: issues.filter(isUnassigned).sort((a, b) => a.raisedAt.localeCompare(b.raisedAt)),
-    verify: issues.filter(isVerify).sort((a, b) => lastEvent(a).localeCompare(lastEvent(b))),
+    verify: issues.filter(isVerify).sort(byPutForward),
   };
 }
 

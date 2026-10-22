@@ -1,4 +1,5 @@
 import type { Issue } from './types';
+import { byPutForward } from './checkFix';
 import { isActiveIssue, isOverdueIssue, isUnassigned, isVerify } from './officeActions';
 import { sortTableRows, type SortDirection } from './tableSorting';
 
@@ -161,6 +162,7 @@ export function queryIssues(all: readonly Issue[], q: IssueQuery, context: Query
   // One suggestion per company, however its case was typed; the first spelling seen is kept.
   const owners = [...new Map(all.map(i => i.owner.trim().replace(/\s+/g, ' ')).filter(Boolean).reverse().map(o => [o.toLowerCase(), o] as const)).values()].sort((a, b) => a.localeCompare(b));
   const mine = context.mine ?? (() => false);
-  const oldestToVerify = scoped.filter(i => isVerify(i) && !mine(i)).sort((a, b) => a.raisedAt.localeCompare(b.raisedAt) || a.reference.localeCompare(b.reference))[0];
+  // "Verify the oldest": the fix that has waited longest since it was put forward, not the oldest defect.
+  const oldestToVerify = scoped.filter(i => isVerify(i) && !mine(i)).sort(byPutForward)[0];
   return { oldestToVerify, issues: ordered.slice((page - 1) * q.pageSize, page * q.pageSize), total: ordered.length, page, pageSize: q.pageSize, pages, counts, owners };
 }

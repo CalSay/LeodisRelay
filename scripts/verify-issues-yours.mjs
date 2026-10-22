@@ -70,11 +70,11 @@ try {
   browser=await chromium.launch({headless:true,...(process.env.RELAY_BROWSER_PATH?{executablePath:process.env.RELAY_BROWSER_PATH}:{})});
   const shots=process.env.RELAY_SCREENSHOT_DIR;if(shots)mkdirSync(shots,{recursive:true});
   const open=async(who,scheme,width)=>{const wide=width>=900;const context=await browser.newContext({viewport:{width,height:wide?900:844},colorScheme:scheme,...(wide?{}:{hasTouch:true,isMobile:true})});await context.addCookies([{name:'relay_session',value:sessions[who.oid],url:base}]);const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));return {context,page,errors};};
-  const sections=page=>page.locator('main section.eng-panel').evaluateAll(els=>els.map(e=>({site:e.querySelector('h2')?.firstChild?.textContent?.trim(),count:e.querySelector('.eng-yours-count')?.textContent,waiting:e.querySelector('.eng-yours-waiting')?.textContent??'',cards:[...e.querySelectorAll('.eng-issue-card h3')].map(h=>h.textContent)})));
-  const settle=async page=>{await page.locator('.eng-issue-list, .eng-yours-empty').first().waitFor();await page.waitForTimeout(300);};
+  const sections=page=>page.locator('main section.eng-panel').evaluateAll(els=>els.map(e=>({site:e.querySelector('h2')?.firstChild?.textContent?.trim(),count:e.querySelector('.eng-yours-count')?.textContent,waiting:e.querySelector('.eng-yours-waiting')?.textContent??'',cards:[...e.querySelectorAll('.eng-issue-card h3')].filter(h=>!h.closest('.eng-yours-wait')).map(h=>h.textContent),waitingCards:[...e.querySelectorAll('.eng-yours-wait .eng-issue-card h3')].map(h=>h.textContent)})));
+  const settle=async page=>{await page.locator('.eng-panel > .eng-issue-list, .eng-yours-empty').first().waitFor();await page.waitForTimeout(300);};
   const layout=async(page,at)=>{
     ok(!(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth)),`${at}: no sideways scroll`);
-    if(!at.includes('1440')){const small=await page.evaluate(()=>[...document.querySelectorAll('.eng-issue-tabs button, .eng-issue-card')].filter(e=>e.getBoundingClientRect().height<48).map(e=>e.textContent.trim()));ok(small.length===0,`${at}: buttons and cards 48px or taller (${small.join(', ')})`);}
+    if(!at.includes('1440')){const small=await page.evaluate(()=>[...document.querySelectorAll('.eng-issue-tabs button, .eng-issue-card, .eng-yours-waiting')].filter(e=>e.getClientRects().length).filter(e=>e.getBoundingClientRect().height<48).map(e=>e.textContent.trim()));ok(small.length===0,`${at}: buttons and cards 48px or taller (${small.join(', ')})`);}
   };
 
   // 390px light: the whole Friday flow, counting taps.
@@ -96,6 +96,19 @@ try {
     ok(!all.includes('Pipe lagging missing')&&!all.includes('Valve leaking')&&!all.includes('Door closer loose'),`${at}: other trades' issues raised by others are left out`);
     ok(!all.includes('Spur not labelled')&&!all.includes('Light fitting not earthed'),`${at}: closed and put-forward issues are not listed`);
     ok(s[1].count==='1 to do'&&/1 put forward as fixed, waiting for the office to check/.test(s[1].waiting),`${at}: Kirkstall Gate counts the one waiting: ${JSON.stringify(s[1])}`);
+    // The count opens to show which fixes are waiting (checking fixes walk, 2026-10-21): folded at first, one tap to open, each opens its issue.
+    {
+      const fold=page.locator('main section.eng-panel').nth(1).locator('details.eng-yours-wait');
+      ok(!(await fold.evaluate(d=>d.open))&&!(await fold.locator('.eng-issue-card').first().isVisible()),`${at}: the waiting fixes are folded under the count at first`);
+      await fold.locator('summary').click();
+      ok(await fold.locator('.eng-issue-card',{hasText:'Light fitting not earthed'}).isVisible()&&JSON.stringify(s[1].waitingCards)===JSON.stringify(['Light fitting not earthed']),`${at}: one tap on the count lists the fix waiting: ${JSON.stringify(s[1].waitingCards)}`);
+      ok(/fixed, to check/i.test(await fold.locator('.eng-issue-card').first().innerText()),`${at}: the waiting card says it is fixed, to check`);
+      await fold.locator('.eng-issue-card').first().click();await page.locator('.issue-eng-title').waitFor();
+      ok((await page.locator('.issue-eng-title').innerText()).includes('Light fitting not earthed'),`${at}: the waiting card opens its issue`);
+      await page.getByRole('link',{name:'← Back to Issues'}).click();await settle(page);
+      ok(await page.getByRole('button',{name:'Yours'}).getAttribute('aria-pressed')==='true',`${at}: Back from a waiting fix returns to Yours`);
+      s=await sections(page);
+    }
     const cordCard=page.locator('.eng-issue-card',{hasText:'Pull cord switch missing'});
     const cordText=await cordCard.innerText();
     ok(/Sent back/i.test(cordText)&&cordText.includes(`Olive Office wrote on`)&&cordText.includes('still loose'),`${at}: the sent-back card says so, with what the office wrote: ${JSON.stringify(cordText)}`);

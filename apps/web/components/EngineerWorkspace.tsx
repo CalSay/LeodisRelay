@@ -228,7 +228,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
         const returnTo = engineerReturn();
         // `site`: the project name, on rows from a site other than the one the engineer is at.
         const reportRow = (r:ReportSummary, corrected:boolean, site?:string):Back => ({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:withViewReturn(`/reports/${r.id}`,returnTo), title:`${reportTypeOf(r).name} ${r.reference.split("-").slice(1).join("-")}`, sub:`${site ? `${site} · ` : ''}Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned', sentBack:r.review === 'returned' && !corrected, word:reportWord(r,corrected), office:officeOpened(r) });
-        const issueRow = (i:Issue, site?:string):Back => ({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}?update=1`,returnTo), title:i.description, sub:`${site ? `${site} · ` : ''}${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'}${site ? '' : ` · you raised it ${fmtDay(i.raisedAt)}`}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed', sentBack:i.confirmation === 'disputed' || issueReopened(i.events,principal), word:issueWord(i.events,principal), office:officeActed(i.events,principal) });
+        const issueRow = (i:Issue, site?:string):Back => ({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}?update=1`,returnTo), title:i.description, sub:`${site ? `${site} · ` : ''}${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'}${site ? '' : ` · you raised it ${fmtDay(i.raisedAt)}`}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed', sentBack:i.confirmation === 'disputed' || issueReopened(i.events,principal), word:issueWord(i.events,principal), office:i.work !== 'awaiting_verification' && officeActed(i.events,principal) });
         const variationRow = (v:Variation, site?:string):Back => ({ at:v.events.at(-1)?.at ?? v.raisedAt, key:v.id, href:withViewReturn(`/variations/${v.id}`,returnTo), title:v.description, sub:`${site ? `${site} · ` : ''}${v.reference.split('-').slice(1).join('-')} · ${v.location || 'no location'}${site ? '' : ` · you raised it ${fmtDay(v.raisedAt)}`}`, tags:<VariationTags v={v}/>, late:v.workDone && v.instruction === 'pending', word:variationWord(v.events,principal), office:officeActed(v.events,principal) });
         const here:Back[] = [];
         for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) here.push(reportRow(r,page.reports.some(c => c.corrects === r.id)));
@@ -384,7 +384,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
 /**
  * "Yours" on the Issues tab: a section per site with something still to do for
  * this engineer, the site they are on first. Put forward as fixed is counted, not
- * listed, as it waits on the office. Never quietly empty: it says so, with one
+ * listed, as it waits on the office; the count, under the list, opens to show which. Never quietly empty: it says so, with one
  * tap to every issue.
  */
 function YourIssues({projects,issues,projectId,returnTo,onAll}:{projects:FixtureProject[];issues:Issue[];projectId:string;returnTo:string;onAll:()=>void}) {
@@ -395,10 +395,10 @@ function YourIssues({projects,issues,projectId,returnTo,onAll}:{projects:Fixture
     .filter(s => s.toDo.length || s.waiting);
   const waitingLine = (n:number) => `${n} put forward as fixed, waiting for the office to check`;
   if (!sites.length) return <section className="eng-panel eng-yours-empty"><p className="eng-help">Nothing open for you on {projects.length === 1 ? 'this site' : `any of your ${projects.length} sites`}. Issues you raise{principal.trade ? ', or that are for your trade,' : ''} show here until they are fixed.</p><button type="button" onClick={onAll}>See all issues</button></section>;
-  return <>{sites.map(({p,toDo,waiting}) => <section className="eng-panel" key={p.id} aria-labelledby={`yours-${p.id}`}>
+  return <>{sites.map(({p,toDo,waiting,waitingIssues}) => <section className="eng-panel" key={p.id} aria-labelledby={`yours-${p.id}`}>
     <h2 id={`yours-${p.id}`}>{p.projectName}{' '}<span className="eng-yours-count">{toDo.length} to do</span></h2>
-    {waiting > 0 && <p className="eng-help eng-yours-waiting">{waitingLine(waiting)}</p>}
     <EngineerIssueList rows={toDo} empty={waiting ? '' : 'Nothing left to do here.'} returnTo={returnTo}/>
+    {waiting > 0 && <details className="eng-yours-wait"><summary className="eng-yours-waiting">{waitingLine(waiting)}</summary><EngineerIssueList rows={waitingIssues.map(issue => ({issue}))} empty="" returnTo={returnTo}/></details>}
   </section>)}</>;
 }
 
