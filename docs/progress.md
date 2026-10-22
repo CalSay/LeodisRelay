@@ -58,6 +58,40 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   checked), and the Help text overstating "as before" at 1280-1365 (fixed).
 - Not verified: a real laptop with browser zoom or a larger system font, a
   screen reader, a printer.
+## 2026-10-22 — A shorter printed month
+
+- Why: a walk of an office manager at 1440px (latest main, busy example data
+  from `scripts/seed-busy-projects.mjs`) printing Tetley Hall's Weekly summary
+  as a PDF to share progress: last week, this week and September (screens and
+  PDFs in project files `ui-review/weekly-pdf/`). The figures matched the
+  records: the month's week rows add up to its totals, the 196 past target
+  equal the companies' past-target figures, and the 354 still open equal the
+  companies' open issues. The week printed cleanly in 7 pages. The month did
+  not: it came to 28 A4 pages, 22 of them the "Issues past their target" list,
+  because print showed every one of the 196. Asked for by the coordinator as
+  the walk's one pick; not a `docs/tasks.json` task, so no status changed.
+  Decided without asking Cal (his autonomy message), within his 07:02
+  direction (the office's view of progress).
+- Changed: on paper "Behind or stuck" shows the ten longest-late issues, the
+  same ten as the screen, then "And 186 more past their target on Wed 30 Sep
+  2026, each no more days late than these. Each company's open and past-target figures are
+  under “Still open, with whom”." (`MonthSheet.tsx`, `week.css`
+  `.month-late-extra`, `.month-print-only`). With "Show all" open on screen,
+  print still gives every one. Every place under "Where work moved on" still
+  prints. The screen is unchanged. September now prints in 7 pages.
+- Decisions (Claude): ten, because it is what the screen already shows and the
+  company figures that print below account for the rest. Kept "Show all" as
+  the way to print the full list rather than adding a print option.
+- Checks: typecheck, `npm test` (146 + 551), build. New
+  `scripts/verify-month-print.mjs` (32 checks, light and dark 1440 on the busy
+  data: ten printed in the API's order, the "more" line and its count, every
+  place, each company, white sheet, eight A4 pages or fewer, Show all prints
+  every one with no "more" line, screen unchanged). It fails on main ("ten
+  late issues printed (196)"). Also passed: month-summary, weekly-summary,
+  help.
+- Not verified: a real printer or another browser's print dialog (PDFs are
+  Chromium's); a live tenant; a real phone.
+
 ## 2026-10-22 — Today from site on the office overview
 
 - Why: a walk of an office manager reading the end of the day's site updates at
