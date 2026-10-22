@@ -58,6 +58,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Issues"; and the check's tap count and "fresh" check claimed more than they
   tested (taps now counted, the check renamed).
 - Not verified: real phones, real weak signal, screen readers.
+
 ## 2026-10-22 — The checking fixes walk's small findings
 
 - Why: the checking fixes walk (project files
