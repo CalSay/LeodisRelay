@@ -33,7 +33,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   went quiet again when reopened (it was still waiting for its kind), and the
   one "photographs with no caption" note could be hidden with the open card's
   findings. Fixed: such a card is new only until first left, and only stops
-  are left out. The browser check now covers both reopening routes.
+  are left out. The browser check now covers both reopening routes. A second
+  fresh review found a blank card still open after a reload at Check & send
+  (which skips the blank-card tidy) went red on typing once back on the
+  cards: the open card is now looked at again whenever the step changes.
+  That path is checked by reading the code, not by the browser check.
 - Verified: typecheck, `npm test` (146 + 570), build. New
   `scripts/verify-calm-while-writing.mjs` (55 checks, 390 and 1440): no red
   after Where, a new defect calm until left then red with "needs at least one

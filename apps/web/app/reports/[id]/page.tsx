@@ -982,7 +982,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   // check still to answer, as it does on a wide screen. Once, as the draft opens.
   const openedBlank = useRef('');
   /** The open card, and that card again if it was new when it opened: one being filled in for the first time. */
-  const startedBlank = useRef<{ open: string | null; card: string | null }>({ open: null, card: null });
+  const startedBlank = useRef<{ open: string | null; step: string; card: string | null }>({ open: null, step: '', card: null });
   /** Cards the engineer has left, or seen on the check step: not new again unless still blank. */
   const leftCards = useRef(new Set<string>());
   /** Checks given their first answer here, which moves on at most once. */
@@ -1180,10 +1180,12 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   // new only until it is first left or seen on the check step; a card still
   // blank when it opens has nothing in it to warn about yet, so it always is.
   if (step === 'check') report.observations.forEach(o => leftCards.current.add(o.id));
-  if (step === 'check' || startedBlank.current.open !== open) {
+  // Coming back from the check step counts too: a card still blank there (a reload
+  // at Check & send skips the tidy) is new again; one with anything in it is not.
+  if (step === 'check' || startedBlank.current.open !== open || startedBlank.current.step !== step) {
     if (startedBlank.current.open) leftCards.current.add(startedBlank.current.open);
     const card = report.observations.find(o => o.id === open);
-    startedBlank.current = { open, card: step === 'cards' && !checklist && card && (isBlankCard(card) || (picking.includes(card.id) && !leftCards.current.has(card.id))) ? card.id : null };
+    startedBlank.current = { open, step, card: step === 'cards' && !checklist && card && (isBlankCard(card) || (picking.includes(card.id) && !leftCards.current.has(card.id))) ? card.id : null };
   }
   const writing = step === 'cards' ? startedBlank.current.card : null;
   // Only its stops: a note (such as photographs with no caption, which may cover other cards) is not red.
