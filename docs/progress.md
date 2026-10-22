@@ -4,6 +4,49 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Site page: a defect not sent yet
+
+- Why: the coordinator asked for a walk of an engineer's end of day at 390px
+  on main 71e7f88, with one item saved with no signal, checking everything
+  reached the office. Sam sent a site update, then flagged a defect with no
+  signal: the defect screen said "Defect not sent yet", but once he tapped
+  Site nothing showed it, and the "Flag a defect" button still said "sent
+  straight away". A site update in the same state already says "Not sent yet"
+  on the big button. Not a `docs/tasks.json` task, so no status changed.
+  Within Cal's 21 Oct direction (the engineer's job simpler).
+- Changed (`EngineerWorkspace.tsx`, engineer home only): while a defect the
+  engineer tapped Send on is held on the phone (`heldDefectsToSend`), the
+  current project's button reads "Defect not sent yet · Only on this phone,
+  not at the office yet. Tap to see it." (caution colours) and opens the
+  defect with "Try again" as before. A defect held on another listed project
+  is one caution row under the buttons ("Defect not sent yet · Kirkstall Gate
+  - Phase 2"), opening that project's defect. `sendHeldDefect` now fires
+  `DEFECT_SETTLED_EVENT` whenever a send ends (by itself or a tap), so the
+  Site page reads again then, on `storage` (another tab) and on coming back
+  from the defect screen. Help "What's new" line.
+- Decided (Claude): the button changes in place, like the site update's big
+  button, rather than adding a new section, so nothing more is on screen. A
+  defect written but never sent, or one RELAY refused and handed back to
+  change, is not "waiting" and leaves the button as it was; the refusal
+  already has its own red note. The words say "only on this phone, not at
+  the office yet" rather than "goes by itself when there is signal": that is
+  true whatever holds it up (no signal, RELAY closed, signed out, a missing
+  photograph), and the defect screen gives the reason (review).
+- Verified: typecheck, `npm test` (146 + 572), build. New
+  `scripts/verify-defect-waiting-on-site.mjs` (99 checks, 390 light and dark,
+  1440 dark: the button before, while waiting, after RELAY is opened again,
+  and after it goes by itself; never-sent draft; another project's row and
+  its link; Site tapped during a slow send, then the button goes back by
+  itself; 48px targets; no sideways scroll). `verify-defect-send-on-signal`
+  now waits for "Defect not sent yet" on the Site page (96 pass). Also
+  passed: engineer-layout, engineer-day, came-back-first, home-and-sheet,
+  receipt-send-bar, other-trade-defect, defect-recent-places, help,
+  role-access, offline-capture, accessibility (584). defect-recent-places
+  failed once on a timeout and passed alone on a rerun. Screens: project files
+  `ui-review/defect-waiting/`.
+- Not verified: a real phone or real weak signal (simulated offline and a
+  blocked upload in a phone-sized browser).
+
 ## 2026-10-22 — Weekly summary: an earlier week's open issues as they stood
 
 - Why: the coordinator asked for a walk of an office person at 1440 on the
