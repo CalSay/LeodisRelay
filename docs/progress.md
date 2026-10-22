@@ -60,6 +60,91 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   part (tower-only visit added); Help gave the wrong cause for "14 against
   11" (reworded); the Weekly summary could count a visit dated tomorrow
   (visits now up to today, as the overview).
+## 2026-10-22 — What the office asked, when a sent-back fix comes in again
+
+- Why: a walk at 390px on main 172c277 with Sam, whose socket fix the office
+  marked "Not finished" ("the back box is still loose, send a photo with the
+  plate off"). The engineer side was already short: the home's Came back row
+  carries the office's words, one tap opens the issue with the reason above
+  the buttons, then photo, note and Put forward: 4 taps, none to cut. The gap
+  was the office: the second attempt's Check this fix window looked like a
+  first attempt, with no sign it had been sent back or what was asked, and
+  the Fixed, to check rows did not say "again". Whoever checks it (often not
+  who sent it back) could not check the new photo against the ask.
+  Coordinator's ask (walk and one pick); not a `docs/tasks.json` task, so no
+  status changed. Within Cal's 21 Oct direction (the office's view of
+  progress clearer).
+- Changed: `lib/checkFix.ts` `sentBackBefore` (who sent it back last, when,
+  the reason, how many times since it was last verified) and `againWords`.
+  The check window says "Sent back by Jo Office on Wed 21 Oct, 11:00: “…”"
+  above the engineer's note (once the full issue has loaded); the overview's
+  Fixed, to check rows and Attention say "put forward again" (or "put forward
+  3 times"); the office issue sheet's "Closure submitted" note says the same.
+  `deskIssue` now keeps a waiting fix's put forward / sent back / verified
+  events (notes and photos still stripped) instead of only the latest put
+  forward, so the desk can tell. Help "What's new" line.
+- Decided (Claude): count send-backs only since the last verified close, so
+  an issue reopened as a new defect starts again; show the reason above the
+  engineer's note because it is the question the note answers; no change on
+  the engineer side, which the walk found already minimal.
+- Verified: typecheck, `npm test` (146 + 559), build. New
+  `scripts/verify-sent-back-fix.mjs` (29 checks): the engineer's walk (4
+  taps, reason above Put forward on the first screen, the new photo on the
+  server); for a manager who did not send it back, at 1440 dark and 390
+  light, the overview row, Attention, the window (reason before their note,
+  the new photo not the first) and the issue sheet; a first attempt says none
+  of it; axe on the window; no sideways scroll; no page errors. Also passed:
+  check-fixes, fix-waiting, busy-projects, office-top-bar, help,
+  office-actions, issue-figures, issue-register, came-back-to-update,
+  fix-forward-next, office-words. Screens: project files
+  `ui-review/sent-back-fix/` (before, and after/).
+- Not verified: a real phone.
+- Next: an engineer who fixes an issue someone else raised (same trade) sees
+  it under Issues "Yours" but not the office's reason on the issue page
+  (the word box is for the raiser only); worth a look.
+
+## 2026-10-22 — An inspection shows what needs action first in the office
+
+- Why: a walk of an office manager at 1440px and 390px on main 79f39c9
+  reading a handover inspection that had just come in (12 checks: 3 action
+  needed, 1 not applicable; a first fix inspection with none beside it), in
+  the Inbox, the reader and the Full report / PDF. Figures agree with the
+  records: the Inbox's "3 actions" and "no actions", the reader's three
+  actions and their issues ISS-001 to 003, the PDF's actions arising. No
+  wrong number found. But the reader then listed all 12 checks alike, each
+  with Quick actions and "0 photographs", so the three failures sat among
+  eight satisfactory rows (3,596px on a phone) with no line saying how the
+  inspection went, and "Not applicable" ran into its check's text.
+  Coordinator's ask (walk and one pick); not a `docs/tasks.json` task, so no
+  status changed. Within Cal's 21 Oct direction (the office's view clearer).
+- Changed (`ReportReader` in `office/ProjectsView.tsx`, `workspace.css`):
+  under "Inspection results" a tally line ("3 need action · 8 satisfactory ·
+  1 not applicable", or "No actions · …"); checks needing action listed
+  first, in checklist order; satisfactory and not applicable checks fold
+  under one button ("Show the 8 satisfactory and 1 not applicable checks",
+  aria-expanded), closed again for each report. A passing check with a
+  correction (an office note) stays above the fold with its change log. The
+  answer tag wraps in its column. Breadcrumb links are underlined (axe
+  link-in-text-block failed on the reader's "Tetley Hall" crumb). Site
+  updates, the PDF and Full report are unchanged. Help "What's new" line.
+- Decided (Claude): fold rather than drop the passing checks, so the office
+  can still read or note on any of them; the heading keeps "12 checks".
+- Verified: typecheck, `npm test`, build. New
+  `scripts/verify-office-inspection.mjs` (66 checks, 1440px light and dark,
+  390px light): tally equals the answers; only the three action checks with
+  their issues before the fold; the button's words and aria-expanded; nine
+  in order when opened; "Not applicable" does not overlap; a note on a
+  satisfactory check keeps it in view after a reload (7 + 1 folded); a clean
+  first fix inspection says No actions and folds all 12; axe on the reader;
+  no sideways scroll. Also passed: handover-, first-fix- and
+  tower-inspection, report-types, office-inbox, inbox-phone, accessibility,
+  help, role-access, engineer-layout, office-sections, safety-actions.
+  Fresh review: no reader bugs; fixed its three points (a reload check now
+  waits for the corrections; Hide closes an open Quick actions on a folded
+  check; an unanswered check on an old record is counted "not answered").
+  Screens: project files
+  `ui-review/office-inspection/before|after`.
+- Not verified: a real phone; a screen reader.
 - Next: none from this walk.
 
 ## 2026-10-22 — The office's questions before saved drafts on the engineer home

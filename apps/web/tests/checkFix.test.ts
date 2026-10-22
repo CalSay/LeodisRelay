@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {applyCommand,getIssue} from '../lib/issueStore';
 import {database,putRecord} from '../lib/storage';
-import {SEND_BACK_REASON,byPutForward,daysWaiting,fixEvidence,putForwardAt,waitingWords} from '../lib/checkFix';
+import {SEND_BACK_REASON,againWords,byPutForward,daysWaiting,fixEvidence,putForwardAt,sentBackBefore,waitingWords} from '../lib/checkFix';
 import type {Issue,IssueEvent,Photo} from '../lib/types';
 
 const shot=(id:string):Photo=>({id,dataUrl:`/api/media/${id}`,caption:'',capturedAt:'2026-10-20T10:00:00Z'});
@@ -76,4 +76,23 @@ test('a fix waits in calendar days, as the date it was put forward reads',()=>{
   // A note after it was put forward does not restart the wait.
   const noted=put('2026-10-19T08:00:00Z');noted.events.push(ev('note','2026-10-22T08:00:00Z','Photo added'));
   assert.equal(daysWaiting(noted,'2026-10-22'),3);
+});
+
+test('a fix sent back before says who sent it back, when, why and how many times',()=>{
+  const first=[ev('raised','2026-10-01T09:00:00Z','Collar missing'),ev('closure_submitted','2026-10-05T09:00:00Z','Done')];
+  assert.equal(sentBackBefore({events:first}),undefined,'a first attempt is not "again"');
+  assert.equal(againWords({events:first}),'');
+  const twice={events:[...first,ev('reopened','2026-10-06T09:00:00Z','  Wrong collar  ',[],'Jo Office'),ev('closure_submitted','2026-10-08T09:00:00Z','Right collar')]};
+  assert.deepEqual(sentBackBefore(twice),{by:'Jo Office',at:'2026-10-06T09:00:00Z',note:'Wrong collar',times:1});
+  assert.equal(againWords(twice),'put forward again');
+  // A note added in between changes nothing; the reason given last is the one shown.
+  const thrice={events:[...twice.events,ev('note','2026-10-08T10:00:00Z','Photo'),ev('reopened','2026-10-09T09:00:00Z','Still no fire mastic',[],'Ann Office'),ev('closure_submitted','2026-10-10T09:00:00Z','Mastic done')]};
+  assert.deepEqual(sentBackBefore(thrice),{by:'Ann Office',at:'2026-10-09T09:00:00Z',note:'Still no fire mastic',times:2});
+  assert.equal(againWords(thrice),'put forward 3 times');
+  // An issue verified, then reopened as a new defect, starts again: the earlier send-back belongs to the closed round.
+  const reopenedAfterClose={events:[...twice.events,ev('verified','2026-10-09T09:00:00Z','',[],'Jo Office'),ev('reopened','2026-10-12T09:00:00Z','Cracked again',[],'Jo Office'),ev('closure_submitted','2026-10-14T09:00:00Z','Replaced')]};
+  assert.equal(sentBackBefore(reopenedAfterClose),undefined);
+  // An older record sent back with no reason still counts, with the reason left empty.
+  const silent={events:[...first,ev('reopened','2026-10-06T09:00:00Z','',[],'Jo Office'),ev('closure_submitted','2026-10-08T09:00:00Z','')]};
+  assert.equal(sentBackBefore(silent)?.note,'');
 });

@@ -62,18 +62,20 @@ export function notSeen(reports: ReportSummary[], day: string): NotSeen {
 export const opensAsSeen = (r: Pick<ReportSummary, 'state' | 'acknowledged' | 'authorId'>, viewer: { id: string; role?: string }): boolean =>
   r.state === 'submitted' && !r.acknowledged && (viewer.role === 'Admin' || viewer.role === 'Manager') && r.authorId !== viewer.id;
 
+/** Kept on a fix waiting to be checked: when it was put forward, and whether it was sent back before ("put forward again", lib/checkFix.ts). A few events, not the history. */
+const CHECK_ROUNDS = new Set<Issue['events'][number]['kind']>(['closure_submitted', 'reopened', 'verified']);
 /**
  * An issue as the office desk's registers and totals use it: every field, and
  * only its latest event, without its note or photographs. A fix waiting to be
- * checked also keeps its latest "put forward as fixed", so "waiting N days"
- * counts from then and not from a note added since (lib/checkFix.ts). The issue's own page loads its whole history. On a busy
+ * checked also keeps its rounds of put forward, sent back and verified, so
+ * "waiting N days" counts from the latest put forward and not from a note
+ * added since, and a fix sent back before says "put forward again" (lib/checkFix.ts). The issue's own page loads its whole history. On a busy
  * register the full histories were most of a 10 MB answer, fetched every
  * 15 seconds.
  */
 export const deskIssue = (i: Issue): Issue => {
-  const last = i.events.at(-1);
-  const put = i.work === 'awaiting_verification' ? [...i.events].reverse().find(e => e.kind === 'closure_submitted') : undefined;
-  const kept = put && put !== last ? [put, last!] : last ? [last] : [];
+  const waiting = i.work === 'awaiting_verification';
+  const kept = i.events.filter((e, n) => n === i.events.length - 1 || (waiting && CHECK_ROUNDS.has(e.kind)));
   return { ...i, events: kept.map(e => ({ ...e, note: '', photos: [] })) };
 };
 
