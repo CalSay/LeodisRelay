@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'variations-team-admin-edges', added: '2026-10-22', audience: 'office', title: 'Variations, Team and Admin: calmer and clearer',
+    text: 'On the Variations tab, Price the oldest is now the one gold button: each row\'s Price and Instruct are plain, so the page no longer shows a gold button on every line, and the two rows of filters read as one block. On a phone a variation leaves out Quoted, Instructed and Margin until there is a figure. On Team, the Admin\'s panel for a person stays beside the list when they are chosen far down it. Each part of these pages has a clearer edge. Nothing was added or taken away. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
+    link: { label: 'Open Variations', href: '/office#/variations' } },
   { id: 'handover-diary-edges', added: '2026-10-22', audience: 'all', title: 'Before handover and the site diary: clearer parts',
     text: 'Before handover now starts each trade\'s snags under a rule, so Electrical, HVAC and P&H no longer run into each other on a long list, and each list, report and figure has a clearer edge, here and in the site diary and Site coverage. On a phone the buttons, filters and report links are easier to tap. Nothing was added or taken away, and the printed Before handover is unchanged. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
     link: { label: 'Open the site diary', href: '/diary' } },
