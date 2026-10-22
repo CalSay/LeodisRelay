@@ -4,6 +4,39 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — What needs the office, straight under the projects
+
+- Why: the coordinator asked for a look at the office overview's first
+  screen and whole page as an office manager starting the day, at 1440 and
+  1024px on main 117df61 (busy and small example data). Once the day's site
+  updates are in, "Today from site" (#143) shows every card open on the desk
+  and runs to about 1,040px at 1440 and 1,210px at 1024, so "Not seen yet",
+  "Unassigned issues" and "Fixed, to check" started about 1,770px and 2,020px
+  down: two screens below the project list. Nothing on the page was repeated
+  enough to cut (the project rows' "Needs action" is per project, the lists
+  are the items), so the pick was order, not removal. Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct
+  direction (the office's view of progress clearer).
+- Changed: `OfficeSheet` (ProjectsView.tsx) puts the three lists straight
+  after "Where each project stands" and "Today from site" after them, on
+  widths over 700px. On a phone the order stays as #147 left it (the day
+  folded to its bars, then the lists), because the count tiles at the top
+  already jump to the lists and the stacked lists are about 1,500px tall.
+  Help "What's new" line; the Help guide's office paragraph gives the new
+  order (and no longer mentions "new reports", a list removed in #101).
+- Decided (Claude): reorder rather than fold the day's cards on the desk,
+  because #143 built the open cards for the end-of-day read and nothing is
+  lost by moving them under the lists.
+- Verified: typecheck, `npm test` (146 + 562), build.
+  `verify-today-from-site` (62 checks) now also checks, at 1440 light and
+  dark, that the lists sit between Where each project stands and the day and
+  start within the first 900px; its inspection is now a first fix one,
+  because since #163 a safety inspection is not counted while the safety
+  records are off, and the check failed on main at "Tetley Hall's day in one
+  line". Screens: project files `ui-review/overview-first-screen/` (before,
+  after; 1440, 1024 and 390, busy and small data).
+- Not verified: a real laptop or phone.
+
 ## 2026-10-22 — A visit is one person on site on one day
 
 - Why: a walk of an office manager at 1440px on main 172c277 (busy example
