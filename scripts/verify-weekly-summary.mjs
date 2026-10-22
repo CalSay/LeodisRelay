@@ -15,7 +15,8 @@ const {chromium}=require(process.env.RELAY_PLAYWRIGHT_MODULE || 'playwright');
 const root=mkdtempSync(join(tmpdir(),'relay-week-'));
 process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media');
 const {putRecord,database}=require('../apps/web/.test-build/lib/storage.js');
-const {londonDay,weekStart,shiftWeek}=require('../apps/web/.test-build/lib/weeklySummary.js');
+const {londonDay,weekStart,weekEnd,shiftWeek}=require('../apps/web/.test-build/lib/weeklySummary.js');
+const {dayShort}=require('../apps/web/.test-build/lib/dates.js');
 const engineer={id:'entra:week-engineer',oid:'week-engineer',name:'Week Engineer',email:'week@example.test',role:'Engineer',trade:'Electrical'};
 const other={id:'entra:week-other',oid:'week-other',name:'Pat Pipe',email:'pat@example.test',role:'Engineer',trade:'P&H'};
 const manager={id:'entra:week-manager',oid:'week-manager',name:'Office Manager',email:'manager@example.test',role:'Manager'};
@@ -37,6 +38,10 @@ const issue=(extra)=>{const i={id:randomUUID(),reference:`011LME-ISS-${randomUUI
 const raised=issue({reference:'011LME-ISS-201',description:'Cable tray lid missing',raisedAt:now});
 const closed=issue({reference:'011LME-ISS-202',description:'Socket faceplate cracked',work:'closed',events:[{at:now,actor:manager.name,kind:'verified',note:'',photos:[]}]});
 const overdue=issue({reference:'011LME-ISS-203',description:'Old snag',targetDate:shiftWeek(lastMonday,-1)});
+// Open at the end of last week but not now: past target then, checked and closed today.
+const checkedToday=issue({reference:'011LME-ISS-204',description:'Riser door not closing',work:'closed',targetDate:lastMonday,events:[{at:now,actor:engineer.name,kind:'closure_submitted',note:'',photos:[]},{at:now,actor:manager.name,kind:'verified',note:'',photos:[]}]});
+// Put forward as fixed last week, still waiting to be checked.
+const fixedLastWeek=issue({reference:'011LME-ISS-205',description:'Light switch loose',work:'awaiting_verification',events:[{at:at(lastMonday,12),actor:engineer.name,kind:'closure_submitted',note:'',photos:[]}]});
 const variation={id:randomUUID(),reference:'011LME-VO-301',projectId:'proj-011lme',description:'Extra sockets in the plant room',location:'Plant room',workDone:true,instruction:'pending',source:'report',raisedBy:engineer.name,raisedAt:now,events:[]};
 putRecord('variations',variation);
 const port=4336,base=`http://127.0.0.1:${port}`;let output='';
@@ -96,7 +101,8 @@ try {
     check(/Site reports\s*2/i.test(stats)&&/Engineers\s*2/i.test(stats)&&/Issues raised\s*1/i.test(stats)&&/Variations raised\s*1/i.test(stats),`engineer: headline counts: ${JSON.stringify(stats)}`);
     check((await rows(page,'Issues').allInnerTexts()).some(t=>t.includes(raised.reference)),'engineer: issue raised this week is listed');
     check((await page.locator('.week-section').filter({hasText:'Checked and closed'}).innerText()).includes(closed.reference),'engineer: issue closed this week is listed');
-    check(/Open now: 2 · 1 past target/.test(await page.locator('.week-total').nth(1).innerText()),'engineer: open now with past target');
+    check(/^Open now: 3 · 1 past target · 1 fixed and waiting to be checked\./.test(await page.locator('.week-total').nth(1).innerText()),'engineer: open now with past target');
+    check(!/open now/i.test(stats),`engineer: on a phone the figures keep to one line each; open issues are under Issues: ${JSON.stringify(stats)}`);
     const vo=(await rows(page,'Variations').allInnerTexts()).join('\n');
     check(vo.includes(variation.reference)&&/done, not instructed/i.test(vo)&&!/£/.test(text),'engineer: variation raised, flagged as done, not instructed, no prices');
     const width=await page.evaluate(()=>document.documentElement.scrollWidth);
@@ -108,6 +114,12 @@ try {
     await page.locator('.week-sheet').waitFor();
     const before=await rows(page,'On site').allInnerTexts();
     check(before.length===1&&before[0].includes(lastWeek.reference)&&!(await page.locator('.week-sheet').innerText()).includes('so far'),`engineer: previous week lists last week's report: ${JSON.stringify(before)}`);
+    // Last week's issues as they stood at the end of its Sunday, not today's.
+    const sunday=dayShort(weekEnd(lastMonday));
+    const standing=await page.locator('.week-total').filter({hasText:'Open at the end of the week'}).innerText();
+    check(standing.startsWith(`Open at the end of the week (${sunday}): 4 · 2 past target · 1 fixed and waiting to be checked.`),`engineer: last week's issues as they stood on its Sunday (${standing})`);
+    const foot=await page.locator('.week-foot').innerText();
+    check(/as the issues stood at the end of/.test(foot)&&!/Open now/.test(foot),`engineer: the footnote says when the figures were read (${foot})`);
     // A record opened from the summary comes back to the same week.
     await page.getByRole('link',{name:lastWeek.reference}).click();await page.waitForURL(`**/reports/${lastWeek.id}**`);
     await page.goBack();await page.waitForURL(new RegExp(`week=${lastMonday}`));await page.locator('.week-sheet').waitFor();
@@ -140,6 +152,17 @@ try {
     await page.emulateMedia({media:'screen'});
     await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/office/);
     check(true,'office: back returns to the office');
+    // Today's to-check figure opens the register; last week's is words, since the register shows today.
+    await page.goto(`${base}/weekly-summary?project=proj-011lme`);await page.locator('.week-sheet').waitFor();
+    check(await page.locator('.week-total a[href^="/office"]').filter({hasText:'1 fixed and waiting to be checked'}).count()===1,'office: this week\'s to-check figure opens the register');
+    check(/Issues raised\s*1\s*\d+ closed this week · 3 open now/i.test(await page.locator('.week-stats').innerText()),'office: the issues figure says how many are open now');
+    await page.goto(`${base}/weekly-summary?project=proj-011lme&week=${lastMonday}`);await page.locator('.week-sheet').waitFor();
+    const lastSunday=dayShort(weekEnd(lastMonday));
+    check(new RegExp(`Issues raised\\s*\\d+\\s*\\d+ closed this week · 4 open on ${lastSunday}`,'i').test(await page.locator('.week-stats').innerText()),'office: the issues figure says how many were open at the end of last week');
+    await page.emulateMedia({media:'print'});
+    check((await page.locator('.week-stats').innerText()).includes(`4 open on ${lastSunday}`),'print: the open issues figure prints');
+    await page.emulateMedia({media:'screen'});
+    check(await page.locator('.week-total a[href^="/office"]').count()===0&&/1 fixed and waiting to be checked/.test(await page.locator('.week-total').filter({hasText:'Open at the end of the week'}).innerText()),'office: last week\'s to-check figure is words');
     // Another project: nothing this week, said plainly.
     await page.goto(`${base}/weekly-summary?project=proj-014lme&week=${lastMonday}`);await page.locator('.week-sheet').waitFor();
     check((await page.locator('.week-sheet').innerText()).includes('No site reports were sent for visits this week.'),'office: an empty week says so');

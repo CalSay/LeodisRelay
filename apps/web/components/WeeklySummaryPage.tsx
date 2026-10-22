@@ -74,6 +74,8 @@ export function WeeklySummaryPage({ initialProject, initialWeek, initialPeriod =
   const { safetyRecords } = useFeatures();
   const s = period === 'week' && summary?.projectId === projectId && summary.start === week ? summary : null;
   const m = period === 'month' && monthly?.projectId === projectId && monthly.month === month ? monthly : null;
+  // A week that is over gives its issues as they stood at its end, not today's.
+  const weekOver = s ? !s.current && s.open.asOf === s.end : false;
   const issuesMoved = s ? s.issuesRaised.length + s.issuesFixed.length + s.issuesClosed.length : 0;
   const siteCount = s ? s.site.talks.length + s.site.permits.length + s.site.deliveries.length : 0;
   const snagHref = `/issues/snag-list?${new URLSearchParams({ project: projectId, returnTo: here })}`;
@@ -126,7 +128,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, initialPeriod =
         <dl className="week-stats">
           <div><dt>Site reports</dt><dd>{s.reports.length}<small>{s.siteDays.length ? `${plural(s.visits, 'visit')} over ${plural(s.siteDays.length, 'day')}` : 'no visits reported'}</small></dd></div>
           <div><dt>Engineers</dt><dd>{s.engineers.length}<small>{s.engineers.length ? s.engineers.join(', ') : 'none reported'}</small></dd></div>
-          <div><dt>Issues raised</dt><dd>{s.issuesRaised.length}<small>{plural(s.issuesClosed.length, 'closed', 'closed')} this week</small></dd></div>
+          <div><dt>Issues raised</dt><dd>{s.issuesRaised.length}<small>{plural(s.issuesClosed.length, 'closed', 'closed')} this week<span className="week-open-figure"> · {s.open.total} open {weekOver ? `on ${fmtDay(s.open.asOf)}` : 'now'}</span></small></dd></div>
           <div><dt>Variations raised</dt><dd className={s.variationsRaised.some(v => v.workDone && v.status !== 'Instructed') ? 'late' : ''}>{s.variationsRaised.length}<small>{plural(s.variationsInstructed.length, 'instructed', 'instructed')} this week</small></dd></div>
         </dl>
 
@@ -149,8 +151,9 @@ export function WeeklySummaryPage({ initialProject, initialWeek, initialPeriod =
           <h3>Raised</h3><IssueRows rows={s.issuesRaised} empty="No issues raised this week." here={here} />
           <h3>Put forward as fixed</h3><IssueRows rows={s.issuesFixed} empty="Nothing put forward as fixed this week." here={here} />
           <h3>Checked and closed</h3><IssueRows rows={s.issuesClosed} empty="No issues closed this week." here={here} />
-          <p className="week-total">Open now: <b>{s.openNow.total}</b>{s.openNow.pastTarget > 0 && <> · <span className="late">{s.openNow.pastTarget} past target</span></>}{s.openNow.toCheck > 0 && <> · {manager ? <a href={officeVerify}>{s.openNow.toCheck} fixed and waiting to be checked</a> : `${s.openNow.toCheck} fixed and waiting to be checked`}</>}.
-            {s.openNow.total > 0 && <> <Link className="week-noprint" href={snagHref}>Open the snag list</Link></>}</p>
+          {/* The register's list is today's, so a week that is over gives its to-check figure as words. */}
+          <p className="week-total">{weekOver ? `Open at the end of the week (${fmtDay(s.open.asOf)})` : 'Open now'}: <b>{s.open.total}</b>{s.open.pastTarget > 0 && <> · <span className="late">{s.open.pastTarget} past target</span></>}{s.open.toCheck > 0 && <> · {manager && !weekOver ? <a href={officeVerify}>{s.open.toCheck} fixed and waiting to be checked</a> : `${s.open.toCheck} fixed and waiting to be checked`}</>}.
+            {s.open.total > 0 && <> <Link className="week-noprint" href={snagHref}>Open the snag list</Link></>}</p>
         </section>
 
         <section className="week-section">
@@ -182,7 +185,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, initialPeriod =
         </section>}
 
         <footer className="week-foot">
-          <p>Made from site reports sent to the office{safetyRecords ? ', the issue and variation registers, and the toolbox talks, permits and deliveries recorded in RELAY' : ' and the issue and variation registers'}. Reports are placed by their visit day; issues and variations by the day each change was recorded{safetyRecords ? '; talks by the day given, permits and deliveries by the day issued or taken in, or closed or sorted when that was this week' : ''}. A corrected report replaces the one it corrects. Reports still awaiting review or returned for changes are marked. &ldquo;Open now&rdquo; is as of {fmtDay(today, true)}. Prices are not shown.</p>
+          <p>Made from site reports sent to the office{safetyRecords ? ', the issue and variation registers, and the toolbox talks, permits and deliveries recorded in RELAY' : ' and the issue and variation registers'}. Reports are placed by their visit day; issues and variations by the day each change was recorded{safetyRecords ? '; talks by the day given, permits and deliveries by the day issued or taken in, or closed or sorted when that was this week' : ''}. A corrected report replaces the one it corrects. Reports still awaiting review or returned for changes are marked. {weekOver ? <>&ldquo;Open at the end of the week&rdquo; is as the issues stood at the end of {fmtDay(s.open.asOf, true)}; fixed issues waiting to be checked are never counted as past target.</> : <>&ldquo;Open now&rdquo; is as of {fmtDay(today, true)}.</>} Prices are not shown.</p>
         </footer>
       </article>}
   </main>;
