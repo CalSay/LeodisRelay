@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-project-sheet-tidier', added: '2026-10-22', audience: 'office', title: 'A tidier project sheet',
+    text: 'A project\'s sheet in the office now opens on the project\'s name in large type, and each part below it is its own card with a clear edge: the four figures with the issue bar under them, then Latest from site, the project\'s pages and its details, each under its own heading. On a phone the project\'s name heads the page. The separate Projects list and project page have one rule under the heading instead of two, the details four across on a laptop, and a smaller Start a site update button there. Nothing was added or taken away. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'sharepoint-reads-reused', added: '2026-10-22', audience: 'all', title: 'Pages with issues and variations open quicker',
     text: 'Issues, the Site page, the snag list, an issue and the other pages that show issues or variations no longer wait for SharePoint every time you open one. RELAY shows what it last read from SharePoint (fetched again if it is more than ten minutes old) and fetches the latest behind the scenes, so a change made straight in SharePoint shows within a page or two. Anything you change in RELAY shows at once, as before, and saving works exactly as it did. Timed against a stand-in for SharePoint, not the live one.' },
   { id: 'home-screen-full-screen', added: '2026-10-22', audience: 'all', title: 'RELAY from the home screen: full screen, no web address',

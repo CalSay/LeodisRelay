@@ -1,0 +1,17 @@
+/* /projects and /projects/[id] (Release 1, O2). Scoped to these two pages: this
+   file stays loaded after a client navigation to any other page. */
+
+/* One rule between the heading and the list, not two. */
+.project-list-page>.pagehead{align-items:baseline}
+.project-list-page>.reg{border-top:0}
+.project-list-page>.empty{margin-top:var(--s5)}
+.project-list-page>.footnote{border-top:0}
+
+/* The project's identity under its name, four across on a laptop, then the button. */
+.project-page>.pagehead{border-bottom:0;padding-bottom:var(--s3)}
+.project-page>.titleblock{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));column-gap:var(--s5)}
+.project-page>.project-start{margin-top:var(--s5)}
+@media (min-width:701px){
+  /* A bar of gold the width of a laptop screen shouts; a phone keeps it full width for the thumb. */
+  .project-page>.project-start .btn-wide{width:auto;min-width:280px;padding:0 var(--s6)}
+}

@@ -13,6 +13,7 @@ import { ownsReport } from '@/lib/auth/access';
 import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 import { receiptStatus } from '@/lib/status';
 import { dayShort } from '@/lib/dates';
+import '../projects.css';
 
 export default function ProjectPage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ returnTo?: string }> }) {
   const getProject = useProjectLookup();
@@ -58,7 +59,7 @@ export default function ProjectPage({ params, searchParams }: { params: Promise<
   }
 
   return (
-    <main className="wrap eng-page">
+    <main className="wrap eng-page project-page">
       <PageTitle title={project.projectName} />
       <Link href={returnTo} className="back">
         &larr; {backLabel(returnTo, 'Projects')}
@@ -74,7 +75,7 @@ export default function ProjectPage({ params, searchParams }: { params: Promise<
       </div>
 
       {/* Title block: the identity of the job, stated once, the way a drawing does. */}
-      <dl className="titleblock" style={{ marginTop: 24 }}>
+      <dl className="titleblock">
         <div className="tb-cell">
           <dt>Client account</dt>
           <dd className="ref">{project.clientAccountNumber}</dd>
@@ -93,7 +94,7 @@ export default function ProjectPage({ params, searchParams }: { params: Promise<
         </div>
       </dl>
 
-      <div style={{ marginTop: 24 }}>
+      <div className="project-start">
         <button className="btn-primary btn-wide" onClick={startReport} disabled={creating}>
           {creating ? "Starting…" : "Start a site update"}
         </button>

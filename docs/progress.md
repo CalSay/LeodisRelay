@@ -4,6 +4,57 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish O2: a project's sheet and the projects pages
+
+- Why: task O2 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch").
+  Before and after screenshots at 1440 light and dark and 390 light (viewport
+  and full) are in the project files under `ui-review/release-1/O2/`. Busy
+  example data, 60 days, Office Manager.
+- Found: the project sheet was one panel with every part inside it on the same
+  colour, so its parts ran together (Cal, 21 Oct 12:59), the same fault O1
+  fixed on the overview. The title sat in a boxed band under a "Projects ›
+  Project" trail the Projects column already gives. The issue bar floated
+  loose between the figures and Latest from site. The project's pages and its
+  details had no heading. The project manager's email broke mid-word
+  ("example.invali / d"). The register heading left "E" alone on a second
+  line. On a phone the project's name appeared only in small capitals in the
+  column band, and "And 2 more in the report" pushed the rest of its sentence
+  onto a line of its own. `/projects` had two rules between the heading and
+  the list (and two above the footnote); `/projects/[id]` had two rules under
+  the name, its details three across with one left over, and a gold button the
+  full width of a laptop.
+- Changed: `ProjectsView.tsx` (ProjectSheet title without the trail, figures
+  and bar in one `sheet-standing` block, headings "On this project" and
+  "Project details"; the phone register starts with the project's name, its
+  number and client); `workspace.css` new block at the end scoped to
+  `.cols[data-depth="2"]`, `.project-title`, `.sheet-standing`,
+  `.sheet-details`, `.register-name` and `.register-standing` (cards with
+  `--line-2` edges on the sunken ground as O1 does, PM column widest, balanced
+  register heading); new `app/projects/projects.css` scoped to
+  `.project-list-page` and `.project-page` (one rule, details four across,
+  button its own width above 700px, full width on a phone). No `globals.css`
+  token changes, no shared component changed (`IssueRegister` untouched).
+  Help "What's new" line.
+- Decided (Claude): the "Details · 011LME" column band stays at depth 2 (it
+  labels the column beside the register); O1 hid it only on the overview.
+  Branched after O1 (#186) merged, as it changes the same two files.
+- Left for lane E: the app bar on `/projects` at 390px wraps to three rows
+  (it is `app/layout.tsx`, task E1).
+- Checks: `verify-office-phone` read the register's whole name from the
+  column band; it now reads it from the new name line (whole, unclipped,
+  under the back link) and still checks the band says "Register · name" for
+  screen readers (103 checks, was 99).
+- Verified: typecheck, `npm test` (146 + 583), build. Browser, one at a time:
+  office-phone (103), office-progress (84), office-links (65), home-and-sheet
+  (254), office-landing (19), simpler-home (56), navigation (76),
+  office-registers (225), sheet-figures-laptop (548), office-desk (73),
+  office-sections (63), office-top-bar (1917), september-office (43),
+  issue-figures (48), role-access (95), help (36), accessibility (584). A
+  fresh-context review found five small things, all fixed (a 44px target for
+  "And N more", the name twice on a phone, one selector not scoped to the
+  sheet, Help wording).
+- Not verified: a real phone, a tablet, a screen reader.
+
 ## 2026-10-22 — Reuse a recent SharePoint read (slow pages on engineer phones, part 1)
 
 - Why: Cal finds pages slow on an engineer's phone, the Issues tab for one.
@@ -40,6 +91,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: the live tenant's real Graph timings, or that the pilot's
   `RELAY_SHAREPOINT_MODE` is read or write (its upgrade step talks to the
   Variation Register, so it is very likely on). Not deployed.
+
 ## 2026-10-22 — Home screen icon: full screen, no web address bar
 
 - Why: Cal saved RELAY to his phone's home screen and it opens with a bar
