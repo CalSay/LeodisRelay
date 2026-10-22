@@ -20,6 +20,8 @@ export const NO_LOCATION = 'No location recorded';
 const isLive = (i: Issue) => i.work !== 'closed' && i.confirmation !== 'withdrawn';
 /** The trade an issue belongs to, as the office register reads it: the affected trade, else the reporter's. */
 export const issueTrade = (i: Issue) => i.affectedTrade ?? i.reporterTrade;
+/** Whose work an issue is, as the office reads it: the trade the engineer chose, else who reported it. */
+export const issueTradeWords = (i: Pick<Issue, 'affectedTrade' | 'reporterTrade'>): string => i.affectedTrade ?? (i.reporterTrade ? `reported by ${i.reporterTrade}` : 'trade not recorded');
 const key = (location: string) => location.trim().replace(/\s+/g, ' ').toLowerCase();
 
 /** Companies and people named as owners on the project's open issues, for the picker. */

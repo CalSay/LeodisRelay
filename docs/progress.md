@@ -30,6 +30,198 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   verified: printed on paper; the weekly summary print has no logo (unchanged).
 - Not live: the pilot runs 03188ee; this needs a deploy.
 
+## 2026-10-22 — Site coverage: one mark for each person on site
+
+- Why: the coordinator asked for a walk of an office manager using Site
+  coverage to answer "which sites had nobody report this week, and which
+  trades are missing?", at 1440 and 390px on main eb4b076, merged up to 76fa669 (busy example
+  data and a small hand-made set). On the busy data, Hunslet Depot showed two
+  "P&H" marks on Thu 22 Oct: one plumber, Pat Pipe, who sent a site update
+  and a first fix inspection. That read as two plumbers on site, and it
+  disagreed with the office overview, which since #163 counts one visit per
+  person per day. The same thing showed on Kirkstall Gate, Thu 15 Oct. It
+  also meant two "Elec" marks could not be told apart from one electrician
+  sending two reports, the worry raised about the Team "This week" line
+  (#159). Not a `docs/tasks.json` task, so no status changed. Within Cal's
+  21 Oct direction (the office's view of progress clearer).
+- Changed: `siteCoverage` (lib/siteCoverage.ts) gives one entry per person per
+  day, a person known by sign-in or else by name, as `countVisits` does. It
+  opens their site update (else their first report), and `references` lists
+  every report they sent that day. On the page, the mark's label and title
+  name the person and all their reports, the day reads "3 people on site",
+  and the key says "Each mark is one person … so two Elec marks are two
+  electricians". Help "What's new" line.
+- Decided (Claude): no count or badge on a mark with more than one report,
+  because a number on a mark would read as people again; the other reports
+  are named on the mark and are one tap away on the report. The "which trades
+  have not reported this week" line is left for a later task.
+- Verified: typecheck, `npm test` (146 + 570, one new unit test, and the
+  existing test's second engineer given their own sign-in), build. New
+  `scripts/verify-coverage-one-mark.mjs` (17 checks): Sam's update and
+  inspection are one mark opening the update and naming both, Jo (a second
+  electrician) is a second Elec mark, at 1440 dark and 390 light, no
+  sideways scroll. `verify-visits-this-week` (19) and `verify-help` pass.
+  `verify-site-coverage` fails at "a draft is not a visit" on this branch and
+  on main alike (the Thu-Sun test-data fault fixed in #142). Busy data after
+  the change: Hunslet Thu 22 shows 3 marks for 3 people (was 4). Screens:
+  project files `ui-review/site-coverage/` (before-busy, after-busy,
+  after-small).
+- Fresh review found: a mark could open the inspection when a person's two
+  reports differed in name spacing or trade (now the site update is chosen
+  within each person's reports), and the Help line claimed desktop light
+  (now "light and dark" across the two widths). Both fixed, with the unit
+  test covering the first.
+- Not verified: a real phone or laptop, a screen reader.
+- Next: under each active site, say which trades that reported earlier in
+  the fortnight have not reported this week.
+## 2026-10-22 — Fifteenth release check (main 54c7c93)
+
+- Why: a full check of main before the next deploy, after #165 (issues by
+  place), #166 (fixed, to check on Issues over time) and #167 (office desk
+  order) merged. Last passed: 73b6d8d (#2-#157). #142 and #154 are not on
+  main, so not checked.
+- Ran on 54c7c93 (#2-#27, #29-#129, #131-#141, #143-#153, #155-#167):
+  `npm ci`, typecheck, `npm test` (146 + 568), build, then all 121
+  `scripts/verify-*.mjs` one after another. 118 passed.
+  - `verify-undo-remove` and `verify-site-coverage` (Thursday to Sunday): the
+    known faults PR #142 fixes (waiting on Cal); not fixed again here.
+  - `verify-simpler-home`: with safety, permits and deliveries switched off
+    (the default), office Help said "While safety, permits and deliveries
+    are switched off, a weekly safety or tower inspection is no longer
+    counted as a visit". The "A visit is one person on site on one day"
+    line from #163 named the switched-off records. Fixed: that sentence is
+    taken out, with the "14 visits this week" example after it, which only
+    that sentence explained (a fresh review's point).
+  - An earlier, stopped run on 4714a18 failed `verify-deliveries` once
+    ("focus returns to Record a delivery"); it passed in the full run on
+    54c7c93 and 3 of 3 runs alone. Recorded, not changed.
+- With the fix on main eb4b076 (#169 merged after the check): typecheck,
+  `npm test` (146 + 569), build, simpler-home, help, issue-assign,
+  company-issues, role-access, issue-register and accessibility pass.
+- Deploy: no new settings, packages, data change or offline store version
+  (still `relay-public-v14`).
+- Not verified: a real phone, tablet, printer or screen reader; a live
+  tenant; Docker (no build change since the eleventh check).
+- Next: once #142 merges, rerun `verify-undo-remove` and
+  `verify-site-coverage`; then main is ready.
+## 2026-10-22 — Flag a defect: trade in one tap
+
+- Why: the walk in #169 found that on "Flag a defect" at 390px the trade
+  starts as the engineer's own and changing it (an electrician flagging a
+  plumber's leak as P&H) needs a native dropdown: open it, find P&H, close it.
+  On a site update card the same question is four buttons, one tap. Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the engineer's job simpler, fewer taps).
+- Changed: `TradeChoice` in `ObservationEditor.tsx` is the card's existing
+  four-button control (Electrical, HVAC, P&H, Other; 48px, `aria-pressed`),
+  now used by the defect card and by `IndividualDefect.tsx` in place of the
+  `<select>`. It still starts at the engineer's own trade, is held on the
+  phone with the rest of the draft, and is disabled with the form while it
+  sends. The hint also says what "Other" covers, as the card does. Help
+  "What's new" line.
+- Decided (Claude): reuse the card's control rather than a second copy, so
+  the two stay the same; kept it in `ObservationEditor.tsx` beside
+  `Suggestions`, which the defect form already borrows from there.
+- Verified: typecheck, `npm test` (146 + 569), build. `verify-engineer-layout`
+  now checks the four buttons, Electrical pressed at first, one tap to HVAC,
+  and HVAC still pressed after a reload. `verify-other-trade-defect` (59)
+  taps P&H instead of choosing it from a list and checks the buttons are 48px.
+  Also passed: defect-recent-places (87), defect-send-on-signal (96),
+  lighter-card (80), report-editor (58), came-back-to-update (36), help (36),
+  role-access (95), accessibility (584). Screens: project files
+  `ui-review/defect-trade/` (after: form, filled, no signal, sent at 390 light
+  and dark and 1440 dark; before: copied from the #169 and #113 runs).
+- Not verified: a real phone.
+- Fresh review found no correctness gaps; it suggested plainer hint words and
+  a hint for someone with no trade recorded ("Tap the trade whose work it
+  is."), both taken.
+
+## 2026-10-22 — Unassigned issues say whose work it is
+
+- Why: the coordinator asked for a walk of an electrician flagging another
+  trade's defect, then a check that the office sees whose it is. Walked at
+  390px on main 4714a18 (rebased on 54c7c93, #167). Sam (Electrical) flagged a plumber's leak from "Flag a
+  defect" in about 6 taps plus typing what was wrong. The trade starts as his
+  own and needs a dropdown to change it to P&H (on a site update card it is
+  one tap). On the office side, the overview's "Unassigned issues" row
+  said only "Flat 2.04 kitchen · raised 22 Oct", with no trade. The Assign box
+  did not give the trade either and offered every company on the project in
+  A to Z order, so the office had to open the issue to see whose it was and then
+  type or pick the company. Not a `docs/tasks.json` task, so no status
+  changed. Within Cal's 21 Oct direction (the office's view clearer, with less
+  work).
+- Changed: the Unassigned row reads "Flat 2.04 kitchen · P&H · raised …"
+  (`issueTradeWords` in `lib/snagList.ts`, now also used by the Issues
+  register). The office desk's Assign box says "Trade: P&H" and, under
+  "Already doing P&H work on this project", offers the companies the office
+  has already put on P&H issues on this project as one-tap buttons. The issue
+  page's "Who puts it right" offers the same companies as chips. This comes
+  from `companiesByTrade` and `companiesForIssue` in `lib/suggestions.ts`, sent
+  as `byTrade` by `/api/locations`: newest first, up to 3, only the trade
+  the engineer chose (never the reporter's own trade), and placeholders like
+  "TBC" are left out. A tap only fills Responsible. Help "What's new" line.
+- Decided (Claude): a suggestion only, never auto-assigning (keeps clear of
+  EXP-2 decision routing; the office still presses Assign). "Other /
+  non-Leodis" offers no company, because it covers the main contractor and
+  every other trade. The office desk reads the offer from the server
+  rather than from the desk's own list, so `OfficeDesk.tsx` and `model.ts`
+  (open PR #154) are not touched. The engineer's trade dropdown on "Flag a
+  defect" was left for a later task.
+- Verified: typecheck, `npm test` (146 + 569, one new unit test), build. New
+  `scripts/verify-other-trade-defect.mjs` (56 checks). Sam flags the leak as
+  P&H at 390px. Then the office at 1440 light and dark and 390 light: the Unassigned row
+  names P&H, and an "Other" one says so. The desk's Assign box says the trade,
+  offers only the plumber's company (not the electrician's), and starts
+  empty. A tap fills Responsible and assigns nothing on its own. The issue
+  page's chips do the same, are 48px on a phone, and "Who puts it right"
+  says the trade. An "Other" defect gets no offer on either. Pressing Assign gives the issue to the plumber. No sideways scroll and no page errors.
+  Screens: project files `ui-review/other-trade-defect/` (before, after).
+- Not verified: a real phone or laptop.
+- Fresh review found: "Who puts it right" named the trade only when it
+  had a company to offer (now always), the Help line said one company when up
+  to three are offered, and the "Other" check could pass before the companies
+  had loaded and did not cover the desk (both fixed).
+- Next: "Flag a defect" could use the site update card's one-tap trade
+  buttons instead of the dropdown.
+
+## 2026-10-22 — What needs the office, straight under the projects
+
+- Why: the coordinator asked for a look at the office overview's first
+  screen and whole page as an office manager starting the day, at 1440 and
+  1024px on main 117df61 (busy and small example data). Once the day's site
+  updates are in, "Today from site" (#143) shows every card open on the desk
+  and runs to about 1,040px at 1440 and 1,210px at 1024, so "Not seen yet",
+  "Unassigned issues" and "Fixed, to check" started about 1,770px and 2,020px
+  down: two screens below the project list. Nothing on the page was repeated
+  enough to cut (the project rows' "Needs action" is per project, the lists
+  are the items), so the pick was order, not removal. Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct
+  direction (the office's view of progress clearer).
+- Changed: `OfficeSheet` (ProjectsView.tsx) puts the three lists straight
+  after "Where each project stands" and "Today from site" after them, on
+  widths over 700px. On a phone the order stays as #147 left it (the day
+  folded to its bars, then the lists), because the count tiles at the top
+  already jump to the lists and the stacked lists are about 1,500px tall.
+  Help "What's new" line; the Help guide's office paragraph gives the new
+  order (and no longer mentions "new reports", a list removed in #101).
+- Decided (Claude): reorder rather than fold the day's cards on the desk,
+  because #143 built the open cards for the end-of-day read and nothing is
+  lost by moving them under the lists.
+- Verified: typecheck, `npm test` (146 + 562), build.
+  `verify-today-from-site` (62 checks) now also checks, at 1440 light and
+  dark, that the lists sit between Where each project stands and the day and
+  start within the first 900px; its inspection is now a first fix one,
+  because since #163 a safety inspection is not counted while the safety
+  records are off, and the check failed on main at "Tetley Hall's day in one
+  line". Screens: project files `ui-review/overview-first-screen/` (before,
+  after; 1440, 1024 and 390, busy and small data).
+- Not verified: a real laptop or phone; many more projects (a longer
+  project list still pushes the lists down).
+- Fresh review found: a check still looked for the old inspection's words,
+  so proved nothing (fixed); the Help line claimed more than was checked
+  (reworded); a phone briefly drew the desk order before the width was known
+  (now neither section shows until it is).
+
 ## 2026-10-22 — Issues over time shows what is waiting for the office
 
 - Why: a walk of an office manager at 1440px and 390px on main 117df61 (busy
