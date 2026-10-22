@@ -6,7 +6,8 @@ import { canManage, isAdmin } from '@/lib/auth/access';
 import { peopleChecklist, type PersonLogEntry } from '@/lib/people';
 import { database, getRecord, records } from '@/lib/storage';
 import { listReports } from '@/lib/serverStore';
-import { latestOf, latestSentByAuthor, type LastSent } from '@/lib/teamActivity';
+import { latestOf, latestSentByAuthor, sentThisWeekByAuthor, weekOf, type LastSent, type SentThisWeek } from '@/lib/teamActivity';
+import { londonDay } from '@/lib/weeklySummary';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +37,12 @@ export interface TeamMember {
   onChecklist: boolean;
   /** Their latest sent report: the site and day the Team tab shows. */
   lastSent?: LastSent;
+  /** The days from Monday to today they sent a report for, and the sites. */
+  thisWeek?: SentThisWeek;
 }
+
+/** How far back someone off the checklist, with no session left, still shows because they sent a report. */
+const OFF_LIST_SENT_DAYS = 14;
 
 /**
  * The team as the office can know it: the assignment checklist reconciled with
@@ -64,6 +70,8 @@ export async function GET() {
   const identities = records<{ id: string; email?: string; name?: string; microsoftName?: string }>('identities');
   const reports = listReports();
   const sentBy = latestSentByAuthor(reports);
+  const today = londonDay(new Date());
+  const week = sentThisWeekByAuthor(reports, today);
   const describe = (email: string, assignment: string, onChecklist: boolean, person?: { relayName?: string; log?: PersonLogEntry[] }, addedByRelay?: boolean): TeamMember => {
     const own = (byEmail.get(email.toLowerCase()) ?? []).sort((a, b) => b.issuedAt.localeCompare(a.issuedAt));
     const latest = own[0];
@@ -74,6 +82,7 @@ export async function GET() {
     // Every account id this email has signed in with, so a report sent under an older id still counts.
     const ids = new Set([...own.map(s => s.principal.id as string), ...identities.filter(i => i.email?.toLowerCase() === email.toLowerCase()).map(i => i.id)]);
     const lastSent = latestOf(sentBy, ids);
+    const thisWeek = weekOf(week, ids);
     return {
       email, assignment, onChecklist,
       ...(name ? { name } : {}),
@@ -84,6 +93,7 @@ export async function GET() {
       // Sessions are deleted when they expire or on signing out; identities are kept, so this stays true.
       everSignedIn: !!latest || !!identity,
       ...(lastSent ? { lastSent } : {}),
+      ...(thisWeek ? { thisWeek } : {}),
       ...(latest ? {
         id: latest.principal.id,
         ...(latest.principal.role ? { role: latest.principal.role } : {}),
@@ -105,6 +115,12 @@ export async function GET() {
       const person = getRecord<{ relayName?: string; log?: PersonLogEntry[] }>('people', e);
       return describe(p.email, p.role ? (p.trade ? `${p.role}.${p.trade.replace('&', '')}` : p.role) : 'Unknown', false, person);
     }),
+    // Off the checklist with every session gone (signed out, or expired and
+    // cleared at someone's next sign-in), but sent a report in the last
+    // fortnight: kept, so their updates do not drop off the Team tab. The role
+    // is not kept after the session, so it is read from the report they sent.
+    ...offListSenders(identities, reports, sentBy, new Set([...listed, ...byEmail.keys()]), today).map(({ email, trade }) =>
+      describe(email, trade ? `Engineer.${trade.replace('&', '')}` : 'Unknown', false, getRecord<{ relayName?: string; log?: PersonLogEntry[] }>('people', email))),
   ];
 
   if (!admin) return NextResponse.json({ members });
@@ -121,4 +137,34 @@ export async function GET() {
       outbox: outbox.map(r => ({ id: r.id, reference: r.reference, projectId: r.projectId, delivery: r.delivery, error: r.deliveryError, since: r.serverAcknowledgedAt })),
     },
   });
+}
+
+/**
+ * Accounts that signed in at some time (identities are kept), are not in
+ * `shown`, and whose latest sent report is for a visit in the last
+ * OFF_LIST_SENT_DAYS days. One entry per email, with the trade from that report.
+ */
+function offListSenders(
+  identities: { id: string; email?: string }[],
+  reports: { id: string; authorTrade?: string }[],
+  sentBy: Map<string, LastSent>,
+  shown: Set<string>,
+  today: string,
+): { email: string; trade?: string }[] {
+  const from = new Date(`${today}T12:00:00Z`); from.setUTCDate(from.getUTCDate() - (OFF_LIST_SENT_DAYS - 1));
+  const since = from.toISOString().slice(0, 10);
+  const byEmail = new Map<string, string[]>();
+  for (const i of identities) {
+    const email = i.email?.toLowerCase();
+    if (!email || shown.has(email)) continue;
+    byEmail.set(email, [...(byEmail.get(email) ?? []), i.id]);
+  }
+  const out: { email: string; trade?: string }[] = [];
+  for (const [email, ids] of byEmail) {
+    const last = latestOf(sentBy, ids);
+    if (!last || last.visitDate < since || last.visitDate > today) continue;
+    const trade = reports.find(r => r.id === last.reportId)?.authorTrade;
+    out.push({ email, ...(trade ? { trade } : {}) });
+  }
+  return out.sort((a, b) => a.email.localeCompare(b.email));
 }

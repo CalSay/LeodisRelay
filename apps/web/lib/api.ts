@@ -16,7 +16,7 @@ import { localSaveJournal } from './localSaveJournal';
 import { SaveConflict, saveWithJournal, type SaveRequest } from './saveRequest';
 import type { SinceLastVisit } from './sinceLastVisit';
 import type { CameBack, CameBackElsewhere } from './cameBack';
-import type { LastSent } from './teamActivity';
+import type { LastSent, SentThisWeek } from './teamActivity';
 import type { ReportTypeId } from './reportTypes';
 import type { ProjectSuggestions } from './suggestions';
 import type { SafetyActions } from './safetyActions';
@@ -304,6 +304,8 @@ export interface TeamMember {
   addedByRelay?: boolean;
   /** Their latest sent report (lib/teamActivity.ts). */
   lastSent?: LastSent;
+  /** The days from Monday to today they sent a report for, and the sites. */
+  thisWeek?: SentThisWeek;
 }
 export interface RelayPerson { id: string; email: string; relayName?: string; assignment?: string; removed?: boolean; addedById?: string; addedAt?: string; log: PersonLogEntry[] }
 /** One Admin change to the people checklist. Never grants access. */

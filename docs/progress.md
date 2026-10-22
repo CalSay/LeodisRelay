@@ -4,6 +4,44 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — The Team tab says who has sent updates this week
+
+- Why: a walk of an office manager at 1440px on main e3138df (busy seed, its
+  three engineers put on the list) answering "which engineers have been on
+  site and sent updates this week, and which sites have gone quiet?". The
+  figures agree with the records: each person's Last sent, each project's
+  "This week" visits (13, 14, 14), Site coverage's "Reported today 2 of 2"
+  and "Gone quiet 0". But Team showed only someone's latest report, so an
+  engineer who reported from three sites today read as one, and Site
+  coverage marks reports by trade only (the real list has five
+  electricians), so the question took hovering over chips. Also, someone
+  signed in but not on the list dropped off Team once their session ended,
+  with their updates. Coordinator's ask (walk and one pick); not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the office's view of progress clearer).
+- Changed: `lib/teamActivity.ts` adds `sentThisWeekByAuthor` (sent reports by
+  visit day, Monday to today, London, and their sites), `weekOf` (across a
+  person's accounts) and `thisWeekWords` ("This week: Mon, Tue, today · 3
+  sites", "Nothing sent this week"). `/api/office/team` returns `thisWeek`
+  and lists accounts off the checklist with no session whose latest sent
+  report is for a visit in the last 14 days (role read from that report's
+  trade). `TeamAdmin.tsx` shows the line under Last sent on the Manager's and
+  Admin's lists. Help "What's new" line.
+- Decided (Claude): days and site count, not report counts or times, so it
+  reads as reporting, not hours; no line for someone who has never sent. A
+  list left open into a new week drops last week's days (fresh review). The
+  fortnight limit keeps old development or departed accounts off the list.
+- Verified: typecheck, `npm test` (146 + 556, one new unit test), build.
+  `scripts/verify-team-last-sent.mjs` now 90 checks (week line before and
+  after new reports, none for someone who sent nothing, an off-list account
+  kept, one last sent three weeks ago left off). Also ran: help,
+  role-access, accessibility. Screens: project files `ui-review/team-week/`.
+- Not verified: a real phone; the live roster.
+- Seen, not changed: Site coverage's Last report names one person when
+  several reported that day (left alone in #118); "visits" on the overview
+  counts reports, so a site update and an inspection on one day are two.
+- Next: none from this walk.
+
 ## 2026-10-22 — Before handover says how late each snag is
 
 - Why: a walk of an office manager at 1440px on main 993445f (busy seed,
