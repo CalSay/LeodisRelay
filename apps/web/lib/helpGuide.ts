@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'not-seen-two-weeks', added: '2026-10-22', audience: 'office', title: 'Not seen yet means the last two weeks',
+    text: '"Not seen yet" in the office now counts the reports received in the last two weeks that nobody in the office has opened, so it can come down to nought once you have read what came in. Older reports nobody opened are no longer counted; the Inbox says how many there are and "List them too" shows them. A report that a correction has replaced is not counted either: open the correction. Nothing is marked seen for you, so an engineer still sees "Seen by the office" only when someone opened it. Checked in a desktop browser and a phone-sized window, not on a real phone.',
+    link: { label: 'Open the Inbox', href: '/office#/inbox/show/notAck' } },
   { id: 'weekly-summary-phone', added: '2026-10-22', audience: 'office', title: 'The Weekly summary reads on a phone',
     text: 'On a phone, the Weekly summary\'s choices now take three rows instead of five: the project, then Week or Month beside "Print or save as PDF" (now a plain outlined button), then the steps back and forward. So the week\'s figures and the month\'s first two are on the first screen (on phones narrower than most, the week\'s first two). In the Month choice, "Week by week" shows each week as a small block with all six figures named (days on site, reports, issues raised and closed, variations raised and instructed). Before, only days and reports showed and the rest were hidden off the side of the screen. On a desk the print button now sits beside Week and Month. Printing is unchanged. Checked in a phone-sized browser, light and dark, not on a real phone.',
     link: { label: 'Open the Weekly summary', href: '/weekly-summary' } },
@@ -361,7 +364,7 @@ export const GLOSSARY: readonly GuideGroup[] = [
     { term: 'To review', meaning: 'Only on projects set up to need a review; review is off by default. Someone in the office approves it or sends it back with a reason.' },
     { term: 'PDF', meaning: 'RELAY makes the PDF of the report. "Ready" means it is made, not that anyone has it yet.' },
     { term: 'Delivery', meaning: 'Filed in SharePoint for SharePoint projects. RELAY does not email anyone yet, so the step says "Not emailed": if something cannot wait, tell the project manager yourself.' },
-    { term: 'Seen', meaning: 'Someone in the office has opened the report. Until then it says "Not seen yet". Nobody has to press anything: opening it is enough.' },
+    { term: 'Seen', meaning: 'Someone in the office has opened the report. Until then it says "Not seen yet". In the office, "Not seen yet" counts the last two weeks. Nobody has to press anything: opening it is enough.' },
   ] },
   { heading: 'An issue', terms: [
     { term: 'Open', meaning: 'Raised and not yet given to anyone.' },

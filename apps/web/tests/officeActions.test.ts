@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isNewReport, isOverdueIssue, issueFigures, officeActions, opensAsSeen, previousWorkingDay, sinceWords } from '../lib/officeActions';
+import { isNewReport, isOverdueIssue, issueFigures, notSeen, officeActions, opensAsSeen, previousWorkingDay, sinceWords } from '../lib/officeActions';
 import type { Issue, ReportSummary } from '../lib/types';
 
 const report = (id: string, over: Partial<ReportSummary>): ReportSummary => ({ id, state: 'submitted', projectId: 'proj-a', reference: `A-SPR-${id}`, author: 'Sam', serverAcknowledgedAt: '2026-10-20T09:00:00Z', ...over }) as ReportSummary;
@@ -48,6 +48,29 @@ test('the four groups pick and order what each one means', () => {
   assert.deepEqual(a.notRead.map(r => r.id), ['new-unread', 'old-unread']);
   assert.deepEqual(a.unassigned.map(i => i.id), ['unowned-old', 'unowned-new']);
   assert.deepEqual(a.verify.map(i => i.id), ['verify-waiting', 'verify-recent']);
+});
+
+test('not seen yet counts the last two weeks and leaves out a report a correction replaces', () => {
+  const seen = { by: 'Pat', byId: 'pat', at: '2026-10-20T08:30:00Z' };
+  const reports = [
+    report('today', { serverAcknowledgedAt: '2026-10-20T09:00:00Z' }),
+    // 23:30 UTC on 6 Oct is 00:30 on 7 Oct in London: the first day counted.
+    report('first-day', { serverAcknowledgedAt: '2026-10-06T23:30:00Z' }),
+    report('day-before', { serverAcknowledgedAt: '2026-10-06T22:30:00Z' }),
+    report('last-year', { serverAcknowledgedAt: '2025-10-01T09:00:00Z' }),
+    report('opened', { serverAcknowledgedAt: '2026-10-19T09:00:00Z', acknowledged: seen }),
+    report('original', { serverAcknowledgedAt: '2026-10-15T09:00:00Z' }),
+    report('correction', { serverAcknowledgedAt: '2026-10-16T09:00:00Z', revision: 2, corrects: 'original' }),
+    report('old-original', { serverAcknowledgedAt: '2026-09-01T09:00:00Z' }),
+    unreceived('draft-correction', { state: 'draft', corrects: 'old-original' }),
+    unreceived('draft', { state: 'draft' }),
+  ];
+  const n = notSeen(reports, '2026-10-20');
+  assert.equal(n.from, '2026-10-07');
+  assert.deepEqual(n.recent.map(r => r.id), ['today', 'first-day', 'correction']);
+  // A correction still being written does not replace what was sent.
+  assert.deepEqual(n.older.map(r => r.id), ['day-before', 'last-year', 'old-original']);
+  assert.deepEqual(officeActions(reports, [], '2026-10-20').notRead.map(r => r.id), ['today', 'correction', 'first-day']);
 });
 
 test('an unassigned issue waiting for verification counts in both groups', () => {
