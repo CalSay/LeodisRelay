@@ -2915,7 +2915,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   stands".
 - Checks: `npm run typecheck`, `npm test` (146 + 436; new
   `tests/projectStanding.test.ts`), `npm run build`. New
-  `scripts/verify-office-progress.mjs` (78 checks: the five answers per
+  `scripts/verify-office-progress.mjs` (74 checks: the five answers per
   project and the count matching the register, quiet and defects liability sites, a correction counted once,
   inspections left out of Latest from site, words of the correction not the
   original, what is left out said, the row and trade headings opening the
@@ -5393,7 +5393,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Kept: the engineer Issues view's disabled "Assigned to me" button, which
   `docs/engineer-site-companion.md` records as a deliberate placeholder.
 - Verified on Node 24: `npm run typecheck`, `npm test` (2 new tests),
-  `npm run build`. New `scripts/verify-navigation.mjs` passed (78 checks: as an
+  `npm run build`. New `scripts/verify-navigation.mjs` passed (74 checks: as an
   engineer at 390px light and 1440px dark, tab titles on every view, the home
   rows, Photographs and Back to Site, the Reports links and dates, no sideways
   scroll, Weekly summary and Back to Reports, Search from Reports, an issue
