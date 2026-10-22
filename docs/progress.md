@@ -4,6 +4,48 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Home screen icon: full screen, no web address bar
+
+- Why: Cal saved RELAY to his phone's home screen and it opens with a bar
+  showing the web address. Part of Release 1 (`docs/release-1.md`, engineer
+  phone). Not a `docs/tasks.json` task, so no status changed.
+- Found: the live manifest (fetched from app.relaybyleodis.com on 22 Oct) is
+  right: `display: standalone`, `scope: /`, icons 192 and 512 served as real
+  PNGs without signing in. So the bar comes from one of three things on the
+  phone's side: (1) the icon was saved as a plain shortcut (Android "Create
+  shortcut", or Safari with "Open as Web App" off), which opens a browser tab;
+  (2) Microsoft's sign-in is another web address, outside RELAY's scope, so the
+  phone shows a bar with it while signing in (an iPhone can finish it in a
+  browser sheet over RELAY); (3) Next.js 15 writes `appleWebApp.capable` only
+  as `mobile-web-app-capable`, not Apple's own `apple-mobile-web-app-capable`
+  that older iPhones look for.
+- Changed: `layout.tsx` adds `apple-mobile-web-app-capable`. `middleware.ts`
+  marks a visit to the icon's address (`/?open=app`) with a 5-minute cookie
+  (`lib/homeScreen.ts`), only when opened directly (Sec-Fetch-Site "none"),
+  so coming back to it from Microsoft's sign-in in a browser sheet over a
+  properly installed app is not mistaken for a shortcut (fresh review); `IconOpensBrowser` reads it once and, if the page is
+  not running full screen, says the icon opened the browser and how to add
+  RELAY again (iPhone or Android words), until "Got it". It stays through a
+  sign-in on the way in. The sign-in screen (`SignedInElsewhere`) carries on
+  to where it was going once a session exists when it comes back into view.
+  Install steps on the hub and sign-in say Install, not Create shortcut, and
+  to leave Open as Web App on. Help "What's new" line.
+- Decided (Claude): say it in the app rather than try to force full screen,
+  because a shortcut cannot be turned into an app from the page. The 12-hour
+  session was left alone: a longer one means fewer Microsoft sign-ins (and so
+  fewer bars) but a lost phone stays signed in longer; that is Cal's call.
+- Verified: typecheck, `npm test`, build, new `scripts/verify-home-screen.mjs`
+  (23 checks: tags and manifest, not marked when coming from another site,
+  note at 390 light/dark and 1440 on Android and
+  iPhone words, none when full screen or typed in, cookie read once, through
+  sign-in, sign-in carries on, stays put when still signed out). Full screen
+  is imitated by answering the display-mode query, as Chromium 141 cannot act
+  as an installed app. Screenshots in
+  `ui-review/release-1/home-screen/`.
+- Not verified: no real phone, so not which of the three causes Cal sees,
+  nor an iPhone's sign-in sheet. Live only after the next deploy; an icon
+  saved as a shortcut has to be removed and added again.
+
 ## 2026-10-22 — Release 1 polish O1: office top bar and overview
 
 - Why: task O1 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" for
