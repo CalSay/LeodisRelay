@@ -29,6 +29,11 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'dates-with-year', added: '2026-10-22', audience: 'all', title: 'Late issues say how late, and old dates say their year',
+    text: 'A late issue now says how many days it is past its target ("366 days past target") on the office Issues list, the snag list, the issue page and the Month summary, the same words as the office issue sheet. A date from another year now shows its year on the Weekly and Month summaries, My week, Issues over time, Site coverage and Before handover, so a week from last year, or a target last November, no longer reads as one still to come. Nothing else on those pages has changed. Checked in a desktop browser and a phone-sized window, not on a real phone or printer.' },
+  { id: 'handover-days-late', added: '2026-10-22', audience: 'all', title: 'Before handover says how late each snag is',
+    text: 'A late snag on Before handover now says how many days it is past its target ("349 days past target"), as an issue does in the office, instead of a date with no year. Before, a snag due last November read "Past target Fri 7 Nov", as if it were not due for two weeks. Target dates and inspection dates from another year now show the year.',
+    link: { label: 'Open Before handover', href: '/handover' } },
   { id: 'update-says-its-day', added: '2026-10-22', audience: 'site', title: 'An update says which day it is for',
     text: 'A site update now says under its title which day it is for ("For today, Thu 22 Oct"), and Check & send says the day the office files it under. If you open one left unsent from an earlier day, a note says so: the office files everything in it under that day, so send it as it is and put anything from today in today\'s update. "Go to today\'s update" on the note opens today\'s, or starts it if you have not yet. Nothing in the older update is changed or removed. Checked in a phone-sized browser, light and dark, not on a real phone.' },
   { id: 'photos-phone-in-view', added: '2026-10-22', audience: 'all', title: 'A day\'s photographs on the first screen of a phone',

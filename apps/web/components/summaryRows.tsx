@@ -9,7 +9,8 @@ import { dayShort } from '@/lib/dates';
 
 /** Rows and words shared by the weekly and monthly summaries. */
 
-export const fmtDay = (ymd: string, year = false) => dayShort(ymd, year);
+/** "Wed 21 Oct", with the year when it is not this year (or when asked). */
+export const fmtDay = (ymd: string, year: boolean | 'auto' = 'auto') => dayShort(ymd, year);
 export const fmtAt = (at: string) => fmtDay(londonDay(at));
 export const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 export const KIND_WORD: Record<string, [string, string]> = { update: ['progress update', 'progress updates'], defect: ['defect', 'defects'], instruction: ['variation required', 'variations required'], access: ['access problem', 'access problems'] };

@@ -7,6 +7,7 @@ import { useProjects } from './ProjectContext';
 import { usePrincipal } from './PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { dayLabel } from '@/lib/myWeek';
+import { dateShort } from '@/lib/dates';
 import type { IssueTrend, TrendWeek } from '@/lib/issueTrend';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { failure } from '@/lib/failure';
@@ -19,7 +20,8 @@ import { failure } from '@/lib/failure';
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 /** "12 Oct": short enough to sit under a bar on a phone. */
-const shortDay = (ymd: string) => dayLabel(ymd).slice(4);
+/** "12 Oct" under the chart: the weeks run in order up to Now, so the year would only crowd it. */
+const shortDay = (ymd: string) => dateShort(ymd, false);
 
 /** Nothing raised, closed or open in any week shown: no chart or table to read. */
 const blank = (t: IssueTrend) => t.weeks.every(w => !w.raised && !w.closed && !w.open);

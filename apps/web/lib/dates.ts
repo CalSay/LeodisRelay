@@ -69,3 +69,18 @@ export function whenShort(value: string | undefined | null, year: Year = 'auto')
 export function timeOf(value: string | undefined | null): string {
   return parts(value)?.time ?? '';
 }
+
+/** Whole calendar days from `from` to `to`, both "YYYY-MM-DD" ("2026-10-21" to "2026-10-22" is 1); 0 when either is unreadable. */
+export function daysBetween(from: string, to: string): number {
+  const days = Math.round((Date.parse(to) - Date.parse(from)) / 86400000);
+  return Number.isFinite(days) ? days : 0;
+}
+
+/**
+ * "1 day past target", "349 days past target": how long a late item has
+ * waited, in the words of the office issue sheet. Said instead of the target
+ * date, which without its year reads as a day still to come.
+ */
+export function pastTarget(days: number): string {
+  return `${days} ${days === 1 ? 'day' : 'days'} past target`;
+}
