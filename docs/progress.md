@@ -48,6 +48,56 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a real phone; a screen reader.
 - Next: none from this walk.
 
+## 2026-10-22 — The office's questions before saved drafts on the engineer home
+
+- Why: a walk at 390px on main 73b6d8d with Sam (busy seed, Thursday): three
+  sites, a site update left as a draft on each from Tuesday, five fixes the
+  office sent back with a question across the three sites, a report returned
+  for changes. "Start today's site update" sat at 350px, but "Came back from
+  the office" started at 959px and its first row at 997px, under the first
+  screen (775px above the bottom bar). Three full rows of drafts saved to
+  RELAY (about 330px) came first. Further down, Since your last visit lists
+  other trades' issues and variations at length (left alone: below the
+  office's questions). Coordinator's ask (walk and one pick); not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the engineer's job simpler, less on screen).
+- Changed (`EngineerWorkspace.tsx`, `engineer.css`): Unfinished reports splits
+  into what could be lost (started with no signal, edits only on this phone,
+  signed or waiting to send, refused) and drafts saved to RELAY. With nothing
+  at risk the section goes under Came back from the office, and two or more
+  saved drafts fold into one line ("3 drafts saved to RELAY · Visit Tue 20 Oct
+  · 3 sites · open to carry on"); one is listed as before. With anything at
+  risk the section stays above the office's questions, those rows in full,
+  the saved ones folded under "N more drafts, saved to RELAY". Nothing is
+  removed. The section waits until the phone's own copies are read (a moment),
+  so it does not draw under Came back and then jump above it; a copy the
+  server did not list still waits for the server's answer, as before. Help
+  "What's new" line.
+- Decided (Claude): fold only what the server already holds, so a draft that
+  could be lost is never one tap away; keep one section and one heading so it
+  is still "Unfinished reports" wherever it sits. No count beside the heading
+  when everything is in the fold (the line says it).
+- Verified: typecheck, `npm test` (146 + 557), build. New
+  `scripts/verify-busy-home.mjs` (35 checks; busy seed; 390px light, 1440px
+  dark, and 390px with one waiting to send): the office's first question down
+  to its words is on the first screen (now from 605px); the fold says three
+  drafts, three sites, opens to all three and each opens its report; with one
+  waiting to send it is listed in full above Came back and the other two fold;
+  48px rows, no sideways scroll, axe. `verify-unfinished-reports` and
+  `verify-offline-capture` updated for the fold and the at-risk order (they
+  passed on main as they were). Also passed: engineer-day, old-drafts, home-and-sheet,
+  came-back-first, simpler-home, send-on-signal, engineer-layout, and the
+  checks listed in the PR. Screens: project files `ui-review/busy-home/`
+  (before and after).
+- Fresh review found: the new check failing on a Tuesday or some Wednesdays
+  (the seed's drafts), a check that let an at-risk row hide, the section
+  jumping once the phone's copies load, and Help leaving out a refused report.
+  All fixed. Known limit: a copy only on this phone that the server did not
+  list (seen when the server cannot be asked) still appears a moment later and
+  can move the section above Came back.
+- Not verified: a real phone.
+- Next: Since your last visit is long on a busy site (other trades' issues
+  and variations); worth a walk of its own.
 ## 2026-10-22 — Fourteenth release check (main 993445f, then 73b6d8d)
 
 - Why: a full check of main before the next deploy. Last passed: 6def5e8

@@ -133,6 +133,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
   const [next,setNext] = useState<number | null>(null);
   const [retry,setRetry] = useState(0);
   const [held,setHeld] = useState<{ copies: HeldDraft[]; deviceOnly: Set<string> }>({ copies: [], deviceOnly: new Set() });
+  // Whether the phone's own copies have been read: until then a draft cannot be told safe, so Unfinished reports waits rather than show in one place and jump to another.
+  const [heldRead,setHeldRead] = useState(false);
   const project = projects.find(p => p.id === projectId);
   const ownDrafts = drafts.filter(r => r.projectId === projectId);
   // Today's site update (or a correction) in progress, and any inspection in
@@ -185,6 +187,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
     if (!principal) return;
     let cancelled = false;
     void listHeld(principal.id).then(async copies => {
+      // What this phone holds is known at once; the server is asked only about copies it did not list, which can be slow on weak signal.
+      if (!cancelled) { setHeld({ copies, deviceOnly: new Set() }); setHeldRead(true); }
       const unlisted = copies.filter(c => !c.started && !drafts.some(d => d.id === c.reportId));
       const answers = await Promise.all(unlisted.map(c => getReport(c.reportId).then(() => null, e => e instanceof ApiError && e.offline ? c.reportId : null)));
       if (!cancelled) setHeld({ copies, deviceOnly: new Set(answers.filter((id): id is string => !!id)) });
@@ -280,6 +284,24 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
   // One row on the home screen for a page about the current project.
   const projectPage = (path: string, title: string, note: string) => <Link className="eng-row" href={`${path}?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}><div className="main"><b>{title}</b><span>{note}</span></div><span className="chev">›</span></Link>;
 
+  // A draft saved to RELAY is safe and waits for whenever the engineer gets back to it, so it does not push the
+  // office's questions off the first screen: those drafts go under "Came back from the office", folded into one
+  // line when there are several. Anything that could be lost (only on this phone, not saved yet, signed but not
+  // sent, refused) is listed in full above the office's questions, and the section goes there with it.
+  const atRisk = unfinished.filter(r => r.started || r.device || r.signed || r.problem || waiting.has(r.id));
+  const saved = unfinished.filter(r => !atRisk.includes(r));
+  const unfinishedRow = (r:UnfinishedReport) => r.started ? <a key={r.id} href="/offline.html" className="eng-row late"><div className="main"><b>New {r.typeName.toLowerCase()} · {r.projectName}</b><span>No reference yet · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r} waiting={waiting.has(r.id)}/></div></div><span className="chev">›</span></a> : <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : r.typeName} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r} waiting={waiting.has(r.id)}/></div></div><span className="chev">›</span></Link>;
+  const oldestVisit = saved.map(r => r.visitDate).sort()[0];
+  const unfinishedSection = heldRead && unfinished.length > 0 && <section aria-labelledby="eng-unfinished-title" className="eng-unfinished">
+    <div className="eng-section-title"><h2 id="eng-unfinished-title">Unfinished reports</h2><span className="r">{atRisk.length || saved.length === 1 ? unfinished.length : ''}</span></div>
+    {atRisk.length > 0 && <div className="eng-list">{atRisk.map(unfinishedRow)}</div>}
+    {saved.length === 1 && <div className="eng-list">{saved.map(unfinishedRow)}</div>}
+    {saved.length > 1 && <details className="eng-saved-drafts">
+      <summary>{atRisk.length ? `${saved.length} more drafts, saved to RELAY` : `${saved.length} drafts saved to RELAY`}<span>{saved.every(r => r.visitDate === oldestVisit) ? `Visit ${fmtDay(oldestVisit)}` : `Oldest visit ${fmtDay(oldestVisit)}`} · {new Set(saved.map(r => r.projectId)).size > 1 ? `${new Set(saved.map(r => r.projectId)).size} sites` : saved[0]!.projectName} · open to carry on</span></summary>
+      <div className="eng-list">{saved.map(unfinishedRow)}</div>
+    </details>}
+  </section>;
+
   return <main className="eng-workspace">
     <PageTitle title={VIEW_TITLES[view]} />
     {principal?.role !== 'Engineer' && <p className="eng-preview">Engineer layout preview · Signed in as {principal?.role}. Your permissions and report authorship are unchanged.</p>}
@@ -304,13 +326,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
             <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo and a short note, sent straight away</small></div></button>
             <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work, for the office to price</small></div></button>
           </div>
-          {unfinished.length > 0 && <section aria-labelledby="eng-unfinished-title">
-            <div className="eng-section-title"><h2 id="eng-unfinished-title">Unfinished reports</h2><span className="r">{unfinished.length}</span></div>
-            <div className="eng-list">
-              {unfinished.map(r => r.started ? <a key={r.id} href="/offline.html" className="eng-row late"><div className="main"><b>New {r.typeName.toLowerCase()} · {r.projectName}</b><span>No reference yet · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r} waiting={waiting.has(r.id)}/></div></div><span className="chev">›</span></a> : <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : r.typeName} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r} waiting={waiting.has(r.id)}/></div></div><span className="chev">›</span></Link>)}
-            </div>
-          </section>}
-          {/* Straight under the main buttons, above Inspections, so on a phone the office's answer is on the first screen. */}
+          {atRisk.length > 0 && unfinishedSection}
+          {/* Straight under the main buttons (and anything unfinished that could be lost), above drafts saved to RELAY and Inspections, so on a phone the office's answer is on the first screen. */}
           <section className="eng-came-back" aria-labelledby="eng-came-back-title">
             <div className="eng-section-title"><h2 id="eng-came-back-title">Came back from the office</h2><span className="r">{back && !back.failed ? (fromOffice ? `${fromOffice} from the office` : '') : back ? '' : '…'}</span></div>
             <div className="eng-list">
@@ -320,6 +337,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
                 : <div className="eng-empty">Nothing on this project yet. Reports you send, defects you flag and variations you request show here with the office’s answer.</div>}
             </div>
           </section>
+          {!atRisk.length && unfinishedSection}
           <section aria-labelledby="eng-inspections-title" className="eng-inspections">
             <div className="eng-section-title"><h2 id="eng-inspections-title">Inspections</h2></div>
             <p className="eng-section-note">A walk round one area with a checklist, signed and sent as its own report.</p>
