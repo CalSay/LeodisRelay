@@ -4,6 +4,50 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Office issue sheet: everything open at the same place
+
+- Why: the coordinator asked for a walk of an office person at 1440px on the
+  busy example data answering "what's the state of Flat 12?" (main 9afbb1f;
+  the seed has no Flat 12, so Flat 204 kitchen on Tetley Hall). The answer was
+  there but split over three screens the office had to know about: the Issues
+  register (choose the project, type the place: 31 open), Photographs (its own
+  Find box) and Search (every project, open and closed together, 272 issues,
+  and "flat" also finds "flats"). An issue's sheet gave its place as plain
+  text; the engineer's issue page has had "Every open issue here" since #165,
+  the office had nothing. Not a `docs/tasks.json` task, so no status changed.
+  Within Cal's 21 Oct direction (the office's view of progress clearer).
+- Changed: under an office issue sheet's title, "At Flat 204 kitchen: 31 open
+  issues · Photographs". The count opens the Issues register on that project
+  and place, both filled in (new route `#/issues/show/open/<project>/<place>`;
+  the place is the fifth part, encoded, so Back from an issue comes back to the
+  same list; the bare Issues tab still starts again from every project).
+  Photographs opens `/photos` on that project with the place in Find, and its
+  Back returns to the sheet. No place, no line; a place with nothing open says
+  "no open issues". `openAtPlace`, `placeRegisterHash`, `placeFromRoute` in
+  lib/issueQuery.ts. Help "What's new" line.
+- Decided (Claude): counted by the register's own rule (every word of the
+  place, any order, open issues on that project), so the number on the sheet
+  is the number the register opens on; #165's inward place match was not used
+  because the office lands in the register, which matches by words. The
+  place is the engineer's typed text; no list of places (EXP-4). Photographs
+  rather than a list of recent updates: Photographs already shows each visit's
+  pictures at a place by day, and the report behind each is one click from
+  there. Kept to the issue sheet; a report card's place was left for later.
+- Verified: typecheck, `npm test` (146 + 579, two new unit tests: the count
+  equals `queryIssues` for five project/place pairs including another
+  project's and an unknown place; the link keeps a slash inside the place and
+  reads back). New `scripts/verify-issue-at-place.mjs` (38 checks, light and
+  dark at 1440, light at 390 on the busy seed): the line's words and count
+  against the seed, the register filled in and listing exactly those issues,
+  Back from an issue keeps the place, the Issues tab clears it, Photographs
+  with the place in Find and Back to the sheet, no line without a place, "no
+  open issues" for a closed issue alone at its place, axe, no sideways scroll.
+  Its axe run leaves out the project list's group headings, which fail colour
+  contrast on main (already left out in verify-issue-figures; not touched
+  here). VERIFY_RESULTS
+  Screens in /mnt/project-files/ui-review/issue-at-place/.
+- Not verified: a real phone or screen reader.
+
 ## 2026-10-22 — Site updates: the same trade's previous visit
 
 - Why: the coordinator asked for a walk of an office person at 1440px opening

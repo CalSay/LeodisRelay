@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Principal } from '@relay/platform';
-import { issueQueryParams, parseIssueQuery, queryIssues, type IssueQuery } from '../lib/issueQuery';
+import { issueQueryParams, openAtPlace, parseIssueQuery, placeFromRoute, placeRegisterHash, queryIssues, type IssueQuery } from '../lib/issueQuery';
 import type { Issue } from '../lib/types';
 import { putRecord, database } from '../lib/storage';
 import { issueRegister } from '../lib/issueStore';
@@ -35,6 +35,31 @@ test('location matches every word in any order, ignoring case and spacing', () =
   assert.deepEqual(ids(queryIssues(register, query({ location: 'RISER  2' }), { day })).sort(), ['late', 'riser']);
   assert.deepEqual(ids(queryIssues(register, query({ location: 'level 3 riser' }), { day })), ['riser']);
   assert.deepEqual(ids(queryIssues(register, query({ location: 'basement' }), { day })), []);
+});
+
+test('open at a place on an issue\'s sheet is what the register opens on for that project and place', () => {
+  const site = [...register,
+    issue({ id: 'flat', reference: '011LME-ISS-004', location: 'Flat 204 kitchen' }),
+    issue({ id: 'flat-again', reference: '011LME-ISS-005', location: 'kitchen,  flat 204', work: 'awaiting_verification' }),
+    issue({ id: 'flat-shut', reference: '011LME-ISS-006', location: 'Flat 204 kitchen', work: 'closed' }),
+    issue({ id: 'flat-gone', reference: '011LME-ISS-007', location: 'Flat 204 kitchen', confirmation: 'withdrawn' }),
+    issue({ id: 'flat-elsewhere', reference: '014LME-ISS-003', projectId: 'p2', location: 'Flat 204 kitchen' })];
+  for (const [projectId, place] of [['p1', 'Flat 204 kitchen'], ['p1', 'Riser 2'], ['p2', 'riser 2'], ['p2', 'Flat 204 kitchen'], ['p1', 'Basement']] as const) {
+    const register = queryIssues(site, query({ projectId, location: place }), { day });
+    assert.deepEqual(openAtPlace(site, projectId, place).map(i => i.id).sort(), ids(register).sort(), `${projectId} ${place}`);
+  }
+  assert.deepEqual(openAtPlace(site, 'p1', 'Flat 204 kitchen').map(i => i.id).sort(), ['flat', 'flat-again'], 'closed and withdrawn left out, other projects too');
+  assert.deepEqual(openAtPlace(site, 'p1', '  '), [], 'no place, nothing to count');
+});
+
+test('the register link carries the project and the place as typed, and reads back', () => {
+  const hash = placeRegisterHash('proj-011lme', ' Flat 204 /  kitchen ');
+  assert.equal(hash, '#/issues/show/open/proj-011lme/Flat%20204%20%2F%20kitchen');
+  const parts = hash.replace(/^#\/?/, '').split('/');
+  assert.equal(parts.length, 5, 'a slash in the place stays inside one part');
+  assert.equal(placeFromRoute(parts[4]), 'Flat 204 / kitchen');
+  assert.equal(placeFromRoute(null), '');
+  assert.equal(placeFromRoute('%E0%A4%A'), '', 'a part that cannot be read is no place');
 });
 
 test('the responsible company is matched as typed, not against a maintained list', () => {

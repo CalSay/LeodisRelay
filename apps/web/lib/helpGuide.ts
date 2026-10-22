@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-issue-at-place', added: '2026-10-22', audience: 'office', title: 'Issues: everything open at the same place',
+    text: 'An issue\'s sheet in the office now has a line under its title, for example "At Flat 204 kitchen: 31 open issues · Photographs". Select the open issues to open the Issues register with that project and place already filled in, and Back from an issue comes back to that list. Select Photographs to see that project\'s photographs from the same place, newest first. It uses the place the engineer typed, so "kitchen, Flat 204" counts too. Checked in a desktop browser (light and dark), not on a real phone.',
+    link: { label: 'Open the Issues register', href: '/office#/issues' } },
   { id: 'office-previous-trade-update', added: '2026-10-22', audience: 'office', title: 'Site updates: open the same trade\'s previous visit',
     text: 'When the office opens a site update, a line under its title now names the same trade\'s previous update on that site, for example "Previous Electrical update here: Wed 21 Oct, the day before · Sam Spark", and the next one when there is a later one. Select it to open that update and see what changed since the trade was last there. It works in the Inbox reader and in the project. A correction counts in place of the update it corrects, inspections are left out, and an update with no trade is matched to the same person. Checked in a desktop browser (light and dark) and a phone-sized window, not on a real phone.',
     link: { label: 'Open the Inbox', href: '/office#/inbox' } },

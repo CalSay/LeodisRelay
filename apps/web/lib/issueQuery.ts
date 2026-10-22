@@ -120,6 +120,28 @@ export function matchesWords(field: string, search: string | undefined): boolean
   return words(search).every(w => haystack.includes(w));
 }
 
+/**
+ * The open issues on one project at a place, by the register's own rules, so
+ * the count on an issue's sheet is the number the register opens on
+ * (2026-10-22). The place is what the engineer typed; there is no list of
+ * places (EXP-4).
+ */
+export function openAtPlace(all: readonly Issue[], projectId: string, place: string): Issue[] {
+  if (!place.trim()) return [];
+  return all.filter(i => i.projectId === projectId && isActiveIssue(i) && matchesWords(i.location, place));
+}
+
+/** The office register open on one project and place: #/issues/show/open/<project>/<place>. */
+export function placeRegisterHash(projectId: string, place: string): string {
+  return `#/issues/show/open/${encodeURIComponent(projectId)}/${encodeURIComponent(place.trim().replace(/\s+/g, ' '))}`;
+}
+
+/** The place from the last part of that link; empty when there is none or it cannot be read. */
+export function placeFromRoute(part: string | null | undefined): string {
+  if (!part) return '';
+  try { return decodeURIComponent(part).trim(); } catch { return ''; }
+}
+
 /** The trade the issue is for: the affected trade, or the reporter's where none was named. */
 const tradeOf = (i: Issue): string | undefined => i.affectedTrade ?? i.reporterTrade;
 

@@ -10,7 +10,7 @@ import { issueTradeWords } from '@/lib/snagList';
 import { pastTarget } from '@/lib/dates';
 import type { SortDirection } from '@/lib/tableSorting';
 import { issueRegister } from '@/lib/api';
-import { MAX_PAGE_SIZE, VERIFICATION, VERIFICATION_LABEL, issueQueryParams, type IssuePage, type IssueSort, type IssueView, type Verification } from '@/lib/issueQuery';
+import { MAX_PAGE_SIZE, VERIFICATION, VERIFICATION_LABEL, issueQueryParams, placeFromRoute, type IssuePage, type IssueSort, type IssueView, type Verification } from '@/lib/issueQuery';
 import { DownloadLink } from '@/components/DownloadLink';
 
 type Filter = Exclude<IssueView, 'all'> | 'all';
@@ -47,9 +47,11 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   // #/issues/show/<filter>/<project> also narrows it to one project, from a project's own counts; without one it is every project.
   const linkedProject = linked && ctx.route.c && ctx.projects.some(p => p.id === ctx.route.c) ? ctx.route.c : '';
   const [project, setProject] = useState(linkedProject);
-  useEffect(() => { if (linked) { setFilter(linked); setProject(linkedProject); } else if (bare) { setFilter('open'); setProject(''); } }, [linked, linkedProject, bare]);
+  // #/issues/show/<filter>/<project>/<place> also fills in the place, from "At this place" on an issue's sheet.
+  const linkedPlace = linkedProject ? placeFromRoute(ctx.route.d) : '';
+  const [locationText, setLocationText] = useState(linkedPlace);
+  useEffect(() => { if (linked) { setFilter(linked); setProject(linkedProject); setLocationText(linkedPlace); } else if (bare) { setFilter('open'); setProject(''); setLocationText(''); } }, [linked, linkedProject, linkedPlace, bare]);
   const [trade, setTrade] = useState('');
-  const [locationText, setLocationText] = useState('');
   const [companyText, setCompanyText] = useState('');
   const [verification, setVerification] = useState<Verification | ''>('');
   const [sort, setSort] = useState<SortState>(null);
