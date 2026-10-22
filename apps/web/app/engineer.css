@@ -516,6 +516,7 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .issue-eng-facts>div{display:grid;grid-template-columns:8.5em 1fr;gap:10px;align-items:baseline;}
 .issue-eng-facts dt{color:var(--text-2);font-size:13px;}
 .issue-eng-facts dd{margin:0;font-size:15px;overflow-wrap:anywhere;}
+.issue-eng-here{margin:12px 0;}
 .issue-eng-update{margin-top:8px;}
 /* What the office last wrote, above the buttons (issue and variation pages). */
 .eng-word-box{margin:0 0 12px;padding:8px 14px;border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:9px;background:var(--panel);}
