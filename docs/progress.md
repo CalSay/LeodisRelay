@@ -18,8 +18,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (the engineer's job simpler, less on screen).
 - Changed: `app/reports/[id]/page.tsx` remembers the open card if it was new
   when it opened (blank, or from "+ Another card here" while its kind is
-  chosen), and leaves that card's findings out on the cards step until it is
-  left (Done, another card) or the engineer goes to Check & send. Check &
+  chosen), and leaves that card's stops out on the cards step until it is
+  left (Done, another card) or the engineer goes to Check & send. A
+  "+ Another card here" card is new only until first left; a card still
+  blank when opened always is (nothing in it to warn about). Check &
   send itself is unchanged: every stop is listed and Send stays disabled, and
   a card opened again from a Stop still says what stops it. Inspections are
   unchanged. Help "What's new" line.
@@ -27,12 +29,18 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   or until "What happened" is typed, because leaving the card is when the
   engineer thinks they are done with it, and a timer would turn it red mid-
   sentence.
+- Fresh review found: a "+ Another card here" card left with no kind chosen
+  went quiet again when reopened (it was still waiting for its kind), and the
+  one "photographs with no caption" note could be hidden with the open card's
+  findings. Fixed: such a card is new only until first left, and only stops
+  are left out. The browser check now covers both reopening routes.
 - Verified: typecheck, `npm test` (146 + 570), build. New
-  `scripts/verify-calm-while-writing.mjs` (43 checks, 390 and 1440): no red
+  `scripts/verify-calm-while-writing.mjs` (55 checks, 390 and 1440): no red
   after Where, a new defect calm until left then red with "needs at least one
   photograph" and a count of 1, still red when opened again, "+ Another card
   here" calm, Check & send lists both stops with Send disabled, and a card
-  opened from a Stop is red and says why. It fails on main at the first
+  opened from a Stop is red and says why, and a "+ Another card here" card
+  left without a kind is red when reopened from its row or its Stop. It fails on main at the first
   check. Also passed: verify-fewest-taps, -lighter-card, -quicker-update,
   -engineer-layout, -editor-usability, -help, -old-drafts, -accessibility,
   -day-walkthrough, -draft-conflict, -offline-drafts.

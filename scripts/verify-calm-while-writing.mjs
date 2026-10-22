@@ -4,7 +4,8 @@
 // open: typing "Where" first should not read as a mistake before they reach
 // "What happened" or the camera. Once they leave the card (Done, another card)
 // or go to Check & send, what is missing shows in red as before, and a card
-// opened again from a Stop still says what stops it. Phone 390 and wide 1440.
+// opened again from a Stop still says what stops it, whichever card was
+// open before. Phone 390 and wide 1440.
 // npm test && npm run build first.
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -96,6 +97,25 @@ try {
     eq(await red(2),true,`${at}: the card opened from a Stop is red`);
     {const t=await rows.nth(2).innerText();ok(/no description of what happened/i.test(t),`${at}: and says what stops it (${t})`);}
     eq(await tabCount(),2,`${at}: Check & send shows 2`);
+
+    // 5. A card from "+ Another card here" left with no kind chosen, then opened from its Stop, stays red.
+    await tapOn(rows.first());
+    await editor.locator('.eng-same-place').waitFor();
+    await tapOn(editor.locator('.eng-same-place'));await settle();
+    const unchosen=rows.filter({has:page.locator('.kind',{hasText:/^New$/})});
+    eq(await unchosen.count(),1,`${at}: a fourth card waiting for its kind`);
+    eq(await tabCount(),2,`${at}: calm while its kind is being chosen`);
+    await tapOn(rows.first());await settle();
+    eq(await tabCount(),3,`${at}: left without a kind, it counts`);
+    await tapOn(unchosen);await settle();
+    eq(await tabCount(),3,`${at}: opened again, it still counts`);
+    await tapOn(rows.first());await settle();
+    await tapOn(page.locator('.eng-steps').getByRole('button',{name:/Check & send/}));
+    await page.locator('#report-check').waitFor();
+    await tapOn(page.locator('#report-check .find-stop').filter({hasText:/Level 2 corridor: no description/}));
+    await settle();
+    ok((await unchosen.getAttribute('class')).split(/\s+/).includes('late'),`${at}: opened from its Stop, the card with no kind is red`);
+    eq(await tabCount(),3,`${at}: and Check & send still shows 3`);
     eq(errors.length,0,`${at}: no page errors (${errors.join(' | ')})`);
     await context.close();
   }
