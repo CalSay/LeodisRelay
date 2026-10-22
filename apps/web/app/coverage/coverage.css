@@ -61,3 +61,16 @@
   .cov-quiet-list li{flex-direction:column;align-items:flex-start;}
 }
 .cov-empty p{margin:0;}
+
+/* Release 1 polish (O6). The figures, the gone-quiet panel and the grid take
+   the clearer card edge the office sheets and summaries use (O2 to O5), so the
+   parts of the page do not blend into the ground (Cal, 21 Oct 12:59). The
+   notes under the grid keep a readable line length and sit under a rule. On a
+   phone each mark is a 48px tap target. */
+.cov-stats div,.cov-scroll{border-color:var(--line-2);border-radius:10px;}
+.cov-panel{border-top-color:var(--line-2);border-right-color:var(--line-2);border-bottom-color:var(--line-2);border-radius:10px;}
+.cov-foot{max-width:82ch;padding-top:14px;border-top:1px solid var(--line);line-height:1.5;}
+@media (max-width:640px){
+  .cov-chip{min-height:48px;}
+  .cov-visits{gap:6px;}
+}

@@ -51,3 +51,25 @@
   .ho-rows li{break-inside:avoid;}
   .ho-stats{grid-template-columns:repeat(var(--ho-stats,5),minmax(0,1fr));}
 }
+
+/* Release 1 polish (O6). Screen only, so paper is unchanged. The controls,
+   figures and each list take the clearer card edge the office sheets and
+   summaries use (O2 to O5); inside "Snags on our work" each trade starts under
+   a rule, so Electrical, HVAC and P&H do not run into each other on a long
+   list (Cal, 21 Oct 12:59). On a phone the controls are 48px and full width,
+   and each reference's tap area is 48px tall without moving the text. */
+@media screen{
+  .ho-controls,.ho-section,.ho-stat{border-color:var(--line-2);}
+  .ho-stat.ho-stat-alert{border-color:color-mix(in srgb,var(--alert) 55%,transparent);}
+  .ho-stat.ho-stat-due{border-color:color-mix(in srgb,var(--caution) 55%,transparent);}
+  .ho-section{padding:4px 18px 18px;margin-top:16px;}
+  .eng-page .ho-section h2{margin:14px 0 10px;padding-bottom:10px;border-bottom:1px solid var(--line);}
+  .ho-group+.ho-group{margin-top:22px;padding-top:8px;border-top:1px solid var(--line);}
+  .ho-group h3 a{min-height:48px;}
+}
+@media screen and (max-width:760px){
+  .ho-section{padding:2px 14px 14px;}
+  .ho-controls select,.ho-controls button{min-height:48px;}
+  .ho-controls button{flex:1 1 100%;}
+  .ho-rows a.ref{padding:14px 0;}
+}
