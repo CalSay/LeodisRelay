@@ -49,3 +49,9 @@
   .eng-page.mw-page{padding:0;max-width:none;}
   .mw-rows a.ref,.mw-rows a.mw-rec{color:#111;text-decoration:none;}
 }
+
+/* Release 1 polish E7 (2026-10-22): Back and each record's reference are a thumb's width tall
+   (a reference never wraps, so its taller tap area does not push the row apart). */
+.mw-page>.back{min-height:48px;padding-block:8px;}
+.mw-controls,.mw-stats div,.mw-day:not(.mw-today){border-color:var(--line-2);}
+.mw-rows a.ref{display:inline-flex;align-items:center;min-height:48px;margin-block:-12px;}

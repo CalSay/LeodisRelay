@@ -63,3 +63,9 @@
   .photos-viewer-actions{grid-template-columns:1fr 1fr;}
   .photos-viewer-actions a.btn-primary{grid-column:1/-1;grid-row:1;}
 }
+
+/* Release 1 polish E7 (2026-10-22): Back and the kind buttons are a thumb's width tall, and the
+   choices box has an edge that holds in dark mode. */
+.photos-page>.back{min-height:48px;padding-block:8px;}
+.photos-controls{border-color:var(--line-2);}
+.photos-show button{min-height:48px;}

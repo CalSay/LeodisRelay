@@ -4,6 +4,47 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish E7: Reports, My week, Photographs, Site notes, Search, Help
+
+- Why: task E7 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
+  the engineer's phone). Branched from main at 5babd9d while E6 was in
+  progress; E6's files (the Issues view, `/issues/[id]`, the snag list) are
+  untouched. Before and after screenshots on the busy example data (40 days,
+  Sam Spark, Tetley Hall), 390px light and dark and 1440px light, plus 1440px
+  dark for Photographs, Search and Help, first screen and full page, are in
+  the project files under `ui-review/release-1/E7/` (not in the repo).
+- What the walk found: nothing scrolled sideways and there was one gold
+  button per screen. On a phone the Reports list read unevenly: a report with
+  one tag kept it beside the reference, one with two dropped them under it, so
+  rows jumped between two shapes down a 50-report page. In My week each
+  report's reference was a 19px tap target. Help's four "jump to" links were three and one left over on a
+  phone and 32px tall at a desk. Back on every one of these pages (about
+  40px), the Photographs kind buttons and the Site notes controls were under
+  48px. Card edges
+  used `--line`, which all but disappears in dark mode.
+- Changed (CSS only, appended blocks): on a phone each Reports row is the
+  reference, who and when, then its tags under them; the list's edge is
+  `--line-2` and its last rule is gone; wrapped tags start on the left. In My
+  week each reference is 48px to tap, with rows only a few pixels taller. Help's jump links are a two by
+  two on a phone and 48px everywhere. Back, the kind buttons, Leave note, Done
+  with, the project choice and "Marked done with" are 48px. Back sits 8px higher, as on E4's
+  pages. Card edges on My week, Site notes, Photographs and Help are
+  `--line-2`, so printed My week and Help have slightly darker card edges. Search was already in
+  good order apart from Back. No components, routes, data or `globals.css`
+  tokens changed. Help "What's new" line.
+- Seen and left alone: My week's week steps (two and one left over on a
+  phone); putting them in a tidier order would make the keyboard order differ
+  from the screen. The Reports view lists weekly safety and tower
+  inspections (TPI, SSI) sent in the busy data while safety is switched off.
+  Hiding them changes what the list shows, so it is not a polish change; it is
+  a question for the release check.
+- Verified: `npm run typecheck`, `npm test` (146 + 591), `npm run build`.
+  Browser checks passed: my-week (30), my-week-counts (13), photo-library
+  (51), photos-phone (76), photos-month (43), photo-uploads (22), site-notes
+  (45), site-notes-offline (36), search (31), help (36), navigation (76),
+  engineer-layout, engineer-nav (60), accessibility (584), role-access (95).
+- Not verified: a real phone, a screen reader.
+
 ## 2026-10-22 — Release 1 polish E5: inspections
 
 - Why: task E5 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on

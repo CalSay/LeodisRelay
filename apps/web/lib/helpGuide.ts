@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'reports-week-tidier', added: '2026-10-22', audience: 'site', title: 'Reports and My week: easier to read and tap',
+    text: 'On a phone, each report in Reports now reads the same way: the reference, who sent it and when, then its tags underneath, instead of the tags sitting beside one report and under the next. In My week each report\'s reference is easier to tap. Back, the photograph kind buttons, the notes for the next visit and the Help page\'s "jump to" links are all a thumb\'s width tall. Nothing was added or taken away. Checked in a phone-sized browser window, light and dark, and a desktop one, not on a real phone.',
+    link: { label: 'Open My week', href: '/my-week' } },
   { id: 'handover-diary-edges', added: '2026-10-22', audience: 'all', title: 'Before handover and the site diary: clearer parts',
     text: 'Before handover now starts each trade\'s snags under a rule, so Electrical, HVAC and P&H no longer run into each other on a long list, and each list, report and figure has a clearer edge, here and in the site diary and Site coverage. On a phone the buttons, filters and report links are easier to tap. Nothing was added or taken away, and the printed Before handover is unchanged. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
     link: { label: 'Open the site diary', href: '/diary' } },
