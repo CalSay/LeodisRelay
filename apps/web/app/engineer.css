@@ -573,3 +573,5 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-card-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
 .eng-card-foot .eng-remove-card{margin-top:0;}
 .eng-card-foot .btn-sm,.eng-card .head .btn-sm{min-height:48px;}
+/* Speed (2026-10-22): past the first 30 cards (EngineerIssueList FIRST_CARDS), the browser lays out and paints only the cards near the screen. */
+.eng-issue-list>.eng-issue-card:nth-child(n+31){content-visibility:auto;contain-intrinsic-size:auto 140px;}

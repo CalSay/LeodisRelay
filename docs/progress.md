@@ -4,6 +4,37 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Issues lists draw the first 30 cards first (slow pages on engineer phones, part 2)
+
+- Why: part 1 (#188) took SharePoint off the wait. With a busy project's own
+  data, the engineer Issues tab still drew every card at once: on the busy
+  seed, All issues for Tetley Hall is 11,500 page elements (266,000 px), Open
+  3,700 and Yours 5,800, and the phone's main thread was then busy for up to
+  1.9 s after the list showed, so taps and scrolling stuck.
+- Changed: `EngineerIssueList` draws the first 30 cards (`FIRST_CARDS`), then
+  the rest straight after the first screen is up, as a low-priority React
+  update. Cards past the 30th get `content-visibility:auto` in
+  `engineer.css`, so the browser lays out and paints only those near the
+  screen. Nothing on screen changes: every card is there a moment later, in
+  the same order. Speed only, so no Help line.
+- Decided (Claude): not a "Show more" button (that would change the screen
+  the Release 1 polish lane owns) and not on the first 30 cards, so a short
+  list, and a card that has just been unfolded, behave exactly as before
+  (`verify-issues-yours` reads a card's text the moment its fold opens).
+- Verified: typecheck, `npm test` (146 + 591). Timed at 390px, 4x slower
+  processor, Fast 4G, busy seed, median of five, until the list shows
+  (scratch script): All issues 2,110 to 1,615 ms opened fresh and 1,428 to
+  1,065 ms with scripts cached; main thread busy after load 1,924 to 397 ms
+  and 1,457 to 503 ms. Open 1,725 to 1,674 / 1,129 to 1,046 ms, busy 694 to
+  401 / 536 to 243 ms. Yours 1,574 to 1,612 / 944 to 864 ms, busy 682 to 772
+  / 537 to 212 ms (fresh opens of Yours are mostly the scripts starting).
+  Browser checks passed: issues-yours, simpler-issue-list, issues-here,
+  issue-at-place, engineer-layout, quiet-card-list, busy-projects (phone,
+  13 timings within budget; Engineer issues 1,529 ms).
+- Not verified: a real phone. Not deployed. Also on the pilot (03188ee) the
+  Issues tab downloads every issue on the project with its whole history
+  (251 KB on the busy seed); main already asks for only "Yours" first.
+
 ## 2026-10-22 — Reuse a recent SharePoint read (slow pages on engineer phones, part 1)
 
 - Why: Cal finds pages slow on an engineer's phone, the Issues tab for one.
