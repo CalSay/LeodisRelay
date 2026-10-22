@@ -8,6 +8,7 @@ import { useProjects } from './ProjectContext';
 import { usePrincipal } from './PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { dayLabel } from '@/lib/myWeek';
+import { dayShort } from '@/lib/dates';
 import { londonDay } from '@/lib/weeklySummary';
 import type { BeforeHandover, HandoverIssue } from '@/lib/beforeHandover';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
@@ -31,8 +32,8 @@ function Section({ id, title, count, children }: { id: string; title: string; co
 function IssueRows({ rows, here, fixed = false, trade = false }: { rows: HandoverIssue[]; here: string; fixed?: boolean; trade?: boolean }) {
   return <ul className="ho-rows">{rows.map(i => <li key={i.id} className={i.overdue ? 'ho-late' : ''}>
     <p className="ho-tags"><Link className="ref" href={withViewReturn(`/issues/${i.id}`, here)}>{i.reference}</Link>
-      {i.overdue && <span className="tag tag-alert">Past target {dayLabel(i.targetDate)}</span>}
-      {!i.overdue && i.targetDate && !fixed && <span className="tag tag-draft">Target {dayLabel(i.targetDate)}</span>}
+      {i.overdue && <span className="tag tag-alert">{i.daysLate > 0 ? `${plural(i.daysLate, 'day')} past target` : 'Past target'}</span>}
+      {!i.overdue && i.targetDate && !fixed && <span className="tag tag-draft">Target {dayShort(i.targetDate)}</span>}
       {i.disputed && <span className="tag tag-alert">Disputed</span>}</p>
     <p className="ho-desc">{i.description || 'No description'}</p>
     <p className="ho-meta">{[i.location || 'No location recorded', fixed ? (i.fixedBy ? `put forward as fixed by ${i.fixedBy}` : 'put forward as fixed') : (i.owner || 'Not yet assigned'), trade ? (i.trade ?? 'Trade not recorded') : ''].filter(Boolean).join(' · ')}
@@ -133,7 +134,7 @@ export function BeforeHandoverPage({ initialProject, returnTo }: { initialProjec
           {d.inspections.length ? <ul className="ho-rows">{d.inspections.map(r => <li key={r.id} className={r.stillOpen ? 'ho-late' : ''}>
             <p className="ho-tags"><Link className="ref" href={withViewReturn(`/reports/${r.id}`, here)}>{r.reference}</Link>{r.revision > 1 && <span className="tag tag-draft">Rev {r.revision}</span>}
               {r.stillOpen ? <span className="tag tag-alert">{plural(r.stillOpen, 'action')} still open</span> : <span className="tag tag-sent">{r.raised ? 'Every action closed' : 'No actions'}</span>}</p>
-            <p className="ho-desc">{dayLabel(r.visitDate)} · {r.author}</p>
+            <p className="ho-desc">{dayShort(r.visitDate)} · {r.author}</p>
             <p className="ho-meta">{r.checks.ok} satisfactory, {plural(r.checks.action, 'action')}, {r.checks.na} not applicable{r.raised ? ` · ${r.raised - r.stillOpen} of ${r.raised} closed` : ''}{r.waiting ? `, ${r.waiting} fixed and waiting to be checked` : ''}</p>
             {r.locations.length > 0 && <p className="ho-meta">Actions at {r.locations.join(' · ')}</p>}
           </li>)}</ul>
