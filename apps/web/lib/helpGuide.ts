@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'attention-by-kind', added: '2026-10-22', audience: 'office', title: 'Attention shows what is waiting, kind by kind',
+    text: 'In the office, Attention in the top bar no longer adds everything into one number. It has a dot when something is waiting, and its list now has one line for each kind: overdue issues, variations done but not instructed, fixes to check, unassigned issues, disputed issues, variations needing a quote, and any report that could not be processed or is waiting for review. Each line gives the same figure as the Issues, Variations or Inbox list it opens, with the first one underneath and its button (Verify, Assign, Price). Safety, permit and delivery lines, when those are switched on, are listed in full. Checked in a desktop browser and a phone-sized window, not on a real phone.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'photos-phone-in-view', added: '2026-10-22', audience: 'all', title: 'A day\'s photographs on the first screen of a phone',
     text: 'On a phone, choosing a month or a day on Photographs now brings that day\'s photographs up to the top of the screen, with "Newer day" and "Older day" above them, so there is no scrolling down to see them or back up to step to the next day. The same happens when a link opens Photographs on a day, such as a visit\'s "N photographs" on the Weekly summary. The Month and Day choices no longer have a small title above them on a phone (they read "Every month", "Every day" or what you chose), and the line under the heading is left off, so more of the first screen shows photographs. Wider screens look as before. Checked in a phone-sized browser, not on a real phone.',
     link: { label: 'Open Photographs', href: '/photos' } },

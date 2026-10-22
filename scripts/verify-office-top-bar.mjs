@@ -113,7 +113,7 @@ try {
         checks+=3;
       }
       const words=Object.fromEntries(items.map(i=>[i.name,i.words]));
-      assert.match(words.Attention,/^Attention \d+$/,`${label}: Attention says what it is`);
+      assert.match(words.Attention,/^Attention\s*(, something is waiting|, nothing waiting)$/,`${label}: Attention says what it is, with no summed figure`);
       assert.match(words.name,/^Joanna Fitzgerald/,`${label}: the name starts with who is signed in`);
       assert.match(words.theme,/^(Auto|Light|Dark)$/,`${label}: the theme button says its setting`);
       assert.match(words.Help,/^Help/,`${label}: Help says Help`);
