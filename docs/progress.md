@@ -25,22 +25,30 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   places at least and take the engineer's own new records' places beyond
   that, while the current site always keeps two rows and its own answers.
   The heading's "N from the office" counts the other sites' rows too.
-  If the other sites cannot be asked (weak signal), the current site's rows
-  still show.
+  The current site's rows show as soon as they come; the other sites' are
+  added when they arrive, and if they cannot be asked (weak signal) the
+  current site's rows stay. Decided: other sites list only the office's
+  words and send-backs, not an assignment or a price with no note, so a
+  second site never adds rows with nothing to read.
 - Opening an issue from another site's home adds a "Site" line above Where,
   so the engineer knows which site it is on (variations and reports already
   name their project). Opened from its own site's home, nothing changes.
   Back returns to the site they were on.
 - Help: one "What's new" line for engineers.
-- Checks: typecheck; `npm test` (146 + 546); build;
-  `scripts/verify-other-sites-came-back.mjs` (new, 28 checks, light and dark
+- Checks: typecheck; `npm test` (146 + 543); build;
+  `scripts/verify-other-sites-came-back.mjs` (new, 32 checks, light and dark
   at 390: the Kirkstall question listed at Tetley after Tetley's rows, named,
   with the office's words; the engineer's own Kirkstall report and defect not
   listed; "1 from the office"; the tap opens it ready to update with its
   site; at Kirkstall it shows without a site name and nothing from Tetley;
-  with the other sites' answer lost, Tetley's rows still show; 48px rows; no
+  with the other sites' answer lost or 4 s slow, Tetley's rows show first; 48px rows; no
   sideways scroll; no page errors). Screens in
-  `ui-review/office-questions-sites/`.
+  `ui-review/office-questions-sites/`. Also passed: came-back-first,
+  seen-by-office, office-words, came-back-to-update, home-and-sheet,
+  issues-yours, engineer-layout, role-access, same-place-issues,
+  simpler-home, engineer-day. Fresh review: no requirement gaps; fixed its
+  points (a slow other-sites answer held the current site's rows back; one
+  scan for corrections, not one per report; no raw project id on the Site line).
 - Not verified: a real phone, a screen reader, a live tenant.
 - Next: other walk findings stay in the notes (receipt with no way back to
   Site; Send bar over "What sending does").

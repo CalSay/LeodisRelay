@@ -221,8 +221,9 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
     if(view === 'home' && principal) {
       setBack(null);
       // Only the few records the rows need, not every issue and variation on the project.
-      // Other sites' answers are extra: with no answer from there, the current site's still show.
-      Promise.all([listReports(projectId,0),cameBack(projectId),cameBackElsewhere(projectId).catch(() => null)]).then(([page,{ issues:all, variations, open },away]) => {
+      // Other sites' answers are extra: the current site's rows show as soon as they come, and stay if the other sites cannot be asked.
+      const away = cameBackElsewhere(projectId).catch(() => null);
+      Promise.all([listReports(projectId,0),cameBack(projectId)]).then(([page,{ issues:all, variations, open }]) => {
         if(cancelled)return;
         const returnTo = engineerReturn();
         // `site`: the project name, on rows from a site other than the one the engineer is at.
@@ -233,15 +234,19 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
         for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) here.push(reportRow(r,page.reports.some(c => c.corrects === r.id)));
         for (const i of all) if (raisedIssue(i,principal.id)) here.push(issueRow(i));
         for (const v of variations) if (v.raisedById === principal.id) here.push(variationRow(v));
-        const there:Back[] = [];
+        here.sort(waitingOnYouFirst);
+        const reports = page.reports.filter(r => r.state === 'submitted').length;
+        setBack({ rows:cameBackRows(here,[]), open, reports });
         const siteName = (id:string) => projects.find(p => p.id === id)?.projectName;
-        if (away) {
-          for (const r of away.reports) { const site = siteName(r.projectId); if (site) there.push(reportRow(r,false,site)); }
-          for (const i of away.issues) { const site = siteName(i.projectId); if (site) there.push(issueRow(i,site)); }
-          for (const v of away.variations) { const site = siteName(v.projectId); if (site) there.push(variationRow(v,site)); }
-        }
-        here.sort(waitingOnYouFirst);there.sort(waitingOnYouFirst);
-        setBack({ rows:cameBackRows(here,there), open, reports:page.reports.filter(r => r.state === 'submitted').length });
+        void away.then(elsewhere => {
+          if (cancelled || !elsewhere) return;
+          const there:Back[] = [];
+          for (const r of elsewhere.reports) { const site = siteName(r.projectId); if (site) there.push(reportRow(r,false,site)); }
+          for (const i of elsewhere.issues) { const site = siteName(i.projectId); if (site) there.push(issueRow(i,site)); }
+          for (const v of elsewhere.variations) { const site = siteName(v.projectId); if (site) there.push(variationRow(v,site)); }
+          there.sort(waitingOnYouFirst);
+          if (there.length) setBack({ rows:cameBackRows(here,there), open, reports });
+        });
       }).catch(e => { if(!cancelled) setBack({ rows:[], open:0, reports:0, failed:true, offline:e instanceof ApiError && e.offline }); });
     }
     return () => {cancelled=true;};

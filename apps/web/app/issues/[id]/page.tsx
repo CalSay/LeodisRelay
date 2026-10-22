@@ -290,7 +290,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
     const word = principal && raisedIssue(issue, principal.id) ? issueWord(issue.events, principal) : undefined;
     // Opened from another site's home (its "Came back from the office" lists every site): say which site this one is on.
     const elsewhere = new URL(back, 'https://relay.local').searchParams.get('project');
-    const otherSite = elsewhere && elsewhere !== issue.projectId ? project?.projectName ?? issue.projectId : undefined;
+    const otherSite = elsewhere && elsewhere !== issue.projectId ? project?.projectName : undefined;
     return (
       <main className="wrap eng-page issue-eng">
         <PageTitle title={`${issue.reference} · Issue`} />

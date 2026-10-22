@@ -31,8 +31,8 @@ export function reportPage(projectId?: string, offset = 0) { return pageRecords<
  */
 export function ownSentReports(authorId: string, limit = 50): { report: ReportSummary; corrected: boolean }[] {
   const rows = database().prepare("SELECT summary FROM records WHERE kind='reports' AND state='submitted' AND json_extract(summary,'$.authorId')=? ORDER BY updated DESC,id DESC LIMIT ?").all(authorId, limit);
-  const corrected = database().prepare("SELECT 1 FROM records WHERE kind='reports' AND json_extract(summary,'$.corrects')=? LIMIT 1");
-  return rows.map(row => { const report = JSON.parse(row.summary as string) as ReportSummary; return { report, corrected: !!corrected.get(report.id) }; });
+  const corrected = new Set(database().prepare("SELECT json_extract(summary,'$.corrects') AS corrects FROM records WHERE kind='reports' AND json_extract(summary,'$.corrects') IS NOT NULL").all().map(row => row.corrects as string));
+  return rows.map(row => { const report = JSON.parse(row.summary as string) as ReportSummary; return { report, corrected: corrected.has(report.id) }; });
 }
 
 /** Filter before pagination: another engineer's draft never reaches the response. */

@@ -10,7 +10,7 @@
 // counts only what the office did ("1 from the office"); tapping the row opens
 // the issue ready to update, on Kirkstall Gate; at Kirkstall the same question
 // is listed without a site name and nothing from Tetley is; with the other
-// sites' answer lost, Tetley's rows still show; no sideways scroll, 48px rows,
+// sites' answer lost or slow, Tetley's rows still show first; no sideways scroll, 48px rows,
 // no page errors.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 // RELAY_SCREENSHOT_DIR=<dir> saves screenshots.
@@ -122,6 +122,14 @@ try {
     await page.route(/\/api\/came-back\?elsewhere=1/,r=>r.abort());
     await page.goto(`${base}/engineer?project=${T}`);await rows.filter({hasText:'Cable tray bracket bent'}).first().waitFor({timeout:20000});
     ok(!(await rows.allInnerTexts()).some(t=>t.includes(KIRKSTALL)),`${label}: with the other sites' answer lost, Tetley's rows still show`);
+    await page.unroute(/\/api\/came-back\?elsewhere=1/);
+    // The other sites slow to answer: Tetley's rows show first, the Kirkstall question joins them after.
+    await page.route(/\/api\/came-back\?elsewhere=1/,async r=>{await new Promise(w=>setTimeout(w,4000));await r.continue().catch(()=>{});});
+    const asked=Date.now();await page.goto(`${base}/engineer?project=${T}`);await rows.filter({hasText:'Cable tray bracket bent'}).first().waitFor({timeout:20000});
+    const shownIn=Date.now()-asked;
+    ok(shownIn<3500&&!(await rows.allInnerTexts()).some(t=>t.includes(KIRKSTALL)),`${label}: with the other sites slow, Tetley's rows show first (${shownIn} ms)`);
+    await rows.filter({hasText:QUESTION}).first().waitFor({timeout:20000});
+    ok(true,`${label}: then the Kirkstall question joins them`);
     ok(!errors.length,`${label}: no page errors: ${errors.join(' | ')}`);
     await context.close();
   }
