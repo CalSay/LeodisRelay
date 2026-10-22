@@ -103,6 +103,13 @@ try {
     check((await fixed.locator('.diary-more-photos').innerText()).trim()==='+2','engineer: the rest are counted, linking the report');
     check(await fixed.getByRole('img',{name:'Riser before boarding'}).count()===1,'engineer: a caption is the photograph\'s description');
     check(/awaiting review/i.test(await entry(page,theirs.reference).innerText()),'engineer: another engineer\'s report awaiting review is shown and marked');
+    // Less on a phone screen: the site is in the heading, so no project list; the first visit starts on the first screen.
+    check(!(await page.getByLabel('Project').isVisible()),'engineer, phone: the project list is not shown once the site is chosen');
+    const firstTop=await page.locator('.diary-entry').first().evaluate(el=>el.getBoundingClientRect().top);
+    check(firstTop<600,`engineer, phone: the first visit starts high on the first screen (${Math.round(firstTop)}px)`);
+    check(!/rev 1/i.test(await entry(page,theirs.reference).locator('.diary-entry-ref').innerText()),'engineer: a report never corrected has no Rev tag');
+    check(/sent \d\d:\d\d$/.test(await entry(page,theirs.reference).locator('.diary-by').innerText()),'engineer: sent on its visit day, only the time is given');
+    check(/sent \d\d:\d\d$/.test(await entry(page,'011LME-SPR-301').locator('.diary-by').innerText()),'engineer: an older day\'s report sent that day also gives only the time');
     const width=await page.evaluate(()=>document.documentElement.scrollWidth);
     check(width<=390,`engineer: no sideways scroll at 390px (${width})`);
     if(screenshot)await page.screenshot({path:join(screenshot,'diary-light-390.png'),fullPage:false});
@@ -147,12 +154,27 @@ try {
     await page.getByRole('link',{name:'Site diary'}).click();await page.waitForURL(/\/diary\?/);await page.locator('.diary-entry').first().waitFor();
     check(new URL(page.url()).searchParams.get('project')==='proj-011lme','office: opens on the chosen project');
     check(/13 site days · 14 reports/.test(await page.locator('.diary-count').innerText()),'office: same diary as the engineer, no drafts');
+    check(await page.getByLabel('Project').isVisible(),'office, wide screen: the project list is still there to switch project');
     if(screenshot)await page.screenshot({path:join(screenshot,'diary-dark-1440.png'),fullPage:false});
     await entry(page,rev2.reference).getByRole('link',{name:/011LME-ISS-401/}).click();await page.waitForURL('**/issues/diary-issue**');
     await page.goBack();await page.locator('.diary-entry').first().waitFor();
     check(true,'office: an issue opens from the diary and back returns');
     await page.getByRole('link',{name:/^← Back to /}).click();await page.waitForURL(/\/office/);
     check(true,'office: back returns to the office');
+    await context.close();
+  }
+  // Phone, no project in the address: the list shows, and stays after a pick so it can be changed.
+  {
+    const {context,page,errors}=await open('Manager','light',390);
+    await page.goto(`${base}/diary`);
+    check(await page.getByLabel('Project').isVisible(),'phone, no project: the project list shows');
+    await page.getByLabel('Project').selectOption('proj-011lme');await page.locator('.diary-entry').first().waitFor();
+    check(await page.getByLabel('Project').isVisible(),'phone: the list stays after picking a project on the page');
+    assert.deepEqual(errors,[],'phone pick: page errors');
+    await context.close();
+  }
+  {
+    const {context,page,errors}=await open('Manager','dark',1440);
     // A project with nothing sent yet says so plainly.
     await page.goto(`${base}/diary?project=proj-014lme`);await page.getByText('No site visits yet').waitFor();
     check(true,'office: an empty diary says so');

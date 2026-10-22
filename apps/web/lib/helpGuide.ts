@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'diary-starts-higher', added: '2026-10-22', audience: 'all', title: 'The site diary starts higher on a phone',
+    text: 'On a phone, the Site diary no longer shows a Project list when you open it from a site, since the site\'s name is in the heading, and its explanation is one short line. So the first visit starts on the first screen. A report shows "Rev 2" (or higher) only when it was corrected, and a report sent on its visit day shows only the time it was sent, as the day is in the heading above it. On a wide screen the Project list stays, for switching project. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open the Site diary', href: '/diary' } },
   { id: 'came-back-every-site', added: '2026-10-22', audience: 'site', title: 'The office\'s questions from your other sites',
     text: '"Came back from the office" on your home screen now also lists what the office wrote on, or sent back, at your other sites, after the site you are on, with the site\'s name at the start of the line. So a question about a fix at one site shows while you are at another, without switching site. Your own new reports and defects from other sites are not listed there. Tap one to open it; the issue shows which site it is on. The list is no longer than before. Checked in a phone-sized browser, not on a real phone.',
     link: { label: 'Open your home screen', href: '/engineer' } },
