@@ -46,6 +46,79 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   or 1440px.
 - Not verified: a real phone, a screen reader.
 
+## 2026-10-22 — Release 1 polish E5: inspections
+
+- Why: task E5 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
+  the engineer's phone). Branched from main at 82b06f7, then E4 (#197) and O6
+  (#198) merged in. Screenshots before and
+  after, 390px light and dark and 1440px light, are in
+  `ui-review/release-1/E5/`: a pre-handover and a first fix inspection each
+  opened, a check needing action filled in, halfway through, Check & sign,
+  signed, and the sent receipt.
+- What the walk found: every control was already 48px or more and nothing
+  scrolled sideways (E3's styling already covers "What sending does" and the
+  signature's Clear). Three things read badly. At a desk the check list is a
+  300px column, and the answer tag plus the "Saving" word beside it left the
+  question about 70px, so "Containment, tray and trunking complete" broke one
+  word to a line, 10 lines tall. On a phone the same "Saving" word squeezed the
+  question onto a third line while each answer saved. On the sent receipt each
+  of the 12 checks was a card of its own, so the one needing action was lost
+  among 11 identical boxes, 2,087px long.
+- Changed: one block at the end of `engineer.css`, scoped to the new
+  `.eng-inspection` class on the page's `main` (set in `reports/[id]/page.tsx`
+  for checklist reports). At a desk a check's row has its answer and saving dot
+  on one line and the question under them at full width. The row keeps the dot
+  and leaves the words "Saving" or "Uploading" to the bar at the foot (still read out by screen
+  readers). On the receipt the satisfactory and not applicable checks are rows
+  of one quiet list with the answer as plain coloured words; checks needing
+  action stay full cards. No `globals.css` changes, no shared component
+  changes, no change to answering, saving, signing or sending.
+- No Help "What's new" line: nothing works differently.
+- Verified: `npm run typecheck`, `npm test` (146 + 591), `npm run build`.
+  Browser checks passed: handover-inspection (104), first-fix-inspection
+  (110), report-types (90), quicker-inspections (100), offline-inspection
+  (103), offline-sign (62), handover-offline (14), fewest-taps (17),
+  engineer-layout, old-drafts (84), accessibility (584).
+- Not verified: a real phone, a screen reader.
+
+## 2026-10-22 — Release 1 polish O6: Site coverage, Before handover, site diary
+
+- Why: task O6 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch";
+  21 Oct 12:59: sections must not blend into one). Branched after O5 (#196)
+  merged (82b06f7). Before and after screenshots, 1440 light and dark and 390
+  light and dark (office manager, and the engineer for Before handover and the
+  diary), first screen and full page, are in the project files under
+  `ui-review/release-1/O6/`. Busy example data, 40 days, Tetley Hall.
+- Found: the three pages were already in good order and scrolled sideways
+  nowhere. The rest was small: every card edge used `--line`, which all but
+  disappears in dark mode, while O2 to O5 moved to `--line-2`; on Before
+  handover the 74 open snags were one card in which Electrical, HVAC and P&H
+  followed each other with only a small heading between them; on a phone the
+  coverage marks were 28px tall, the handover controls and the diary's
+  filters 44px, the diary's linked records 40px, and the report and issue
+  references a single text line; the coverage notes ran 1,190px wide at 1440.
+- Changed (each page's own CSS only, appended blocks): card edges `--line-2`;
+  Before handover's section headings sit over a rule and each trade after the
+  first starts under one; Snag list to print 48px; on a phone the project
+  choice and Print are 48px and Print is full width; Site coverage notes
+  under a rule at 82 characters; in the diary a photograph that has not
+  loaded no longer spills its description out of its square. Phone tap
+  targets 48px: coverage marks, diary filters, inputs, linked records, Show
+  earlier days, the diary's report and revision links and each Before
+  handover row's reference (rows are a little taller on a phone). A figure
+  on Before handover still shows a stronger edge on hover.
+  Before handover's changes are screen only, so the printed copy is
+  unchanged. #173's quiet-trades line and every figure are unchanged. No
+  components, routes, data or `globals.css` tokens changed. Help "What's new"
+  line.
+- Verified: typecheck, `npm test` (146 + 591), build; verify-coverage-one-mark
+  (17), -coverage-quiet-trades (37), -before-handover (33), -site-diary (43),
+  -role-access (95), -accessibility (584). verify-site-coverage fails at
+  "office: a draft is not a visit", the same on main without this change (the
+  known Thursday-to-Sunday failure until #142 merges).
+- Not verified: a real phone, a real printer, a screen reader. The busy data's
+  photographs have no image files, so the diary screenshots show empty
+  squares where photographs would be.
 ## 2026-10-22 — Release 1 polish E4: defects and variations
 
 - Why: task E4 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
