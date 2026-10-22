@@ -52,6 +52,17 @@ test('open at a place on an issue\'s sheet is what the register opens on for tha
   assert.deepEqual(openAtPlace(site, 'p1', '  '), [], 'no place, nothing to count');
 });
 
+test('a number in the place is a whole number, so Flat 12 is not Flat 120, 212 or 12A', () => {
+  const site = [issue({ id: 'twelve', location: 'Flat 12' }), issue({ id: 'twelve-kitchen', location: 'kitchen, flat 12' }),
+    issue({ id: 'hundred', location: 'Flat 120' }), issue({ id: 'other', location: 'Flat 212 kitchen' }), issue({ id: 'level-10', location: 'Level 10' }),
+    issue({ id: 'part', location: 'Flat 2.04' })];
+  assert.deepEqual(ids(queryIssues(site, query({ location: 'flat 12' }), { day })).sort(), ['twelve', 'twelve-kitchen']);
+  assert.deepEqual(openAtPlace(site, 'p1', 'Flat 12').map(i => i.id).sort(), ['twelve', 'twelve-kitchen']);
+  assert.deepEqual(ids(queryIssues(site, query({ location: 'level 1' }), { day })), [], 'Level 1 is not Level 10');
+  assert.deepEqual(ids(queryIssues(site, query({ location: 'flat 2' }), { day })), ['part'], 'Flat 2 still finds Flat 2.04, as #165 counts it');
+  assert.deepEqual(ids(queryIssues(site, query({ location: 'kitch' }), { day })).sort(), ['other', 'twelve-kitchen'], 'words are still found inside longer words');
+});
+
 test('the register link carries the project and the place as typed, and reads back', () => {
   const hash = placeRegisterHash('proj-011lme', ' Flat 204 /  kitchen ');
   assert.equal(hash, '#/issues/show/open/proj-011lme/Flat%20204%20%2F%20kitchen');

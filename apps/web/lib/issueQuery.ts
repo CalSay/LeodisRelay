@@ -113,11 +113,16 @@ export function verificationOf(i: Issue): Verification | undefined {
 }
 
 const words = (value: string): string[] => value.toLowerCase().split(/\s+/).filter(Boolean);
-/** Every word of the search appears in the field, so "riser 2" finds "Level 3, Riser 2". */
+/**
+ * Every word of the search appears in the field, so "riser 2" finds "Level 3, Riser 2".
+ * A number has to be a whole number in the field, so "Flat 12" does not find
+ * "Flat 120" or "Flat 212", nor "Level 1" every "Level 10" (2026-10-22).
+ */
 export function matchesWords(field: string, search: string | undefined): boolean {
   if (!search?.trim()) return true;
   const haystack = words(field).join(' ');
-  return words(search).every(w => haystack.includes(w));
+  const numbers = new Set(haystack.match(/\d+/g) ?? []);
+  return words(search).every(w => /^\d+$/.test(w) ? numbers.has(w) : haystack.includes(w));
 }
 
 /**
