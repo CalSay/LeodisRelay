@@ -4,6 +4,45 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Today from site fits a phone
+
+- Why: a walk of an office manager at 390px on the office overview (latest
+  main, busy example data from `scripts/seed-busy-projects.mjs`; screens in
+  project files `ui-review/office-overview-phone/`), asking "what happened on
+  site today and what needs me?". The figures matched the records: 9 updates
+  today, 3 a project; each bar's access and raised counts add up to its cards;
+  1,542 not seen equals the projects' 553 + 493 + 496; Attention 1,369 equals
+  their needs-action figures. The read did not fit a phone: the nine cards
+  under "Today from site" ran to about 2,700px, so "Not seen yet",
+  "Unassigned issues" and "Fixed, to check" started about 4,700px down.
+  Asked for by the coordinator as the walk's one pick; not a
+  `docs/tasks.json` task, so no status changed. Decided without asking Cal
+  (his autonomy message), within his 07:02 direction (the office's view of
+  progress).
+- Changed: on a phone (700px or less) each project's cards fold under its bar
+  behind a "Show the 3 site updates" button (`aria-expanded`, "Hide the site
+  updates" when open; `TodayProject` in `ProjectsView.tsx`, `.today-fold` in
+  `workspace.css`). Folded cards are not loaded, not even for the moment
+  before the page knows it is on a phone (`usePhoneKnown`); once opened they
+  stay loaded, so Hide and Show again do not read the reports again. The
+  desk is unchanged. The
+  busy overview on a phone went from 6,890px to 4,622px tall, and "Not seen
+  yet" now starts about 2,000px down.
+- Decisions (Claude): fold rather than cut the cards to one line, because the
+  bar already says what the day found and the cards are the engineers' words,
+  read when wanted. Folded by default on every visit (not remembered), so the
+  overview always opens the same way.
+- Checks: typecheck, `npm test` (146 + 551), build.
+  `scripts/verify-today-from-site.mjs` now also checks, at 390px, that both
+  projects start folded with their counts, the folded day is under one
+  screen, the action groups follow it, axe finds nothing folded, each fold
+  opens and says so, Hide folds it again, opening again reads nothing new,
+  no card is read before a fold is opened, and the desk has no fold (58
+  checks; fails on main).
+  Also passed: help, office-phone, office-sections, office-landing,
+  office-links, office-progress, role-access, accessibility, day-walkthrough.
+- Not verified: a real phone; a live tenant.
+
 ## 2026-10-22 — Plain words on engineer screens
 
 - Why: Cal's 21 Oct ask that RELAY be easy for hands-on engineers, "not IT

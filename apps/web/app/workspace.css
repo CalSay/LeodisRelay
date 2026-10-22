@@ -552,7 +552,13 @@ body:has(.ws){overflow:hidden auto}
 .ws .today-project-h:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
 @media (hover:hover){.ws .today-project-h:hover b{text-decoration:underline;text-underline-offset:3px}}
 .ws .today-found{display:flex;flex-wrap:wrap;gap:var(--s1) var(--s4);font-size:13px;color:var(--text-2)}
-.ws .today-project>.from-site,.ws .today-project>.loading,.ws .today-project>.empty{padding:var(--s3)}
+.ws .today-project .from-site,.ws .today-project .loading,.ws .today-project .empty{padding:var(--s3)}
+/* A phone's fold: the project's cards open under its bar. */
+.ws .today-fold{display:flex;align-items:center;width:100%;min-height:44px;padding:0 var(--s3);border:0;background:none;font:inherit;font-size:13px;color:var(--acc);text-align:left;cursor:pointer}
+.ws .today-fold::after{content:'▾';content:'▾'/'';margin-left:var(--s2);font-size:11px}
+.ws .today-fold[aria-expanded="true"]{border-bottom:1px solid var(--line)}
+.ws .today-fold[aria-expanded="true"]::after{content:'▴';content:'▴'/''}
+.ws .today-fold:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
 /* A figure or line that opens what it counts: the desk's quiet link, an arrow like a row's, underlined on hover. */
 .ws .tb-go{display:block;position:relative;padding-right:var(--s4);color:inherit;text-decoration:none}
 .ws .tb-go .arrow{position:absolute;right:0;top:2px;font-family:var(--mono);font-size:13px;color:var(--text-3)}
@@ -586,7 +592,7 @@ body:has(.ws){overflow:hidden auto}
   .ws .today-project-h{grid-template-columns:1fr 14px;padding:var(--s3)}
   .ws .today-project-h .today-found{grid-column:1}
   .ws .today-project-h .arrow{grid-column:2;grid-row:1 / span 2}
-  .ws .today-project>.from-site{padding:var(--s2)}
+  .ws .today-project .from-site{padding:var(--s2)}
   .ws .from-site-more{display:inline-flex;align-items:center;min-height:44px}
 }
 /* A desk narrower than 1366px: registers keep their columns by packing them
