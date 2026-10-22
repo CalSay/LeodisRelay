@@ -11,7 +11,7 @@ import { useMarkSeen } from '@/components/useMarkSeen';
 import { useFeatures } from '@/components/FeaturesContext';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { officeActions } from '@/lib/officeActions';
-import { putForwardAt } from '@/lib/checkFix';
+import { putForwardAt, waitingWords } from '@/lib/checkFix';
 import { withViewReturn } from '@/lib/viewNavigation';
 import { shiftWeek, weekStart } from '@/lib/weeklySummary';
 import { confirmationNote } from '@/lib/issueConfirmation';
@@ -21,9 +21,10 @@ import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, f
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
-import { WORK_LABEL, notAcknowledged, daysLate, daysSince, attention, fmtDate, fmtDay, fmtReceived, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
+import { WORK_LABEL, notAcknowledged, daysLate, attention, fmtDate, fmtDay, fmtReceived, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
 import { signatureMethod } from '@/lib/signature';
-import { LATEST_DAYS, peopleWords, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
+import { dayShort, timeOf } from '@/lib/dates';
+import { LATEST_DAYS, dayFound, peopleWords, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
 import { OUR_CONTRACT, canCorrect, duplicateOf, isWithinContract, modesFor, pickPool, pickTag, priorOwner, type Target } from './corrections';
 import './quickactions.css';
 
@@ -191,6 +192,7 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
     </span></div>}
     <ActionStrip groups={groups} />
     <ProjectGlance ctx={ctx} />
+    <TodayFromSite ctx={ctx} />
     <ActionGroups groups={groups} />
     <SecH right={<a href="#/issues">All →</a>}>Also needs attention</SecH>
     <AttentionList ctx={ctx} limit={6} />
@@ -291,7 +293,7 @@ function actionGroups(ctx: Ctx): ActionGroup[] {
     { key: 'unassigned', title: 'Unassigned issues', sub: 'Open, nobody owns the action', n: a.unassigned.length, tone: 'soon', all: '#/issues/show/unassigned', empty: anyOpen ? 'Every open issue has an owner.' : 'No open issues.',
       rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)) },
     { key: 'verify', title: 'Fixed, to check', sub: 'Put forward as fixed; someone else checks it', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be checked.',
-      rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · waiting ${daysSince(putForwardAt(i))} days`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: () => Promise.resolve(a.verify) })}>Verify</Btn>)) },
+      rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · ${waitingWords(i, ctx.day)}`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: () => Promise.resolve(a.verify) })}>Verify</Btn>)) },
   ];
 }
 /** On a phone the groups stack under the project list, so their counts are gathered at the top, each a tap from its group. */
@@ -371,11 +373,21 @@ const LINES_SHOWN = 4;
  * counted here, not repeated. Reads the reports the register lists.
  */
 function LatestFromSite({ ctx, s, shown = LINES_SHOWN }: { ctx: Ctx; s: ProjectStats; shown?: number }) {
-  const latest = s.standing.latest;
-  const ids = latest.map(r => r.id).join(',');
+  return <section aria-labelledby={`from-site-${s.code}`}>
+    <SecH right={<span className="r">each trade’s newest update</span>}><span id={`from-site-${s.code}`}>Latest from site</span></SecH>
+    <FromSiteVisits ctx={ctx} code={s.code} list={s.standing.latest} shown={shown} empty={`No site update in the last ${LATEST_DAYS} days.`} />
+  </section>;
+}
+
+/**
+ * Site updates as cards: who sent it, its progress and access lines, and what
+ * else it raised. Reads each report in full for its lines; a load that failed
+ * is tried again with the desk's next refresh.
+ */
+function FromSiteVisits({ ctx, code, list, shown, empty, when, heldUpFirst }: { ctx: Ctx; code: string; list: ReportSummary[]; shown: number; empty: string; when?: (r: ReportSummary) => string; heldUpFirst?: boolean }) {
+  const ids = list.map(r => r.id).join(',');
   const [loaded, setLoaded] = useState<{ ids: string; reports: Map<string, Report> } | null>(null);
   const [failed, setFailed] = useState('');
-  // A load that failed is tried again with the desk's next refresh.
   const retry = failed === ids ? ctx.snap?.loadedAt : '';
   useEffect(() => {
     if (!ids) return;
@@ -385,22 +397,56 @@ function LatestFromSite({ ctx, s, shown = LINES_SHOWN }: { ctx: Ctx; s: ProjectS
       .catch(() => { if (!stopped) setFailed(ids); });
     return () => { stopped = true; };
   }, [ids, retry]);
-  const body = !latest.length ? <div className="empty" style={{ padding: 14 }}>No site update in the last {LATEST_DAYS} days.</div>
-    : failed === ids ? <div className="empty" style={{ padding: 14 }}>The latest reports could not be loaded just now. RELAY will try again; each one also opens from the project’s reports.</div>
-    : loaded?.ids !== ids ? <div className="loading" style={{ minHeight: 80 }}>Loading what site said</div>
-    : <div className="from-site">{latest.map(r => {
-      const full = loaded.reports.get(r.id); const lines = full ? progressLines(full) : [];
-      const others = foundOthers(r);
-      return <article key={r.id} className="from-site-visit">
-        <a className="from-site-h" href={`#/projects/${s.code}/report/${r.id}`}><b>{r.authorTrade ?? 'Trade not recorded'}</b><span>{r.author} · {visitDay(r.visitDate, ctx.day)} · <span className="ref">{shortRef(r.reference)}</span></span><span className="arrow" aria-hidden="true">›</span></a>
-        {lines.length ? <ul>{lines.slice(0, shown).map(l => <li key={l.id}>{l.kind === 'access' && <span className="kind tone-access">Access</span>}<b>{l.location || 'No location'}</b>{l.text ? ` — ${l.text}` : ''}</li>)}</ul>
-          : <p className="rowsub">{full ? 'No progress written on this visit.' : 'This report could not be opened here.'}</p>}
-        {(lines.length > shown || others) && <p className="rowsub">{lines.length > shown && <a className="from-site-more" href={`#/projects/${s.code}/report/${r.id}`}>And {lines.length - shown} more in the report</a>}{lines.length > shown && '.'}{lines.length > shown && others ? ' ' : ''}{others ? `Also raised ${others}.` : ''}</p>}
-      </article>;
-    })}</div>;
-  return <section aria-labelledby={`from-site-${s.code}`}>
-    <SecH right={<span className="r">each trade’s newest update</span>}><span id={`from-site-${s.code}`}>Latest from site</span></SecH>
-    {body}
+  if (!list.length) return <div className="empty" style={{ padding: 14 }}>{empty}</div>;
+  if (failed === ids) return <div className="empty" style={{ padding: 14 }}>The latest reports could not be loaded just now. RELAY will try again; each one also opens from the project’s reports.</div>;
+  if (loaded?.ids !== ids) return <div className="loading" style={{ minHeight: 80 }}>Loading what site said</div>;
+  return <div className="from-site">{list.map(r => {
+    const full = loaded.reports.get(r.id), written = full ? progressLines(full) : [];
+    // Held up first where asked, so the access problems the day's headline counts come before "and N more".
+    const lines = heldUpFirst ? [...written.filter(l => l.kind === 'access'), ...written.filter(l => l.kind !== 'access')] : written;
+    const others = foundOthers(r);
+    return <article key={r.id} className="from-site-visit">
+      <a className="from-site-h" href={`#/projects/${code}/report/${r.id}`}><b>{r.authorTrade ?? 'Trade not recorded'}</b><span>{r.author} · {when ? when(r) : visitDay(r.visitDate, ctx.day)} · <span className="ref">{shortRef(r.reference)}</span></span><span className="arrow" aria-hidden="true">›</span></a>
+      {lines.length ? <ul>{lines.slice(0, shown).map(l => <li key={l.id}>{l.kind === 'access' && <span className="kind tone-access">Access</span>}<b>{l.location || 'No location'}</b>{l.text ? ` — ${l.text}` : ''}</li>)}</ul>
+        : <p className="rowsub">{full ? 'No progress written on this visit.' : 'This report could not be opened here.'}</p>}
+      {(lines.length > shown || others) && <p className="rowsub">{lines.length > shown && <a className="from-site-more" href={`#/projects/${code}/report/${r.id}`}>And {lines.length - shown} more in the report</a>}{lines.length > shown && '.'}{lines.length > shown && others ? ' ' : ''}{others ? `Also raised ${others}.` : ''}</p>}
+    </article>;
+  })}</div>;
+}
+
+/**
+ * The end of the day's read, across every project in one place: each project
+ * with a site update for today's visit, what the day found (held up by access, and the
+ * defects and variations the office now has to answer), then each update's
+ * progress lines. The same cards as a project's Latest from site, so nothing
+ * new to learn; every update for today's visit is read, not only each trade's newest,
+ * and its access problems come first.
+ */
+function TodayFromSite({ ctx }: { ctx: Ctx }) {
+  const phone = usePhone();
+  const shown = projectStatusGroups(ctx.projects).flatMap(g => g.projects).map(p => ctx.statOf(p.id))
+    .filter((s): s is ProjectStats => !!s && s.standing.today.length > 0);
+  const updates = shown.reduce((n, s) => n + s.standing.today.length, 0);
+  return <section className="today-site" aria-labelledby="today-site-h">
+    <SecH right={<span className="r">{dayShort(ctx.day)}{updates ? ` · ${count(updates, 'update')}` : ''}</span>}><span id="today-site-h">Today from site</span></SecH>
+    {shown.length ? shown.map(s => <TodayProject key={s.project.id} ctx={ctx} s={s} lines={phone ? 2 : 3} />)
+      : <div className="empty" style={{ padding: 14 }}>No site update sent for today yet. Each project’s Latest from site has its last ones.</div>}
+  </section>;
+}
+function TodayProject({ ctx, s, lines }: { ctx: Ctx; s: ProjectStats; lines: number }) {
+  const f = dayFound(s.standing.today), id = `today-${s.code}`;
+  const found = [f.defects ? count(f.defects, 'defect') : '', f.variations ? count(f.variations, 'variation') : ''].filter(Boolean).join(' and ');
+  return <section className="today-project" aria-labelledby={id}>
+    <a className="today-project-h" href={`#/projects/${s.code}`}>
+      <b id={id}>{s.project.projectName}</b>
+      <span className="today-found">
+        <span>{count(f.updates, 'site update')}{s.standing.inspectionsToday ? `, ${count(s.standing.inspectionsToday, 'inspection')}` : ''}</span>
+        <span className={f.access ? 'late' : ''}>{f.access ? `${count(f.access, 'access problem')}` : 'nothing held up'}</span>
+        <span className={found ? 'soon' : ''}>{found ? `raised ${found}` : 'no defects or variations'}</span>
+      </span>
+      <span className="arrow" aria-hidden="true">›</span>
+    </a>
+    <FromSiteVisits ctx={ctx} code={s.code} list={s.standing.today} shown={lines} empty="" when={r => `sent ${timeOf(r.serverAcknowledgedAt) || 'today'}`} heldUpFirst />
   </section>;
 }
 /** "2 defects and 1 variation", or '' when the visit raised neither. */
@@ -681,7 +727,7 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
     <dl className="tb"><div><dt>Work</dt><dd><WorkTag i={issue} day={ctx.day} /><small>{WORK_LABEL[issue.work]}{overdue ? ` · ${daysLate(issue.targetDate, ctx.day)} days past target` : ''}</small></dd></div><div><dt>Confirmation</dt><dd><ConfirmTag i={issue} reviewOn={reviewOn} /><small>{confirmationNote(issue.confirmation, reviewOn)}</small></dd></div><div><dt>Owner</dt><dd>{issue.owner.trim() || <span className="late">Unassigned</span>}</dd></div><div><dt>Target</dt><dd className={`num ${overdue ? 'late' : ''}`}>{issue.targetDate ? fmtDay(issue.targetDate) : '—'}</dd></div></dl>
     {issue.actionNeeded && <div className="note info"><span><b>Action needed.</b> {issue.actionNeeded}</span></div>}
     {issue.confirmation === 'disputed' && <div className="note bad"><span><b>Disputed.</b> The report that raised this was sent back. Any work already done stands; the observation needs a decision.</span></div>}
-    {issue.work === 'awaiting_verification' && <div className={`note ${closureMine ? 'warn' : 'good'}`}><span><b>Closure submitted by {ctx.nameOf(issue.closureSubmittedById, issue.closureSubmittedBy ?? 'unknown')}</b> · put forward {fmtDay(putForwardAt(issue))}, waiting {daysSince(putForwardAt(issue))} days. {closureMine ? 'You submitted this closure, so someone else has to verify it.' : 'Verify it if the work is done, or send it back as not finished.'}</span></div>}
+    {issue.work === 'awaiting_verification' && <div className={`note ${closureMine ? 'warn' : 'good'}`}><span><b>Closure submitted by {ctx.nameOf(issue.closureSubmittedById, issue.closureSubmittedBy ?? 'unknown')}</b> · put forward {fmtDay(putForwardAt(issue))}, {waitingWords(issue, ctx.day)}. {closureMine ? 'You submitted this closure, so someone else has to verify it.' : 'Verify it if the work is done, or send it back as not finished.'}</span></div>}
     {linkedVariations.length > 0 && <div className="note info"><span><b>Variation{linkedVariations.length === 1 ? '' : 's'} on this issue:</b> {linkedVariations.map((v, i) => <span key={v.id}>{i > 0 && ', '}<a className="ref" href={`#/projects/${code}/variation/${v.id}`}>{shortRef(v.reference)}</a> {INSTRUCTION_LABEL[v.instruction].toLowerCase()}</span>)}.</span></div>}
     <dl className="tb two" style={{ marginTop: 12 }}><div><dt>Source</dt><dd>{source ? <>Raised by <a className="ref" href={`#/projects/${code}/report/${source.id}`}>{shortRef(source.reference)}</a> · {fmtDay(issue.raisedAt)}</> : issue.source === 'individual' ? <>Flagged on site by {issue.reportedBy ?? 'unknown'} · {fmtDay(issue.raisedAt)}</> : <>Raised {fmtDay(issue.raisedAt)}</>}<small>{issue.reportedBy ?? issue.events[0]?.actor ?? 'Reporter not recorded'}{issue.reporterTrade ? ` · ${issue.reporterTrade}` : ''}</small></dd></div><div><dt>Progress notes</dt><dd>Add updates and photographs on the issue page.<small>Engineers can submit the work as complete there; the office verifies here.</small></dd></div></dl>
     <SecH right={<span className="r">{issue.events.length}</span>}>History</SecH>
