@@ -34,7 +34,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   through and say so. Plain display of photographs already sent: no tags,
   albums or annotations (FE-2 stays out).
 - Help: a "What's new" line, and the Photographs line in the page list.
-- Checks: typecheck, `npm test` (146 + 542), build. New
+- Checks: typecheck, `npm test` (146 + 545 on top of #136), build. New
   `scripts/verify-photos-month.mjs` (43 checks): month choices and counts, a
   fix added to an issue counted in its month, grouped by day, Day choice and
   Newer/Older day kept inside the month, the find box narrowing a month's
