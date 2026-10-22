@@ -36,6 +36,7 @@ for(const key of ['engineer','manager']){sessions[key]=randomUUID();putRecord('s
 const measureOnly=process.env.RELAY_BUSY_MEASURE==='1';
 const only=process.env.RELAY_BUSY_ONLY; // api, phone or desk, to time one group
 const P='proj-011lme';
+const lastMonth=new Date(Date.UTC(Number(today.slice(0,4)),Number(today.slice(5,7))-2,1)).toISOString().slice(0,7);
 
 // Budgets. Pages: milliseconds from navigation to the page showing its
 // records with nothing still loading, and kilobytes the page's API calls sent
@@ -70,6 +71,8 @@ const DESK_PAGES=[
   ['Issues by company','/companies','main',2000,30],
   ['Site coverage','/coverage','main',2000,30],
   ['Search (office)','/search?q=riser','main',2500,30],
+  // Last month's photographs, grouped by day: filtered on the page from the same download as every month.
+  ['Photographs, one month (office)',`/photos?project=${P}&month=${lastMonth}`,'.photos-tile',2500,500],
 ];
 const APIS=[
   ['engineer',`/api/reports?projectId=${P}`,100],
