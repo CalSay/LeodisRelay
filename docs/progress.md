@@ -4,6 +4,47 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — A day's photographs on the first screen of a phone
+
+- Why: a walk at 390x844 (busy seed, Tetley Hall, 1,146 photographs, engineer
+  and office manager alike) finding one day's and one month's photographs.
+  The page opened with the heading, a line of explanation and a 420px stack
+  of five controls, so the first photograph started at 842px of 844: none
+  showed. Choosing a day (2 taps) left its photographs below the screen (first
+  at 900px), so every day needed a scroll down, and every Newer day or Older
+  day a scroll back up to the buttons and down again. Cal's 21 Oct ask: easy
+  for engineers, clear for the office. Not a `docs/tasks.json` task (picked
+  from the walk under Cal's 20 Oct go-ahead to decide); no status changed.
+- Changed (`PhotoLibraryPage.tsx`, `photos.css`), phones (640px and less)
+  only: choosing a month or a day, Newer day, Older day, Every day or a month
+  step scrolls so the count line sits just under the top bar, with the day
+  steps and the photographs below it. A link that names a day or a month (the
+  Weekly summary's "N photographs", the month sheet's "Every photograph from
+  October") does the same once the photographs load. The line under the
+  heading is left off, and Month and Day lose their small titles on screen
+  (kept for screen readers): they read "Every month", "Every day" or the
+  choice. Typing in the find box and changing project do not move the page.
+  Wider screens are unchanged. Help "What's new" line added.
+- Decided: titles hidden rather than Month and Day side by side, because at
+  390px half the width cuts "Thu 15 Oct 2026 · 15 photographs" to
+  "Thu 15 Oct 20…". An instant jump, not a smooth scroll, so it reads as the
+  page opening on the choice. Only a choice moves the page, never typing or
+  a project change.
+- Verified: typecheck, `npm test`, build. New
+  `scripts/verify-photos-phone.mjs` (74 checks: engineer light and manager
+  dark at 390x844, 1440 light): photographs on the first screen, after each
+  choice and step the count is under the top bar with the steps and a whole
+  row of photographs on screen, links naming a day or month, find box and
+  project change do not move the page, no sideways scroll, 1440 unchanged.
+  It fails on main ("photographs show on the first screen", first at 842px of
+  844). Also passed: verify-photo-library, verify-photos-month, verify-help,
+  verify-weekly-summary, verify-month-summary, verify-accessibility (584).
+  Screens: project files `ui-review/photos-phone/` (`walk/` before, `after/`;
+  the busy seed's photographs have no image files, so tiles show as blank).
+- Not verified: a real phone (the native day list, iOS Safari's own scroll),
+  browsers other than Chromium 141.
+- Next: nothing further from this walk.
+
 ## 2026-10-22 — A project's figures on a laptop
 
 - Why: the office laptop walk (PR #145) found a project sheet's four figures

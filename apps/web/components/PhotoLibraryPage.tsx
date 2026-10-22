@@ -21,9 +21,15 @@ import { failure } from '@/lib/failure';
  * one day ("show me Tuesday's photographs") without paging back through
  * every photograph since; a Month choice opens one calendar month, grouped by
  * day, the same months the Weekly summary's Month choice uses.
+ *
+ * On a phone the choices fill the first screen, so choosing a month or a day,
+ * stepping a day, or arriving from a link that names one, brings the count,
+ * the steps and the photographs up under the top bar: no scrolling to see
+ * what was chosen, or back up to step again.
  */
 
 const PAGE = 60;
+const PHONE = '(max-width:640px)';
 const fmtDay = (ymd: string) => dayShort(ymd, true);
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const isGroup = (v: string): v is PhotoGroup => PHOTO_GROUPS.some(g => g.value === v);
@@ -48,12 +54,17 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ini
   });
   const setDay = (d: string) => setChoice(([m]) => [m, d]);
   const setMonth = (m: string) => setChoice(([, d]) => [m, d]);
+  const chooseDay = (d: string) => { setDay(d); setJump(n => n + 1); };
   const [library, setLibrary] = useState<PhotoLibrary | null>(null);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
   const [limit, setLimit] = useState(PAGE);
   const [open, setOpen] = useState<number | null>(null);
   const dialog = useRef<HTMLDialogElement>(null);
+  const results = useRef<HTMLParagraphElement>(null);
+  // Each choice of a month or a day (or a link naming one) asks once for the photographs to be brought into view, when loaded.
+  const [jump, setJump] = useState(() => isPhotoDay(initialDay) || isPhotoMonth(initialMonth) ? 1 : 0);
+  const jumped = useRef(0);
   const project = projects.find(p => p.id === projectId);
   const manager = principal ? canManage(principal) : false;
   const fallback = manager ? '/office' : `/engineer${projectId ? `?project=${encodeURIComponent(projectId)}&view=reports` : ''}`;
@@ -96,7 +107,7 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ini
   const dayChoices = useMemo(() => photoDays(inMonth, day), [inMonth, day]);
   const shown = useMemo(() => day ? inMonth.filter(p => p.day === day) : inMonth, [inMonth, day]);
   const olderMonth = Boolean(month && matched.at(-1) && matched.at(-1)!.day < `${month}-01`);
-  const chooseMonth = (m: string) => { setMonth(m > thisMonth ? thisMonth : m); setDay(''); };
+  const chooseMonth = (m: string) => { setMonth(m > thisMonth ? thisMonth : m); setDay(''); setJump(n => n + 1); };
   const when = day ? ` on ${fmtDay(day)}` : month ? ` in ${monthName(month)}` : '';
   const withPhotos = dayChoices.filter(d => d.count > 0);
   const newerDay = day ? withPhotos.filter(d => d.day > day).at(-1)?.day : undefined;
@@ -107,6 +118,17 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ini
     return out;
   }, [shown, limit]);
   const current = open !== null ? shown[open] : undefined;
+  const loaded = Boolean(all);
+
+  // Phones only: put the count line just under the sticky top bar. Waits for the photographs to load on arrival.
+  useEffect(() => {
+    const el = results.current;
+    if (jump === jumped.current || !el) return;
+    jumped.current = jump;
+    if (!window.matchMedia(PHONE).matches) return;
+    const bar = document.querySelector('.appbar')?.getBoundingClientRect().height ?? 0;
+    window.scrollTo({ top: Math.max(0, el.getBoundingClientRect().top + window.scrollY - bar - 8) });
+  }, [jump, loaded]);
 
   useEffect(() => {
     const d = dialog.current;
@@ -119,17 +141,17 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ini
   return <main className="eng-page photos-page">
     <Link href={back} className="back">&larr; {backLabel(back)}</Link>
     <div className="eng-heading"><h1>Photographs{project ? ` · ${project.projectName}` : ''}</h1>
-      <p>Every photograph sent from site on this project, newest first. Pick a month or a day, or find a place to see how it looked on each visit.</p></div>
+      <p className="photos-intro">Every photograph sent from site on this project, newest first. Pick a month or a day, or find a place to see how it looked on each visit.</p></div>
     <div className="photos-controls">
       <label>Project<select value={projectId} onChange={e => { setProjectId(e.target.value); setMonth(''); setDay(''); }}>
         <option value="">Choose a project</option>
         {projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} {p.projectName}</option>)}
       </select></label>
-      <label>Month<select value={month} onChange={e => chooseMonth(e.target.value)}>
+      <label className="photos-when"><span className="photos-label">Month</span><select value={month} onChange={e => chooseMonth(e.target.value)}>
         <option value="">Every month</option>
         {monthChoices.map(m => <option key={m.month} value={m.month}>{monthName(m.month)} · {plural(m.count, 'photograph')}</option>)}
       </select></label>
-      <label>Day<select value={day} onChange={e => setDay(e.target.value)}>
+      <label className="photos-when"><span className="photos-label">Day</span><select value={day} onChange={e => chooseDay(e.target.value)}>
         <option value="">{month ? `Every day in ${monthName(month)}` : 'Every day'}</option>
         {dayChoices.map(d => <option key={d.day} value={d.day}>{fmtDay(d.day)} · {plural(d.count, 'photograph')}</option>)}
       </select></label>
@@ -145,16 +167,16 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ini
       : !all ? <p role="status">Loading photographs…</p>
       : !all.length ? <div className="eng-panel photos-empty"><h2>No photographs yet</h2><p className="eng-help">Photographs on reports sent to the office, and those added to issues and variations, will appear here.</p></div>
       : <>
-        <p className="photos-count" role="status">{shown.length === all.length ? plural(all.length, 'photograph') : `${shown.length} of ${plural(all.length, 'photograph')}`}{when}</p>
+        <p className="photos-count" role="status" ref={results}>{shown.length === all.length ? plural(all.length, 'photograph') : `${shown.length} of ${plural(all.length, 'photograph')}`}{when}</p>
         {month && !day && <nav className="photos-day-step photos-month-step" aria-label="Move by a month">
           <button type="button" onClick={() => chooseMonth(shiftMonth(month, -1))} disabled={!olderMonth}>&larr; Previous month</button>
           <button type="button" onClick={() => chooseMonth(thisMonth)} disabled={month === thisMonth}>This month</button>
           <button type="button" onClick={() => chooseMonth(shiftMonth(month, 1))} disabled={month >= thisMonth}>Next month &rarr;</button>
         </nav>}
         {day && <nav className="photos-day-step" aria-label="Move by a day">
-          <button type="button" disabled={!newerDay} onClick={() => newerDay && setDay(newerDay)} aria-label={newerDay ? `Newer day, ${fmtDay(newerDay)}` : 'Newer day'}>&larr; Newer day{newerDay && <small>{fmtDay(newerDay)}</small>}</button>
-          <button type="button" onClick={() => setDay('')}>{month ? `All of ${monthName(month).split(' ')[0]}` : 'Every day'}</button>
-          <button type="button" disabled={!olderDay} onClick={() => olderDay && setDay(olderDay)} aria-label={olderDay ? `Older day, ${fmtDay(olderDay)}` : 'Older day'}>Older day &rarr;{olderDay && <small>{fmtDay(olderDay)}</small>}</button>
+          <button type="button" disabled={!newerDay} onClick={() => newerDay && chooseDay(newerDay)} aria-label={newerDay ? `Newer day, ${fmtDay(newerDay)}` : 'Newer day'}>&larr; Newer day{newerDay && <small>{fmtDay(newerDay)}</small>}</button>
+          <button type="button" onClick={() => chooseDay('')}>{month ? `All of ${monthName(month).split(' ')[0]}` : 'Every day'}</button>
+          <button type="button" disabled={!olderDay} onClick={() => olderDay && chooseDay(olderDay)} aria-label={olderDay ? `Older day, ${fmtDay(olderDay)}` : 'Older day'}>Older day &rarr;{olderDay && <small>{fmtDay(olderDay)}</small>}</button>
         </nav>}
         {!shown.length ? <div className="eng-panel photos-empty">{find.trim() || show
             ? <><p className="eng-help">No photographs match{when}. Try fewer words, or show all kinds.</p>

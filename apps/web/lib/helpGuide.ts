@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'photos-phone-in-view', added: '2026-10-22', audience: 'all', title: 'A day\'s photographs on the first screen of a phone',
+    text: 'On a phone, choosing a month or a day on Photographs now brings that day\'s photographs up to the top of the screen, with "Newer day" and "Older day" above them, so there is no scrolling down to see them or back up to step to the next day. The same happens when a link opens Photographs on a day, such as a visit\'s "N photographs" on the Weekly summary. The Month and Day choices no longer have a small title above them on a phone (they read "Every month", "Every day" or what you chose), and the line under the heading is left off, so more of the first screen shows photographs. Wider screens look as before. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open Photographs', href: '/photos' } },
   { id: 'project-figures-laptop', added: '2026-10-22', audience: 'office', title: 'A project\'s figures on a laptop',
     text: 'On a laptop screen up to about 1400 pixels wide, a project\'s four figures ("Last visit", "Overdue actions", "Fixed, to check" and "Variations") now sit two by two instead of four in a row, so each label fits on one line and the words under each figure take one or two lines instead of up to six. The project\'s details further down, and the four facts at the top of an issue or a variation, sit the same way. Wider screens and phones look as before. Checked in a desktop browser, light and dark, with and without scrollbars showing.',
     link: { label: 'Open the office', href: '/office' } },
