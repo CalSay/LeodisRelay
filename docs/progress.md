@@ -4,6 +4,22 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Real company address on report PDFs, no VAT number
+
+- Why: Cal sent the company address and asked why a report needs the VAT
+  number. It doesn't: a site report is not an invoice. Not a
+  `docs/tasks.json` task.
+- Changed: `branding.ts` address is Unit 3 Pool Business Park, Pool Road,
+  Pool in Wharfedale, Otley LS21 1FD; `registrationLines` (the placeholder
+  company and VAT numbers) removed with its rendering in `ReportDocument.tsx`.
+  No branding placeholders are left. The #168 Help "What's new" line says so.
+- Decided (Claude): the company number goes too, as we don't have the real
+  one and a made-up number on an issued report is worse than none. It can be
+  added back as one line in `branding.ts` if Cal wants it.
+- Verified: `npm run typecheck`, `npm test`, `node scripts/verify-long-pdfs.mjs`,
+  sample PDF first page looked at. Not verified: printed. Not live until the
+  next deploy.
+
 ## 2026-10-22 — Release 1 defined
 
 - Why: Cal asked to "define a first release point and work towards that with
