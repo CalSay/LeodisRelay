@@ -15,6 +15,7 @@ import { againWords, putForwardAt, sentBackBefore, waitingWords } from '@/lib/ch
 import { withViewReturn } from '@/lib/viewNavigation';
 import { shiftWeek, weekStart } from '@/lib/weeklySummary';
 import { confirmationNote } from '@/lib/issueConfirmation';
+import { openAtPlace, placeRegisterHash } from '@/lib/issueQuery';
 import type { Correction, CorrectionAction, Issue, Observation, Report, ReportSummary, Variation } from '@/lib/types';
 import { revisionsBefore, sectionOf } from '@/lib/sectionMatch';
 import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, signedCopyLink, variationValue } from '@/lib/variations';
@@ -60,7 +61,7 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
 /** "1 report", "3 issues". */
 const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
 function officeReturn(ctx: Ctx): string {
-  const route = [ctx.route.tab, ctx.route.a, ctx.route.b, ctx.route.c].filter((part): part is string => !!part);
+  const route = [ctx.route.tab, ctx.route.a, ctx.route.b, ctx.route.c, ctx.route.d].filter((part): part is string => !!part);
   return `/office#/${route.join('/')}`;
 }
 
@@ -776,8 +777,12 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
   const back = issue.work === 'awaiting_verification' ? sentBackBefore(issue) : undefined;
   const d = (kind: string) => ctx.setDialog(dialogFor(kind, issue, ctx));
   const linkedVariations = ctx.snap?.variations.filter(v => v.linkedIssueId === issue.id) ?? [];
+  // Everything else at this place on the project: the register's open issues there and the photographs, as typed (no list of places).
+  const place = issue.location.trim().replace(/\s+/g, ' ');
+  const here = openAtPlace(ctx.snap?.issues ?? [], issue.projectId, place);
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h3>{issue.description}</h3><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div></div>
+    <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h3>{issue.description}</h3><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div>
+      {place && ctx.snap && <p className="sheet-here">At <b>{place}</b>: {here.length ? <a href={placeRegisterHash(issue.projectId, place)}>{count(here.length, 'open issue')}</a> : 'no open issues'} · <Link href={`/photos?${new URLSearchParams({ project: issue.projectId, q: place, returnTo: officeReturn(ctx) })}`}>Photographs</Link></p>}</div>
       <div className="actions">
         <Link className="btn btn-q btn-sm" href={withViewReturn(`/issues/${issue.id}`, officeReturn(ctx))}>Issue page</Link>
         {active && issue.work !== 'awaiting_verification' && (issue.owner ? <BtnQ className="btn-sm" onClick={() => d('assign')}>Reassign</BtnQ> : <Btn className="btn-sm" onClick={() => d('assign')}>Assign</Btn>)}

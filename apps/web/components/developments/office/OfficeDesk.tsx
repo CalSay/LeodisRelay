@@ -40,7 +40,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const { hash, go } = useHashRoute(fallback);
   // People moved from Admin to the Team tab (one list of people), so older #/admin/roles links open Team.
   const parts = hash === '#/admin/roles' ? ['team'] : parseHash(hash);
-  const route: Route = { tab: parts[0] ?? 'projects', a: parts[1] ?? null, b: parts[2] ?? null, c: parts[3] ?? null };
+  const route: Route = { tab: parts[0] ?? 'projects', a: parts[1] ?? null, b: parts[2] ?? null, c: parts[3] ?? null, d: parts[4] ?? null };
 
   const [snap, setSnap] = useState<Snapshot | null>(null);
   const [error, setError] = useState('');
@@ -99,7 +99,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   const projects = useMemo(() => projectData.filter(p => principal && canAccessProject(principal, p.id) && REPORTABLE.includes(p.status)), [principal, projectData]);
   const stats = useMemo(() => snap ? projects.map(p => projectStats(p, snap, day, safetyRecords)) : [], [snap, projects, day, safetyRecords]);
   const statOf = useCallback((code: string) => stats.find(s => s.code === code), [stats]);
-  const here = `/office#/${[route.tab, route.a, route.b, route.c].filter(Boolean).join('/')}`;
+  const here = `/office#/${[route.tab, route.a, route.b, route.c, route.d].filter(Boolean).join('/')}`;
   const attn = useMemo(() => attention(stats, day, snap?.safety, here, snap?.permits, snap?.deliveries), [stats, day, snap?.safety, here, snap?.permits, snap?.deliveries]);
   const me = { id: principal?.id ?? '', name: principal?.name ?? '', role: principal?.role ?? '', admin: principal ? isAdmin(principal) : false };
   const reviewOn = stats.some(s => s.reviewOn);
