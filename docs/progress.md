@@ -4,6 +4,30 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish E3: the site update editor
+
+- Why: task E3 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
+  the engineer's phone). Branched after #176 and #193 merged (79dc5aa).
+  Screenshots before and after, 390px light and dark and 1440px light, are in
+  `ui-review/release-1/E3/`: a new update, a filled card, a defect, three
+  cards, Check & send with stops and clear, signing, and the sent receipt.
+- What the walk found: the editor was already in good order (every control
+  48px or more except Back). The rest was small: Back was 44px; "Change
+  kind", "Remove card N" and the signature's "Clear" were 12px text among
+  15px buttons; "What sending does" was a bare label tight under the tally
+  while "In this report" and "Sign" are ruled headings; on the receipt "See
+  the full report" was a 15px-tall link inside a sentence and "Make a
+  correction" a small grey 12px button that looked switched off.
+- Changed: one block at the end of `engineer.css`, scoped to
+  `.eng-report-editor` and `.eng-report-sent`, and in `reports/[id]/page.tsx`
+  the full report link sits on its own line (class `eng-full-report`, its
+  inline style moved there) and Make a correction is a plain outlined button
+  (`btn-quiet eng-correct`). No `globals.css` token changes, no shared
+  component changes, no change to cards, saving, offline or drafts.
+- No Help "What's new" line: nothing works differently.
+- Verified: see the PR for typecheck, tests and the browser checks run.
+- Not verified: a real phone, a screen reader.
+
 ## 2026-10-22 — No red on a site update card while it is being filled in
 
 - Why: the coordinator asked for a walk of an engineer on a 390px phone
