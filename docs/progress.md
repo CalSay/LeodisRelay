@@ -4,6 +4,42 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish O1: office top bar and overview
+
+- Why: task O1 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" for
+  the office and the phone). Before and after screenshots at 1440 light and
+  dark, 1024 light and 390 light are in the project files under
+  `ui-review/release-1/O1/`. Busy example data, 60 days.
+- Found: the overview sat as one panel inside the column, with every section
+  inside that panel on the same colour, so the sections ran together (Cal,
+  21 Oct 12:59). A grey "Overview · Office" band repeated the Projects tab.
+  The "Office position" block used about 100px for a title, the company name
+  the top bar already shows, and the time. Up to eight gold Assign and Verify
+  buttons on the first screen. In the top bar the theme button had a frame
+  and nothing else did. On a phone the top bar took three rows (RELAY alone,
+  then Attention, name and Help, then search).
+- Changed (`workspace.css` new block at the end, scoped to `.cols[data-depth="1"]`
+  and `.topbar-right`; `ProjectsView.tsx` OfficeSheet and the action lists):
+  the overview's sections are cards with `--line-2` edges on the sunken
+  ground; the column heading is kept for screen readers only (its text,
+  "Overview", is what the landing checks read); the title is one line
+  ("Office position · Updated ..." with the two buttons right); the list
+  buttons are quiet (`BtnQ`); the top bar's controls share one height and
+  frame, with a line before Help, Engineer view and Switch company; on a phone
+  the company name beside RELAY is hidden, so name, Attention and Help share
+  its row. No `globals.css` token changes, no shared component changed. The
+  Attention bell, its list and "Also needs attention" are untouched (#154 is
+  open on them). Help "What's new" line added.
+- Verified: typecheck, `npm test` (146 + 581), build. Browser, one at a
+  time: office-landing (19), office-phone (99), office-top-bar (1917),
+  office-sections (63), office-desk (73), office-actions (46),
+  office-registers (225), office-progress (84), office-links (65),
+  september-office (43), simpler-home (56), today-from-site (62),
+  not-seen-pile (58), home-and-sheet (254), navigation (76), seen-by-office
+  (45), office-words (67), help (36), accessibility (584), busy-projects
+  (39 timings within budget). No check needed changing.
+- Not verified: a real phone, a tablet, a screen reader.
+
 ## 2026-10-22 — Sixteenth release check: "Put forward as fixed" on the first screen again
 
 - Why: the sixteenth release check on main bc864b8 (#2-#179 minus #28, #130,

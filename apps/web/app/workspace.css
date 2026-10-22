@@ -675,3 +675,53 @@ body:has(.ws){overflow:hidden auto}
 .ws .checks-passed>.btn{margin-bottom:var(--s2)}
 /* "Not applicable" is wider than the answer column: let it wrap rather than run into the check. */
 .ws .hist .d .kind{white-space:normal}
+
+/* ------------------------------------------------- office overview (Release 1, O1)
+   The overview is the desk's front page. Its sections sit as their own cards on
+   the sunken ground instead of inside one more panel, so each has a clear edge
+   (Cal, 21 Oct 12:59); the column header that only said "Overview · Office"
+   is kept for screen readers, and the title is one line. */
+.ws .cols[data-depth="1"] .col-main>.col-head{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.ws .cols[data-depth="1"] .col-main>.colpad{padding:var(--s5)}
+.ws .cols[data-depth="1"] .sheet{background:none;border:0;padding:0}
+.ws .office-title{align-items:center;padding:0 0 var(--s4);border:0;border-bottom:1px solid var(--edge);background:none}
+.ws .office-title>div:first-child{display:flex;align-items:baseline;flex-wrap:wrap;gap:var(--s1) var(--s3)}
+.ws .office-title h3{margin:0;font-size:22px;line-height:1.25}
+.ws .office-title .rowsub{margin:0;font-size:13px}
+.ws .office-title .actions .btn-q{background:var(--panel)}
+.ws .cols[data-depth="1"] .sheet .glance{margin-top:0}
+.ws .cols[data-depth="1"] .sheet .sec-h{border-top-color:var(--line-2);border-bottom-color:var(--line-2);margin-top:var(--s6)}
+.ws .glance .grp{border:1px solid var(--line-2);border-bottom-color:var(--line);color:var(--text-2);background:var(--panel-2)}
+.ws .glance-list{border-color:var(--line-2)}
+.ws .glance .glance-row .arrow{font-size:16px}
+.ws .cols[data-depth="1"] .acts{margin-top:var(--s5);gap:var(--s4)}
+.ws .cols[data-depth="1"] .act{border-color:var(--line-2)}
+.ws .act-h{padding-top:var(--s4)}
+.ws .cols[data-depth="1"] .today-project{border-color:var(--line-2)}
+.ws .cols[data-depth="1"] .sheet>p.rowsub{margin-top:var(--s4) !important}
+
+/* Top bar: every control the same height and the same quiet frame until pointed at. */
+.ws .topbar-right{gap:var(--s2)}
+.ws .topbar-right :is(.bell,.whoami,.tbtn){display:inline-block;line-height:24px;padding:4px 10px;border:1px solid transparent;border-radius:var(--r)}
+.ws .topbar-right .themebtn{min-height:34px;padding:4px 10px;border-color:transparent}
+@media (hover:hover){.ws .topbar-right :is(.tbtn,.themebtn):hover{border-color:var(--line-2);color:var(--text)}}
+.ws .topbar-right .whoami+.themebtn,.ws .topbar-right form+.themebtn{margin-right:var(--s2)}
+.ws .topbar-right .tbtn-help{border-left:1px solid var(--line-2);border-radius:0 var(--r) var(--r) 0;padding-left:var(--s4)}
+
+@media (max-width:700px){
+  /* The company is named by the title under it; without it the name, Attention and Help share the logo's row. */
+  .ws .logo span{display:none}
+  .ws .topbar{row-gap:var(--s2)}
+  .ws .topbar-right{gap:0}
+  .ws .topbar-right :is(.bell,.whoami,.tbtn){min-height:44px;padding:4px 8px}
+  .ws .topbar-right .tbtn:not(.tbtn-help),.ws .topbar-right .themebtn{display:none}
+  .ws .topbar-right .tbtn-help{border-left:0;padding-left:8px}
+  .ws .whoami{max-width:136px}
+  .ws .cols[data-depth="1"] .col-main>.colpad{padding:var(--s3)}
+  .ws .office-title{flex-direction:column;align-items:stretch;gap:var(--s3);padding-bottom:var(--s3)}
+  .ws .office-title h3{font-size:20px}
+  .ws .office-title .actions{display:grid;grid-template-columns:1fr 1fr}
+  .ws .office-title .actions .btn-q{justify-content:center}
+  .ws .cols[data-depth="1"] .sheet .sec-h{margin-top:var(--s5)}
+  .ws .cols[data-depth="1"] .acts{margin-top:var(--s4);gap:var(--s3)}
+}

@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-overview-tidier', added: '2026-10-22', audience: 'office', title: 'A tidier office overview',
+    text: 'The office overview opens on one line, "Office position" and when it was updated, with Site coverage and Issues by company beside it. Each part below it (where each project stands, the three lists, today from site) is its own card with a clear edge. The Assign and Verify buttons in the lists are now plain buttons, so the page has no row of gold ones. The top bar\'s buttons line up at the same height, and on a phone your name, Attention and Help sit on the same row as RELAY. Nothing was added or taken away. Checked in a desktop browser at 1440px and 1024px (light and dark) and a phone-sized one, not on a real phone.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'office-issue-at-place', added: '2026-10-22', audience: 'office', title: 'Issues: everything open at the same place',
     text: 'An issue\'s sheet in the office now has a line under its title, for example "At Flat 204 kitchen: 31 open issues · Photographs". Select the open issues to open the Issues register with that project and place already filled in, and Back from an issue comes back to that list. Select Photographs to see that project\'s photographs from the same place, newest first. It uses the place the engineer typed, so "kitchen, Flat 204" counts too. A number in a place now has to match the whole number, here and in the register\'s Location box: Flat 12 no longer brings in Flat 120 or Flat 212, nor Level 1 every Level 10. Checked in a desktop browser (light and dark), not on a real phone.',
     link: { label: 'Open the Issues register', href: '/office#/issues' } },
