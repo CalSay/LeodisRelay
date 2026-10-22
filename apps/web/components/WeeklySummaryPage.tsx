@@ -91,6 +91,8 @@ export function WeeklySummaryPage({ initialProject, initialWeek, initialPeriod =
       <div className="week-period" role="group" aria-label="Week or month">
         {(['week', 'month'] as const).map(p => <button key={p} type="button" aria-pressed={period === p} onClick={() => setPeriod(p)}>{p === 'week' ? 'Week' : 'Month'}</button>)}
       </div>
+      {/* Beside Week and Month, so on a phone the controls take three rows and the figures reach the first screen. */}
+      <button type="button" className="btn-primary week-print" onClick={() => window.print()} disabled={period === 'week' ? !s : !m}>Print or save as PDF</button>
       {period === 'week' ? <div className="week-step" role="group" aria-label="Choose the week">
         <button type="button" onClick={() => setWeek(w => shiftWeek(w, -1))}>&larr; Previous week</button>
         <button type="button" onClick={() => setWeek(thisWeek)} disabled={week === thisWeek}>This week</button>
@@ -100,7 +102,6 @@ export function WeeklySummaryPage({ initialProject, initialWeek, initialPeriod =
         <button type="button" onClick={() => setMonth(thisMonth)} disabled={month === thisMonth}>This month</button>
         <button type="button" onClick={() => setMonth(v => shiftMonth(v, 1))} disabled={month >= thisMonth}>Next month &rarr;</button>
       </div>}
-      <button type="button" className="btn-primary" onClick={() => window.print()} disabled={period === 'week' ? !s : !m}>Print or save as PDF</button>
     </div>
 
     {!project ? <div className="eng-panel week-noprint"><h1>{period === 'month' ? 'Monthly summary' : 'Weekly summary'}</h1><p className="eng-help">{period === 'month'

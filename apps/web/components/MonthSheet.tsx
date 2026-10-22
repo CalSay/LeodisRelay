@@ -27,6 +27,16 @@ const PLACES_SHOWN = 12, LATE_SHOWN = 10;
 type ListKey = 'days' | 'reports' | 'raised' | 'closed' | 'vraised' | 'vinstructed';
 const LIST_NAME: Record<ListKey, string> = { days: 'Days on site', reports: 'Site reports', raised: 'Issues raised', closed: 'Issues closed', vraised: 'Variations raised', vinstructed: 'Variations instructed' };
 
+/**
+ * The week-by-week columns. On a phone each week is a block of six labelled
+ * figures instead of a table row (week.css): seven columns at 390px hid the
+ * issues and variations behind a sideways scroll.
+ */
+const WEEK_COLUMNS = ['Days on site', 'Reports', 'Issues raised', 'Issues closed', 'Variations raised', 'Variations instructed'];
+function WeekFigures({ v }: { v: number[] }) {
+  return <>{v.map((n, i) => <td key={WEEK_COLUMNS[i]} data-label={WEEK_COLUMNS[i]}>{n}</td>)}</>;
+}
+
 function ShowAll({ total, shown, all, onToggle, what }: { total: number; shown: number; all: boolean; onToggle: () => void; what: string }) {
   if (total <= shown) return null;
   return <button type="button" className="week-noprint month-more" aria-expanded={all} onClick={onToggle}>{all ? 'Show less' : `Show all ${total} ${what}`}</button>;
@@ -94,13 +104,13 @@ export function MonthSheet({ m, project, today, thisMonth, here, manager }: { m:
       <h3>Week by week</h3>
       <div className="month-weeks-wrap">
         <table className="month-weeks">
-          <thead><tr><th scope="col">Week</th><th scope="col">Days on site</th><th scope="col">Reports</th><th scope="col">Issues raised</th><th scope="col">Issues closed</th><th scope="col">Variations raised</th><th scope="col">Variations instructed</th></tr></thead>
+          <thead><tr><th scope="col">Week</th>{WEEK_COLUMNS.map(c => <th key={c} scope="col">{c}</th>)}</tr></thead>
           <tbody>{m.weeks.map(w => <tr key={w.monday}>
             {/* A full page load: this screen keeps its week or month in state, so the week opens fresh and Back returns to the month as it was. */}
             <th scope="row"><a href={weekHref(w.monday)}>{range(w.from, w.to)}</a>{w.from !== w.monday && <small>week from {fmtDay(w.monday)}</small>}</th>
-            <td>{w.daysOnSite}</td><td>{w.reports}</td><td>{w.issuesRaised}</td><td>{w.issuesClosed}</td><td>{w.variationsRaised}</td><td>{w.variationsInstructed}</td>
+            <WeekFigures v={[w.daysOnSite, w.reports, w.issuesRaised, w.issuesClosed, w.variationsRaised, w.variationsInstructed]} />
           </tr>)}</tbody>
-          <tfoot><tr><th scope="row">{name.split(' ')[0]}</th><td>{total.days}</td><td>{total.reports}</td><td>{total.raised}</td><td>{total.closed}</td><td>{total.vraised}</td><td>{total.vinstructed}</td></tr></tfoot>
+          <tfoot><tr><th scope="row">{name.split(' ')[0]}</th><WeekFigures v={[total.days, total.reports, total.raised, total.closed, total.vraised, total.vinstructed]} /></tr></tfoot>
         </table>
       </div>
       <p className="week-total">A week that runs into the next or last month counts only its days in {name.split(' ')[0]}. Open a week for its full summary.</p>

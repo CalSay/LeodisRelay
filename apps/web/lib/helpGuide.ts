@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'weekly-summary-phone', added: '2026-10-22', audience: 'office', title: 'The Weekly summary reads on a phone',
+    text: 'On a phone, the Weekly summary\'s choices now take three rows instead of five: the project, then Week or Month beside "Print or save as PDF" (now a plain outlined button), then the steps back and forward. So the week\'s four figures, or the month\'s first two, are on the first screen. In the Month choice, "Week by week" shows each week as a small block with all six figures named (days on site, reports, issues raised and closed, variations raised and instructed). Before, only days and reports showed and the rest were hidden off the side of the screen. On a desk the print button now sits beside Week and Month. Printing is unchanged. Checked in a phone-sized browser, light and dark, not on a real phone.',
+    link: { label: 'Open the Weekly summary', href: '/weekly-summary' } },
   { id: 'quiet-card-list', added: '2026-10-22', audience: 'site', title: 'A quieter list of cards',
     text: 'In a site update, a card that is saved now shows a small green dot beside its place instead of a line saying "Saved", so each card in the list is a line shorter and more of them fit on the screen. While a card is being saved it says "Saving" (its photos say "Uploading"), not "Not saved to RELAY yet", so folding a card no longer flashes a warning. A card that really has not gone up, such as one written with no signal, still says so on a line of its own. Checked in a phone-sized browser, light and dark, not on a real phone.',
     link: { label: 'Open your home screen', href: '/engineer' } },
