@@ -1444,4 +1444,12 @@ button:disabled {
 .signed-out-go { grid-row: 1; grid-column: 2; display: inline-flex; align-items: center; min-height: 44px; padding: 0 var(--s4); border-radius: var(--r); background: var(--brass); color: var(--brass-ink); font-weight: 600; text-decoration: none; white-space: nowrap; }
 @media (max-width: 480px) { .signed-out { grid-template-columns: 1fr; } .signed-out-go { grid-row: auto; grid-column: 1; justify-self: start; } }
 
+/* The home screen icon opened a browser tab, not the app (components/IconOpensBrowser.tsx). */
+.icon-browser { position: fixed; z-index: 1000; top: var(--s3); left: 50%; transform: translateX(-50%); width: min(560px, calc(100vw - 2 * var(--s4)));
+  display: grid; gap: var(--s2); padding: var(--s3) var(--s4);
+  background: var(--panel); color: var(--text); border: 1px solid var(--line-2); border-left: 3px solid var(--brass); border-radius: var(--r);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, .18); }
+.icon-browser p { margin: 0; font-size: 14.5px; line-height: 1.45; }
+.icon-browser-close { justify-self: start; min-height: 44px; padding: 0 var(--s4); border: 0; border-radius: var(--r); background: var(--brass); color: var(--brass-ink); font: inherit; font-weight: 600; cursor: pointer; }
+
 .download-problem { display: block; flex-basis: 100%; margin-top: var(--s2); padding: var(--s2) var(--s3); border-left: 2px solid var(--alert); background: var(--alert-wash); color: var(--alert); font-size: 13.5px; line-height: 1.45; border-radius: var(--r); }

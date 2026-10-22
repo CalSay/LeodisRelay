@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'home-screen-full-screen', added: '2026-10-22', audience: 'all', title: 'RELAY from the home screen: full screen, no web address',
+    text: 'If RELAY\'s home screen icon opens it in the browser, with the web address at the top, RELAY now says so when it opens and how to fix it: remove the icon and add RELAY again as an app (on Android choose Install, not Create shortcut; on an iPhone leave Open as Web App on). Older iPhones now get the setting they look for to open RELAY full screen. Microsoft\'s sign-in is a different web address, so a bar with it can show while you sign in; once you are back, the sign-in screen carries on by itself. Checked in a desktop browser made to act like a phone, not on a real phone.' },
   { id: 'defect-fixed-on-the-spot', added: '2026-10-22', audience: 'site', title: 'Fixed a defect there and then? Say so from the receipt',
     text: 'After you flag a defect, "Defect sent to the office" now has "Fixed it already?" under Back to Site. Tap it to take a photo of the fix, then "Put forward as fixed": the office gets it to check, with your photo of the fix, and someone else still checks it and closes it. No photo to add? Tap "No photo? Put forward as fixed". Only once the defect has reached the office. On the issue, "Who is fixing it" now names who put it forward as fixed. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'month-figures-read-true', added: '2026-10-22', audience: 'all', title: 'Month summary: figures that say what they count',

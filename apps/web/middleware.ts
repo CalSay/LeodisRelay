@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { crossSiteChange } from "./lib/crossSite";
 import { COMPANY_COOKIE } from "./lib/company";
+import { ICON_LAUNCH_COOKIE, ICON_LAUNCH_SECONDS, isIconLaunch } from "./lib/homeScreen";
 
 /**
  * Require a session for everything except sign-in itself.
@@ -15,6 +16,16 @@ import { COMPANY_COOKIE } from "./lib/company";
 const PUBLIC = ["/signin", "/api/auth", "/api/health"];
 
 export function middleware(request: NextRequest) {
+  const response = route(request);
+  // Opened from the home screen icon: the page that shows next checks whether
+  // it is full screen (lib/homeScreen.ts, components/IconOpensBrowser.tsx).
+  if (isIconLaunch(request.nextUrl.pathname, request.nextUrl.searchParams)) {
+    response.cookies.set(ICON_LAUNCH_COOKIE, '1', { path: '/', sameSite: 'lax', secure: request.nextUrl.protocol === 'https:', maxAge: ICON_LAUNCH_SECONDS });
+  }
+  return response;
+}
+
+function route(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
   if (crossSiteChange(request)) {
     // The code lets RELAY's own screens say it in their words (lib/failure.ts); the refusal itself is unchanged.
