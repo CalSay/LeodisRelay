@@ -27,7 +27,7 @@ import { CheckEditor } from "@/components/CheckEditor";
 import { InspectedName } from "@/components/InspectedName";
 import { CHECK_ANSWERS, checkCounts, checkHint, reportTypeOf } from "@/lib/reportTypes";
 import { SignaturePad } from "@/components/SignaturePad";
-import type { Issue as IssueSummary } from "@/lib/types";
+import type { Issue as IssueSummary, ReportSummary } from "@/lib/types";
 import { heldSendBusy, heldSendSettled } from '@/lib/heldSend';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { useRouter } from 'next/navigation';
@@ -118,6 +118,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [report, setReport] = useState<Report | null>(null);
   /** "Go to today’s update" tapped on an update left from an earlier day: finding or starting today's. */
   const [toToday, setToToday] = useState(false);
+  const [toTodayError, setToTodayError] = useState('');
   /** Why the report could not be opened, said in place of it. */
   const [missing, setMissing] = useState<string | null>(null);
   /** The session has gone before the report opened: nothing to keep on screen, so sign in here. */
@@ -1139,15 +1140,19 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   /** Today's update on this site: the engineer's own if started, otherwise a new one. With no signal, the Site page, which can start one offline. */
   async function openTodays() {
     if (!report || toToday) return;
-    setToToday(true);
+    setToToday(true);setToTodayError('');
     const home = `/engineer?project=${encodeURIComponent(report.projectId)}`;
+    const isTodays = (r: ReportSummary) => r.state === 'draft' && !r.corrects && reportTypeOf(r).id === 'progress' && r.visitDate === today && !!principal && ownsReport(principal, r);
     try {
-      const { reports } = await listReports(report.projectId, 0);
-      const todays = reports.find(r => r.state === 'draft' && !r.corrects && reportTypeOf(r).id === 'progress' && r.visitDate === today && !!principal && ownsReport(principal, r));
+      // Every page: on a busy site the engineer's own draft can be past the first 50 reports.
+      let todays: { id: string } | undefined, offset: number | null = 0;
+      while (!todays && offset !== null) { const page = await listReports(report.projectId, offset); todays = page.reports.find(isTodays); offset = page.next; }
       const target = todays ?? await createReport(report.projectId, principal?.name ?? '');
       router.push(withViewReturn(`/reports/${target.id}`, safeViewReturn(returnTo, home)));
-    } catch {
-      router.push(home);
+    } catch (e) {
+      if (e instanceof ApiError && e.offline) { router.push(home); return; }
+      setToTodayError(e instanceof Error ? e.message : 'Today’s update could not be opened. Please try again.');
+      setToToday(false);
     }
   }
   const counts = Object.fromEntries(KINDS.map(k => [k, report.observations.filter(o => o.type === k).length])) as Record<ObservationType, number>;
@@ -1398,6 +1403,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           <div className="btn-row" style={{ marginTop: 10 }}>
             <button type="button" className="btn-quiet" onClick={() => void openTodays()} disabled={toToday}>{toToday ? 'Opening…' : 'Go to today’s update'}</button>
           </div>
+          {toTodayError && <p role="alert" style={{ margin: "8px 0 0" }}>{toTodayError}</p>}
         </div>
       )}
 

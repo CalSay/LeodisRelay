@@ -27,8 +27,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   for yesterday, Wed 21 Oct. The office files everything in it under that
   day. Send it as it is; anything from today goes in today's update.") with
   "Go to today's update", which opens the engineer's own update for today on
-  that site, or starts one, and with no signal goes to the Site page (which
-  can start one offline). Check & send's "The office can read it straight
+  that site (reading every page of the project's reports, so a busy site's
+  50 newest do not hide it), or starts one; with no signal it goes to the
+  Site page (which can start one offline), and any other failure is said on
+  the note. Check & send's "The office can read it straight
   away" row starts "Filed under …". Help: a "What's new" line and the site
   update guide's paragraph.
 - Decided (Claude): no way to change an update's day, and nothing moved
@@ -37,15 +39,20 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   no note: an inspection may take two days, and a correction keeps the day of
   the report it corrects. Nothing is changed or removed in the older update.
 - Verified: typecheck, `npm test` (146 + 554, two new `visitDay` unit tests),
-  build. New `scripts/verify-old-drafts.mjs` (81 checks, light and dark at
+  build. New `scripts/verify-old-drafts.mjs` (84 checks, light and dark at
   390px, dark at 1440px): home lists yesterday's with its day; the note and
   its day; Check & send's "Filed under yesterday"; Go to today's update makes
   one dated today on the same site with "For today" and no note, and tapped
-  again opens the same one; yesterday's stays a draft with its day and cards
+  again opens the same one, also after 55 more reports are sent; yesterday's stays a draft with its day and cards
   and is still listed; inspection and correction have no note; no signal goes
   to the Site page; 48px button, axe on the title and note, no sideways
-  scroll. On main the first note check fails (no note). Other browser checks
-  are listed in the PR. Screens: project files `ui-review/old-drafts/`.
+  scroll. On main the first note check fails (no note). Also passed:
+  role-access, engineer-layout, signature-reload, report-editor,
+  editor-usability, editor-wide, quicker-update, quiet-card-list,
+  receipt-send-bar, offline-capture, offline-drafts, accessibility,
+  day-walkthrough, engineer-day, fewest-taps, came-back-to-update, help.
+  A fresh review found the first-page-only lookup and the silent failure;
+  both fixed. Screens: project files `ui-review/old-drafts/`.
 - Not verified: a real phone; London midnight on a real device clock.
 - Next: none from this walk.
 

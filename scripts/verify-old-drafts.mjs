@@ -6,7 +6,7 @@
 // Checks: an update from yesterday has a note that the office files it under that day and "Go to today’s
 // update" (an update for today says "For today, …" under its title); Check & send says "Filed under yesterday, …"; the button starts
 // today's update on this site (dated today, no note) and, tapped again,
-// opens the same one rather than a second; yesterday's cards and draft are
+// opens the same one rather than a second, also past the first 50 reports; yesterday's cards and draft are
 // untouched and still listed on the home screen; today's update, an inspection
 // and a correction have no note; with no signal the button goes to the Site
 // page. Axe on the note, 48px button, no sideways scroll. Light and dark at
@@ -116,6 +116,13 @@ try {
     await tap(note.getByRole('button',{name:'Go to today’s update'}));
     await page.waitForURL(u=>u.pathname.endsWith(todaysId),{timeout:20000});
     ok(true,`${label}: tapped again it opens the same today's update`);
+
+    // A busy site: 55 reports sent since today's was last saved put it past the first page of 50.
+    for(let k=0;k<55;k++){const id=s.make(P,'progress',day(-2));const r=await submitReport(id,undefined,getReport(id).version,s.principal.id);assert.ok(r.ok,JSON.stringify(r));}
+    await openReport(s.old);
+    await tap(note.getByRole('button',{name:'Go to today’s update'}));
+    await page.waitForURL(u=>u.pathname.startsWith('/reports/')&&!u.pathname.endsWith(s.old),{timeout:20000});
+    eq(new URL(page.url()).pathname.split('/').pop(),todaysId,`${label}: past the first 50 reports it still opens the same today's update`);
 
     // Home: today's on the big button, yesterday's still under Unfinished reports.
     await page.goto(`${base}/engineer?project=${P}`);
