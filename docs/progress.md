@@ -4,6 +4,41 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — The office's reason reaches whoever is fixing it
+
+- Why: the "What the office asked" walk (PR #162) found that when the office
+  sends a fix back as "Not finished" with a reason, only the engineer who
+  raised the issue saw it at the top of the issue and on the home. Confirmed
+  at 390px on main b0d389f: Pat, an electrician who put Sam's socket fix
+  forward, had "Nothing on this project yet" under Came back from the office
+  (the only sign was "Reopened · Your trade" under Since your last visit,
+  without the reason), and the issue page had no box: the reason was only in
+  History. Coordinator's ask; not a `docs/tasks.json` task, so no status
+  changed. Within Cal's 21 Oct direction (the engineer's job simpler).
+- Changed: the issue page shows the office's words box (`OfficeWordBox`) to
+  whoever the issue is theirs to see to, the same rule as Issues "Yours"
+  (`isYours`: raised it, their trade, or worked on it), not only the raiser.
+  `lib/cameBack.ts` `sentBackToYou` / `cameBackIssue`: Came back from the
+  office (this site and other sites) also lists an issue the engineer put
+  forward that the office sent back and they have not answered, with "you
+  put it forward" and the day instead of "you raised it". Help "What's new"
+  line.
+- Decided (Claude): no new access. Every engineer who can open the issue
+  could already read the reason in History; the box only moves it up for
+  those it is meant for. Another trade still finds it in History. The home
+  lists only the one who put the fix forward, not the whole trade, so a
+  trade's home does not fill with others' issues; the same trade sees it on
+  the issue and first under Issues "Yours" (which already carried it).
+- Verified: typecheck, `npm test` (146 + 560, one new unit test), build. New
+  `scripts/verify-sent-back-reason.mjs` (22 checks): Pat at 1440 dark and
+  390 light (the reason above Put forward on the first screen, the home row,
+  4 taps to put it forward again, then box and row go); Lee (same trade, not
+  involved) sees the box but no home row; Pete (another trade) sees no box;
+  Sam as before; a fix waiting on the office is not on Pat's home; axe on the
+  box; no sideways scroll; no page errors. Related checks: see the PR.
+  Screens: project files `ui-review/sent-back-reason/` (before/, after/).
+- Not verified: a real phone.
+
 ## 2026-10-22 — What the office asked, when a sent-back fix comes in again
 
 - Why: a walk at 390px on main 172c277 with Sam, whose socket fix the office

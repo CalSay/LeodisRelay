@@ -4,8 +4,8 @@ import type { OfficeWord } from '@/lib/cameBack';
 import { dayShort } from '@/lib/dates';
 
 /**
- * What someone else last wrote on a record the engineer raised, at the top of
- * its page rather than folded in the history: who, when, and their words. A
+ * What someone else last wrote on a record the engineer raised (or an issue
+ * that is theirs to see to), at the top of its page rather than folded in the history: who, when, and their words. A
  * note longer than three lines opens on those, with "Show all of it", so the
  * buttons under it stay on the first screen of a phone.
  */

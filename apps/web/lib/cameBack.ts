@@ -2,7 +2,8 @@ import type { Issue, ReportSummary, Variation } from './types';
 
 /**
  * What the engineer home needs for "Came back from the office": the latest
- * issues and variations the engineer raised on a project, and how many of the
+ * issues and variations the engineer raised on a project (and issues they put
+ * forward as fixed that the office sent back), and how many of the
  * project's issues are open. Worked out on the server, so a phone fetches a
  * dozen records rather than every issue and variation on a busy project.
  *
@@ -18,15 +19,24 @@ export interface CameBack { issues: Issue[]; variations: Variation[]; open: numb
 /** The engineer reported it, or raised it from a report. */
 export const raisedIssue = (i: Issue, principalId: string): boolean => i.reportedById === principalId || i.events[0]?.actorId === principalId;
 export const isOpenIssue = (i: Issue): boolean => i.work !== 'closed' && i.confirmation !== 'withdrawn';
+/**
+ * The engineer put a fix forward on it and the office sent it back ("Not
+ * finished"), and they have not added anything since: it waits on them, not
+ * only on whoever raised it (2026-10-22).
+ */
+export const sentBackToYou = (i: Issue, principal: { id: string; name: string }): boolean =>
+  isOpenIssue(i) && i.events.some(e => e.kind === 'closure_submitted' && (e.actorId ? e.actorId === principal.id : e.actor === principal.name)) && issueReopened(i.events, principal);
+/** An issue for the engineer's "Came back from the office": they raised it, or the office sent back their fix. */
+export const cameBackIssue = (i: Issue, principal: { id: string; name: string }): boolean => raisedIssue(i, principal.id) || sentBackToYou(i, principal);
 
 /** Newest last change first; a stable sort, so records changed at the same moment keep their order. */
 const latest = <T extends { raisedAt: string; events: { at: string }[] }>(rows: T[]): T[] =>
   rows.map(row => ({ row, at: row.events.at(-1)?.at ?? row.raisedAt })).sort((a, b) => b.at.localeCompare(a.at)).slice(0, CAME_BACK_ROWS).map(x => x.row);
 
-export function cameBack(issues: readonly Issue[], variations: readonly Variation[], principalId: string): CameBack {
+export function cameBack(issues: readonly Issue[], variations: readonly Variation[], principal: { id: string; name: string }): CameBack {
   return {
-    issues: latest(issues.filter(i => raisedIssue(i, principalId))),
-    variations: latest(variations.filter(v => v.raisedById === principalId)),
+    issues: latest(issues.filter(i => cameBackIssue(i, principal))),
+    variations: latest(variations.filter(v => v.raisedById === principal.id)),
     open: issues.filter(isOpenIssue).length,
   };
 }
@@ -153,7 +163,7 @@ export function cameBackElsewhere(
 ): CameBackElsewhere {
   const there = (r: { projectId: string }) => sites.has(r.projectId);
   return {
-    issues: latest(records.issues.filter(i => there(i) && raisedIssue(i, principal.id) && (i.confirmation === 'disputed' || issueReopened(i.events, principal) || !!issueWord(i.events, principal)))),
+    issues: latest(records.issues.filter(i => there(i) && cameBackIssue(i, principal) && (i.confirmation === 'disputed' || issueReopened(i.events, principal) || !!issueWord(i.events, principal)))),
     variations: latest(records.variations.filter(v => there(v) && v.raisedById === principal.id && !!variationWord(v.events, principal))),
     reports: records.reports.filter(({ report: r, corrected }) => there(r) && r.state === 'submitted' && r.authorId === principal.id && ((r.review === 'returned' && !corrected) || !!reportWord(r, corrected)))
       .map(({ report }) => report).sort((a, b) => (b.serverAcknowledgedAt ?? '').localeCompare(a.serverAcknowledgedAt ?? '')).slice(0, CAME_BACK_ROWS),

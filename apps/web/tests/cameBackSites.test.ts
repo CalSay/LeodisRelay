@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CAME_BACK_ROWS, cameBackElsewhere, cameBackRows } from '../lib/cameBack';
+import { CAME_BACK_ROWS, cameBack, cameBackElsewhere, cameBackRows, sentBackToYou } from '../lib/cameBack';
 import type { Issue, ReportSummary, Variation } from '../lib/types';
 
 const sam = { id: 'entra:sam', name: 'Sam Sparks' };
@@ -54,4 +54,24 @@ test('rows: the current site first, then other sites, no more than before', () =
   assert.equal(keys(cameBackRows([], ['t1', 't2', 't3', 't4', 't5', 't6', 't7'].map(k => row(k, true)))), 't1 t2 t3 t4 t5 t6');
   assert.equal(keys(cameBackRows(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7'].map(k => row(k)), [])), 'h1 h2 h3 h4 h5 h6');
   for (let h = 0; h < 9; h++) for (let t = 0; t < 9; t++) assert.ok(cameBackRows(Array.from({ length: h }, () => row('h')), Array.from({ length: t }, () => row('t', true))).length === Math.min(CAME_BACK_ROWS, h + t));
+});
+
+test('a fix the engineer put forward and the office sent back comes back to them, not only to whoever raised it', () => {
+  const pat = { id: 'entra:pat', name: 'Pat Wire' };
+  const putForward = ev('closure_submitted', 'Pat Wire', pat.id, '2026-10-21T10:00:00Z', 'New plate fitted');
+  const notFinished = ev('reopened', 'Olive Office', 'entra:olive', '2026-10-21T11:00:00Z', 'Back box still loose');
+  const sentBack = issue({ work: 'in_progress', events: [raised(), putForward, notFinished] as Issue['events'] });
+  const waiting = issue({ work: 'awaiting_verification', events: [raised(), putForward] as Issue['events'] });
+  const answered = issue({ work: 'awaiting_verification', events: [raised(), putForward, notFinished, ev('closure_submitted', 'Pat Wire', pat.id, '2026-10-21T12:00:00Z')] as Issue['events'] });
+  // Recorded before ids: told apart by name.
+  const byName = issue({ work: 'in_progress', events: [raised(), { ...putForward, actorId: undefined }, notFinished] as Issue['events'] });
+  const someoneElsesFix = issue({ work: 'in_progress', events: [raised(), ev('closure_submitted', 'Lee Live', 'entra:lee', '2026-10-21T10:00:00Z'), notFinished] as Issue['events'] });
+  const withdrawn = issue({ confirmation: 'withdrawn', events: sentBack.events });
+  const all = [sentBack, waiting, answered, byName, someoneElsesFix, withdrawn];
+  assert.deepEqual(all.filter(i => sentBackToYou(i, pat)).map(i => i.id), [sentBack.id, byName.id]);
+  assert.deepEqual(cameBack(all, [], pat).issues.map(i => i.id).sort(), [sentBack.id, byName.id].sort());
+  assert.deepEqual(cameBackElsewhere({ issues: all, variations: [], reports: [] }, pat, sites).issues.map(i => i.id).sort(), [sentBack.id, byName.id].sort());
+  // Sam raised them all: as before.
+  assert.equal(cameBack(all, [], sam).issues.length, all.length);
+  assert.equal(sentBackToYou(sentBack, sam), false);
 });

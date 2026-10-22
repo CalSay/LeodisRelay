@@ -20,7 +20,7 @@ import { isOverdueIssue } from '@/lib/officeActions';
 import { failure } from "@/lib/failure";
 import { issueWord, raisedIssue } from "@/lib/cameBack";
 import { OfficeWordBox } from "@/components/OfficeWordBox";
-import { nextYourIssue } from "@/lib/yourIssues";
+import { isYours, nextYourIssue } from "@/lib/yourIssues";
 
 /**
  * One issue, across every visit that touched it.
@@ -301,8 +301,10 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
     // it, then the photograph and the two buttons, all on the first screen of a
     // phone. The history and the office's detail are folded, not removed.
     const owner = issue.owner.trim();
-    // What the office asked or said last on an issue this engineer raised, while it waits on them: shown, not left in History.
-    const word = principal && raisedIssue(issue, principal.id) ? issueWord(issue.events, principal) : undefined;
+    // What the office asked or said last, while it waits on them: shown, not left in History. For whoever the issue is
+    // theirs to see to, as Issues "Yours": they raised it, it is their trade, or they worked on it (a fix they put
+    // forward and the office sent back, 2026-10-22). Another trade still finds it in History.
+    const word = principal && (raisedIssue(issue, principal.id) || isYours(issue, principal)) ? issueWord(issue.events, principal) : undefined;
     // Opened from another site's home (its "Came back from the office" lists every site): say which site this one is on.
     const elsewhere = new URL(back, 'https://relay.local').searchParams.get('project');
     const otherSite = elsewhere && elsewhere !== issue.projectId ? project?.projectName : undefined;
