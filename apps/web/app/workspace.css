@@ -727,3 +727,39 @@ body:has(.ws){overflow:hidden auto}
   .ws .cols[data-depth="1"] .acts{margin-top:var(--s4);gap:var(--s3)}
 }
 @media (max-width:380px){.ws .whoami{max-width:104px}}
+
+/* ------------------------------------------------- project sheet (Release 1, O2)
+   A project's sheet, like the overview, sets its parts on the sunken ground as
+   their own cards: the title, where it stands (figures and issue bar as one
+   block), Latest from site, the project's pages and its details, each under a
+   heading with a clear edge (Cal, 21 Oct 12:59). */
+.ws .cols[data-depth="2"] .col-main>.colpad{padding:var(--s5)}
+.ws .cols[data-depth="2"] .sheet{background:none;border:0;padding:0}
+.ws .project-title{align-items:center;padding:0 0 var(--s4);border:0;border-bottom:1px solid var(--edge);background:none}
+.ws .project-title h3{margin:0 0 var(--s1);font-size:22px;line-height:1.25}
+.ws .project-title .actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:var(--s2)}
+.ws .project-title .actions .btn-q{background:var(--panel)}
+.ws .sheet-standing{margin-top:var(--s5)}
+.ws .sheet-standing>.tb{margin:0;border-color:var(--line-2)}
+.ws .sheet-bar{padding:var(--s3) var(--s4);border:1px solid var(--line-2);border-top:0;background:var(--panel)}
+.ws .cols[data-depth="2"] .sheet .sec-h{border-top-color:var(--line-2);border-bottom-color:var(--line-2);margin-top:var(--s6)}
+.ws .cols[data-depth="2"] .from-site-visit{border-color:var(--line-2)}
+.ws .sheet-drafts{margin:var(--s3) 0 0}
+.ws .cols[data-depth="2"] .sheet .sheet-links{margin-top:0;padding:var(--s4);border-color:var(--line-2)}
+/* The project manager's email is the longest line, so its column is the widest. */
+.ws .sheet-details{margin-top:0;border-color:var(--line-2);grid-template-columns:1.4fr 1fr 1fr 1.2fr}
+/* The register's heading wraps evenly instead of leaving the last word alone. */
+.ws .cols[data-depth="2"]>.col:nth-child(2)>.col-head :is(h2,h4){text-wrap:balance}
+
+@media (max-width:1179px){
+  .ws .cols[data-depth="2"] .col-main>.colpad{padding:var(--s4)}
+}
+@media (max-width:700px){
+  /* A phone shows the register in place of the sheet: the project's name heads it in plain words. */
+  .ws .register-name{margin:var(--s2) 0 var(--s3);font-size:20px;font-weight:500;line-height:1.25;letter-spacing:-.015em;color:var(--text)}
+  .ws .register-name .rowsub{display:block;margin-top:2px;font-size:13px;font-weight:400;letter-spacing:0}
+  /* "And 2 more in the report" keeps a 44px target (padding cancelled by margin) without pushing the sentence after it onto lines of its own. */
+  .ws .register-standing .from-site-more{display:inline-block;min-height:0;padding:14px 0;margin:-14px 0}
+  /* The name below says which project this is, so the column band's "Register · name" is kept for screen readers only. */
+  .ws .cols[data-depth="2"]>.col:has(>.register-standing)>.col-head :is(h2,h4){position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+}

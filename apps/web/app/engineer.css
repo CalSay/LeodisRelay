@@ -575,3 +575,23 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-card-foot .btn-sm,.eng-card .head .btn-sm{min-height:48px;}
 /* Speed (2026-10-22): past the first 30 cards (EngineerIssueList FIRST_CARDS), the browser lays out and paints only the cards near the screen. */
 .eng-issue-list>.eng-issue-card:nth-child(n+31){content-visibility:auto;contain-intrinsic-size:auto 140px;}
+
+/* App bar (layout.tsx), on every page that has it. Sign out and the theme sit
+   together as two matching buttons, apart from the page links. On a phone or a
+   small laptop they stay beside the brand and the links get a grid of
+   their own below, instead of wrapping into three or four ragged rows. Sign
+   out names nobody, so it never crowds the links (the name is in its tooltip). */
+.appbar .nav{margin-left:auto;}
+@media (min-width:1024px){.appbar .nav{flex-wrap:nowrap;}.appbar .nav a{padding:8px 10px;white-space:nowrap;}}
+.appbar-tools{display:flex;align-items:center;gap:8px;flex:none;}
+.appbar-tools form{margin:0;}
+.appbar-tools .themebtn{margin-left:0;}
+.appbar-tools .whoami{font:13px var(--sans);letter-spacing:0;color:var(--text-2);border-color:var(--line);min-height:32px;}
+@media (max-width:1023px){
+  .appbar .appbar-inner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;}
+  .appbar-tools{grid-column:2;grid-row:1;}
+  .appbar .nav{grid-column:1/-1;grid-row:2;width:auto;margin:0 calc(-1 * var(--s4));padding:4px 8px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:2px;}
+  .appbar .nav a{display:flex;align-items:center;justify-content:center;text-align:center;min-height:48px;padding:6px 4px;line-height:1.3;}
+  .appbar-tools .whoami,.appbar-tools .themebtn{min-height:48px;}
+  body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,body:has(.eng-page) .appbar .nav,body:has(.eng-chrome) .appbar .nav{display:none;}
+}

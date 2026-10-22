@@ -120,15 +120,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {principal && canManage(principal) && <Link href="/office">Office</Link>}
               {principal && isAdmin(principal) && <Link href="/admin">Admin</Link>}
               {principal && <Link href="/help">Help</Link>}
+            </nav>
+            {/* Not navigation: kept beside the brand on a phone, so the links get a row of their own. */}
+            <div className="appbar-tools">
               {principal && (
-                <form action="/api/auth/signout" method="POST" style={{ display: "inline" }}>
-                  <button type="submit" className="whoami" title="Sign out">
-                    {principal.role==='Engineer'?'Sign out':`${principal.name} · ${principal.role} · Sign out`}
+                <form action="/api/auth/signout" method="POST">
+                  <button type="submit" className="whoami" title={principal.role==='Engineer'?'Sign out':`${principal.name}, ${principal.role}. Sign out`}>
+                    Sign out
                   </button>
                 </form>
               )}
               <ThemeToggle />
-            </nav>
+            </div>
           </div>
         </header>
 
