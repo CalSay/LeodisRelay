@@ -24,6 +24,49 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   simpler-issue-page (76), sent-back-reason (22).
 - Not verified: a real phone.
 
+## 2026-10-22 — Month summary: figures that say what they count
+
+- Why: the coordinator asked for every figure on the Weekly summary's Month
+  choice (and its PDF) to be checked against counts taken straight from the
+  stored records, on the busy example data, for a past month and this one
+  (Tetley Hall, September 2026 and 1 to 22 October 2026, main 460e2b5). Every
+  figure matched: days on site (22, 16), site reports (61, 42), issues raised
+  (89, 66) and closed (71, 29), variations raised (19, 14) and instructed
+  (18, 9), each week row, open (354, 390), past target (196, 222) and fixed,
+  to check (110, 119) at the month's end. Two things read wrongly. The line
+  under Site reports counted update cards ("42 · 89 progress updates"), bigger
+  than the figure above it, and September's 61 held a first fix and a
+  handover inspection without saying so. This month showed "Mon 26 Oct to
+  Sat 31 Oct" as a row of noughts, which reads as a week nobody was on site,
+  and this week's row ran to Sunday on a Thursday. Not a `docs/tasks.json`
+  task, so no status changed. Within Cal's 21 Oct direction (the office's view
+  of progress clearer).
+- Changed (`lib/monthSummary.ts`, `MonthSheet.tsx`): `reportKinds` counts the
+  month's site reports by type (site updates and the non-safety inspections),
+  adding up to the figure; the line reads "59 site updates, 1 handover
+  inspection, 1 first fix inspection", or "all site updates". While the month
+  is going a week still to come has no row and this week's row ends today with
+  "so far"; the note under the table says weeks still to come are not shown.
+  A month that is over is unchanged. Help "What's new" line.
+- Decided (Claude): if anything in a later week or later this week is dated
+  after today (a visit date may be a day ahead), that week keeps its row and
+  its full end, so the rows always add up to the month. The busy seed has two
+  variation instructions dated 24 and 25 Oct (made five days after raising),
+  so on it this week's row stays "to Sun 25 Oct"; the browser check's own
+  data has none and shows "so far". Withdrawn issues stay counted under
+  Issues raised (1 in September, 2 in October), as the Weekly summary counts
+  them and tags them Withdrawn in the list; left alone.
+- Verified: typecheck, `npm test` (146 + 583; two new unit tests: rows this
+  month with and without something dated ahead, on a Monday and in a month
+  that is over; the Site reports line by type adding up, safety left out).
+  `verify-month-summary` (79, now also: no row after today, this week ends
+  today with "so far", the note, "all site updates" on last month),
+  `verify-month-print`, `verify-weekly-summary`, `verify-weekly-phone`,
+  `verify-help` passed. The busy-seed walk again after the change: the same
+  figures, the new line and no row for 26 to 31 Oct, 7 PDF pages as before.
+  Screens and PDFs in /mnt/project-files/ui-review/month-figures/.
+- Not verified: a real phone or printer.
+
 ## 2026-10-22 — Office issue sheet: everything open at the same place
 
 - Why: the coordinator asked for a walk of an office person at 1440px on the
