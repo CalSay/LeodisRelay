@@ -3,7 +3,7 @@ import type { OfficeTeam } from '@/lib/api';
 import type { Dialog } from './Dialogs';
 import type { ProjectStats, Snapshot } from './model';
 
-export interface Route { tab: string; a: string | null; b: string | null; c: string | null }
+export interface Route { tab: string; a: string | null; b: string | null; c: string | null; d?: string | null }
 
 /** What every office screen is handed. Data, navigation, and the dialogs. */
 export interface Ctx {

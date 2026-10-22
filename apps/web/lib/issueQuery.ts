@@ -113,11 +113,38 @@ export function verificationOf(i: Issue): Verification | undefined {
 }
 
 const words = (value: string): string[] => value.toLowerCase().split(/\s+/).filter(Boolean);
-/** Every word of the search appears in the field, so "riser 2" finds "Level 3, Riser 2". */
+/**
+ * Every word of the search appears in the field, so "riser 2" finds "Level 3, Riser 2".
+ * A number has to be a whole number in the field, so "Flat 12" does not find
+ * "Flat 120" or "Flat 212", nor "Level 1" every "Level 10" (2026-10-22).
+ */
 export function matchesWords(field: string, search: string | undefined): boolean {
   if (!search?.trim()) return true;
   const haystack = words(field).join(' ');
-  return words(search).every(w => haystack.includes(w));
+  const numbers = new Set(haystack.match(/\d+/g) ?? []);
+  return words(search).every(w => /^\d+$/.test(w) ? numbers.has(w) : haystack.includes(w));
+}
+
+/**
+ * The open issues on one project at a place, by the register's own rules, so
+ * the count on an issue's sheet is the number the register opens on
+ * (2026-10-22). The place is what the engineer typed; there is no list of
+ * places (EXP-4).
+ */
+export function openAtPlace(all: readonly Issue[], projectId: string, place: string): Issue[] {
+  if (!place.trim()) return [];
+  return all.filter(i => i.projectId === projectId && isActiveIssue(i) && matchesWords(i.location, place));
+}
+
+/** The office register open on one project and place: #/issues/show/open/<project>/<place>. */
+export function placeRegisterHash(projectId: string, place: string): string {
+  return `#/issues/show/open/${encodeURIComponent(projectId)}/${encodeURIComponent(place.trim().replace(/\s+/g, ' '))}`;
+}
+
+/** The place from the last part of that link; empty when there is none or it cannot be read. */
+export function placeFromRoute(part: string | null | undefined): string {
+  if (!part) return '';
+  try { return decodeURIComponent(part).trim(); } catch { return ''; }
 }
 
 /** The trade the issue is for: the affected trade, or the reporter's where none was named. */
