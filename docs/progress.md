@@ -56,9 +56,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   office-progress, office-words, issue-figures, accessibility, help,
   role-access, search, engineer-layout. `npm test` once failed in
   `offlineStart.test` ("a report started with signal still takes today")
-  between midnight London time and midnight UTC; it passed after 00:00 UTC
-  and is not touched here (found, not fixed: a London/UTC day mix-up in the
-  test or the code).
+  between midnight London time and midnight UTC; #133 fixed that test, and
+  `npm test` passes after bringing it in.
 - Found, not fixed: the Leodis Compliance office (`/compliance`, screens over
   invented sample data, not in the first release) is still held at 1240px and
   has no phone layout; it scrolls sideways below 1240px. The other walk notes
