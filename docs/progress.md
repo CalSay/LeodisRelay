@@ -4,6 +4,40 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Weekly summary: an earlier week's open issues as they stood
+
+- Why: the coordinator asked for a walk of an office person at 1440 on the
+  busy example data telling a client "how did this project go this week?"
+  from the Weekly summary, project page and PDF. Wrong figure found: the
+  summary's "Open now" was always today's, on every week. Tetley Hall's week
+  of 1 June printed today said 390 open, 222 past target; at the end of that
+  week it was 260 and 138. The Month summary already reads a past month at its
+  end. The open figure was also only at the foot of the Issues section, below
+  every report and issue row. Not a `docs/tasks.json` task, so no status
+  changed. Within Cal's 21 Oct direction (the office's view of progress
+  clearer).
+- Changed: `periodSummary` (lib/weeklySummary.ts) gives `open` (was
+  `openNow`) with `asOf`: the period's last day once it is over, else today.
+  Today it is still `issueFigures`, so this week matches the project sheet;
+  otherwise `isOpenOn`/`isLateOn`/`isToCheckOn` (lib/issueTrend.ts), the rules
+  Issues over time and the Month use. The page says "Open at the end of the
+  week (Sun 18 Oct)" on a week that is over, "Open now" on this week; the
+  footnote says which. The Issues raised figure adds "· 390 open now" or
+  "· 260 open on Sun 7 Jun" on desks and on paper. Help "What's new" line.
+- Decided (Claude): on a phone the figure's open part is hidden (the open line
+  under Issues stays), because the extra line pushed the second row of figures
+  16px below the first screen that #150 keeps them on. On a week that is over,
+  "fixed and waiting to be checked" is words, not the register link, since the
+  register shows today's list. weeklySummary.ts now imports issueTrend.ts,
+  which imports it back; both only call each other inside functions.
+- Verified: `npm run typecheck`, `npm test` (146 + 573, new test for a past
+  week's standing), build. Browser: verify-weekly-summary (46, new checks for
+  last week at 390 and 1440, print, link vs words), weekly-phone (263),
+  issue-figures (48), office-links (65), check-fixes (70),
+  office-weekly-review (53), issue-trend (29), help (36), busy-home (35),
+  role-access (95). Busy data figures looked at in a desktop browser
+  (project files `ui-review/weekly-week-end/`). Not verified: a real phone or
+  printer.
 ## 2026-10-22 — Site updates: the same trade's previous visit
 
 - Why: the coordinator asked for a walk of an office person at 1440px opening

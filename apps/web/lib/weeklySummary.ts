@@ -7,6 +7,7 @@ import type { Issue, Report, Variation } from './types';
 import { checkCounts, reportName, reportTypeOf } from './reportTypes';
 import { ISSUE_WORK as WORK } from './status';
 import { issueFigures } from './officeActions';
+import { isLateOn, isOpenOn, isToCheckOn } from './issueTrend';
 import type { ToolboxTalk } from './toolboxTalks';
 import { kindLabel, type Permit } from './permits';
 import { conditionShort, type Delivery } from './deliveries';
@@ -90,8 +91,12 @@ export interface WeeklySummary {
   issuesRaised: WeekIssue[];
   issuesFixed: WeekIssue[];
   issuesClosed: WeekIssue[];
-  /** As things stand when the page is opened, not as they stood at the end of the week. */
-  openNow: { total: number; pastTarget: number; toCheck: number };
+  /**
+   * Issues open, past target and fixed waiting to be checked at the end of
+   * `asOf`: the period's last day once it is over, or today while it is going.
+   * So a past week printed today shows how that week ended, not today's list.
+   */
+  open: { asOf: string; total: number; pastTarget: number; toCheck: number };
   variationsRaised: WeekVariation[];
   variationsInstructed: WeekVariation[];
   /** Toolbox talks given, permits issued or closed, and deliveries taken in this week. Withdrawn ones were entered by mistake and are left out. */
@@ -170,9 +175,14 @@ export function periodSummary(sources: WeekSources, principal: Principal, projec
   const issuesFixed = issues.flatMap(i => { const at = lastIn(i, 'closure_submitted'); return at ? [weekIssue(i, at)] : []; });
   // Closed this week and still closed: one that was verified and then reopened is not shown as closed.
   const issuesClosed = issues.flatMap(i => { const at = lastIn(i, 'verified'); return at && i.work === 'closed' ? [weekIssue(i, at)] : []; });
-  // The office's figures (lib/officeActions.ts), so this agrees with the project sheet.
-  const figures = issueFigures(issues, today);
-  const openNow = { total: figures.open, pastTarget: figures.overdue, toCheck: figures.toCheck };
+  // Today: the office's figures (lib/officeActions.ts), so this agrees with the project sheet.
+  // A period that is over: as the issues stood at its end, read as Issues over time and the Month read them.
+  const asOf = end < today ? end : today;
+  const figures = asOf === today ? issueFigures(issues, today) : {
+    open: issues.filter(i => isOpenOn(i, asOf)).length,
+    overdue: issues.filter(i => isLateOn(i, asOf, today)).length,
+    toCheck: issues.filter(i => isToCheckOn(i, asOf, today)).length };
+  const open = { asOf, total: figures.open, pastTarget: figures.overdue, toCheck: figures.toCheck };
 
   const variations = sources.variations.filter(v => v.projectId === projectId);
   const variationsRaised = variations.filter(v => inWeek(londonDay(v.raisedAt))).map(v => weekVariation(v, v.raisedAt));
@@ -205,7 +215,7 @@ export function periodSummary(sources: WeekSources, principal: Principal, projec
     projectId, start: monday, end, current: inWeek(today),
     reports, engineers: [...new Set(reports.map(r => r.author))].sort((a, b) => a.localeCompare(b)),
     siteDays: [...new Set(reports.map(r => r.visitDate))].sort(), visits: countVisits(sent.filter(r => r.visitDate <= today)), kinds,
-    issuesRaised: byTime(issuesRaised), issuesFixed: byTime(issuesFixed), issuesClosed: byTime(issuesClosed), openNow,
+    issuesRaised: byTime(issuesRaised), issuesFixed: byTime(issuesFixed), issuesClosed: byTime(issuesClosed), open,
     variationsRaised: byTime(variationsRaised), variationsInstructed: byTime(variationsInstructed),
     site: { talks: byDay(talks), permits: byDay(permits), deliveries: byDay(deliveries) },
   };
