@@ -1,7 +1,7 @@
 /* Issues over time: one project's issues week by week. The bar colours are
-   the alert status colour for "past target", the ok colour for "fixed, to
-   check" and a neutral for the rest of "open", with a legend, a readout and a
-   table, so colour is never the only cue. */
+   the alert status colour for "past target", the caution colour for "fixed, to
+   check" (as on the project sheet's bar) and a neutral for the rest of "open",
+   with a legend, a readout and a table, so colour is never the only cue. */
 .it-page{max-width:900px;--it-open:#878881;}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .it-page{--it-open:#8a9299;}}
 :root[data-theme="dark"] .it-page{--it-open:#8a9299;}
@@ -27,7 +27,7 @@
 .it-key{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
 .it-key-open{background:var(--it-open);}
 .it-key-late{background:var(--alert);}
-.it-key-check{background:var(--ok);}
+.it-key-check{background:var(--caution);}
 .it-readout{margin:10px 0 8px;font-size:14px;min-height:2.9em;}
 .it-plot{position:relative;padding-top:18px;}
 .it-top{position:absolute;top:0;left:0;font:500 11px var(--mono);color:var(--text-3);}
@@ -40,7 +40,7 @@
 .it-stack>span:first-child{border-radius:4px 4px 0 0;}
 .it-open{background:var(--it-open);}
 .it-late{background:var(--alert);}
-.it-check{background:var(--ok);}
+.it-check{background:var(--caution);}
 .it-value{position:absolute;top:-17px;left:-12px;right:-12px;text-align:center;font:600 12px var(--mono);color:var(--text);pointer-events:none;}
 .it-axis{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:2px;margin-top:4px;font:500 10.5px var(--mono);color:var(--text-3);white-space:nowrap;}
 .it-table-wrap{overflow-x:auto;}

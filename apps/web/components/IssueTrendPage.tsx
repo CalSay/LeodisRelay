@@ -59,7 +59,7 @@ function Chart({ weeks }: { weeks: TrendWeek[] }) {
       <span className="it-top" aria-hidden="true">{top}</span>
       <div className="it-bars" onMouseLeave={() => setHovered(null)}>
         {weeks.map((week, k) => {
-          const onTime = week.open - week.late - week.toCheck;
+          const onTime = Math.max(0, week.open - week.late - week.toCheck);
           return <button key={week.monday} type="button" className={`it-col ${k === shown ? 'it-col-on' : ''}`}
             aria-pressed={k === picked} aria-label={weekWords(week, k === last)}
             onClick={() => setPicked(k)} onFocus={() => setPicked(k)} onMouseEnter={() => setHovered(k)} onMouseLeave={() => setHovered(null)}>

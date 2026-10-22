@@ -21,7 +21,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `isToCheckOn`, never past target as well) and `toCheckNow`.
   `IssueTrendPage`: the headline adds "119 of them are fixed and waiting for the
   office to check."; Open now says "119 fixed, to check"; each bar has a
-  fixed, to check part (ok colour) between past target and "Open, not late";
+  fixed, to check part (caution colour, as on the project sheet's bar) between past target and "Open, not late";
   the readout and a new table column carry it; the footer says what it means.
   On a phone the table's weeks read "19 Oct" on one line and each legend label
   stays with its colour. Help "What's new" line.
@@ -29,7 +29,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (#128) rather than a new term; the headline's direction (fewer/more) is
   unchanged, because a fix only shortens the list once the office checks it.
 - Verified: typecheck, `npm test` (146 + 562), build. New
-  `scripts/verify-issue-trend-busy.mjs` (33 checks; busy seed, 1440px light and
+  `scripts/verify-issue-trend-busy.mjs` (36 checks; busy seed, 1440px light and
   dark, 390px light): Open now, past target and fixed, to check equal the
   records and the project sheet; the headline, this week's row, bar and readout
   carry them; every week's parts fit inside its open; loads within 5 s; no
@@ -40,6 +40,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   timings within budget). Screens: project files
   `ui-review/issues-over-time/` (before, after).
 - Not verified: a real phone or laptop; a printer.
+- Fresh review found: the green first used for fixed, to check disagreed with
+  the project sheet's amber (now amber); the busy check did not prove the
+  table fits inside its box at 390px (added); a bar part could go negative
+  on bad data (clamped).
 
 ## 2026-10-22 — A visit is one person on site on one day
 

@@ -75,6 +75,7 @@ try {
     const parted=await page.locator('.it-legend > span').evaluateAll(els=>els.filter(e=>e.getClientRects().length>1||e.getBoundingClientRect().height>24).map(e=>e.textContent));
     check(!parted.length,`${label}: each legend label stays with its colour (${parted})`);
     check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),`${label}: nothing scrolls sideways`);
+    check(await page.locator('.it-table-wrap').evaluate(e=>e.scrollWidth<=e.clientWidth+1),`${label}: the week-by-week table fits without scrolling inside its box`);
     if(width===390){
       const tall=await page.locator('.it-table tbody th').evaluateAll(ths=>ths.slice(1).filter(th=>th.getBoundingClientRect().height>40).length);
       check(!tall,`${label}: week names fit on one line (${tall} wrap)`);
