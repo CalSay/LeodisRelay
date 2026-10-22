@@ -24,6 +24,17 @@ export function reportReference(id: string): string | undefined {
 }
 export function reportPage(projectId?: string, offset = 0) { return pageRecords<ReportSummary>('reports', projectId, offset); }
 
+/**
+ * The author's newest sent reports on every project, each with whether a
+ * correction of it has been started, for "Came back from the office" on
+ * their other sites (lib/cameBack.ts). An answer on an older report than these is not looked for.
+ */
+export function ownSentReports(authorId: string, limit = 50): { report: ReportSummary; corrected: boolean }[] {
+  const rows = database().prepare("SELECT summary FROM records WHERE kind='reports' AND state='submitted' AND json_extract(summary,'$.authorId')=? ORDER BY updated DESC,id DESC LIMIT ?").all(authorId, limit);
+  const corrected = new Set(database().prepare("SELECT json_extract(summary,'$.corrects') AS corrects FROM records WHERE kind='reports' AND json_extract(summary,'$.corrects') IS NOT NULL").all().map(row => row.corrects as string));
+  return rows.map(row => { const report = JSON.parse(row.summary as string) as ReportSummary; return { report, corrected: corrected.has(report.id) }; });
+}
+
 /** Filter before pagination: another engineer's draft never reaches the response. */
 export function reportsFor(principal: Principal, projectId?: string, offset = 0, limit = 50) {
   const where = ["kind='reports'"];

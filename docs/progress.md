@@ -48,6 +48,54 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the click). It now waits up to 3 s for the bar to hide and to come back.
 - Not verified: real phones (including a phone's own toolbar and keyboard),
   real weak signal, screen readers.
+## 2026-10-22 — The office's questions from other sites on the engineer's home
+
+- Why: a two-site walk (`ui-review/two-site-day/walk-notes.md`, item 2) found
+  the office's question on a Kirkstall Gate fix shown nowhere while the
+  engineer was at Tetley Hall: "Came back from the office" read one project.
+  Asked for by the coordinator; not a `docs/tasks.json` task, so no status
+  changed. Decided without asking Cal (his autonomy message). Item 5 of the
+  walk (the number counting the engineer's own records) was fixed by #135;
+  this builds on its `office` flag.
+- Changed: `/api/came-back?elsewhere=1&projectId=` returns, from every other
+  site the engineer reports on, only what waits on them: an issue they raised
+  that the office wrote on, sent back ("Not finished") or disputed; a
+  variation the office wrote on; a sent report returned and not yet corrected,
+  or written on when opened (`cameBackElsewhere` in `lib/cameBack.ts`, reports
+  from `ownSentReports`). Their own new records from other sites are left out,
+  so another site adds only the office's words. The home lists the current
+  site's rows first, then the other sites', each line starting with the site's
+  name. Decided: still six rows at most (`cameBackRows`): other sites keep two
+  places at least and take the engineer's own new records' places beyond
+  that, while the current site always keeps two rows and its own answers.
+  The heading's "N from the office" counts the other sites' rows too.
+  The current site's rows show as soon as they come; the other sites' are
+  added when they arrive, and if they cannot be asked (weak signal) the
+  current site's rows stay. Decided: other sites list only the office's
+  words and send-backs, not an assignment or a price with no note, so a
+  second site never adds rows with nothing to read.
+- Opening an issue from another site's home adds a "Site" line above Where,
+  so the engineer knows which site it is on (variations and reports already
+  name their project). Opened from its own site's home, nothing changes.
+  Back returns to the site they were on.
+- Help: one "What's new" line for engineers.
+- Checks: typecheck; `npm test` (146 + 543); build;
+  `scripts/verify-other-sites-came-back.mjs` (new, 32 checks, light and dark
+  at 390: the Kirkstall question listed at Tetley after Tetley's rows, named,
+  with the office's words; the engineer's own Kirkstall report and defect not
+  listed; "1 from the office"; the tap opens it ready to update with its
+  site; at Kirkstall it shows without a site name and nothing from Tetley;
+  with the other sites' answer lost or 4 s slow, Tetley's rows show first; 48px rows; no
+  sideways scroll; no page errors). Screens in
+  `ui-review/office-questions-sites/`. Also passed: came-back-first,
+  seen-by-office, office-words, came-back-to-update, home-and-sheet,
+  issues-yours, engineer-layout, role-access, same-place-issues,
+  simpler-home, engineer-day. Fresh review: no requirement gaps; fixed its
+  points (a slow other-sites answer held the current site's rows back; one
+  scan for corrections, not one per report; no raw project id on the Site line).
+- Not verified: a real phone, a screen reader, a live tenant.
+- Next: other walk findings stay in the notes (receipt with no way back to
+  Site; Send bar over "What sending does").
 
 ## 2026-10-22 — Defect cards ask only about issues in the same place
 
