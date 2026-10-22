@@ -22,15 +22,25 @@ export const isOpenIssue = (i: Issue): boolean => i.work !== 'closed' && i.confi
 /**
  * The office's "Not finished" that still stands for someone other than the
  * raiser, read back from the newest event: their own event answers it, and a
- * fix put forward again (by anyone), a check or a reassignment moves past it.
- * Other site people's updates do not. Undefined when there is none.
+ * fix put forward again (by anyone), a check or handing it to another company
+ * moves past it. Other site people's updates, and a new target date for the
+ * same company, do not. Only a reopen of a fix put forward counts, not of an
+ * issue the office had checked and closed. Undefined when there is none.
  */
-export function sentBackEvent<E extends Written>(events: readonly E[], principal: { id: string; name: string }): E | undefined {
+type Assigned = Written & { to?: string };
+export function sentBackEvent<E extends Assigned>(events: readonly E[], principal: { id: string; name: string }): E | undefined {
+  const handedTo = new Set<string>();
   for (let i = events.length - 1; i >= 0; i--) {
     const e = events[i]!;
     if (e.actorId ? e.actorId === principal.id : e.actor === principal.name) return undefined;
-    if (e.kind === 'reopened') return e;
-    if (e.kind === 'closure_submitted' || e.kind === 'verified' || e.kind === 'assigned') return undefined;
+    if (e.kind === 'closure_submitted' || e.kind === 'verified') return undefined;
+    if (e.kind === 'assigned') { handedTo.add(e.to?.trim() ?? ''); continue; }
+    if (e.kind !== 'reopened') continue;
+    // Who it was with when it was sent back, and what came just before: a fix put forward, not a check.
+    const before = events.slice(0, i).reverse();
+    if (before.find(b => b.kind === 'closure_submitted' || b.kind === 'verified')?.kind !== 'closure_submitted') return undefined;
+    const owner = before.find(b => b.kind === 'assigned')?.to?.trim() ?? '';
+    return [...handedTo].every(to => to === owner) ? e : undefined;
   }
   return undefined;
 }

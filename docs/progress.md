@@ -20,7 +20,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (`isYours`: their trade, or worked on it), not only the raiser. For them
   it shows only the "Not finished" reason (`lib/cameBack.ts` `sentBackWord`)
   while it stands: their own event, anyone putting it forward again, a check
-  or a reassignment ends it; other notes stay for the raiser. `sentBackToYou`
+  or handing it to another company ends it (a new target date does not);
+  a reopen of a checked and closed issue is not a send-back; other notes
+  stay for the raiser. Issues "Yours" uses the same rule for someone else's
+  issue (it showed any office note, and kept "Sent back" after someone
+  else put it forward again). `sentBackToYou`
   / `cameBackIssue`: Came back from the office (this site and other sites)
   also lists an issue the engineer put forward that the office sent back,
   with "you put it forward" and the day instead of "you raised it". The
@@ -33,7 +37,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the issue and first under Issues "Yours" (which already carried it).
   A fresh review found the first cut let a stale reason stay after someone
   else put it forward again or it was reassigned, and showed any office note
-  to the same trade; both fixed and unit-tested. Known, not changed: the
+  to the same trade; both fixed. A second review found a new target date
+  cleared it, a reopened closed issue counted, and the Yours list still
+  showed any note; all fixed and unit-tested. Known, not changed: the
   home's server cut to six newest before sorting (as before #162).
 - Verified: typecheck, `npm test` (146 + 560, one new unit test), build. New
   `scripts/verify-sent-back-reason.mjs` (22 checks): Pat at 1440 dark and
@@ -43,7 +49,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Sam as before; a fix waiting on the office is not on Pat's home; axe on the
   box; no sideways scroll; no page errors. Also passed: office-words,
   sent-back-fix, came-back-to-update, busy-projects, engineer-layout,
-  role-access (95 HTTP checks), help, fix-forward-next.
+  role-access (95 HTTP checks), help, fix-forward-next, issues-yours,
+  simpler-issue-list, day-walkthrough.
   Screens: project files `ui-review/sent-back-reason/` (before/, after/).
 - Not verified: a real phone.
 
