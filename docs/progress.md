@@ -4,6 +4,40 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Before handover says how late each snag is
+
+- Why: a walk of an office manager at 1440px on main 993445f (busy seed,
+  Tetley Hall) deciding whether a block nearing handover is ready. The page's
+  figures agree with the office overview (390 open issues, 222 past target,
+  119 to check, 103 variations, 31 done but not instructed). But each late
+  snag said "Past target" and a date with no year: 58 of the 222 had a target
+  last year, so "Past target Tue 21 Oct" was really a year and a day late, and
+  33 read as dates still to come ("Past target Fri 7 Nov" on 22 Oct). Nobody
+  could tell from the page what had sat for a year. Coordinator's ask (walk
+  and one pick); not a `docs/tasks.json` task, so no status changed. Within
+  Cal's 21 Oct direction (the office's view of progress clearer).
+- Changed: `lib/beforeHandover.ts` gives each row `daysLate` (whole days past
+  its target when overdue, otherwise 0). `BeforeHandoverPage.tsx` tags a late
+  snag "349 days past target", the words the office issue sheet uses; future
+  targets and handover inspection dates use `dayShort`, which adds the year
+  when it is not this year. Help "What's new" line.
+- Decided (Claude): days late instead of the date on the tag, because the
+  question at handover is how long it has waited; the date is one tap away on
+  the issue. Figures, grouping and order unchanged.
+- Verified: typecheck, `npm test` (146 + 555, one new unit test for a target
+  across the year end), build. `scripts/verify-before-handover.mjs` (now 33
+  checks) adds a second project with a target 350 days ago, one 400 days
+  ahead, one a day late and an inspection 380 days ago: "350 days past
+  target", "1 day past target", no late tag with a bare date, the year on the
+  next-year target and the old inspection, headline "2 past target". Also
+  passed: accessibility (584), help, role-access. Screens: project files
+  `ui-review/handover-ready/`.
+- Not verified: a real phone or printer.
+- Seen, not changed: the busy seed's handover inspections have actions with
+  no issue raised (the real send always raises one), so the page shows "No
+  actions" beside "1 action" there; a seed gap, not an app fault.
+- Next: none from this walk.
+
 ## 2026-10-22 — A site update says which day it is for
 
 - Why: a walk of an electrician at 390px on main 09bd55c, opening RELAY the

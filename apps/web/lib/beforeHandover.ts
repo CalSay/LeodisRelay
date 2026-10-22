@@ -33,6 +33,8 @@ export interface HandoverIssue {
   targetDate: string;
   /** Past its target date and not yet put forward as fixed. */
   overdue: boolean;
+  /** Whole days past the target date when overdue, otherwise 0, so a snag a year late does not read as one due next month. */
+  daysLate: number;
   disputed: boolean;
   /** As the register reads it; absent when nobody recorded it. */
   trade?: string;
@@ -147,8 +149,10 @@ export function beforeHandover(project: HandoverProject, sources: HandoverSource
     const trade = i.affectedTrade ?? (inspection || ownWork.has(i.raisedByReport) ? i.reporterTrade : undefined);
     const target = /^\d{4}-\d{2}-\d{2}$/.test(i.targetDate) ? i.targetDate : '';
     const fixedBy = i.work === 'awaiting_verification' ? i.closureSubmittedBy?.trim() : undefined;
+    const overdue = isOverdueIssue(i, today);
+    const daysLate = overdue && target ? Math.round((Date.parse(today) - Date.parse(target)) / 86400000) : 0;
     return { id: i.id, reference: i.reference, description: tidy(i.description), location: tidy(i.location), owner: tidy(i.owner),
-      targetDate: target, overdue: isOverdueIssue(i, today), disputed: i.confirmation === 'disputed',
+      targetDate: target, overdue, daysLate, disputed: i.confirmation === 'disputed',
       ...(trade ? { trade } : {}), ...(fixedBy ? { fixedBy } : {}), ...(inspection ? { inspection } : {}) };
   };
   const rows = live.map(row);
