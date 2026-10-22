@@ -32,6 +32,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a real phone, tablet, printer or screen reader; a live tenant.
 - Next: once #142 merges, rerun `verify-undo-remove` and `verify-site-coverage`;
   then main is ready.
+  #159 (Team tab, merged after) was not in this run; its own checks plus
+  team-last-sent, role-access, help, office-desk, month-summary and
+  engineer-layout pass on main with it.
+
 ## 2026-10-22 — The Team tab says who has sent updates this week
 
 - Why: a walk of an office manager at 1440px on main e3138df (busy seed, its
