@@ -8,8 +8,10 @@ import { PhotoImage } from './PhotoImage';
 import { canManage } from '@/lib/auth/access';
 import { mediaId } from '@/lib/media';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
-import { isPhotoDay, matchesPhoto, photoDays, PHOTO_GROUPS, type LibraryPhoto, type PhotoGroup, type PhotoLibrary } from '@/lib/photoLibrary';
+import { isPhotoDay, isPhotoMonth, matchesPhoto, photoDays, photoMonths, PHOTO_GROUPS, type LibraryPhoto, type PhotoGroup, type PhotoLibrary } from '@/lib/photoLibrary';
 import { dayShort } from '@/lib/dates';
+import { londonDay } from '@/lib/weeklySummary';
+import { monthName, monthOf, shiftMonth } from '@/lib/monthSummary';
 import { failure } from '@/lib/failure';
 
 /**
@@ -17,7 +19,8 @@ import { failure } from '@/lib/failure';
  * did it look like before it was boarded?" is one page, not a dozen reports.
  * It reads what is already in RELAY and changes nothing. A Day choice opens
  * one day ("show me Tuesday's photographs") without paging back through
- * every photograph since.
+ * every photograph since; a Month choice opens one calendar month, grouped by
+ * day, the same months the Weekly summary's Month choice uses.
  */
 
 const PAGE = 60;
@@ -29,13 +32,22 @@ const large = (src: string) => mediaId(src) ? `${src}?variant=pdf` : src;
 const recordHref = (p: LibraryPhoto) => `/${p.source.kind === 'report' ? 'reports' : p.source.kind === 'issue' ? 'issues' : 'variations'}/${p.source.id}`;
 const recordWord = { report: 'report', issue: 'issue', variation: 'variation' } as const;
 
-export function PhotoLibraryPage({ initialProject, initialFind, initialShow, initialDay, returnTo }: { initialProject: string; initialFind: string; initialShow: string; initialDay: string; returnTo?: string | undefined }) {
+export function PhotoLibraryPage({ initialProject, initialFind, initialShow, initialDay, initialMonth = '', returnTo }: { initialProject: string; initialFind: string; initialShow: string; initialDay: string; initialMonth?: string; returnTo?: string | undefined }) {
   const projects = useProjects();
   const principal = usePrincipal();
   const [projectId, setProjectId] = useState(projects.some(p => p.id === initialProject) ? initialProject : projects.length === 1 ? projects[0]!.id : '');
   const [find, setFind] = useState(initialFind);
   const [show, setShow] = useState<PhotoGroup | ''>(isGroup(initialShow) ? initialShow : '');
-  const [day, setDay] = useState(isPhotoDay(initialDay) ? initialDay : '');
+  const thisMonth = monthOf(undefined, londonDay(new Date()));
+  // A chosen day sits in the chosen month; a link naming both keeps the day. Never a month after this one,
+  // and a day dropped with its month when that month is pulled back to this one.
+  const [[month, day], setChoice] = useState<[string, string]>(() => {
+    const d = isPhotoDay(initialDay) ? initialDay : '';
+    const m = d && isPhotoMonth(initialMonth) ? d.slice(0, 7) : isPhotoMonth(initialMonth) ? initialMonth : '';
+    return m > thisMonth ? [thisMonth, ''] : [m, d];
+  });
+  const setDay = (d: string) => setChoice(([m]) => [m, d]);
+  const setMonth = (m: string) => setChoice(([, d]) => [m, d]);
   const [library, setLibrary] = useState<PhotoLibrary | null>(null);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);
@@ -68,17 +80,24 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ini
   if (projectId) q.set('project', projectId);
   if (find.trim()) q.set('q', find.trim());
   if (show) q.set('show', show);
+  if (month) q.set('month', month);
   if (day) q.set('day', day);
   if (returnTo) q.set('returnTo', returnTo);
   const here = `/photos${q.size ? `?${q}` : ''}`;
   useEffect(() => { window.history.replaceState(window.history.state, '', here); }, [here]);
-  useEffect(() => { setLimit(PAGE); }, [projectId, find, show, day]);
+  useEffect(() => { setLimit(PAGE); }, [projectId, find, show, month, day]);
 
   const all = library?.projectId === projectId ? library.photos : null;
   const matched = useMemo(() => all?.filter(p => matchesPhoto(p, find, show)) ?? [], [all, find, show]);
-  // The Day choices count what the find box and filter leave, so a day reads the same number it opens on.
-  const dayChoices = useMemo(() => photoDays(matched, day), [matched, day]);
-  const shown = useMemo(() => day ? matched.filter(p => p.day === day) : matched, [matched, day]);
+  // The Month and Day choices count what the find box and filter leave, so each reads the same number it opens on.
+  // With a month chosen, the days (and Newer day, Older day) stay inside it.
+  const monthChoices = useMemo(() => photoMonths(matched, month), [matched, month]);
+  const inMonth = useMemo(() => month ? matched.filter(p => p.day.startsWith(`${month}-`)) : matched, [matched, month]);
+  const dayChoices = useMemo(() => photoDays(inMonth, day), [inMonth, day]);
+  const shown = useMemo(() => day ? inMonth.filter(p => p.day === day) : inMonth, [inMonth, day]);
+  const olderMonth = Boolean(month && matched.at(-1) && matched.at(-1)!.day < `${month}-01`);
+  const chooseMonth = (m: string) => { setMonth(m > thisMonth ? thisMonth : m); setDay(''); };
+  const when = day ? ` on ${fmtDay(day)}` : month ? ` in ${monthName(month)}` : '';
   const withPhotos = dayChoices.filter(d => d.count > 0);
   const newerDay = day ? withPhotos.filter(d => d.day > day).at(-1)?.day : undefined;
   const olderDay = day ? withPhotos.find(d => d.day < day)?.day : undefined;
@@ -100,14 +119,18 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ini
   return <main className="eng-page photos-page">
     <Link href={back} className="back">&larr; {backLabel(back)}</Link>
     <div className="eng-heading"><h1>Photographs{project ? ` · ${project.projectName}` : ''}</h1>
-      <p>Every photograph sent from site on this project, newest first. Pick a day, or find a room, a riser or a reference to see how it looked on each visit.</p></div>
+      <p>Every photograph sent from site on this project, newest first. Pick a month or a day, or find a room, a riser or a reference to see how it looked on each visit.</p></div>
     <div className="photos-controls">
-      <label>Project<select value={projectId} onChange={e => { setProjectId(e.target.value); setDay(''); }}>
+      <label>Project<select value={projectId} onChange={e => { setProjectId(e.target.value); setMonth(''); setDay(''); }}>
         <option value="">Choose a project</option>
         {projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} {p.projectName}</option>)}
       </select></label>
+      <label>Month<select value={month} onChange={e => chooseMonth(e.target.value)}>
+        <option value="">Every month</option>
+        {monthChoices.map(m => <option key={m.month} value={m.month}>{monthName(m.month)} · {plural(m.count, 'photograph')}</option>)}
+      </select></label>
       <label>Day<select value={day} onChange={e => setDay(e.target.value)}>
-        <option value="">Every day</option>
+        <option value="">{month ? `Every day in ${monthName(month)}` : 'Every day'}</option>
         {dayChoices.map(d => <option key={d.day} value={d.day}>{fmtDay(d.day)} · {plural(d.count, 'photograph')}</option>)}
       </select></label>
       <label>Find<input type="text" inputMode="search" value={find} onChange={e => setFind(e.target.value)} placeholder="Location, words or reference" enterKeyHint="search" autoComplete="off" /></label>
@@ -122,16 +145,22 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ini
       : !all ? <p role="status">Loading photographs…</p>
       : !all.length ? <div className="eng-panel photos-empty"><h2>No photographs yet</h2><p className="eng-help">Photographs on reports sent to the office, and those added to issues and variations, will appear here.</p></div>
       : <>
-        <p className="photos-count" role="status">{shown.length === all.length ? plural(all.length, 'photograph') : `${shown.length} of ${plural(all.length, 'photograph')}`}{day ? ` on ${fmtDay(day)}` : ''}</p>
+        <p className="photos-count" role="status">{shown.length === all.length ? plural(all.length, 'photograph') : `${shown.length} of ${plural(all.length, 'photograph')}`}{when}</p>
+        {month && !day && <nav className="photos-day-step photos-month-step" aria-label="Move by a month">
+          <button type="button" onClick={() => chooseMonth(shiftMonth(month, -1))} disabled={!olderMonth}>&larr; Previous month</button>
+          <button type="button" onClick={() => chooseMonth(thisMonth)} disabled={month === thisMonth}>This month</button>
+          <button type="button" onClick={() => chooseMonth(shiftMonth(month, 1))} disabled={month >= thisMonth}>Next month &rarr;</button>
+        </nav>}
         {day && <nav className="photos-day-step" aria-label="Move by a day">
           <button type="button" disabled={!newerDay} onClick={() => newerDay && setDay(newerDay)} aria-label={newerDay ? `Newer day, ${fmtDay(newerDay)}` : 'Newer day'}>&larr; Newer day{newerDay && <small>{fmtDay(newerDay)}</small>}</button>
-          <button type="button" onClick={() => setDay('')}>Every day</button>
+          <button type="button" onClick={() => setDay('')}>{month ? `All of ${monthName(month).split(' ')[0]}` : 'Every day'}</button>
           <button type="button" disabled={!olderDay} onClick={() => olderDay && setDay(olderDay)} aria-label={olderDay ? `Older day, ${fmtDay(olderDay)}` : 'Older day'}>Older day &rarr;{olderDay && <small>{fmtDay(olderDay)}</small>}</button>
         </nav>}
         {!shown.length ? <div className="eng-panel photos-empty">{find.trim() || show
-            ? <><p className="eng-help">No photographs match{day ? ` on ${fmtDay(day)}` : ''}. Try fewer words, or show all kinds.</p>
+            ? <><p className="eng-help">No photographs match{when}. Try fewer words, or show all kinds.</p>
               <button type="button" onClick={() => { setFind(''); setShow(''); }}>Clear the find box and filter</button></>
-            : <p className="eng-help">No photographs were sent on {fmtDay(day)}. Choose another day, or every day.</p>}</div>
+            : day ? <p className="eng-help">No photographs were sent on {fmtDay(day)}. Choose another day, or every day.</p>
+            : <p className="eng-help">No photographs were sent in {monthName(month)}. Choose another month, or every month.</p>}</div>
           : days.map(d => <section key={d.day} className="photos-day" aria-label={fmtDay(d.day)}>
             <h2>{fmtDay(d.day)}<span>{plural(shown.filter(p => p.day === d.day).length, 'photograph')}</span></h2>
             <ul className="photos-grid">{d.photos.map(({ p, n }) => <li key={p.src}>

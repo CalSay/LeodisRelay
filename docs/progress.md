@@ -33,6 +33,98 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   role-access, engineer-layout, accessibility.
 - Not verified: a real phone, a screen reader.
 
+## 2026-10-22 — Back to Site after a defect, and nothing under the Send bar
+
+- Why: the two-site walk (project files `ui-review/two-site-day/walk-notes.md`,
+  items 3 and 4) found the "Defect sent to the office" receipt offered Open issue
+  and View project issues but no way back to Site (the engineer used the bottom
+  tabs), and the Send bar covered part of "What sending does" on Check & send.
+  The coordinator approved both as one small task. Not a `docs/tasks.json` task;
+  no status changed.
+- Changed: the receipt's buttons are stacked full width, "Back to Site" first
+  (the engineer is mid-visit), then "Open issue" and "View project issues". Back
+  to Site goes to the same site's home with the Site tab on. The report editor
+  (site updates and every inspection: the only screen with this bar) now sizes
+  its bottom space from the bar itself (`ResizeObserver` → `--actionbar-space`,
+  bar height + 32px) instead of a fixed 230px/190px/140px. While a field has the
+  keyboard the bar is hidden and the last height is kept, so the page does not
+  jump.
+- Found: measured on main with the bar at the end of the page, a 390px phone had
+  room for the usual bar (95px tall, 148px spare) but not when "Waiting for
+  signal" was in it (245px tall: the end of Check & send 3px under it); at 1440px
+  the waiting note left 45px under it and Undo 9px. Now every case ends 32-45px
+  clear. Note: the walk's screenshot was a full-page capture, which draws the
+  fixed bar mid-page; at the top of Check & send the bar always covers whatever
+  is at the bottom of the screen until you scroll, as any fixed bar does.
+- Help: a "What's new" line.
+- Checks: typecheck, `npm test`, build. New `scripts/verify-receipt-send-bar.mjs`
+  (58 checks, light and dark at 390px, dark at 1440px): the receipt's three
+  buttons in order, 48px or taller, above the bottom tabs, Back to Site lands on
+  the same site's home; the cards step, Check & send on a site update (three
+  "What sending does" rows) and on a handover inspection, Check & send with
+  "Waiting for signal", and the cards step with Undo, each scrolled to the end
+  with nothing under the bar (columns that scroll by themselves count only what
+  they show); after Back to Site, Flag a defect opens a blank form; no sideways
+  scroll, no page errors. Screens in project files `ui-review/receipt-send-bar/`
+  (before = main, after = this change; viewport captures, so the fixed bar is
+  where it really is). Also passed: engineer-layout, defect-recent-places,
+  defect-send-on-signal, help, editor-usability, editor-wide, quicker-update,
+  one-caption-line, same-place-issues, fewest-taps, engineer-day, role-access,
+  accessibility, offline-capture, report-editor. A fresh-context review found one
+  check named for more than it tested; it now taps Flag a defect again.
+- Fixed on the way: `verify-report-editor` failed on main since #133 (the bar
+  now steps aside once a tap has finished, and the check looked straight after
+  the click). It now waits up to 3 s for the bar to hide and to come back.
+- Not verified: real phones (including a phone's own toolbar and keyboard),
+  real weak signal, screen readers.
+## 2026-10-22 — Photographs by month
+
+- Why: the monthly progress walk found the office Photographs page showed one
+  day or every photograph (811 on Tetley Hall), so last month's photographs for
+  the progress meeting meant paging back through every day since. #129 gave the
+  Weekly summary a Month choice; Photographs had none. The coordinator picked it
+  from the queue. Not a `docs/tasks.json` task; no status changed.
+- Changed: a Month choice beside Day on `/photos` ("September 2026 · 4
+  photographs", newest first, counting what the find box and kind filter
+  leave). A chosen month shows its photographs grouped by day, with "← Previous
+  month", "This month" and "Next month →" as on the Weekly summary, the same
+  calendar months (`monthOf`, `shiftMonth`, `monthName`, now in
+  `lib/monthSummary.ts`) and the same London day each photograph is already
+  grouped under. With a month chosen, the Day choice (and Newer day, Older day)
+  stays inside it, and the day's middle button reads "All of September". The
+  month is in the page's link (`month=YYYY-MM`); a link naming a day outside
+  the month opens the day in its own month, a month after this one opens this
+  month (dropping a day in that later month), and anything not a month is ignored. Choosing another project goes
+  back to every month. On the Weekly summary's Month choice, "Every photograph
+  from September 2026, by day" under "A few photographs" opens it, and Back
+  returns there. The controls now sit two by two (Project, Month; Day, Find)
+  from 641px up, so the chosen month and day are never cut off.
+- Decided: months filter on the page from the one download Photographs already
+  makes, rather than a new month query, so switching months is instant and the
+  page fetches nothing new. "Previous month" is off before the oldest month with
+  photographs (the Weekly summary has no such limit, but here an endless run of
+  empty months helps nobody); months between with none can still be stepped
+  through and say so. Plain display of photographs already sent: no tags,
+  albums or annotations (FE-2 stays out).
+- Help: a "What's new" line, and the Photographs line in the page list.
+- Checks: typecheck, `npm test` (146 + 545 on top of #136), build. New
+  `scripts/verify-photos-month.mjs` (43 checks): month choices and counts, a
+  fix added to an issue counted in its month, grouped by day, Day choice and
+  Newer/Older day kept inside the month, the find box narrowing a month's
+  count, Previous into a month with none and to the oldest (then off), This
+  month and Next month off at this month, Every month, project change, links
+  with a day outside the month, a future month and a non-month, Back from a
+  report, the Weekly summary link and Back, 1440 light and dark and 1024 light
+  and dark (two by two, nothing cut off, no sideways scroll), 390 engineer
+  (no sideways scroll, month buttons' words fit), no page errors. Screenshots
+  in project files `ui-review/photos-month/`. `verify-busy-projects` now also
+  times last month's photographs in the office: 1228 ms (budget 2500), 372 KB
+  (budget 500), on the 24,717-photograph seed; the whole check passed. Also
+  passed: photo-library, month-summary, help, office-top-bar.
+  A fresh-context review found two things, both fixed: a link with a future
+  month and a day in it kept the day outside the month it opened; and the test
+  count here was wrong.
+- Not verified: real phones, tablets, screen readers.
 ## 2026-10-22 — The office's questions from other sites on the engineer's home
 
 - Why: a two-site walk (`ui-review/two-site-day/walk-notes.md`, item 2) found
