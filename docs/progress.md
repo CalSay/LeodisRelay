@@ -26,6 +26,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   day-walkthrough, report-editor, editor-usability, receipt-send-bar,
   engineer-layout, offline-capture, accessibility.
 - Not verified: a real phone, a screen reader.
+
 ## 2026-10-22 — Straight on to the next issue after putting a fix forward
 
 - Why: a walk of an electrician on a 390px phone (latest main, local example
