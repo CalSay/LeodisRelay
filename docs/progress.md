@@ -25,11 +25,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   with a very long description, the row would push "Add photograph" off the
   landing screen (66px in `verify-came-back-to-update`'s longest case), so
   for that visit only the row moves just under the buttons. Thumbnails are
-  80px, not 96px, so the long case in that check still lands with both
-  buttons in view. Only the raised photographs, not later ones: those are
+  80px, not 96px: at 96px the check's "long" case (a long description,
+  not the longest) landed with "Put forward as fixed" 8px off the screen;
+  at 80px it lands with both buttons in view and the row in place. Only the raised photographs, not later ones: those are
   fixes and updates, still in History.
 - Verified: typecheck, `npm test` (146 + 569), build. New
-  `scripts/verify-issue-raised-photo.mjs` (89 checks, light and dark at
+  `scripts/verify-issue-raised-photo.mjs` (91 checks, light and dark at
   390x844: photograph, office reason and both buttons on the first screen;
   larger copy loads; inline photo not linked; no row without a photograph;
   days past target only when past; History still holds it; 48px buttons; axe
@@ -41,7 +42,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   engineer-layout. Screens: project files `ui-review/issue-page-phone/`
   (before and after at 390 light, after dark, office 1440 dark).
 - Not verified: a real phone; how a phone opens the larger copy in a new tab
-  when installed to the home screen.
+  when installed to the home screen. Left as is (review): an unassigned issue
+  with a past target date gets no "days past target", since a target is only
+  set on assignment.
 
 ## 2026-10-22 — Fifteenth release check (main 54c7c93)
 

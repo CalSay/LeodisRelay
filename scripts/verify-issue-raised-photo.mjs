@@ -116,6 +116,10 @@ try{
     if(landing){
       const cam=await page.locator('label.camera').evaluate(e=>e.getBoundingClientRect().bottom<=innerHeight);
       ok(cam&&where,`longest, came back: photograph button in view (${cam}) and the photograph under the buttons (${where})`);
+      const view=await page.evaluate(()=>({y:scrollY,title:document.querySelector('.issue-eng-title').getBoundingClientRect().top>=document.querySelector('.appbar').getBoundingClientRect().bottom}));
+      ok(view.y>0&&view.title,`longest, came back: scrolled towards the update (${view.y}px) with what is wrong still below the app bar`);
+      const fixedTop=await page.getByRole('button',{name:'Put forward as fixed'}).evaluate(e=>e.getBoundingClientRect().top);
+      ok(fixedTop>0,`longest, came back: "Put forward as fixed" not scrolled away above (${Math.round(fixedTop)})`);
       if(shots)await page.screenshot({path:join(shots,'after-longest-came-back-light-390.png'),fullPage:true});
     }else ok(!where,'longest, opened plainly: the photograph stays under the facts');
     assert.deepEqual(errors,[],`longest ${landing}: page errors`);
