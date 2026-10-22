@@ -136,7 +136,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   return <div className="col">
     <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h2>Register · {s.project.projectName}</h2><i>{s.reports.length} report{s.reports.length === 1 ? '' : 's'} · {s.active.length} open</i></div>
     {/* A phone shows this column in place of the project sheet, so the sheet's four figures, the project's own pages and what site said come first. */}
-    {phone && <div className="phone-only register-standing"><SheetFigures ctx={ctx} s={s} /><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /><LatestFromSite ctx={ctx} s={s} shown={2} /></div>}
+    {phone && <div className="phone-only register-standing"><p className="register-name">{s.project.projectName}<span className="rowsub"><span className="ref">{s.project.projectNumber}</span> · {s.project.clientName}</span></p><SheetFigures ctx={ctx} s={s} /><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /><LatestFromSite ctx={ctx} s={s} shown={2} /></div>}
     <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
       {([['action', `Needs action · ${s.needsAction + onSite.length}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
     </div>
@@ -362,14 +362,17 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   // Where it stands, then what site said; the project's other pages and its details after them. What needs the office
   // and every report are in the register column beside the sheet (a phone shows that column instead), so not repeated here.
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
+    {/* The Projects column beside the sheet is the way back, so the title is the project alone. */}
+    <div className="sheet-title project-title"><div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
       <div className="actions"><BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'variation-new', projects: ctx.projects, projectId: p.id, opened: v => ctx.go(`#/projects/${s.code}/variation/${v.id}`) })}>Add variation</BtnQ><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link></div></div>
-    <SheetFigures ctx={ctx} s={s} />
-    <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
+    {/* The figures and the issue bar under them read as one block. */}
+    <div className="sheet-standing"><SheetFigures ctx={ctx} s={s} /><div className="sheet-bar"><Bar c={s.rollup} /><Meta c={s.rollup} /></div></div>
     {!phone && <LatestFromSite ctx={ctx} s={s} />}
-    {s.drafts.length > 0 && <p className="rowsub" style={{ marginTop: 12 }}>{s.drafts.length} draft{s.drafts.length === 1 ? '' : 's'} in progress on site. Contents stay private until sent.</p>}
+    {s.drafts.length > 0 && <p className="rowsub sheet-drafts">{s.drafts.length} draft{s.drafts.length === 1 ? '' : 's'} in progress on site. Contents stay private until sent.</p>}
+    <SecH>On this project</SecH>
     <ProjectLinks ctx={ctx} projectId={p.id} />
-    <dl className="tb" style={{ marginTop: 12 }}><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
+    <SecH>Project details</SecH>
+    <dl className="tb sheet-details"><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
   </div>;
 }
 

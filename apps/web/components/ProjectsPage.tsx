@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { listProjects } from "@/lib/api";
 import type { FixtureProject } from "@/lib/fixtures";
+import "@/app/projects/projects.css";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<FixtureProject[] | null>(null);
@@ -13,7 +14,7 @@ export default function ProjectsPage() {
   }, []);
 
   return (
-    <main className="wrap">
+    <main className="wrap project-list-page">
       <div className="pagehead">
         <div>
           <h1>Projects</h1>
@@ -27,15 +28,15 @@ export default function ProjectsPage() {
       </div>
 
       {projects === null ? (
-        <div className="empty" style={{ marginTop: 24 }}>
+        <div className="empty">
           Loading
         </div>
       ) : projects.length === 0 ? (
-        <div className="empty" style={{ marginTop: 24 }}>
+        <div className="empty">
           No projects are open to you.
         </div>
       ) : (
-        <div className="reg" style={{ marginTop: 24 }}>
+        <div className="reg">
           {projects.map((project) => (
             <Link key={project.id} href={`/projects/${project.id}`} className="row">
               <span className="row-code">{project.projectNumber}</span>
