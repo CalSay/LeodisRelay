@@ -46,6 +46,13 @@ export function workingDaysBetween(from: string, to: string): number {
   return n;
 }
 
+/** "No P&H report yet this week", or "No Electrical, HVAC or P&H report yet this week". */
+export function quietTradeWords(trades: readonly string[]): string {
+  if (!trades.length) return '';
+  const names = trades.length === 1 ? trades[0]! : `${trades.slice(0, -1).join(', ')} or ${trades.at(-1)}`;
+  return `No ${names} report yet this week`;
+}
+
 export interface CoverageVisit {
   /** The report a mark opens: the person's site update that day, else their first report. */
   reportId: string; reference: string; author: string; trade?: string; revision: number;
@@ -62,6 +69,12 @@ export interface CoverageProject {
   days: CoverageVisit[][];
   /** Every trade that reported in the fortnight, so a missing one is easy to spot. */
   trades: string[];
+  /**
+   * Active sites only, from Tuesday: the trades that sent a report from this site in the two weeks
+   * before this week but none yet this week (Monday to today). Always about today's week, whatever
+   * fortnight is shown. A prompt about progress reports, not a check on people.
+   */
+  quietTrades: string[];
   /** The latest visit on or before today, from any time, not just this fortnight. */
   last?: CoverageVisit & { visitDate: string };
   /** Full working days since the last visit, up to today (today is still going, so it is not counted). */
@@ -102,6 +115,10 @@ export function siteCoverage(projects: CoverageProjectSource[], reports: Report[
     return [...people.values()].map(rs => { const ordered = [...rs.filter(r => !r.reportType), ...rs.filter(r => r.reportType)]; return visit(ordered[0]!, ordered.map(r => r.reference)); });
   };
 
+  // On a Monday nobody has had a working day yet this week, so no trade is called quiet.
+  const monday = addDays(today, -weekday(today));
+  const lastFortnight = addDays(monday, -COVERAGE_DAYS);
+
   return {
     start, end, today, days,
     projects: projects.map(p => {
@@ -109,11 +126,15 @@ export function siteCoverage(projects: CoverageProjectSource[], reports: Report[
       const inRange = mine.filter(r => r.visitDate >= start && r.visitDate <= end).sort(order);
       const latest = mine.filter(r => r.visitDate <= today).sort((a, b) => b.visitDate.localeCompare(a.visitDate) || naturalOrder(b.reference, a.reference))[0];
       const active = p.status === ACTIVE_PROJECT_STATUS;
+      const trades = (rs: Report[]) => new Set(rs.map(r => r.authorTrade).filter((t): t is NonNullable<Report['authorTrade']> => Boolean(t)));
+      const before = trades(mine.filter(r => r.visitDate >= lastFortnight && r.visitDate < monday));
+      const thisWeek = trades(mine.filter(r => r.visitDate >= monday && r.visitDate <= today));
       const workingDaysSince = latest ? workingDaysBetween(latest.visitDate, today) : -1;
       return {
         projectId: p.id, projectNumber: p.projectNumber, projectName: p.projectName, projectManager: p.projectManager, active,
         days: days.map(d => byPerson(inRange.filter(r => r.visitDate === d))),
-        trades: [...new Set(inRange.map(r => r.authorTrade).filter((t): t is NonNullable<Report['authorTrade']> => Boolean(t)))].sort(),
+        trades: [...trades(inRange)].sort(),
+        quietTrades: active && weekday(today) >= 1 ? [...before].filter(t => !thisWeek.has(t)).sort() : [],
         ...(latest ? { last: { ...visit(latest), visitDate: latest.visitDate }, workingDaysSince } : {}),
         quiet: active && (!latest || workingDaysSince >= QUIET_WORKING_DAYS),
       };
