@@ -106,8 +106,10 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
     if (need > 0 && room > 0) window.scrollBy(0, Math.min(need, room));
   }, [update, manager, issue]);
 
-  // The button that was tapped has gone: move to what replaced it, so the result is read out.
-  useEffect(() => { if (putForward) doneBox.current?.focus(); }, [putForward]);
+  // The button that was tapped has gone: move to what replaced it, once, so the result is read out.
+  // Not again when the next issue arrives, which may be after the engineer has started typing a note.
+  const shown = !!putForward;
+  useEffect(() => { if (shown) doneBox.current?.focus(); }, [shown]);
 
   async function run(kind: string) {
     if (!issue) return;
@@ -326,7 +328,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         {canClose && !isWithdrawn && (putForward ? (
           <section className="eng-panel issue-eng-done" role="status" aria-labelledby="issue-done-title" ref={doneBox} tabIndex={-1}>
             <h2 id="issue-done-title">Put forward as fixed</h2>
-            <p>The office will check it. If it is not finished, it comes back to you on the Site page.</p>
+            <p>It is waiting for the office to check it. If it is not finished, it comes back to you.</p>
             {putForward.next ? (
               <Link className="eng-primary issue-eng-next" href={withViewReturn(`/issues/${putForward.next.id}`, back)}>
                 <span>Next: {putForward.next.description}</span>

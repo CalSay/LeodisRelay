@@ -9,7 +9,8 @@
 // the empty form is folded under "Add a note for the office".
 // Checks, at 390px light and dark: the box, the Next button in view without
 // scrolling and naming the top of "Yours" (never the one just done, never another
-// site), focus moves to the box, the form is folded; Next opens that issue fresh;
+// site), focus moves to the box (and stays in a note typed before a slow answer),
+// the form is folded; Next opens that issue ready to put forward;
 // four taps per fix; the last one says so and offers no Next; with no answer for
 // the next issue the box still shows with Back; opened later, a fixed issue shows
 // the plain note and the fold still records an update; the office's page keeps
@@ -79,15 +80,16 @@ try {
   const offScreen=async l=>l.evaluate(e=>{const b=e.getBoundingClientRect(),bar=document.querySelector('.appbar')?.getBoundingClientRect().bottom??0;return Math.round(Math.max(0,b.bottom-innerHeight,bar-b.top));});
   const sideways=page=>page.evaluate(()=>document.documentElement.scrollWidth>document.documentElement.clientWidth);
   const axe=async(page,label)=>{await page.evaluate(axeSource);const found=await page.evaluate(async()=>(await window.axe.run(document.querySelector('main'),{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']}})).violations.map(v=>`${v.id}: ${v.nodes.map(n=>n.target.join(' ')).slice(0,3).join(', ')}`));ok(!found.length,`${label}: axe found ${found.join('; ')}`);};
-  // Puts the open issue forward with a photograph and a note; returns the taps it took on this page.
+  // Every tap the engineer makes is counted here; choosing the photograph counts as one tap.
+  let taps=0;const tap=async l=>{await l.click();taps++;};
+  // Puts the open issue forward with a photograph and a note.
   const putForward=async(page,colour='#2f6b45')=>{
     await page.getByRole('button',{name:'Put forward as fixed'}).waitFor();
-    await page.locator('label.camera input[type=file]').setInputFiles({name:'fixed.png',mimeType:'image/png',buffer:await png(colour)});
+    await page.locator('label.camera input[type=file]').setInputFiles({name:'fixed.png',mimeType:'image/png',buffer:await png(colour)});taps++;
     await page.locator('.shots img[alt^="New evidence"]').first().waitFor();
-    await page.locator('#note').click();await page.locator('#note').fill('Replaced and tested');
-    await page.getByRole('button',{name:'Put forward as fixed'}).click();
+    await tap(page.locator('#note'));await page.locator('#note').fill('Replaced and tested');
+    await tap(page.getByRole('button',{name:'Put forward as fixed'}));
     await page.locator('.issue-eng-done').waitFor({timeout:15000});
-    return 3;
   };
   const doneText=async page=>flat(await page.locator('.issue-eng-done').innerText());
 
@@ -97,13 +99,14 @@ try {
     await page.goto(`${base}/engineer?project=${T}&view=issues`);
     const first=page.locator('a.eng-issue-card').first();await first.waitFor();
     ok((await first.innerText()).includes('Downlight not working'),`Yours starts with the newest change: ${await first.innerText()}`);
-    await first.click();let taps=1;
+    taps=0;await tap(first);
     const expected=['806','805','804','803','802','801'];
     for(let k=0;k<expected.length;k++){
       const id=expected[k];
       await page.waitForURL(new RegExp(`/issues/${id}\\?`));
-      ok(!(await page.locator('.issue-eng-done').count()),`${id}: opens fresh, with no box from the last one`);
-      taps+=await putForward(page);
+      await page.locator('.issue-eng-title',{hasText:getIssue(id).description}).waitFor();
+      ok(!(await page.locator('.issue-eng-done').count())&&await page.getByRole('button',{name:'Put forward as fixed'}).isVisible()&&await page.locator('#note').inputValue()==='',`${id}: opens ready to put forward, with an empty note`);
+      await putForward(page);
       ok(getIssue(id).work==='awaiting_verification',`${id}: put forward on the server`);
       const box=page.locator('.issue-eng-done');
       ok(await page.evaluate(()=>document.activeElement?.classList.contains('issue-eng-done')),`${id}: focus moves to the box`);
@@ -120,7 +123,7 @@ try {
         ok(await offScreen(next)===0&&await offScreen(box.locator('h2'))===0,`${id}: the box and Next are on screen without scrolling`);
         ok(/Back to Issues/.test(await box.locator('a.eng-secondary').innerText()),`${id}: Back to Issues offered`);
         if(k===0){await shot(page,'put-forward-light-390');ok(!(await sideways(page)),'no sideways scroll');await axe(page,'box, light');}
-        await next.click();taps++;
+        await tap(next);
       } else {
         await page.locator('.issue-eng-done strong').waitFor();
         ok((await doneText(page)).includes('That was the last one for you on Tetley Hall'),'last: says it was the last one');
@@ -129,7 +132,7 @@ try {
       }
     }
     console.log(`Six fixes put forward in ${taps} taps from the Issues list: the first issue, then photograph, note, Put forward and Next for each (four a fix; it was five, with Back and the next card).`);
-    ok(taps===1+6*3+5,`four taps a fix: ${taps}`);
+    ok(taps===24,`four taps a fix after the first: ${taps}`);
     // Back goes to the Issues list, now with nothing to do here but Kirkstall's still listed.
     await page.locator('.issue-eng-done a.eng-secondary').click();
     await page.waitForURL(/view=issues/);await page.getByText('6 put forward as fixed, waiting for the office to check').waitFor();
@@ -159,9 +162,15 @@ try {
     ok(words.includes('Put forward as fixed')&&words.includes('Back to Issues')&&!(await page.locator('a.issue-eng-next').count())&&!words.includes('last one'),`no answer: box with Back, no Next, no "last one": ${words}`);
     await page.unroute('**/api/issues?only=yours');
     // With an answer, Hana's next is her own, never Sam's or the one already waiting.
+    // A slow answer: the engineer opens "Add a note for the office" and types before it comes; focus stays in the note.
+    await page.route('**/api/issues?only=yours',async r=>{await new Promise(x=>setTimeout(x,2500));await r.continue();});
     await page.goto(`${base}/issues/840?returnTo=${encodeURIComponent(`/engineer?project=${T}&view=issues`)}`);
     await putForward(page,'#1f4b65');
-    await page.locator('.issue-eng-done strong').waitFor();
+    ok(!(await page.locator('.issue-eng-done strong').count()),'slow answer: the next issue is not known yet');
+    await page.locator('details.issue-eng-add summary').click();await page.locator('#note').click();await page.keyboard.type('Also');
+    await page.locator('.issue-eng-done strong').waitFor();await page.waitForTimeout(300);
+    ok(await page.evaluate(()=>document.activeElement?.id==='note'),'slow answer: focus stays in the note being typed');
+    await page.locator('#note').fill('');await page.locator('details.issue-eng-add summary').click();
     ok((await doneText(page)).includes('That was the last one for you on Tetley Hall'),'dark: Hana has none left (the waiting one is not offered)');
     await shot(page,'last-one-dark-390');
     ok(!(await sideways(page)),'dark: no sideways scroll');await axe(page,'box, dark');
