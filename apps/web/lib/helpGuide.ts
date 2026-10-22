@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'project-figures-laptop', added: '2026-10-22', audience: 'office', title: 'A project\'s figures on a laptop',
+    text: 'On a laptop screen up to about 1400 pixels wide, a project\'s four figures ("Last visit", "Overdue actions", "Fixed, to check" and "Variations") now sit two by two instead of four in a row, so each label fits on one line and the words under each figure take one or two lines instead of up to six. The project\'s details further down, and the four facts at the top of an issue or a variation, sit the same way. Wider screens and phones look as before. Checked in a desktop browser, light and dark, with and without scrollbars showing.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'plain-words-engineer', added: '2026-10-22', audience: 'site', title: 'Plainer words on your phone screens',
     text: 'Words on the site screens are shorter and plainer. Where your work is now says "Saved to RELAY", "Saved" or "Only on this phone" instead of talking about a server; a site update no longer says to sign it (signing is optional); in your list on the home screen, an issue nobody is fixing yet says "nobody on it yet"; and "Since your last visit", My week, Notes for the next visit and Flag a defect lose sentences that said the same thing twice. Nothing works differently. Checked in a phone-sized browser, not on a real phone.',
     link: { label: 'Open your home screen', href: '/engineer' } },

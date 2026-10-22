@@ -304,12 +304,13 @@ body:has(.ws){overflow:hidden auto}
   .ws .cols>.col:nth-child(2) .col-head{flex-wrap:wrap;row-gap:var(--s1)}
   .ws .cols>.col:nth-child(2) .col-head :is(h2,h4){order:1;flex-basis:100%}
 }
-/* A project's figures two by two when the details column is narrow. */
-@media (min-width:701px) and (max-width:1023px){
-  .ws .cols:not([data-depth="1"]) .tb:not(.two){grid-template-columns:1fr 1fr}
-  .ws .cols:not([data-depth="1"]) .tb:not(.two)>div:nth-child(2n){border-right:0}
-  .ws .cols:not([data-depth="1"]) .tb:not(.two)>div{border-bottom:1px solid var(--line)}
-  .ws .cols:not([data-depth="1"]) .tb:not(.two)>div:nth-last-child(-n+2){border-bottom:0}
+/* A sheet's figures two by two when the sheet is narrow: a 1024-1400px laptop leaves about 460-680px inside it, too narrow for four in a row. */
+.ws .sheet{container-type:inline-size}
+@container (max-width:679px){
+  .ws .sheet .tb:not(.two,.three){grid-template-columns:1fr 1fr}
+  .ws .sheet .tb:not(.two,.three)>div:nth-child(2n){border-right:0}
+  .ws .sheet .tb:not(.two,.three)>div{border-bottom:1px solid var(--line)}
+  .ws .sheet .tb:not(.two,.three)>div:nth-last-child(-n+2){border-bottom:0}
 }
 
 /* ------------------------------------------------------------------ phone */

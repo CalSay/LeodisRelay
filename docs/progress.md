@@ -4,6 +4,39 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — A project's figures on a laptop
+
+- Why: the office laptop walk (PR #145) found a project sheet's four figures
+  cramped at 1024px. On 1024-1400px screens the sheet has only about
+  460-680px inside it (it shares the desk with the register and, from
+  1180px, the Projects column), so each figure had a 115-170px cell:
+  "Overdue actions" and "Fixed, to check" broke onto two lines and the words
+  under a figure took four to six lines. Cal's 21 Oct ask: the office should
+  see progress clearly. Not a `docs/tasks.json` task (out-of-queue work under
+  Cal's 20 Oct go-ahead to decide); no status changed.
+- Changed (CSS only): a sheet's four-cell figure blocks go two by two
+  whenever the inside of the sheet is narrower than 680px, using a container
+  query on `.sheet`, with a line between cells across and down. This replaces
+  the 701-1023px media rule that did the same for narrower desks only. It
+  covers the project's figures and details, and the four facts at the top of
+  an issue or a variation (same CSS; measured only on the project sheet).
+  At 1440px the sheet has 724px inside (694px with Windows-style scrollbars)
+  and stays four in a row; phones are unchanged (already two by two).
+- Decided: a container query rather than another media range, because the
+  sheet's width does not grow with the screen (1180px gives a narrower sheet
+  than 1100px, when the Projects column comes back) and scrollbars take
+  about 30px on Windows. 680px keeps 1440px four in a row either way.
+- Verified: new `scripts/verify-sheet-figures-laptop.mjs` (busy seed, 390,
+  800, 1000-1920px, light and dark at 1024 and 1280, and 1280/1366/1440/1920
+  with scrollbars showing): 548 checks pass; on main it reports 51 failures
+  (labels on two lines, sub-lines of four to six lines, four across at
+  1024-1365). At 1024 the words under each figure now take one or two lines.
+  Also ran verify-office-links, verify-office-top-bar, verify-home-and-sheet,
+  verify-office-progress, verify-issues-laptop and verify-role-access.
+  Screens: project files `ui-review/office-laptop/figures/before|after`.
+- Not verified: a real laptop, browsers other than Chromium 141.
+- Next: Projects-column issue rows truncated at 1180-1365 (same walk).
+
 ## 2026-10-22 — Plain words on engineer screens
 
 - Why: Cal's 21 Oct ask that RELAY be easy for hands-on engineers, "not IT
