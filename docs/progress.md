@@ -33,7 +33,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   rather than a list of recent updates: Photographs already shows each visit's
   pictures at a place by day, and the report behind each is one click from
   there. Kept to the issue sheet; a report card's place was left for later.
-- Verified: typecheck, `npm test` (146 + 579, two new unit tests: the count
+- Also changed (from the fresh review): the register's Location (and Company)
+  box matched a number inside a longer one, so "Flat 12" counted Flat 120 and
+  Flat 212, and "Level 1" every Level 10. A number in the search now has to be
+  a whole number in the field (`matchesWords`); words are still found inside
+  longer words ("kitch" finds kitchen), and "Flat 2" still finds "Flat 2.04",
+  as #165 counts it. The sheet's count and the register move together.
+- Verified: typecheck, `npm test` (146 + 580, three new unit tests: whole numbers; the count
   equals `queryIssues` for five project/place pairs including another
   project's and an unknown place; the link keeps a slash inside the place and
   reads back). New `scripts/verify-issue-at-place.mjs` (38 checks, light and
@@ -44,7 +50,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   open issues" for a closed issue alone at its place, axe, no sideways scroll.
   Its axe run leaves out the project list's group headings, which fail colour
   contrast on main (already left out in verify-issue-figures; not touched
-  here). VERIFY_RESULTS
+  here). Also passed: verify-issue-figures, -issue-register, -issues-here,
+  -office-actions, -office-desk, -office-landing, -office-links,
+  -office-phone, -office-registers, -office-sections, -photo-library, -help
+  (failed once, passed alone), -accessibility, -role-access,
+  -engineer-layout. verify-office-words fails at "light 390 long: Put forward
+  as fixed still on the first screen" on the engineer's issue page, which
+  this change does not touch (#174 changed that page); not rerun on main.
   Screens in /mnt/project-files/ui-review/issue-at-place/.
 - Not verified: a real phone or screen reader.
 
