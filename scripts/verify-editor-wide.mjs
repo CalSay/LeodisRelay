@@ -91,7 +91,7 @@ try {
     const raised=(await page.locator('.eng-does .eng-row b').first().innerText()).trim();
     eq(raised,linking?'1 added to an issue already raised · not yet reviewed':'1 issue raised · not yet reviewed',`${label}: what sending does counts a linked defect apart`);
     await shot('update-check');await shot('update-check-full',true);
-    await clearOfBar('.eng-check-sign .hint, .eng-check-sign .btn-row','the signature hint');
+    await clearOfBar('.eng-sign-open','the signature button');
     await tap(page.getByRole('button',{name:'Send to office'}));
     await page.locator('.pagehead .tag-sent').waitFor();
     await shot('update-sent');await shot('update-sent-full',true);

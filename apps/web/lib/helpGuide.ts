@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'shorter-check-and-send', added: '2026-10-22', audience: 'site', title: 'A shorter Check & send',
+    text: 'Check & send on a site update now lists only the kinds of card in it, such as "Progress 1", instead of four boxes with three of them 0. Signing a site update is still optional, so the signature box stays folded behind "Add your signature" until you tap it; a draft you have already signed opens with it showing. A one-card update with photos now fits on about one phone screen. Inspections still show the signature box, because they must be signed. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open your home screen', href: '/engineer' } },
   { id: 'project-figures-laptop', added: '2026-10-22', audience: 'office', title: 'A project\'s figures on a laptop',
     text: 'On a laptop screen up to about 1400 pixels wide, a project\'s four figures ("Last visit", "Overdue actions", "Fixed, to check" and "Variations") now sit two by two instead of four in a row, so each label fits on one line and the words under each figure take one or two lines instead of up to six. The project\'s details further down, and the four facts at the top of an issue or a variation, sit the same way. Wider screens and phones look as before. Checked in a desktop browser, light and dark, with and without scrollbars showing.',
     link: { label: 'Open the office', href: '/office' } },
