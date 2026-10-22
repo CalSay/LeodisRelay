@@ -10,6 +10,8 @@
 // update today. A fix put forward 23.5 hours ago waits "1 day" (a calendar day), not
 // the 0 whole days the overview used to say.
 // Checks, light and dark at 1440 and light at 390: the section's day and count;
+// on a phone each project's cards fold under its bar (the day fits on one screen,
+// what needs the office follows, each fold opens and says so);
 // one edged block a project with an update today, in the overview's project order;
 // each block's headline (updates and inspections, access problems, what was
 // raised); the cards by trade then as sent, every update today and not only each
@@ -85,6 +87,23 @@ try {
     const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`${base}/office`);
     const section=page.locator('section.today-site');await section.waitFor();
+    const folds=section.locator('button.today-fold');
+    if(phone){
+      // On a phone the cards fold under each project's bar, so the whole day fits on a screen and what needs the office follows.
+      await folds.first().waitFor();
+      check(await folds.count()===2&&await section.locator('.from-site-visit').count()===0,`${label}: each project's cards start folded (${await folds.count()} folds)`);
+      const words=(await folds.allInnerTexts()).map(flat);
+      check(words.join('|')==='Show the 3 site updates|Show the site update',`${label}: each fold says how many updates it holds (${words.join(' | ')})`);
+      check(await folds.first().getAttribute('aria-expanded')==='false',`${label}: the fold says it is closed`);
+      const box=await section.boundingBox();
+      check(box.height<844,`${label}: the folded day fits on one screen (${Math.round(box.height)}px)`);
+      const notSeen=await page.locator('.act').first().boundingBox();
+      check(notSeen.y>=box.y+box.height,`${label}: what needs the office comes straight after the day`);
+      await axe(page,`${label} folded`);
+      if(shot)await section.screenshot({path:join(shot,`today-from-site-folded-${scheme}-${width}.png`)});
+      for(let n=0;n<2;n++)await folds.nth(n).click();
+      check(await folds.first().getAttribute('aria-expanded')==='true'&&flat(await folds.first().innerText())==='Hide the site updates',`${label}: an open fold says so and offers to hide`);
+    }else check(await folds.count()===0,`${label}: the desk shows the cards open, with no fold`);
     await section.locator('.from-site-visit').first().waitFor();
     await page.waitForFunction(()=>!document.querySelector('.today-site .loading'),null,{timeout:15000});
     const head=flat(await section.locator('.r').first().textContent());
@@ -117,7 +136,7 @@ try {
     await tetley.locator('.from-site-h').nth(1).click();
     await page.waitForFunction(ref=>location.hash.includes('/report/')&&document.querySelector('.ws-main')?.textContent?.includes(ref),samToday.reference,{timeout:15000}).catch(()=>{});
     check(page.url().includes(`/report/${samToday.id}`),`${label}: an update opens its report (${page.url()})`);
-    await page.goto(`${base}/office`);await section.locator('.from-site-visit').first().waitFor();
+    await page.goto(`${base}/office`);await section.locator('.today-project-h').first().waitFor();
     await blocks.nth(1).locator('.today-project-h').click();
     await page.waitForFunction(()=>/#\/projects\/[^/]+$/.test(location.hash),null,{timeout:15000}).catch(()=>{});
     check(page.url().endsWith(`#/projects/${H}`),`${label}: a project's name opens its sheet (${page.url()})`);

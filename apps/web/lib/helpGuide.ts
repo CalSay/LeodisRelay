@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'today-from-site-phone-fold', added: '2026-10-22', audience: 'office', title: 'Today from site fits a phone screen',
+    text: 'On a phone, "Today from site" on the office overview now shows each project\'s line for the day (its site updates, access problems and what was raised) with its updates folded under it. Tap "Show the 3 site updates" to read them in the engineers\' words. So the whole day fits on one screen, and the reports not seen yet, unassigned issues and fixes to check come straight after it. On a desk nothing changes. Checked in a phone-sized browser window, light and dark, not on a real phone.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'month-print-shorter', added: '2026-10-22', audience: 'office', title: 'A shorter printed month',
     text: 'Printing the Weekly summary\'s Month choice, or saving it as a PDF, now gives the ten issues most days past their target, the same ten the screen shows, and then a line saying how many more there are. Each company\'s open and past-target figures still print under "Still open, with whom". On a busy project, a month that came to 28 pages now comes to 7. If you want every late issue on paper, tap "Show all" before you print. Nothing changes on screen. Checked as a PDF saved from a desktop browser, not on a printer.',
     link: { label: 'Open the Weekly summary', href: '/weekly-summary?period=month' } },
@@ -497,7 +500,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
   ],
   office: [
     { id: 'office-day', heading: 'Your day in the office', ordered: true, steps: [
-      'Office opens on the office position. "Where each project stands" gives every project\'s last visit and everyone on site that day, its visits this week and by which trades, its open and overdue issues, its variations waiting and how much needs the office; a site with no report for three working days is marked. "Today from site" then reads each project\'s site updates for today\'s visit, with its access problems and the defects and variations raised. Under it: new reports, reports nobody in the office has opened yet, unassigned issues and issues fixed and waiting to be checked.',
+      'Office opens on the office position. "Where each project stands" gives every project\'s last visit and everyone on site that day, its visits this week and by which trades, its open and overdue issues, its variations waiting and how much needs the office; a site with no report for three working days is marked. "Today from site" then reads each project\'s site updates for today\'s visit, with its access problems and the defects and variations raised; on a phone each project\'s updates are folded under its line until you tap to show them. Under it: new reports, reports nobody in the office has opened yet, unassigned issues and issues fixed and waiting to be checked.',
       'Open a project to read "Latest from site": each trade\'s newest site update from the last fortnight, in the engineer\'s own words, with what else it raised.',
       'Opening a report marks it "Seen" with your name and the time, and the engineer sees "Seen by the office" on it. There is nothing to press. Receipt and delivery do not count, and nor does opening a report you wrote yourself.',
       'A report\'s signature line says whether it was drawn or typed. A typed signature shows the statement the person ticked and who was signed in when it was sent.',

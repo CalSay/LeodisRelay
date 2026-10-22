@@ -429,12 +429,18 @@ function TodayFromSite({ ctx }: { ctx: Ctx }) {
   const updates = shown.reduce((n, s) => n + s.standing.today.length, 0);
   return <section className="today-site" aria-labelledby="today-site-h">
     <SecH right={<span className="r">{dayShort(ctx.day)}{updates ? ` · ${count(updates, 'update')}` : ''}</span>}><span id="today-site-h">Today from site</span></SecH>
-    {shown.length ? shown.map(s => <TodayProject key={s.project.id} ctx={ctx} s={s} lines={phone ? 2 : 3} />)
+    {shown.length ? shown.map(s => <TodayProject key={s.project.id} ctx={ctx} s={s} phone={phone} />)
       : <div className="empty" style={{ padding: 14 }}>No site update sent for today yet. Each project’s Latest from site has its last ones.</div>}
   </section>;
 }
-function TodayProject({ ctx, s, lines }: { ctx: Ctx; s: ProjectStats; lines: number }) {
+/**
+ * On a phone a project's cards fold under its bar, so the whole day reads in
+ * one screen and what needs the office follows it; the desk shows them open.
+ */
+function TodayProject({ ctx, s, phone }: { ctx: Ctx; s: ProjectStats; phone: boolean }) {
   const f = dayFound(s.standing.today), id = `today-${s.code}`;
+  const [open, setOpen] = useState(false);
+  const showCards = !phone || open;
   const found = [f.defects ? count(f.defects, 'defect') : '', f.variations ? count(f.variations, 'variation') : ''].filter(Boolean).join(' and ');
   return <section className="today-project" aria-labelledby={id}>
     <a className="today-project-h" href={`#/projects/${s.code}`}>
@@ -446,7 +452,8 @@ function TodayProject({ ctx, s, lines }: { ctx: Ctx; s: ProjectStats; lines: num
       </span>
       <span className="arrow" aria-hidden="true">›</span>
     </a>
-    <FromSiteVisits ctx={ctx} code={s.code} list={s.standing.today} shown={lines} empty="" when={r => `sent ${timeOf(r.serverAcknowledgedAt) || 'today'}`} heldUpFirst />
+    {phone && <button type="button" className="today-fold" aria-expanded={open} aria-controls={`${id}-cards`} onClick={() => setOpen(o => !o)}>{open ? 'Hide the site updates' : f.updates === 1 ? 'Show the site update' : `Show the ${f.updates} site updates`}</button>}
+    {showCards && <div id={`${id}-cards`}><FromSiteVisits ctx={ctx} code={s.code} list={s.standing.today} shown={phone ? 2 : 3} empty="" when={r => `sent ${timeOf(r.serverAcknowledgedAt) || 'today'}`} heldUpFirst /></div>}
   </section>;
 }
 /** "2 defects and 1 variation", or '' when the visit raised neither. */
