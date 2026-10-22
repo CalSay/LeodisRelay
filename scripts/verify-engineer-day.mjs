@@ -110,7 +110,7 @@ try {
       await page.getByRole('button',{name:/Check & send/}).last().click();await page.locator('#report-check').waitFor();
     }
     const check=await page.locator('#report-check').innerText();
-    ok(/Sign · optional/i.test(check)&&/do not have to sign a site update/.test(check),`${scheme} check: signing a site update is optional`);
+    ok(/Sign · optional/i.test(check)&&/Add your signature/.test(check)&&await page.locator('#report-check canvas.sigpad').count()===0,`${scheme} check: signing a site update is optional and folded`);
     ok(!/mailbox is live|raise variations|raise issues/.test(check),`${scheme} check: no "mailbox is live" or "raise issues"`);
     ok(/If it cannot wait, tell them yourself/.test(check),`${scheme} check: says to tell the project manager if it cannot wait`);
     await shot('check');

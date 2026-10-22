@@ -160,6 +160,7 @@ try {
       // Changing the signature after tapping Send: it waits for Send again.
       await sendButton(page).click();
       await waitingNote(page).waitFor({timeout:10000});
+      await page.getByRole('button',{name:'Add your signature'}).click();
       await page.getByLabel('Your name').fill('S. Signal');
       ok(await waitingNote(page).count()===0&&await marker()===null,`${label} signature changed: no longer goes by itself`);
       await page.getByLabel('Your name').blur();

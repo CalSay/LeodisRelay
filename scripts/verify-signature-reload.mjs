@@ -34,8 +34,10 @@ try {
     const context=await browser.newContext({viewport:{width:390,height:844},colorScheme:scheme});await context.addCookies([{name:'relay_session',value:session,url:base}]);
     const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`${base}/reports/${draft.id}#check`); // the signature is on the Check & send step
-    const pad=page.locator('canvas.sigpad');await pad.scrollIntoViewIfNeeded();
+    const pad=page.locator('canvas.sigpad');
     if(scheme==='light'){
+      // An optional signature folds behind one button until it is wanted.
+      await page.getByRole('button',{name:'Add your signature'}).click();await pad.scrollIntoViewIfNeeded();
       await page.getByLabel('Your name',{exact:true}).fill('G. Stephenson');
       const box=await pad.boundingBox();
       await page.mouse.move(box.x+20,box.y+box.height/2);await page.mouse.down();

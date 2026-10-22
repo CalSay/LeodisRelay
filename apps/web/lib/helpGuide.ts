@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'shorter-check-and-send', added: '2026-10-22', audience: 'site', title: 'A shorter Check & send',
+    text: 'Check & send on a site update now lists only the kinds of card in it, such as "Progress 1", instead of four boxes with three of them 0. Signing a site update is still optional, so the signature box stays folded behind "Add your signature" until you tap it; a draft you have already signed opens with it showing. A one-card update with photos now fits on about one phone screen. Inspections still show the signature box, because they must be signed. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open your home screen', href: '/engineer' } },
   { id: 'quiet-card-list', added: '2026-10-22', audience: 'site', title: 'A quieter list of cards',
     text: 'In a site update, a card that is saved now shows a small green dot beside its place instead of a line saying "Saved", so each card in the list is a line shorter and more of them fit on the screen. While a card is being saved it says "Saving" (its photos say "Uploading"), not "Not saved to RELAY yet", so folding a card no longer flashes a warning. A card that really has not gone up, such as one written with no signal, still says so on a line of its own. Checked in a phone-sized browser, light and dark, not on a real phone.',
     link: { label: 'Open your home screen', href: '/engineer' } },
