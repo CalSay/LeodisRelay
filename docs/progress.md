@@ -4,6 +4,46 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish E6: engineer Issues
+
+- Why: task E6 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
+  the engineer's phone). Branched from main at 5babd9d (E5, #199). Screenshots
+  before and after, 390px light and dark and 1440px light, are in
+  `ui-review/release-1/E6/` on the busy example data: Issues Yours, Open at a
+  place, an open issue, just put forward, waiting, closed, and the snag list.
+- What the walk found: Flag a defect and Snag list were two odd widths, and
+  Yours, Open and All issues were three small 13px buttons of different
+  widths at the left. On a phone "Put forward as fixed" and "Record an
+  update" each broke onto two lines. At a desk an issue's page ran 1,072px
+  wide, with the two buttons 512px each. The snag list's choices filled the
+  phone's first screen (Company and Trade one under the other), at a desk the
+  project's name was cut off ("Tetley Hall - Blc") and Print sat alone on a
+  second row; on a phone each photograph was 240px wide.
+- Changed: one block at the end of `engineer.css`, scoped to the Issues tabs,
+  the Issues heading and `.issue-eng`: the tabs are three equal 48px parts and
+  the two actions an even pair (both at most 480px wide); an issue's page is a
+  720px column at a desk; Back is 48px tall; the update buttons have less side
+  padding so each fits one line on a phone. In `snag.css`: the choices are
+  one grid (project twice as wide; Print at the end of the row under them);
+  on a phone Company and Trade share a row and photographs are 144px; Back
+  is 48px tall. A place's count in its heading now lines up with the place's
+  name (on paper too). The
+  page's two buttons and "Put forward as fixed" are where they were: on the
+  issue page the button sits 4px lower (Back is taller) and fits one line.
+  No `globals.css` changes, no shared component changes, no change to data
+  loading or the list's drawing (#188/#191).
+- No Help "What's new" line: nothing works differently.
+- Verified: `npm run typecheck`, `npm test` (146 + 591), `npm run build`.
+  Browser checks passed: came-back-to-update (36), office-words (67),
+  issues-here (63), simpler-issue-list (52), simpler-issue-page (76),
+  snag-list (24), fix-forward-next (73), accessibility (584); and on the first
+  version of the change also issue-raised-photo (91), issues-yours (48),
+  issues-laptop (284), same-place-issues (61), issue-at-place (38),
+  came-back-first (29), other-sites-came-back (32), issue-link (42),
+  engineer-layout.
+- Not verified: a real phone, a screen reader, printing the snag list on paper
+  (the new grid and Back apply on screen only; the heading alignment prints).
+
 ## 2026-10-22 — Release 1 polish O7: Variations, Team and Admin
 
 - Why: task O7 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch";

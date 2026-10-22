@@ -690,3 +690,18 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-variation .eng-hist .t{width:84px;}
 .eng-variation .eng-variation-note .field{margin-top:0;}
 .eng-variation .eng-variation-note button{min-width:140px;font-size:15px;}
+
+/* Release 1 polish E6 (2026-10-22): the Issues view, an issue's page and
+   putting a fix forward. Scoped to .eng-issue-tabs, the Issues heading and .issue-eng. */
+/* Yours, Open and All issues read as one choice: three equal parts at button size. */
+.eng-issue-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:480px;}
+.eng-issue-tabs button{font-size:15px;min-height:48px;padding:8px 6px;}
+/* Flag a defect and the Snag list sit side by side as a pair, not two odd widths. */
+.eng-heading:has(+.eng-issue-tabs) .eng-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-width:480px;margin-bottom:0;}
+.eng-heading:has(+.eng-issue-tabs) .eng-actions>*{width:100%;min-width:0;justify-content:center;text-align:center;}
+/* An issue at a desk is a column a person reads, not buttons a screen wide. */
+.issue-eng{max-width:720px;margin-inline:auto;}
+/* Back is a thumb's width tall, like every other control on the page. */
+.issue-eng>.back{min-height:48px;padding-block:8px;}
+/* "Put forward as fixed" and "Record an update" each on one line on a phone. */
+.issue-eng-update .btn-row button{padding-inline:8px;}
