@@ -36,15 +36,19 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (open PR #154) are not touched. The engineer's trade dropdown on "Flag a
   defect" was left for a later task.
 - Verified: typecheck, `npm test` (146 + 569, one new unit test), build. New
-  `scripts/verify-other-trade-defect.mjs` (47 checks). Sam flags the leak as
+  `scripts/verify-other-trade-defect.mjs` (56 checks). Sam flags the leak as
   P&H at 390px. Then the office at 1440 light and dark and 390 light: the Unassigned row
   names P&H, and an "Other" one says so. The desk's Assign box says the trade,
   offers only the plumber's company (not the electrician's), and starts
   empty. A tap fills Responsible and assigns nothing on its own. The issue
-  page's chips do the same and are 48px on a phone. An "Other" defect gets no
-  offer. Pressing Assign gives the issue to the plumber. No sideways scroll and no page errors.
+  page's chips do the same, are 48px on a phone, and "Who puts it right"
+  says the trade. An "Other" defect gets no offer on either. Pressing Assign gives the issue to the plumber. No sideways scroll and no page errors.
   Screens: project files `ui-review/other-trade-defect/` (before, after).
 - Not verified: a real phone or laptop.
+- Fresh review found: "Who puts it right" named the trade only when it
+  had a company to offer (now always), the Help line said one company when up
+  to three are offered, and the "Other" check could pass before the companies
+  had loaded and did not cover the desk (both fixed).
 - Next: "Flag a defect" could use the site update card's one-tap trade
   buttons instead of the dropdown.
 

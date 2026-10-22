@@ -105,6 +105,7 @@ try {
     // The issue page's Assign: the same offer, as chips.
     await page.goto(`${base}/issues/${leak().id}`);
     await page.getByRole('region',{name:'Who puts it right'}).getByRole('button',{name:/Assign/}).click();
+    await page.getByRole('region',{name:'Who puts it right'}).getByText('Trade: P&H',{exact:true}).waitFor();checks++;
     const chips=page.getByRole('group',{name:'Already doing P&H work here'});
     await chips.waitFor({timeout:10000});
     eq(JSON.stringify(await chips.getByRole('button').allInnerTexts()),JSON.stringify([PLUMBER]),`${label}: the issue page offers the plumber's company`);
@@ -118,9 +119,19 @@ try {
     await shot(page,`issue-assign-${scheme}-${width}`);
     // "Other" is many companies: no offer.
     await page.goto(`${base}/issues/${other.id}`);
+    // Wait for the companies to arrive, so "no offer" is not just "not loaded yet".
+    const read=page.waitForResponse(r=>r.url().includes('/api/locations'));
     await page.getByRole('region',{name:'Who puts it right'}).getByRole('button',{name:/Assign/}).click();
-    await page.getByLabel('Responsible').waitFor();await page.waitForTimeout(800);
-    eq(await page.locator('.eng-suggestions').count(),0,`${label}: an "Other" defect offers no company`);
+    await (await read).finished();await page.getByLabel('Responsible').waitFor();await page.waitForTimeout(200);
+    eq(await page.locator('.eng-suggestions').count(),0,`${label}: an "Other" defect offers no company on the issue page`);
+    // And none on the desk's Assign box either.
+    await page.goto(`${base}/office#/projects`);
+    const otherRow=page.locator('.act').filter({hasText:'Unassigned issues'}).locator('a.rt',{has:page.locator('b',{hasText:'Hoarding damaged'})}).first().locator('xpath=..');
+    const deskRead=page.waitForResponse(r=>r.url().includes('/api/locations'));
+    await otherRow.getByRole('button',{name:'Assign'}).click();
+    await (await deskRead).finished();await page.waitForTimeout(200);
+    await page.locator('.ws-dialog').getByText('Trade: Other / non-Leodis').waitFor();checks++;
+    eq(await page.locator('.ws-dialog .assign-offer').count(),0,`${label}: an "Other" defect offers no company on the desk`);
     await context.close();
   }
   // The office presses Assign: now it is the plumber's.

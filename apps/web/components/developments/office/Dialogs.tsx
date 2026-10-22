@@ -44,6 +44,7 @@ export function Dialogs({ d, close, done, me }: { d: Dialog; close: () => void; 
   const [offer, setOffer] = useState<string[]>([]);
   const assigning = d.kind === 'assign' ? d.issue : null;
   useEffect(() => {
+    setOffer([]);
     if (!assigning) return;
     let live = true;
     projectSuggestions(assigning.projectId).then(s => { if (live) setOffer(companiesForIssue(assigning, s.byTrade)); }).catch(() => {});

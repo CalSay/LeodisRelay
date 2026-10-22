@@ -22,6 +22,7 @@ import { issueWord, raisedIssue, sentBackWord } from "@/lib/cameBack";
 import { OfficeWordBox } from "@/components/OfficeWordBox";
 import { isYours, nextYourIssue } from "@/lib/yourIssues";
 import { companiesForIssue } from "@/lib/suggestions";
+import { issueTradeWords } from "@/lib/snagList";
 
 /**
  * One issue, across every visit that touched it.
@@ -469,6 +470,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
               </div>
             ) : (
               <form onSubmit={assign} noValidate>
+                <p className="eng-help" style={{ marginTop: 0 }}>Trade: {issueTradeWords(issue)}</p>
                 <div className="field">
                   <label htmlFor="assign-owner">Responsible</label>
                   <input id="assign-owner" type="text" value={owner} onChange={(e) => { setOwner(e.target.value); setAssignError(null); }} list="assign-owners" placeholder="Person or company" autoComplete="off" autoFocus />
