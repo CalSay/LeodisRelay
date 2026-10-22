@@ -4,6 +4,47 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — A day's photographs on the first screen of a phone
+
+- Why: a walk at 390x844 (busy seed, Tetley Hall, 1,146 photographs, engineer
+  and office manager alike) finding one day's and one month's photographs.
+  The page opened with the heading, a line of explanation and a 420px stack
+  of five controls, so the first photograph started at 842px of 844: none
+  showed. Choosing a day (2 taps) left its photographs below the screen (first
+  at 900px), so every day needed a scroll down, and every Newer day or Older
+  day a scroll back up to the buttons and down again. Cal's 21 Oct ask: easy
+  for engineers, clear for the office. Not a `docs/tasks.json` task (picked
+  from the walk under Cal's 20 Oct go-ahead to decide); no status changed.
+- Changed (`PhotoLibraryPage.tsx`, `photos.css`), phones (640px and less)
+  only: choosing a month or a day, Newer day, Older day, Every day or a month
+  step scrolls so the count line sits just under the top bar, with the day
+  steps and the photographs below it. A link that names a day or a month (the
+  Weekly summary's "N photographs", the month sheet's "Every photograph from
+  October") does the same once the photographs load. The line under the
+  heading is left off, and Month and Day lose their small titles on screen
+  (kept for screen readers): they read "Every month", "Every day" or the
+  choice. Typing in the find box and changing project do not move the page.
+  Wider screens are unchanged. Help "What's new" line added.
+- Decided: titles hidden rather than Month and Day side by side, because at
+  390px half the width cuts "Thu 15 Oct 2026 · 15 photographs" to
+  "Thu 15 Oct 20…". An instant jump, not a smooth scroll, so it reads as the
+  page opening on the choice. Only a choice moves the page, never typing or
+  a project change.
+- Verified: typecheck, `npm test`, build. New
+  `scripts/verify-photos-phone.mjs` (76 checks: engineer light and manager
+  dark at 390x844, 1440 light): photographs on the first screen, after each
+  choice and step the count is under the top bar with the steps and a whole
+  row of photographs on screen, links naming a day or month, find box and
+  project change do not move the page, no sideways scroll, 1440 unchanged.
+  It fails on main ("photographs show on the first screen", first at 842px of
+  844). Also passed: verify-photo-library, verify-photos-month, verify-help,
+  verify-weekly-summary, verify-month-summary, verify-accessibility (584).
+  Screens: project files `ui-review/photos-phone/` (`walk/` before, `after/`;
+  the busy seed's photographs have no image files, so tiles show as blank).
+- Not verified: a real phone (the native day list, iOS Safari's own scroll),
+  browsers other than Chromium 141.
+- Next: nothing further from this walk.
+
 ## 2026-10-22 — "Not seen yet" counts the last two weeks
 
 - Why: a walk of an office manager at 1440 and 390px on main 199503f (busy
@@ -47,6 +88,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   files `ui-review/not-seen-pile/before|after`.
 - Not verified: a real phone or laptop, browsers other than Chromium 141.
 - Next: none from this walk.
+
 ## 2026-10-22 — The Weekly summary reads on a phone
 
 - Why: a walk of an office manager at 390px (latest main, busy example data
@@ -109,6 +151,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Ideas for later (not built): on a phone the week's "On site" list runs to
   about 3,500px on a busy week, before Issues; folding each report's work
   lines, as Today from site does, would bring the issues up.
+
 ## 2026-10-22 — A shorter Check & send for a site update
 
 - Why: a walk of an engineer at 390px (latest main 3b03173) sending the
@@ -377,6 +420,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   checked), and the Help text overstating "as before" at 1280-1365 (fixed).
 - Not verified: a real laptop with browser zoom or a larger system font, a
   screen reader, a printer.
+
 ## 2026-10-22 — A shorter printed month
 
 - Why: a walk of an office manager at 1440px (latest main, busy example data
@@ -479,6 +523,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   task; built under the project instructions' freedom to add features, which
   CLAUDE.md's "approved scope" rule predates.
 - Not verified: a live tenant, a real phone, a screen reader, a printer.
+
 ## 2026-10-22 — Straight on to the next issue after putting a fix forward
 
 - Why: a walk of an electrician on a 390px phone (latest main, local example
@@ -682,6 +727,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the click). It now waits up to 3 s for the bar to hide and to come back.
 - Not verified: real phones (including a phone's own toolbar and keyboard),
   real weak signal, screen readers.
+
 ## 2026-10-22 — Photographs by month
 
 - Why: the monthly progress walk found the office Photographs page showed one
@@ -735,6 +781,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   month and a day in it kept the day outside the month it opened; and the test
   count here was wrong.
 - Not verified: real phones, tablets, screen readers.
+
 ## 2026-10-22 — The office's questions from other sites on the engineer's home
 
 - Why: a two-site walk (`ui-review/two-site-day/walk-notes.md`, item 2) found
@@ -845,6 +892,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Seen on the walk, left as notes: the office's question on another site is not
   shown while at this one; the defect receipt has no way back to Site; the Send
   bar covers part of "What sending does".
+
 ## 2026-10-22 — The office fits a smaller laptop or a tablet
 
 - Why: the checking fixes walk (#131) found the office top bar 156px wider
@@ -1395,6 +1443,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   on their own, so a week of defects raised from site updates reads as none;
   My week shows "Put forward as fixed" for an issue the office has since sent
   back or closed. Both are small My week wording jobs.
+
 ## 2026-10-21 — Last week's summary from the office overview
 
 - Why: walked an office manager's Monday look back at last week on main
@@ -1582,6 +1631,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (label column for each field), so 214 reports are about 44,000px; a
   two-line phone row (who · project · time, then what was found) would
   roughly halve that.
+
 ## 2026-10-21 — Tenth release check: main ready at 0d56773
 
 - Why: about ten merges since the ninth check (#110 to #118), several on the
@@ -1614,6 +1664,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not covered: #119 (office Inbox), merged after this check; it waits for
   the next one.
 - Next: deploy 0d56773 when Cal says so (deploy thread).
+
 ## 2026-10-21 — Office Inbox tidy-up
 
 - Why: the office walk-through for #118 (1440px, dark and light, weeks of
@@ -1701,6 +1752,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   is squashed when no report is open (project names wrap to 3 or 4 lines);
   "Not seen yet" lists oldest first so today's arrive at the bottom; the
   Inbox has no "Today" filter.
+
 ## 2026-10-21 — The office's answers first on the engineer's home
 
 - Why: walked one engineer's whole visit at 390px on main a3bbb55 (open
@@ -1979,6 +2031,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   live tenant, a real Microsoft sign-in. No Entra or SharePoint setting was
   changed. `docs/phone-installation-checks.md` lists the steps to try on a
   phone.
+
 ## 2026-10-21 — A project at a glance on a phone
 
 - Why: Cal (2026-10-21 07:02) wants RELAY to get the office the information
@@ -2328,6 +2381,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   verify-role-access, verify-help.
 - Not verified: Cal's own screen or the live pilot (the pilot runs an
   older build), a real office monitor.
+
 ## 2026-10-21 — The week in the engineers' words (Weekly summary)
 
 - Why: Cal's 07:02 direction (get the office the information it needs).
@@ -2396,6 +2450,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `captionLine.test.ts`), `npm run build`; browser checks listed in the PR.
   Screenshots before and after: project files `ui-review/one-caption-line/`.
 - Not verified: a real phone, a real engineer, the live server or tenant.
+
 ## 2026-10-21 — Simpler office screens: one place for each thing
 
 - Why: Cal's 07:02 direction (RELAY gets the office the information it
@@ -2678,6 +2733,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Screenshots before and after: project files
   `ui-review/sent-report-two-steps/`.
 - Not verified: no real phone, no live tenant, no real engineer.
+
 ## 2026-10-21 — Simpler issue page for engineers
 
 - Why: Cal (2026-10-21 07:02): engineers are hands-on people, not IT people.
@@ -2777,6 +2833,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Proposed, not built: a Weekly summary link on each "Where each project
   stands" row; put the phone overview's project list above the four action
   counts; a plainer word than "Verify" if managers say so.
+
 ## 2026-10-21 — An engineer's day, in plainer words
 
 - Why: Cal (2026-10-21 07:02) wants RELAY really easy for hands-on
@@ -3097,6 +3154,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a physical phone, screen readers, the live server.
 - Proposed, not built: remove the hidden records entirely if Cal says so;
   shorter inspection blurbs (they repeat "actions go on the snag list").
+
 ## 2026-10-21 — PDFs with long, real content
 
 - Why: a quality pass asked for by the coordinator. Clients, auditors and the
@@ -3471,6 +3529,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a real phone, a live tenant or SharePoint, the live server
   behind Caddy (its own 502 page is simulated in the check), a real screen
   reader.
+
 ## 2026-10-21 — Registers and spreadsheet downloads as one set
 
 - Why: a cross-app quality pass (coordinator, under Cal's ask for a clear,
@@ -4078,6 +4137,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   actions offers no way to start the inspection that is due.
 - Not verified: a physical phone or real loss of signal (Playwright's offline
   switch stands in), a live tenant, screen readers.
+
 ## 2026-10-21 — The same words in reports and inspections
 
 - Why: #61 brought the rest of RELAY into line but stopped short of the
@@ -5003,6 +5063,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   handover: everything open on one project on one page, read-only, printable".
   Follow-ups: an area filter (by location as written) for phased handovers;
   showing it on the office desk for projects in their last month.
+
 ## 2026-10-20 — Accessibility pass over the engineer and office pages
 
 - Audited every engineer and office page built so far (28 pages, as engineer,
@@ -5302,6 +5363,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   check at 390 and 1440px". Follow-ups: add `verify-help.mjs` to the browser
   checks in `CLAUDE.md`, and a line in `CLAUDE.md` asking each feature PR to
   add its `WHATS_NEW` entry; let Cal or the office edit the guide's wording.
+
 ## 2026-10-20 — EXP-5: second report type, a pre-handover inspection
 
 - New report type on the #39 engine: a **handover inspection**
@@ -5648,6 +5710,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   issues if Cal prefers); more types on the same engine, such as a
   pre-handover area inspection or a commissioning record; add
   `verify-report-types.mjs` to the browser checks list in `CLAUDE.md`.
+
 ## 2026-10-20 — My week (new feature, proposed as NEW-9)
 
 - New `/my-week` page: the signed-in person's own week, Monday to Sunday,
@@ -6380,6 +6443,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `verify-role-access` (61) and `verify-search` (31) passed.
 - Not verified: a live SharePoint tenant, a physical device. Not in
   `docs/tasks.json`; proposed in the PR.
+
 ## 2026-10-20 — FE-5a: search and filter the issue register
 
 - The office issue register now filters by location text ("riser 2" finds
@@ -6425,6 +6489,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Next: the same filters for the engineer Issues view if engineers ask;
   CLAUDE.md's list of browser checks should gain
   `verify-issue-register.mjs`.
+
 ## 2026-10-20 — Since your last visit (new feature, proposed as NEW-5)
 
 - The engineer home now opens its right-hand column with "Since your last
@@ -6531,6 +6596,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   are lazy-loaded thumbnails).
 - Next: a "Photographs" link from an issue or the snag list filtered to that
   location, if site teams use the page.
+
 ## 2026-10-20 — FE-3b: which cards and photos are on the server
 
 - In the report editor every card row now ends with where the card is: "On
