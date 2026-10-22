@@ -4,6 +4,38 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Fourteenth release check (main 993445f, then 73b6d8d)
+
+- Why: a full check of main before the next deploy. Last passed: 6def5e8
+  (#2-#126). #154 (Attention kind by kind) and #142 (phone Undo focus) are
+  not on main, so not checked. No app change.
+- Ran: `npm ci`, typecheck, `npm test` (146 + 554), build, then all 112
+  `scripts/verify-*.mjs` one after another. 109 passed first time.
+  - `verify-undo-remove`: focus does not move to Undo after a card is removed
+    on a phone. Known fault from the thirteenth check, fixed by PR #142
+    (waiting on Cal); not fixed again here.
+  - `verify-site-coverage`: "a draft is not a visit" failed on every run.
+    The check, not the app: its quiet site's last report (today minus 10
+    days) falls inside the fortnight from Thursday to Sunday. PR #142 already
+    fixes this line of the check, so it is not changed here.
+  - `verify-editor-wide` timed out once waiting for a new inspection to
+    open; passed 5 reruns alone. Not reproduced, so recorded, not changed.
+- Then #156 and #157 merged, so everything ran again on main 73b6d8d:
+  typecheck, `npm test` (146 + 557), build, all 113 browser checks. 110
+  passed; undo-remove and site-coverage as above, and `verify-month-summary`
+  once read the tab title before it changed to "Monthly summary" (the title
+  follows the page a moment after a client-side move to another month). It
+  passed alone twice. The check now waits up to 5 s for the title; passes
+  3 of 3. No app change.
+- Deploy: no new settings, packages, data change or offline store version
+  (still `relay-public-v14`). One new read-only route, `/api/monthly-summary`.
+- Not verified: a real phone, tablet, printer or screen reader; a live tenant.
+- Next: once #142 merges, rerun `verify-undo-remove` and `verify-site-coverage`;
+  then main is ready.
+  #159 (Team tab, merged after) was not in this run; its own checks plus
+  team-last-sent, role-access, help, office-desk, month-summary and
+  engineer-layout pass on main with it.
+
 ## 2026-10-22 — The Team tab says who has sent updates this week
 
 - Why: a walk of an office manager at 1440px on main e3138df (busy seed, its
