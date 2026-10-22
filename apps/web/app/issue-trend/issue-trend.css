@@ -77,7 +77,17 @@
   html,body{background:#fff !important;color:#111;color-scheme:light;}
   .appbar,.install-help,.it-page>.back,.it-controls,.it-links{display:none !important;}
   .banner{position:static !important;background:none !important;color:#111 !important;border-bottom:1px solid #999;font-size:9px;}
-  .eng-page.it-page{padding:0;max-width:none;--it-open:#878881;}
+  .eng-page.it-page{padding:0;max-width:none;}
+  /* Above the dark theme's open grey, so paper always has the light one. */
+  :root .eng-page.it-page,:root[data-theme] .eng-page.it-page{--it-open:#878881;}
+  /* A4 is narrower than 760px, so the phone layout is undone for paper. */
+  .it-chart,.it-section{padding:14px 16px;}
+  .it-stat-n{font-size:26px;}
+  .it-bars{height:180px;}
+  .it-col{padding:0 3px;}
+  .it-table th,.it-table td{padding:7px 8px;}
+  .it-table thead th{letter-spacing:.12em;}
+  .it-table small{display:inline;}
   .it-stats{grid-template-columns:repeat(4,minmax(0,1fr)) !important;}
   .it-verdict,.it-stat,.it-chart,.it-section{background:#fff !important;break-inside:avoid;}
   .it-stack>span,.it-key{-webkit-print-color-adjust:exact;print-color-adjust:exact;}

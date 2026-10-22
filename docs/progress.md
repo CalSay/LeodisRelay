@@ -66,7 +66,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   project and issue sheets are (O2, O3). The month's figure tiles inside
   their card take the sunken ground. `issue-trend.css`: the cards' edges use
   `--line-2`; a print block gives the sheet alone, black on white on A4, with
-  the bars' colours kept and the desk layout (four figures, long week names).
+  the bars' colours kept (the light grey even in dark mode) and the desk
+  layout restored, as A4 is narrower than the 760px phone break.
   Help "What's new" line. No figures, components, routes or `globals.css`
   tokens changed.
 - Verified: typecheck, `npm test` (146 + 591), build; verify-weekly-summary (46),
