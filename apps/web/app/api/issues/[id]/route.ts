@@ -26,7 +26,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
   const principal = guard.principal;
-  try { await refreshIssues(); } catch { return NextResponse.json({reason:'SharePoint issues could not be refreshed. Please retry.'},{status:503}); }
+  try { await refreshIssues(true); } catch { return NextResponse.json({reason:'SharePoint issues could not be refreshed. Please retry.'},{status:503}); }
   const issue=getIssue(id);
   if(!issue)return NextResponse.json({reason:'No such issue.'},{status:404});
   if(!canAccessProject(principal,issue.projectId))return NextResponse.json({reason:'Project access required.'},{status:403});

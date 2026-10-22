@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   if (!guard.ok) return guard.response;
   const principal = guard.principal;
   if (!canRaiseVariation(principal)) return NextResponse.json({ reason: 'Only the office can add a variation to the register.' }, { status: 403 });
-  try { await refreshVariations(); } catch { return NextResponse.json({reason:'SharePoint variations could not be refreshed. Please retry.'},{status:503}); }
+  try { await refreshVariations(true); } catch { return NextResponse.json({reason:'SharePoint variations could not be refreshed. Please retry.'},{status:503}); }
 
   const body = (await request.json().catch(() => null)) as Record<string, unknown> | null;
   if (!body || typeof body !== 'object' || Array.isArray(body) || typeof body.requestId !== 'string' || typeof body.projectId !== 'string' || typeof body.description !== 'string' ||

@@ -74,7 +74,7 @@ export async function POST(request: Request) {
   // Authorship comes from the session. A client-supplied author is not an
   // author, and the review rules depend on knowing who actually wrote this.
   if (sharePointMode() === 'read') return NextResponse.json({reason:'Report capture is disabled while the connection is read-only.'},{status:409});
-  try { await refreshProjects(); } catch { return NextResponse.json({reason:'SharePoint projects could not be refreshed. Please retry.'},{status:503}); }
+  try { await refreshProjects(false, true); } catch { return NextResponse.json({reason:'SharePoint projects could not be refreshed. Please retry.'},{status:503}); }
   const project = cachedProject(body.projectId);
   if (!project || !reportableProject(project)) {
     return NextResponse.json({reason:'This project is not open for reporting.'},{status:422});
