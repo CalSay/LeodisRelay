@@ -5,7 +5,7 @@ point and work towards that with haste", with the UI on the engineer's phone
 and the office laptop "top notch". This page says what Release 1 is, what it
 leaves out, and what has to be true before it goes to the live pilot.
 
-The live pilot runs 03188ee (#2 to #99). Main is at b387483 (#180).
+The live pilot runs 03188ee (#2 to #27 and #29 to #99). Main is at b387483 (#180).
 
 ## What Release 1 is for
 
@@ -74,9 +74,9 @@ Release 1 is ready to deploy when every line is ticked.
 3. `npm run typecheck`, `npm test` and `npm run build` pass on the release
    commit.
 4. Every `scripts/verify-*.mjs` check passes, run one at a time (they share
-   ports). A check that is known to be slow on cloud machines
-   (verify-busy-projects, verify-day-walkthrough) passes on a rerun alone, or
-   fails the same way on the previous checked commit. verify-pdf-navigation
+   ports). A check that earlier release checks found slow or flaky on cloud
+   machines (verify-busy-projects, verify-day-walkthrough) passes on a rerun
+   alone, or fails the same way on the previous checked commit. verify-pdf-navigation
    is known to fail on the preinstalled Chromium (pdf.js 6) and is recorded,
    not waved through silently.
 5. A full release check on that commit: a walk of an engineer's day at 390px
@@ -104,8 +104,9 @@ work at once without touching the same screens:
 - **Lane O (office)** owns office screens, checked at **1440px**, light and
   dark, plus 390px light (the office also opens RELAY on a phone).
 
-A screen used by both (Photographs, Search, Help, Weekly summary) belongs to
-one lane only, named below, and that lane checks it at both widths. Within a
+A screen used by both (Photographs, Search, Help, Weekly summary, Issues over
+time, Before handover, the site diary) belongs to one lane only, named below,
+and that lane checks it at both widths, light and dark. Within a
 lane, tasks go in order. Never two threads in the same lane.
 
 **Every polish task does the same things on its screens:**
@@ -119,10 +120,20 @@ lane, tasks go in order. Never two threads in the same lane.
   sideways scroll, long or technical words.
 - Take things off the screen rather than add them. No new features, no new
   routes, no data changes.
-- Keep the shared files quiet: `globals.css` colour and size tokens are only
-  changed in task E1 (lane E) or O1 (lane O), never both at once. Lane E
-  styles go in `engineer.css` or the screen's own CSS; lane O in
-  `workspace.css`, `quickactions.css` or the screen's own CSS.
+- Keep the shared files quiet:
+  - No polish task changes the colour and size tokens in `globals.css`. If
+    one is needed, it is its own small PR between tasks, with both lanes'
+    checks run.
+  - `engineer.css`, `entry.css`, `search.css` and `stages.css` load on every
+    page (from `app/layout.tsx`), so new rules there use selectors that only
+    match the lane's own screens. Lane E styles go in `engineer.css` or the
+    screen's own CSS; lane O in `workspace.css`, `quickactions.css` or the
+    screen's own CSS.
+  - Components both lanes render are restyled from the calling screen's CSS,
+    not changed themselves: `PageTitle`, `PhotoImage`, `ThemeToggle`,
+    `SharePointStatus`, `DownloadLink`, `OfficeWordBox`, `SubmissionStages`,
+    `InstallRelay`, `IssueRegister`. If one has to change, the PR says so
+    and runs both lanes' checks for the screens that use it.
 - Pass the screen's existing verify scripts, `verify-accessibility`, and the
   usual typecheck and tests. Add or update a check only where the change
   moves something a check looks for.
@@ -132,14 +143,17 @@ lane, tasks go in order. Never two threads in the same lane.
 
 - **E1. Entry screens.** Sign-in, local sign-in, the company hub (`/`),
   `/developments`, `/signed-in`, `/offline`, the install prompt and the
-  signed-out prompt (`EntryFrame`, `InstallRelay`, `SignedOutPrompt`). The hub
-  shows Leodis Compliance as "Coming later", not a link, so nobody lands on
-  sample data (decided: it is not in Release 1 and invented records look
-  like real ones). Shared tokens for the engineer side, if any are needed,
-  are changed here.
-- **E2. The Site page.** `/engineer` (`EngineerWorkspace`, `HeldWork`,
-  `SinceLastVisit`): first screen on a phone shows the big button and what
-  needs the engineer, nothing else; the folds and rows below line up.
+  signed-out prompt (`EntryFrame`, `InstallRelay`, `SignedOutPrompt`), and
+  the main navigation in `app/layout.tsx` on a phone. The hub shows Leodis
+  Compliance as "Coming later", not a link, so nobody lands on sample data.
+  This is the one change of behaviour in the polish tasks, decided by
+  Claude under Cal's go-ahead to decide (14:11, 20 October): Compliance is
+  not in Release 1 and its invented records look like real ones. It is
+  undone by putting the link back.
+- **E2. The Site page.** `/engineer` Site view and its Projects view
+  (`EngineerWorkspace`, `HeldWork`, `SinceLastVisit`): first screen on a
+  phone shows the big button and what needs the engineer, nothing else; the
+  folds and rows below line up.
 - **E3. Site update.** `/reports/[id]` for a site update: cards, photos, Check
   & send, signature, the sent receipt, the no-signal and conflict states
   (`ObservationEditor`, `SignaturePad`, `SubmissionStages`, `DraftConflict`,
@@ -150,12 +164,13 @@ lane, tasks go in order. Never two threads in the same lane.
 - **E5. Inspections.** Pre-handover and first fix in `/reports/[id]`
   (`CheckEditor`, `InspectedName`): the check list, needs action, signing,
   sent. Safety and tower inspections are left alone (switched off).
-- **E6. Issues.** `/issues` list and "Where are you?", `/issues/[id]`, putting
-  a fix forward, `/issues/snag-list` (`EngineerIssueList`). Wait for #181 to
-  merge before branching.
-- **E7. The engineer's other pages.** `/my-week`, `/photos`, `/site-notes`,
-  `/search`, `/help` (`MyWeekPage`, `PhotoLibraryPage`, `SiteNotesPage`,
-  `SearchPage`, `HelpPage`). Photographs, Search and Help belong to this lane
+- **E6. Issues.** The Issues view of `/engineer` and "Where are you?" (its
+  part of `EngineerWorkspace`, and `EngineerIssueList`), `/issues/[id]`,
+  putting a fix forward, `/issues/snag-list`. Wait for #181 to merge before
+  branching.
+- **E7. The engineer's other pages.** The Reports view of `/engineer`,
+  `/my-week`, `/photos`, `/site-notes`, `/search`, `/help` (`MyWeekPage`,
+  `PhotoLibraryPage`, `SiteNotesPage`, `SearchPage`, `HelpPage`). Photographs, Search and Help belong to this lane
   and are checked at 1440px light and dark too.
 
 ### Lane O: office laptop (1440px)
@@ -163,24 +178,27 @@ lane, tasks go in order. Never two threads in the same lane.
 - **O1. Top bar and projects overview.** `/office` landing and the projects
   list, the overview blocks (Not seen yet, Unassigned issues, Fixed to check,
   Today from site) (`OfficeDesk`, `ProjectsView` overview part, `bits`).
-  Shared tokens for the office side, if any, are changed here. While #154 is
+  While #154 is
   open, leave the Attention block's figures as they are.
 - **O2. A project's sheet.** The sheet beside the list in `ProjectsView`:
-  last visit, latest from site, reports and records links, project manager.
+  last visit, latest from site, reports and records links, project manager;
+  and the separate `/projects` and `/projects/[id]` pages (`ProjectsPage`).
   Leave the issue sheet to O3.
 - **O3. Issues.** The Issues tab and register (`IssuesView`, `IssueRegister`),
   an issue's sheet, checking a fix and sending it back (`CheckFix`, the check
   dialogs in `Dialogs`), Companies (`/companies`, `CompanyIssuesPage`).
 - **O4. Inbox and reading a report.** The Inbox tab (`InboxView`), the
-  office's report reader and review panel (`ReviewPanel`), correction and
-  acknowledgement dialogs in `Dialogs`. Wait for O3 to merge (both change
-  `Dialogs`).
+  office's report reader (in `InboxView` and the report part of
+  `ProjectsView`), `/reports/[id]/preview` and the `/reports/[id]/pdf`
+  viewer page, correction and acknowledgement dialogs in `Dialogs`. Wait for
+  O2 and O3 to merge (they change `ProjectsView` and `Dialogs`).
 - **O5. Weekly summary and month.** `/weekly-summary` week and month, at
   1440px and 390px (`WeeklySummaryPage`, `MonthSheet`, `summaryRows`,
-  `week.css`), and `/issue-trend`. This lane owns the engineer's view of the
-  weekly summary too.
+  `week.css`), and `/issue-trend`. This lane owns the engineer's view of
+  these too.
 - **O6. Coverage, handover and diary.** `/coverage` (`SiteCoveragePage`),
-  `/handover` (`BeforeHandoverPage`), `/diary` (`SiteDiaryPage`).
+  `/handover` (`BeforeHandoverPage`), `/diary` (`SiteDiaryPage`). Engineers
+  open Before handover and the diary too: check both at 390px light and dark.
 - **O7. Variations, Team and Admin.** The Variations tab (`VariationsView`),
   Team and Admin (`TeamAdmin`, `/admin`).
 

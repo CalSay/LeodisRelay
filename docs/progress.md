@@ -21,7 +21,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   #130 and #154 join only if Cal says "carry on" before the final check. The
   hub should show Compliance as "Coming later" rather than open sample data
   (task E1). PDFs are left to Cal's own PDF template thread. Shared colour
-  tokens change only in E1 or O1.
+  tokens are not changed by polish tasks; shared components are restyled
+  from the calling screen. Fresh review fixed screen gaps (/projects, report
+  preview, the engineer's Reports and Issues views) and file names.
 - Verified: `npm test` (581 pass) on main b387483 before writing. No code
   changed, so no browser checks were run.
 - Next: the coordinator dispatches E1 and O1.
