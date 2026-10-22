@@ -19,7 +19,7 @@ export function middleware(request: NextRequest) {
   const response = route(request);
   // Opened from the home screen icon: the page that shows next checks whether
   // it is full screen (lib/homeScreen.ts, components/IconOpensBrowser.tsx).
-  if (isIconLaunch(request.nextUrl.pathname, request.nextUrl.searchParams)) {
+  if (isIconLaunch(request.nextUrl.pathname, request.nextUrl.searchParams, request.headers.get('sec-fetch-site'))) {
     response.cookies.set(ICON_LAUNCH_COOKIE, '1', { path: '/', sameSite: 'lax', secure: request.nextUrl.protocol === 'https:', maxAge: ICON_LAUNCH_SECONDS });
   }
   return response;

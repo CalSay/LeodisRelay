@@ -9,10 +9,17 @@ test('only the address the home screen icon opens counts as a launch from the ic
   const start = /start_url: "([^"]+)"/.exec(manifest)?.[1];
   assert.ok(start, 'manifest start_url');
   const url = new URL(start, 'https://app.relaybyleodis.com');
-  assert.equal(isIconLaunch(url.pathname, url.searchParams), true);
-  assert.equal(isIconLaunch('/', new URLSearchParams()), false);
-  assert.equal(isIconLaunch('/developments', new URLSearchParams('open=app')), false);
-  assert.equal(isIconLaunch('/', new URLSearchParams('open=other')), false);
+  assert.equal(isIconLaunch(url.pathname, url.searchParams, 'none'), true);
+  assert.equal(isIconLaunch('/', new URLSearchParams(), 'none'), false);
+  assert.equal(isIconLaunch('/developments', new URLSearchParams('open=app'), 'none'), false);
+  assert.equal(isIconLaunch('/', new URLSearchParams('open=other'), 'none'), false);
+});
+
+test('coming back to the icon address from Microsoft sign-in is not a launch', () => {
+  const app = new URLSearchParams('open=app');
+  assert.equal(isIconLaunch('/', app, 'cross-site'), false);
+  assert.equal(isIconLaunch('/', app, 'same-origin'), false);
+  assert.equal(isIconLaunch('/', app, null), false);
 });
 
 test('the launch mark is found among other cookies, and not once cleared', () => {

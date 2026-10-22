@@ -53,6 +53,11 @@ try {
   const manifest=await (await fetch(base+'/manifest.webmanifest')).json();
   check(manifest.display==='standalone'&&manifest.scope==='/'&&manifest.start_url==='/?open=app','the manifest opens full screen over the whole of RELAY');
 
+  // Back from Microsoft's sign-in (another site), the same address is not a launch from the icon.
+  {const from=async site=>(await fetch(base+'/?open=app',{redirect:'manual',headers:{'sec-fetch-site':site}})).headers.get('set-cookie')??'';
+    check((await from('none')).includes('relay-icon-launch=1'),'opened directly: marked as a launch');
+    check(!(await from('cross-site')).includes('relay-icon-launch'),'back from Microsoft sign-in: not marked');}
+
   // Android: the icon was saved as a shortcut, so it opens a Chrome tab.
   {const {context,page,errors}=await open();
     await page.goto(base+'/?open=app');await page.waitForURL(landed);

@@ -21,7 +21,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   that older iPhones look for.
 - Changed: `layout.tsx` adds `apple-mobile-web-app-capable`. `middleware.ts`
   marks a visit to the icon's address (`/?open=app`) with a 5-minute cookie
-  (`lib/homeScreen.ts`); `IconOpensBrowser` reads it once and, if the page is
+  (`lib/homeScreen.ts`), only when opened directly (Sec-Fetch-Site "none"),
+  so coming back to it from Microsoft's sign-in in a browser sheet over a
+  properly installed app is not mistaken for a shortcut (fresh review); `IconOpensBrowser` reads it once and, if the page is
   not running full screen, says the icon opened the browser and how to add
   RELAY again (iPhone or Android words), until "Got it". It stays through a
   sign-in on the way in. The sign-in screen (`SignedInElsewhere`) carries on
@@ -33,7 +35,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   session was left alone: a longer one means fewer Microsoft sign-ins (and so
   fewer bars) but a lost phone stays signed in longer; that is Cal's call.
 - Verified: typecheck, `npm test`, build, new `scripts/verify-home-screen.mjs`
-  (21 checks: tags and manifest, note at 390 light/dark and 1440 on Android and
+  (23 checks: tags and manifest, not marked when coming from another site,
+  note at 390 light/dark and 1440 on Android and
   iPhone words, none when full screen or typed in, cookie read once, through
   sign-in, sign-in carries on, stays put when still signed out). Full screen
   is imitated by answering the display-mode query, as Chromium 141 cannot act

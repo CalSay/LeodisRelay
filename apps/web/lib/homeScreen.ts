@@ -14,9 +14,15 @@ export const ICON_LAUNCH_COOKIE = 'relay-icon-launch';
 /** Long enough to survive a Microsoft sign-in on the way in, short enough not to stick to a later visit. */
 export const ICON_LAUNCH_SECONDS = 300;
 
-/** True when the address is the one the home screen icon opens. */
-export function isIconLaunch(pathname: string, search: URLSearchParams): boolean {
-  return pathname === '/' && search.get('open') === 'app';
+/**
+ * True when the person opened the icon's address themselves. An icon launch
+ * has no page behind it (Sec-Fetch-Site "none"). The same address reached on
+ * the way back from Microsoft's sign-in comes from another site, and may be in
+ * a browser sheet over an app that was installed properly, so it is not a launch.
+ * A browser too old to send the header gets no note rather than a wrong one.
+ */
+export function isIconLaunch(pathname: string, search: URLSearchParams, fetchSite: string | null): boolean {
+  return pathname === '/' && search.get('open') === 'app' && fetchSite === 'none';
 }
 
 /** True when `cookieHeader` (document.cookie) carries the mark set by middleware.ts. */
