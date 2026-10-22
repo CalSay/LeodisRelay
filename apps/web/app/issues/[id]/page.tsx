@@ -5,13 +5,13 @@ import { useProjectLookup } from "@/components/ProjectContext";
 import { use, useEffect, useRef, useState, type FormEvent } from "react";
 import { PageTitle } from '@/components/PageTitle';
 import Link from "next/link";
-import { projectSuggestions, readPhoto } from "@/lib/api";
+import { projectSuggestions, readPhoto, yourOpenIssues } from "@/lib/api";
 import type { Issue, Photo } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
 import { PhotoRefused, uploadPhotos } from '@/lib/localMedia';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { canManage } from '@/lib/auth/access';
-import { backLabel, safeViewReturn } from '@/lib/viewNavigation';
+import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 import { confirmationLabel } from '@/lib/issueConfirmation';
 import { eventProvenance } from '@/lib/issueProvenance';
 import { ISSUE_WORK } from '@/lib/status';
@@ -19,6 +19,7 @@ import { dateShort } from '@/lib/dates';
 import { failure } from "@/lib/failure";
 import { issueWord, raisedIssue } from "@/lib/cameBack";
 import { OfficeWordBox } from "@/components/OfficeWordBox";
+import { nextYourIssue } from "@/lib/yourIssues";
 
 /**
  * One issue, across every visit that touched it.
@@ -77,6 +78,10 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   const [instruction, setInstruction] = useState("");
   const [owners, setOwners] = useState<string[]>([]);
   const [assignError, setAssignError] = useState<string | null>(null);
+  // Just put forward as fixed by this engineer: say so and offer the next of theirs on this site
+  // (empty while it is looked up, and if there is no answer; `left: 0` when none is left).
+  const [putForward, setPutForward] = useState<{ next?: Issue; left?: number } | null>(null);
+  const doneBox = useRef<HTMLElement>(null);
 
   useEffect(() => {
     fetch(`/api/issues/${id}`, { cache: "no-store" })
@@ -100,6 +105,11 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
     const room = title.getBoundingClientRect().top - bar - 8;
     if (need > 0 && room > 0) window.scrollBy(0, Math.min(need, room));
   }, [update, manager, issue]);
+
+  // The button that was tapped has gone: move to what replaced it, once, so the result is read out.
+  // Not again when the next issue arrives, which may be after the engineer has started typing a note.
+  const shown = !!putForward;
+  useEffect(() => { if (shown) doneBox.current?.focus(); }, [shown]);
 
   async function run(kind: string) {
     if (!issue) return;
@@ -129,6 +139,10 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
       setAssigning(false);
       setNote("");
       setPhotos([]);
+      if (kind === "submit_closure" && !manager && principal) {
+        setPutForward({});
+        yourOpenIssues().then((all) => setPutForward(nextYourIssue(all, principal, body.projectId, body.id))).catch(() => undefined);
+      }
     } catch (e) {
       // A photograph the server would not take says so; anything else here is the connection.
       setError(e instanceof PhotoRefused ? `A photograph was not accepted: ${e.reason ? e.reason[0]!.toLowerCase() + e.reason.slice(1) : 'the server would not take it.'} Remove it and add it again. Your note is still here.`
@@ -311,10 +325,41 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
 
         {word && <OfficeWordBox key={`${word.at}${word.note}`} word={word} />}
         {issue.confirmation === "disputed" && <p className="note note-bad" role="status">The office is checking whether this needs fixing. Open History for why.</p>}
-        {canClose && !isWithdrawn && <p className="note" role="status">Put forward as fixed. It is waiting for the office to check it.</p>}
+        {canClose && !isWithdrawn && (putForward ? (
+          <section className="eng-panel issue-eng-done" role="status" aria-labelledby="issue-done-title" ref={doneBox} tabIndex={-1}>
+            <h2 id="issue-done-title">Put forward as fixed</h2>
+            <p>It is waiting for the office to check it. If it is not finished, it comes back to you.</p>
+            {putForward.next ? (
+              <Link className="eng-primary issue-eng-next" href={withViewReturn(`/issues/${putForward.next.id}`, back)}>
+                <span>Next: {putForward.next.description}</span>
+                <small>{putForward.next.location || "Location not recorded"} · {putForward.left} to do on this site</small>
+              </Link>
+            ) : putForward.left === 0 && <p><strong>That was the last one for you on {project?.projectName ?? "this site"}.</strong></p>}
+            <Link className="eng-secondary" href={back}>{backLabel(back, 'Issues')}</Link>
+          </section>
+        ) : <p className="note" role="status">Put forward as fixed. It is waiting for the office to check it.</p>)}
         {isClosed && !isWithdrawn && <p className="note" role="status">The office checked the work and closed this issue.</p>}
 
-        {!isWithdrawn && !isClosed && (
+        {!isWithdrawn && !isClosed && (canClose ? (
+          // Waiting on the office: adding more is still possible, but folded, so the page reads as done.
+          <details className="eng-more-detail issue-eng-add">
+            <summary>Add a note for the office<small>A photograph or a few words, if there is more to say</small></summary>
+            <div className="issue-eng-update">
+              {cameraButton}
+              {newPhotos}
+              <div className="field">
+                <label htmlFor="note">What has happened</label>
+                <textarea id="note" rows={2} value={note} onChange={(e) => setNote(e.target.value)} placeholder="What you did or found" />
+              </div>
+              {error && <div className="note note-bad" role="alert">{error}</div>}
+              <div className="btn-row">
+                <button onClick={() => run("progress")} disabled={busy}>
+                  Record an update
+                </button>
+              </div>
+            </div>
+          </details>
+        ) : (
           <section className="eng-panel issue-eng-update" aria-labelledby="issue-update-title">
             <h2 id="issue-update-title">Update this issue</h2>
             {cameraButton}
@@ -325,17 +370,15 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
             </div>
             {error && <div className="note note-bad" role="alert">{error}</div>}
             <div className="btn-row">
-              {!canClose && (
-                <button className="btn-primary" onClick={() => run("submit_closure")} disabled={busy}>
-                  Put forward as fixed
-                </button>
-              )}
+              <button className="btn-primary" onClick={() => run("submit_closure")} disabled={busy}>
+                Put forward as fixed
+              </button>
               <button onClick={() => run("progress")} disabled={busy}>
                 Record an update
               </button>
             </div>
           </section>
-        )}
+        ))}
 
         <details className="eng-more-detail issue-more">
           <summary>History · {issue.events.length}<small>Every update, and the detail the office keeps</small></summary>
