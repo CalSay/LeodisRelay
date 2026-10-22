@@ -143,11 +143,17 @@ try {
     {
       const narrow=await open('light',600,900);
       await narrow.page.goto(`${base}/weekly-summary?project=${P}&week=${week}`);await narrow.page.locator('.week-sheet').waitFor();
-      const print=narrow.page.getByRole('button',{name:'Print or save as PDF'});await print.hover();
-      const [bg,fg]=await print.evaluate(b=>[getComputedStyle(b).backgroundColor,getComputedStyle(b).color]);
-      const lum=(c)=>{const [r,g,b]=c.match(/\d+(\.\d+)?/g).slice(0,3).map(Number).map(v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4;});return 0.2126*r+0.7152*g+0.0722*b;};
+      const print=narrow.page.getByRole('button',{name:'Print or save as PDF'});
+      // No fade, so the colours read are the hover's own, not the start of the transition.
+      await narrow.page.addStyleTag({content:'*{transition:none !important;}'});await print.hover();
+      const [bgRaw,fg,panel]=await print.evaluate(b=>[getComputedStyle(b).backgroundColor,getComputedStyle(b).color,getComputedStyle(document.querySelector('.week-controls')).backgroundColor]);
+      // A see-through hover colour is blended over the panel behind it.
+      const parts=(c)=>c.match(/\d+(\.\d+)?/g).map(Number);
+      const [br,bg_,bb,ba=1]=parts(bgRaw),[pr,pg,pb]=parts(panel);
+      const bg=`rgb(${[br*ba+pr*(1-ba),bg_*ba+pg*(1-ba),bb*ba+pb*(1-ba)].map(Math.round).join(', ')})`;
+      const lum=(c)=>{const [r,g,b]=parts(c).slice(0,3).map(v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4;});return 0.2126*r+0.7152*g+0.0722*b;};
       const ratio=(a,b)=>{const [x,y]=[lum(a),lum(b)].sort((p,q)=>q-p);return (x+0.05)/(y+0.05);};
-      check(ratio(bg,fg)>=4.5,`600 with a mouse: hovering print keeps its text readable (${bg} / ${fg}, ${ratio(bg,fg).toFixed(1)}:1)`);
+      check(bgRaw!==panel&&ratio(bg,fg)>=4.5,`600 with a mouse: hovering print shows and keeps its text readable (${bgRaw} over ${panel} / ${fg}, ${ratio(bg,fg).toFixed(1)}:1)`);
       await narrow.context.close();
     }
     const phone=await open('light',390);
