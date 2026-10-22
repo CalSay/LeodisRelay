@@ -4,6 +4,42 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish E2: the engineer Site and Projects views
+
+- Why: task E2 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
+  the engineer's phone). Before and after screenshots at 390 light and dark
+  and 1440 light (first screen and full page) are in the project files under
+  `ui-review/release-1/E2/`. Busy example data, 60 days, Sam Spark.
+- Found: the Site page opened with an "On site" label above the engineer's
+  name, which said nothing the page does not, and pushed the office's answers
+  down. "This project" repeated the open issue count that the Site issues row
+  right under it already gives ("111 open issues" twice). Inside the lists,
+  the "Reports from others / Issues / Variations" labels and the folded lines
+  ("More on this project", "3 drafts saved to RELAY") started 3px left of the
+  row text. On a phone the inspection tiles put a "HANDOVER" or "FIRST FIX"
+  tag beside "Do a handover inspection", squeezing the words to three lines.
+  On Projects the site names were small (15px) inside a card inside a box,
+  so on a phone they sat 32px in from the group's edge.
+- Changed: `EngineerWorkspace.tsx` (no "On site" label; no count beside "This
+  project"); `engineer.css` new block at the end scoped to `.eng-workspace`
+  (labels and folds line up with rows; inspection tags hidden at 600px and
+  under; Projects names 17px with roomier cards and less nested padding on a
+  phone; a slightly tighter project band on a phone). No `globals.css` token
+  changes, no shared component changed, no app bar change (E1, #190).
+- Decided (Claude): no Help "What's new" line, as nothing works differently.
+- Checks: `verify-day-walkthrough` read "N open issues" from the This project
+  heading; it now checks the heading does not repeat the count (the Site
+  issues row check above it still checks the number).
+- Verified (after rebasing on E1 #190 and #191/#192): typecheck, `npm test`
+  (146 + 591), build. Browser, one at a time: engineer-layout, busy-home (35),
+  engineer-day (37), day-walkthrough (117), home-and-sheet (254),
+  came-back-first (29), engineer-nav (60), accessibility (584), first-time-use
+  (375); before the rebase also defect-waiting-on-site (99), first-day (94),
+  role-access (95), other-sites-came-back (32). A fresh-context review found
+  "Show N more" 3px out of line, one heading rule reaching the Reports and
+  Issues views, and this entry missing the checks; all fixed.
+- Not verified: a real phone or a screen reader.
+
 ## 2026-10-22 — Issues lists draw the first 30 cards first (slow pages on engineer phones, part 2)
 
 - Why: part 1 (#188) took SharePoint off the wait. With a busy project's own

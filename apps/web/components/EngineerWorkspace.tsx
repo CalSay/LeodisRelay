@@ -330,7 +330,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
       {view!=='home' && view!=='projects' && <div className="eng-project-context"><div><small>CURRENT PROJECT</small><strong>{project.projectName}</strong></div></div>}
       {error && <div className="note note-bad" role="alert">{error} <button onClick={()=>{setError('');setRetry(n=>n+1);}}>Retry</button></div>}
       {view==='home' && <>
-        <div className="eng-heading eng-heading-home"><p className="lbl">On site</p><h1>{principal?.name}</h1><p>{principal?.trade ? `${principal.trade} engineer` : principal?.role} · {fmtDay(new Date().toISOString())}</p></div>
+        <div className="eng-heading eng-heading-home"><h1>{principal?.name}</h1><p>{principal?.trade ? `${principal.trade} engineer` : principal?.role} · {fmtDay(new Date().toISOString())}</p></div>
         <div className="eng-home-grid"><div>
           <section className="eng-band"><span className="lbl">Current project</span><h2>{project.projectName}</h2><p><span className="ref" style={{color:'inherit'}}>{project.projectNumber}</span> · {project.projectManager}, project manager · <button type="button" onClick={()=>navigate('projects')}>Change ›</button></p></section>
           {/* The job: a site update with photographs, issues and variations, sent to the office. One big button, then the two quick ones. */}
@@ -373,7 +373,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
         </div><div>
           <SinceLastVisit key={project.id} projectId={project.id} returnTo={engineerReturn()}/>
           <section aria-labelledby="eng-project-title">
-            <div className="eng-section-title"><h2 id="eng-project-title">This project</h2><span className="r">{back && !back.failed ? `${back.open} open issue${back.open===1?'':'s'}` : ''}</span></div>
+            {/* The open issue count is on the Site issues row below, so the heading does not repeat it. */}
+            <div className="eng-section-title"><h2 id="eng-project-title">This project</h2></div>
             <div className="eng-list">
               <button type="button" className="eng-row" onClick={()=>navigate('issues','open')}><div className="main"><b>Site issues</b><span>{back && !back.failed ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
               <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back && !back.failed ? `${back.reports} sent · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
