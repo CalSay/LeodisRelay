@@ -15,6 +15,7 @@ import { againWords, putForwardAt, sentBackBefore, waitingWords } from '@/lib/ch
 import { withViewReturn } from '@/lib/viewNavigation';
 import { shiftWeek, weekStart } from '@/lib/weeklySummary';
 import { confirmationNote } from '@/lib/issueConfirmation';
+import { openAtPlace, placeRegisterHash } from '@/lib/issueQuery';
 import type { Correction, CorrectionAction, Issue, Observation, Report, ReportSummary, Variation } from '@/lib/types';
 import { revisionsBefore, sectionOf } from '@/lib/sectionMatch';
 import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, signedCopyLink, variationValue } from '@/lib/variations';
@@ -40,7 +41,7 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
   useEffect(() => { if (window.matchMedia('(max-width:700px)').matches) window.scrollTo(0, 0); }, [depth, s?.code, id]);
   const projects = s && <ProjectsCol key="projects" ctx={ctx} current={s} />;
   const main = <div key="main" className="col col-main">
-      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h2>{s ? 'Details' : 'Overview'}</h2><i>{s ? s.project.projectNumber : 'Office'}</i></div>
+      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h2>{s ? 'Details' : 'Overview'}</h2>{s && <i>{s.project.projectNumber}</i>}</div>
       <div className="colpad">
         {!ctx.snap ? <div className="loading">Loading office records</div>
           : kind === 'report' && id ? <ReportReader ctx={ctx} id={id} />
@@ -60,7 +61,7 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
 /** "1 report", "3 issues". */
 const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
 function officeReturn(ctx: Ctx): string {
-  const route = [ctx.route.tab, ctx.route.a, ctx.route.b, ctx.route.c].filter((part): part is string => !!part);
+  const route = [ctx.route.tab, ctx.route.a, ctx.route.b, ctx.route.c, ctx.route.d].filter((part): part is string => !!part);
   return `/office#/${route.join('/')}`;
 }
 
@@ -135,7 +136,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   return <div className="col">
     <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h2>Register · {s.project.projectName}</h2><i>{s.reports.length} report{s.reports.length === 1 ? '' : 's'} · {s.active.length} open</i></div>
     {/* A phone shows this column in place of the project sheet, so the sheet's four figures, the project's own pages and what site said come first. */}
-    {phone && <div className="phone-only register-standing"><SheetFigures ctx={ctx} s={s} /><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /><LatestFromSite ctx={ctx} s={s} shown={2} /></div>}
+    {phone && <div className="phone-only register-standing"><p className="register-name">{s.project.projectName}<span className="rowsub"><span className="ref">{s.project.projectNumber}</span> · {s.project.clientName}</span></p><SheetFigures ctx={ctx} s={s} /><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /><LatestFromSite ctx={ctx} s={s} shown={2} /></div>}
     <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
       {([['action', `Needs action · ${s.needsAction + onSite.length}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
     </div>
@@ -194,7 +195,8 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   // The totals, overdue count and latest reports that used to sit here are in that list, the
   // action groups and the Inbox, so they are no longer repeated; nor are the tab counts above it.
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h3>Office position</h3><div className="rowsub">Updated {fmtWhen(snap.loadedAt)}</div></div>
+    {/* One line: the top bar already names the company, so the title says only what this is and how fresh it is. */}
+    <div className="sheet-title office-title"><div><h3>Office position</h3><span className="rowsub">Updated {fmtWhen(snap.loadedAt)}</span></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link>{safetyRecords && <Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions{safety ? ` · ${safety.open} open` : ''}</Link>}</div></div>
     {!snap.reports.length && !snap.issues.length && !snap.variations.length && <div className="note info office-first" role="status"><span>
       <b>Nothing has come in from site yet.</b> Reports arrive in the Inbox as engineers send them, and their defects and variations fill the Issues and Variations registers. Choose a project to see its sheet, or open Help for how RELAY works.
@@ -298,14 +300,15 @@ function actionGroups(ctx: Ctx): ActionGroup[] {
   const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
   const reportRow = (r: ReportSummary, action?: ReactNode) => <div key={r.id}><a className="rt" href={`#/projects/${r.projectId}/report/${r.id}`}><b>{project(r.projectId)} · {r.author}</b><span>{shortRef(r.reference)} · received {fmtReceived(r.serverAcknowledgedAt, ctx.day)}</span></a>{action}</div>;
   const issueRow = (i: Issue, sub: string, action?: ReactNode) => <div key={i.id}><a className="rt" href={`#/projects/${i.projectId}/issue/${i.id}`}><b>{i.description}</b><span>{project(i.projectId)} · {sub}</span></a>{action}</div>;
+  // Every row's button is the quiet kind: a screen of gold buttons says nothing about which comes first.
   return [
     // Opening a report marks it seen, so each row is a link and nothing more.
     { key: 'notAck', title: 'Not seen yet', sub: 'Received in the last two weeks, nobody in the office has opened it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: anyReports ? 'Every report from the last two weeks has been seen.' : 'No reports received yet.',
       rows: a.notRead.slice(0, 4).map(r => reportRow(r)) },
     { key: 'unassigned', title: 'Unassigned issues', sub: 'Open, nobody owns the action', n: a.unassigned.length, tone: 'soon', all: '#/issues/show/unassigned', empty: anyOpen ? 'Every open issue has an owner.' : 'No open issues.',
-      rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · ${issueTradeWords(i)} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)) },
+      rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · ${issueTradeWords(i)} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <BtnQ className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</BtnQ>)) },
     { key: 'verify', title: 'Fixed, to check', sub: 'Put forward as fixed; someone else checks it', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be checked.',
-      rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · ${againWords(i) ? `${againWords(i)} · ` : ''}${waitingWords(i, ctx.day)}`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: () => Promise.resolve(a.verify) })}>Verify</Btn>)) },
+      rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · ${againWords(i) ? `${againWords(i)} · ` : ''}${waitingWords(i, ctx.day)}`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: () => Promise.resolve(a.verify) })}>Verify</BtnQ>)) },
   ];
 }
 /** On a phone the groups stack under the project list, so their counts are gathered at the top, each a tap from its group. */
@@ -359,14 +362,17 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   // Where it stands, then what site said; the project's other pages and its details after them. What needs the office
   // and every report are in the register column beside the sheet (a phone shows that column instead), so not repeated here.
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
+    {/* The Projects column beside the sheet is the way back, so the title is the project alone. */}
+    <div className="sheet-title project-title"><div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
       <div className="actions"><BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'variation-new', projects: ctx.projects, projectId: p.id, opened: v => ctx.go(`#/projects/${s.code}/variation/${v.id}`) })}>Add variation</BtnQ><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link></div></div>
-    <SheetFigures ctx={ctx} s={s} />
-    <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
+    {/* The figures and the issue bar under them read as one block. */}
+    <div className="sheet-standing"><SheetFigures ctx={ctx} s={s} /><div className="sheet-bar"><Bar c={s.rollup} /><Meta c={s.rollup} /></div></div>
     {!phone && <LatestFromSite ctx={ctx} s={s} />}
-    {s.drafts.length > 0 && <p className="rowsub" style={{ marginTop: 12 }}>{s.drafts.length} draft{s.drafts.length === 1 ? '' : 's'} in progress on site. Contents stay private until sent.</p>}
+    {s.drafts.length > 0 && <p className="rowsub sheet-drafts">{s.drafts.length} draft{s.drafts.length === 1 ? '' : 's'} in progress on site. Contents stay private until sent.</p>}
+    <SecH>On this project</SecH>
     <ProjectLinks ctx={ctx} projectId={p.id} />
-    <dl className="tb" style={{ marginTop: 12 }}><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
+    <SecH>Project details</SecH>
+    <dl className="tb sheet-details"><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
   </div>;
 }
 
@@ -776,8 +782,12 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
   const back = issue.work === 'awaiting_verification' ? sentBackBefore(issue) : undefined;
   const d = (kind: string) => ctx.setDialog(dialogFor(kind, issue, ctx));
   const linkedVariations = ctx.snap?.variations.filter(v => v.linkedIssueId === issue.id) ?? [];
-  return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h3>{issue.description}</h3><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div></div>
+  // Everything else at this place on the project: the register's open issues there and the photographs, as typed (no list of places).
+  const place = issue.location.trim().replace(/\s+/g, ' ');
+  const here = openAtPlace(ctx.snap?.issues ?? [], issue.projectId, place);
+  return <div className="sheet issue-sheet">
+    <div className="sheet-title issue-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h3>{issue.description}</h3><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div>
+      {place && ctx.snap && <p className="sheet-here">At <b>{place}</b>: {here.length ? <a href={placeRegisterHash(issue.projectId, place)}>{count(here.length, 'open issue')}</a> : 'no open issues'} · <Link href={`/photos?${new URLSearchParams({ project: issue.projectId, q: place, returnTo: officeReturn(ctx) })}`}>Photographs</Link></p>}</div>
       <div className="actions">
         <Link className="btn btn-q btn-sm" href={withViewReturn(`/issues/${issue.id}`, officeReturn(ctx))}>Issue page</Link>
         {active && issue.work !== 'awaiting_verification' && (issue.owner ? <BtnQ className="btn-sm" onClick={() => d('assign')}>Reassign</BtnQ> : <Btn className="btn-sm" onClick={() => d('assign')}>Assign</Btn>)}

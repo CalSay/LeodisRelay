@@ -106,7 +106,8 @@ try {
     await flag(second);
     await context.setOffline(true);await send();await notSent().waitFor();
     await tap(page.getByRole('button',{name:'Site',exact:true}));
-    await page.getByRole('button',{name:/Flag a defect/}).first().waitFor();
+    // The Site page says it is not sent yet until it goes (2026-10-22).
+    await page.getByRole('button',{name:/Defect not sent yet/}).waitFor();
     await context.setOffline(false);
     const note=page.locator('.held-send [role=status]').filter({hasText:'Defect sent to the office by itself'});
     await note.waitFor({timeout:20000});

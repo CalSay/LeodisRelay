@@ -5,9 +5,10 @@
 // 2026). Busy example data (scripts/seed-busy-projects.mjs, 60 days) and the
 // office manager, on Open, on Fixed, to check and with a location typed (so
 // "Clear filters" is on the filter row):
-// - at 1024-1279px the heading's buttons sit beside the title on one row, the
-//   five filters are on one row, the Project column gives way to the
-//   project's name under the reference, and "45 days past target" sits under the target;
+// - from 1024px up the five filters are on one row, each box wide enough to
+//   read, and "45 days past target" sits under the target (Release 1 O3);
+// - at 1024-1279px the heading's buttons sit beside the title on one row and the
+//   Project column gives way to the project's name under the reference;
 // - at 1280px and wider the Project column is back and nothing is under the
 //   reference; below 1024 the register is still cards with a Project line;
 // - every Work and Confirmation tag is on one line from 1024px up;
@@ -75,7 +76,6 @@ const measure=()=>{
     firstRowTop:Math.round(r(rows[0]).top+scrollY),
     rowAverage:Math.round(rows.reduce((s,tr)=>s+r(tr).height,0)/rows.length),
     lateUnder:[...table.querySelectorAll('.late-days')].every(s=>getComputedStyle(s).display==='block'),
-    lateBeside:[...table.querySelectorAll('.late-days')].every(s=>getComputedStyle(s).display==='inline'),
     late:table.querySelectorAll('.late-days').length,
     sideways:document.documentElement.scrollWidth>innerWidth+1||[...document.querySelectorAll('.ws .view,.ws .panel')].some(e=>e.scrollWidth>e.clientWidth+1),
     verifyInside:!verify||(r(verify).right<=r(panel).right&&r(verify).right<=innerWidth),
@@ -110,16 +110,16 @@ try {
       }
       check(!m.cards,`${label}: the register is a table`);
       check(m.tagsOnTwoLines===0,`${label}: every Work and Confirmation tag is on one line (${m.tagsOnTwoLines} of ${m.tags} on two or more)`);
+      // From 1024px up (Release 1 O3 extended these past 1279px): filters on one row, each box readable, "N days past target" under the date.
+      check(m.filtersOneRow,`${label}: the five filters are on one row`);
+      check(m.filterCut.length===0,`${label}: every filter box is wide enough to read (${m.filterCut.join(', ')})`);
+      if(name==='open')check(m.late>0&&m.lateUnder,`${label}: "N days past target" is under the target date`);
       if(width<1280){
         check(m.headOneRow,`${label}: the heading's buttons are on one row beside the title`);
-        check(m.filtersOneRow,`${label}: the five filters are on one row`);
-        check(m.filterCut.length===0,`${label}: every filter box is wide enough to read (${m.filterCut.join(', ')})`);
         check(!m.projectColumn&&m.projectUnderRef,`${label}: the project's name is under the reference, not in a column`);
         check(/\S/.test(m.projectUnderRefText),`${label}: the name under the reference is the project's name`);
-        if(name==='open')check(m.late>0&&m.lateUnder,`${label}: "N days past target" is under the target date`);
       }else{
         check(m.projectColumn&&!m.projectUnderRef,`${label}: the Project column is there and nothing is under the reference`);
-        if(name==='open')check(m.late>0&&m.lateBeside,`${label}: "N days past target" is beside the target date`);
       }
       if(width===1024&&name==='open'){
         check(m.firstRowTop<=520,`${label}: the first issue starts by 520px (${m.firstRowTop}px)`);

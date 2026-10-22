@@ -13,6 +13,7 @@ import type { FixtureProject } from '@/lib/fixtures';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import { usePrincipal } from './PrincipalContext';
 import { waitingToSend } from '@/lib/sendOnSignal';
+import { DEFECT_SETTLED_EVENT, heldDefectsToSend } from '@/lib/heldDefect';
 import { SafetyActionsRow } from './SafetyActionsRow';
 import { ownsReport } from '@/lib/auth/access';
 import { EngineerIssueList, WordLine, isOpen } from './EngineerIssueList';
@@ -131,6 +132,16 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
   /** Reports sent with no signal on this phone, still to go (lib/sendOnSignal.ts). Read after the first render, as the server cannot know. */
   const [waiting,setWaiting] = useState<ReadonlySet<string>>(() => new Set());
   useEffect(() => { if (principal) setWaiting(new Set(waitingToSend(principal.id))); }, [principal]);
+  /** Projects with a defect sent with no signal, still on this phone (lib/heldDefect.ts). Read again when a send of one ends (by itself or a tap), on a change from another tab, and on coming back from the defect screen. */
+  const [heldDefects,setHeldDefects] = useState<readonly string[]>([]);
+  useEffect(() => {
+    if (!principal) return;
+    const read = () => { const now = heldDefectsToSend(principal.id).map(h => h.defect.projectId).sort(); setHeldDefects(was => was.join() === now.join() ? was : now); };
+    read();
+    window.addEventListener(DEFECT_SETTLED_EVENT, read);
+    window.addEventListener('storage', read);
+    return () => { window.removeEventListener(DEFECT_SETTLED_EVENT, read); window.removeEventListener('storage', read); };
+  }, [principal, view]);
   const [back,setBack] = useState<{ rows: Back[]; open: number; reports: number; failed?: boolean; offline?: boolean } | null>(null);
   const [error,setError] = useState('');
   const [creating,setCreating] = useState(false);
@@ -319,7 +330,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
       {view!=='home' && view!=='projects' && <div className="eng-project-context"><div><small>CURRENT PROJECT</small><strong>{project.projectName}</strong></div></div>}
       {error && <div className="note note-bad" role="alert">{error} <button onClick={()=>{setError('');setRetry(n=>n+1);}}>Retry</button></div>}
       {view==='home' && <>
-        <div className="eng-heading eng-heading-home"><p className="lbl">On site</p><h1>{principal?.name}</h1><p>{principal?.trade ? `${principal.trade} engineer` : principal?.role} · {fmtDay(new Date().toISOString())}</p></div>
+        <div className="eng-heading eng-heading-home"><h1>{principal?.name}</h1><p>{principal?.trade ? `${principal.trade} engineer` : principal?.role} · {fmtDay(new Date().toISOString())}</p></div>
         <div className="eng-home-grid"><div>
           <section className="eng-band"><span className="lbl">Current project</span><h2>{project.projectName}</h2><p><span className="ref" style={{color:'inherit'}}>{project.projectNumber}</span> · {project.projectManager}, project manager · <button type="button" onClick={()=>navigate('projects')}>Change ›</button></p></section>
           {/* The job: a site update with photographs, issues and variations, sent to the office. One big button, then the two quick ones. */}
@@ -329,9 +340,14 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
                 ? <><b>{currentDraft.corrects ? 'Send the correction' : 'Send today’s update'}</b><small>Not sent yet: there was no signal when you tapped Send. Open it with signal and it goes to the office.</small></>
                 : <><b>{currentDraft.corrects ? 'Carry on with the correction' : 'Carry on with today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'to RELAY'}</small></>}</div><span className="arrow" aria-hidden="true">→</span></Link>
               : <button type="button" className="eng-tile big eng-tile-main" onClick={()=>void startReport('update')} disabled={creating}><div><b>{creating?'Starting…':'Start today’s site update'}</b><small>Progress, photographs, defects and variations, then send to the office</small></div><span className="arrow" aria-hidden="true">→</span></button>}
-            <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo and a short note, sent straight away</small></div></button>
+            {/* A defect sent with no signal is not at the office yet: the tile says so until it goes, and opens it. */}
+            <button type="button" className={`eng-tile${heldDefects.includes(projectId) ? ' eng-tile-held' : ''}`} onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div>{heldDefects.includes(projectId)
+              ? <><b>Defect not sent yet</b><small>Only on this phone, not at the office yet. Tap to see it.</small></>
+              : <><b>Flag a defect</b><small>Photo and a short note, sent straight away</small></>}</div></button>
             <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work, for the office to price</small></div></button>
           </div>
+          {/* A full load: the workspace reads its project and view from the address only when it opens. */}
+          {projects.some(p => p.id !== projectId && heldDefects.includes(p.id)) && <div className="eng-list eng-held-defects">{projects.filter(p => p.id !== projectId && heldDefects.includes(p.id)).map(p => <a key={p.id} className="eng-row held" href={`/engineer?${new URLSearchParams({ project: p.id, view: 'defect' })}`}><div className="main"><b>Defect not sent yet · {p.projectName}</b><span>Only on this phone, not at the office yet</span></div><span className="chev">›</span></a>)}</div>}
           {atRisk.length > 0 && unfinishedSection}
           {/* Straight under the main buttons (and anything unfinished that could be lost), above drafts saved to RELAY and Inspections, so on a phone the office's answer is on the first screen. */}
           <section className="eng-came-back" aria-labelledby="eng-came-back-title">
@@ -357,7 +373,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
         </div><div>
           <SinceLastVisit key={project.id} projectId={project.id} returnTo={engineerReturn()}/>
           <section aria-labelledby="eng-project-title">
-            <div className="eng-section-title"><h2 id="eng-project-title">This project</h2><span className="r">{back && !back.failed ? `${back.open} open issue${back.open===1?'':'s'}` : ''}</span></div>
+            {/* The open issue count is on the Site issues row below, so the heading does not repeat it. */}
+            <div className="eng-section-title"><h2 id="eng-project-title">This project</h2></div>
             <div className="eng-list">
               <button type="button" className="eng-row" onClick={()=>navigate('issues','open')}><div className="main"><b>Site issues</b><span>{back && !back.failed ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
               <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back && !back.failed ? `${back.reports} sent · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>

@@ -92,7 +92,7 @@ try {
     await page.getByLabel('Where on site?',{exact:true}).fill('Flat 1.03');
     await tap(page.getByRole('button',{name:/^Send defect to /}));
     const receipt=page.locator('.eng-defect-receipt');await receipt.getByRole('heading',{name:'Defect sent to the office'}).waitFor({timeout:20000});
-    const actions=receipt.locator('.eng-defect-receipt-actions').locator('a,button');
+    const actions=receipt.locator('.eng-defect-receipt-actions').locator(':scope>a,:scope>button');
     eq((await actions.allInnerTexts()).map(s=>s.trim()).join(' | '),'Back to Site | Open issue | View project issues',`${label}: Back to Site first, then the issue`);
     for(const a of await actions.all()){const box=await a.boundingBox();ok(box.height>=MIN_TARGET,`${label}: "${(await a.innerText()).trim()}" at least ${MIN_TARGET}px tall (${Math.round(box.height)})`);}
     if(!wide){

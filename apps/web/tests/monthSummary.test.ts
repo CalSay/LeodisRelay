@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Principal } from '@relay/platform';
-import { monthLast, monthOf, monthSummary, shiftMonth, MONTH_PHOTOS } from '../lib/monthSummary';
+import { monthLast, monthOf, monthSummary, reportKindsLine, shiftMonth, MONTH_PHOTOS } from '../lib/monthSummary';
 import { weeklySummary, type WeekSources } from '../lib/weeklySummary';
 import { issueFigures } from '../lib/officeActions';
 import type { Issue, IssueEvent, Observation, Report, Variation } from '../lib/types';
@@ -156,4 +156,38 @@ test('this month counts an issue with no recorded raise date, as the register do
   const m = monthSummary({ ...none, issues }, manager, 'p1', '2026-10', '2026-10-21');
   assert.equal(m.openAtEnd, issueFigures(issues, '2026-10-21').open);
   assert.equal(m.pastTarget.length, issueFigures(issues, '2026-10-21').overdue);
+});
+
+test('this month: weeks still to come have no row, and this week ends today, still adding up to the month', () => {
+  // Thursday 22 October 2026: the week of 19 Oct runs to today; 26 to 31 Oct has not happened.
+  const sources: WeekSources = { ...none,
+    reports:[report({ id:'a', visitDate:'2026-10-01' }), report({ id:'b', visitDate:'2026-10-20', reference:'011LME-SPR-002' })],
+    issues:[issue({ id:'i1', raisedAt:'2026-10-21T10:00:00Z' })] };
+  const m = monthSummary(sources, manager, 'p1', '2026-10', '2026-10-22');
+  assert.deepEqual(m.weeks.map(w => [w.from, w.to, w.soFar]), [
+    ['2026-10-01', '2026-10-04', false], ['2026-10-05', '2026-10-11', false], ['2026-10-12', '2026-10-18', false], ['2026-10-19', '2026-10-22', true],
+  ]);
+  assert.equal(m.weeks.reduce((n, w) => n + w.reports, 0), m.period.reports.length);
+  assert.equal(m.weeks.reduce((n, w) => n + w.issuesRaised, 0), m.period.issuesRaised.length);
+  // On a Monday the new week is a row of its own, so today's visits have a place to go.
+  const monday = monthSummary(sources, manager, 'p1', '2026-10', '2026-10-26').weeks.at(-1)!;
+  assert.deepEqual([monday.from, monday.to, monday.soFar], ['2026-10-26', '2026-10-26', true]);
+  // A visit dated a day ahead keeps its week whole, so it is still counted in a row.
+  const ahead = monthSummary({ ...none, reports:[report({ id:'c', visitDate:'2026-10-26' })] }, manager, 'p1', '2026-10', '2026-10-25');
+  assert.deepEqual(ahead.weeks.slice(-2).map(w => [w.from, w.to, w.soFar, w.reports]), [['2026-10-19', '2026-10-25', false, 0], ['2026-10-26', '2026-10-31', false, 1]]);
+  // A month that is over keeps every week.
+  assert.equal(monthSummary(sources, manager, 'p1', '2026-10', '2026-11-02').weeks.length, 5);
+});
+
+test('the Site reports line says what the reports were and adds up to the figure', () => {
+  const reports = [report({ id:'a' }), report({ id:'b', reference:'011LME-SPR-002', observations:[card({}), card({ id:'o2' }), card({ id:'o3' })] }),
+    report({ id:'f', reference:'011LME-FFI-001', reportType:'first-fix-inspection' }), report({ id:'h', reference:'011LME-PHI-001', reportType:'handover-inspection' }),
+    report({ id:'s', reference:'011LME-SSI-001', reportType:'safety-inspection' })];
+  const m = monthSummary({ ...none, reports }, manager, 'p1', '2026-10', '2026-10-22');
+  assert.equal(m.period.reports.length, 4);
+  assert.deepEqual(m.reportKinds, [{ name:'Site update', count:2 }, { name:'Handover inspection', count:1 }, { name:'First fix inspection', count:1 }]);
+  assert.equal(m.reportKinds.reduce((n, k) => n + k.count, 0), m.period.reports.length);
+  assert.equal(reportKindsLine(m.reportKinds), '2 site updates, 1 handover inspection, 1 first fix inspection');
+  assert.equal(reportKindsLine([{ name:'Site update', count:42 }]), 'all site updates');
+  assert.equal(reportKindsLine([]), 'no visits reported');
 });

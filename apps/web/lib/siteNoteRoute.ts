@@ -6,7 +6,8 @@ import { refreshProjects } from './projects';
 /** The project, if it exists and this person may open it; otherwise the response to send. */
 export async function noteProject(principal: Principal, projectId: string) {
   let projects;
-  try { projects = await refreshProjects(); }
+  // Also behind every note, permit, delivery and talk being written, so the list is never more than a minute old here.
+  try { projects = await refreshProjects(false, true); }
   catch { return { response: NextResponse.json({ reason: 'SharePoint could not be reached, so the project list might be out of date. Please retry.' }, { status: 503 }) }; }
   const project = projects.find(p => p.id === projectId);
   if (!project) return { response: NextResponse.json({ reason: 'No such project.' }, { status: 404 }) };

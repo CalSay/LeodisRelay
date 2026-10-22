@@ -57,6 +57,10 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-tile.big>div{flex:1;min-width:0;}
 .eng-tile.big .arrow{font-family:var(--mono);color:var(--brass);}
 .eng-tile:disabled{opacity:.6;}
+.eng-tile.eng-tile-held{border-color:var(--caution);background:var(--caution-wash);}
+.eng-tile.eng-tile-held small{color:var(--text-2);}
+.eng-held-defects{margin-top:10px;}
+.eng-row.held{border-left-color:var(--caution);}
 
 /* ---- Lists ---------------------------------------------------------------- */
 .eng-list{border:1px solid var(--line);background:var(--panel);border-radius:9px;overflow:hidden;margin:0 0 6px;}
@@ -299,8 +303,22 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-defect-summary dt{font-size:12px;color:var(--text-2);margin-top:16px;}.eng-defect-summary dd{margin:6px 0;overflow-wrap:anywhere;}.eng-defect-receipt{text-align:center;}
 /* Back to Site first: one way back to the visit, then the issue itself (2026-10-22). */
 .eng-defect-receipt-actions{display:grid;gap:10px;margin-top:18px;}
+/* Fixed on the spot (2026-10-22): the receipt's second step, a photograph of the fix then "Put forward as fixed". */
+.eng-fixed{display:grid;gap:10px;text-align:left;}
+.eng-fixed-camera{position:relative;display:flex;align-items:center;gap:14px;min-height:64px;padding:12px 18px;border:1.5px solid var(--brass);border-radius:8px;background:var(--brass-wash);color:var(--brass);cursor:pointer;}
+.eng-fixed-camera span{display:grid;gap:2px;}.eng-fixed-camera small{color:var(--text-2);font-size:13px;}
+.eng-fixed-camera.eng-fixed-more{min-height:48px;justify-content:center;background:var(--panel);border:1px solid var(--line-2);color:var(--text);}
+.eng-fixed-camera input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;}
+.eng-fixed-camera:has(input:focus-visible){outline:2px solid var(--brass);outline-offset:2px;}
+.eng-fixed-nophoto{min-height:48px;margin:0;padding:8px 12px;border:0;background:none;color:var(--text-2);font:500 14px/1.3 var(--sans);text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+.eng-fixed-open{padding:12px;border:1.5px solid var(--brass);border-radius:8px;background:var(--brass-wash);}
+.eng-fixed-title{margin:0;color:var(--text);font-size:14px;}.eng-fixed-title b{color:var(--brass);}
+.eng-fixed .eng-defect-photos{margin:0;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));}.eng-fixed .eng-defect-photos img{height:104px;}.eng-fixed .eng-defect-photos button{min-height:44px;}
+.eng-fixed-done{margin:0;padding:14px 16px;border:1px solid var(--line-2);border-left:3px solid var(--brass);border-radius:8px;background:var(--panel);text-align:left;line-height:1.45;}
 .eng-defect-receipt-actions .eng-secondary{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;margin:0;padding:12px 18px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel);color:var(--text);text-decoration:none;font:500 15px/1.2 var(--sans);}
 .eng-primary{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;padding:12px 18px;border:1px solid var(--brass);border-radius:8px;background:var(--brass);color:var(--brass-ink);text-decoration:none;font-weight:500;}
+/* A mouse over the button version kept the global grey hover, leaving brass-ink words on grey (seen 2026-10-22 at 1440). */
+@media (hover:hover){button.eng-primary:hover:not(:disabled){background:var(--brass);border-color:var(--brass);filter:brightness(1.08);}}
 .eng-issue-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;}.eng-issue-tabs button{font-size:13px;padding:10px 12px;}.eng-issue-tabs [aria-pressed=true]{border-color:var(--brass);background:var(--brass-wash);color:var(--brass);}
 .eng-issue-list{display:grid;gap:12px;}.eng-issue-card.late{border-left:3px solid var(--alert);}.eng-issue-card .eng-word{margin:4px 0;font-size:13.5px;line-height:1.4;color:var(--text);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .eng-yours-count{margin-left:10px;font:600 12px/1 var(--sans);color:var(--text-2);white-space:nowrap;}.eng-yours-wait{margin:12px 0 0;border:1px solid var(--line);border-radius:9px;background:var(--panel);}.eng-yours-wait>summary.eng-yours-waiting{display:flex;align-items:center;min-height:48px;padding:8px 40px 8px 14px;position:relative;cursor:pointer;list-style:none;color:var(--text-2);font-size:14px;}.eng-yours-wait>summary::-webkit-details-marker{display:none;}.eng-yours-wait>summary::after{content:'+' / '';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:18px;color:var(--text-3);}.eng-yours-wait[open]>summary::after{content:'−' / '';}.eng-yours-wait>:not(summary){padding:0 12px 12px;}.eng-yours-empty button{margin-top:12px;min-height:48px;}.eng-issue-card{display:flex;gap:16px;padding:16px;border:1px solid var(--line);border-radius:9px;background:var(--ground);color:var(--text);text-decoration:none;align-items:flex-start;}
@@ -555,3 +573,47 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-card-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
 .eng-card-foot .eng-remove-card{margin-top:0;}
 .eng-card-foot .btn-sm,.eng-card .head .btn-sm{min-height:48px;}
+/* Speed (2026-10-22): past the first 30 cards (EngineerIssueList FIRST_CARDS), the browser lays out and paints only the cards near the screen. */
+.eng-issue-list>.eng-issue-card:nth-child(n+31){content-visibility:auto;contain-intrinsic-size:auto 160px;}
+/* The size held for a card not yet drawn: the average card on the busy seed, so the page is nearly its true length from the start. */
+@media(max-width:450px){.eng-issue-list>.eng-issue-card:nth-child(n+31){contain-intrinsic-size:auto 180px;}}
+
+/* App bar (layout.tsx), on every page that has it. Sign out and the theme sit
+   together as two matching buttons, apart from the page links. On a phone or a
+   small laptop they stay beside the brand and the links get a grid of
+   their own below, instead of wrapping into three or four ragged rows. Sign
+   out names nobody, so it never crowds the links (the name is in its tooltip). */
+.appbar .nav{margin-left:auto;}
+@media (min-width:1024px){.appbar .nav{flex-wrap:nowrap;}.appbar .nav a{padding:8px 10px;white-space:nowrap;}}
+.appbar-tools{display:flex;align-items:center;gap:8px;flex:none;}
+.appbar-tools form{margin:0;}
+.appbar-tools .themebtn{margin-left:0;}
+.appbar-tools .whoami{font:13px var(--sans);letter-spacing:0;color:var(--text-2);border-color:var(--line);min-height:32px;}
+@media (max-width:1023px){
+  .appbar .appbar-inner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;}
+  .appbar-tools{grid-column:2;grid-row:1;}
+  .appbar .nav{grid-column:1/-1;grid-row:2;width:auto;margin:0 calc(-1 * var(--s4));padding:4px 8px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:2px;}
+  .appbar .nav a{display:flex;align-items:center;justify-content:center;text-align:center;min-height:48px;padding:6px 4px;line-height:1.3;}
+  .appbar-tools .whoami,.appbar-tools .themebtn{min-height:48px;}
+  body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,body:has(.eng-page) .appbar .nav,body:has(.eng-chrome) .appbar .nav{display:none;}
+}
+
+/* Release 1 polish E2 (2026-10-22): the Site and Projects views. Scoped to
+   .eng-workspace so the editor and other pages are untouched. */
+/* Group labels and folded lines start where the row text starts (row: 14px padding + 3px edge). */
+.eng-workspace .eng-since-group,.eng-workspace .eng-since-more{padding-left:17px;}
+.eng-workspace .eng-more-pages>summary,.eng-workspace .eng-saved-drafts>summary{padding-left:17px;}
+.eng-workspace .eng-heading-home h1{margin:0;}
+/* Projects: the site's name is what the engineer looks for, so it reads first and larger. */
+.eng-workspace .eng-project-list button{padding:16px;}
+.eng-workspace .eng-project-list strong{font-size:17px;font-weight:600;line-height:1.3;overflow-wrap:anywhere;}
+.eng-workspace .eng-project-list small{font-size:13px;margin:6px 0 10px;}
+.eng-workspace .eng-project-list span{font-weight:500;}
+@media(max-width:600px){
+  /* A phone: one box per group, not a box in a box, so the cards keep their width. */
+  .eng-workspace .eng-project-group{padding:12px;}
+  .eng-workspace .eng-project-groups{gap:20px;}
+  /* The inspection's name already says what it is: drop the tag so the words get the width. */
+  .eng-workspace .eng-inspections .eng-tile-wide>.kind{display:none;}
+  .eng-workspace .eng-band{padding:14px 16px;}
+}

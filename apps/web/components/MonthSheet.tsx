@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { ConnectedProject } from '@/lib/projects';
 import { withViewReturn } from '@/lib/viewNavigation';
-import { monthName, shiftMonth, type MonthLateIssue, type MonthSummary } from '@/lib/monthSummary';
+import { monthName, reportKindsLine, shiftMonth, type MonthLateIssue, type MonthSummary } from '@/lib/monthSummary';
 import { fmtAt, fmtDay, plural, IssueRows, VariationRows } from './summaryRows';
 import { PhotoImage } from './PhotoImage';
 import { pastTarget } from '@/lib/dates';
@@ -98,7 +98,7 @@ export function MonthSheet({ m, project, today, thisMonth, here, manager }: { m:
       <h2 id="month-figures">Figures for the month<span>{range(m.start, m.current ? today : m.end)}</span></h2>
       <dl className="week-stats month-stats">
         <div><dt>Days on site</dt><dd>{figure("days", total.days)}<small>{p.engineers.length ? p.engineers.join(', ') : 'no visits reported'}</small></dd></div>
-        <div><dt>Site reports</dt><dd>{figure("reports", total.reports)}<small>{plural(p.kinds.update, 'progress update')}</small></dd></div>
+        <div><dt>Site reports</dt><dd>{figure("reports", total.reports)}<small>{reportKindsLine(m.reportKinds)}</small></dd></div>
         <div><dt>Issues raised</dt><dd>{figure("raised", total.raised)}<small>this month</small></dd></div>
         <div><dt>Issues closed</dt><dd>{figure("closed", total.closed)}<small>checked and closed this month</small></dd></div>
         <div><dt>Variations raised</dt><dd>{figure("vraised", total.vraised, notInstructed > 0)}<small>{notInstructed ? `${notInstructed} done, not instructed` : 'this month'}</small></dd></div>
@@ -111,13 +111,13 @@ export function MonthSheet({ m, project, today, thisMonth, here, manager }: { m:
           <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Week</th>{WEEK_COLUMNS.map(c => <th key={c} scope="col" role="columnheader">{c}</th>)}</tr></thead>
           <tbody role="rowgroup">{m.weeks.map(w => <tr key={w.monday} role="row">
             {/* A full page load: this screen keeps its week or month in state, so the week opens fresh and Back returns to the month as it was. */}
-            <th scope="row" role="rowheader"><a href={weekHref(w.monday)}>{range(w.from, w.to)}</a>{w.from !== w.monday && <small>week from {fmtDay(w.monday)}</small>}</th>
+            <th scope="row" role="rowheader"><a href={weekHref(w.monday)}>{range(w.from, w.to)}</a>{w.from !== w.monday && <small>week from {fmtDay(w.monday)}</small>}{w.soFar && <small>so far</small>}</th>
             <WeekFigures v={[w.daysOnSite, w.reports, w.issuesRaised, w.issuesClosed, w.variationsRaised, w.variationsInstructed]} />
           </tr>)}</tbody>
           <tfoot role="rowgroup"><tr role="row"><th scope="row" role="rowheader">{name.split(' ')[0]}</th><WeekFigures v={[total.days, total.reports, total.raised, total.closed, total.vraised, total.vinstructed]} /></tr></tfoot>
         </table>
       </div>
-      <p className="week-total">A week that runs into the next or last month counts only its days in {name.split(' ')[0]}. Open a week for its full summary.</p>
+      <p className="week-total">A week that runs into the next or last month counts only its days in {name.split(' ')[0]}.{m.current ? ' Weeks still to come are not shown.' : ''} Open a week for its full summary.</p>
     </section>
 
     <section className="week-section">

@@ -5,6 +5,7 @@ import { cachedProject, projectIdentity, refreshProjects, reportableProject } fr
 import { assertProjectWrite, OPERATIONS, sharePointMode, writableProjectItemIds } from './config';
 import { fieldsEqual, sharePointDay } from './issues';
 import { INSTRUCTION_CHOICE, instructionFromChoice } from '../variations';
+import { recentRead } from './recentRead';
 import { graph, GraphError, type ListItem } from './graph';
 import { personLookup, principalForPerson, sitePeople } from './people';
 
@@ -115,72 +116,73 @@ export async function sendVariationOperation(operation: VariationOperation, oper
   });
 }
 
-let refreshing: Promise<void> | undefined;
-export async function refreshVariations(): Promise<void> {
-  if (sharePointMode() === 'off') return;
-  if (refreshing) return refreshing;
-  refreshing = (async () => {
-    await refreshProjects();
-    const [rows, people] = await Promise.all([graph.items(OPERATIONS.variations), sitePeople()]);
-    const seen = new Set<string>();
-    const next: Variation[] = [];
-    const text = (value: unknown) => typeof value === 'string' ? value : '';
-    const number = (value: unknown) => value === null || value === undefined || value === '' ? undefined : Number(value);
-    for (const row of rows) {
-      const f = row.fields;
-      const id = text(f.RelayVariationId);
-      if (!id) continue; // Manually maintained/demo rows remain visible in SharePoint but are not claimed by RELAY.
-      if (seen.has(id)) throw new Error('Duplicate variation identity in SharePoint.');
-      seen.add(id);
-      const projectId = projectIdentity(String(f.ProjectLookupId));
-      const project = cachedProject(projectId);
-      if (!project || !reportableProject(project)) continue;
-      const local = getRecord<Variation>('variations', id);
-      if (local?.sync && local.sync.status !== 'synced') continue;
-      const by = people.find(person => person.id === String(f.RaisedByLookupId));
-      const linked = records<Issue>('issues', projectId).find(issue => issue.sync?.itemId === String(f.LinkedIssueLookupId));
-      const instruction = instructionFromChoice(f.Instruction);
-      if (!instruction) throw new Error('SharePoint contains an unsupported variation status.');
-      const trade = ['Electrical','HVAC','P&H','Multi'].includes(text(f.Trade)) ? text(f.Trade) as Variation['trade'] : undefined;
-      const reason = ['Client instruction','Design change','Site condition','Damage by others','Omission','Spec change'].includes(text(f.Reason)) ? text(f.Reason) as Variation['reason'] : undefined;
-      const signedInstruction = typeof f.SignedInstruction === 'object' && f.SignedInstruction ? text((f.SignedInstruction as {Url?:string}).Url) : text(f.SignedInstruction);
-      const raisedById = by ? principalForPerson(by) : local?.raisedById;
-      const raisedByReport = text(f.SourceReportId);
-      const labourHours = number(f.ExpectedLabour), labourRate = number(f.LabourRate), partsCost = number(f.ExpectedPartsCost);
-      const plantSubcontract = number(f.PlantSubcontract), upliftPct = number(f.Uplift), quotedValue = number(f.QuotedValue), instructedValue = number(f.InstructedValue);
-      next.push({
-        id, projectId, reference: text(f.Title).split(' | ', 1)[0] || local?.reference || 'UNKNOWN-VO-000',
-        description: text(f.Description), location: text(f.Location), workDone: f.WorkUndertakenBeforeInstruction === true, instruction,
-        source: local?.source ?? 'office', raisedBy: by?.name ?? local?.raisedBy ?? 'SharePoint', raisedAt: text(f.RaisedAt), events: local?.events ?? [],
-        ...(trade ? { trade } : {}), ...(reason ? { reason } : {}),
-        ...(text(f.InstructionReference) ? { instructionReference: text(f.InstructionReference) } : {}),
-        ...(text(f.InstructedBy) ? { instructedBy: text(f.InstructedBy) } : {}),
-        ...(text(f.InstructedOn) ? { instructedOn: sharePointDay(text(f.InstructedOn)) } : {}),
-        ...(signedInstruction ? { signedInstruction } : {}),
-        ...(labourHours !== undefined ? { labourHours } : {}), ...(labourRate !== undefined ? { labourRate } : {}),
-        ...(partsCost !== undefined ? { partsCost } : {}), ...(plantSubcontract !== undefined ? { plantSubcontract } : {}),
-        ...(upliftPct !== undefined ? { upliftPct } : {}), ...(quotedValue !== undefined ? { quotedValue } : {}),
-        ...(instructedValue !== undefined ? { instructedValue } : {}),
-        ...(raisedById ? { raisedById } : {}), ...(local?.raiserTrade ? { raiserTrade: local.raiserTrade } : {}),
-        ...(raisedByReport ? { raisedByReport } : {}), ...(local?.raisedByObservation ? { raisedByObservation: local.raisedByObservation } : {}),
-        ...(linked?.id ? { linkedIssueId: linked.id } : {}), ...(local?.askedBy ? { askedBy: local.askedBy } : {}),
-        sync: { status: 'synced', itemId: row.id, etag: row.eTag,
-          ...(typeof f.EvidenceLink === 'object' && f.EvidenceLink
-            ? {evidenceUrl:String((f.EvidenceLink as {Url?:string}).Url ?? '')}
-            : text(f.EvidenceLink) ? {evidenceUrl:text(f.EvidenceLink)} : {}) },
-      });
-    }
-    atomic(() => {
-      for (const variation of next) {
-        const current = getRecord<Variation>('variations', variation.id);
-        if (!current?.sync || current.sync.status === 'synced') putRecord('variations', { ...variation, events: current?.events ?? variation.events });
-      }
-      for (const old of records<Variation>('variations')) if (old.sync?.status === 'synced' && !seen.has(old.id)) {
-        putRecord('variations', { ...old, sync: { ...old.sync, status: 'conflict', error: 'The SharePoint variation was deleted or moved outside the connected project scope.' } });
-      }
+/** Reads the whole Variation Register into the local store. */
+async function readVariations(): Promise<void> {
+  await refreshProjects(false, true);
+  const [rows, people] = await Promise.all([graph.items(OPERATIONS.variations), sitePeople()]);
+  const seen = new Set<string>();
+  const next: Variation[] = [];
+  const text = (value: unknown) => typeof value === 'string' ? value : '';
+  const number = (value: unknown) => value === null || value === undefined || value === '' ? undefined : Number(value);
+  for (const row of rows) {
+    const f = row.fields;
+    const id = text(f.RelayVariationId);
+    if (!id) continue; // Manually maintained/demo rows remain visible in SharePoint but are not claimed by RELAY.
+    if (seen.has(id)) throw new Error('Duplicate variation identity in SharePoint.');
+    seen.add(id);
+    const projectId = projectIdentity(String(f.ProjectLookupId));
+    const project = cachedProject(projectId);
+    if (!project || !reportableProject(project)) continue;
+    const local = getRecord<Variation>('variations', id);
+    if (local?.sync && local.sync.status !== 'synced') continue;
+    const by = people.find(person => person.id === String(f.RaisedByLookupId));
+    const linked = records<Issue>('issues', projectId).find(issue => issue.sync?.itemId === String(f.LinkedIssueLookupId));
+    const instruction = instructionFromChoice(f.Instruction);
+    if (!instruction) throw new Error('SharePoint contains an unsupported variation status.');
+    const trade = ['Electrical','HVAC','P&H','Multi'].includes(text(f.Trade)) ? text(f.Trade) as Variation['trade'] : undefined;
+    const reason = ['Client instruction','Design change','Site condition','Damage by others','Omission','Spec change'].includes(text(f.Reason)) ? text(f.Reason) as Variation['reason'] : undefined;
+    const signedInstruction = typeof f.SignedInstruction === 'object' && f.SignedInstruction ? text((f.SignedInstruction as {Url?:string}).Url) : text(f.SignedInstruction);
+    const raisedById = by ? principalForPerson(by) : local?.raisedById;
+    const raisedByReport = text(f.SourceReportId);
+    const labourHours = number(f.ExpectedLabour), labourRate = number(f.LabourRate), partsCost = number(f.ExpectedPartsCost);
+    const plantSubcontract = number(f.PlantSubcontract), upliftPct = number(f.Uplift), quotedValue = number(f.QuotedValue), instructedValue = number(f.InstructedValue);
+    next.push({
+      id, projectId, reference: text(f.Title).split(' | ', 1)[0] || local?.reference || 'UNKNOWN-VO-000',
+      description: text(f.Description), location: text(f.Location), workDone: f.WorkUndertakenBeforeInstruction === true, instruction,
+      source: local?.source ?? 'office', raisedBy: by?.name ?? local?.raisedBy ?? 'SharePoint', raisedAt: text(f.RaisedAt), events: local?.events ?? [],
+      ...(trade ? { trade } : {}), ...(reason ? { reason } : {}),
+      ...(text(f.InstructionReference) ? { instructionReference: text(f.InstructionReference) } : {}),
+      ...(text(f.InstructedBy) ? { instructedBy: text(f.InstructedBy) } : {}),
+      ...(text(f.InstructedOn) ? { instructedOn: sharePointDay(text(f.InstructedOn)) } : {}),
+      ...(signedInstruction ? { signedInstruction } : {}),
+      ...(labourHours !== undefined ? { labourHours } : {}), ...(labourRate !== undefined ? { labourRate } : {}),
+      ...(partsCost !== undefined ? { partsCost } : {}), ...(plantSubcontract !== undefined ? { plantSubcontract } : {}),
+      ...(upliftPct !== undefined ? { upliftPct } : {}), ...(quotedValue !== undefined ? { quotedValue } : {}),
+      ...(instructedValue !== undefined ? { instructedValue } : {}),
+      ...(raisedById ? { raisedById } : {}), ...(local?.raiserTrade ? { raiserTrade: local.raiserTrade } : {}),
+      ...(raisedByReport ? { raisedByReport } : {}), ...(local?.raisedByObservation ? { raisedByObservation: local.raisedByObservation } : {}),
+      ...(linked?.id ? { linkedIssueId: linked.id } : {}), ...(local?.askedBy ? { askedBy: local.askedBy } : {}),
+      sync: { status: 'synced', itemId: row.id, etag: row.eTag,
+        ...(typeof f.EvidenceLink === 'object' && f.EvidenceLink
+          ? {evidenceUrl:String((f.EvidenceLink as {Url?:string}).Url ?? '')}
+          : text(f.EvidenceLink) ? {evidenceUrl:text(f.EvidenceLink)} : {}) },
     });
-  })();
-  try { await refreshing; } finally { refreshing = undefined; }
+  }
+  atomic(() => {
+    for (const variation of next) {
+      const current = getRecord<Variation>('variations', variation.id);
+      if (!current?.sync || current.sync.status === 'synced') putRecord('variations', { ...variation, events: current?.events ?? variation.events });
+    }
+    for (const old of records<Variation>('variations')) if (old.sync?.status === 'synced' && !seen.has(old.id)) {
+      putRecord('variations', { ...old, sync: { ...old.sync, status: 'conflict', error: 'The SharePoint variation was deleted or moved outside the connected project scope.' } });
+    }
+  });
+}
+const refreshVariationsRecent = recentRead(readVariations);
+/** The Variation Register as of a recent read (lib/sharepoint/recentRead.ts); `force` waits for a new one, for anything about to change a record. */
+export async function refreshVariations(force = false): Promise<void> {
+  if (sharePointMode() === 'off') return;
+  return refreshVariationsRecent(force);
 }
 
 export function failVariationOperation(operation: VariationOperation, error: unknown, operationId: string): void {
