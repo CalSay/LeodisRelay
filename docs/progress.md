@@ -107,6 +107,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Ideas for later (not built): on a phone the week's "On site" list runs to
   about 3,500px on a busy week, before Issues; folding each report's work
   lines, as Today from site does, would bring the issues up.
+
 ## 2026-10-22 — A shorter Check & send for a site update
 
 - Why: a walk of an engineer at 390px (latest main 3b03173) sending the
