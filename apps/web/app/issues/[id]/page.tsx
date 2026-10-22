@@ -21,6 +21,7 @@ import { failure } from "@/lib/failure";
 import { issueWord, raisedIssue, sentBackWord } from "@/lib/cameBack";
 import { OfficeWordBox } from "@/components/OfficeWordBox";
 import { isYours, nextYourIssue } from "@/lib/yourIssues";
+import { companiesForIssue } from "@/lib/suggestions";
 
 /**
  * One issue, across every visit that touched it.
@@ -78,6 +79,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   const [target, setTarget] = useState("");
   const [instruction, setInstruction] = useState("");
   const [owners, setOwners] = useState<string[]>([]);
+  const [tradeOffer, setTradeOffer] = useState<string[]>([]);
   const [assignError, setAssignError] = useState<string | null>(null);
   // Just put forward as fixed by this engineer: say so and offer the next of theirs on this site
   // (empty while it is looked up, and if there is no answer; `left: 0` when none is left).
@@ -161,7 +163,9 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
     setAssignError(null);
     setAssigning(true);
     // Companies already named on the project, as the report editor suggests them. A suggestion, never a list to pick from.
-    projectSuggestions(issue.projectId).then((s) => setOwners(s.companies)).catch(() => setOwners([]));
+    // The companies already doing this issue's trade here come first, one tap each; the office still picks.
+    setTradeOffer([]);
+    projectSuggestions(issue.projectId).then((s) => { setOwners(s.companies); setTradeOffer(companiesForIssue(issue, s.byTrade)); }).catch(() => setOwners([]));
   }
 
   async function assign(event: FormEvent<HTMLFormElement>) {
@@ -469,6 +473,10 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
                   <label htmlFor="assign-owner">Responsible</label>
                   <input id="assign-owner" type="text" value={owner} onChange={(e) => { setOwner(e.target.value); setAssignError(null); }} list="assign-owners" placeholder="Person or company" autoComplete="off" autoFocus />
                   <datalist id="assign-owners">{owners.map((o) => <option key={o} value={o} />)}</datalist>
+                  {tradeOffer.length > 0 && <div className="eng-suggestions compact" role="group" aria-labelledby="assign-offer-h">
+                    <div className="eng-suggestions-head"><span id="assign-offer-h">Already doing {issue.affectedTrade} work here</span></div>
+                    <div className="eng-chips">{tradeOffer.map((o) => <button key={o} type="button" className="eng-chip" aria-pressed={owner.trim().toLowerCase() === o.toLowerCase()} onClick={() => { setOwner(o); setAssignError(null); }}>{o}</button>)}</div>
+                  </div>}
                 </div>
                 <div className="field">
                   <label htmlFor="assign-target">Target date</label>

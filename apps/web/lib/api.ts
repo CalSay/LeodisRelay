@@ -391,7 +391,7 @@ export { reviewReport } from "./review";
 /** Places and responsible companies already typed on this project, newest first, for the card chips. Never a catalogue. */
 export async function projectSuggestions(projectId: string): Promise<ProjectSuggestions> {
   const data = await parse<Partial<ProjectSuggestions>>(await request(`/api/locations?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
-  return { locations: data.locations ?? [], companies: data.companies ?? [] };
+  return { locations: data.locations ?? [], companies: data.companies ?? [], byTrade: data.byTrade ?? {} };
 }
 
 /* --------------------------------------------------------------- variations */
