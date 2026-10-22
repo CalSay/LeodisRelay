@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'issue-raised-photo', added: '2026-10-22', audience: 'site', title: 'An issue shows its photograph at the top',
+    text: 'Opening an issue now shows the photograph taken when it was raised, small, under "Who is fixing it", so you can see which tray, socket or fitting it means without opening History. Tap it to see it larger (an older photograph kept on the issue itself shows only small). "Add photograph" and "Put forward as fixed" are still on the first screen for most issues; on one with a very long description, opened from "Came back from the office", the photograph sits just under "Update this issue" instead. An issue past its target date also says how many days past target it is, as the office screens do. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'coverage-quiet-trades', added: '2026-10-22', audience: 'office', title: 'Site coverage: trades with no report yet this week',
     text: 'On Site coverage, an active site now says which of its trades have not sent a report yet this week, for example "No P&H report yet this week". A trade is named when it sent a report from that site in the two weeks before this week but none from Monday to today, so a trade that has finished there is not named for ever. It shows from Tuesday, only on the fortnight that holds today, and never on defects liability sites. It is a prompt to ask how that work is going, not a check on anyone. Checked in a desktop browser (dark) and a phone-sized window (light), not on a real phone.',
     link: { label: 'Open Site coverage', href: '/coverage' } },
