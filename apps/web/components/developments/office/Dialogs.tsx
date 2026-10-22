@@ -8,7 +8,7 @@ import { Modal, formValues, toast } from '@/components/workspace/hooks';
 import { InstallRelay } from '@/components/InstallRelay';
 import { Btn, BtnQ } from './bits';
 import { CheckFix } from './CheckFix';
-import { today } from './model';
+import { fmtDay, today } from './model';
 import { issueTradeWords } from '@/lib/snagList';
 import { companiesForIssue } from '@/lib/suggestions';
 
@@ -243,7 +243,7 @@ function TriageForm({ d, busy, shell, close, decide }: { d: Extract<Dialog, { ki
 
 function ReviewForm({ r, busy, shell, close, decide }: { r: ReportSummary; busy: boolean; shell: Shell; close: () => void; decide: (decision: 'approve' | 'return', note: string) => Promise<void> }) {
   const [note, setNote] = useState('');
-  return shell('Review', `${r.reference} · ${r.author} · visit ${r.visitDate}`, <>
+  return shell('Review', `${r.reference} · ${r.author} · visit ${fmtDay(r.visitDate)}`, <>
     <div className="note info" style={{ margin: 0 }}><span>Reviewed as the person signed in; a report cannot be reviewed by whoever wrote it. {r.defectCount > 0 ? `Approving confirms the ${r.defectCount} issue${r.defectCount === 1 ? '' : 's'} it raised. Sending it back marks them for triage; any work already done stands.` : 'Approving accepts it for issue.'} The engineer sees the note and can send a corrected revision.</span></div>
     <div className="f"><label>Comments · required if sending back</label><textarea value={note} onChange={e => setNote(e.target.value)} placeholder="What needs changing, or a note for the file" autoFocus /></div>
   </>, <>

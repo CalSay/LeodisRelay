@@ -808,3 +808,56 @@ body:has(.ws){overflow:hidden auto}
 }
 /* The trade's companies offered when assigning sit apart, not touching. */
 .ws .assign-offer .btn-row{display:flex;flex-wrap:wrap;gap:var(--s2)}
+
+/* ------------------------------------- Inbox and reading a report (Release 1, O4)
+   With a report open at a desk the reader gets more of the width than the
+   list, so its title, the last and next visit and the report's stages read on
+   a line or two instead of breaking mid-word in a 440px strip. The reader
+   (in the Inbox and in a project) takes the issue sheet's look (O3): the
+   title on the sunken ground in large type, then each part as a card with a
+   clear edge, with no box inside a box. */
+@media (min-width:701px){
+  .ws .view.inbox-reading .two-wide{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  /* An engineer's name stays on one line; the project name takes the wrap. */
+  .ws table.inbox-list:not(.wide) .who{white-space:nowrap}
+  /* When it came in reads in plain type, so the date leaves the project its room. */
+  .ws table.inbox-list:not(.wide) td.due{font-family:var(--sans);font-size:13px;letter-spacing:0}
+}
+.ws .inbox-reader{padding:var(--s4) var(--s5) var(--s5)}
+.ws .cols[data-depth="3"] .col-main>.colpad:has(>.report-sheet){padding:var(--s5)}
+.ws .report-sheet{background:none;border:0;padding:0}
+.ws .report-title{padding:0 0 var(--s4);border:0;border-bottom:1px solid var(--edge);background:none}
+.ws .report-title h3{margin:var(--s2) 0 var(--s1);font-size:22px;line-height:1.25;text-wrap:balance}
+.ws .report-title .actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:var(--s2);flex:none}
+.ws .report-title .actions .btn-q{background:var(--panel)}
+.ws .report-sheet>.trade-visits{margin-top:var(--s4)}
+.ws .report-sheet .trade-visit{border-color:var(--line-2)}
+.ws .report-sheet>.stages{margin-top:var(--s4)}
+.ws .report-sheet>.note{margin-top:var(--s4)}
+.ws .report-sheet>.sec-h{margin-top:var(--s6);margin-bottom:0;border-top-color:var(--line-2);border-bottom-color:var(--line-2)}
+.ws .report-sheet>.sec-h+.rmenu{border-color:var(--line-2);border-top:0}
+.ws .report-sheet>.check-tally{margin:0;padding:var(--s3) var(--s4);background:var(--panel);border:1px solid var(--line-2);border-top:0}
+/* What the visit found reads as one card under its heading, passed checks included. */
+.ws .report-sheet>.hist,.ws .report-sheet>.checks-passed{padding:var(--s3) var(--s4);background:var(--panel);border:1px solid var(--line-2);border-top:0;border-bottom:1px solid var(--line)}
+.ws .report-sheet>.hist:has(+:not(.hist)){border-bottom-color:var(--line-2)}
+.ws .report-sheet>.hist.ro-qa-sec{border-radius:0}
+.ws .report-sheet>.checks-passed{border-bottom-color:var(--line-2)}
+.ws .report-sheet>.checks-passed>.hist:last-child{padding-bottom:0}
+.ws .report-sheet>.sec-h~.rowsub{margin-top:var(--s3)}
+@media (max-width:1179px){
+  .ws .cols[data-depth="3"] .col-main>.colpad:has(>.report-sheet){padding:var(--s4)}
+}
+@media (max-width:700px){
+  .ws .inbox-reader{padding:12px}
+  .ws .cols[data-depth="3"] .col-main>.colpad:has(>.report-sheet){padding:12px}
+  .ws .report-title{flex-direction:column;gap:var(--s3)}
+  .ws .report-title .actions{justify-content:flex-start}
+  .ws .report-title h3{font-size:20px}
+  .ws .report-sheet>.hist,.ws .report-sheet>.checks-passed{padding:var(--s3)}
+  /* The words get the width: a narrower tag column, and Quick actions under the words, not beside them. */
+  .ws .report-sheet .hist{gap:var(--s3)}
+  .ws .report-sheet .hist .d{width:76px}
+  .ws .report-sheet .ro-qa-head{flex-wrap:wrap}
+  .ws .report-sheet .ro-qa-head>p{flex-basis:100%}
+  .ws .report-sheet .ro-qa-btn{margin-left:0}
+}
