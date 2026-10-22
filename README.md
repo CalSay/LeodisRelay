@@ -5,7 +5,7 @@ Compliance Management.
 
 ## Scope
 
-First release covers **Main Hub and Developments**. Compliance Management is
+See [docs/release-1.md](docs/release-1.md) for Release 1. First release covers **Main Hub and Developments**. Compliance Management is
 built as screens over invented sample data (`apps/web/lib/compliance`): the
 office portfolio browser and the engineer site view are usable end to end, but
 nothing they show or record persists. Its domain rules and store are still to
