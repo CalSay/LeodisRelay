@@ -245,7 +245,7 @@ export function SignaturePad({
         />
         {!hasInk && <span className="sighint" aria-hidden="true">Sign here</span>}
         {/* The drawing said in words, for a screen reader. */}
-        <span id="sign-pad-state" className="eng-sr">{hasInk ? 'Signed: a signature is drawn.' : 'Not signed yet: draw your signature in the box with a finger, pen or mouse.'}</span>
+        <span id="sign-pad-state" className="eng-sr">{hasInk ? 'Signed: a signature is drawn.' : 'Not signed yet: sign in the box.'}</span>
       </div>
 
       <div className="btn-row" style={{ marginTop: 10 }}>

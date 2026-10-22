@@ -89,7 +89,7 @@ try {
   const visible=page.locator('#card-editor > div:not([hidden])');
   await visible.getByLabel('What happened',{exact:true}).fill('Tablet section survives rotation');
   await visible.getByLabel('Where',{exact:true}).fill('Roof');
-  try { await page.getByText('Saved on server',{exact:true}).waitFor(); }
+  try { await page.getByText('Saved to RELAY',{exact:true}).waitFor(); }
   catch(error) { console.error(await page.locator('main').innerText()); throw error; }
   // Below 900px the cards fold into a list and the open one unfolds under its row.
   await page.setViewportSize({width:820,height:1180});

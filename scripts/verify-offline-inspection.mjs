@@ -103,7 +103,7 @@ try {
     await start();
     await page.goto(`${base}/engineer`);
     const note=page.locator('.held-send .note-ok');await note.waitFor({timeout:30000});
-    check(/The report you started on this phone is now on the server\. It stays a draft until you sign and send\./.test(await note.innerText()),`${scheme}: says it went up: ${await note.innerText()}`);
+    check(/The report you started on this phone is now saved to RELAY\. It stays a draft until you send it\./.test(await note.innerText()),`${scheme}: says it went up: ${await note.innerText()}`);
     const fresh=mine().filter(r=>!before.has(r.id));
     check(fresh.length===1,`${scheme}: one report on the server, not two`);
     const made=getReport(fresh[0].id);

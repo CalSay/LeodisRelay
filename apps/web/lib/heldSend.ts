@@ -194,8 +194,8 @@ async function submitSigned(held: HeldDraft, version: number, result: HeldSendRe
     if (error instanceof ApiError && error.offline) return 'offline';
     const reason = error instanceof ApiError && error.signedOut ? 'You have been signed out, so it has not gone to the office yet.'
       : error instanceof ApiError && error.code === CROSS_SITE_CODE ? 'RELAY could not tell it came from its own page, so it has not gone to the office yet. Reload RELAY.'
-      : error instanceof ApiError && error.passing ? 'RELAY’s server is not answering, so it has not gone to the office yet.'
-      : error instanceof Error ? error.message : 'The server would not send it.';
+      : error instanceof ApiError && error.passing ? 'RELAY is not answering, so it has not gone to the office yet.'
+      : error instanceof Error ? error.message : 'RELAY would not send it.';
     // A fault on the server's side (a 5xx), or signed out: kept as it is,
     // signed and saved, and tried again next time. Named once. A refusal (4xx) is final.
     if (!(error instanceof ApiError) || error.status === undefined || waits(error)) {
@@ -235,7 +235,7 @@ async function noteWaiting(held: HeldDraft, error: ApiError, result: HeldSendRes
     ? 'You have been signed out, so it has not gone yet. It is kept on this phone as it is, and goes by itself once you sign in again.'
     : error.code === CROSS_SITE_CODE
       ? 'RELAY could not tell it came from its own page, so it has not gone yet. It is kept on this phone as it is. Reload RELAY and it tries again.'
-      : 'RELAY’s server is not answering, so it has not gone yet. It is kept on this phone as it is, and goes by itself when the server answers.';
+      : 'RELAY is not answering, so it has not gone yet. It is kept on this phone as it is, and goes by itself when RELAY answers.';
   if (held.problem === reason) return;
   await update(held.key, h => ({ ...h, problem: reason })).catch(() => null);
   result.problems.push({ ...(held.started ? {} : { reportId: held.reportId }), title, reason, headline: 'not sent yet.' });
@@ -245,7 +245,7 @@ async function noteProblem(held: HeldDraft, error: unknown, result: HeldSendResu
   const conflict = error instanceof SaveConflict;
   const why = conflict
     ? (error.current.state === 'draft' ? 'It was changed somewhere else too. Open it to choose what to keep.' : 'It was sent from somewhere else. Open it to keep your changes as a correction.')
-    : error instanceof Error ? error.message : 'It could not go to the server.';
+    : error instanceof Error ? error.message : 'It could not be saved to RELAY.';
   const reason = held.signed && !retry ? `${why} Your signature from the phone was not used: sign it there.` : why;
   // A start that was refused is tried again next time (a project may reopen);
   // a save that was refused goes to the editor, which knows how to compare it.

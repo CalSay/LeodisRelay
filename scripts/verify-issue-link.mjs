@@ -77,8 +77,8 @@ try {
     if(scheme==='light'){
       await first.click();
       eq(await first.getAttribute('aria-pressed'),'true',`${tag}: tapping an issue links it`);
-      await page.getByText("This will be added to that issue's history rather than raising a new one.").waitFor();
-      await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached'});
+      await page.getByText('It goes on that issue, not as a new one.').waitFor();
+      await page.getByText('Saved to RELAY',{exact:true}).waitFor({state:'attached'});
     }
     // Variation card: the same picture list replaces the old drop-down.
     await open(1);
@@ -101,7 +101,7 @@ try {
       await varGroup.getByRole('button',{name:new RegExp(last.description)}).click();
       await page.getByRole('button',{name:'Show fewer issues'}).click();
       eq(await varGroup.getByRole('button',{name:new RegExp(last.description)}).getAttribute('aria-pressed'),'true',`${tag}: linked issue still listed and marked after "Show fewer"`);
-      await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached'});
+      await page.getByText('Saved to RELAY',{exact:true}).waitFor({state:'attached'});
       await page.waitForTimeout(1200);
       await page.reload();
       await open(1);
@@ -113,7 +113,7 @@ try {
       await varGroup.getByRole('button',{name:/^No/}).click();
       eq(await varGroup.locator('.eng-linkrow[aria-pressed=true]').count(),1,`${tag}: one answer at a time`);
       eq(await varGroup.getByRole('button',{name:/^No/}).getAttribute('aria-pressed'),'true',`${tag}: "No" unlinks the variation`);
-      await page.waitForTimeout(1200);await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached'});
+      await page.waitForTimeout(1200);await page.getByText('Saved to RELAY',{exact:true}).waitFor({state:'attached'});
       await page.reload();await open(1);
       // With nothing answered under "More for the office" it is folded again after a reload.
       await page.locator('.eng-card:visible .eng-more-detail').waitFor();

@@ -59,7 +59,7 @@ try {
     const bar=page.locator('.eng-undo');
     const overflow=()=>page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);
     const stored=async(test,what)=>{let saved;for(let n=0;n<40;n++){saved=getRecord('reports',draft.id);if(test(saved))return saved;await sleep(250);}assert.fail(`${label}: server never showed ${what}: ${JSON.stringify(saved.observations.map(o=>[o.id,o.photos.length]))}`);};
-    const settle=async()=>{await page.getByText('Saved on server',{exact:true}).first().waitFor({state:'attached'});await sleep(900);};
+    const settle=async()=>{await page.getByText('Saved to RELAY',{exact:true}).first().waitFor({state:'attached'});await sleep(900);};
     eq(await bar.count(),0,`${label}: no undo bar before anything is removed`);
     // Two photographs taken on the defect card the usual way, so they are uploaded once.
     await open(0);

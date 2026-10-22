@@ -54,13 +54,13 @@ export function SinceLastVisit({ projectId, returnTo }: { projectId: string; ret
   const from = data?.lastVisit ? `your report on ${fmtDay(data.lastVisit.visitDate)}` : '';
   return <section aria-labelledby="eng-since-title" className="eng-since">
     <div className="eng-section-title"><h2 id="eng-since-title">Since your last visit</h2><span className="r">{data ? `${total} new` : ''}</span></div>
-    {data && <p className="eng-since-from">{data.lastVisit
+    {data && !(data.lastVisit && !total) && <p className="eng-since-from">{data.lastVisit
       ? <>From others since <Link href={withViewReturn(`/reports/${data.lastVisit.reportId}`, returnTo)}>{from}</Link> ({short(data.lastVisit.reference)}).</>
       : <>You have not sent a report on this project before today, so this is the last {FIRST_LOOK_DAYS} days.</>}</p>}
     <div className="eng-list">
       {failed ? <div className="eng-empty" role="alert">{failed} <button type="button" onClick={() => setRetry(n => n + 1)}>Retry</button></div>
         : !data ? <div className="eng-empty">Checking what has changed…</div>
-        : !total ? <div className="eng-empty">Nothing new from anyone else{data.lastVisit ? ` since ${from}` : ` in the last ${FIRST_LOOK_DAYS} days`}. Reports, issues and variations other people record here will show up.</div>
+        : !total ? <div className="eng-empty">Nothing new from anyone else{data.lastVisit ? ` since ${from}` : ` in the last ${FIRST_LOOK_DAYS} days`}.</div>
         : <>
           <Group label="Reports from others" count={data.reports.length}>
             {data.reports.map(r => <Link key={r.id} href={withViewReturn(`/reports/${r.id}`, returnTo)} className="eng-row"><div className="main">

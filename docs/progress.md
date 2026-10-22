@@ -38,6 +38,108 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   office-links, office-progress, role-access, accessibility, day-walkthrough.
 - Not verified: a real phone; a live tenant.
 
+## 2026-10-22 — Plain words on engineer screens
+
+- Why: Cal's 21 Oct ask that RELAY be easy for hands-on engineers, "not IT
+  guys". A walk of every engineer screen at 390px on latest main (home,
+  Issues, an issue, Flag a defect, a site update's cards, check and sent
+  screens, a handover inspection, site diary, My week, Photographs, Notes for
+  the next visit, Weekly summary, Search, sign-in, page not found, no signal)
+  listed IT-speak ("On the server", "Saved on server", "on this device"),
+  office-speak ("assign", "sighting", "chargeable", "needs an instruction"),
+  and text said twice. Not a `docs/tasks.json` task; no status changed.
+- Changed (words only; nothing works differently): where work is now says
+  "Saved to RELAY" (the bar), "Saved" (a card or photo), "Not saved to
+  RELAY yet", "RELAY not answering · kept on this phone" and "Waiting for
+  RELAY to answer", the save and send problem notes say "RELAY" instead of
+  "RELAY's server", and the two-versions screen says "Saved copy"; the home button no longer says to sign a
+  site update (signing is optional), Request a variation says "Extra work, for
+  the office to price", an issue with no owner says "nobody on it yet" in the home list,
+  inspections say "anything to fix goes on the snag list", Reports says "2
+  sent"; on Check & send, "RELAY does not email A. Whitfield yet. If it cannot
+  wait, tell them yourself." (the same as the sent report), "Ones you linked are
+  added to the issue already raised", "The office says who fixes them"; on a
+  card, plainer hints for linking an issue, who should fix it and work already
+  done; Flag a defect says "Photo of the problem", "Kept on this phone · not sent
+  yet" and a plainer trade hint; My week says "open it to finish and send", with its footnote cut to three sentences; Notes for the
+  next visit and Photographs lose a repeated sentence. "Since your last visit"
+  with nothing new shows one line instead of two saying the same thing.
+- Decided: one word for where work is, "RELAY", set against "this phone",
+  since engineers already see "No signal, or no answer from RELAY". Words the
+  office also reads (status names such as Awaiting instruction, the weekly
+  summary and My week's "variation required" (kept the same as each other),
+  "Variation required" on PDFs, "Who needs to respond") are left as
+  they are.
+- Help: "What's new" line; the first-update, no-signal and unfinished-reports
+  steps say "Saved to RELAY" and "until you send it".
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
+- Checks: typecheck, `npm test`, build; every `scripts/verify-*.mjs` except
+  pdf-navigation (fails on main) run on this change, one at a time, with
+  checks that read the old words updated to the new ones: 99 pass. Three
+  did not: toolbox-talks (its known tab-title race; passed when rerun),
+  undo-remove (focus on Undo) and site-coverage (a date that falls inside the
+  fortnight), both red on main and fixed by open PR #142. Before and after screens and the words on
+  each screen in project files `ui-review/plain-words/` (before = main).
+- Not verified: real phones, screen readers.
+
+## 2026-10-22 — The Issues list on a small laptop
+
+- Why: a walk of an office manager at 1024 and 1280px on main 8af52ef (busy
+  example data from `scripts/seed-busy-projects.mjs`, 60 days; screens in
+  project files `ui-review/office-laptop/before|after/`). The overview, Inbox,
+  a project sheet and the Weekly summary read well. The Issues register at
+  1024px did not: the heading's buttons dropped under the title and the
+  filters took two rows, so the first issue started at 580px, and each Open
+  row averaged 184px because the description had about 110px and wrapped to
+  five or six lines while Work and Confirmation tags broke into a column of
+  words ("FIXED, / TO / CHECK"). 55 of 100 tags were on two or more lines at
+  every width from 1024 to 1365. Asked for by the coordinator as the walk's one
+  pick; not a `docs/tasks.json` task, so no status changed. Decided without
+  asking Cal (his autonomy message), within his 07:02 direction (the office's
+  view of progress).
+- Changed (`IssuesView.tsx`, `workspace.css`, only the Issues register): from
+  1024px its Work and Confirmation tags stay on one line. At 1024-1279px the
+  heading keeps its four buttons on one row beside the title (the summary line
+  wraps instead), the five filters share one row, the Project column gives way
+  to the project's name under the reference, and "45d late" goes under the
+  target date; with a filter set, "Clear filters" goes under the filters, and a
+  download that fails says so under the buttons. Below 1024px (cards) it is
+  as before; from 1280px only the tags change (one line, so no wider).
+- Measured (`RELAY_REPORT_ONLY=1` on main, then the branch, at 1024x800):
+  first issue 580px to 511px from the top; an Open row 184px to 106px, a
+  Fixed, to check row 144px to 123px; tags on two lines 55 of 100 to 0. At
+  1280px the rows are the same height as before (tags were not what made them
+  tall there) and the tags are on one line.
+- Decisions (Claude): the Project column goes rather than the description
+  being cut, because every reference already starts with the project's code
+  and the name under it keeps the full name in the row. Sorting by project is
+  not offered at 1024-1279px as a result; sorting by Ref groups by project.
+  The summary line wraps under the title rather than the buttons, because the
+  buttons are what you press. Kept to the Issues register: the Variations and
+  Inbox tables read well at 1024 in the walk.
+- Checks: typecheck, `npm test`, build. New `scripts/verify-issues-laptop.mjs`
+  (260 checks at 1000, 1024, 1100, 1180, 1279, 1280, 1365 and 1440px, light
+  and dark at 1024 and 1280, Open, Fixed, to check and with a location typed:
+  heading on one row,
+  filters on one row and wide enough to read, project under the reference or
+  in its column by width, "Nd late" under or beside the date, every tag on one
+  line, first issue by 520px and Open rows 130px or less at 1024, cards
+  with their Project line below 1024, nothing sideways, no cell
+  over the next, Verify inside its panel, a failed download's message inside
+  the heading, no page errors). Against main it fails as listed above. Also
+  passed: office-top-bar, issue-register, office-registers, check-fixes,
+  office-phone, office-desk, help, issue-figures, fix-waiting, accessibility,
+  role-access, engineer-layout, snag-list and issue-assign.
+- A fresh-context review found a failed download's message would have pushed
+  the heading sideways at 1024-1279 (now wraps under the buttons), the filter
+  boxes too narrow with "Clear filters" on the row (it now goes under them,
+  checked), and the Help text overstating "as before" at 1280-1365 (fixed).
+- Not verified: a real laptop with browser zoom or a larger system font, a
+  screen reader, a printer.
 ## 2026-10-22 — A shorter printed month
 
 - Why: a walk of an office manager at 1440px (latest main, busy example data
@@ -169,6 +271,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   cannot be fetched (no signal), the box shows with Back and no Next, rather than
   guessing.
 - Help: a "What's new" line.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (new unit test for `nextYourIssue`), build. New
   `scripts/verify-fix-forward-next.mjs` (73 checks): six fixes put forward one
   after another from the Issues tab in 24 counted taps (the first issue, then
@@ -235,6 +342,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   is the one waiting longest; Help says so) so nobody relearns it; the waiting
   fixes go under the to-do list rather than above it, so what is the engineer's
   to do comes first.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 547; new tests in `checkFix.test.ts`,
   `yourIssues.test.ts`, `busyProjects.test.ts`), build. New
   `scripts/verify-fix-waiting.mjs` (41 checks: overview order and days, project
@@ -308,6 +420,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   fixed bar mid-page; at the top of Check & send the bar always covers whatever
   is at the bottom of the screen until you scroll, as any fixed bar does.
 - Help: a "What's new" line.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test`, build. New `scripts/verify-receipt-send-bar.mjs`
   (58 checks, light and dark at 390px, dark at 1440px): the receipt's three
   buttons in order, 48px or taller, above the bottom tabs, Back to Site lands on
@@ -358,6 +475,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   through and say so. Plain display of photographs already sent: no tags,
   albums or annotations (FE-2 stays out).
 - Help: a "What's new" line, and the Photographs line in the page list.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 545 on top of #136), build. New
   `scripts/verify-photos-month.mjs` (43 checks): month choices and counts, a
   fix added to an issue counted in its month, grouped by day, Day choice and
@@ -457,6 +579,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   decided or wrote on an issue or variation: `officeActed`/`officeOpened` in
   `lib/cameBack.ts`); with none it shows no number. The rows are unchanged.
 - Help: a "What's new" line.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 540; between 23:00 and 00:00 UTC
   `offlineStart.test.ts` fails on main too, fixed separately in #133), build. New
   `scripts/verify-same-place-issues.mjs` (61 checks, light and dark at
@@ -512,6 +639,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   fresh-context review found the first two-row layout (Attention on row one,
   search on row two) took the keyboard from the logo down to the search box
   and back up; the rows now follow the page order and the check tests it.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test`, build. New `scripts/verify-office-top-bar.mjs`
   (busy example data, an Admin with a long name): at 768, 1024, 1280 and
   1440px, on the overview, a project, a project with an issue open, Inbox,
@@ -653,6 +785,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   back without a word are left as they are and still show as sent back;
   `verify-came-back-first` now makes such a record directly instead of through the
   refused command. Help: a "What's new" line and a step under "Closing an issue".
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 537; new `checkFix.test.ts`), build. New
   `scripts/verify-check-fixes.mjs` (70 checks): 25 fixes; from the overview the
   dialog follows the panel's order, Enter changes nothing, Verify moves on, an
@@ -774,6 +911,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   sheet. Engineer My week has no open or overdue figures, so nothing changed
   there. Team list (#125) and the phone Inbox report screen (#122) untouched.
   Help "What's new" line added.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 526; new tests in
   `officeActions.test.ts` and `issueTrend.test.ts`; the company and snag list
   tests that asserted the old rule now assert the new one), build. New
@@ -870,6 +1012,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Fresh-context review: no correctness bugs; three low findings fixed (the
   footnote line above, "closed, then opened again" instead of "sent back",
   SharePoint closures say closed).
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 521; two new `myWeek.test.ts` cases),
   build. New `scripts/verify-my-week-counts.mjs` (13 checks): seeds through the
   real code a site update with two defects and an access problem, a later
@@ -909,6 +1056,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   / "Not signed in now" under Signed in) for the Admin, and to "Signed in
   now" under "Signed in at" on the Manager's list, so nothing the session
   showed is lost. Help "What's new" line added.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 522 after merging main, 3 new in `teamActivity.test.ts`),
   build. New `scripts/verify-team-last-sent.mjs` (58 checks; Admin 1440 dark
   and light, Manager 1440 dark and light, Admin 390 light): not signed in
@@ -961,6 +1113,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - After: two issues on two sites put forward in 7 taps from home (was 11);
   the Yours page in the check's data is 1,791px at 390px, against 2,817px for
   every trade on all projects.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 518; new `yourIssues.test.ts`), build.
   New `scripts/verify-issues-yours.mjs` (43 checks: 390px light whole flow
   with tap count, 390px and 1440px dark, no trade, nothing open, Open/All keep
@@ -1032,6 +1189,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   guide's "For the site meeting" updated.
 - Result: three projects' last week in 5 clicks with no scrolling (was 7
   and a scroll), straight from the overview.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 514), build. New
   `scripts/verify-office-weekly-review.mjs` (53; 1440 dark and light, 1280,
   390): a link a row named for its project, its address (project, last
@@ -1093,6 +1255,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   before the page redraws cannot leave Action needed folded.
 - Result: the same walk is 33 taps and about 3,220px of scrolling. The Where
   box with its places is 125px.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 514, 1 new in `quickCards.test.ts`),
   build. New `scripts/verify-quicker-inspections.mjs` (100, light and dark
   at 390px, dark at 1440px): first check open on arrival, Satisfactory moves
@@ -1146,6 +1313,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   were cut off at the right edge of phone rows; `.kind` tags now wrap in
   phone cards like `.tag` does. An empty "Status" label (a report nobody has
   opened) no longer shows on phone rows.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 513), build. New
   `scripts/verify-inbox-phone.mjs` (58): report at the top, list hidden,
   Seen by the office, "‹ Inbox" and Back return within 40px of the place,
@@ -1242,6 +1414,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   another chip would be one more control for what the list already shows.
 - Light theme `--access` (#5f7a9c to #4c6585): the "1 access" tag was below
   4.5:1 on the panel (axe colour-contrast on the Inbox), now passes.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 513; `officeActions` test now expects
   newest first), build. New `scripts/verify-office-inbox.mjs` (80, 1440px dark
   and light, 1280px dark, 1200px light, 390px light; `RELAY_REPORT_ONLY=1`
@@ -1317,6 +1494,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   visit now heads the right-hand column. Help "What's new" line and the
   "After you send" guide updated. Taps unchanged; what changes is scrolling
   and reading past rows.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (new unit tests for the order and for
   `issueReopened`), build. New `scripts/verify-came-back-first.mjs`
   (29 checks, 390px light and dark, 1440px dark, where the office reopens
@@ -1443,6 +1625,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   phone" still show in words. 287px to 179px a tile, four photos 586px to
   369px at 390px. Display only: no new photo features (FE-2 stays out). Help
   "What's new" line.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test`, build. New `scripts/verify-quicker-update.mjs`
   (109 checks, 390px light and dark, 1440px dark): empty card opens ready to
   type from "Carry on" and saves typing; once written it opens folded; only
@@ -1486,6 +1673,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Limit, unchanged from before: a defect with no signal does not go by
   itself when signal returns (site updates do since #105); the engineer taps
   "Try again". Possible later task.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 493), build. New
   `scripts/verify-defect-recent-places.mjs` (87 checks, 390px light and dark,
   1440px dark): chips under Where from yesterday's update, a tap fills and is
@@ -1578,6 +1770,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Measured on the seeded data: Photographs link 10,928px → 539px down a
   project at 390px (on the first screen); the four figures on the first
   screen; page height about the same (11,303px → 11,493px).
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 493 after rebasing on #110), build.
   `verify-office-progress` (77; now expects the figures first, the project
   pages before Latest from site and on the first screen, listed once),
@@ -1630,6 +1827,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   issues). Limit: an office "Record an update" on an issue is a `progress`
   event like an engineer's, so it does not show; the office's "Not
   finished"/reopen does.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 493; new `officeWord.test.ts`),
   build. New `scripts/verify-office-words.mjs` (67 checks, 390px light and
   dark, 1440px dark): who, when and what on the rows; "Put forward as fixed"
@@ -1735,6 +1937,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   project column's lines (same reason); the bar's "3 issues · 1 overdue · 1 to
   check" under the sheet figures (the figures above it now open the same
   lists). Site coverage already links each visit and last report.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 480), build. New
   `scripts/verify-office-links.mjs` (52 checks, 1440px dark and 390px light,
   plus an engineer). Browser checks one at a time: verify-office-progress
@@ -1773,6 +1980,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (7,126px at 390px); three weeks back took 6 presses and 19,567px. Now one
   choice, under 0.2 s, the day starting 519px down (773px at 390px). The Day
   list has 403 entries; page load unchanged (no API change).
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 480 after rebasing on #105, two new unit tests), build;
   browser checks one at a time: verify-photo-library (51, 13 new for the day),
   verify-help, verify-accessibility, verify-first-time-use,
@@ -1821,6 +2033,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Check & send; Check & send then sends the latest version. It only sends
   while RELAY is open (said on screen and in Help); the no-signal page's
   own sending is unchanged.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 477; new `sendOnSignal.test.ts`),
   build. New `scripts/verify-send-on-signal.mjs` (69 checks, 390px light
   and dark, 1440px dark): open page waits then sends once (one report, one
@@ -1862,6 +2079,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   surface change between top bar and tabs, edges 1.32-1.64:1, cards 0px
   apart; the card-fill check was added after); now all 63 pass. Screenshots before and after: project files
   `ui-review/office-sections/`.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 472), build; browser checks
   verify-office-sections, verify-accessibility, verify-office-desk,
   verify-office-phone, verify-office-landing, verify-office-progress,
@@ -1965,6 +2187,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   were browser-default and under 44px, caught once Admin opened there).
 - Kept: every September feature, #88's automatic Seen (no Acknowledge
   button), the Safety, permits and deliveries switch, off by default.
+- Review: a fresh-context review found the bar and a card both said "Saved to
+  RELAY" (checks waiting for a save could stop at a card; the card now says
+  "Saved"), Help claiming the office sees a saved draft (it does not until
+  sent), error notes still naming the server, My week disagreeing with the
+  weekly summary, and three checks still reading old words. All fixed.
 - Checks: typecheck, `npm test` (146 + 467), build. All 75 browser checks
   run one at a time on this branch: 72 passed first time; verify-help (tab
   title race) and verify-company-chases (axe target size on /companies,
