@@ -10,7 +10,9 @@
 
 .ws .ro-qa-head{display:flex;align-items:flex-start;gap:10px;min-width:0}
 .ws .ro-qa-head>p{flex:1;min-width:0}
-.ws .ro-qa-btn{flex:none;margin-left:auto;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--line-2);background:var(--panel);color:var(--text);padding:4px 9px;border-radius:3px;cursor:pointer;white-space:nowrap}
+/* A control, so sans in sentence case like the other buttons (Release 1, O4). */
+.ws .ro-qa-btn{flex:none;margin-left:auto;font-family:var(--sans);font-size:13px;border:1px solid var(--line-2);background:var(--panel);color:var(--text);min-height:32px;padding:4px 12px;border-radius:3px;cursor:pointer;white-space:nowrap}
+@media (pointer:coarse){.ws .ro-qa-btn{min-height:44px}}
 .ws .ro-qa-btn:hover{border-color:var(--acc);color:var(--acc)}
 .ws .ro-qa-btn[aria-expanded="true"]{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
 .ws .ro-qa-btn:focus-visible{outline:2px solid var(--acc);outline-offset:1px}

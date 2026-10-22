@@ -11,6 +11,7 @@ import type { Report } from "@/lib/types";
 import { safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 import { dateShort, dayLong } from '@/lib/dates';
 import { PageTitle } from '@/components/PageTitle';
+import './preview.css';
 
 /**
  * What the issued document would say.

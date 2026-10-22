@@ -7,6 +7,7 @@ import {safeViewReturn, withViewReturn} from '@/lib/viewNavigation';
 import {PageTitle} from '@/components/PageTitle';
 import {DownloadLink} from '@/components/DownloadLink';
 import {failure} from '@/lib/failure';
+import './pdf.css';
 
 /** Render locally: never navigate the installed app into the device PDF viewer. */
 export default function PdfPage({params,searchParams}: {params:Promise<{id:string}>;searchParams:Promise<{returnTo?:string}>}) {
@@ -112,15 +113,16 @@ export default function PdfPage({params,searchParams}: {params:Promise<{id:strin
     <PageTitle title="Report PDF" />
     <Link href={withViewReturn(`/reports/${id}`,returnTo)} replace className="back">← Back to report</Link>
     <div className="pagehead"><div><h1>Report PDF</h1><p className="sub">View the document without leaving RELAY</p></div></div>
-    <div className="btn-row" style={{flexWrap:'wrap'}}>
-      <button disabled={!doc || page === 1 || loading} onClick={() => setPage(p => p-1)}>Previous page</button>
-      <span aria-live="polite">{doc ? `Page ${page} of ${doc.numPages}` : 'PDF'}</span>
-      <button disabled={!doc || page === doc.numPages || loading} onClick={() => setPage(p => p+1)}>Next page</button>
-      <label>Zoom <select value={zoom} onChange={e => setZoom(Number(e.target.value))}><option value={1}>Fit width</option><option value={1.5}>150%</option><option value={2}>200%</option></select></label>
-      {doc && <DownloadLink className="back" href={`/api/reports/${id}/pdf?download=1`} what="PDF">Download PDF</DownloadLink>}
-    </div>
-    {loading && <p role="status">Loading PDF…</p>}
-    {error && <div role="alert" className="note note-bad"><p>{error}</p>{cannotShow
+    {/* The page controls come once there is a document to page through. */}
+    {doc && <div className="pdf-tools">
+      <button disabled={page === 1 || loading} onClick={() => setPage(p => p-1)}>Previous page</button>
+      <span className="pdf-page" aria-live="polite">Page {page} of {doc.numPages}</span>
+      <button disabled={page === doc.numPages || loading} onClick={() => setPage(p => p+1)}>Next page</button>
+      <label className="pdf-zoom">Zoom <select value={zoom} onChange={e => setZoom(Number(e.target.value))}><option value={1}>Fit width</option><option value={1.5}>150%</option><option value={2}>200%</option></select></label>
+      <DownloadLink className="back" href={`/api/reports/${id}/pdf?download=1`} what="PDF">Download PDF</DownloadLink>
+    </div>}
+    {loading && <p role="status" className="pdf-status">Loading PDF…</p>}
+    {error && <div role="alert" className="note note-bad pdf-problem"><p>{error}</p>{cannotShow
       ? <DownloadLink href={`/api/reports/${id}/pdf?download=1`} what="PDF">Download the PDF</DownloadLink>
       : <button onClick={() => setRetry(n => n+1)}>Try again</button>}</div>}
     <div ref={container} style={{width:'100%',overflowX:'auto',marginTop:16}}>
