@@ -4,6 +4,47 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Issues over time shows what is waiting for the office
+
+- Why: a walk of an office manager at 1440px and 390px on main 117df61 (busy
+  example data) using Issues over time to answer "are we getting on top of
+  Tetley Hall's snags?". Every figure matched the records, the project sheet
+  and the Weekly summary (390 open, 222 past target, 14 raised this week, 78
+  raised and 37 closed over four weeks) and the page loaded in under half a
+  second. The gap: the headline said "Getting longer: 390 open" but 119 of
+  those were fixed by site and waiting for the office to check, drawn in grey
+  with the issues still to do, so the office could not tell whether site or the
+  office was behind. Coordinator's ask (walk and one pick); not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the office's view of progress clearer).
+- Changed: `lib/issueTrend.ts` gives each week `toCheck` (the existing
+  `isToCheckOn`, never past target as well) and `toCheckNow`.
+  `IssueTrendPage`: the headline adds "119 of them are fixed and waiting for the
+  office to check."; Open now says "119 fixed, to check"; each bar has a
+  fixed, to check part (caution colour, as on the project sheet's bar) between past target and "Open, not late";
+  the readout and a new table column carry it; the footer says what it means.
+  On a phone the table's weeks read "19 Oct" on one line and each legend label
+  stays with its colour. Help "What's new" line.
+- Decided (Claude): "fixed, to check" uses the project sheet's words and rule
+  (#128) rather than a new term; the headline's direction (fewer/more) is
+  unchanged, because a fix only shortens the list once the office checks it.
+- Verified: typecheck, `npm test` (146 + 562), build. New
+  `scripts/verify-issue-trend-busy.mjs` (36 checks; busy seed, 1440px light and
+  dark, 390px light): Open now, past target and fixed, to check equal the
+  records and the project sheet; the headline, this week's row, bar and readout
+  carry them; every week's parts fit inside its open; loads within 5 s; no
+  sideways scroll; legend labels and phone week names on one line. Fails on
+  main at Open now. `verify-issue-figures` (48) now also checks the trend's
+  headline, row and bar; `verify-issue-trend` (29) reads the new column. Also
+  passed: month-summary, accessibility, help, role-access, busy-projects (39
+  timings within budget). Screens: project files
+  `ui-review/issues-over-time/` (before, after).
+- Not verified: a real phone or laptop; a printer.
+- Fresh review found: the green first used for fixed, to check disagreed with
+  the project sheet's amber (now amber); the busy check did not prove the
+  table fits inside its box at 390px (added); a bar part could go negative
+  on bad data (clamped).
+
 ## 2026-10-22 — The office's reason reaches whoever is fixing it
 
 - Why: the "What the office asked" walk (PR #162) found that when the office

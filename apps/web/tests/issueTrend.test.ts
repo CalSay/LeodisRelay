@@ -25,11 +25,12 @@ test('counts raised, closed and open at the end of each Monday-to-Sunday week, u
   assert.equal(t.weeks.at(-1)!.monday, '2026-10-19');
   assert.equal(t.weeks[0]!.monday, '2026-08-03');
   const [w5, w12, w19] = t.weeks.slice(-3);
-  assert.deepEqual(w5, { monday:'2026-10-05', raised:2, closed:0, open:2, late:0 });
-  assert.deepEqual(w12, { monday:'2026-10-12', raised:1, closed:1, open:2, late:0 });
+  assert.deepEqual(w5, { monday:'2026-10-05', raised:2, closed:0, open:2, late:0, toCheck:0 });
+  assert.deepEqual(w12, { monday:'2026-10-12', raised:1, closed:1, open:2, late:0, toCheck:0 });
   // Put forward as fixed is still open until the office checks it.
-  assert.deepEqual(w19, { monday:'2026-10-19', raised:1, closed:0, open:3, late:0 });
+  assert.deepEqual(w19, { monday:'2026-10-19', raised:1, closed:0, open:3, late:0, toCheck:1 });
   assert.equal(t.openNow, 3);
+  assert.equal(t.toCheckNow, 1);
 });
 
 test('past target is judged on each week\'s last day, not today', () => {
@@ -90,4 +91,11 @@ test('past target leaves out work put forward as fixed by then, and counts it ag
   assert.equal(late('2026-10-12'), 1);
   assert.equal(t.lateNow, 1, 'today, the same count as the project sheet');
   assert.equal(t.openNow, 2, 'put forward as fixed is still open');
+  // Fixed, to check from the week it was put forward until it is sent back or checked; never late as well.
+  const toCheck = (monday: string) => t.weeks.find(w => w.monday === monday)!.toCheck;
+  assert.equal(toCheck('2026-09-28'), 0);
+  assert.equal(toCheck('2026-10-05'), 2);
+  assert.equal(toCheck('2026-10-12'), 1);
+  assert.equal(t.toCheckNow, 1, 'today, the same count as the project sheet');
+  for (const w of t.weeks) assert.ok(w.late + w.toCheck <= w.open, `week of ${w.monday}: past target and to check are parts of open`);
 });
