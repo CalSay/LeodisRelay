@@ -105,6 +105,8 @@ try {
     check(!(await page.getByRole('button',{name:/Next month/}).isEnabled()),'office: no month after this one');
     await page.getByRole('button',{name:/Previous month/}).click();await page.waitForURL(new RegExp(`month=${M}`));
     await page.locator('.month-sheet').filter({hasText:'last month'}).waitFor();
+    // The tab title is set just after the sheet draws, so give it a moment.
+    await page.waitForFunction(()=>document.title.startsWith('Monthly summary'),null,{timeout:5000}).catch(()=>{});
     check((await page.title()).startsWith('Monthly summary'),`office: the tab says Monthly summary (${await page.title()})`);
     const text=await page.locator('.month-sheet').innerText();
     check(!/toolbox|permit|deliver/i.test(text),'office: no toolbox talks, permits or deliveries, even switched on');

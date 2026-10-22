@@ -8,6 +8,11 @@
 // - The site opens that report. A draft does not count as sent.
 // - Whether someone is signed in now moved to their own panel; no "No session"
 //   or "Session expired" left on the list.
+// - Under it, the days this week they sent a report for and how many sites
+//   ("This week: Mon, today · 2 sites"), or "Nothing sent this week".
+// - Someone off the list who signed in once and sent a report in the last
+//   fortnight stays listed after their session has gone; someone whose last
+//   report is older does not.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 // RELAY_SCREENSHOT_DIR=<dir> saves screenshots.
 import assert from 'node:assert/strict';
@@ -26,6 +31,7 @@ process.env.RELAY_DATA_ROOT=root;process.env.RELAY_MEDIA_ROOT=join(root,'media')
 const {putRecord,database}=require('../apps/web/.test-build/lib/storage.js');
 const {addPerson}=require('../apps/web/.test-build/lib/people.js');
 const {londonDay}=require('../apps/web/.test-build/lib/weeklySummary.js');
+const {dateShort}=require('../apps/web/.test-build/lib/dates.js');
 const people={
   Admin:{id:'entra:last-sent-admin',oid:'last-sent-admin',name:'Cal Say',email:'callum@leodisme.com',role:'Admin'},
   Manager:{id:'entra:last-sent-manager',oid:'last-sent-manager',name:'Office Manager',email:'office.manager@leodisme.com',role:'Manager'},
@@ -33,12 +39,16 @@ const people={
   Ray:{id:'entra:last-sent-ray',oid:'last-sent-ray',name:'Ray Turner',email:'ray.turner@leodisme.com',role:'Engineer',trade:'Electrical'},
   // New to RELAY, starting on Kirkstall Gate.
   Nina:{id:'entra:last-sent-nina',oid:'last-sent-nina',name:'Nina Starter',email:'nina.starter@leodisme.com',role:'Engineer',trade:'P&H'},
+  // Assigned in Microsoft but never put on RELAY's list; signed out since.
+  Olly:{id:'entra:last-sent-olly',oid:'last-sent-olly',name:'Olly Offlist',email:'olly.offlist@leodisme.com',role:'Engineer',trade:'HVAC'},
+  // The same, but his last report was three weeks ago.
+  Gus:{id:'entra:last-sent-gus',oid:'last-sent-gus',name:'Gus Gone',email:'gus.gone@leodisme.com',role:'Engineer',trade:'HVAC'},
 };
 const sessions={};
 const signIn=k=>{sessions[k]=randomUUID();putRecord('sessions',{id:sessions[k],principal:people[k],issuedAt:new Date().toISOString(),expiresAt:new Date(Date.now()+3600000).toISOString()});putRecord('identities',{id:people[k].id,email:people[k].email,name:people[k].name});};
 signIn('Admin');signIn('Manager');
 for(const k of ['Ray','Nina'])assert.ok(addPerson(people.Admin,{email:people[k].email,name:people[k].name,assignment:k==='Ray'?'Engineer.Electrical':'Engineer.PH'}).ok,`added ${k}`);
-putRecord('identities',{id:people.Ray.id,email:people.Ray.email,name:people.Ray.name});
+for(const k of ['Ray','Olly','Gus'])putRecord('identities',{id:people[k].id,email:people[k].email,name:people[k].name});
 const today=londonDay(new Date().toISOString());
 const dayBefore=n=>{const d=new Date(`${today}T12:00:00Z`);d.setUTCDate(d.getUTCDate()-n);return d.toISOString().slice(0,10);};
 let seq=0;
@@ -51,6 +61,17 @@ const sent=(who,projectId,number,visitDate,at=`${visitDate}T14:00:00.000Z`,state
 };
 sent(people.Ray,'proj-011lme','011LME',dayBefore(3));
 const rayYesterday=sent(people.Ray,'proj-011lme','011LME',dayBefore(1));
+sent(people.Olly,'proj-014lme','014LME',dayBefore(2));
+sent(people.Gus,'proj-014lme','014LME',dayBefore(21));
+// What the week line should say for these visit days and sites (Monday to today, London).
+const monday=dayBefore((new Date(`${today}T12:00:00Z`).getUTCDay()+6)%7);
+const weekWords=(visits)=>{
+  const mine=visits.filter(([d])=>d>=monday&&d<=today);
+  if(!mine.length)return 'Nothing sent this week';
+  const days=[...new Set(mine.map(([d])=>d))].sort().map(d=>d===today?'today':['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(`${d}T12:00:00Z`).getUTCDay()]);
+  const sites=new Set(mine.map(([,p])=>p)).size;
+  return `This week: ${days.join(', ')}${sites>1?` · ${sites} sites`:''}`;
+};
 
 const port=4357,base=`http://127.0.0.1:${port}`;let output='';
 const server=spawn(process.execPath,[resolve('node_modules/next/dist/bin/next'),'start','-p',String(port),'-H','127.0.0.1'],{cwd:resolve('apps/web'),windowsHide:true,stdio:['ignore','pipe','pipe'],env:{...process.env,NODE_ENV:'production',ENTRA_TENANT_ID:'00000000-0000-0000-0000-000000000001',ENTRA_CLIENT_ID:'00000000-0000-0000-0000-000000000002',ENTRA_CLIENT_SECRET:'synthetic-last-sent-check',ENTRA_REDIRECT_URI:`${base}/api/auth/callback`}});
@@ -75,8 +96,13 @@ async function look(page,label,width){
 const cell=async(page,email)=>{
   const row=page.locator('tr',{hasText:email}).first();
   await row.waitFor();
-  // Words as written (a tag shows in capitals on screen), each part of the cell apart.
-  return row.locator('td[data-label="Last sent"]').evaluate(td=>[...td.children].map(c=>c.textContent.trim()).join(' ').replace(/\s+/g,' '));
+  // Words as written (a tag shows in capitals on screen), each part of the cell apart; the week line is read on its own.
+  return row.locator('td[data-label="Last sent"]').evaluate(td=>[...td.children].filter(c=>!c.hasAttribute('data-week')).map(c=>c.textContent.trim()).join(' ').replace(/\s+/g,' '));
+};
+/** The line under it for this week, or null when there is none. */
+const weekLine=async(page,email)=>{
+  const line=page.locator('tr',{hasText:email}).first().locator('td[data-label="Last sent"] [data-week]');
+  return (await line.count())?(await line.textContent()).trim():null;
 };
 const team=async(who,width,scheme)=>{
   const context=await browser.newContext({viewport:{width,height:900},colorScheme:scheme});
@@ -101,6 +127,15 @@ try {
     check(await cell(page,people.Nina.email)==='Not signed in yet',`${tag}: Nina reads "Not signed in yet" (${await cell(page,people.Nina.email)})`);
     check(await cell(page,people.Ray.email)==='Tetley Hall - Block E Visit yesterday',`${tag}: Ray reads his site and day (${await cell(page,people.Ray.email)})`);
     check(/^Nothing sent yet Signed in /.test(await cell(page,people.Admin.email)),`${tag}: someone signed in with nothing sent says so (${await cell(page,people.Admin.email)})`);
+    const rayWeek=weekWords([[dayBefore(3),'proj-011lme'],[dayBefore(1),'proj-011lme']]);
+    check(await weekLine(page,people.Ray.email)===rayWeek,`${tag}: Ray's week reads "${rayWeek}" (${await weekLine(page,people.Ray.email)})`);
+    check(await weekLine(page,people.Nina.email)===null && await weekLine(page,people.Admin.email)===null,`${tag}: no week line for someone who has sent nothing`);
+    // Off the list, no session: kept while he sent something in the last fortnight.
+    check(await cell(page,people.Olly.email)===`Kirkstall Gate - Phase 2 Visit ${dateShort(dayBefore(2),'auto')}`,`${tag}: Olly, off the list, is still there with his site (${await cell(page,people.Olly.email)})`);
+    check(await weekLine(page,people.Olly.email)===weekWords([[dayBefore(2),'proj-014lme']]),`${tag}: and his week (${await weekLine(page,people.Olly.email)})`);
+    const ollyRow=await page.locator('tr',{hasText:people.Olly.email}).first().innerText();
+    check(who==='Admin'?/Not on the checklist/.test(ollyRow):/Engineer · HVAC/.test(ollyRow),`${tag}: Olly reads as off the list${who==='Admin'?'':', with the trade from his report'} (${ollyRow.replace(/\s+/g,' ')})`);
+    check(!text.includes(people.Gus.email),`${tag}: Gus, off the list and last sent three weeks ago, is not listed`);
     if(who==='Manager'){
       const signedAt=row=>page.locator('tr',{hasText:row}).first().locator('td[data-label="Signed in at"]').innerText();
       check((await signedAt(people.Manager.email)).includes('Signed in now'),`${tag}: the Manager's list still says who is signed in now`);
@@ -149,6 +184,9 @@ try {
     await look(page,tag,width);
     check(await cell(page,people.Nina.email)==='Kirkstall Gate - Phase 2 Visit today',`${tag}: Nina reads the new site, today (${await cell(page,people.Nina.email)})`);
     check(await cell(page,people.Ray.email)==='Kirkstall Gate - Phase 2 Visit today',`${tag}: Ray reads the new site he moved to (${await cell(page,people.Ray.email)})`);
+    const rayWeek=weekWords([[dayBefore(3),'proj-011lme'],[dayBefore(1),'proj-011lme'],[today,'proj-014lme']]);
+    check(await weekLine(page,people.Ray.email)===rayWeek,`${tag}: Ray's week now has today and the second site: "${rayWeek}" (${await weekLine(page,people.Ray.email)})`);
+    check(await weekLine(page,people.Nina.email)==='This week: today',`${tag}: Nina's week reads "This week: today" (${await weekLine(page,people.Nina.email)})`);
     if(who==='Admin'&&width===1440)await page.locator('tr.clickable',{hasText:people.Nina.email}).click();
     await shoot(page,`team-after-${who.toLowerCase()}-${scheme}-${width}`);
     await page.locator('tr',{hasText:people.Nina.email}).first().getByRole('link',{name:'Kirkstall Gate - Phase 2'}).click();
@@ -159,7 +197,7 @@ try {
   }
   // Engineers cannot read the team.
   check((await fetch(base+'/api/office/team',{headers:{cookie:`relay_session=${sessions.Nina}`}})).status===403,'engineers cannot read the team');
-  console.log(`Team last sent check passed (${checks} checks): "Not signed in yet", "Nothing sent yet" and the site and day of the latest sent report on the Admin's and Manager's Team lists, linked to the report; drafts not counted; signed in now on the person's panel; 1440px dark and light, 390px light.`);
+  console.log(`Team last sent check passed (${checks} checks): "Not signed in yet", "Nothing sent yet" and the site and day of the latest sent report on the Admin's and Manager's Team lists, linked to the report; drafts not counted; signed in now on the person's panel; the days and sites this week under it; someone off the list kept while they sent in the last fortnight; 1440px dark and light, 390px light.`);
 } finally {
   await browser?.close();server.kill();if(server.exitCode===null)await once(server,'exit');database().close();rmSync(root,{recursive:true,force:true});
 }

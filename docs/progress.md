@@ -54,6 +54,75 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a real phone.
 - Next: Since your last visit is long on a busy site (other trades' issues
   and variations); worth a walk of its own.
+## 2026-10-22 — Fourteenth release check (main 993445f, then 73b6d8d)
+
+- Why: a full check of main before the next deploy. Last passed: 6def5e8
+  (#2-#126). #154 (Attention kind by kind) and #142 (phone Undo focus) are
+  not on main, so not checked. No app change.
+- Ran: `npm ci`, typecheck, `npm test` (146 + 554), build, then all 112
+  `scripts/verify-*.mjs` one after another. 109 passed first time.
+  - `verify-undo-remove`: focus does not move to Undo after a card is removed
+    on a phone. Known fault from the thirteenth check, fixed by PR #142
+    (waiting on Cal); not fixed again here.
+  - `verify-site-coverage`: "a draft is not a visit" failed on every run.
+    The check, not the app: its quiet site's last report (today minus 10
+    days) falls inside the fortnight from Thursday to Sunday. PR #142 already
+    fixes this line of the check, so it is not changed here.
+  - `verify-editor-wide` timed out once waiting for a new inspection to
+    open; passed 5 reruns alone. Not reproduced, so recorded, not changed.
+- Then #156 and #157 merged, so everything ran again on main 73b6d8d:
+  typecheck, `npm test` (146 + 557), build, all 113 browser checks. 110
+  passed; undo-remove and site-coverage as above, and `verify-month-summary`
+  once read the tab title before it changed to "Monthly summary" (the title
+  follows the page a moment after a client-side move to another month). It
+  passed alone twice. The check now waits up to 5 s for the title; passes
+  3 of 3. No app change.
+- Deploy: no new settings, packages, data change or offline store version
+  (still `relay-public-v14`). One new read-only route, `/api/monthly-summary`.
+- Not verified: a real phone, tablet, printer or screen reader; a live tenant.
+- Next: once #142 merges, rerun `verify-undo-remove` and `verify-site-coverage`;
+  then main is ready.
+  #159 (Team tab, merged after) was not in this run; its own checks plus
+  team-last-sent, role-access, help, office-desk, month-summary and
+  engineer-layout pass on main with it.
+
+## 2026-10-22 — The Team tab says who has sent updates this week
+
+- Why: a walk of an office manager at 1440px on main e3138df (busy seed, its
+  three engineers put on the list) answering "which engineers have been on
+  site and sent updates this week, and which sites have gone quiet?". The
+  figures agree with the records: each person's Last sent, each project's
+  "This week" visits (13, 14, 14), Site coverage's "Reported today 2 of 2"
+  and "Gone quiet 0". But Team showed only someone's latest report, so an
+  engineer who reported from three sites today read as one, and Site
+  coverage marks reports by trade only (the real list has five
+  electricians), so the question took hovering over chips. Also, someone
+  signed in but not on the list dropped off Team once their session ended,
+  with their updates. Coordinator's ask (walk and one pick); not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the office's view of progress clearer).
+- Changed: `lib/teamActivity.ts` adds `sentThisWeekByAuthor` (sent reports by
+  visit day, Monday to today, London, and their sites), `weekOf` (across a
+  person's accounts) and `thisWeekWords` ("This week: Mon, Tue, today · 3
+  sites", "Nothing sent this week"). `/api/office/team` returns `thisWeek`
+  and lists accounts off the checklist with no session whose latest sent
+  report is for a visit in the last 14 days (role read from that report's
+  trade). `TeamAdmin.tsx` shows the line under Last sent on the Manager's and
+  Admin's lists. Help "What's new" line.
+- Decided (Claude): days and site count, not report counts or times, so it
+  reads as reporting, not hours; no line for someone who has never sent. A
+  list left open into a new week drops last week's days (fresh review). The
+  fortnight limit keeps old development or departed accounts off the list.
+- Verified: typecheck, `npm test` (146 + 556, one new unit test), build.
+  `scripts/verify-team-last-sent.mjs` now 90 checks (week line before and
+  after new reports, none for someone who sent nothing, an off-list account
+  kept, one last sent three weeks ago left off). Also ran: help,
+  role-access, accessibility. Screens: project files `ui-review/team-week/`.
+- Not verified: a real phone; the live roster.
+- Seen, not changed: Site coverage's Last report names one person when
+  several reported that day (left alone in #118); "visits" on the overview
+  counts reports, so a site update and an inspection on one day are two.
+- Next: none from this walk.
 
 ## 2026-10-22 — Late issues say how late, and old dates say their year
 
