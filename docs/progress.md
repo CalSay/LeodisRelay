@@ -18,6 +18,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   while "In this report" and "Sign" are ruled headings; on the receipt "See
   the full report" was a 15px-tall link inside a sentence and "Make a
   correction" a small grey 12px button that looked switched off.
+- The no-signal and two-screen states: screenshots from the existing checks
+  (`verify-draft-conflict`, `verify-sent-elsewhere`, `verify-offline-capture`
+  with `RELAY_SCREENSHOT_DIR`, 390px light and 1440px dark, as those checks
+  take them) are in the same folder. In the "changed somewhere else" card
+  "Photographs" ran into its value ("PhotographsNone"), and the keep and
+  discard buttons were 12px text: both fixed. The no-signal page itself
+  (`/offline`) is E1's and was not changed.
 - Changed: one block at the end of `engineer.css`, scoped to
   `.eng-report-editor` and `.eng-report-sent`, and in `reports/[id]/page.tsx`
   the full report link sits on its own line (class `eng-full-report`, its
@@ -25,7 +32,20 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (`btn-quiet eng-correct`). No `globals.css` token changes, no shared
   component changes, no change to cards, saving, offline or drafts.
 - No Help "What's new" line: nothing works differently.
-- Verified: see the PR for typecheck, tests and the browser checks run.
+- `.eng-report-editor` also wraps the pre-handover and first fix
+  inspections, so their "What sending does" heading and signature "Clear"
+  button change the same way (E5's screens; checked by the inspection checks
+  below).
+- Verified: `npm run typecheck`, `npm test` (146 + 591), `npm run build`.
+  Browser checks passed: engineer-layout, signature-reload, report-editor
+  (58), editor-usability (55), editor-wide (274), quick-update (47),
+  quicker-update (109), lighter-card (80), fewest-taps (17),
+  calm-while-writing (55), draft-conflict (23), offline-drafts (5),
+  offline-sign (62), offline-capture (65), sent-elsewhere (33), engineer-day
+  (37), receipt-send-bar (58), typed-signature (42), old-drafts (84), help
+  (36), accessibility (584). A fresh-context review found no correctness bugs;
+  it asked for the no-signal and two-screen states to be looked at too (done
+  above) and for the checks to be named here.
 - Not verified: a real phone, a screen reader.
 
 ## 2026-10-22 — No red on a site update card while it is being filled in

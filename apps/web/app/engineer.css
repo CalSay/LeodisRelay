@@ -632,3 +632,7 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 /* The receipt: the full report link and Make a correction are big enough to tap. */
 .eng-report-sent .eng-full-report{display:flex;align-items:center;width:fit-content;min-height:48px;color:var(--brass);text-decoration:underline;text-underline-offset:3px;}
 .eng-report-sent .eng-correct{min-height:48px;font-size:15px;padding:0 18px;}
+/* Two versions of a draft, or changes left after it was sent elsewhere: the
+   choices read at button size, and "Photographs" no longer runs into its value. */
+.eng-report-editor .eng-conflict-all .btn-sm,.eng-report-sent .eng-sent-away-actions .btn-sm{font-size:15px;}
+.eng-report-editor .eng-conflict-side dl>div{grid-template-columns:96px 1fr;}
