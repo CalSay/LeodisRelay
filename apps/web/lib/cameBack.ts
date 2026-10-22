@@ -1,4 +1,4 @@
-import type { Issue, Variation } from './types';
+import type { Issue, ReportSummary, Variation } from './types';
 
 /**
  * What the engineer home needs for "Came back from the office": the latest
@@ -137,4 +137,43 @@ export function reportWord(r: { review?: string; reviewNote?: string; reviewedBy
   if (r.review === 'returned' && r.reviewNote?.trim()) return { by: r.reviewedBy ?? 'The office', at: r.reviewedAt ?? '', note: r.reviewNote.trim() };
   if (r.acknowledged?.note?.trim()) return { by: r.acknowledged.by, at: r.acknowledged.at, note: r.acknowledged.note.trim() };
   return undefined;
+}
+
+/**
+ * What came back on the engineer's other sites (2026-10-22): only what waits
+ * on them, a note from the office or something sent back, so a question asked
+ * at one site shows while they are at another without their own new records
+ * from there filling the home. Newest first, each list cut to `CAME_BACK_ROWS`.
+ * `sites` are the sites they report on, other than the one they are at.
+ */
+export interface CameBackElsewhere { issues: Issue[]; variations: Variation[]; reports: ReportSummary[] }
+export function cameBackElsewhere(
+  records: { issues: readonly Issue[]; variations: readonly Variation[]; reports: readonly { report: ReportSummary; corrected: boolean }[] },
+  principal: { id: string; name: string }, sites: ReadonlySet<string>,
+): CameBackElsewhere {
+  const there = (r: { projectId: string }) => sites.has(r.projectId);
+  return {
+    issues: latest(records.issues.filter(i => there(i) && raisedIssue(i, principal.id) && (i.confirmation === 'disputed' || issueReopened(i.events, principal) || !!issueWord(i.events, principal)))),
+    variations: latest(records.variations.filter(v => there(v) && v.raisedById === principal.id && !!variationWord(v.events, principal))),
+    reports: records.reports.filter(({ report: r, corrected }) => there(r) && r.state === 'submitted' && r.authorId === principal.id && ((r.review === 'returned' && !corrected) || !!reportWord(r, corrected)))
+      .map(({ report }) => report).sort((a, b) => (b.serverAcknowledgedAt ?? '').localeCompare(a.serverAcknowledgedAt ?? '')).slice(0, CAME_BACK_ROWS),
+  };
+}
+
+/** Rows from other sites kept on the home even when the current site has its own to show. */
+export const OTHER_SITE_ROWS = 2;
+
+/**
+ * The home's rows: the current site's first, then other sites', at most
+ * `CAME_BACK_ROWS` in all, so the home is no busier with two sites than one.
+ * Both lists come sorted with `waitingOnYouFirst`. The office's words come
+ * before the engineer's own new records wherever they are: other sites get
+ * `OTHER_SITE_ROWS` places at least, more where the current site's rows are
+ * only the engineer's own, and the current site keeps two rows at least.
+ */
+export function cameBackRows<T extends { word?: unknown; sentBack?: boolean }>(here: readonly T[], there: readonly T[]): T[] {
+  const hereWaiting = here.filter(r => r.word || r.sentBack).length;
+  const hereWaitShown = Math.min(hereWaiting, CAME_BACK_ROWS - Math.min(there.length, OTHER_SITE_ROWS));
+  const thereShown = Math.min(there.length, CAME_BACK_ROWS - Math.max(hereWaitShown, Math.min(here.length, 2)));
+  return [...here.slice(0, CAME_BACK_ROWS - thereShown), ...there.slice(0, thereShown)];
 }

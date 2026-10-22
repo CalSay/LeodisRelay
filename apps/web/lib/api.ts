@@ -15,7 +15,7 @@ import { failure, passingFailure, RequestFailure } from './failure';
 import { localSaveJournal } from './localSaveJournal';
 import { SaveConflict, saveWithJournal, type SaveRequest } from './saveRequest';
 import type { SinceLastVisit } from './sinceLastVisit';
-import type { CameBack } from './cameBack';
+import type { CameBack, CameBackElsewhere } from './cameBack';
 import type { LastSent } from './teamActivity';
 import type { ReportTypeId } from './reportTypes';
 import type { ProjectSuggestions } from './suggestions';
@@ -345,6 +345,11 @@ export async function openIssues(projectId: string): Promise<Issue[]> {
 /** The engineer home's latest issues and variations the signed-in engineer raised, and the open issue count. */
 export async function cameBack(projectId: string): Promise<CameBack> {
   return parse<CameBack>(await request(`/api/came-back?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
+}
+
+/** What waits on the signed-in engineer on their other sites: the office's notes and things sent back. */
+export async function cameBackElsewhere(projectId: string): Promise<CameBackElsewhere> {
+  return parse<CameBackElsewhere>(await request(`/api/came-back?elsewhere=1&projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
 }
 
 /** The signed-in engineer's open issues on every site they can see (lib/yourIssues.ts), for "Yours" on the Issues tab. */
