@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'project-figures-laptop', added: '2026-10-22', audience: 'office', title: 'A project\'s figures on a laptop',
+    text: 'On a laptop screen up to about 1400 pixels wide, a project\'s four figures ("Last visit", "Overdue actions", "Fixed, to check" and "Variations") now sit two by two instead of four in a row, so each label fits on one line and the words under each figure take one or two lines instead of up to six. The project\'s details further down, and the four facts at the top of an issue or a variation, sit the same way. Wider screens and phones look as before. Checked in a desktop browser, light and dark, with and without scrollbars showing.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'quiet-card-list', added: '2026-10-22', audience: 'site', title: 'A quieter list of cards',
     text: 'In a site update, a card that is saved now shows a small green dot beside its place instead of a line saying "Saved", so each card in the list is a line shorter and more of them fit on the screen. While a card is being saved it says "Saving" (its photos say "Uploading"), not "Not saved to RELAY yet", so folding a card no longer flashes a warning. A card that really has not gone up, such as one written with no signal, still says so on a line of its own. Checked in a phone-sized browser, light and dark, not on a real phone.',
     link: { label: 'Open your home screen', href: '/engineer' } },
