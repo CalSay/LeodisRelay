@@ -232,6 +232,7 @@ try {
   ok(getRecord('reports',updateId).observations.length===3,'site update: the card reached the server once signal returned');
   await page.locator('.actionbar').getByRole('button',{name:/Check & send/}).click();await page.locator('#report-check').waitFor();
   await page.getByText(/All 3 cards and 3 (photos|photographs) are saved to RELAY/).waitFor({timeout:20000});checks++;
+  await page.getByRole('button',{name:'Add your signature'}).click();
   const pad=page.locator('canvas.sigpad');await pad.scrollIntoViewIfNeeded();const box=await pad.boundingBox();
   await page.mouse.move(box.x+20,box.y+40);await page.mouse.down();for(let x=20;x<box.width-20;x+=12)await page.mouse.move(box.x+x,box.y+40+Math.sin(x/15)*20);await page.mouse.up();
   await sleep(500);

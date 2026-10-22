@@ -81,7 +81,7 @@ try {
     ok(/Plant room east/.test(await rows.nth(2).innerText()),`${scheme}: folded row shows the edit`);
     // Check & send is its own step, Back returns to the cards.
     await page.locator('.actionbar').getByRole('button',{name:'Check & send →'}).click();
-    await page.getByText('Sign here').waitFor();
+    await page.locator('#report-check').waitFor();
     ok(page.url().endsWith('#check'),`${scheme}: check step has its own history entry`);
     eq(await rows.count(),0,`${scheme}: cards are not on the check step`);
     ok(await page.getByRole('button',{name:'Send to office'}).isDisabled(),`${scheme}: a stop finding blocks sending`);

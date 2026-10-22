@@ -45,6 +45,48 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   browsers other than Chromium 141.
 - Next: nothing further from this walk.
 
+## 2026-10-22 — A shorter Check & send for a site update
+
+- Why: a walk of an engineer at 390px (latest main 3b03173) sending the
+  shortest useful end-of-day update: one place, one line, two photographs,
+  from the Site page to sent. 7 taps over 4 screens (Start, Where, What
+  happened, two photos, Check & send, Send to office), none spare; the office
+  sees it under "Today from site" straight away. The clutter was on Check &
+  send, about 1,360px for one progress card: a four-box tally with three
+  zeros, and a full signature pad (name, drawing box, Clear) that the page
+  itself said was optional. Asked for by the coordinator as the walk's one
+  pick; not a `docs/tasks.json` task, so no status changed. Decided without
+  asking Cal (his autonomy message), within his 07:02 direction (less on
+  screen for engineers).
+- Changed (`reports/[id]/page.tsx`, `engineer.css`): on a site update the
+  tally lists only the kinds in it ("Progress 1"; progress and a defect show
+  two boxes). An optional signature folds behind one "Add your signature"
+  button (48px); tapping it opens the pad and moves focus to it. A draft
+  already signed (drawn or typed), or with a name other than the author's,
+  opens with the pad showing, and Clear does not fold it away. With no cards
+  the tally and its heading are left out. Inspections, whose signature is required, are unchanged,
+  as is their tally. Check & send for the walk's update is now about 940px.
+  Taps stay at 7; what the office gets is unchanged.
+- Decisions (Claude): kept the "Sign · optional" heading so an engineer who
+  wants to sign still sees where; kept the optional caption note and "What
+  sending does" (the one line that says RELAY does not email the PM yet).
+- Checks: typecheck, `npm test`, build. New `scripts/verify-quick-update.mjs`
+  (light and dark at 390, dark at 1440: 7 taps or fewer, tally without zeros,
+  no pad until "Add your signature", 48px button, focus moves to the pad,
+  Check & send 1,000px or less at 390, progress plus defect shows two boxes,
+  the office gets place, line and both photos and Today from site shows it).
+  Updated for the fold: signature-reload (a signed draft opens with the pad),
+  day-walkthrough, editor-wide, send-on-signal, engineer-day, report-editor.
+  Also passed: accessibility (584), help, engineer-layout, fewest-taps,
+  quicker-update, one-caption-line, report-types, editor-usability,
+  offline-sign, quiet-card-list, role-access. Screens:
+  project files `ui-review/quick-update/` (`walk/` before, `after/`).
+- Review: a fresh-context review found verify-report-editor still waited for
+  the pad, a name changed from the author's was hidden behind the button after
+  a reload, an update with no cards showed an empty tally box, and three kinds
+  sat two and one on a phone. All fixed (three kinds are three across).
+- Not verified: a real phone, a screen reader.
+
 ## 2026-10-22 — A project's figures on a laptop
 
 - Why: the office laptop walk (PR #145) found a project sheet's four figures
