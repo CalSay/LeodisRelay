@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import type { Variation } from '@/lib/types';
-import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, fmtMoney, fmtPct, isCharged, marginPct, variationValue } from '@/lib/variations';
+import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, fmtMoney, fmtPct, instructionParts, isCharged, marginPct, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
 import { registerFileName, toCsv, variationRows } from '@/lib/registerExport';
 import { Btn, BtnQ, InstructionTag, Money, SortHead } from './bits';
@@ -110,7 +110,7 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
         <td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{v.description}</div><div className="rowsub">{v.location || 'no location'} · {v.trade ?? 'trade not set'} · {v.reason ?? 'reason not set'}{v.workDone && <> · <span className="late">work already done</span></>}</div></td>
         <td data-label="Project">{name(v.projectId)}</td>
         <td className="due" data-label="Raised">{fmtDay(v.raisedAt)}<div className="rowsub">{source(v)} · {ctx.nameOf(v.raisedById, v.raisedBy)}</div></td>
-        <td data-label="Instruction"><InstructionTag v={v} />{v.instruction === 'instructed' && <div className="rowsub">{v.instructionReference} · {v.instructedBy} · {v.instructedOn}</div>}{v.instruction === 'declined' && <div className="rowsub">{v.events.slice().reverse().find(e => e.kind === 'declined')?.note}</div>}{v.instruction === 'within_contract' && <div className="rowsub">Not charged{v.events.slice().reverse().find(e => e.kind === 'within_contract')?.note ? ` · ${v.events.slice().reverse().find(e => e.kind === 'within_contract')?.note}` : ''}</div>}</td>
+        <td data-label="Instruction"><InstructionTag v={v} />{v.instruction === 'instructed' && <div className="rowsub">{instructionParts(v.instructionReference, v.instructedBy, v.instructedOn) || 'no reference recorded'}</div>}{v.instruction === 'declined' && <div className="rowsub">{v.events.slice().reverse().find(e => e.kind === 'declined')?.note}</div>}{v.instruction === 'within_contract' && <div className="rowsub">Not charged{v.events.slice().reverse().find(e => e.kind === 'within_contract')?.note ? ` · ${v.events.slice().reverse().find(e => e.kind === 'within_contract')?.note}` : ''}</div>}</td>
         <td className="money" data-label="Quoted"><Money n={v.quotedValue} /></td>
         <td className="money" data-label="Instructed"><Money n={v.instruction === 'instructed' ? variationValue(v) : undefined} /></td>
         <td className="money" data-label="Margin">{!isCharged(v) ? <span className="fine">—</span> : <><Money n={margin} className={margin !== undefined && margin < 0 ? 'late' : ''} />{pct !== undefined && <div className="rowsub num">{fmtPct(pct)}</div>}</>}</td>

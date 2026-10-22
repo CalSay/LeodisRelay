@@ -7,7 +7,7 @@ import { getVariation, variationCommand } from "@/lib/api";
 import { useProjectLookup } from '@/components/ProjectContext';
 import type { Variation } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
-import { fmtMoney, signedCopyLink, variationValue } from '@/lib/variations';
+import { fmtMoney, instructionParts, signedCopyLink, variationValue } from '@/lib/variations';
 import { backLabel, safeViewReturn } from '@/lib/viewNavigation';
 import { dayShort } from '@/lib/dates';
 import { variationWord } from '@/lib/cameBack';
@@ -53,13 +53,13 @@ export default function VariationPage({ params, searchParams }: { params: Promis
   const evidence = v.events.find(e => e.kind === 'raised')?.photos ?? [];
   const value = variationValue(v);
   const declinedWhy = v.instruction === 'declined' ? v.events.slice().reverse().find(e => e.kind === 'declined')?.note : undefined;
-  const headline = v.instruction === 'instructed' ? `Instructed · ${v.instructionReference}`
+  const headline = v.instruction === 'instructed' ? instructionParts('Instructed', v.instructionReference)
     : v.instruction === 'declined' ? 'Declined'
     : v.instruction === 'within_contract' ? 'Within contract'
     : v.workDone ? 'Done without a written instruction'
     : v.quotedValue !== undefined ? `Quoted ${fmtMoney(v.quotedValue)}`
     : 'With the office';
-  const detail = v.instruction === 'instructed' ? `${v.instructedBy ?? ''} · ${dayShort(v.instructedOn) || v.instructedOn || ''} · ${fmtMoney(value)}${v.signedInstruction ? ' · signed copy on file' : ''}`
+  const detail = v.instruction === 'instructed' ? instructionParts(v.instructedBy, dayShort(v.instructedOn) || v.instructedOn, fmtMoney(value), v.signedInstruction ? 'signed copy on file' : undefined)
     : v.instruction === 'declined' ? (declinedWhy ?? 'The client will not instruct it.')
     : v.instruction === 'within_contract' ? 'The office found this is within our contract, so it is not charged.'
     : v.workDone ? 'The office is getting the client’s sign-off for it as a chargeable variation before it is invoiced.'
