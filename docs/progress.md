@@ -4,6 +4,50 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Back to Site after a defect, and nothing under the Send bar
+
+- Why: the two-site walk (project files `ui-review/two-site-day/walk-notes.md`,
+  items 3 and 4) found the "Defect sent to the office" receipt offered Open issue
+  and View project issues but no way back to Site (the engineer used the bottom
+  tabs), and the Send bar covered part of "What sending does" on Check & send.
+  The coordinator approved both as one small task. Not a `docs/tasks.json` task;
+  no status changed.
+- Changed: the receipt's buttons are stacked full width, "Back to Site" first
+  (the engineer is mid-visit), then "Open issue" and "View project issues". Back
+  to Site goes to the same site's home with the Site tab on. The report editor
+  (site updates and every inspection: the only screen with this bar) now sizes
+  its bottom space from the bar itself (`ResizeObserver` → `--actionbar-space`,
+  bar height + 32px) instead of a fixed 230px/190px/140px. While a field has the
+  keyboard the bar is hidden and the last height is kept, so the page does not
+  jump.
+- Found: measured on main with the bar at the end of the page, a 390px phone had
+  room for the usual bar (95px tall, 148px spare) but not when "Waiting for
+  signal" was in it (245px tall: the end of Check & send 3px under it); at 1440px
+  the waiting note left 45px under it and Undo 9px. Now every case ends 32-45px
+  clear. Note: the walk's screenshot was a full-page capture, which draws the
+  fixed bar mid-page; at the top of Check & send the bar always covers whatever
+  is at the bottom of the screen until you scroll, as any fixed bar does.
+- Help: a "What's new" line.
+- Checks: typecheck, `npm test`, build. New `scripts/verify-receipt-send-bar.mjs`
+  (58 checks, light and dark at 390px, dark at 1440px): the receipt's three
+  buttons in order, 48px or taller, above the bottom tabs, Back to Site lands on
+  the same site's home; the cards step, Check & send on a site update (three
+  "What sending does" rows) and on a handover inspection, Check & send with
+  "Waiting for signal", and the cards step with Undo, each scrolled to the end
+  with nothing under the bar (columns that scroll by themselves count only what
+  they show); after Back to Site, Flag a defect opens a blank form; no sideways
+  scroll, no page errors. Screens in project files `ui-review/receipt-send-bar/`
+  (before = main, after = this change; viewport captures, so the fixed bar is
+  where it really is). Also passed: engineer-layout, defect-recent-places,
+  defect-send-on-signal, help, editor-usability, editor-wide, quicker-update,
+  one-caption-line, same-place-issues, fewest-taps, engineer-day, role-access,
+  accessibility, offline-capture, report-editor. A fresh-context review found one
+  check named for more than it tested; it now taps Flag a defect again.
+- Fixed on the way: `verify-report-editor` failed on main since #133 (the bar
+  now steps aside once a tap has finished, and the check looked straight after
+  the click). It now waits up to 3 s for the bar to hide and to come back.
+- Not verified: real phones (including a phone's own toolbar and keyboard),
+  real weak signal, screen readers.
 ## 2026-10-22 — Photographs by month
 
 - Why: the monthly progress walk found the office Photographs page showed one

@@ -376,7 +376,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
         {issues===null ? !error && <p role="status">Loading issues…</p>
           : show==='yours' ? <YourIssues projects={projects} issues={issues} projectId={projectId} returnTo={engineerReturn('issues')} onAll={()=>pickIssues('all','all')}/>
           : (scope==='all'?projects:[project]).map(p=>{const here=issues.filter(i=>i.projectId===p.id);const rows=(show==='open'?here.filter(isOpen):here).map(issue=>({issue}));return <section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList rows={rows} empty={show==='open'?'No open issues on this project.':'No issues have been raised on this project.'} returnTo={engineerReturn('issues')}/></section>;})}</>}
-      {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues','open')} returnTo={engineerReturn('issues')}/>}
+      {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues','open')} onSite={()=>navigate('home')} returnTo={engineerReturn('issues')}/>}
     </>}
   </main>;
 }

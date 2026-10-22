@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'receipt-back-to-site', added: '2026-10-22', audience: 'site', title: 'Back to Site after a defect, and nothing under the Send bar',
+    text: 'After you flag a defect, "Defect sent to the office" now has a "Back to Site" button first, then "Open issue" and "View project issues". On a site update or an inspection, the page now always ends clear of the bar with Send to office, even when the bar is taller because it says "Waiting for signal" or offers Undo: scroll to the end and everything above the bar can be read and tapped. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open your home screen', href: '/engineer' } },
   { id: 'photos-by-month', added: '2026-10-22', audience: 'all', title: 'Photographs from one month',
     text: 'Photographs now has a Month choice beside Day: pick a month, such as "October 2026", to see that calendar month\'s photographs, newest day first, with how many each month has. "Previous month", "This month" and "Next month" step a month at a time, as on the Weekly summary\'s Month choice, and "Every month" goes back to the full list. With a month chosen, the Day choice lists only that month\'s days. On the Weekly summary\'s Month choice, "Every photograph from October 2026, by day" under "A few photographs" opens it. The month stays in the page\'s link. Checked in a desktop browser, light and dark, and a phone-sized window.',
     link: { label: 'Open Photographs', href: '/photos' } },
