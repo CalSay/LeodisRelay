@@ -573,6 +573,10 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-card-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
 .eng-card-foot .eng-remove-card{margin-top:0;}
 .eng-card-foot .btn-sm,.eng-card .head .btn-sm{min-height:48px;}
+/* Speed (2026-10-22): past the first 30 cards (EngineerIssueList FIRST_CARDS), the browser lays out and paints only the cards near the screen. */
+.eng-issue-list>.eng-issue-card:nth-child(n+31){content-visibility:auto;contain-intrinsic-size:auto 160px;}
+/* The size held for a card not yet drawn: the average card on the busy seed, so the page is nearly its true length from the start. */
+@media(max-width:450px){.eng-issue-list>.eng-issue-card:nth-child(n+31){contain-intrinsic-size:auto 180px;}}
 
 /* App bar (layout.tsx), on every page that has it. Sign out and the theme sit
    together as two matching buttons, apart from the page links. On a phone or a
@@ -592,4 +596,24 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
   .appbar .nav a{display:flex;align-items:center;justify-content:center;text-align:center;min-height:48px;padding:6px 4px;line-height:1.3;}
   .appbar-tools .whoami,.appbar-tools .themebtn{min-height:48px;}
   body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,body:has(.eng-page) .appbar .nav,body:has(.eng-chrome) .appbar .nav{display:none;}
+}
+
+/* Release 1 polish E2 (2026-10-22): the Site and Projects views. Scoped to
+   .eng-workspace so the editor and other pages are untouched. */
+/* Group labels and folded lines start where the row text starts (row: 14px padding + 3px edge). */
+.eng-workspace .eng-since-group,.eng-workspace .eng-since-more{padding-left:17px;}
+.eng-workspace .eng-more-pages>summary,.eng-workspace .eng-saved-drafts>summary{padding-left:17px;}
+.eng-workspace .eng-heading-home h1{margin:0;}
+/* Projects: the site's name is what the engineer looks for, so it reads first and larger. */
+.eng-workspace .eng-project-list button{padding:16px;}
+.eng-workspace .eng-project-list strong{font-size:17px;font-weight:600;line-height:1.3;overflow-wrap:anywhere;}
+.eng-workspace .eng-project-list small{font-size:13px;margin:6px 0 10px;}
+.eng-workspace .eng-project-list span{font-weight:500;}
+@media(max-width:600px){
+  /* A phone: one box per group, not a box in a box, so the cards keep their width. */
+  .eng-workspace .eng-project-group{padding:12px;}
+  .eng-workspace .eng-project-groups{gap:20px;}
+  /* The inspection's name already says what it is: drop the tag so the words get the width. */
+  .eng-workspace .eng-inspections .eng-tile-wide>.kind{display:none;}
+  .eng-workspace .eng-band{padding:14px 16px;}
 }

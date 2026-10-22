@@ -48,6 +48,121 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   PDFs, so they show "still being made"; pdf-navigation renders its own).
 - Next: O5 (weekly summary week and month, issue trend).
 
+## 2026-10-22 — No red on a site update card while it is being filled in
+
+- Why: the coordinator asked for a walk of an engineer on a 390px phone
+  arriving on site and starting a site update, from the Site page to the
+  first saved entry, on main af20c7b. It is already short: 3 taps (Start
+  today's site update, Where, What happened) and the card saves by itself.
+  The snag: as soon as "Where" was typed, before "What happened" or the
+  camera, the card turned red ("no description of what happened") and Check
+  & send got a red "1"; a new defect did the same before its photograph. That
+  reads as a mistake when the engineer simply has not finished. Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the engineer's job simpler, less on screen).
+- Changed: `app/reports/[id]/page.tsx` remembers the open card if it was new
+  when it opened (blank, or from "+ Another card here" while its kind is
+  chosen), and leaves that card's stops out on the cards step until it is
+  left (Done, another card) or the engineer goes to Check & send. A
+  "+ Another card here" card is new only until first left; a card still
+  blank when opened always is (nothing in it to warn about). Check &
+  send itself is unchanged: every stop is listed and Send stays disabled, and
+  a card opened again from a Stop still says what stops it. Inspections are
+  unchanged. Help "What's new" line.
+- Decided (Claude): quiet until the card is left rather than until a timer
+  or until "What happened" is typed, because leaving the card is when the
+  engineer thinks they are done with it, and a timer would turn it red mid-
+  sentence.
+- Fresh review found: a "+ Another card here" card left with no kind chosen
+  went quiet again when reopened (it was still waiting for its kind), and the
+  one "photographs with no caption" note could be hidden with the open card's
+  findings. Fixed: such a card is new only until first left, and only stops
+  are left out. The browser check now covers both reopening routes. A second
+  fresh review found a blank card still open after a reload at Check & send
+  (which skips the blank-card tidy) went red on typing once back on the
+  cards: the open card is now looked at again whenever the step changes.
+  That path is checked by reading the code, not by the browser check.
+- Verified: typecheck, `npm test` (146 + 570), build. New
+  `scripts/verify-calm-while-writing.mjs` (55 checks, 390 and 1440): no red
+  after Where, a new defect calm until left then red with "needs at least one
+  photograph" and a count of 1, still red when opened again, "+ Another card
+  here" calm, Check & send lists both stops with Send disabled, and a card
+  opened from a Stop is red and says why, and a "+ Another card here" card
+  left without a kind is red when reopened from its row or its Stop. It fails on main at the first
+  check. Also passed: verify-fewest-taps, -lighter-card, -quicker-update,
+  -engineer-layout, -editor-usability, -help, -old-drafts, -accessibility,
+  -day-walkthrough, -draft-conflict, -offline-drafts.
+- Not verified: a real phone, a screen reader.
+## 2026-10-22 — Release 1 polish E2: the engineer Site and Projects views
+
+- Why: task E2 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
+  the engineer's phone). Before and after screenshots at 390 light and dark
+  and 1440 light (first screen and full page) are in the project files under
+  `ui-review/release-1/E2/`. Busy example data, 60 days, Sam Spark.
+- Found: the Site page opened with an "On site" label above the engineer's
+  name, which said nothing the page does not, and pushed the office's answers
+  down. "This project" repeated the open issue count that the Site issues row
+  right under it already gives ("111 open issues" twice). Inside the lists,
+  the "Reports from others / Issues / Variations" labels and the folded lines
+  ("More on this project", "3 drafts saved to RELAY") started 3px left of the
+  row text. On a phone the inspection tiles put a "HANDOVER" or "FIRST FIX"
+  tag beside "Do a handover inspection", squeezing the words to three lines.
+  On Projects the site names were small (15px) inside a card inside a box,
+  so on a phone they sat 32px in from the group's edge.
+- Changed: `EngineerWorkspace.tsx` (no "On site" label; no count beside "This
+  project"); `engineer.css` new block at the end scoped to `.eng-workspace`
+  (labels and folds line up with rows; inspection tags hidden at 600px and
+  under; Projects names 17px with roomier cards and less nested padding on a
+  phone; a slightly tighter project band on a phone). No `globals.css` token
+  changes, no shared component changed, no app bar change (E1, #190).
+- Decided (Claude): no Help "What's new" line, as nothing works differently.
+- Checks: `verify-day-walkthrough` read "N open issues" from the This project
+  heading; it now checks the heading does not repeat the count (the Site
+  issues row check above it still checks the number).
+- Verified (after rebasing on E1 #190 and #191/#192): typecheck, `npm test`
+  (146 + 591), build. Browser, one at a time: engineer-layout, busy-home (35),
+  engineer-day (37), day-walkthrough (117), home-and-sheet (254),
+  came-back-first (29), engineer-nav (60), accessibility (584), first-time-use
+  (375); before the rebase also defect-waiting-on-site (99), first-day (94),
+  role-access (95), other-sites-came-back (32). A fresh-context review found
+  "Show N more" 3px out of line, one heading rule reaching the Reports and
+  Issues views, and this entry missing the checks; all fixed.
+- Not verified: a real phone or a screen reader.
+
+## 2026-10-22 — Issues lists draw the first 30 cards first (slow pages on engineer phones, part 2)
+
+- Why: part 1 (#188) took SharePoint off the wait. With a busy project's own
+  data, the engineer Issues tab still drew every card at once: on the busy
+  seed, All issues for Tetley Hall is 11,500 page elements (266,000 px), Open
+  3,700 and Yours 5,800, and the phone's main thread was then busy for up to
+  1.9 s after the list showed, so taps and scrolling stuck.
+- Changed: `EngineerIssueList` draws the first 30 cards (`FIRST_CARDS`), then
+  the rest straight after the first screen is up, as a low-priority React
+  update. Cards past the 30th get `content-visibility:auto` in
+  `engineer.css`, so the browser lays out and paints only those near the
+  screen, holding 180px for each card not yet drawn at phone width (160px
+  wider), about the busy seed's average card, so the page starts near its
+  true length (Open 86,751 px against 89,503 drawn in full; All 295,653
+  against 265,733, as closed cards are shorter) and grows
+  or shrinks a little as cards scroll into view. Every card is there a moment
+  later, in the same order. Speed only, so no Help line.
+- Decided (Claude): not a "Show more" button (that would change the screen
+  the Release 1 polish lane owns) and not on the first 30 cards, so a short
+  list, and a card that has just been unfolded, behave exactly as before
+  (`verify-issues-yours` reads a card's text the moment its fold opens).
+- Verified: typecheck, `npm test` (146 + 591). Timed at 390px, 4x slower
+  processor, Fast 4G, busy seed, median of five, until the list shows
+  (scratch script): All issues 2,110 to 1,615 ms opened fresh and 1,428 to
+  1,065 ms with scripts cached; main thread busy after load 1,924 to 397 ms
+  and 1,457 to 503 ms. Open 1,725 to 1,674 / 1,129 to 1,046 ms, busy 694 to
+  401 / 536 to 243 ms. Yours 1,574 to 1,612 / 944 to 864 ms, busy 682 to 772
+  / 537 to 212 ms (fresh opens of Yours are mostly the scripts starting).
+  Browser checks passed: issues-yours, simpler-issue-list, issues-here,
+  issue-at-place, engineer-layout, quiet-card-list, busy-projects (phone,
+  13 timings within budget; Engineer issues 1,529 ms).
+- Not verified: a real phone. Not deployed. Also on the pilot (03188ee) the
+  Issues tab downloads every issue on the project with its whole history
+  (251 KB on the busy seed); main already asks for only "Yours" first.
 ## 2026-10-22 — Release 1 polish O3: office Issues
 
 - Why: task O3 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch").

@@ -256,7 +256,7 @@ try {
   await row('Site issues').filter({hasText:/open/}).waitFor();
   const issues=openIssues();
   ok((await row('Site issues').innerText()).includes(`${issues} open`),`home: Site issues says ${issues} open`);
-  ok((await page.locator('#eng-project-title').locator('..').innerText()).includes(`${issues} open issues`),'home: This project agrees');
+  ok(!/open issue/.test(await page.locator('#eng-project-title').locator('..').innerText()),'home: This project does not repeat the count (Release 1 E2)');
   await row('Safety actions').filter({hasText:/open/}).waitFor();
   ok(/2 open · 1 tower due/.test(await row('Safety actions').innerText()),`home: two safety actions now open: ${await row('Safety actions').innerText()}`);
   ok(await row('Safety actions').evaluate(a=>a.classList.contains('late')),'home: the Safety actions row is marked while actions are open');

@@ -981,6 +981,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   // ready to type: folded, it only cost a tap. An inspection opens at its first
   // check still to answer, as it does on a wide screen. Once, as the draft opens.
   const openedBlank = useRef('');
+  /** The open card, and that card again if it was new when it opened: one being filled in for the first time. */
+  const startedBlank = useRef<{ open: string | null; step: string; card: string | null }>({ open: null, step: '', card: null });
+  /** Cards the engineer has left, or seen on the check step: not new again unless still blank. */
+  const leftCards = useRef(new Set<string>());
   /** Checks given their first answer here, which moves on at most once. */
   const movedOn = useRef(new Set<string>());
   useEffect(() => {
@@ -1114,21 +1118,6 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   }
 
   const project = report.projectSnapshot ?? getProject(report.projectId);
-  // A card added and not used yet is left off when the engineer goes to check
-  // and send (withoutBlankCards), so while writing cards it is not "stopping"
-  // anything: no red warning on a card that has only just been opened. On the
-  // check step (reached by the address too, without that tidy) it still
-  // stops sending, as the server would refuse it.
-  const blank = new Set(step === 'check' ? [] : report.observations.filter(isBlankCard).map(o => o.id));
-  const findings = reviewReport(report).filter(f => !blank.has(f.observationId));
-  const stop = findings.filter((f) => f.blocking);
-  // An inspection just started has every check unanswered: one line for them
-  // all, opening the first, rather than a dozen identical stops.
-  const unansweredStops = stop.filter(f => f.field === 'answer');
-  const stopRows = unansweredStops.length > 1
-    ? stop.flatMap(f => f.field !== 'answer' ? [f] : f === unansweredStops[0] ? [{ ...f, message: `${unansweredStops.length} checks not answered yet` }] : [])
-    : stop;
-  const note = findings.filter((f) => !f.blocking);
   const sent = report.state === "submitted";
   const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
   const mine = principal ? ownsReport(principal, report) : false;
@@ -1176,6 +1165,39 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   // An inspection opens at the first check still to answer.
   const open = report.observations.some(o => o.id === selectedSection) ? selectedSection
     : wide ? (checklist ? (unanswered[0] ?? report.observations[0])?.id ?? null : report.observations.at(-1)?.id ?? null) : null;
+  // A card added and not used yet is left off when the engineer goes to check
+  // and send (withoutBlankCards), so while writing cards it is not "stopping"
+  // anything: no red warning on a card that has only just been opened. On the
+  // check step (reached by the address too, without that tidy) it still
+  // stops sending, as the server would refuse it.
+  const blank = new Set(step === 'check' ? [] : report.observations.filter(isBlankCard).map(o => o.id));
+  // Nor is a card the engineer opened new (blank, or from "+ Another card
+  // here") and is still filling in: typing where they are should not turn it
+  // red before they reach "What happened" or the camera. It shows once they
+  // leave the card or go to Check & send, and coming back to it from there (a
+  // Stop, say) shows it as before.
+  // A card from "+ Another card here" (it has a place, so is not blank) is
+  // new only until it is first left or seen on the check step; a card still
+  // blank when it opens has nothing in it to warn about yet, so it always is.
+  if (step === 'check') report.observations.forEach(o => leftCards.current.add(o.id));
+  // Coming back from the check step counts too: a card still blank there (a reload
+  // at Check & send skips the tidy) is new again; one with anything in it is not.
+  if (step === 'check' || startedBlank.current.open !== open || startedBlank.current.step !== step) {
+    if (startedBlank.current.open) leftCards.current.add(startedBlank.current.open);
+    const card = report.observations.find(o => o.id === open);
+    startedBlank.current = { open, step, card: step === 'cards' && !checklist && card && (isBlankCard(card) || (picking.includes(card.id) && !leftCards.current.has(card.id))) ? card.id : null };
+  }
+  const writing = step === 'cards' ? startedBlank.current.card : null;
+  // Only its stops: a note (such as photographs with no caption, which may cover other cards) is not red.
+  const findings = reviewReport(report).filter(f => !blank.has(f.observationId) && !(f.blocking && f.observationId === writing));
+  const stop = findings.filter((f) => f.blocking);
+  // An inspection just started has every check unanswered: one line for them
+  // all, opening the first, rather than a dozen identical stops.
+  const unansweredStops = stop.filter(f => f.field === 'answer');
+  const stopRows = unansweredStops.length > 1
+    ? stop.flatMap(f => f.field !== 'answer' ? [f] : f === unansweredStops[0] ? [{ ...f, message: `${unansweredStops.length} checks not answered yet` }] : [])
+    : stop;
+  const note = findings.filter((f) => !f.blocking);
   const shortRef = report.reference.split('-').slice(1).join('-');
   // Where each card and photograph is. Offline means the server could not be
   // reached, so anything not yet on it is only on this phone.
