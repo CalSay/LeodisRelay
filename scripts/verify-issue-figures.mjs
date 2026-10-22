@@ -5,7 +5,8 @@
 // some of them fixed and waiting to be checked, plus closed and withdrawn ones
 // past target. The project list card, the project sheet (desk and phone), "Where
 // each project stands", the Issues tab and register, Issues by company, the
-// snag list, the Weekly summary and Issues over time must all say 7 open,
+// snag list, the Weekly summary and Issues over time (its card, headline,
+// table and bar) must all say 7 open,
 // 2 overdue and 3 to check; the sheet's figures open lists of exactly that many;
 // and a fixed issue past its target is never listed as overdue.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
@@ -147,7 +148,12 @@ try {
 
     await page.goto(`${base}/issue-trend?project=${P}`);await page.locator('.it-stat').first().waitFor();
     const trend=flat(await page.locator('.it-stat').first().innerText());
-    check(trend.toLowerCase()===`open now ${OPEN} ${OVERDUE} past target`,`${label}: Issues over time agrees (${trend})`);
+    check(trend.toLowerCase()===`open now ${OPEN} ${OVERDUE} past target ${TO_CHECK} fixed, to check`,`${label}: Issues over time agrees (${trend})`);
+    const trendVerdict=flat(await page.locator('.it-verdict').innerText());
+    check(trendVerdict.endsWith(`${TO_CHECK} of them are fixed and waiting for the office to check.`),`${label}: Issues over time says how many open are waiting for the office (${trendVerdict})`);
+    const trendRow=flat(await page.locator('.it-table tbody tr').first().innerText());
+    check(new RegExp(`${OPEN} ${OVERDUE} ${TO_CHECK}$`).test(trendRow),`${label}: this week's row gives open, past target and fixed, to check (${trendRow})`);
+    check(await page.locator('.it-col').last().locator('.it-check').count()===1,`${label}: this week's bar has a fixed, to check part`);
     await context.close();
   }
 

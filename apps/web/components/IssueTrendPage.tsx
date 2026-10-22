@@ -33,8 +33,13 @@ function headline(t: IssueTrend): string {
   return t.openNow ? `No change: ${plural(t.openNow, 'issue')} open, the same as four weeks ago.` : 'No open issues, now or four weeks ago.';
 }
 
+/** Whose move the open issues wait on: the office's checks, apart from site's work. */
+const toCheckWords = (t: IssueTrend) => t.toCheckNow
+  ? `${t.toCheckNow === t.openNow ? (t.openNow === 1 ? 'It is' : 'All of them are') : `${t.toCheckNow} of them ${t.toCheckNow === 1 ? 'is' : 'are'}`} fixed and waiting for the office to check.`
+  : '';
+
 const weekWords = (w: TrendWeek, current: boolean) =>
-  `${current ? 'This week so far' : `Week of ${dayLabel(w.monday)}`}: ${w.raised} raised, ${w.closed} closed, ${w.open} open at the end${current ? ' of today' : ''}${w.late ? `, ${w.late} past target` : ''}.`;
+  `${current ? 'This week so far' : `Week of ${dayLabel(w.monday)}`}: ${w.raised} raised, ${w.closed} closed, ${w.open} open at the end${current ? ' of today' : ''}${w.late ? `, ${w.late} past target` : ''}${w.toCheck ? `, ${w.toCheck} fixed, to check` : ''}.`;
 
 function Chart({ weeks }: { weeks: TrendWeek[] }) {
   const last = weeks.length - 1;
@@ -47,19 +52,20 @@ function Chart({ weeks }: { weeks: TrendWeek[] }) {
   return <figure className="it-chart" aria-labelledby="it-chart-title">
     <figcaption>
       <h2 id="it-chart-title">Open at the end of each week</h2>
-      <p className="it-legend"><span className="it-key it-key-open" aria-hidden="true" />On time or no target<span className="it-key it-key-late" aria-hidden="true" />Past target</p>
+      <p className="it-legend"><span><span className="it-key it-key-late" aria-hidden="true" />Past target</span><span><span className="it-key it-key-check" aria-hidden="true" />Fixed, to check</span><span><span className="it-key it-key-open" aria-hidden="true" />Open, not late</span></p>
     </figcaption>
     <p className="it-readout">{weekWords(w, shown === last)}</p>
     <div className="it-plot">
       <span className="it-top" aria-hidden="true">{top}</span>
       <div className="it-bars" onMouseLeave={() => setHovered(null)}>
         {weeks.map((week, k) => {
-          const onTime = week.open - week.late;
+          const onTime = week.open - week.late - week.toCheck;
           return <button key={week.monday} type="button" className={`it-col ${k === shown ? 'it-col-on' : ''}`}
             aria-pressed={k === picked} aria-label={weekWords(week, k === last)}
             onClick={() => setPicked(k)} onFocus={() => setPicked(k)} onMouseEnter={() => setHovered(k)} onMouseLeave={() => setHovered(null)}>
             <span className="it-stack" style={{ height: `${(week.open / top) * 100}%` }}>
               {week.late > 0 && <span className="it-late" style={{ flexGrow: week.late }} />}
+              {week.toCheck > 0 && <span className="it-check" style={{ flexGrow: week.toCheck }} />}
               {onTime > 0 && <span className="it-open" style={{ flexGrow: onTime }} />}
               {k === last && <b className="it-value" aria-hidden="true">{week.open}</b>}
             </span>
@@ -126,14 +132,14 @@ export function IssueTrendPage({ initialProject, returnTo }: { initialProject: s
         <header>
           <p className="lbl">Issues over time · {project.projectNumber}</p>
           <h1 id="it-title">{project.projectName}</h1>
-          <p className={`it-verdict ${tone}`} role="status">{headline(d)}</p>
+          <p className={`it-verdict ${tone}`} role="status">{headline(d)}{!blank(d) && toCheckWords(d) && <> <strong>{toCheckWords(d)}</strong></>}</p>
         </header>
 
         {blank(d) ? <div className="eng-panel it-empty">
           <p>Nothing to chart yet. Defect and access cards in site updates, defects flagged on their own, and actions on handover and first fix inspections become issues; each week fills in here as they are raised and closed.</p>
         </div> : <>
         <div className="it-stats">
-          <div className={`it-stat ${d.lateNow ? 'it-stat-alert' : ''}`}><span className="it-stat-label">Open now</span><span className="it-stat-n">{d.openNow}</span><small>{d.lateNow ? `${d.lateNow} past target` : 'none past target'}</small></div>
+          <div className={`it-stat ${d.lateNow ? 'it-stat-alert' : ''}`}><span className="it-stat-label">Open now</span><span className="it-stat-n">{d.openNow}</span><small>{d.lateNow ? `${d.lateNow} past target` : 'none past target'}</small>{d.toCheckNow > 0 && <small>{d.toCheckNow} fixed, to check</small>}</div>
           <div className="it-stat"><span className="it-stat-label">Last four weeks</span><span className="it-stat-n">{d.recent.raised}<span className="it-stat-of"> raised</span></span><small>{d.recent.closed} closed</small></div>
           <div className="it-stat"><span className="it-stat-label">Time to close</span><span className="it-stat-n">{d.medianDaysToClose === undefined ? '–' : plural(d.medianDaysToClose, 'day')}</span><small>{d.closedInRange ? `typical, of ${d.closedInRange} closed in 12 weeks` : 'none closed in 12 weeks'}</small></div>
           <div className="it-stat"><span className="it-stat-label">Oldest open</span>{d.oldest
@@ -147,9 +153,9 @@ export function IssueTrendPage({ initialProject, returnTo }: { initialProject: s
           <h2 id="it-table-title">Week by week</h2>
           <div className="it-table-wrap">
             <table className="it-table">
-              <thead><tr><th scope="col">Week of</th><th scope="col">Raised</th><th scope="col">Closed</th><th scope="col">Open at end</th><th scope="col">Past target</th></tr></thead>
+              <thead><tr><th scope="col">Week of</th><th scope="col">Raised</th><th scope="col">Closed</th><th scope="col">Open at end</th><th scope="col">Past target</th><th scope="col">Fixed, to check</th></tr></thead>
               <tbody>{[...d.weeks].reverse().map((w, k) => <tr key={w.monday}>
-                <th scope="row">{dayLabel(w.monday)}{k === 0 && <small> so far</small>}</th><td>{w.raised}</td><td>{w.closed}</td><td>{w.open}</td><td className={w.late ? 'it-late-n' : ''}>{w.late}</td>
+                <th scope="row"><span className="it-wk-long">{dayLabel(w.monday)}</span><span className="it-wk-short">{shortDay(w.monday)}</span>{k === 0 && <small> so far</small>}</th><td>{w.raised}</td><td>{w.closed}</td><td>{w.open}</td><td className={w.late ? 'it-late-n' : ''}>{w.late}</td><td>{w.toCheck}</td>
               </tr>)}</tbody>
             </table>
           </div>
@@ -159,7 +165,7 @@ export function IssueTrendPage({ initialProject, returnTo }: { initialProject: s
         <p className="it-links"><Link href={`/issues/snag-list?${new URLSearchParams({ project: projectId, returnTo: here })}`}>Open issues on the snag list</Link><Link href={`/handover?${new URLSearchParams({ project: projectId, returnTo: here })}`}>Before handover</Link></p>
 
         <footer className="it-foot">
-          <p>Counted from the issue register as it stands today. An issue counts as closed on the day the office checked it; one closed, reopened and still open counts as open throughout. Put forward as fixed is still open until it is checked, but not past target: it is waiting for the office. Past target uses each issue&rsquo;s target date as it is now. Withdrawn issues are left out{d.closedUndated ? `, and ${plural(d.closedUndated, 'closed issue')} with no record of when it was closed ${d.closedUndated === 1 ? 'counts' : 'count'} as raised but never as open or closed` : ''}. Weeks run Monday to Sunday.</p>
+          <p>Counted from the issue register as it stands today. An issue counts as closed on the day the office checked it; one closed, reopened and still open counts as open throughout. Fixed, to check is put forward as fixed by site and still open until the office checks it, but never past target: it is waiting for the office. Past target uses each issue&rsquo;s target date as it is now. Withdrawn issues are left out{d.closedUndated ? `, and ${plural(d.closedUndated, 'closed issue')} with no record of when it was closed ${d.closedUndated === 1 ? 'counts' : 'count'} as raised but never as open or closed` : ''}. Weeks run Monday to Sunday.</p>
         </footer>
       </article>}
   </main>;
