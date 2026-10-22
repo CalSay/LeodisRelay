@@ -45,6 +45,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   a reload, an update with no cards showed an empty tally box, and three kinds
   sat two and one on a phone. All fixed (three kinds are three across).
 - Not verified: a real phone, a screen reader.
+
 ## 2026-10-22 — A project's figures on a laptop
 
 - Why: the office laptop walk (PR #145) found a project sheet's four figures
