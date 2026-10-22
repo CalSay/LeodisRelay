@@ -12,7 +12,7 @@ import { mediaId } from '@/lib/media';
 import { raisedPhoto, snagList, snagOwners } from '@/lib/snagList';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import './snag.css';
-import { dateShort } from '@/lib/dates';
+import { dateShort, daysBetween, pastTarget } from '@/lib/dates';
 
 /**
  * A snag list for one project: the open issues a company or trade has to put
@@ -124,7 +124,7 @@ export default function SnagListPage({ searchParams }: { searchParams: Promise<{
                 <div className="snag-body">
                   <p className="snag-ref"><Link href={withViewReturn(`/issues/${issue.id}`, here)} className="ref">{issue.reference}</Link>
                     {fixed && <span className="tag tag-sent">Fixed, to check</span>}
-                    {overdue && <span className="tag tag-alert">Past target</span>}</p>
+                    {overdue && <span className="tag tag-alert">{issue.targetDate ? pastTarget(daysBetween(issue.targetDate, day)) : 'Past target'}</span>}</p>
                   <p className="snag-desc">{issue.description}</p>
                   {issue.actionNeeded.trim() && <p className="snag-action"><b>To do:</b> {issue.actionNeeded}</p>}
                   <p className="snag-meta">{issue.owner.trim() || 'Not yet assigned'} · {issue.targetDate ? `target ${fmtDate(issue.targetDate)}` : 'no target date'}{issue.affectedTrade ? ` · ${issue.affectedTrade}` : ''}</p>

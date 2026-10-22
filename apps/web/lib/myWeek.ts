@@ -9,6 +9,7 @@ import type { ToolboxTalk } from './toolboxTalks';
 import { kindLabel, type Permit } from './permits';
 import { conditionShort, type Delivery } from './deliveries';
 import { londonDay, weekEnd } from './weeklySummary';
+import { dayLong, dayShort } from './dates';
 
 /**
  * My week: one person's own week across every project, day by day. Made for
@@ -215,19 +216,20 @@ function recordWords(records: MyWeekRecord[]): string[] {
   return words;
 }
 
-const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 /**
- * "Mon 12 Oct", or "Monday 12 October" in full. Spelt out here rather than by
- * the browser, whose date wording differs from the server's (a comma or not)
- * and would make the page's first paint disagree with the server's.
+ * "Mon 12 Oct", or "Monday 12 October" in full, with the year when it is not
+ * this year ("Fri 7 Nov 2025"), so a day from last year never reads as one
+ * still to come. Written by lib/dates.ts like every other page.
  */
 export function dayLabel(ymd: string, full = false): string {
-  const d = new Date(`${ymd}T12:00:00Z`);
-  const weekday = WEEKDAYS[d.getUTCDay()]!, month = MONTHS[d.getUTCMonth()]!;
-  return full ? `${weekday} ${d.getUTCDate()} ${month}` : `${weekday.slice(0, 3)} ${d.getUTCDate()} ${month.slice(0, 3)}`;
+  return (full ? dayLong(ymd, 'auto') : dayShort(ymd)) || ymd;
 }
-const fmtDay = (ymd: string) => dayLabel(ymd);
+/** "Mon 12 Oct to Sun 18 Oct 2026": the year once at the end, and at the start too when the week spans New Year. */
+export function weekRange(start: string, end: string): string {
+  return `${dayShort(start, start.slice(0, 4) !== end.slice(0, 4))} to ${dayShort(end, true)}`;
+}
+/** A day inside a copied week: its heading already gives the year. */
+const fmtDay = (ymd: string) => dayShort(ymd, false);
 const isWeekend = (ymd: string) => new Date(`${ymd}T12:00:00Z`).getUTCDay() % 6 === 0;
 
 /**
@@ -238,7 +240,7 @@ const isWeekend = (ymd: string) => new Date(`${ymd}T12:00:00Z`).getUTCDay() % 6 
  * records yet.
  */
 export function myWeekText(week: MyWeek, name: string, today: string): string {
-  const lines = [`${name} · ${fmtDay(week.start)} to ${fmtDay(week.end)} ${week.end.slice(0, 4)}`];
+  const lines = [`${name} · ${weekRange(week.start, week.end)}`];
   for (const d of week.days) {
     const projects = d.projects.filter(p => p.reports.length + p.issues.length + p.records.length > 0);
     if (d.day > today || (!projects.length && isWeekend(d.day))) continue;

@@ -4,6 +4,68 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Late issues say how late, and old dates say their year
+
+- Why: PR #156 found Before handover tagging a snag due last November "Past
+  target Fri 7 Nov", which on 22 Oct reads as two weeks away. Coordinator's
+  ask: sweep every office and engineer screen and printout on main e3138df
+  for dates with no year that may not be this year, and late items shown as a
+  date instead of "N days past target". Not a `docs/tasks.json` task, so no
+  status changed. Within Cal's 21 Oct direction (the office's view of
+  progress clearer).
+- Found: three helpers wrote a day with no year whatever its year:
+  `dayLabel` (`lib/myWeek.ts`; My week, Issues over time, Before handover's
+  "As of", Safety actions), `fmtDay` in `summaryRows.tsx` (every row on the
+  Weekly and Month summaries) and in `SiteCoveragePage.tsx` (a site's last
+  report). Late issues were "Nd late" on the office Issues list, "N days late"
+  on the Month summary, "Past target" with no figure on the snag list and
+  nothing at all on the issue page; the issue sheet said "1 days past
+  target". Everything else already used
+  `lib/dates.ts` with the year added when it is not this year; the report PDF
+  always prints the year.
+- Changed: `lib/dates.ts` gains `daysBetween` and `pastTarget` ("1 day past
+  target", "366 days past target"). `dayLabel` is now written by `dayShort`
+  and `dayLong`, adding the year when it is not this year; the two `fmtDay`s
+  default to the same. My week's range (page and copied text) comes from a
+  new `weekRange`: the year once at the end, and at the start too when the
+  week spans New Year ("Mon 29 Dec 2025 to Sun 4 Jan 2026"); the copied
+  text's day lines leave the year to that heading. Late issues say
+  `pastTarget` on the office Issues list (allowed to wrap in its cell),
+  issue sheet, project figures ("oldest …"), the snag list, the Month
+  summary (rows and the printed "And N more" line) and the issue page (office view, beside the target date; not for a
+  fix waiting to be checked, as on every other count). Issues over time keeps
+  "12 Oct" under its chart: the weeks run in order up to Now. Check fixes
+  keeps its ", N days past": everything on it is a fix waiting to be checked,
+  which RELAY never counts as past target. `myWeek` unit tests no longer
+  assume the year they were written in. Help "What's new" line.
+- Decided (Claude): the year only when it is not this year, as `lib/dates.ts`
+  already does everywhere else, rather than always, so this year's pages read
+  as before. Not changed, because open PR #154 (Attention, waiting on Cal)
+  edits `office/model.ts`: the work tag "Nd overdue" on the office Issues list
+  and issue sheet and the Attention line's tag. They give a number, not a
+  date, so nothing reads as still to come; worth "N days past target" once
+  #154 is settled. Compliance screens (separate demo) not touched. A fresh
+  review found Check fixes calling a fix to check "past target", unit tests
+  that would fail from 1 Jan 2027, a loose register check and a printed
+  "days late"; all fixed.
+- Verified: typecheck, `npm test` (146 + 557, two new `dates` unit tests and `weekRange` cases:
+  last year's day with its year, this year's without; days across the year
+  end and the clocks changing), build. New `scripts/verify-dates-with-year.mjs`
+  (33 checks, 1440px dark and 390px light): an issue 366 days late says so with
+  its target's year on the register, issue sheet, project figures, issue page,
+  snag list and Month summary; one a day late says "1 day past target"; one due
+  next year shows its year and is not late; a fix to check is never called past
+  target; a week a year back on the Weekly summary and My week has its year on
+  every day; Issues over time gives the oldest issue's year. On main it fails at
+  its first check ("366d late"). Also passed: issues-laptop, month-summary,
+  office-weekly-review, my-week, issue-trend, site-coverage, before-handover,
+  check-fixes, issue-figures, help, role-access, accessibility.
+  `verify-site-coverage` fails at "a draft is not a visit", the same on main
+  e3138df without this change (not looked into here).
+- Not verified: a real phone or printer; a page left open over New Year.
+- Next: "N days past target" on the work tag and Attention once #154 is
+  settled.
+
 ## 2026-10-22 — Before handover says how late each snag is
 
 - Why: a walk of an office manager at 1440px on main 993445f (busy seed,

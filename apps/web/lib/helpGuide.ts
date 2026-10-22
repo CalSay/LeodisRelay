@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'dates-with-year', added: '2026-10-22', audience: 'all', title: 'Late issues say how late, and old dates say their year',
+    text: 'A late issue now says how many days it is past its target ("366 days past target") on the office Issues list, the snag list, the issue page and the Month summary, the same words as the office issue sheet. A date from another year now shows its year on the Weekly and Month summaries, My week, Issues over time, Site coverage and Before handover, so a week from last year, or a target last November, no longer reads as one still to come. Nothing else on those pages has changed. Checked in a desktop browser and a phone-sized window, not on a real phone or printer.' },
   { id: 'handover-days-late', added: '2026-10-22', audience: 'all', title: 'Before handover says how late each snag is',
     text: 'A late snag on Before handover now says how many days it is past its target ("349 days past target"), as an issue does in the office, instead of a date with no year. Before, a snag due last November read "Past target Fri 7 Nov", as if it were not due for two weeks. Target dates and inspection dates from another year now show the year.',
     link: { label: 'Open Before handover', href: '/handover' } },

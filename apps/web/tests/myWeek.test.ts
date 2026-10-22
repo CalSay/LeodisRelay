@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Principal } from '@relay/platform';
-import { dayLabel, myWeek, myWeekText, type MyWeekSources } from '../lib/myWeek';
+import { dayLabel, myWeek, weekRange, myWeekText, type MyWeekSources } from '../lib/myWeek';
 import type { Issue, IssueEvent, Observation, Report } from '../lib/types';
 
 const engineer: Principal = { id:'entra:eng' as never, oid:'eng', name:'Sam Spark', email:'s@example.test', role:'Engineer', trade:'Electrical' };
@@ -99,9 +99,13 @@ test('the timesheet text names every weekday up to today, weekends only with rec
 });
 
 test('days are spelt out the same way on the server and in the browser', () => {
-  assert.equal(dayLabel('2026-10-12'), 'Mon 12 Oct');
-  assert.equal(dayLabel('2026-10-18', true), 'Sunday 18 October');
-  assert.equal(dayLabel('2026-03-29', true), 'Sunday 29 March', 'the clocks going forward');
+  // The year is added only when it is not this year (tests/dates.test.ts), so compare without it.
+  const noYear = (s: string) => s.replace(/ 2026$/, '');
+  assert.equal(noYear(dayLabel('2026-10-12')), 'Mon 12 Oct');
+  assert.equal(noYear(dayLabel('2026-10-18', true)), 'Sunday 18 October');
+  assert.equal(noYear(dayLabel('2026-03-29', true)), 'Sunday 29 March', 'the clocks going forward');
+  assert.equal(weekRange('2026-10-12', '2026-10-18'), 'Mon 12 Oct to Sun 18 Oct 2026');
+  assert.equal(weekRange('2025-12-29', '2026-01-04'), 'Mon 29 Dec 2025 to Sun 4 Jan 2026', 'a week across New Year says both years');
 });
 
 test('lists the toolbox talks, permits and deliveries I recorded, closed or sorted, never withdrawn ones or anyone else\'s', () => {

@@ -15,7 +15,8 @@ import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation'
 import { confirmationLabel } from '@/lib/issueConfirmation';
 import { eventProvenance } from '@/lib/issueProvenance';
 import { ISSUE_WORK } from '@/lib/status';
-import { dateShort } from '@/lib/dates';
+import { dateShort, daysBetween, pastTarget } from '@/lib/dates';
+import { isOverdueIssue } from '@/lib/officeActions';
 import { failure } from "@/lib/failure";
 import { issueWord, raisedIssue } from "@/lib/cameBack";
 import { OfficeWordBox } from "@/components/OfficeWordBox";
@@ -428,7 +429,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         </div>
         <div className="tb-cell">
           <dt>Target date</dt>
-          <dd className={issue.targetDate ? "ref" : ""}>{issue.targetDate ? dateShort(issue.targetDate) : "No target date"}</dd>
+          <dd className={issue.targetDate ? "ref" : ""}>{issue.targetDate ? dateShort(issue.targetDate) : "No target date"}{isOverdueIssue(issue, todayInLondon()) && <span className="late">, {pastTarget(daysBetween(issue.targetDate, todayInLondon()))}</span>}</dd>
         </div>
         <div className="tb-cell">
           <dt>Raised</dt>
