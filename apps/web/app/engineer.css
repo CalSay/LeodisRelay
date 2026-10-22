@@ -125,6 +125,9 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-linkrow>div:last-child{min-width:0;}
 .eng-linkrow b{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:anywhere;font-size:14px;font-weight:500;}
 .eng-linkrow small{display:block;font-size:12px;color:var(--text-3);}
+/* A defect or access card asks only about issues at its own place (2026-10-22): one line when there are none, and the rest behind a plain link. */
+.eng-link-none{margin:0;}
+.eng-link-elsewhere{display:block;text-align:left;font:14px var(--sans);letter-spacing:0;text-decoration:underline;text-underline-offset:3px;}
 .eng-linklist{display:grid;gap:6px;}
 
 /* ---- Editor layout ------------------------------------------------------- */

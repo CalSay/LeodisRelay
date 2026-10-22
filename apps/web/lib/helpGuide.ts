@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'already-raised-here', added: '2026-10-22', audience: 'site', title: 'Defects ask only about issues in the same place',
+    text: 'On a defect or access card, "Is this something already raised?" now lists only the open issues at the place you put under Where, or in a part of it (Flat 2 and Flat 2.04 count as the same place; Level 1 and Level 12 do not). When there are none it says so in one line, so "What\'s wrong" sits just under Where. To link an issue somewhere else, tap "Link to an issue somewhere else". On the home screen, the number beside "Came back from the office" now counts only the records the office has done something on, not the reports and defects you have just sent.',
+    link: { label: 'Open your home screen', href: '/engineer' } },
   { id: 'office-smaller-screens', added: '2026-10-22', audience: 'office', title: 'The office on a smaller laptop or a tablet',
     text: 'The office no longer scrolls sideways on a screen narrower than a large monitor. On a small laptop or a tablet on its side, the top bar takes two rows: RELAY and the search box on the first, and Attention, your name, the light or dark setting, Help, Engineer view and Switch company on the second. With a project open, its register and details share the screen and "‹ Projects" at the top of the register goes back to the project list. Below 1024 pixels wide the office lists (Inbox, Issues, Variations, Team) show each row as a card, with an Order choice for sorting issues and variations; below 1366 they pack their columns closer so the Verify and Not finished buttons stay in view. The register heading now shows a project\'s whole name. Checked in a browser from 701 to 1440 pixels wide, light and dark, not on a real tablet.',
     link: { label: 'Open the office', href: '/office' } },

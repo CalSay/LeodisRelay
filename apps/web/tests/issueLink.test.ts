@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LINK_PICKER_SIZE, issueThumbnail, linkCandidates, shortReference } from '../lib/issueLink';
+import { LINK_PICKER_SIZE, issueThumbnail, issuesHere, linkCandidates, sameLocation, shortReference } from '../lib/issueLink';
 import type { Issue } from '../lib/types';
 
 const photo = (id: string) => ({ id, dataUrl: `data:image/png;base64,${id}`, caption: '' });
@@ -50,4 +50,27 @@ test('the thumbnail is the first photograph on the history, if there is one', ()
 test('the reference drops the project prefix the picker repeats on every row', () => {
   assert.equal(shortReference('011LME-ISS-004'), 'ISS-004');
   assert.equal(shortReference('ISS4'), 'ISS4');
+});
+
+test('a place matches itself, or a place inside it, but not a longer number', () => {
+  const at = (location: string) => issue(1, { location });
+  assert.ok(sameLocation(at('Flat 1.03'), ' flat  1.03 '));
+  assert.ok(sameLocation(at('Block E, flat 2.04'), 'Block E'), 'a flat inside the block');
+  assert.ok(sameLocation(at('Flat 2'), 'Flat 2.04'), 'the flat and a part of it');
+  assert.ok(!sameLocation(at('Level 12'), 'Level 1'));
+  assert.ok(!sameLocation(at('Riser 20'), 'riser 2'));
+  assert.ok(!sameLocation(at('Riser 2'), 'Flat 1.03'));
+  assert.ok(!sameLocation(at(''), 'Flat 1.03'));
+  assert.ok(!sameLocation(at('Flat 1.03'), '  '));
+});
+
+test('a defect card asks only about issues at its place, and keeps a link made elsewhere', () => {
+  const issues = [issue(1, { location: 'Riser 2' }), issue(2, { location: 'Flat 2.04' }), issue(3, { location: 'flat 2.04 bathroom' }), issue(4, { location: 'Level 1' })];
+  assert.deepEqual(issuesHere(issues, 'Flat 2.04', undefined).here.map(i => i.id), ['i2', 'i3']);
+  assert.equal(issuesHere(issues, 'Flat 2.04', undefined).elsewhere, 2);
+  const none = issuesHere(issues, 'Flat 1.03', undefined);
+  assert.deepEqual([none.here.length, none.elsewhere], [0, 4]);
+  assert.deepEqual(issuesHere(issues, '', undefined).here, [], 'nothing asked before a place is given');
+  const linked = issuesHere(issues, 'Flat 1.03', 'i1');
+  assert.deepEqual([linked.here.map(i => i.id), linked.elsewhere], [['i1'], 3]);
 });
