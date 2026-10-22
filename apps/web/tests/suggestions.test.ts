@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { projectSuggestions } from '../lib/suggestions';
+import { companiesByTrade, companiesForIssue, projectSuggestions } from '../lib/suggestions';
 import type { Issue, Observation, Report, Variation } from '../lib/types';
 
 const card = (o: Partial<Observation>): Observation => ({ id: 'o', type: 'defect', location: '', whatHappened: '', actionNeeded: '', owner: '', photos: [], ...o });
@@ -56,4 +56,26 @@ test('places come from sent reports, issues and variations, newest first and cap
   assert.equal(many.locations.length, 12);
   assert.equal(many.companies.length, 12);
   assert.equal(many.locations[0], 'Flat 20');
+});
+
+test('each trade offers the companies already put on its issues here, newest first, from the trade the engineer chose', () => {
+  const assigned = (at: string) => [{ at, actor: 'Office', kind: 'assigned', note: '', photos: [] } as Issue['events'][number]];
+  const byTrade = companiesByTrade([
+    issue('2026-10-01T09:00:00Z', { affectedTrade: 'P&H', owner: 'Aire Plumbing' }),
+    issue('2026-10-02T09:00:00Z', { affectedTrade: 'P&H', owner: 'Leeds Heating', events: assigned('2026-10-09T09:00:00Z') }),
+    issue('2026-10-03T09:00:00Z', { affectedTrade: 'P&H', owner: 'aire plumbing ' }),
+    issue('2026-10-04T09:00:00Z', { affectedTrade: 'P&H', owner: 'TBC' }),
+    issue('2026-10-05T09:00:00Z', { affectedTrade: 'Electrical', owner: 'Northbank Electrical' }),
+    // The reporter's own trade is not whose work it is.
+    issue('2026-10-06T09:00:00Z', { reporterTrade: 'HVAC', owner: 'Main contractor' }),
+    issue('2026-10-07T09:00:00Z', { affectedTrade: 'Other / non-Leodis', owner: 'Main contractor' }),
+  ]);
+  assert.deepEqual(byTrade, { 'P&H': ['Leeds Heating', 'aire plumbing'], Electrical: ['Northbank Electrical'] });
+  assert.deepEqual(companiesForIssue({ affectedTrade: 'P&H' }, byTrade), ['Leeds Heating', 'aire plumbing']);
+  assert.deepEqual(companiesForIssue({ affectedTrade: 'HVAC' }, byTrade), []);
+  // "Other" is many trades and companies, so it never points at one.
+  assert.deepEqual(companiesForIssue({ affectedTrade: 'Other / non-Leodis' }, byTrade), []);
+  assert.deepEqual(companiesForIssue({}, byTrade), []);
+  assert.deepEqual(companiesForIssue({ affectedTrade: 'P&H' }, undefined), []);
+  assert.deepEqual(projectSuggestions({ ...none, issues: [issue('2026-10-01T09:00:00Z', { affectedTrade: 'HVAC', owner: 'Cool Air Ltd' })] }).byTrade, { HVAC: ['Cool Air Ltd'] });
 });

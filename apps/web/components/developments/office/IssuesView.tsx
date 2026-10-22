@@ -6,6 +6,7 @@ import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Btn, BtnQ, ConfirmTag, SortHead, WorkTag } from './bits';
 import { daysLate, fmtDay, isActive, isOverdue, shortRef } from './model';
+import { issueTradeWords } from '@/lib/snagList';
 import { pastTarget } from '@/lib/dates';
 import type { SortDirection } from '@/lib/tableSorting';
 import { issueRegister } from '@/lib/api';
@@ -134,7 +135,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
     <div className="panel"><table className="reg cards issue-reg"><thead><tr><SortHead label="Ref" column="reference" sort={sort} change={changeSort} /><SortHead label="Issue" column="issue" sort={sort} change={changeSort} /><SortHead label="Project" column="project" sort={sort} change={changeSort} className="c-project" /><SortHead label="Raised" column="raised" sort={sort} change={changeSort} /><SortHead label="Owner" column="owner" sort={sort} change={changeSort} /><SortHead label="Target" column="target" sort={sort} change={changeSort} /><SortHead label="Work" column="work" sort={sort} change={changeSort} /><SortHead label="Confirmation" column="confirmation" sort={sort} change={changeSort} /><th><span className="sr">Actions</span></th></tr></thead><tbody>
       {shown.length ? shown.map(i => { const late = isOverdue(i, day); const active = isActive(i); return <tr key={i.id} className="clickable" onClick={() => ctx.go(`#/projects/${code(i.projectId)}/issue/${i.id}`)}>
         <td className="c-ref"><span className="ref">{i.reference}</span><div className="rowsub ref-project">{name(i.projectId)}</div></td>
-        <td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{i.description}</div><div className="rowsub">{i.location || 'no location'} · {i.affectedTrade ?? (i.reporterTrade ? `reported by ${i.reporterTrade}` : 'trade not recorded')}</div></td>
+        <td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{i.description}</div><div className="rowsub">{i.location || 'no location'} · {issueTradeWords(i)}</div></td>
         <td className="c-project" data-label="Project">{name(i.projectId)}</td>
         <td className="due" data-label="Raised">{fmtDay(i.raisedAt)}{source(i) && <div className="rowsub">{source(i)}</div>}</td>
         <td data-label="Owner">{i.owner.trim() || <span className="late">Unassigned</span>}</td>

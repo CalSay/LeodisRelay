@@ -4,6 +4,54 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Unassigned issues say whose work it is
+
+- Why: the coordinator asked for a walk of an electrician flagging another
+  trade's defect, then a check that the office sees whose it is. Walked at
+  390px on main 4714a18 (rebased on 54c7c93, #167). Sam (Electrical) flagged a plumber's leak from "Flag a
+  defect" in about 6 taps plus typing what was wrong. The trade starts as his
+  own and needs a dropdown to change it to P&H (on a site update card it is
+  one tap). On the office side, the overview's "Unassigned issues" row
+  said only "Flat 2.04 kitchen · raised 22 Oct", with no trade. The Assign box
+  did not give the trade either and offered every company on the project in
+  A to Z order, so the office had to open the issue to see whose it was and then
+  type or pick the company. Not a `docs/tasks.json` task, so no status
+  changed. Within Cal's 21 Oct direction (the office's view clearer, with less
+  work).
+- Changed: the Unassigned row reads "Flat 2.04 kitchen · P&H · raised …"
+  (`issueTradeWords` in `lib/snagList.ts`, now also used by the Issues
+  register). The office desk's Assign box says "Trade: P&H" and, under
+  "Already doing P&H work on this project", offers the companies the office
+  has already put on P&H issues on this project as one-tap buttons. The issue
+  page's "Who puts it right" offers the same companies as chips. This comes
+  from `companiesByTrade` and `companiesForIssue` in `lib/suggestions.ts`, sent
+  as `byTrade` by `/api/locations`: newest first, up to 3, only the trade
+  the engineer chose (never the reporter's own trade), and placeholders like
+  "TBC" are left out. A tap only fills Responsible. Help "What's new" line.
+- Decided (Claude): a suggestion only, never auto-assigning (keeps clear of
+  EXP-2 decision routing; the office still presses Assign). "Other /
+  non-Leodis" offers no company, because it covers the main contractor and
+  every other trade. The office desk reads the offer from the server
+  rather than from the desk's own list, so `OfficeDesk.tsx` and `model.ts`
+  (open PR #154) are not touched. The engineer's trade dropdown on "Flag a
+  defect" was left for a later task.
+- Verified: typecheck, `npm test` (146 + 569, one new unit test), build. New
+  `scripts/verify-other-trade-defect.mjs` (56 checks). Sam flags the leak as
+  P&H at 390px. Then the office at 1440 light and dark and 390 light: the Unassigned row
+  names P&H, and an "Other" one says so. The desk's Assign box says the trade,
+  offers only the plumber's company (not the electrician's), and starts
+  empty. A tap fills Responsible and assigns nothing on its own. The issue
+  page's chips do the same, are 48px on a phone, and "Who puts it right"
+  says the trade. An "Other" defect gets no offer on either. Pressing Assign gives the issue to the plumber. No sideways scroll and no page errors.
+  Screens: project files `ui-review/other-trade-defect/` (before, after).
+- Not verified: a real phone or laptop.
+- Fresh review found: "Who puts it right" named the trade only when it
+  had a company to offer (now always), the Help line said one company when up
+  to three are offered, and the "Other" check could pass before the companies
+  had loaded and did not cover the desk (both fixed).
+- Next: "Flag a defect" could use the site update card's one-tap trade
+  buttons instead of the dropdown.
+
 ## 2026-10-22 — What needs the office, straight under the projects
 
 - Why: the coordinator asked for a look at the office overview's first
@@ -41,7 +89,6 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   so proved nothing (fixed); the Help line claimed more than was checked
   (reworded); a phone briefly drew the desk order before the width was known
   (now neither section shows until it is).
-
 ## 2026-10-22 — Issues over time shows what is waiting for the office
 
 - Why: a walk of an office manager at 1440px and 390px on main 117df61 (busy
