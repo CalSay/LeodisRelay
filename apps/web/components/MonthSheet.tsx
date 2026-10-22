@@ -124,7 +124,7 @@ export function MonthSheet({ m, project, today, thisMonth, here, manager }: { m:
       <h3>Issues past their target {when}</h3>
       {pastTargetTotal ? <LateRows rows={m.pastTarget} here={here} all={allLate} /> : <p className="week-none">No open issues were past their target {when}.</p>}
       <ShowAll total={pastTargetTotal} shown={LATE_SHOWN} all={allLate} onToggle={() => setAllLate(a => !a)} what="issues" />
-      {!allLate && pastTargetTotal > LATE_SHOWN && <p className="week-total month-print-only">And {pastTargetTotal - LATE_SHOWN} more past their target {when}, not as late as these. Each company&rsquo;s open and past-target figures are under &ldquo;Still open, with whom&rdquo;.</p>}
+      {!allLate && pastTargetTotal > LATE_SHOWN && <p className="week-total month-print-only">And {pastTargetTotal - LATE_SHOWN} more past their target {when}, each no more days late than these. Each company&rsquo;s open and past-target figures are under &ldquo;Still open, with whom&rdquo;.</p>}
       <h3>Access problems on more than one day</h3>
       {m.access.length ? <ul className="week-rows">{m.access.map(a => <li key={a.place}>
         <span className="week-when">{plural(a.days.length, 'day')}</span>

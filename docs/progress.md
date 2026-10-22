@@ -20,7 +20,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   direction (the office's view of progress).
 - Changed: on paper "Behind or stuck" shows the ten longest-late issues, the
   same ten as the screen, then "And 186 more past their target on Wed 30 Sep
-  2026, not as late as these. Each company's open and past-target figures are
+  2026, each no more days late than these. Each company's open and past-target figures are
   under “Still open, with whom”." (`MonthSheet.tsx`, `week.css`
   `.month-late-extra`, `.month-print-only`). With "Show all" open on screen,
   print still gives every one. Every place under "Where work moved on" still
@@ -37,6 +37,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   help.
 - Not verified: a real printer or another browser's print dialog (PDFs are
   Chromium's); a live tenant; a real phone.
+
 ## 2026-10-22 — Today from site on the office overview
 
 - Why: a walk of an office manager reading the end of the day's site updates at
