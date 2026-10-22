@@ -1,3 +1,6 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 
 import { BRANDING } from "./branding.js";
@@ -28,11 +31,14 @@ export const FOOTER_HEIGHT = 70;
 
 const MARGIN = 42;
 
+const assetDir = path.join(path.dirname(fileURLToPath(import.meta.url)), "..", "assets");
+/** Height of every accreditation mark; each takes its own width. */
+const MARK_HEIGHT = 28;
+const MARK_GAP = 12;
+
 const INK = rgb(0.306, 0.318, 0.345);
 const FAINT = rgb(0.424, 0.435, 0.459); // #6c6f75, as the document's labels
 const RULE = rgb(0.851, 0.851, 0.831);
-const BOX = rgb(0.761, 0.761, 0.733);
-const WASH = rgb(0.965, 0.961, 0.945);
 
 export interface FooterText {
   /** Left-hand line: reference, revision and issue state. */
@@ -70,6 +76,10 @@ export async function stampFooter(pdf: Uint8Array, text: FooterText): Promise<Ui
    */
   const regular = await doc.embedFont(StandardFonts.Helvetica);
   const medium = await doc.embedFont(StandardFonts.HelveticaBold);
+  // Embedded once and drawn on every page, so the file carries one copy of each.
+  const marks = await Promise.all(
+    BRANDING.accreditations.map(async (mark) => doc.embedPng(await readFile(path.join(assetDir, mark.file)))),
+  );
 
   // Standard Helvetica only has the WinAnsi characters; a project name with
   // anything else (a Polish place name, an emoji) would stop the stamp, so
@@ -89,8 +99,7 @@ export async function stampFooter(pdf: Uint8Array, text: FooterText): Promise<Ui
     const { width } = page.getSize();
     const right = width - MARGIN;
 
-    // Accreditation marks: outlined frames sized to the space a real mark needs,
-    // so the layout is proven at the right proportions rather than at a gap.
+    // Accreditation marks, the same height side by side, each at its own width.
     const label = "ACCREDITATIONS";
     const labelSize = 6;
     const labelWidth = medium.widthOfTextAtSize(label, labelSize) + label.length * 1.2;
@@ -102,21 +111,11 @@ export async function stampFooter(pdf: Uint8Array, text: FooterText): Promise<Ui
       lx += medium.widthOfTextAtSize(ch, labelSize) + 1.2;
     }
 
-    const boxW = 74;
-    const boxH = 26;
     let x = MARGIN + labelWidth + 10;
-    for (let i = 0; i < BRANDING.accreditationCount; i += 1) {
-      page.drawRectangle({
-        x,
-        y: 38,
-        width: boxW,
-        height: boxH,
-        color: WASH,
-        borderColor: BOX,
-        borderWidth: 1,
-        borderDashArray: [3, 2],
-      });
-      x += boxW + 7;
+    for (const mark of marks) {
+      const markWidth = (mark.width / mark.height) * MARK_HEIGHT;
+      page.drawImage(mark, { x, y: 35, width: markWidth, height: MARK_HEIGHT });
+      x += markWidth + MARK_GAP;
     }
 
     page.drawLine({

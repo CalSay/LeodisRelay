@@ -33,7 +33,7 @@ test('working days leave out both ends and weekends', () => {
 test('places sent reports on their visit day, leaves out drafts and other projects, and counts a correction once', () => {
   const c = siteCoverage([project({})], [
     report({ id:'a', visitDate:'2026-10-13' }),
-    report({ id:'b', visitDate:'2026-10-13', author:'Pat Pipe', authorTrade:'P&H', reference:'011LME-SPR-002' }),
+    report({ id:'b', visitDate:'2026-10-13', author:'Pat Pipe', authorId:'entra:pat', authorTrade:'P&H', reference:'011LME-SPR-002' }),
     report({ id:'draft', visitDate:'2026-10-14', state:'draft' }),
     report({ id:'other', projectId:'p2', visitDate:'2026-10-14' }),
     report({ id:'orig', visitDate:'2026-10-15', reference:'011LME-SPR-003' }),
@@ -79,4 +79,21 @@ test('three full working days without a report is the line', () => {
 test('only reads what the person may read', () => {
   const c = siteCoverage([project({})], [report({ id:'mine', state:'draft' }), report({ id:'sent' })], engineer, START, TODAY);
   assert.deepEqual(c.projects[0]!.days.flat().map(v => v.reportId), ['sent'], 'even the author\'s own draft is not a visit');
+});
+
+test('one mark for each person on site each day, opening their site update', () => {
+  const c = siteCoverage([project({})], [
+    report({ id:'ffi', visitDate:'2026-10-15', reference:'011LME-FFI-001', reportType:'first-fix-inspection' }),
+    report({ id:'spr', visitDate:'2026-10-15', reference:'011LME-SPR-009' }),
+    report({ id:'jo', visitDate:'2026-10-15', reference:'011LME-SPR-010', author:'Jo Wire', authorId:'entra:jo' as never }),
+    report({ id:'same-name', visitDate:'2026-10-16', reference:'011LME-SPR-011', author:'Sam Spark ', authorId:undefined as never }),
+    report({ id:'by-name', visitDate:'2026-10-16', reference:'011LME-FFI-002', author:'Sam Spark', authorId:undefined as never, reportType:'first-fix-inspection' }),
+  ], manager, START, TODAY);
+  const [p] = c.projects;
+  assert.deepEqual(p!.days[3]!.map(v => [v.reportId, v.author, v.references]), [
+    ['jo', 'Jo Wire', ['011LME-SPR-010']],
+    ['spr', 'Sam Spark', ['011LME-SPR-009', '011LME-FFI-001']],
+  ], 'two electricians are two marks; one electrician\'s update and inspection are one, opening the update');
+  assert.deepEqual(p!.days[4]!.map(v => v.references), [['011LME-SPR-011', '011LME-FFI-002']], 'without a sign-in, a person is known by their name, and the update still opens first');
+  assert.equal(p!.days[4]![0]!.reportId, 'same-name');
 });

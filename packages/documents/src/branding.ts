@@ -1,15 +1,11 @@
 /**
- * Branding placeholders.
+ * Branding.
  *
- * Every value here is a stand-in awaiting the real thing, collected in one file
- * with explicit TODOs so replacing them is a single deliberate change rather
- * than a hunt through the layout — and so nobody has to guess which strings on
- * the document are real.
- *
- * The logo and accreditation marks are drawn as outlined boxes rather than
- * omitted. A placeholder that occupies the space it will eventually need proves
- * the layout works at the right proportions; leaving a gap means discovering at
- * the worst moment that the real mark does not fit.
+ * The logo and accreditation marks are real (supplied by Cal on 22 Oct 2026).
+ * The company details are stand-ins awaiting the real thing, collected in one
+ * file with explicit TODOs so replacing them is a single deliberate change
+ * rather than a hunt through the layout — and so nobody has to guess which
+ * strings on the document are real.
  */
 
 export interface Branding {
@@ -19,21 +15,27 @@ export interface Branding {
   addressLines: string[];
   /** TODO: company registration and VAT numbers. */
   registrationLines: string[];
-  /** TODO: supply a logo image and render it in place of the outlined box. */
-  logo: { widthPt: number; heightPt: number; label: string };
   /**
-   * TODO: replace with the real accreditations and their marks. Sized as a row
-   * of frames so the strip is laid out against the number Leodis actually
-   * holds — typically Gas Safe, NICEIC, SafeContractor, CHAS, Constructionline
-   * or ISO marks for an M&E contractor.
+   * The logo, as a file in packages/documents/assets. Width and height keep the
+   * image's own proportions (640 × 389), so it is never stretched.
    */
-  accreditationCount: number;
+  logo: { widthPt: number; heightPt: number; file: string };
+  /**
+   * The accreditation marks along the foot of every page, left to right, as
+   * files in packages/documents/assets (the packs Cal supplied on 22 Oct 2026).
+   * Each is drawn at the same height and its own width, so none is stretched.
+   */
+  accreditations: { name: string; file: string }[];
 }
 
 export const BRANDING: Branding = {
   companyName: "Leodis Developments Ltd",
   addressLines: ["Registered office address line 1", "Leeds", "LS0 0AA"],
   registrationLines: ["Company no. 00000000", "VAT no. GB 000 0000 00"],
-  logo: { widthPt: 132, heightPt: 40, label: "LOGO" },
-  accreditationCount: 4,
+  logo: { widthPt: 82, heightPt: 50, file: "leodis-developments-logo.png" },
+  accreditations: [
+    { name: "CHAS Accreditation Standard", file: "accreditation-chas.png" },
+    { name: "REFCOM F-Gas Certificated", file: "accreditation-refcom.png" },
+    { name: "MCS Certified", file: "accreditation-mcs.png" },
+  ],
 };
