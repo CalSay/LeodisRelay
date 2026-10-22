@@ -1399,7 +1399,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   </button>);
 
   return (
-    <main className={sent ? "wrap eng-page eng-report-sent" : "wrap wrap-pad eng-report-editor"}>
+    <main className={`${sent ? "wrap eng-page eng-report-sent" : "wrap wrap-pad eng-report-editor"}${checklist ? " eng-inspection" : ""}`}>
       <PageTitle title={sent ? report.reference : type.name} />
       <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`)} className="back">
         &larr; {backLabel(safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))}

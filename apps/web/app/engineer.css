@@ -637,6 +637,35 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-report-editor .eng-conflict-all .btn-sm,.eng-report-sent .eng-sent-away-actions .btn-sm{font-size:15px;}
 .eng-report-editor .eng-conflict-side dl>div{grid-template-columns:96px 1fr;}
 
+/* Release 1 polish E5 (2026-10-22): pre-handover and first fix inspections.
+   Scoped to .eng-inspection (an inspection's editor or sent receipt). */
+/* A check's row: the answer and its saving dot on one line, the question under
+   them at the row's full width, so it never breaks a word to a line in the
+   300px list at a desk. "Saving" is said once, in the bar at the foot; the row
+   keeps its dot (the word stays for screen readers). */
+.eng-inspection .eng-checkrow .top{flex-wrap:wrap;row-gap:6px;}
+.eng-inspection .eng-checkrow .top b{order:2;flex:1 1 100%;}
+.eng-inspection .eng-checkrow .top .eng-where-mark{order:1;margin-left:auto;align-items:center;gap:0;width:8px;overflow:hidden;white-space:nowrap;color:transparent;}
+@media (max-width:899px){
+  /* On a phone the list is a screen wide: the answer sits beside the question as before. */
+  .eng-inspection .eng-checkrow .top{flex-wrap:nowrap;}
+  .eng-inspection .eng-checkrow .top b{order:0;flex:1 1 auto;}
+  .eng-inspection .eng-checkrow .top .eng-where-mark{order:0;}
+}
+/* The sent receipt: a passing check is one quiet row of a list, not a card of
+   its own, so the checks needing action stand out and twelve checks are not
+   two screens long. */
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center;margin:0;padding:10px 14px;border-radius:0;border-top-width:0;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>.head{display:contents;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>.head>.lbl{grid-column:1;grid-row:1;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>.head>.kind{grid-column:2;grid-row:1;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>p{grid-column:1/-1;grid-row:2;margin-top:2px;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>p b{font-weight:500;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>small{grid-column:1/-1;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral:not(.tone-neutral+.tone-neutral){border-top-width:1px;border-top-left-radius:9px;border-top-right-radius:9px;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral:not(:has(+.tone-neutral)){margin-bottom:10px;border-bottom-left-radius:9px;border-bottom-right-radius:9px;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral .kind:is(.answer-ok,.answer-na){border-color:transparent;background:none;padding-inline:0;}
+
 /* Release 1 polish E4 (2026-10-22): a defect on its own, its receipt, and a
    variation's page. Scoped to .eng-defect, .eng-defect-receipt and .eng-variation. */
 /* The two boxes of the form sit one gap apart, not a gap plus each box's margin. */

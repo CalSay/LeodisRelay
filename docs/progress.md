@@ -4,6 +4,41 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish E5: inspections
+
+- Why: task E5 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
+  the engineer's phone). Branched from main at 82b06f7, then E4 (#197) and O6
+  (#198) merged in. Screenshots before and
+  after, 390px light and dark and 1440px light, are in
+  `ui-review/release-1/E5/`: a pre-handover and a first fix inspection each
+  opened, a check needing action filled in, halfway through, Check & sign,
+  signed, and the sent receipt.
+- What the walk found: every control was already 48px or more and nothing
+  scrolled sideways (E3's styling already covers "What sending does" and the
+  signature's Clear). Three things read badly. At a desk the check list is a
+  300px column, and the answer tag plus the "Saving" word beside it left the
+  question about 70px, so "Containment, tray and trunking complete" broke one
+  word to a line, 10 lines tall. On a phone the same "Saving" word squeezed the
+  question onto a third line while each answer saved. On the sent receipt each
+  of the 12 checks was a card of its own, so the one needing action was lost
+  among 11 identical boxes, 2,087px long.
+- Changed: one block at the end of `engineer.css`, scoped to the new
+  `.eng-inspection` class on the page's `main` (set in `reports/[id]/page.tsx`
+  for checklist reports). At a desk a check's row has its answer and saving dot
+  on one line and the question under them at full width. The row keeps the dot
+  and leaves the words "Saving" or "Uploading" to the bar at the foot (still read out by screen
+  readers). On the receipt the satisfactory and not applicable checks are rows
+  of one quiet list with the answer as plain coloured words; checks needing
+  action stay full cards. No `globals.css` changes, no shared component
+  changes, no change to answering, saving, signing or sending.
+- No Help "What's new" line: nothing works differently.
+- Verified: `npm run typecheck`, `npm test` (146 + 591), `npm run build`.
+  Browser checks passed: handover-inspection (104), first-fix-inspection
+  (110), report-types (90), quicker-inspections (100), offline-inspection
+  (103), offline-sign (62), handover-offline (14), fewest-taps (17),
+  engineer-layout, old-drafts (84), accessibility (584).
+- Not verified: a real phone, a screen reader.
+
 ## 2026-10-22 — Release 1 polish O6: Site coverage, Before handover, site diary
 
 - Why: task O6 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch";
