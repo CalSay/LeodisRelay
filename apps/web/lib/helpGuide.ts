@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'issues-small-laptop', added: '2026-10-22', audience: 'office', title: 'The Issues list on a small laptop',
+    text: 'On a screen 1024 to 1279 pixels wide, such as a small laptop, the office Issues list now starts higher and shows more issues at once. The buttons sit beside the "Issues" heading, the five filters fit on one row, the project\'s name sits under each reference (which already starts with the project\'s code) instead of in a column of its own, "45d late" sits under the target date, and tags such as "Fixed, to check" stay on one line. Each issue reads in two or three lines instead of five or six. On wider screens the tags stay on one line too; otherwise wider screens and phones look as before. Checked in a desktop browser, light and dark.',
+    link: { label: 'Open Issues', href: '/office#/issues' } },
   { id: 'month-print-shorter', added: '2026-10-22', audience: 'office', title: 'A shorter printed month',
     text: 'Printing the Weekly summary\'s Month choice, or saving it as a PDF, now gives the ten issues most days past their target, the same ten the screen shows, and then a line saying how many more there are. Each company\'s open and past-target figures still print under "Still open, with whom". On a busy project, a month that came to 28 pages now comes to 7. If you want every late issue on paper, tap "Show all" before you print. Nothing changes on screen. Checked as a PDF saved from a desktop browser, not on a printer.',
     link: { label: 'Open the Weekly summary', href: '/weekly-summary?period=month' } },

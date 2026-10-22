@@ -107,7 +107,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
   // The file holds this search, every page of it, in the order on screen.
   const downloadHref = `/api/issues/export?${issueQueryParams({ view: filter, projectId: project, trade, location, company, verification: verification || undefined, sort: sort ?? undefined })}`;
   const clear = () => { setProject(''); setTrade(''); setLocationText(''); setCompanyText(''); setVerification(''); };
-  return <div className="view">
+  return <div className="view issues-view">
     <div className="pagehead"><div><h2>Issues</h2><p>{counts.open} open{narrowed ? ' in this search' : ` across ${ctx.projects.length} projects`} · {counts.overdue ? <span className="late">{counts.overdue} overdue</span> : 'none overdue'} · {counts.verify} fixed, to check · {counts.unassigned} unassigned · {reviewOn && <>{counts.notReviewed} not reviewed · </>}{counts.disputed} disputed</p></div>
       <div className="actions"><a className="btn btn-q" href={`/companies?${new URLSearchParams({ returnTo: '/office#/issues' })}`}>Issues by company</a><a className="btn btn-q" href={snagHref}>Snag list</a>{result.total > 0 && <DownloadLink className="btn btn-q" href={downloadHref} what="spreadsheet" aria-label={`Download ${result.total} ${result.total === 1 ? 'issue' : 'issues'} as a spreadsheet (CSV)`}>Download spreadsheet</DownloadLink>}{oldestToVerify && <Btn onClick={() => ctx.setDialog({ kind: 'verify', issue: oldestToVerify, list: oldestFirst })}>Verify the oldest</Btn>}</div></div>
     <div className="filters">
@@ -130,14 +130,14 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
       {narrowed && <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button>}
     </div>
     {failed && <div className="note bad" role="alert"><span>{failed} Showing the last results.</span></div>}
-    <div className="panel"><table className="reg cards"><thead><tr><SortHead label="Ref" column="reference" sort={sort} change={changeSort} /><SortHead label="Issue" column="issue" sort={sort} change={changeSort} /><SortHead label="Project" column="project" sort={sort} change={changeSort} /><SortHead label="Raised" column="raised" sort={sort} change={changeSort} /><SortHead label="Owner" column="owner" sort={sort} change={changeSort} /><SortHead label="Target" column="target" sort={sort} change={changeSort} /><SortHead label="Work" column="work" sort={sort} change={changeSort} /><SortHead label="Confirmation" column="confirmation" sort={sort} change={changeSort} /><th><span className="sr">Actions</span></th></tr></thead><tbody>
+    <div className="panel"><table className="reg cards issue-reg"><thead><tr><SortHead label="Ref" column="reference" sort={sort} change={changeSort} /><SortHead label="Issue" column="issue" sort={sort} change={changeSort} /><SortHead label="Project" column="project" sort={sort} change={changeSort} className="c-project" /><SortHead label="Raised" column="raised" sort={sort} change={changeSort} /><SortHead label="Owner" column="owner" sort={sort} change={changeSort} /><SortHead label="Target" column="target" sort={sort} change={changeSort} /><SortHead label="Work" column="work" sort={sort} change={changeSort} /><SortHead label="Confirmation" column="confirmation" sort={sort} change={changeSort} /><th><span className="sr">Actions</span></th></tr></thead><tbody>
       {shown.length ? shown.map(i => { const late = isOverdue(i, day); const active = isActive(i); return <tr key={i.id} className="clickable" onClick={() => ctx.go(`#/projects/${code(i.projectId)}/issue/${i.id}`)}>
-        <td className="c-ref"><span className="ref">{i.reference}</span></td>
+        <td className="c-ref"><span className="ref">{i.reference}</span><div className="rowsub ref-project">{name(i.projectId)}</div></td>
         <td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{i.description}</div><div className="rowsub">{i.location || 'no location'} · {i.affectedTrade ?? (i.reporterTrade ? `reported by ${i.reporterTrade}` : 'trade not recorded')}</div></td>
-        <td data-label="Project">{name(i.projectId)}</td>
+        <td className="c-project" data-label="Project">{name(i.projectId)}</td>
         <td className="due" data-label="Raised">{fmtDay(i.raisedAt)}{source(i) && <div className="rowsub">{source(i)}</div>}</td>
         <td data-label="Owner">{i.owner.trim() || <span className="late">Unassigned</span>}</td>
-        <td className="due" data-label="Target">{i.targetDate ? <><b className={late ? 'late' : ''}>{fmtDay(i.targetDate)}</b>{late && ` · ${daysLate(i.targetDate, day)}d late`}</> : <span className="fine">—</span>}</td>
+        <td className="due" data-label="Target">{i.targetDate ? <><b className={late ? 'late' : ''}>{fmtDay(i.targetDate)}</b>{late && <span className="late-days"><span className="sep"> · </span>{daysLate(i.targetDate, day)}d late</span>}</> : <span className="fine">—</span>}</td>
         <td data-label="Work"><WorkTag i={i} day={day} /></td><td data-label="Confirmation"><ConfirmTag i={i} reviewOn={!!ctx.statOf(i.projectId)?.reviewOn} /></td>
         <td className="c-actions" onClick={e => e.stopPropagation()}><div className="actions">
           {active && i.work === 'awaiting_verification' && !closureMine(i) && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: fixesHere })}>Verify</Btn>}
