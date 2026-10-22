@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import type { Issue, Photo } from '@/lib/types';
-import { SEND_BACK_REASON, fixEvidence } from '@/lib/checkFix';
+import { SEND_BACK_REASON, fixEvidence, sentBackBefore } from '@/lib/checkFix';
 import { getIssue, issueCommand } from '@/lib/api';
 import { mediaId } from '@/lib/media';
 import { PhotoImage } from '@/components/PhotoImage';
@@ -123,6 +123,7 @@ export function CheckFix({ start, list, me, startWith, close, done }: {
   };
 
   const ev = fixEvidence(issue);
+  const back = sentBackBefore(issue);
   const mine = issue.closureSubmittedById ? issue.closureSubmittedById === me.id : issue.closureSubmittedBy === me.name;
   const day = today();
   const late = issue.targetDate && /^\d{4}-\d{2}-\d{2}$/.test(issue.targetDate) && issue.targetDate < day ? daysLate(issue.targetDate, day) : 0;
@@ -138,6 +139,8 @@ export function CheckFix({ start, list, me, startWith, close, done }: {
       <div className="cf-what">
         <b>{issue.description}</b>
         <p className="rowsub">Put forward by {ev.by}{ev.at ? ` on ${fmtWhen(ev.at)}` : ''} · {issue.owner.trim() || 'nobody named'}{issue.targetDate ? ` · target ${fmtDay(issue.targetDate)}${late > 0 ? `, ${late} ${late === 1 ? 'day' : 'days'} past` : ''}` : ''}</p>
+        {/* Sent back before: what was asked, above the answer, so the new photo is checked against it. */}
+        {back && loaded && loaded !== 'failed' && <p className="cf-note cf-back">{back.times > 1 ? `Sent back ${back.times} times. Last by` : 'Sent back by'} {back.by} on {fmtWhen(back.at)}{back.note ? <>: <q>{back.note}</q></> : ', with no reason given.'}</p>}
         {loaded && loaded !== 'failed' && <p className="cf-note">{ev.note ? <>Their note: <q>{ev.note}</q></> : 'No note was sent with the fix.'}</p>}
       </div>
       {loaded === 'failed' && <div className="note bad" style={{ margin: 0 }} role="alert"><span>The photos for this fix could not be loaded. Check your connection and try again.</span><BtnQ className="btn-sm" onClick={() => reload(listed.id)}>Try again</BtnQ></div>}

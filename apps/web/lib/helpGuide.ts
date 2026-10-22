@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'sent-back-fix-again', added: '2026-10-22', audience: 'office', title: 'See what you asked for when a fix comes back again',
+    text: 'When a fix the office sent back as not finished is put forward again, checking it now shows who sent it back, when, and the reason they gave ("Sent back by Jo Office on Wed 21 Oct: ..."), above the engineer\'s new note and beside the new photo. So whoever checks it can see whether what was asked has been done, even if someone else sent it back. The Fixed, to check rows on the overview and in Attention say "put forward again" (or "put forward 3 times"), and the issue in the office says the same. A first attempt looks as before. Checked in a desktop browser, light and dark, and a phone-sized window.' },
   { id: 'inspection-tally-first', added: '2026-10-22', audience: 'office', title: 'An inspection shows what needs action first',
     text: 'When the office opens an inspection (in the Inbox or a project), a line under Inspection results now says how it went ("3 need action · 8 satisfactory · 1 not applicable") and only the checks needing action are listed, each with its issue. The satisfactory and not applicable checks fold under one button ("Show the 8 satisfactory and 1 not applicable checks"); a passing check the office has added a note to stays in view. The PDF and Full report still list every check. Checked in a desktop browser, light and dark, and a phone-sized window, not on a real phone.',
     link: { label: 'Open the Inbox', href: '/office#/inbox' } },

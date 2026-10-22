@@ -250,7 +250,7 @@ export async function officeAll(): Promise<{ reports: ReportSummary[]; drafts: R
   return { reports: unique(reports), drafts: unique(drafts) };
 }
 
-/** Every issue for the office desk, each with its latest event only, and a fix to check's latest put forward (lib/officeActions.ts `deskIssue`). */
+/** Every issue for the office desk, each with its latest event only, and a fix to check's rounds of put forward, sent back and verified (lib/officeActions.ts `deskIssue`). */
 export async function allIssues(): Promise<Issue[]> {
   const data = await parse<{ issues: Issue[] }>(await request('/api/issues?view=desk', { cache: 'no-store' }));
   return data.issues;
