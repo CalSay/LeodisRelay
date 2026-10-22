@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'no-red-while-writing', added: '2026-10-22', audience: 'site', title: 'No red on a card you are still filling in',
+    text: 'On a site update, a card you have just started no longer turns red as soon as you type where you are, before you have reached "What happened" or taken the photo. It stays calm while you fill it in. If something is still missing when you tap "Done with this card", move to another card or go to Check & send, it shows in red as before, and nothing incomplete can be sent. Inspections are unchanged. Checked in a phone-sized and a desktop browser window, not on a real phone.' },
   { id: 'office-issues-tidier', added: '2026-10-22', audience: 'office', title: 'A tidier Issues tab and issue sheet',
     text: 'On the office Issues tab the filter chips and the search boxes now read as one block, every search box is wide enough for its hint, and "N days past target" sits under the target date instead of wrapping down the column. An issue\'s sheet opens on the issue in large type with its parts as cards, like a project\'s sheet. When checking a fix on a phone, Verify and close is the first button and the buttons stay in view while you scroll the photos. Nothing was added or taken away. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
     link: { label: 'Open Issues', href: '/office#/issues' } },
