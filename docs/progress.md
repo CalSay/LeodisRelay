@@ -37,8 +37,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Back returns to Yours. Folded at first, so the page is no longer than before.
 - Engineer, home: "Came back from the office" counted a fix still waiting to be
   checked as "from the office" when the office had assigned it before it was put
-  forward. A fix waiting for the office is no longer counted; it is still listed
-  with its "Fixed, to check" tag, as the engineer's own records are.
+  forward. A fix waiting for the office is no longer counted unless the office
+  has written to the engineer on it since; it is still listed with its "Fixed,
+  to check" tag, as the engineer's own records are.
 - Decisions (Claude): kept the button's words "Verify the oldest" (the oldest fix
   is the one waiting longest; Help says so) so nobody relearns it; the waiting
   fixes go under the to-do list rather than above it, so what is the engineer's
@@ -55,6 +56,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   issue-register, office-landing, issue-figures, office-progress, office-desk,
   office-sections, office-top-bar, engineer-layout, role-access, busy-projects,
   other-sites-came-back, engineer-day, simpler-issue-list.
+- A fresh-context review found no blocking gap. From its notes: a question from
+  the office on a fix still waiting now counts on the engineer home (it was
+  listed with the office's words but left out of the count); the check's
+  longest-waiting fix now has the newest note, so the order check fails on main
+  too; the +/− on the fold is hidden from screen readers; stale comments fixed.
 - Not verified: a live tenant, real SharePoint issue lists, a real phone, a
   screen reader.
 

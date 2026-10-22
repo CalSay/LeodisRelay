@@ -10,13 +10,14 @@
 //  - the engineer home counted a fix still waiting to be checked as "from the office"
 //    because the office had assigned it before it was put forward.
 // Example data: three fixes on Tetley Hall. A was raised 40 days ago, put forward 2 days
-// ago, and has a note from today; B was raised 10 days ago and put forward 8 days ago;
+// ago, and has a note from today; B was raised 10 days ago, put forward 8 days ago and
+// has the newest note;
 // C was raised 20 days ago and put forward 5 days ago. Longest waiting: B, C, A.
 // Checks, light and dark at 1440 and light at 390: the overview's Fixed, to check rows
 // in that order with 8, 5 and 2 days; the project's figure says the oldest put forward;
 // "Verify the oldest" starts at B; A's issue sheet says when it was put forward and
 // waits 2 days, with its target in words; the engineer home counts only what the
-// office sent back. No sideways scroll and no page errors.
+// office sent back or asked. No sideways scroll and no page errors.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -47,8 +48,10 @@ const fix=(id,description,raisedDays,putDays,extra=[],target='2026-10-13')=>({id
   closureSubmittedBy:sam.name,closureSubmittedById:sam.id,
   events:[ev('raised',ago(raisedDays),sam,description),ev('assigned',ago(raisedDays-0.5),manager,'Acme Electrical'),ev('closure_submitted',ago(putDays),sam,'Done'),...extra]});
 const A=fix('701','Fire collar missing on the riser',40,2,[ev('progress',new Date(now-600000).toISOString(),sam,'Photo of the label added')]);
-const B=fix('702','Cable tray lid missing',10,8);
-const C=fix('703','Socket faceplate cracked',20,5);
+// B waits longest and has the newest note of all, so ordering by last event would put it last.
+const B=fix('702','Cable tray lid missing',10,8,[ev('progress',new Date(now-300000).toISOString(),sam,'Lid label photo')]);
+// C has a question from the office while it waits: that does count as from the office.
+const C=fix('703','Socket faceplate cracked',20,5,[ev('note',ago(3),manager,'Which faceplate did you fit?')]);
 // Sent back by the office with a reason: the one thing on Sam's home that came back from the office.
 const D={...fix('704','Pull cord switch loose',12,6),work:'in_progress',events:[...fix('704','Pull cord switch loose',12,6).events,ev('reopened',ago(1),manager,'Still loose at the ceiling rose')]};
 for(const i of [A,B,C,D])putRecord('issues',i);
@@ -116,9 +119,9 @@ try {
     const title=page.locator('.eng-section-title').filter({hasText:'Came back from the office'});await title.waitFor();
     await page.waitForFunction(()=>/from the office$/.test(document.querySelector('#eng-came-back-title')?.parentElement?.querySelector('.r')?.textContent??''),null,{timeout:8000}).catch(()=>{});
     const count=flat(await title.locator('.r').innerText());
-    check(count==='1 from the office',`${label}: counts the one sent back, not the three waiting to be checked (${count})`);
+    check(count==='2 from the office',`${label}: counts the one sent back and the question on a waiting fix, not the two waiting with no word (${count})`);
     const list=flat(await page.locator('main').innerText());
-    check(list.includes(D.description)&&list.includes('Still loose at the ceiling rose'),`${label}: the sent-back one is listed with the office's words`);
+    check(list.includes(D.description)&&list.includes('Still loose at the ceiling rose')&&list.includes('Which faceplate did you fit?'),`${label}: both are listed with the office's words`);
     check(await sideways(page)<=0,`${label}: no sideways scroll`);
     check(errors.length===0,`${label}: no page errors (${errors.join('; ')})`);
     await context.close();

@@ -72,6 +72,8 @@ test('the office desk’s issues keep every field and their latest event, withou
   // A note after the fix was put forward: the desk keeps both, so "waiting N days" counts from the put forward.
   const noted = deskIssue(issue({ id:'n', work:'awaiting_verification', events:[event('2026-10-01T10:00:00Z', { kind:'raised' }), event('2026-10-09T10:00:00Z', { kind:'closure_submitted' }), event('2026-10-12T10:00:00Z', { kind:'progress' })] }));
   assert.deepEqual(noted.events.map(e => [e.kind, e.at, e.note, e.photos.length]), [['closure_submitted', '2026-10-09T10:00:00Z', '', 0], ['progress', '2026-10-12T10:00:00Z', '', 0]]);
+  // Waiting with no put forward recorded (older records): only the latest event.
+  assert.deepEqual(deskIssue(issue({ id:'w', work:'awaiting_verification', events:[event('2026-10-01T10:00:00Z', { kind:'raised' })] })).events.map(e => e.kind), ['raised']);
   // Not waiting to be checked: only the latest event, as before.
   assert.equal(deskIssue(issue({ id:'o', work:'open', events:[event('2026-10-09T10:00:00Z', { kind:'closure_submitted' }), event('2026-10-12T10:00:00Z', { kind:'reopened' })] })).events.length, 1);
   // The office position reads the same from the trimmed issues as from the full ones.
