@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-reader-tidier', added: '2026-10-22', audience: 'office', title: 'Reading a report: more room and clearer parts',
+    text: 'With a report open in the Inbox, the report now takes half the page instead of a narrow strip, so its title, the last and next visit and its stages read on a line or two, and the list keeps each row to one or two lines. A report opens on its visit date in large type with each part as a card, like an issue\'s sheet, in the Inbox and in a project. Quick actions is a plain button. In the full report the details sit in even rows and on a phone the actions table fits the screen. The PDF page shows its page buttons and zoom on one bar once the PDF has loaded. Nothing was added or taken away. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
+    link: { label: 'Open the Inbox', href: '/office#/inbox' } },
   { id: 'office-issues-tidier', added: '2026-10-22', audience: 'office', title: 'A tidier Issues tab and issue sheet',
     text: 'On the office Issues tab the filter chips and the search boxes now read as one block, every search box is wide enough for its hint, and "N days past target" sits under the target date instead of wrapping down the column. An issue\'s sheet opens on the issue in large type with its parts as cards, like a project\'s sheet. When checking a fix on a phone, Verify and close is the first button and the buttons stay in view while you scroll the photos. Nothing was added or taken away. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
     link: { label: 'Open Issues', href: '/office#/issues' } },

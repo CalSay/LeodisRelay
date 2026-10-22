@@ -4,6 +4,50 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish O4: Inbox and reading a report
+
+- Why: task O4 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch").
+  Before and after screenshots at 1440 light and dark and 390 light are in
+  the project files under `ui-review/release-1/O4/` (Inbox, Inbox with a site
+  update and an inspection open, a report in its project, a corrected report,
+  the Review dialog, the full report, the PDF page). Busy example data, 40
+  days, Office Manager. Branched after O3 (#192) merged.
+- Found: with a report open the Inbox reader was a 440px strip inside a panel
+  inside a box, so the title wrapped, "Received", "Awaiting review" and "Seen
+  by the office" broke mid-word, and the reader read as boxes within boxes.
+  "Quick actions" was a mono capitals control. On a phone a report's rows left
+  the words about 95px beside the tag and button. The PDF page showed
+  "Previous page PDF Next page Zoom" with a full-width select before anything
+  had loaded. The full report's details sat five and one at a desk and its
+  actions table hid the Owner column off the side of a phone. The Review
+  dialog said "visit 2026-10-22".
+- Changed: `workspace.css` new block at the end: with a report open at a desk
+  the list and reader share the width evenly, the engineer's name stays on
+  one line and "Received" is plain type; `.report-sheet` / `.report-title`
+  give the reader O3's issue-sheet look (title in large type on the sunken
+  ground, then cards with `--line-2` edges, no box in a box) in the Inbox and
+  a project; on a phone a narrower tag column and Quick actions under the
+  words. `InboxView` swaps an inline padding for `.inbox-reader`;
+  `ReportReader` adds the two class names. `quickactions.css`: Quick actions
+  in sans, 32px tall (44px on touch). PDF page: its own `pdf.css`, the page
+  controls only once a PDF has loaded. Full report: its own `preview.css`,
+  details three across at a desk with the last one running to the row's end,
+  and on a phone the actions table fits the width. `Dialogs` Review: "visit
+  22 Oct". No `globals.css` changes, no `packages/documents` changes, nothing
+  added or taken away. #177's "Previous/Next update" line unchanged and its
+  check passes. Help "What's new" line.
+- Verified: typecheck, `npm test`, build. Browser, one at a time:
+  office-inbox (80), inbox-phone (58), office-inspection (66),
+  previous-trade-update (44), review-queue (19), submission-stages (145),
+  office-desk (73), office-phone (103), office-sections (63),
+  came-back-first (29), sent-back-reason (22), seen-by-office (45),
+  september-office (43), office-links (65), navigation (76), role-access
+  (95), accessibility (584), pdf-navigation (passes here).
+- Not verified: a real phone, a tablet or a screen reader; a rendered PDF
+  page in the viewer in the screenshots (the example data has no worker-made
+  PDFs, so they show "still being made"; pdf-navigation renders its own).
+- Next: O5 (weekly summary week and month, issue trend).
+
 ## 2026-10-22 — Release 1 polish O3: office Issues
 
 - Why: task O3 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch").
