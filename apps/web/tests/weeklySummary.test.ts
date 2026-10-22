@@ -59,6 +59,18 @@ test('lists sent reports by visit day, never drafts, other projects or other wee
   assert.equal(s.current, false);
 });
 
+test('counts visits as the office overview does: one person on site on one day', () => {
+  const s = weeklySummary({ ...none, reports:[
+    report({ id:'a', visitDate:'2026-10-13' }),
+    report({ id:'b', visitDate:'2026-10-13', reference:'011LME-FFI-001', reportType:'first-fix-inspection' }),
+    report({ id:'c', visitDate:'2026-10-13', reference:'011LME-SPR-002', author:'Pat Pipe', authorId:other.id }),
+    report({ id:'d', visitDate:'2026-10-14', reference:'011LME-SPR-003' }),
+  ] }, manager, 'p1', MONDAY, TODAY);
+  assert.equal(s.reports.length, 4);
+  assert.equal(s.visits, 3, 'Sam\'s update and inspection on Tuesday are one visit');
+  assert.deepEqual(s.siteDays, ['2026-10-13', '2026-10-14']);
+});
+
 test('says what was done on each visit: progress updates in the order written, nothing else', () => {
   const s = weeklySummary({ ...none, reports:[
     report({ id:'tue', observations:[

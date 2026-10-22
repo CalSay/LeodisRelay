@@ -51,6 +51,104 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a real phone; a screen reader.
 - Next: none from this walk. Possible later: the same choice on the Snag
   list, which already groups by place.
+## 2026-10-22 — A visit is one person on site on one day
+
+- Why: a walk of an office manager at 1440px on main 172c277 (busy example
+  data) opening Tetley Hall from the overview to answer "how's this job
+  going?". Checked against the records: the overview's This week and the
+  project's Last visit said 13 or 14 visits (two seeds), the Weekly summary
+  for the same week 11 site reports on 4 days. The records were 11 site
+  updates and 3 safety and tower inspections, each sent by someone who also
+  sent an update that day, so one engineer on site for a day counted twice,
+  and the Weekly summary leaves those inspections out while the safety
+  records are switched off. Also: the Project page header said "124 fixed, to
+  check" where the project's figure said 119 (it counted withdrawn issues).
+  Coordinator's ask (walk and one pick, with the second fix if small); not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the office's view of progress clearer).
+- Changed: `lib/visits.ts` `countVisits` (one person, by sign-in or name, on
+  one visit day) used by `projectStanding` (overview This week, Last visit's
+  "N visits this week") and `weeklySummary` (new `visits`; Site reports now
+  reads "11 visits over 4 days" under the report count). With the safety
+  records switched off, `projectStanding` leaves out weekly safety and tower
+  inspections, as the Weekly summary does (`projectStats` and `OfficeDesk`
+  pass the switch); first fix and handover inspections still count. Site
+  coverage (`api/site-coverage`) leaves them out too while switched off, so
+  its last visit and quiet sites agree with the office's.
+  `IssueRegister` (Project page): "fixed, to check" and Closed leave withdrawn
+  issues out, as `lib/officeActions.ts` does; withdrawn issues stay under All.
+  Help "What's new" line.
+- Decided (Claude): a visit is a person-day, not a report, because the
+  office's question is who was on site; the Weekly summary keeps its report
+  count as the big figure (it lists reports) and gives visits under it.
+- Verified: typecheck, `npm test` (146 + 561), build. New
+  `scripts/verify-visits-this-week.mjs` (19 checks; busy seed plus a first fix
+  inspection on the day of a site update and a tower inspection alone from a
+  new person today; 1440px light and dark): that tower inspection is neither a
+  visit nor today's Last visit; overview,
+  project sheet and Weekly summary give the same visits as the records'
+  people-days, fewer than the reports; Weekly still counts every report;
+  Project page's fixed, to check and Closed equal the records without
+  withdrawn issues. On main it fails at the first figure (13 visits for 11).
+  Screens: project files `ui-review/project-page/` (before, after).
+  `verify-office-progress` now expects 2 visits for Tetley Hall (Sam's
+  update, its correction and his safety inspection are one visit) and names
+  in the new order; `verify-weekly-phone` reads "N visits over D days". Also
+  passed: issue-figures, office-weekly-review, weekly-summary, office-actions,
+  team-last-sent, snag-list, first-time-use, month-summary, office-landing,
+  help, role-access, engineer-layout, sheet-figures-laptop, office-desk,
+  day-walkthrough, busy-home. `verify-site-coverage` fails at "a draft is not
+  a visit", the known Thursday-to-Sunday fault in the check that PR #142
+  fixes; not changed here.
+- Not verified: a real laptop; the switch turned on (then the inspections
+  count as visits everywhere, as before).
+- Fresh review found: Site coverage would disagree with the office on last
+  visit and quiet sites (fixed as above); the check did not prove the switch
+  part (tower-only visit added); Help gave the wrong cause for "14 against
+  11" (reworded); the Weekly summary could count a visit dated tomorrow
+  (visits now up to today, as the overview).
+## 2026-10-22 — What the office asked, when a sent-back fix comes in again
+
+- Why: a walk at 390px on main 172c277 with Sam, whose socket fix the office
+  marked "Not finished" ("the back box is still loose, send a photo with the
+  plate off"). The engineer side was already short: the home's Came back row
+  carries the office's words, one tap opens the issue with the reason above
+  the buttons, then photo, note and Put forward: 4 taps, none to cut. The gap
+  was the office: the second attempt's Check this fix window looked like a
+  first attempt, with no sign it had been sent back or what was asked, and
+  the Fixed, to check rows did not say "again". Whoever checks it (often not
+  who sent it back) could not check the new photo against the ask.
+  Coordinator's ask (walk and one pick); not a `docs/tasks.json` task, so no
+  status changed. Within Cal's 21 Oct direction (the office's view of
+  progress clearer).
+- Changed: `lib/checkFix.ts` `sentBackBefore` (who sent it back last, when,
+  the reason, how many times since it was last verified) and `againWords`.
+  The check window says "Sent back by Jo Office on Wed 21 Oct, 11:00: “…”"
+  above the engineer's note (once the full issue has loaded); the overview's
+  Fixed, to check rows and Attention say "put forward again" (or "put forward
+  3 times"); the office issue sheet's "Closure submitted" note says the same.
+  `deskIssue` now keeps a waiting fix's put forward / sent back / verified
+  events (notes and photos still stripped) instead of only the latest put
+  forward, so the desk can tell. Help "What's new" line.
+- Decided (Claude): count send-backs only since the last verified close, so
+  an issue reopened as a new defect starts again; show the reason above the
+  engineer's note because it is the question the note answers; no change on
+  the engineer side, which the walk found already minimal.
+- Verified: typecheck, `npm test` (146 + 559), build. New
+  `scripts/verify-sent-back-fix.mjs` (29 checks): the engineer's walk (4
+  taps, reason above Put forward on the first screen, the new photo on the
+  server); for a manager who did not send it back, at 1440 dark and 390
+  light, the overview row, Attention, the window (reason before their note,
+  the new photo not the first) and the issue sheet; a first attempt says none
+  of it; axe on the window; no sideways scroll; no page errors. Also passed:
+  check-fixes, fix-waiting, busy-projects, office-top-bar, help,
+  office-actions, issue-figures, issue-register, came-back-to-update,
+  fix-forward-next, office-words. Screens: project files
+  `ui-review/sent-back-fix/` (before, and after/).
+- Not verified: a real phone.
+- Next: an engineer who fixes an issue someone else raised (same trade) sees
+  it under Issues "Yours" but not the office's reason on the issue page
+  (the word box is for the raiser only); worth a look.
 
 ## 2026-10-22 — An inspection shows what needs action first in the office
 

@@ -85,11 +85,11 @@ try {
     const tetley=await cells(rows.filter({hasText:'011LME'}));
     check(Object.keys(tetley).join('|')==='Last visit|This week|Open issues|Variations waiting|Needs action',`${label}: the five questions, in order: ${Object.keys(tetley)}`);
     check(/^Today /.test(tetley['Last visit'].text)&&!tetley['Last visit'].late,`${label}: Tetley Hall last visited today: ${tetley['Last visit'].text}`);
-    check(tetley['Last visit'].text==='Today Sam Spark and Hana Duct',`${label}: everyone on site today is named, once each, not only the last to send: ${tetley['Last visit'].text}`);
+    check(tetley['Last visit'].text==='Today Hana Duct and Sam Spark',`${label}: everyone on site today is named, once each, not only the last to send: ${tetley['Last visit'].text}`);
     // Measured on the words, not the cell (grid cells stretch to the row): the names stay on one line on the desk, two at most on a phone.
     const whoLines=await rows.filter({hasText:'011LME'}).locator('.glance-cells > div').first().locator('dd small').evaluate(e=>Math.round(e.getBoundingClientRect().height/parseFloat(getComputedStyle(e).lineHeight)));
     check(whoLines<=(phone?2:1),`${label}: naming everyone keeps the row tidy (${whoLines} lines)`);
-    check(tetley['This week'].text==='3 visits Electrical, HVAC',`${label}: the correction counts once, the inspection counts as a visit, trades named: ${tetley['This week'].text}`);
+    check(tetley['This week'].text==='2 visits Electrical, HVAC',`${label}: one visit a person a day: Sam's report, its correction and his safety inspection (switched off) are one visit; trades named: ${tetley['This week'].text}`);
     check(tetley['Open issues'].text==='2 1 overdue'&&tetley['Open issues'].late,`${label}: open issues and the overdue one: ${tetley['Open issues'].text}`);
     check(tetley['Variations waiting'].text==='1 1 done, not instructed'&&tetley['Variations waiting'].late,`${label}: the variation done without an instruction: ${tetley['Variations waiting'].text}`);
     const needs=tetley['Needs action'].text.match(/^(\d+) for the office · \d+ reports not seen yet$/);
@@ -122,7 +122,7 @@ try {
     check(chip===`Needs action · ${needs[1]}`,`${label}: the row's count is the register's (${chip})`);
     if(phone){
       const last=scope.locator('dl.tb > div').first();
-      check(/^last visit\s*today/i.test(await last.innerText())&&/3 visits this week/.test(await last.innerText()),`${label}: the register starts with the sheet's figures, last visit first`);
+      check(/^last visit\s*today/i.test(await last.innerText())&&/2 visits this week/.test(await last.innerText()),`${label}: the register starts with the sheet's figures, last visit first`);
       const filters=await page.locator('.filters').boundingBox(),standing=await scope.boundingBox();check(standing.y<filters.y,`${label}: where it stands comes before the register's lists`);
       const links=scope.locator('.sheet-links'),fromSite=await visits.first().boundingBox();
       check(await links.isVisible()&&(await links.boundingBox()).y<fromSite.y,`${label}: the project's other pages come before Latest from site and the register`);
@@ -131,8 +131,8 @@ try {
     } else {
       const last=page.locator('.col-main dl.tb > div').first();
       check(/^last visit\s*today/i.test(await last.innerText()),`${label}: the sheet's first figure is the last visit`);
-      check(/3 visits this week/.test(await last.innerText()),`${label}: with this week's visits`);
-      check(/Sam Spark and Hana Duct · 3 visits this week/.test(await last.innerText()),`${label}: the sheet names everyone on site that day too: ${await last.innerText()}`);
+      check(/2 visits this week/.test(await last.innerText()),`${label}: with this week's visits`);
+      check(/Hana Duct and Sam Spark · 2 visits this week/.test(await last.innerText()),`${label}: the sheet names everyone on site that day too: ${await last.innerText()}`);
       // With a project open, the project column is back to move between projects, and says how each stands.
       const item=page.locator('.col-projects a.item').filter({hasText:'014LME'});
       check(/no report for \d+ working days/i.test(await item.innerText()),`${label}: the project column says a site has gone quiet`);
