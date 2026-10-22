@@ -42,6 +42,147 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (reworded); a phone briefly drew the desk order before the width was known
   (now neither section shows until it is).
 
+## 2026-10-22 — Issues over time shows what is waiting for the office
+
+- Why: a walk of an office manager at 1440px and 390px on main 117df61 (busy
+  example data) using Issues over time to answer "are we getting on top of
+  Tetley Hall's snags?". Every figure matched the records, the project sheet
+  and the Weekly summary (390 open, 222 past target, 14 raised this week, 78
+  raised and 37 closed over four weeks) and the page loaded in under half a
+  second. The gap: the headline said "Getting longer: 390 open" but 119 of
+  those were fixed by site and waiting for the office to check, drawn in grey
+  with the issues still to do, so the office could not tell whether site or the
+  office was behind. Coordinator's ask (walk and one pick); not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the office's view of progress clearer).
+- Changed: `lib/issueTrend.ts` gives each week `toCheck` (the existing
+  `isToCheckOn`, never past target as well) and `toCheckNow`.
+  `IssueTrendPage`: the headline adds "119 of them are fixed and waiting for the
+  office to check."; Open now says "119 fixed, to check"; each bar has a
+  fixed, to check part (caution colour, as on the project sheet's bar) between past target and "Open, not late";
+  the readout and a new table column carry it; the footer says what it means.
+  On a phone the table's weeks read "19 Oct" on one line and each legend label
+  stays with its colour. Help "What's new" line.
+- Decided (Claude): "fixed, to check" uses the project sheet's words and rule
+  (#128) rather than a new term; the headline's direction (fewer/more) is
+  unchanged, because a fix only shortens the list once the office checks it.
+- Verified: typecheck, `npm test` (146 + 562), build. New
+  `scripts/verify-issue-trend-busy.mjs` (36 checks; busy seed, 1440px light and
+  dark, 390px light): Open now, past target and fixed, to check equal the
+  records and the project sheet; the headline, this week's row, bar and readout
+  carry them; every week's parts fit inside its open; loads within 5 s; no
+  sideways scroll; legend labels and phone week names on one line. Fails on
+  main at Open now. `verify-issue-figures` (48) now also checks the trend's
+  headline, row and bar; `verify-issue-trend` (29) reads the new column. Also
+  passed: month-summary, accessibility, help, role-access, busy-projects (39
+  timings within budget). Screens: project files
+  `ui-review/issues-over-time/` (before, after).
+- Not verified: a real phone or laptop; a printer.
+- Fresh review found: the green first used for fixed, to check disagreed with
+  the project sheet's amber (now amber); the busy check did not prove the
+  table fits inside its box at 390px (added); a bar part could go negative
+  on bad data (clamped).
+
+## 2026-10-22 — The office's reason reaches whoever is fixing it
+
+- Why: the "What the office asked" walk (PR #162) found that when the office
+  sends a fix back as "Not finished" with a reason, only the engineer who
+  raised the issue saw it at the top of the issue and on the home. Confirmed
+  at 390px on main b0d389f: Pat, an electrician who put Sam's socket fix
+  forward, had "Nothing on this project yet" under Came back from the office
+  (the only sign was "Reopened · Your trade" under Since your last visit,
+  without the reason), and the issue page had no box: the reason was only in
+  History. Coordinator's ask; not a `docs/tasks.json` task, so no status
+  changed. Within Cal's 21 Oct direction (the engineer's job simpler).
+- Changed: the issue page shows the office's words box (`OfficeWordBox`) to
+  whoever the issue is theirs to see to, the same rule as Issues "Yours"
+  (`isYours`: their trade, or worked on it), not only the raiser. For them
+  it shows only the "Not finished" reason (`lib/cameBack.ts` `sentBackWord`)
+  while it stands: their own event, anyone putting it forward again, a check
+  or handing it to another company ends it (a new target date does not);
+  a reopen of a checked and closed issue is not a send-back; other notes
+  stay for the raiser. Issues "Yours" uses the same rule for someone else's
+  issue (it showed any office note, and kept "Sent back" after someone
+  else put it forward again). `sentBackToYou`
+  / `cameBackIssue`: Came back from the office (this site and other sites)
+  also lists an issue the engineer put forward that the office sent back,
+  with "you put it forward" and the day instead of "you raised it". The
+  raiser's rules are unchanged. Help "What's new" line.
+- Decided (Claude): no new access. Every engineer who can open the issue
+  could already read the reason in History; the box only moves it up for
+  those it is meant for. Another trade still finds it in History. The home
+  lists only the one who put the fix forward, not the whole trade, so a
+  trade's home does not fill with others' issues; the same trade sees it on
+  the issue and first under Issues "Yours" (which already carried it).
+  A fresh review found the first cut let a stale reason stay after someone
+  else put it forward again or it was reassigned, and showed any office note
+  to the same trade; both fixed. A second review found a new target date
+  cleared it, a reopened closed issue counted, and the Yours list still
+  showed any note; all fixed and unit-tested. A third found a company named
+  on the report (no assignment event) lost the reason at a new target date;
+  fixed: the first company named since is then the baseline (so a hand-over
+  in that one case keeps the reason; accepted). Known, not changed: the
+  home's server cut to six newest before sorting (as before #162).
+- Verified: typecheck, `npm test` (146 + 560, one new unit test), build. New
+  `scripts/verify-sent-back-reason.mjs` (22 checks): Pat at 1440 dark and
+  390 light (the reason above Put forward on the first screen, the home row,
+  4 taps to put it forward again, then box and row go); Lee (same trade, not
+  involved) sees the box but no home row; Pete (another trade) sees no box;
+  Sam as before; a fix waiting on the office is not on Pat's home; axe on the
+  box; no sideways scroll; no page errors. Also passed: office-words,
+  sent-back-fix, came-back-to-update, busy-projects, engineer-layout,
+  role-access (95 HTTP checks), help, fix-forward-next, issues-yours,
+  simpler-issue-list, day-walkthrough.
+  Screens: project files `ui-review/sent-back-reason/` (before/, after/).
+- Not verified: a real phone.
+
+## 2026-10-22 — Every open issue where the engineer is standing
+
+- Why: a walk at 390px on main d6ce82d with Sam (busy seed, Tetley Hall:
+  390 open issues across 15 places) standing in one flat and wanting every
+  open issue there, his and other trades', to fix or check. Issues → Open was
+  one list 89,503px long, and Flat 204 kitchen's 31 issues were spread from
+  5,757px to 86,411px down. Yours listed 616 cards, only his. Search for
+  "Flat 204" mixed in another site and closed issues and stopped at 25. The
+  Snag list groups by place, but Flat 204 kitchen started 11,606px down (all
+  trades). Coordinator's ask (walk and one pick); not a `docs/tasks.json`
+  task, so no status changed. Within Cal's 21 Oct direction (fewer taps,
+  less on screen for engineers).
+- Changed: on Issues → Open or All issues for one project, "Where are you?"
+  lists the places typed on the issues shown, each with its count, after
+  "Every place (390)". Picking one lists only the issues at that place (or a
+  smaller place inside it, at word edges, so "Flat 204" brings in "Flat 204
+  kitchen", never "Flat 2041"; "Flat 204 kitchen" does not bring in "Flat
+  204" or every "Kitchen"), from every trade, under
+  "Tetley Hall - Block E · Flat 204 kitchen · 31 open". The place is kept in
+  the address, so Back from an issue returns to it; All issues keeps it; Yours,
+  All projects and changing project drop it. An engineer's issue page has
+  an "Every open issue here" row under "Update this issue" (not beside Where:
+  that pushed the buttons off the first screen), opening that list. New
+  `lib/issuePlaces.ts` (with tests); `EngineerWorkspace.tsx`,
+  `app/engineer/page.tsx`, `app/issues/[id]/page.tsx`, `engineer.css`. Help
+  "What's new" line.
+- Decided (Claude): places come only from what people typed on the issues
+  (no location list, EXP-4), one per place however it was typed, in the
+  spelling used most and natural order. No choice on All projects, where two
+  sites can both have a "Plant room". A place from a link with nothing open
+  stays chosen, and the list says "No open issues at …" rather than
+  quietly showing everything.
+- Verified: typecheck, `npm test` (146 + 562), build. New
+  `scripts/verify-issues-here.mjs` (63 checks, 390px light and dark, 1440px
+  dark, busy seed): Issues, Open, the place in three taps; the choices and
+  counts equal `issuePlaces`; exactly the 31 open issues at Flat 204 kitchen,
+  from more than one engineer; 7,905px instead of 89,503px at 390px; Back
+  from an issue, All issues, All projects, Yours; "Every open issue here";
+  a place typed in another case or spacing; a place with none open; 48px
+  controls, no sideways scroll, axe, no page errors. Fresh review: fixed its
+  points (a place listed bigger places and every bare "Kitchen" too; the
+  count beside a place with none typed said 0; heading words; a place in the
+  address with Yours or All projects). Screens: project files
+  `ui-review/issues-here/before|after`.
+- Not verified: a real phone; a screen reader.
+- Next: none from this walk. Possible later: the same choice on the Snag
+  list, which already groups by place.
 ## 2026-10-22 — A visit is one person on site on one day
 
 - Why: a walk of an office manager at 1440px on main 172c277 (busy example

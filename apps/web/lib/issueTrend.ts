@@ -30,6 +30,8 @@ export interface TrendWeek {
   open: number;
   /** Of those, past their target date on that day. */
   late: number;
+  /** Of those, put forward as fixed and waiting for the office to check: never past target as well. */
+  toCheck: number;
 }
 
 export type TrendDirection = 'fewer' | 'more' | 'same';
@@ -40,6 +42,8 @@ export interface IssueTrend {
   weeks: TrendWeek[];
   openNow: number;
   lateNow: number;
+  /** Open now and fixed, to check: the project sheet's Fixed, to check. */
+  toCheckNow: number;
   /** Open at the end of the week four weeks before this one. */
   openBefore: number;
   direction: TrendDirection;
@@ -132,6 +136,7 @@ export function issueTrend(issues: Issue[], projectId: string, today: string): I
   // The same rules the monthly summary reads its month-end figures with.
   const openOn = (day: string) => rows.filter(r => isOpenOn(r.issue, day, r.days));
   const lateOn = (day: string) => rows.filter(r => isLateOn(r.issue, day, today, r.days)).length;
+  const toCheckOn = (day: string) => rows.filter(r => isToCheckOn(r.issue, day, today, r.days)).length;
 
   const weeks: TrendWeek[] = mondays.map(monday => {
     const end = monday === thisWeek ? today : weekEnd(monday);
@@ -142,6 +147,7 @@ export function issueTrend(issues: Issue[], projectId: string, today: string): I
       closed: rows.filter(r => r.closed && inWeek(r.closed)).length,
       open: openOn(end).length,
       late: lateOn(end),
+      toCheck: toCheckOn(end),
     };
   });
 
@@ -160,6 +166,7 @@ export function issueTrend(issues: Issue[], projectId: string, today: string): I
     weeks,
     openNow: now.open,
     lateNow: now.late,
+    toCheckNow: now.toCheck,
     openBefore: before.open,
     direction: now.open < before.open ? 'fewer' : now.open > before.open ? 'more' : 'same',
     recent: { raised: recentWeeks.reduce((n, w) => n + w.raised, 0), closed: recentWeeks.reduce((n, w) => n + w.closed, 0) },
