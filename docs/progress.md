@@ -8,23 +8,24 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
 - Why: a full check of main before the next deploy. Last passed: 6def5e8
   (#2-#126). #154 (Attention kind by kind) and #142 (phone Undo focus) are
-  not on main, so not checked. Read only, apart from one browser-check fix.
+  not on main, so not checked. Read only.
 - Ran: `npm ci`, typecheck, `npm test` (146 + 554), build, then all 112
-  `scripts/verify-*.mjs` one after another. 109 passed first time.
+  `scripts/verify-*.mjs` one after another. 109 passed first time. This PR
+  only adds this entry.
   - `verify-undo-remove`: focus does not move to Undo after a card is removed
     on a phone. Known fault from the thirteenth check, fixed by PR #142
     (waiting on Cal); not fixed again here.
-  - `verify-site-coverage`: "a draft is not a visit" failed on every run. The
-    check put the quiet site's last report at today minus 10 days, which
-    falls inside the fortnight on a Thursday to Sunday, so the row had a
-    chip. The app was right; the check was wrong. Fixed: that report now
-    falls on the Friday before the fortnight. Passes (30 checks).
+  - `verify-site-coverage`: "a draft is not a visit" failed on every run.
+    The check, not the app: its quiet site's last report (today minus 10
+    days) falls inside the fortnight from Thursday to Sunday. PR #142 already
+    fixes this line of the check, so it is not changed here.
   - `verify-editor-wide` timed out once waiting for a new inspection to
     open; passed 5 reruns alone. Not reproduced, so recorded, not changed.
 - Deploy: no new settings, packages, data change or offline store version
   (still `relay-public-v14`). One new read-only route, `/api/monthly-summary`.
 - Not verified: a real phone, tablet, printer or screen reader; a live tenant.
-- Next: once #142 merges, rerun `verify-undo-remove`; then main is ready.
+- Next: once #142 merges, rerun `verify-undo-remove` and `verify-site-coverage`;
+  then main is ready.
 
 ## 2026-10-22 — A site update says which day it is for
 
