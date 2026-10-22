@@ -4,7 +4,7 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
-## 2026-10-22 — Leodis Developments logo on report PDFs
+## 2026-10-22 — Leodis logo and accreditation marks on report PDFs
 
 - Why: Cal asked what the PDF template looks like, was shown examples with the
   dashed "LOGO" placeholder, and sent the Leodis Developments logo files
@@ -12,15 +12,21 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Changed: `packages/documents/assets/leodis-developments-logo.png` (the grey
   logo, trimmed and scaled to 640 × 389, 128 colours, 39 KB) is drawn at the
   top left of page 1 at 82 × 50 pt, read from disk like the fonts.
-  `branding.ts` now holds the logo file; the address, company and VAT numbers
-  and accreditation marks stay marked TODO. Help "What's new" line.
-- Decided (Claude): the grey version, because PDFs are white paper and the
+  `branding.ts` now holds the logo file. Cal then sent CHAS, REFCOM F-Gas and
+  MCS logo packs: `footer.ts` draws them (assets `accreditation-*.png`, 150 px
+  high, 6-10 KB each, embedded once per PDF) at 28 pt high, each at its own
+  width, in place of the four dashed frames. `verify-long-pdfs.mjs` treats
+  images in the footer strip as page furniture (still checked for stretching)
+  rather than photographs. The address, company and VAT numbers stay marked
+  TODO. Help "What's new" line.
+- Decided (Claude): marks in Cal's upload order (CHAS, REFCOM, MCS); MCS
+  kept on its white square as supplied. The grey logo, because PDFs are white paper and the
   light version is white lettering for dark backgrounds. Sized to the logo's
   own proportions rather than the old 132 × 40 box, which would have shrunk it
   to an unreadable 25 pt high or stretched it.
 - Verified: `npm run typecheck`, `npm test`, `node scripts/verify-long-pdfs.mjs`
   (all 10 worst-case PDFs pass), `scripts/render-sample-pdfs.mjs`: page counts
-  unchanged, each PDF about 40 KB larger (the logo, embedded once). Not
+  unchanged, each PDF about 75 KB larger (logo and marks, each embedded once). Not
   verified: printed on paper; the weekly summary print has no logo (unchanged).
 - Not live: the pilot runs 03188ee; this needs a deploy.
 

@@ -172,6 +172,11 @@ for (const [name, report] of Object.entries(cases)) {
       fail(name, `page ${n} ends on a heading: "${lines.slice(0, trailing).reverse().map(line => line.map(item => item.str).join('')).join(' ')}"`);
     }
     for (const image of page.images) {
+      // The accreditation marks are page furniture in the footer strip, under the body.
+      if (image.y + image.height <= FOOTER_MARKS + 20 && image.height <= 30) {
+        if (Math.abs(image.width / image.height - image.pixels.width / image.pixels.height) > 0.03 * image.pixels.width / image.pixels.height) fail(name, `page ${n}: an accreditation mark is drawn stretched`);
+        continue;
+      }
       const signature = image.height <= 43 && image.width > image.height * 2.5 && image.pixels.width === 600;
       const drawn = image.width / image.height;
       const actual = image.pixels.width / image.pixels.height;
