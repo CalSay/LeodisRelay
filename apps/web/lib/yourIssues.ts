@@ -36,3 +36,13 @@ export function yourIssues(issues: readonly Issue[], person: Person): YourSite {
   const waitingIssues = mine.filter(i => i.work === 'awaiting_verification').sort(byPutForward).reverse();
   return { toDo, waiting: waitingIssues.length, waitingIssues };
 }
+
+/**
+ * Just after putting one forward as fixed: the issue now at the top of the same
+ * site's "Yours" list, which is what the engineer would see going back to it,
+ * and how many are left to do there.
+ */
+export function nextYourIssue(issues: readonly Issue[], person: Person, projectId: string, after: string): { next?: Issue; left: number } {
+  const { toDo } = yourIssues(issues.filter(i => i.projectId === projectId && i.id !== after), person);
+  return toDo[0] ? { next: toDo[0].issue, left: toDo.length } : { left: 0 };
+}

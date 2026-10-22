@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isYours, yourIssues } from '../lib/yourIssues';
+import { isYours, nextYourIssue, yourIssues } from '../lib/yourIssues';
 import type { Issue } from '../lib/types';
 
 const sam = { id: 'entra:sam', name: 'Sam Sparks', trade: 'Electrical' };
@@ -47,6 +47,18 @@ test('a disputed issue counts as sent back', () => {
   const disputed = issue({ affectedTrade: 'Electrical', confirmation: 'disputed', raisedAt: '2026-10-01T09:00:00Z', events: [ev('raised', 'Sam Sparks', sam.id, '2026-10-01T09:00:00Z')] as Issue['events'] });
   const fresh = issue({ affectedTrade: 'Electrical', events: [ev('raised', 'Pat Pipe', 'entra:pat', '2026-10-20T09:00:00Z')] as Issue['events'] });
   assert.equal(yourIssues([fresh, disputed], sam).toDo[0]!.issue.id, disputed.id);
+});
+
+test('the next issue after putting one forward is the top of the same site\'s list, never the one just done', () => {
+  const done = issue({ affectedTrade: 'Electrical', work: 'awaiting_verification', events: [ev('raised', 'Pat Pipe', 'entra:pat', '2026-10-21T09:00:00Z')] as Issue['events'] });
+  const sentBack = issue({ affectedTrade: 'Electrical', events: [ev('raised', 'Sam Sparks', sam.id, '2026-10-12T09:00:00Z'), ev('closure_submitted', 'Sam Sparks', sam.id, '2026-10-13T09:00:00Z'), ev('reopened', 'Olive Office', 'entra:olive', '2026-10-14T09:00:00Z', 'Still loose')] as Issue['events'] });
+  const newer = issue({ affectedTrade: 'Electrical', events: [ev('raised', 'Pat Pipe', 'entra:pat', '2026-10-20T09:00:00Z')] as Issue['events'] });
+  const otherSite = issue({ affectedTrade: 'Electrical', projectId: 'p2', events: [ev('raised', 'Pat Pipe', 'entra:pat', '2026-10-21T10:00:00Z')] as Issue['events'] });
+  const theirs = issue({ affectedTrade: 'P&H' });
+  const waiting = issue({ affectedTrade: 'Electrical', work: 'awaiting_verification' });
+  assert.deepEqual(nextYourIssue([done, newer, otherSite, theirs, waiting, sentBack], sam, 'p1', done.id), { next: sentBack, left: 2 });
+  assert.deepEqual(nextYourIssue([{ ...done, work: 'assigned' }], sam, 'p1', done.id), { left: 0 }, 'the one just done is left out even if the list has not caught up');
+  assert.deepEqual(nextYourIssue([otherSite, theirs], sam, 'p1', done.id), { left: 0 }, 'other sites and other trades are not offered');
 });
 
 test('the fixes waiting for the office can be listed, newest put forward first', () => {

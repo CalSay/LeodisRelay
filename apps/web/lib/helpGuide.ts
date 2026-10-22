@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'fix-forward-next', added: '2026-10-22', audience: 'site', title: 'Straight on to your next issue after a fix',
+    text: 'When you tap "Put forward as fixed" on an issue, the page now says so in a box and offers your next issue on the same site, such as "Next: Spur not labelled", with where it is and how many you have left to do there: the one at the top of your list under Issues, "Yours". Tap it to carry on without going back to the list, or use the Back button under it. The empty form goes away; to add something more for the office, open "Add a note for the office". When it was your last one on that site, it says so. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open your issues', href: '/engineer?view=issues' } },
   { id: 'fix-waiting-from-put-forward', added: '2026-10-22', audience: 'office', title: 'How long a fix has waited, counted from when it was put forward',
     text: '"Waiting N days" on a fix to check now counts from when the engineer put it forward as fixed, so a note or photo added afterwards no longer starts the count again. The overview\'s Fixed, to check rows and Attention list the fix that has waited longest first, a project\'s Fixed, to check figure gives the oldest put forward, and "Verify the oldest" starts at the fix that has waited longest rather than the oldest defect. An issue\'s target date now reads "13 Oct" like everywhere else.',
     link: { label: 'Open the office', href: '/office' } },
