@@ -17,25 +17,33 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   changed. Within Cal's 21 Oct direction (the engineer's job simpler).
 - Changed: the issue page shows the office's words box (`OfficeWordBox`) to
   whoever the issue is theirs to see to, the same rule as Issues "Yours"
-  (`isYours`: raised it, their trade, or worked on it), not only the raiser.
-  `lib/cameBack.ts` `sentBackToYou` / `cameBackIssue`: Came back from the
-  office (this site and other sites) also lists an issue the engineer put
-  forward that the office sent back and they have not answered, with "you
-  put it forward" and the day instead of "you raised it". Help "What's new"
-  line.
+  (`isYours`: their trade, or worked on it), not only the raiser. For them
+  it shows only the "Not finished" reason (`lib/cameBack.ts` `sentBackWord`)
+  while it stands: their own event, anyone putting it forward again, a check
+  or a reassignment ends it; other notes stay for the raiser. `sentBackToYou`
+  / `cameBackIssue`: Came back from the office (this site and other sites)
+  also lists an issue the engineer put forward that the office sent back,
+  with "you put it forward" and the day instead of "you raised it". The
+  raiser's rules are unchanged. Help "What's new" line.
 - Decided (Claude): no new access. Every engineer who can open the issue
   could already read the reason in History; the box only moves it up for
   those it is meant for. Another trade still finds it in History. The home
   lists only the one who put the fix forward, not the whole trade, so a
   trade's home does not fill with others' issues; the same trade sees it on
   the issue and first under Issues "Yours" (which already carried it).
+  A fresh review found the first cut let a stale reason stay after someone
+  else put it forward again or it was reassigned, and showed any office note
+  to the same trade; both fixed and unit-tested. Known, not changed: the
+  home's server cut to six newest before sorting (as before #162).
 - Verified: typecheck, `npm test` (146 + 560, one new unit test), build. New
   `scripts/verify-sent-back-reason.mjs` (22 checks): Pat at 1440 dark and
   390 light (the reason above Put forward on the first screen, the home row,
   4 taps to put it forward again, then box and row go); Lee (same trade, not
   involved) sees the box but no home row; Pete (another trade) sees no box;
   Sam as before; a fix waiting on the office is not on Pat's home; axe on the
-  box; no sideways scroll; no page errors. Related checks: see the PR.
+  box; no sideways scroll; no page errors. Also passed: office-words,
+  sent-back-fix, came-back-to-update, busy-projects, engineer-layout,
+  role-access (95 HTTP checks), help, fix-forward-next.
   Screens: project files `ui-review/sent-back-reason/` (before/, after/).
 - Not verified: a real phone.
 

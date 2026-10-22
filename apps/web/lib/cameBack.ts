@@ -20,12 +20,32 @@ export interface CameBack { issues: Issue[]; variations: Variation[]; open: numb
 export const raisedIssue = (i: Issue, principalId: string): boolean => i.reportedById === principalId || i.events[0]?.actorId === principalId;
 export const isOpenIssue = (i: Issue): boolean => i.work !== 'closed' && i.confirmation !== 'withdrawn';
 /**
+ * The office's "Not finished" that still stands for someone other than the
+ * raiser, read back from the newest event: their own event answers it, and a
+ * fix put forward again (by anyone), a check or a reassignment moves past it.
+ * Other site people's updates do not. Undefined when there is none.
+ */
+export function sentBackEvent<E extends Written>(events: readonly E[], principal: { id: string; name: string }): E | undefined {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const e = events[i]!;
+    if (e.actorId ? e.actorId === principal.id : e.actor === principal.name) return undefined;
+    if (e.kind === 'reopened') return e;
+    if (e.kind === 'closure_submitted' || e.kind === 'verified' || e.kind === 'assigned') return undefined;
+  }
+  return undefined;
+}
+/** The office's reason on a fix it sent back, for an engineer who did not raise the issue (the raiser gets every note, `issueWord`). */
+export function sentBackWord(events: readonly Written[], principal: { id: string; name: string }): OfficeWord | undefined {
+  const e = sentBackEvent(events, principal);
+  return e?.note.trim() ? { by: e.actor, at: e.at, note: e.note.trim() } : undefined;
+}
+/**
  * The engineer put a fix forward on it and the office sent it back ("Not
- * finished"), and they have not added anything since: it waits on them, not
+ * finished"), and nothing has moved past that since: it waits on them, not
  * only on whoever raised it (2026-10-22).
  */
 export const sentBackToYou = (i: Issue, principal: { id: string; name: string }): boolean =>
-  isOpenIssue(i) && i.events.some(e => e.kind === 'closure_submitted' && (e.actorId ? e.actorId === principal.id : e.actor === principal.name)) && issueReopened(i.events, principal);
+  isOpenIssue(i) && i.events.some(e => e.kind === 'closure_submitted' && (e.actorId ? e.actorId === principal.id : e.actor === principal.name)) && !!sentBackEvent(i.events, principal);
 /** An issue for the engineer's "Came back from the office": they raised it, or the office sent back their fix. */
 export const cameBackIssue = (i: Issue, principal: { id: string; name: string }): boolean => raisedIssue(i, principal.id) || sentBackToYou(i, principal);
 
