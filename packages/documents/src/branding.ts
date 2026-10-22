@@ -37,5 +37,6 @@ export const BRANDING: Branding = {
     { name: "CHAS Accreditation Standard", file: "accreditation-chas.png" },
     { name: "REFCOM F-Gas Certificated", file: "accreditation-refcom.png" },
     { name: "MCS Certified", file: "accreditation-mcs.png" },
+    { name: "Gas Safe Register", file: "accreditation-gas-safe.png" },
   ],
 };
