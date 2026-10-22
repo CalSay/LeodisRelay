@@ -4,6 +4,58 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — A quieter list of cards in a site update
+
+- Why: a walk of an engineer at 390px (latest main) writing one site update
+  across five places (flats, corridor, roof, stair core, plant room) with seven
+  photographs, then Check & send: 24 taps, four for each extra place (add,
+  where, what happened, photo), none of them spare. The clutter was in the list
+  of cards above the one being written: every saved card had a line of its own
+  saying so (the bar at the bottom says it too), and each time a card folded it
+  showed amber "Not saved to RELAY yet · changes and 1 photograph" for a second
+  or two while its save went through, which reads as a fault. Asked for by the
+  coordinator as the walk's one pick; not a `docs/tasks.json` task, so no
+  status changed. Decided without asking Cal (his autonomy message), within his
+  07:02 direction (less on screen for engineers).
+- Changed (`reports/[id]/page.tsx` `CardWhereMark`, `CardWhereLine`,
+  `photoWhereOf`; `engineer.css`): a saved card shows a green dot at the end of
+  its place's line, with "Saved" for screen readers only (the photo tiles'
+  rule since #114). A card or photograph waiting only for the save already
+  under way says "Saving" (photo tiles "Uploading") with a grey dot, not the
+  amber warning. Work that has not gone up and is not being saved (no signal,
+  RELAY not answering, a refused save) keeps its amber line as before, also
+  while RELAY retries it: the quiet "Saving" is only for a save after one
+  that worked, and only when the phone has kept its copy. Inspections' check
+  rows follow the same rule (not covered by the new check). A folded card at 390px is
+  three lines (about 91px) instead of four (106px).
+- Decisions (Claude): the dot goes at the right of the place line, clear of
+  the + so it is not read as part of the place name. Kept the amber line for
+  real problems: that is the one an engineer must notice.
+- Checks: typecheck, `npm test` (146 + 551), build. New
+  `scripts/verify-quiet-card-list.mjs` (66 checks, 390px light and dark: five
+  places and seven photos in at most 24 taps, a held save shows "Saving" with
+  no "not saved" on the card or its photos, every saved card one dot on its
+  place's line with "Saved" for screen readers, folded cards 96px or less, no
+  signal keeps its amber line, the office gets every place and photo). It
+  fails on main ("a card whose save is on its way says Saving"). Also passed,
+  one at a time: photo-uploads, send-on-signal, quicker-update, fewest-taps,
+  lighter-card, engineer-layout, offline-capture, one-caption-line,
+  draft-conflict, editor-wide, report-editor, day-walkthrough, engineer-day,
+  accessibility (584), offline-drafts, handover-offline, offline-inspection,
+  quicker-inspections. undo-remove fails as on main (open PR #142 fixes it).
+  Screens: project files `ui-review/site-update-trades/` (`walk/` before,
+  `after/`, `check/`).
+- Review: a fresh-context review found the cards would turn to "Saving"
+  every 15 seconds while RELAY retried a failed save, the "Saving" dot was
+  amber, screen readers would hear the place and "Saved" run together, and
+  the new check could catch photos still uploading. All fixed.
+- Not verified: a real phone, real weak signal, a screen reader; the wide
+  (desk) editor and inspection rows only through the existing checks.
+- Ideas for later (not built): the progress card has no trade, so a site
+  manager writing up several trades files them all under their own trade on
+  "Today from site"; "+ Another card here" and "Done with this card" sit
+  between the open card and "+ Progress" for an update across many places.
+
 ## 2026-10-22 — Today from site fits a phone
 
 - Why: a walk of an office manager at 390px on the office overview (latest
