@@ -8,7 +8,7 @@ import { EngineerWorkspace } from '@/components/EngineerWorkspace';
 
 export const dynamic = 'force-dynamic';
 export default async function EngineerPage({ searchParams }: {
-  searchParams: Promise<{ project?: string; view?: string; show?: string; scope?: string }>;
+  searchParams: Promise<{ project?: string; view?: string; show?: string; scope?: string; place?: string }>;
 }) {
   const principal = await currentPrincipal();
   if (!principal) redirect('/signin');
@@ -19,5 +19,5 @@ export default async function EngineerPage({ searchParams }: {
   const drafts = database().prepare("SELECT summary FROM records WHERE kind='reports' AND state='draft' AND json_extract(data,'$.authorId')=? ORDER BY updated DESC,id DESC")
     .all(principal.id).map(row => JSON.parse(row.summary as string) as ReportSummary)
     .filter(r => projects.some(p => p.id === r.projectId));
-  return <EngineerWorkspace projects={projects} drafts={drafts} initialProject={query.project} initialView={query.view} initialShow={query.show} initialScope={query.scope} />;
+  return <EngineerWorkspace projects={projects} drafts={drafts} initialProject={query.project} initialView={query.view} initialShow={query.show} initialScope={query.scope} initialPlace={query.place} />;
 }

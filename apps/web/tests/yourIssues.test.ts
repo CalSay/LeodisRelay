@@ -70,3 +70,18 @@ test('the fixes waiting for the office can be listed, newest put forward first',
   assert.deepEqual(site.waitingIssues.map(i => i.id), [late.id, early.id]);
   assert.deepEqual(site.toDo.map(r => r.issue.id), [open.id]);
 });
+
+test('someone else\'s issue in Yours: only the office\'s reason on a fix sent back, while it stands', () => {
+  const put = (who: string, id: string, at: string) => ev('closure_submitted', who, id, at);
+  const sentBack = issue({ affectedTrade: 'Electrical', events: [ev('raised', 'Pat Pipe', 'entra:pat', '2026-10-12T09:00:00Z'), put('Lee Live', 'entra:lee', '2026-10-13T09:00:00Z'), ev('reopened', 'Olive Office', 'entra:olive', '2026-10-14T09:00:00Z', 'Still loose')] as Issue['events'] });
+  const noteOnly = issue({ affectedTrade: 'Electrical', events: [ev('raised', 'Pat Pipe', 'entra:pat', '2026-10-12T09:00:00Z'), ev('note', 'Olive Office', 'entra:olive', '2026-10-14T09:00:00Z', 'Pat, was this there before?')] as Issue['events'] });
+  const putAgain = issue({ affectedTrade: 'Electrical', work: 'in_progress', events: [...sentBack.events, ev('progress', 'Lee Live', 'entra:lee', '2026-10-15T09:00:00Z')] as Issue['events'] });
+  const rows = yourIssues([sentBack, noteOnly, putAgain], sam).toDo;
+  const row = (i: Issue) => rows.find(r => r.issue.id === i.id)!;
+  assert.deepEqual(row(sentBack).word, { by: 'Olive Office', at: '2026-10-14T09:00:00Z', note: 'Still loose' });
+  assert.equal(row(sentBack).sentBack, true);
+  assert.equal(row(noteOnly).word, undefined);
+  assert.equal(row(noteOnly).sentBack, false);
+  // Lee's update after the send-back answers it for Lee, not for Sam.
+  assert.equal(row(putAgain).sentBack, true);
+});
