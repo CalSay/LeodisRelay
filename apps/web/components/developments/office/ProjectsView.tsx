@@ -11,7 +11,7 @@ import { useMarkSeen } from '@/components/useMarkSeen';
 import { useFeatures } from '@/components/FeaturesContext';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { officeActions } from '@/lib/officeActions';
-import { putForwardAt, waitingWords } from '@/lib/checkFix';
+import { againWords, putForwardAt, sentBackBefore, waitingWords } from '@/lib/checkFix';
 import { withViewReturn } from '@/lib/viewNavigation';
 import { shiftWeek, weekStart } from '@/lib/weeklySummary';
 import { confirmationNote } from '@/lib/issueConfirmation';
@@ -297,7 +297,7 @@ function actionGroups(ctx: Ctx): ActionGroup[] {
     { key: 'unassigned', title: 'Unassigned issues', sub: 'Open, nobody owns the action', n: a.unassigned.length, tone: 'soon', all: '#/issues/show/unassigned', empty: anyOpen ? 'Every open issue has an owner.' : 'No open issues.',
       rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)) },
     { key: 'verify', title: 'Fixed, to check', sub: 'Put forward as fixed; someone else checks it', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be checked.',
-      rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · ${waitingWords(i, ctx.day)}`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: () => Promise.resolve(a.verify) })}>Verify</Btn>)) },
+      rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · ${againWords(i) ? `${againWords(i)} · ` : ''}${waitingWords(i, ctx.day)}`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: () => Promise.resolve(a.verify) })}>Verify</Btn>)) },
   ];
 }
 /** On a phone the groups stack under the project list, so their counts are gathered at the top, each a tap from its group. */
@@ -723,6 +723,7 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
   const source = issue.raisedByReport ? ctx.snap?.reports.find(r => r.id === issue.raisedByReport) : undefined;
   const active = isActive(issue); const overdue = isOverdue(issue, ctx.day); const reviewOn = !!ctx.statOf(issue.projectId)?.reviewOn;
   const closureMine = issue.closureSubmittedById ? issue.closureSubmittedById === ctx.me.id : issue.closureSubmittedBy === ctx.me.name;
+  const back = issue.work === 'awaiting_verification' ? sentBackBefore(issue) : undefined;
   const d = (kind: string) => ctx.setDialog(dialogFor(kind, issue, ctx));
   const linkedVariations = ctx.snap?.variations.filter(v => v.linkedIssueId === issue.id) ?? [];
   return <div className="sheet">
@@ -739,7 +740,7 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
     <dl className="tb"><div><dt>Work</dt><dd><WorkTag i={issue} day={ctx.day} /><small>{WORK_LABEL[issue.work]}{overdue ? ` · ${pastTarget(daysLate(issue.targetDate, ctx.day))}` : ''}</small></dd></div><div><dt>Confirmation</dt><dd><ConfirmTag i={issue} reviewOn={reviewOn} /><small>{confirmationNote(issue.confirmation, reviewOn)}</small></dd></div><div><dt>Owner</dt><dd>{issue.owner.trim() || <span className="late">Unassigned</span>}</dd></div><div><dt>Target</dt><dd className={`num ${overdue ? 'late' : ''}`}>{issue.targetDate ? fmtDay(issue.targetDate) : '—'}</dd></div></dl>
     {issue.actionNeeded && <div className="note info"><span><b>Action needed.</b> {issue.actionNeeded}</span></div>}
     {issue.confirmation === 'disputed' && <div className="note bad"><span><b>Disputed.</b> The report that raised this was sent back. Any work already done stands; the observation needs a decision.</span></div>}
-    {issue.work === 'awaiting_verification' && <div className={`note ${closureMine ? 'warn' : 'good'}`}><span><b>Closure submitted by {ctx.nameOf(issue.closureSubmittedById, issue.closureSubmittedBy ?? 'unknown')}</b> · put forward {fmtDay(putForwardAt(issue))}, {waitingWords(issue, ctx.day)}. {closureMine ? 'You submitted this closure, so someone else has to verify it.' : 'Verify it if the work is done, or send it back as not finished.'}</span></div>}
+    {issue.work === 'awaiting_verification' && <div className={`note ${closureMine ? 'warn' : 'good'}`}><span><b>Closure submitted by {ctx.nameOf(issue.closureSubmittedById, issue.closureSubmittedBy ?? 'unknown')}</b> · put forward {fmtDay(putForwardAt(issue))}, {waitingWords(issue, ctx.day)}. {back && <> {back.times > 1 ? `Sent back ${back.times} times. Last by` : 'Sent back by'} {back.by} on {fmtDay(back.at)}{back.note ? <>: <q>{back.note}</q></> : ', with no reason given'}.</>} {closureMine ? 'You submitted this closure, so someone else has to verify it.' : 'Verify it if the work is done, or send it back as not finished.'}</span></div>}
     {linkedVariations.length > 0 && <div className="note info"><span><b>Variation{linkedVariations.length === 1 ? '' : 's'} on this issue:</b> {linkedVariations.map((v, i) => <span key={v.id}>{i > 0 && ', '}<a className="ref" href={`#/projects/${code}/variation/${v.id}`}>{shortRef(v.reference)}</a> {INSTRUCTION_LABEL[v.instruction].toLowerCase()}</span>)}.</span></div>}
     <dl className="tb two" style={{ marginTop: 12 }}><div><dt>Source</dt><dd>{source ? <>Raised by <a className="ref" href={`#/projects/${code}/report/${source.id}`}>{shortRef(source.reference)}</a> · {fmtDay(issue.raisedAt)}</> : issue.source === 'individual' ? <>Flagged on site by {issue.reportedBy ?? 'unknown'} · {fmtDay(issue.raisedAt)}</> : <>Raised {fmtDay(issue.raisedAt)}</>}<small>{issue.reportedBy ?? issue.events[0]?.actor ?? 'Reporter not recorded'}{issue.reporterTrade ? ` · ${issue.reporterTrade}` : ''}</small></dd></div><div><dt>Progress notes</dt><dd>Add updates and photographs on the issue page.<small>Engineers can submit the work as complete there; the office verifies here.</small></dd></div></dl>
     <SecH right={<span className="r">{issue.events.length}</span>}>History</SecH>

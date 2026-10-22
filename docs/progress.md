@@ -4,6 +4,49 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — What the office asked, when a sent-back fix comes in again
+
+- Why: a walk at 390px on main 172c277 with Sam, whose socket fix the office
+  marked "Not finished" ("the back box is still loose, send a photo with the
+  plate off"). The engineer side was already short: the home's Came back row
+  carries the office's words, one tap opens the issue with the reason above
+  the buttons, then photo, note and Put forward: 4 taps, none to cut. The gap
+  was the office: the second attempt's Check this fix window looked like a
+  first attempt, with no sign it had been sent back or what was asked, and
+  the Fixed, to check rows did not say "again". Whoever checks it (often not
+  who sent it back) could not check the new photo against the ask.
+  Coordinator's ask (walk and one pick); not a `docs/tasks.json` task, so no
+  status changed. Within Cal's 21 Oct direction (the office's view of
+  progress clearer).
+- Changed: `lib/checkFix.ts` `sentBackBefore` (who sent it back last, when,
+  the reason, how many times since it was last verified) and `againWords`.
+  The check window says "Sent back by Jo Office on Wed 21 Oct, 11:00: “…”"
+  above the engineer's note (once the full issue has loaded); the overview's
+  Fixed, to check rows and Attention say "put forward again" (or "put forward
+  3 times"); the office issue sheet's "Closure submitted" note says the same.
+  `deskIssue` now keeps a waiting fix's put forward / sent back / verified
+  events (notes and photos still stripped) instead of only the latest put
+  forward, so the desk can tell. Help "What's new" line.
+- Decided (Claude): count send-backs only since the last verified close, so
+  an issue reopened as a new defect starts again; show the reason above the
+  engineer's note because it is the question the note answers; no change on
+  the engineer side, which the walk found already minimal.
+- Verified: typecheck, `npm test` (146 + 559), build. New
+  `scripts/verify-sent-back-fix.mjs` (29 checks): the engineer's walk (4
+  taps, reason above Put forward on the first screen, the new photo on the
+  server); for a manager who did not send it back, at 1440 dark and 390
+  light, the overview row, Attention, the window (reason before their note,
+  the new photo not the first) and the issue sheet; a first attempt says none
+  of it; axe on the window; no sideways scroll; no page errors. Also passed:
+  check-fixes, fix-waiting, busy-projects, office-top-bar, help,
+  office-actions, issue-figures, issue-register, came-back-to-update,
+  fix-forward-next, office-words. Screens: project files
+  `ui-review/sent-back-fix/` (before, and after/).
+- Not verified: a real phone.
+- Next: an engineer who fixes an issue someone else raised (same trade) sees
+  it under Issues "Yours" but not the office's reason on the issue page
+  (the word box is for the raiser only); worth a look.
+
 ## 2026-10-22 — The office's questions before saved drafts on the engineer home
 
 - Why: a walk at 390px on main 73b6d8d with Sam (busy seed, Thursday): three
