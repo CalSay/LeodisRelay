@@ -56,7 +56,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (failed once, passed alone), -accessibility, -role-access,
   -engineer-layout. verify-office-words fails at "light 390 long: Put forward
   as fixed still on the first screen" on the engineer's issue page, which
-  this change does not touch (#174 changed that page); not rerun on main.
+  this change does not touch; it fails the same way on main bc864b8.
   Screens in /mnt/project-files/ui-review/issue-at-place/.
 - Not verified: a real phone or screen reader.
 
