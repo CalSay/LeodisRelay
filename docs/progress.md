@@ -4,6 +4,35 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish E1: entry screens, hub and the app bar
+
+- Why: task E1 in `docs/release-1.md` (PR #182), from Cal's 22 Oct ask for a
+  top-notch UI on the engineer's phone and the office laptop. Not a
+  `docs/tasks.json` task, so no status changed.
+- Changed:
+  - Hub (`/`): Leodis Compliance Management shows "Coming later" and is not a
+    link, so nobody lands on its invented records. A phone that picked
+    Compliance before is asked again from the home screen icon instead of
+    being sent there. Decided by Claude (Cal's 14:11, 20 Oct); undone by
+    putting the link back in `app/page.tsx`.
+  - Entry screens on a phone fill the screen edge to edge rather than sitting
+    in a framed card; "Put RELAY on your home screen" lines up with the text,
+    has its own arrow and keeps the entry colours in dark mode; local sign-in
+    loses its stray rule and reads plainer.
+  - `/offline` uses the same layout as the other problem pages, with a button
+    to what is on the phone (`/offline.html`).
+  - App bar (`app/layout.tsx`): Sign out and the theme are two matching
+    buttons outside the links. Below 1024px they sit beside RELAY and the
+    links get an even grid below (was three or four ragged rows at 390px);
+    48px targets. Sign out no longer shows the name and role (it is in the
+    tooltip): at 900px the Admin's seven links ran under it.
+  - Help "What's new" line.
+- Verified: typecheck, `npm test` (146 + 581), build. Browser checks listed
+  in the PR. Screenshots before/after at 390 light and dark and 1440 light:
+  `/mnt/project-files/ui-review/release-1/E1/`. A fresh review found the
+  overlap above and three smaller faults; all fixed.
+- Not verified: a real phone, a home screen install.
+
 ## 2026-10-22 — Sixteenth release check: "Put forward as fixed" on the first screen again
 
 - Why: the sixteenth release check on main bc864b8 (#2-#179 minus #28, #130,

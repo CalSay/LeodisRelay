@@ -48,3 +48,27 @@
 .entry-hub{padding:26px 20px 20px}.entry-hub-grid{grid-template-columns:1fr;gap:24px}.entry-wrap .entry-hub-title{margin-bottom:24px}.entry-mast{border:0;padding:0}.entry-mast strong{font-size:42px}.entry-mast br,.entry-mast small{display:none}
 .entry-company{padding:24px 18px;min-height:156px}.entry-company:before{left:18px}.entry-company-name{font-size:23px}.entry-footer{padding:18px 24px;display:block}.entry-footer span{display:block;line-height:1.8}
 }
+/* Release 1: Compliance is shown on the hub but not opened yet. */
+.entry-company-later{cursor:default;grid-template-columns:minmax(0,1fr) auto}
+.entry-company-later:hover{background:transparent}
+.entry-company-later .entry-company-name{color:var(--entry-muted)}
+.entry-later{justify-self:end;font:11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--entry-muted);border:1px solid var(--entry-line);padding:7px 9px;white-space:nowrap}
+/* "Put RELAY on your home screen" lines up with the text above it and keeps the entry colours. */
+.entry-wrap .install-help{padding:0;max-width:none}
+.entry-wrap .install-help summary{display:flex;align-items:center;gap:10px;min-height:48px;padding:0;color:var(--entry-gold);font-size:14px;list-style:none}
+.entry-wrap .install-help summary::-webkit-details-marker{display:none}
+.entry-wrap .install-help summary::before{content:'';width:6px;height:6px;border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(-45deg);flex:none}
+.entry-wrap .install-help details[open] summary::before{transform:rotate(45deg) translate(-2px,-1px)}
+.entry-wrap .install-help-body>p:first-child{margin-top:0}
+.entry-wrap .install-help-body{background:var(--entry-panel);border-color:var(--entry-line);color:var(--entry-text);font-size:14px;line-height:1.55}
+.entry-wrap .install-help-body p,.entry-wrap .install-help-body li{color:var(--entry-muted)}
+.entry-wrap .install-help-body h2{font-size:15px;font-weight:600;margin:18px 0 6px;letter-spacing:0}
+.entry-wrap .install-help-body ol{padding-left:20px;margin:0}
+.entry-local{margin:0 auto}.entry-local .field{margin-top:8px}
+@media(max-width:600px){
+/* A phone gets the screen edge to edge, like an app, rather than a framed card. */
+body:has(.entry-wrap){display:flex;flex-direction:column;min-height:100svh}
+.entry-wrap{margin:0;padding:0;flex:1;display:flex;width:100%}.entry-screen{border:0;flex:1;display:flex;flex-direction:column;min-width:0}.entry-screen>footer{margin-top:auto}
+.entry-top{padding:16px 20px}
+.entry-later{padding:6px 8px}
+}
