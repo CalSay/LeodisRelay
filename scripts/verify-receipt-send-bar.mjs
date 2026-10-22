@@ -107,7 +107,10 @@ try {
     eq(await page.locator('.eng-defect-receipt').count(),0,`${label}: Back to Site leaves the receipt`);
     eq((await page.locator('.eng-navigation [aria-current=page]').innerText()).trim(),'Site',`${label}: and lands on Site`);
     ok(await page.locator('.eng-workspace').getByText('Tetley Hall - Block E').first().isVisible(),`${label}: on the same site`);
-    ok(await page.getByRole('heading',{name:'Defect sent to the office'}).count()===0,`${label}: a second tap on Flag a defect would start a new one`);
+    await tap(page.getByRole('button',{name:/Flag a defect/}).first());
+    await page.getByLabel('What needs attention?',{exact:true}).waitFor();
+    eq(await page.getByLabel('What needs attention?',{exact:true}).inputValue(),'',`${label}: Flag a defect again opens a blank form, not the receipt`);
+    await tap(page.locator('.eng-navigation').getByRole('button',{name:'Site'}));
 
     // 2. A site update on Check & send: the end of "What sending does" is clear of the bar.
     await page.goto(`${base}/reports/${report}`);

@@ -35,8 +35,17 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   "What sending does" rows) and on a handover inspection, Check & send with
   "Waiting for signal", and the cards step with Undo, each scrolled to the end
   with nothing under the bar (columns that scroll by themselves count only what
-  they show); no sideways scroll, no page errors. Screens in project files
-  `ui-review/receipt-send-bar/` (before = main, after = this change).
+  they show); after Back to Site, Flag a defect opens a blank form; no sideways
+  scroll, no page errors. Screens in project files `ui-review/receipt-send-bar/`
+  (before = main, after = this change; viewport captures, so the fixed bar is
+  where it really is). Also passed: engineer-layout, defect-recent-places,
+  defect-send-on-signal, help, editor-usability, editor-wide, quicker-update,
+  one-caption-line, same-place-issues, fewest-taps, engineer-day, role-access,
+  accessibility, offline-capture, report-editor. A fresh-context review found one
+  check named for more than it tested; it now taps Flag a defect again.
+- Fixed on the way: `verify-report-editor` failed on main since #133 (the bar
+  now steps aside once a tap has finished, and the check looked straight after
+  the click). It now waits up to 3 s for the bar to hide and to come back.
 - Not verified: real phones (including a phone's own toolbar and keyboard),
   real weak signal, screen readers.
 

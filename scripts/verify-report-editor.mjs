@@ -71,11 +71,12 @@ try {
     // Typing: the action bar steps aside so it never covers the field.
     const where=page.locator('.eng-slot.open').getByLabel('Where',{exact:true});
     await where.click();
-    ok(!(await page.locator('.actionbar').isVisible()),`${scheme}: action bar hidden while a field has the keyboard`);
+    // Since #133 the bar steps aside once the tap has finished, not mid-tap: wait for it.
+    ok(await page.locator('.actionbar').waitFor({state:'hidden',timeout:3000}).then(()=>true,()=>false),`${scheme}: action bar hidden while a field has the keyboard`);
     if(scheme==='light'){await where.fill('Plant room east');await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached'});}
     await shot(page,`editor-${scheme}-typing`);
     await page.locator('.eng-slot.open .eng-done').click();
-    ok(await page.locator('.actionbar').isVisible(),`${scheme}: action bar back once the field is left`);
+    ok(await page.locator('.actionbar').waitFor({state:'visible',timeout:3000}).then(()=>true,()=>false),`${scheme}: action bar back once the field is left`);
     eq(await visibleEditors(),0,`${scheme}: "Done with this card" folds it`);
     ok(/Plant room east/.test(await rows.nth(2).innerText()),`${scheme}: folded row shows the edit`);
     // Check & send is its own step, Back returns to the cards.
