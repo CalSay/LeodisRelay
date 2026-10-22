@@ -39,6 +39,91 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (45), office-words (67), help (36), accessibility (584), busy-projects
   (39 timings within budget). No check needed changing.
 - Not verified: a real phone, a tablet, a screen reader.
+## 2026-10-22 — Defect receipt: "Fixed it already?"
+
+- Why: the coordinator asked for a walk of an engineer at 390px who finds a
+  small fault, fixes it there and then, and wants the office to know it was
+  found and already fixed. On main bc864b8 Sam flagged it (Flag a defect, a
+  photo, Send), then the receipt offered Back to Site, "Open issue" and "View
+  project issues": nothing said "I fixed it already". The way was "Open
+  issue", "Add photograph", "Put forward as fixed" on the issue page, which
+  then said "Who is fixing it: Nobody yet. The office will say who." 6 taps
+  from Site (7 with a Recent places chip). The domain already allows open to
+  awaiting verification for exactly this (platform `transitions.ts`). Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the engineer's job simpler, the office's view of progress clearer).
+- Changed: the receipt (`IndividualDefect.tsx`, `FixedAlready`) has "Fixed it
+  already? · Take a photo of the fix" straight under Back to Site. It opens
+  the camera; then the photo, "Put forward as fixed" and "Add another photo"
+  sit in one framed box. "No photo? Put forward as fixed" for a fix with
+  nothing to photograph. It is the issue page's `submit_closure` (photos
+  uploaded to the issue first, the issue's current etag read first), so the
+  office gets it on its usual list to check with both photographs, and someone
+  other than the engineer still closes it. The receipt then says "Put forward
+  as fixed. The office will check it and close it. If it is not finished, it
+  comes back to you." With no signal the photo stays and the words say so
+  (and that it will only go once). Only the receipt's words are a live
+  region, not its buttons, and focus moves to "Put forward as fixed" once a
+  photo is taken.
+  The engineer issue page's "Who is fixing it" names who put it forward as
+  fixed ("Sam Sparks fixed it") instead of "Nobody yet" once it is waiting to
+  be checked. A filled engineer button no longer turns grey under a mouse
+  (the global button hover won). Help "What's new" line.
+- Decided (Claude): on the receipt, not as a tick box on the defect form. The
+  receipt only exists once the defect has reached RELAY, so a defect held with
+  no signal never offers it (a held "fixed" would need its own retry path).
+  Back to Site stays first: most defects are not fixed on the spot. No note is
+  written for the engineer: the history shows it raised and put forward
+  minutes apart by the same person, which is what the office reads.
+- Verified: typecheck, `npm test` (146 + 578), build. New
+  `scripts/verify-fixed-on-the-spot.mjs` (99 checks, 390 light and dark, 1440
+  dark): the button under Back to Site; 5 taps from Site to put forward; a
+  photo added, a second removed, the issue awaiting verification by the
+  engineer with exactly one photo on the closure; the issue page names who
+  fixed it; the no-photo way; no signal keeps the photo, changes nothing at the
+  office, then goes once on a retry; focus after the photo; 48px targets; no sideways scroll; no page
+  errors. `verify-receipt-send-bar` now counts the receipt's own buttons only.
+- Not verified: a real phone's camera or real weak signal (files set in a
+  phone-sized browser, offline simulated).
+## 2026-10-22 — Real company address on report PDFs, no VAT number
+
+- Why: Cal sent the company address and asked why a report needs the VAT
+  number. It doesn't: a site report is not an invoice. Not a
+  `docs/tasks.json` task.
+- Changed: `branding.ts` address is Unit 3 Pool Business Park, Pool Road,
+  Pool in Wharfedale, Otley LS21 1FD; `registrationLines` (the placeholder
+  company and VAT numbers) removed with its rendering in `ReportDocument.tsx`.
+  No branding placeholders are left. The #168 Help "What's new" line says so.
+- Decided (Claude): the company number goes too, as we don't have the real
+  one and a made-up number on an issued report is worse than none. It can be
+  added back as one line in `branding.ts` if Cal wants it.
+- Verified: `npm run typecheck`, `npm test`, `node scripts/verify-long-pdfs.mjs`,
+  sample PDF first page looked at. Not verified: printed. Not live until the
+  next deploy.
+
+## 2026-10-22 — Release 1 defined
+
+- Why: Cal asked to "define a first release point and work towards that with
+  haste", with the UI on the engineer's phone and the office laptop top notch.
+  Not a `docs/tasks.json` task, so no status changed.
+- Changed: new `docs/release-1.md` (docs only). It says what Release 1 holds
+  (the engineer's site update, defects, issues and inspections on a phone; the
+  office overview, issues, inbox, coverage, weekly and month summary and PDFs
+  on a laptop), what stays out or hidden (safety, permits and deliveries
+  switched off; Compliance; Site information #28; email and SharePoint
+  unchanged from the pilot), an exit checklist, and 14 small UI polish tasks
+  in two lanes (E1-E7 engineer at 390px, O1-O7 office at 1440px, light and
+  dark) that name their screens and files so two threads never overlap.
+- Decided (Claude): #142 is needed for Release 1 (it fixes a known fault);
+  #130 and #154 join only if Cal says "carry on" before the final check. The
+  hub should show Compliance as "Coming later" rather than open sample data
+  (task E1). PDFs are left to Cal's own PDF template thread. Shared colour
+  tokens are not changed by polish tasks; shared components are restyled
+  from the calling screen. Fresh review fixed screen gaps (/projects, report
+  preview, the engineer's Reports and Issues views) and file names.
+- Verified: `npm test` (581 pass) on main b387483 before writing. No code
+  changed, so no browser checks were run.
+- Next: the coordinator dispatches E1 and O1.
 
 ## 2026-10-22 — Sixteenth release check: "Put forward as fixed" on the first screen again
 
@@ -59,6 +144,49 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   office-words (67), came-back-to-update (36), issue-raised-photo (91),
   simpler-issue-page (76), sent-back-reason (22).
 - Not verified: a real phone.
+
+## 2026-10-22 — Month summary: figures that say what they count
+
+- Why: the coordinator asked for every figure on the Weekly summary's Month
+  choice (and its PDF) to be checked against counts taken straight from the
+  stored records, on the busy example data, for a past month and this one
+  (Tetley Hall, September 2026 and 1 to 22 October 2026, main 460e2b5). Every
+  figure matched: days on site (22, 16), site reports (61, 42), issues raised
+  (89, 66) and closed (71, 29), variations raised (19, 14) and instructed
+  (18, 9), each week row, open (354, 390), past target (196, 222) and fixed,
+  to check (110, 119) at the month's end. Two things read wrongly. The line
+  under Site reports counted update cards ("42 · 89 progress updates"), bigger
+  than the figure above it, and September's 61 held a first fix and a
+  handover inspection without saying so. This month showed "Mon 26 Oct to
+  Sat 31 Oct" as a row of noughts, which reads as a week nobody was on site,
+  and this week's row ran to Sunday on a Thursday. Not a `docs/tasks.json`
+  task, so no status changed. Within Cal's 21 Oct direction (the office's view
+  of progress clearer).
+- Changed (`lib/monthSummary.ts`, `MonthSheet.tsx`): `reportKinds` counts the
+  month's site reports by type (site updates and the non-safety inspections),
+  adding up to the figure; the line reads "59 site updates, 1 handover
+  inspection, 1 first fix inspection", or "all site updates". While the month
+  is going a week still to come has no row and this week's row ends today with
+  "so far"; the note under the table says weeks still to come are not shown.
+  A month that is over is unchanged. Help "What's new" line.
+- Decided (Claude): if anything in a later week or later this week is dated
+  after today (a visit date may be a day ahead), that week keeps its row and
+  its full end, so the rows always add up to the month. The busy seed has two
+  variation instructions dated 24 and 25 Oct (made five days after raising),
+  so on it this week's row stays "to Sun 25 Oct"; the browser check's own
+  data has none and shows "so far". Withdrawn issues stay counted under
+  Issues raised (1 in September, 2 in October), as the Weekly summary counts
+  them and tags them Withdrawn in the list; left alone.
+- Verified: typecheck, `npm test` (146 + 583; two new unit tests: rows this
+  month with and without something dated ahead, on a Monday and in a month
+  that is over; the Site reports line by type adding up, safety left out).
+  `verify-month-summary` (79, now also: no row after today, this week ends
+  today with "so far", the note, "all site updates" on last month),
+  `verify-month-print`, `verify-weekly-summary`, `verify-weekly-phone`,
+  `verify-help` passed. The busy-seed walk again after the change: the same
+  figures, the new line and no row for 26 to 31 Oct, 7 PDF pages as before.
+  Screens and PDFs in /mnt/project-files/ui-review/month-figures/.
+- Not verified: a real phone or printer.
 
 ## 2026-10-22 — Office issue sheet: everything open at the same place
 

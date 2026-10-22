@@ -303,8 +303,22 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-defect-summary dt{font-size:12px;color:var(--text-2);margin-top:16px;}.eng-defect-summary dd{margin:6px 0;overflow-wrap:anywhere;}.eng-defect-receipt{text-align:center;}
 /* Back to Site first: one way back to the visit, then the issue itself (2026-10-22). */
 .eng-defect-receipt-actions{display:grid;gap:10px;margin-top:18px;}
+/* Fixed on the spot (2026-10-22): the receipt's second step, a photograph of the fix then "Put forward as fixed". */
+.eng-fixed{display:grid;gap:10px;text-align:left;}
+.eng-fixed-camera{position:relative;display:flex;align-items:center;gap:14px;min-height:64px;padding:12px 18px;border:1.5px solid var(--brass);border-radius:8px;background:var(--brass-wash);color:var(--brass);cursor:pointer;}
+.eng-fixed-camera span{display:grid;gap:2px;}.eng-fixed-camera small{color:var(--text-2);font-size:13px;}
+.eng-fixed-camera.eng-fixed-more{min-height:48px;justify-content:center;background:var(--panel);border:1px solid var(--line-2);color:var(--text);}
+.eng-fixed-camera input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;}
+.eng-fixed-camera:has(input:focus-visible){outline:2px solid var(--brass);outline-offset:2px;}
+.eng-fixed-nophoto{min-height:48px;margin:0;padding:8px 12px;border:0;background:none;color:var(--text-2);font:500 14px/1.3 var(--sans);text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+.eng-fixed-open{padding:12px;border:1.5px solid var(--brass);border-radius:8px;background:var(--brass-wash);}
+.eng-fixed-title{margin:0;color:var(--text);font-size:14px;}.eng-fixed-title b{color:var(--brass);}
+.eng-fixed .eng-defect-photos{margin:0;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));}.eng-fixed .eng-defect-photos img{height:104px;}.eng-fixed .eng-defect-photos button{min-height:44px;}
+.eng-fixed-done{margin:0;padding:14px 16px;border:1px solid var(--line-2);border-left:3px solid var(--brass);border-radius:8px;background:var(--panel);text-align:left;line-height:1.45;}
 .eng-defect-receipt-actions .eng-secondary{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;margin:0;padding:12px 18px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel);color:var(--text);text-decoration:none;font:500 15px/1.2 var(--sans);}
 .eng-primary{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;padding:12px 18px;border:1px solid var(--brass);border-radius:8px;background:var(--brass);color:var(--brass-ink);text-decoration:none;font-weight:500;}
+/* A mouse over the button version kept the global grey hover, leaving brass-ink words on grey (seen 2026-10-22 at 1440). */
+@media (hover:hover){button.eng-primary:hover:not(:disabled){background:var(--brass);border-color:var(--brass);filter:brightness(1.08);}}
 .eng-issue-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;}.eng-issue-tabs button{font-size:13px;padding:10px 12px;}.eng-issue-tabs [aria-pressed=true]{border-color:var(--brass);background:var(--brass-wash);color:var(--brass);}
 .eng-issue-list{display:grid;gap:12px;}.eng-issue-card.late{border-left:3px solid var(--alert);}.eng-issue-card .eng-word{margin:4px 0;font-size:13.5px;line-height:1.4;color:var(--text);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .eng-yours-count{margin-left:10px;font:600 12px/1 var(--sans);color:var(--text-2);white-space:nowrap;}.eng-yours-wait{margin:12px 0 0;border:1px solid var(--line);border-radius:9px;background:var(--panel);}.eng-yours-wait>summary.eng-yours-waiting{display:flex;align-items:center;min-height:48px;padding:8px 40px 8px 14px;position:relative;cursor:pointer;list-style:none;color:var(--text-2);font-size:14px;}.eng-yours-wait>summary::-webkit-details-marker{display:none;}.eng-yours-wait>summary::after{content:'+' / '';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:18px;color:var(--text-3);}.eng-yours-wait[open]>summary::after{content:'−' / '';}.eng-yours-wait>:not(summary){padding:0 12px 12px;}.eng-yours-empty button{margin-top:12px;min-height:48px;}.eng-issue-card{display:flex;gap:16px;padding:16px;border:1px solid var(--line);border-radius:9px;background:var(--ground);color:var(--text);text-decoration:none;align-items:flex-start;}
