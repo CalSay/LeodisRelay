@@ -111,7 +111,9 @@ try {
       const top=sheet.locator(':scope > .hist',{hasText:HANDOVER_CHECKLIST[0].question});
       check(await top.count()===1&&/Corrected/i.test(await top.innerText()),`${label}: the noted check stays above the fold, marked corrected`);
       await page.reload();await sheet.locator('.check-tally').waitFor();
-      check(await sheet.getByRole('button',{name:'Show the 7 satisfactory and 1 not applicable checks'}).isVisible(),`${label}: after a reload, 8 checks fold and the noted one is listed`);
+      // The corrections load after the report, so wait for them to lift the noted check.
+      const seven=sheet.getByRole('button',{name:'Show the 7 satisfactory and 1 not applicable checks'});
+      check(await seven.waitFor({timeout:20000}).then(()=>true,()=>false),`${label}: after a reload, 8 checks fold and the noted one is listed`);
       check(await sheet.locator(':scope > .hist').count()===ACTIONS.length+1,`${label}: the three actions and the noted check are listed first`);
     }
     // An inspection with nothing to act on says so, and every check folds.

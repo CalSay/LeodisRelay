@@ -565,8 +565,9 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
         </div></div>;
   };
   const checklist = !!reportTypeOf(report).checklist;
-  const tally = { action: 0, ok: 0, na: 0 };
-  if (checklist) for (const o of report.observations) if (o.check?.answer && o.check.answer in tally) tally[o.check.answer as keyof typeof tally]++;
+  const tally = { action: 0, ok: 0, na: 0, open: 0 };
+  // An older record can hold a check sent unanswered; it is counted, so the figures add up to the checks.
+  if (checklist) for (const o of report.observations) { const a = o.check?.answer; if (a === 'action' || a === 'ok' || a === 'na') tally[a]++; else tally.open++; }
   // A passing check someone corrected stays in view with its change log.
   const folds = (o: Observation) => checklist && (o.check?.answer === 'ok' || o.check?.answer === 'na') && !corrections.some(c => c.observationId === o.id);
   const shownFirst = report.observations.filter(o => !folds(o)), folded = report.observations.filter(folds);
@@ -600,12 +601,12 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
       <div className="rmenu">{decisions.map(o => { const vo = o.type === 'instruction' ? variationOf(o.id) : undefined; return <div key={o.id}><div className="rt"><b>{o.type === 'instruction' ? 'Variation to instruct' : `Action for ${o.owner.trim() || 'nobody yet'}`} · {o.check ? `${o.check.question}${o.location.trim() ? ` · ${o.location}` : ''}` : o.location || 'no location'}</b><span>{o.type === 'instruction' ? o.whatHappened : o.actionNeeded}{o.type !== 'instruction' && !o.owner.trim() && ' · no owner named'}</span></div>{o.type === 'instruction' ? (vo ? <><a className="ref" href={`#/projects/${code}/variation/${vo.id}`}>{shortRef(vo.reference)}</a><InstructionTag v={vo} /></> : <span className="kind tone-variation">Variation</span>) : o.check && !reportTypeOf(report).raisesRecords ? <span className="kind tone-defect">On this inspection</span> : raisedRef(o.id, raised, code, report, o.linkedIssueId ? ctx.snap?.issues.find(i => i.id === o.linkedIssueId) : undefined)}</div>; })}</div></>}
     {checklist
       ? <><SecH right={<span className="r">{report.observations.length} checks</span>}>Inspection results</SecH>
-        <p className="check-tally">{tally.action > 0 ? <b className="late">{tally.action} {tally.action === 1 ? 'needs' : 'need'} action</b> : <b>No actions</b>}{tally.ok > 0 && <> · {tally.ok} satisfactory</>}{tally.na > 0 && <> · {tally.na} not applicable</>}</p></>
+        <p className="check-tally">{tally.action > 0 ? <b className="late">{tally.action} {tally.action === 1 ? 'needs' : 'need'} action</b> : <b>No actions</b>}{tally.ok > 0 && <> · {tally.ok} satisfactory</>}{tally.na > 0 && <> · {tally.na} not applicable</>}{tally.open > 0 && <> · {tally.open} not answered</>}</p></>
       : <SecH right={<span className="r">{report.observations.length} update{report.observations.length === 1 ? '' : 's'}</span>}>Found on this visit</SecH>}
     {report.observations.length ? <>{shownFirst.map(section)}
       {/* Checks that passed fold under one line, so the ones needing action are what the office reads first. */}
       {folded.length > 0 && <div className="checks-passed">
-        <button type="button" className="btn btn-q btn-sm" aria-expanded={showPassed} onClick={() => setShowPassed(v => !v)}>{showPassed ? 'Hide' : 'Show'} the {passedWords(folded)}</button>
+        <button type="button" className="btn btn-q btn-sm" aria-expanded={showPassed} onClick={() => { if (showPassed && folded.some(o => o.id === acting)) setActing(null); setShowPassed(v => !v); }}>{showPassed ? 'Hide' : 'Show'} the {passedWords(folded)}</button>
         {showPassed && folded.map(section)}</div>}</> : <div className="empty">No updates were recorded on this visit.</div>}
     <SecH>Signature</SecH>
     {/* Typed or drawn is said in words, so the office never mistakes one for the other. */}

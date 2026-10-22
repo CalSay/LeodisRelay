@@ -37,7 +37,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   in order when opened; "Not applicable" does not overlap; a note on a
   satisfactory check keeps it in view after a reload (7 + 1 folded); a clean
   first fix inspection says No actions and folds all 12; axe on the reader;
-  no sideways scroll. Also ran: see the PR. Screens: project files
+  no sideways scroll. Also passed: handover-, first-fix- and
+  tower-inspection, report-types, office-inbox, inbox-phone, accessibility,
+  help, role-access, engineer-layout, office-sections, safety-actions.
+  Fresh review: no reader bugs; fixed its three points (a reload check now
+  waits for the corrections; Hide closes an open Quick actions on a folded
+  check; an unanswered check on an old record is counted "not answered").
+  Screens: project files
   `ui-review/office-inspection/before|after`.
 - Not verified: a real phone; a screen reader.
 - Next: none from this walk.
