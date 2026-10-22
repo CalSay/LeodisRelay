@@ -48,6 +48,34 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   PDFs, so they show "still being made"; pdf-navigation renders its own).
 - Next: O5 (weekly summary week and month, issue trend).
 
+## 2026-10-22 — Release 1 polish O5: Weekly summary, month and Issues over time
+
+- Why: task O5 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch";
+  21 Oct 12:59: sections must not blend into one). Before and after
+  screenshots (1440 and 390, light and dark, office manager and engineer, and
+  the printed page) are in the project files under `ui-review/release-1/O5/`.
+  Busy example data, Tetley Hall, last week and September.
+- Found: the week and the month were one long white sheet in a box, with
+  On site, Issues, Variations and the month's parts divided only by a thin
+  heading rule, so on a busy week (7,000px at 1440) the parts ran into each
+  other. Issues over time had no print rules: printing it kept the menu bar,
+  Back, the project choice and the links, and the phone layout on A4.
+- Changed (`week.css`, screen only, so paper is unchanged): the sheet is no
+  longer a box; the title and facts sit on the page ground, the four (or six)
+  figures are tiles, and each part is a card with a `--line-2` edge, as the
+  project and issue sheets are (O2, O3). The month's figure tiles inside
+  their card take the sunken ground. `issue-trend.css`: the cards' edges use
+  `--line-2`; a print block gives the sheet alone, black on white on A4, with
+  the bars' colours kept and the desk layout (four figures, long week names).
+  Help "What's new" line. No figures, components, routes or `globals.css`
+  tokens changed.
+- Verified: typecheck, `npm test` (146 + 591), build; verify-weekly-summary (46),
+  -weekly-phone (263), -month-summary (79), -month-print (32), -issue-trend
+  (29), -issue-trend-busy (36), -office-weekly-review (53),
+  -visits-this-week (19), -accessibility (584), -help (36).
+- Not verified: a real phone, a real printer (print checked with Chromium's
+  print media and PDF), a screen reader.
+
 ## 2026-10-22 — No red on a site update card while it is being filled in
 
 - Why: the coordinator asked for a walk of an engineer on a 390px phone
