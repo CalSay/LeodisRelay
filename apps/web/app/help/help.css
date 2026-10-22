@@ -54,3 +54,13 @@
   .eng-page.help-page{padding:0;max-width:none;}
   .help-new li,.help-card{break-inside:avoid-page;}
 }
+
+/* Release 1 polish E7 (2026-10-22): the four "jump to" links are a thumb's width tall and, on a phone,
+   a tidy two by two instead of three and one left over; Back and "Open … →" are 48px too; card
+   edges hold in dark mode. */
+.help-page>.back{min-height:48px;padding-block:8px;}
+.help-jump a,.help-try{min-height:48px;}
+.help-new li:not(.is-new),.help-card,.help-link{border-color:var(--line-2);}
+@media (max-width:760px){
+  .help-jump{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;}
+}

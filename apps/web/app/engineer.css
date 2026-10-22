@@ -691,6 +691,18 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-variation .eng-variation-note .field{margin-top:0;}
 .eng-variation .eng-variation-note button{min-width:140px;font-size:15px;}
 
+/* Release 1 polish E7 (2026-10-22): the Reports view. .eng-report-link is only used there.
+   On a phone every row reads the same way: reference, who and when, then the tags under them,
+   instead of the tags sitting beside one row and dropping under the next. */
+.eng-panel:has(>.eng-report-link){border-color:var(--line-2);}
+.eng-report-link:last-child{border-bottom:0;}
+@media (max-width:640px){
+  .eng-report-link{flex-direction:column;align-items:flex-start;gap:8px;padding:12px 0;}
+  .eng-report-link>span:first-child{width:100%;}
+  .eng-report-link>span:last-child{justify-content:flex-start !important;} /* over the inline style that suits a desk */
+  .eng-report-link small{margin-top:3px;}
+}
+
 /* Release 1 polish E6 (2026-10-22): the Issues view, an issue's page and
    putting a fix forward. Scoped to .eng-issue-tabs, the Issues heading and .issue-eng. */
 /* Yours, Open and All issues read as one choice: three equal parts at button size. */
