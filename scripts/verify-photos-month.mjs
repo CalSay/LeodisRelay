@@ -141,6 +141,8 @@ try {
     check(await month.inputValue()===M3&&await day.inputValue()===d10,'link: a day outside the month named opens the day, in its own month');
     await page.goto(`${base}/photos?project=proj-011lme&month=${shiftMonth(T,2)}`);await count(page,2);
     check(await month.inputValue()===T,'link: a month after this one opens this month');
+    await page.goto(`${base}/photos?project=proj-011lme&month=${shiftMonth(T,2)}&day=${shiftMonth(T,2)}-03`);await count(page,2);
+    check(await month.inputValue()===T&&await day.inputValue()===''&&param(page,'day')===null,'link: a day in a month after this one is dropped with its month');
     await page.goto(`${base}/photos?project=proj-011lme&month=2026-13`);await count(page,TOTAL);
     check(await month.inputValue()==='','link: a month that is not a month opens every month');
 

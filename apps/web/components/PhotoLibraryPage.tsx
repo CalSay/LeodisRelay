@@ -38,13 +38,16 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ini
   const [projectId, setProjectId] = useState(projects.some(p => p.id === initialProject) ? initialProject : projects.length === 1 ? projects[0]!.id : '');
   const [find, setFind] = useState(initialFind);
   const [show, setShow] = useState<PhotoGroup | ''>(isGroup(initialShow) ? initialShow : '');
-  const [day, setDay] = useState(isPhotoDay(initialDay) ? initialDay : '');
   const thisMonth = monthOf(undefined, londonDay(new Date()));
-  // A chosen day sits in the chosen month; a link naming both keeps the day. Never a month after this one.
-  const [month, setMonth] = useState(() => {
-    const m = isPhotoDay(initialDay) && isPhotoMonth(initialMonth) ? initialDay.slice(0, 7) : isPhotoMonth(initialMonth) ? initialMonth : '';
-    return m > thisMonth ? thisMonth : m;
+  // A chosen day sits in the chosen month; a link naming both keeps the day. Never a month after this one,
+  // and a day dropped with its month when that month is pulled back to this one.
+  const [[month, day], setChoice] = useState<[string, string]>(() => {
+    const d = isPhotoDay(initialDay) ? initialDay : '';
+    const m = d && isPhotoMonth(initialMonth) ? d.slice(0, 7) : isPhotoMonth(initialMonth) ? initialMonth : '';
+    return m > thisMonth ? [thisMonth, ''] : [m, d];
   });
+  const setDay = (d: string) => setChoice(([m]) => [m, d]);
+  const setMonth = (m: string) => setChoice(([, d]) => [m, d]);
   const [library, setLibrary] = useState<PhotoLibrary | null>(null);
   const [error, setError] = useState('');
   const [retry, setRetry] = useState(0);

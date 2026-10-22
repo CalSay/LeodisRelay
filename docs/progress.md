@@ -21,7 +21,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   stays inside it, and the day's middle button reads "All of September". The
   month is in the page's link (`month=YYYY-MM`); a link naming a day outside
   the month opens the day in its own month, a month after this one opens this
-  month, and anything not a month is ignored. Choosing another project goes
+  month (dropping a day in that later month), and anything not a month is ignored. Choosing another project goes
   back to every month. On the Weekly summary's Month choice, "Every photograph
   from September 2026, by day" under "A few photographs" opens it, and Back
   returns there. The controls now sit two by two (Project, Month; Day, Find)
@@ -34,8 +34,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   through and say so. Plain display of photographs already sent: no tags,
   albums or annotations (FE-2 stays out).
 - Help: a "What's new" line, and the Photographs line in the page list.
-- Checks: typecheck, `npm test` (146 + 544), build. New
-  `scripts/verify-photos-month.mjs` (42 checks): month choices and counts, a
+- Checks: typecheck, `npm test` (146 + 542), build. New
+  `scripts/verify-photos-month.mjs` (43 checks): month choices and counts, a
   fix added to an issue counted in its month, grouped by day, Day choice and
   Newer/Older day kept inside the month, the find box narrowing a month's
   count, Previous into a month with none and to the oldest (then off), This
@@ -48,6 +48,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   times last month's photographs in the office: 1228 ms (budget 2500), 372 KB
   (budget 500), on the 24,717-photograph seed; the whole check passed. Also
   passed: photo-library, month-summary, help, office-top-bar.
+  A fresh-context review found two things, both fixed: a link with a future
+  month and a day in it kept the day outside the month it opened; and the test
+  count here was wrong.
 - Not verified: real phones, tablets, screen readers.
 ## 2026-10-22 — The office's questions from other sites on the engineer's home
 
