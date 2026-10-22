@@ -54,6 +54,59 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Walked on the busy seed at 1440 light and dark and 390.
 - Not verified: a real phone or screen reader.
 
+## 2026-10-22 — Gas Safe Register mark on report PDFs
+
+- Why: Cal sent the Gas Safe Register logo pack after #168 put the CHAS,
+  REFCOM and MCS marks in the PDF footer. Not a `docs/tasks.json` task.
+- Changed: `packages/documents/assets/accreditation-gas-safe.png` (150 px
+  high, 2 KB), listed fourth in `branding.ts` `accreditations` (upload
+  order). The #168 Help "What's new" line now names it too.
+- Verified: `npm run typecheck`, `npm test`, `node scripts/verify-long-pdfs.mjs`
+  (all 10 pass), sample PDFs looked at: the four marks fit the footer strip,
+  page counts unchanged. Not verified: printed on paper. Not live until the
+  next deploy.
+
+## 2026-10-22 — Issue page: the raised photograph near the top
+
+- Why: the coordinator asked for a walk of the engineer's issue page at 390px
+  on main 76fa669: an open issue, one the office sent back and one 30 days past
+  its target. "Add photograph", "Put forward as fixed" and the office's reason
+  were on the first screen in all three, but no photograph of the fault showed
+  anywhere until History was opened and scrolled: on site that photograph is
+  the quickest way to know which tray, socket or fitting is meant. The old
+  issue also gave its target date without saying it had passed, which the
+  office screens say since #157. Not a `docs/tasks.json` task, so no status
+  changed. Within Cal's 21 Oct direction (the engineer's job simpler).
+- Changed (`app/issues/[id]/page.tsx`, engineer view only): a "Photograph(s)"
+  row under "Who is fixing it" with the raised photographs as 80px
+  thumbnails; each opens a larger copy (`?variant=pdf`) in a new tab, as the
+  office's Check a fix does; an older inline photo is shown, not linked.
+  "Who is fixing it" adds ", N days past target" in red when past. History
+  keeps everything as before. Help "What's new" line.
+- Decided (Claude): opened from "Came back from the office" (`?update=1`)
+  with a very long description, the row would push "Add photograph" off the
+  landing screen (66px in `verify-came-back-to-update`'s longest case), so
+  for that visit only the row moves just under the buttons. Thumbnails are
+  80px, not 96px: at 96px the check's "long" case (a long description,
+  not the longest) landed with "Put forward as fixed" 8px off the screen;
+  at 80px it lands with both buttons in view and the row in place. Only the raised photographs, not later ones: those are
+  fixes and updates, still in History.
+- Verified: typecheck, `npm test` (146 + 569), build. New
+  `scripts/verify-issue-raised-photo.mjs` (91 checks, light and dark at
+  390x844: photograph, office reason and both buttons on the first screen;
+  larger copy loads; inline photo not linked; no row without a photograph;
+  days past target only when past; History still holds it; 48px buttons; axe
+  on the facts; no sideways scroll; longest description from Came back keeps
+  the camera in view; office page unchanged). Also passed: simpler-issue-page
+  (76), came-back-to-update (36), sent-back-reason (22), fix-forward-next
+  (73), sent-back-fix (29), issue-provenance (18), issue-assign (48),
+  issues-here (63), help, accessibility (584), role-access (95),
+  engineer-layout. Screens: project files `ui-review/issue-page-phone/`
+  (before and after at 390 light, after dark, office 1440 dark).
+- Not verified: a real phone; how a phone opens the larger copy in a new tab
+  when installed to the home screen. Left as is (review): an unassigned issue
+  with a past target date gets no "days past target", since a target is only
+  set on assignment.
 ## 2026-10-22 — Site coverage: trades with no report yet this week
 
 - Why: the coordinator asked for a per-site line on Site coverage naming the
