@@ -705,23 +705,25 @@ body:has(.ws){overflow:hidden auto}
 .ws .topbar-right :is(.bell,.whoami,.tbtn){display:inline-block;line-height:24px;padding:4px 10px;border:1px solid transparent;border-radius:var(--r)}
 .ws .topbar-right .themebtn{min-height:34px;padding:4px 10px;border-color:transparent}
 @media (hover:hover){.ws .topbar-right :is(.tbtn,.themebtn):hover{border-color:var(--line-2);color:var(--text)}}
-.ws .topbar-right .whoami+.themebtn,.ws .topbar-right form+.themebtn{margin-right:var(--s2)}
+.ws .topbar-right form+.themebtn{margin-right:var(--s2)}
 .ws .topbar-right .tbtn-help{border-left:1px solid var(--line-2);border-radius:0 var(--r) var(--r) 0;padding-left:var(--s4)}
 
 @media (max-width:700px){
-  /* The company is named by the title under it; without it the name, Attention and Help share the logo's row. */
+  /* The company name beside RELAY is left off on a phone (the hub's Switch company names it), so the name, Attention and Help share the logo's row. */
   .ws .logo span{display:none}
   .ws .topbar{row-gap:var(--s2)}
   .ws .topbar-right{gap:0}
-  .ws .topbar-right :is(.bell,.whoami,.tbtn){min-height:44px;padding:4px 8px}
+  .ws .topbar-right :is(.bell,.whoami,.tbtn){min-height:48px;padding:4px 8px}
   .ws .topbar-right .tbtn:not(.tbtn-help),.ws .topbar-right .themebtn{display:none}
   .ws .topbar-right .tbtn-help{border-left:0;padding-left:8px}
   .ws .whoami{max-width:136px}
   .ws .cols[data-depth="1"] .col-main>.colpad{padding:var(--s3)}
   .ws .office-title{flex-direction:column;align-items:stretch;gap:var(--s3);padding-bottom:var(--s3)}
   .ws .office-title h3{font-size:20px}
+  .ws .act-h{padding-top:var(--s3)}
   .ws .office-title .actions{display:grid;grid-template-columns:1fr 1fr}
   .ws .office-title .actions .btn-q{justify-content:center}
   .ws .cols[data-depth="1"] .sheet .sec-h{margin-top:var(--s5)}
   .ws .cols[data-depth="1"] .acts{margin-top:var(--s4);gap:var(--s3)}
 }
+@media (max-width:380px){.ws .whoami{max-width:104px}}

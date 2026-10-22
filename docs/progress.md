@@ -18,8 +18,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   buttons on the first screen. In the top bar the theme button had a frame
   and nothing else did. On a phone the top bar took three rows (RELAY alone,
   then Attention, name and Help, then search).
-- Changed (`workspace.css` new block at the end, scoped to `.cols[data-depth="1"]`
-  and `.topbar-right`; `ProjectsView.tsx` OfficeSheet and the action lists):
+- Changed (`workspace.css` new block at the end, its rules on classes only
+  the overview and the office top bar use; `ProjectsView.tsx` OfficeSheet and
+  the action lists):
   the overview's sections are cards with `--line-2` edges on the sunken
   ground; the column heading is kept for screen readers only (its text,
   "Overview", is what the landing checks read); the title is one line
@@ -27,7 +28,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   buttons are quiet (`BtnQ`); the top bar's controls share one height and
   frame, with a line before Help, Engineer view and Switch company; on a phone
   the company name beside RELAY is hidden, so name, Attention and Help share
-  its row. No `globals.css` token changes, no shared component changed. The
+  its row, and those three are 48px tall (narrower than 380px the name is
+  cut shorter so they keep the row). The company name is then not shown on
+  a phone's office desk; on a desk it stays in the top bar. No `globals.css` token changes, no shared component changed. The
   Attention bell, its list and "Also needs attention" are untouched (#154 is
   open on them). Help "What's new" line added.
 - Verified: typecheck, `npm test` (146 + 581), build. Browser, one at a
