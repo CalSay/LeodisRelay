@@ -94,6 +94,10 @@ try {
     await page.getByRole('combobox',{name:/^Project/}).selectOption('proj-014lme');await loaded(page);await settle(page);
     check((await page.evaluate(where)).scrollY===0,`${who}: changing project does not move the page`);
 
+    // A link naming a day but no project waits for a project; choosing one then leaves the page where it is.
+    await page.goto(`${base}/photos?day=${days[3]}`);await page.getByRole('combobox',{name:/^Project/}).selectOption('proj-011lme');await loaded(page);await settle(page);
+    check((await page.evaluate(where)).scrollY===0,`${who}: choosing a project after a link with no project does not move the page`);
+
     // A link that names a day, as a visit's "N photographs" on the Weekly summary does.
     await page.goto(`${base}/photos?project=proj-011lme&day=${days[3]}`);await loaded(page);await settle(page);m=await page.evaluate(where);
     inView(m,`${who}: a link naming a day`);

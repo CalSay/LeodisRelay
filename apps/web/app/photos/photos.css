@@ -46,7 +46,7 @@
 @media (max-width:640px){
   .photos-controls{grid-template-columns:1fr;}
   /* The heading names the project, and "Every month", "Every day" or the chosen one say what each choice is,
-     so the first screen keeps room for photographs. The words stay for screen readers. */
+     so the first screen keeps room for photographs. The two titles stay for screen readers. */
   .photos-intro{display:none;}
   .photos-when .photos-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;}
   .photos-day-step{gap:6px;}

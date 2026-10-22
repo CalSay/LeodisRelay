@@ -143,7 +143,7 @@ export function PhotoLibraryPage({ initialProject, initialFind, initialShow, ini
     <div className="eng-heading"><h1>Photographs{project ? ` · ${project.projectName}` : ''}</h1>
       <p className="photos-intro">Every photograph sent from site on this project, newest first. Pick a month or a day, or find a place to see how it looked on each visit.</p></div>
     <div className="photos-controls">
-      <label>Project<select value={projectId} onChange={e => { setProjectId(e.target.value); setMonth(''); setDay(''); }}>
+      <label>Project<select value={projectId} onChange={e => { setProjectId(e.target.value); setMonth(''); setDay(''); jumped.current = jump; }}>
         <option value="">Choose a project</option>
         {projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} {p.projectName}</option>)}
       </select></label>
