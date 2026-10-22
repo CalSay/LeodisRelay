@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'update-says-its-day', added: '2026-10-22', audience: 'site', title: 'An update says which day it is for',
+    text: 'A site update now says under its title which day it is for ("For today, Thu 22 Oct"), and Check & send says the day the office files it under. If you open one left unsent from an earlier day, a note says so: the office files everything in it under that day, so send it as it is and put anything from today in today\'s update. "Go to today\'s update" on the note opens today\'s, or starts it if you have not yet. Nothing in the older update is changed or removed. Checked in a phone-sized browser, light and dark, not on a real phone.' },
   { id: 'not-seen-two-weeks', added: '2026-10-22', audience: 'office', title: 'Not seen yet means the last two weeks',
     text: '"Not seen yet" in the office now counts the reports received in the last two weeks that nobody in the office has opened, so it can come down to nought once you have read what came in. Older reports nobody opened are no longer counted; the Inbox says how many there are and "List them too" shows them. A report that a correction has replaced is not counted either: open the correction. Nothing is marked seen for you, so an engineer still sees "Seen by the office" only when someone opened it. Checked in a desktop browser and a phone-sized window, not on a real phone.',
     link: { label: 'Open the Inbox', href: '/office#/inbox/show/notAck' } },
@@ -477,7 +479,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
     { id: 'first-update', heading: 'Your first site update', ordered: true, steps: [
       'If you work on more than one site, the first time RELAY asks "Which site are you on?": tap yours and it is remembered on your phone. After that, check the current project on your home screen. "Change" picks another.',
       'Tap "Start today’s site update". It opens on a progress card: say where, what happened, and take a photograph. To start with something else, tap "+ Defect", "+ Variation" or "+ Access" under the card and the empty card becomes that; "Change kind", next to "Remove" on the card, changes it once you have started. For the next thing, tap "+ Progress", "+ Defect", "+ Variation" or "+ Access" under the cards; a place you have already used is one tap under "Where".',
-      'It saves as you go: "Saved to RELAY" at the bottom means it is safe even if you lose your phone, and your phone keeps a copy too. The office sees it once you send it. Leave it whenever you like; "Carry on with today’s update" opens it again. One left from an earlier day waits under "Unfinished reports", and the big button starts today’s.',
+      'It saves as you go: "Saved to RELAY" at the bottom means it is safe even if you lose your phone, and your phone keeps a copy too. The office sees it once you send it. Leave it whenever you like; "Carry on with today’s update" opens it again. One left from an earlier day waits under "Unfinished reports", and the big button starts today’s. Open it and a note says which day it is for: the office files everything in it under that day, so send it as it is and put today’s work in today’s update.',
       'When you are done, tap "Check & send", then "Send to office". It is then on file and cannot be changed, only corrected.',
     ] },
     { id: 'after-send', heading: 'After you send', ordered: false, steps: [
