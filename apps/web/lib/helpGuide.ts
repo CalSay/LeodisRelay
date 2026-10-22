@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-previous-trade-update', added: '2026-10-22', audience: 'office', title: 'Site updates: open the same trade\'s previous visit',
+    text: 'When the office opens a site update, a line under its title now names the same trade\'s previous update on that site, for example "Previous Electrical update here: Wed 21 Oct, the day before · Sam Spark", and the next one when there is a later one. Select it to open that update and see what changed since the trade was last there. It works in the Inbox reader and in the project. A correction counts in place of the update it corrects, inspections are left out, and an update with no trade is matched to the same person. Checked in a desktop browser (light and dark) and a phone-sized window, not on a real phone.',
+    link: { label: 'Open the Inbox', href: '/office#/inbox' } },
   { id: 'issue-raised-photo', added: '2026-10-22', audience: 'site', title: 'An issue shows its photograph at the top',
     text: 'Opening an issue now shows the photograph taken when it was raised, small, under "Who is fixing it", so you can see which tray, socket or fitting it means without opening History. Tap it to see it larger (an older photograph kept on the issue itself shows only small). "Add photograph" and "Put forward as fixed" are still on the first screen for most issues; on one with a very long description, opened from "Came back from the office", the photograph sits just under "Update this issue" instead. An issue past its target date also says how many days past target it is, as the office screens do. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'coverage-quiet-trades', added: '2026-10-22', audience: 'office', title: 'Site coverage: trades with no report yet this week',
