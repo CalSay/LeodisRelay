@@ -4,6 +4,50 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 release check (seventeenth), and "Instructed · undefined"
+
+- Why: exit check in `docs/release-1.md` once E6 (#201) and E7 (#202) had
+  merged. Checked commit: main **de9d726** (#2 to #202 minus #28, #130,
+  #142, #154).
+- Typecheck, `npm test` (146 + 591) and `npm run build` pass. All 131
+  `scripts/verify-*.mjs` checks, one at a time (Node 22, Chromium 141): 129
+  pass. The two that fail are `verify-site-coverage` (the check is wrong
+  from Thursday to Sunday) and `verify-undo-remove` (Undo focus on a phone),
+  the two #142 fixes. With #142 merged into main in a scratch worktree (only
+  `docs/progress.md` conflicted), both pass (30 and 82 checks).
+  verify-busy-projects, verify-day-walkthrough (117) and
+  verify-pdf-navigation passed first time.
+- An earlier pass on 65b3ba8 also saw `verify-previous-trade-update` time
+  out twice in a row (waiting for an Inbox report to open in its project,
+  line 107). It then passed 26 runs in a row, under CPU load too, and on
+  de9d726. Not reproduced, so not called a fault; watch it.
+- Walk: 48 screens (engineer and office) on the busy example data at 390px
+  and 1440px, light and dark, 192 screenshots. Nothing scrolls sideways.
+  One real fault, fixed here: a variation marked Instructed with no
+  instruction reference (as the Variation Register can hold one; RELAY's own
+  Instruct form insists on it) showed "Instructed · undefined" on the
+  engineer's variation page, and "undefined" in the office project list,
+  the variation sheet and its "No signed copy" note. `instructionParts` in
+  `lib/variations.ts` now leaves out a missing part; the register and sheet
+  say "no reference recorded" when nothing is known. Unit test added.
+  Rechecked after the fix with the walk's variation screens (engineer page,
+  office sheet and register, 390 and 1440, light and dark) and these browser
+  checks: office-registers (225), office-desk (73), september-office (43),
+  engineer-day (37), office-links (65), search (31), accessibility (584).
+- Docker: the image built from a clean `git archive` of de9d726 starts
+  healthy (`/api/health` ok, `/signin` 200 with local sign-in allowed). The
+  check machine pulled the Node base image through Google's Docker Hub mirror
+  because Docker Hub refused it (rate limit); the repo's Dockerfile is
+  unchanged.
+- Seen and not faults: broken photograph boxes and 404s (the busy seed
+  points at photographs it never writes), "The PDF is still being made" (no
+  PDF worker in the walk), "Seen Fri 23 Oct" in the future (the seed dates
+  today's reports later than now), and sent tower and safety inspections in
+  the Reports list with safety switched off (by design since #85; the live
+  pilot has run with the switch off since 03188ee and had no safety
+  inspections before it, so it should hold none; reasoned, not checked).
+- Not checked: a real phone, a screen reader, a printer, a live tenant.
+
 ## 2026-10-22 — Release 1 polish E7: Reports, My week, Photographs, Site notes, Search, Help
 
 - Why: task E7 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on

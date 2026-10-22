@@ -8,7 +8,7 @@ import {correctReport,createReport,saveDraft,submitReport} from '../lib/serverSt
 import {applyVariationCommand,listVariations,raiseOfficeVariation} from '../lib/variationStore';
 import {canRaiseVariation,canVariationCommand} from '../lib/auth/access';
 import {database} from '../lib/storage';
-import {INSTRUCTION_CHOICE,INSTRUCTION_LABEL,estimatedMargin,expectedCost,instructionFromChoice,isCharged,marginPct,readCosting,suggestedQuote,variationValue} from '../lib/variations';
+import {INSTRUCTION_CHOICE,INSTRUCTION_LABEL,estimatedMargin,expectedCost,instructionFromChoice,instructionParts,isCharged,marginPct,readCosting,suggestedQuote,variationValue} from '../lib/variations';
 import type {Observation,Report,Variation} from '../lib/types';
 
 const engineer:Principal = {id:'entra:engineer' as never,oid:'engineer',name:'G. Stephenson',email:'g@example.test',role:'Engineer',trade:'Electrical'};
@@ -219,4 +219,11 @@ test('variations are raised at submission and worked by the office in step with 
       assert.equal(canVariationCommand(manager,'delete'),false);
     });
   } finally { database().close(); rmSync(root,{recursive:true,force:true}); }
+});
+
+test('an instruction read with blank parts from the register never shows "undefined"', () => {
+  assert.equal(instructionParts('CI-014', 'J. Smith', '2026-10-20'), 'CI-014 · J. Smith · 2026-10-20');
+  assert.equal(instructionParts('Instructed', undefined), 'Instructed');
+  assert.equal(instructionParts(undefined, ' ', '2026-10-20'), '2026-10-20');
+  assert.equal(instructionParts(undefined, undefined), '');
 });

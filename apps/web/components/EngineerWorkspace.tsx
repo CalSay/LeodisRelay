@@ -27,7 +27,7 @@ import { ToolboxTalksRow } from './ToolboxTalksRow';
 import { PermitsRow } from './PermitsRow';
 import { PageTitle } from './PageTitle';
 import { ISSUE_WORK, acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
-import { fmtMoney, variationValue } from '@/lib/variations';
+import { fmtMoney, instructionParts, variationValue } from '@/lib/variations';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { withViewReturn } from '@/lib/viewNavigation';
 import { CHECKLIST_TYPES, INSPECTED_MAX, inspectedName, reportTypeOf, type ReportTypeDef, type ReportTypeId } from '@/lib/reportTypes';
@@ -62,7 +62,7 @@ function IssueTags({i}:{i:Issue}) {
 }
 /** The office's answer on a variation the engineer raised. */
 export function VariationTags({v}:{v:Variation}) {
-  if (v.instruction === 'instructed') return <><span className="tag tag-sent">Instructed</span><span>{v.instructionReference} · {fmtMoney(variationValue(v))}</span></>;
+  if (v.instruction === 'instructed') return <><span className="tag tag-sent">Instructed</span><span>{instructionParts(v.instructionReference, fmtMoney(variationValue(v)))}</span></>;
   if (v.instruction === 'declined') return <span className="tag tag-draft">Declined</span>;
   if (v.instruction === 'within_contract') return <><span className="tag tag-draft">Within contract</span><span>not charged</span></>;
   if (v.workDone) return <><span className="tag tag-alert">Done, not instructed</span><span>the office is getting the client’s sign-off</span></>;
