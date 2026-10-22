@@ -241,6 +241,8 @@ body:has(.ws){overflow:hidden auto}
 .ws .sheet-title :is(h3,h4){margin:6px 0 var(--s1);font-size:18px;font-weight:500;letter-spacing:-.015em}
 .ws .crumbs{font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:.03em}
 .ws .crumbs a,.ws .crumbs button{font-weight:500;color:var(--acc);font:inherit}
+/* Underlined, so a crumb reads as a link by more than its colour (axe link-in-text-block). */
+.ws .crumbs a{text-decoration:underline;text-underline-offset:2px}
 .ws .crumbs a:hover,.ws .crumbs button:hover{text-decoration:underline}
 .ws .crumbs span{margin:0 6px;color:var(--line-2)}
 
@@ -641,3 +643,11 @@ body:has(.ws){overflow:hidden auto}
   .ws table.issue-reg .late-days{display:block;font-family:var(--sans);font-size:12px;color:var(--text-3)}
   .ws table.issue-reg .late-days .sep{display:none}
 }
+/* An inspection in the office reader: its tally under the heading, then the checks that passed folded under one button. */
+.ws .check-tally{margin:var(--s2) 0 var(--s3);font-size:14px;color:var(--text-2)}
+.ws .check-tally b{font-weight:500;color:var(--text)}
+.ws .check-tally b.late{color:var(--alert)}
+.ws .checks-passed{border-top:1px solid var(--line);padding-top:var(--s3)}
+.ws .checks-passed>.btn{margin-bottom:var(--s2)}
+/* "Not applicable" is wider than the answer column: let it wrap rather than run into the check. */
+.ws .hist .d .kind{white-space:normal}

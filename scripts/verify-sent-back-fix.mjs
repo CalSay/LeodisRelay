@@ -105,7 +105,7 @@ try {
       await dialog.getByRole('button',{name:'Skip'}).click();await page.waitForTimeout(300);}
     await dialog.locator('.cf-back').waitFor();
     const words=flat(await dialog.innerText());
-    ok(words.includes(`Sent back by Jo Office on`)&&words.includes(`“${REASON}”`)||words.includes(REASON),`${label}: the window says who sent it back and why: ${words}`);
+    ok(words.includes('Sent back by Jo Office on')&&words.includes(`“${REASON}”`),`${label}: the window says who sent it back and why: ${words}`);
     ok(words.indexOf(REASON)<words.indexOf('Their note'),`${label}: the reason comes before their note`);
     const fixSrc=await dialog.locator('.cf-side').nth(1).locator('img').first().getAttribute('src');
     ok(fixSrc&&!fixSrc.includes(firstFix.id)&&fixSrc.includes(getIssue('901').events.at(-1).photos[0].id),`${label}: the fix shown is the new photo, not the one sent back`);
