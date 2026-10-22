@@ -106,7 +106,7 @@ try {
   // 5. Check, then send.
   await tap(page.locator('.actionbar').getByRole('button',{name:/Check & send/}),'Check & send');
   await page.locator('#report-check').waitFor();
-  await page.getByText('Saved on server',{exact:true}).waitFor({timeout:20000});
+  await page.getByText('Saved to RELAY',{exact:true}).waitFor({timeout:20000});
   eq(await page.locator('.find-stop').count(),0,'nothing stops the update being sent');
   await measure('check step');await shot('06-check');
   await tap(page.getByRole('button',{name:'Send to office'}),'Send to office');
@@ -135,7 +135,7 @@ try {
     await page.waitForURL(/\/reports\//);await open().getByLabel('Where',{exact:true}).waitFor();
     // The action bar steps aside while a box has the keyboard, so its words are looked for, not looked at.
     // The card it opens on is saved straight away, like any edit.
-    await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached',timeout:20000});
+    await page.getByText('Saved to RELAY',{exact:true}).waitFor({state:'attached',timeout:20000});
     eq(await page.locator('.eng-cardrow').count(),1,'a new update opens on one card');
     // A blank card that is never used goes when the engineer checks: nothing was in it.
     await page.locator('.eng-add-kinds').getByRole('button',{name:'+ Defect'}).tap();
@@ -156,7 +156,7 @@ try {
     await page.reload();await page.locator('.eng-cardrow').first().waitFor();
     ok(/Riser 3/.test(await page.locator('.eng-cardrow').first().innerText()),'the defect written with no signal is still there after a reload');
     eq(await page.locator('.eng-cardrow').count(),1,'and the blank card has not come back');
-    await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached',timeout:30000});
+    await page.getByText('Saved to RELAY',{exact:true}).waitFor({state:'attached',timeout:30000});
     ok(true,'it went up to the server once there was signal');
   }
   eq(errors.length,0,`no page errors (${errors.join(' | ')})`);

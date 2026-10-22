@@ -133,13 +133,13 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
                   </li>)}
                   {p.drafts.map(r => <li key={r.id} className="mw-draft">
                     <p><Link className="ref" href={withViewReturn(`/reports/${r.id}`, here)}>{r.reference}</Link><span className="tag tag-alert">Not sent yet</span></p>
-                    <p className="mw-meta">{r.correction ? 'Correction draft' : `${r.typeName} draft`} · {plural(r.cards, r.typeName === 'Site update' ? 'card' : 'check')} · open it to sign and send</p>
+                    <p className="mw-meta">{r.correction ? 'Correction draft' : `${r.typeName} draft`} · {plural(r.cards, r.typeName === 'Site update' ? 'card' : 'check')} · open it to finish and send</p>
                   </li>)}
                 </ul>
               </section>)}
           </li>)}
         </ol>
-        <p className="mw-foot">Made from what you recorded in RELAY: reports you sent, placed on the visit day you gave; defects you flagged on their own; updates you added on an issue{safetyRecords ? '; and toolbox talks, permits and deliveries you recorded, closed or sorted' : ''}. Issues raised counts each defect, access problem or inspection action you raised this week once, whether it came from a report or you flagged it on its own: the same count the office sees. It counts on the day the issue reached the office, so a report sent a day or more after the visit can have its issues in the next week. A corrected report replaces the one it corrects. RELAY does not know your hours, so check the times before you send a timesheet.</p>
+        <p className="mw-foot">Made from what you sent in RELAY: reports on the visit day you gave, defects flagged on their own and updates on issues{safetyRecords ? ', and toolbox talks, permits and deliveries' : ''}. Issues raised counts each issue once, on the day it reached the office, the same as the office sees. RELAY does not know your hours, so check the times before you send a timesheet.</p>
       </>}
   </main>;
 }

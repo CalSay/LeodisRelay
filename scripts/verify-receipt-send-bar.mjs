@@ -118,7 +118,7 @@ try {
     await clear('cards');
     await tap(page.locator('.eng-steps').getByRole('button',{name:/Check & send/}));
     await page.locator('#report-check .eng-does').waitFor();
-    await page.locator('.actionbar .savestate').getByText(/^(Ready to send|Saved on server)$/).waitFor({timeout:20000});
+    await page.locator('.actionbar .savestate').getByText(/^(Ready to send|Saved to RELAY)$/).waitFor({timeout:20000});
     eq(await page.locator('#report-check .eng-does .eng-row').count(),3,`${label}: "What sending does" lists the issue, the variation and the office`);
     await clear('update check');
     const does=await page.locator('#report-check .eng-does').evaluate(d=>d.getBoundingClientRect().bottom),barTop=await page.locator('.actionbar').evaluate(b=>b.getBoundingClientRect().top);

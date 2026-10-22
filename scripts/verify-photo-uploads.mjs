@@ -43,14 +43,14 @@ try {
     await page.goto(`${base}/reports/${report.id}`);
     const row=page.locator('.eng-cardrow').first();
     await row.waitFor();
-    check((await row.locator('.eng-where').innerText())==='On the server',`${scheme}: a card loaded from the server says so: ${await row.innerText()}`);
+    check((await row.locator('.eng-where').innerText())==='Saved',`${scheme}: a card loaded from the server says so: ${await row.innerText()}`);
     if(width<900)await row.click();
     const slot=width<900?page.locator(`#slot-${cardId}`):page.locator('#card-editor');
     const shots=slot.locator('.shot');
     // A photo taken with the server up goes up with the card.
     await slot.locator('input[type=file]').setInputFiles({name:'first.jpg',mimeType:'image/jpeg',buffer:await jpeg('#997744')});
-    await shots.nth(0).locator('.eng-where',{hasText:/^On the server$/}).waitFor({timeout:20000});
-    await row.locator('.eng-where',{hasText:/^On the server$/}).waitFor();
+    await shots.nth(0).locator('.eng-where',{hasText:/^Saved$/}).waitFor({timeout:20000});
+    await row.locator('.eng-where',{hasText:/^Saved$/}).waitFor();
     check(getReport(report.id).observations[0].photos.length===1,`${scheme}: the first photo is in the server's copy`);
     // Stop the server: the next photo and the changed words stay on this phone, and say so.
     await stop();
@@ -60,7 +60,7 @@ try {
     await row.locator('.eng-where',{hasText:/changes/}).waitFor();
     await page.evaluate(()=>document.activeElement?.blur());
     await page.locator('.savestate',{hasText:'On this phone only'}).waitFor({timeout:20000});
-    check((await shots.nth(0).locator('.eng-where').innerText())==='On the server',`${scheme}: the photo already sent stays on the server`);
+    check((await shots.nth(0).locator('.eng-where').innerText())==='Saved',`${scheme}: the photo already sent stays on the server`);
     const offRow=await row.locator('.eng-where').innerText();
     check(offRow==='Only on this phone · changes and 1 photograph',`${scheme}: the card says what is still to go up: ${offRow}`);
     check(/On this phone only/.test(await page.locator('.savestate').innerText()),`${scheme}: the save state agrees`);
@@ -69,19 +69,19 @@ try {
     await page.locator('.actionbar .btn-primary').click();
     const summary=page.locator('.eng-check p.eng-where');
     await summary.waitFor();
-    check((await summary.innerText())==='1 card and 1 photograph are only on this phone. They go up by themselves when the server can be reached.',`${scheme}: the check step says what is only on this phone: ${await summary.innerText()}`);
+    check((await summary.innerText())==='1 card and 1 photograph are only on this phone. They go up by themselves when RELAY can be reached.',`${scheme}: the check step says what is only on this phone: ${await summary.innerText()}`);
     // Restart it: without anyone touching the page, everything reaches the server.
     await start();
     await page.locator('.eng-check p.eng-where-server').waitFor({timeout:45000});
     const back=await summary.innerText();
-    check(back==='The card and 2 photographs are on the server.',`${scheme}: after the restart the check step says everything is on the server: ${back}`);
+    check(back==='The card and 2 photographs are saved to RELAY.',`${scheme}: after the restart the check step says everything is on the server: ${back}`);
     const saved=getReport(report.id).observations[0];
     check(saved.photos.length===2&&saved.photos[0].caption==='Bracket missing',`${scheme}: the server's copy has both photos and the caption`);
     if(screenshot)await page.screenshot({path:join(screenshot,`uploads-check-${scheme}-${width}.png`),fullPage:true});
     await page.goBack();
     if(width<900&&!(await slot.locator('.shot').first().isVisible()))await row.click();
-    check((await row.locator('.eng-where').innerText())==='On the server',`${scheme}: the card is on the server again`);
-    check((await shots.locator('.eng-where').allInnerTexts()).every(t=>t==='On the server'),`${scheme}: both photos are on the server`);
+    check((await row.locator('.eng-where').innerText())==='Saved',`${scheme}: the card is on the server again`);
+    check((await shots.locator('.eng-where').allInnerTexts()).every(t=>t==='Saved'),`${scheme}: both photos are on the server`);
     if(screenshot)await page.screenshot({path:join(screenshot,`uploads-online-${scheme}-${width}.png`),fullPage:true});
     const scroll=await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth);
     check(!scroll,`${scheme}: no sideways scroll at ${width}px`);

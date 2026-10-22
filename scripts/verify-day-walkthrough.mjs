@@ -187,7 +187,7 @@ try {
   await open.getByRole('button',{name:/Fire stopping missing round pipework/}).click();
   await open.getByLabel(/What’s wrong/).first().fill('Fire stopping still missing round the pipework');
   await open.locator('input[type=file]').first().setInputFiles({name:'riser.jpg',mimeType:'image/jpeg',buffer:await jpeg('#996633')});
-  await open.getByText('On the server').last().waitFor({timeout:15000});
+  await open.getByText('Saved',{exact:true}).last().waitFor({timeout:15000});
   await open.getByRole('button',{name:'Done with this card'}).click();
   await page.locator('.eng-add-kinds').getByRole('button',{name:'+ Defect'}).click();
   open=page.locator('.eng-slot.open');
@@ -211,10 +211,10 @@ try {
   ok(/kept on this phone/i.test(await page.evaluate(()=>document.body.innerText))&&await page.getByRole('link',{name:/Sign in again/}).count()>0,'site update: signed out, it says the card is kept and offers to sign in again');
   await shot(page,'engineer-signed-out-light-390');
   session(true);await page.evaluate(()=>window.dispatchEvent(new Event('focus')));
-  await saveState.filter({hasText:'Saved on server'}).waitFor({timeout:40000});
+  await saveState.filter({hasText:'Saved to RELAY'}).waitFor({timeout:40000});
   ok(getRecord('reports',updateId).observations.some(o=>o.whatHappened==='Socket faceplate cracked, kitchen side'),'site update: once signed in again the card saved by itself');
   await open.locator('input[type=file]').first().setInputFiles({name:'socket.jpg',mimeType:'image/jpeg',buffer:await jpeg('#aa3333')});
-  await open.getByText('On the server').last().waitFor({timeout:15000});
+  await open.getByText('Saved',{exact:true}).last().waitFor({timeout:15000});
   await open.getByRole('button',{name:'Done with this card'}).click();
   // Signal goes in the corridor.
   await ec.setOffline(true);
@@ -231,7 +231,7 @@ try {
   for(let k=0;k<60&&getRecord('reports',updateId).observations.length<3;k++)await sleep(250);
   ok(getRecord('reports',updateId).observations.length===3,'site update: the card reached the server once signal returned');
   await page.locator('.actionbar').getByRole('button',{name:/Check & send/}).click();await page.locator('#report-check').waitFor();
-  await page.getByText(/All 3 cards and 3 (photos|photographs) are on the server/).waitFor({timeout:20000});checks++;
+  await page.getByText(/All 3 cards and 3 (photos|photographs) are saved to RELAY/).waitFor({timeout:20000});checks++;
   const pad=page.locator('canvas.sigpad');await pad.scrollIntoViewIfNeeded();const box=await pad.boundingBox();
   await page.mouse.move(box.x+20,box.y+40);await page.mouse.down();for(let x=20;x<box.width-20;x+=12)await page.mouse.move(box.x+x,box.y+40+Math.sin(x/15)*20);await page.mouse.up();
   await sleep(500);
@@ -309,7 +309,7 @@ try {
   await ec.setOffline(true);
   await page.reload();
   await page.getByText('No signal, so RELAY cannot check with the office just now.').waitFor({timeout:15000});checks++;
-  ok(!/0 open/.test(await row('Site issues').innerText())&&!/0 on file/.test(await row('Reports').innerText()),'no signal: no counts of nothing');
+  ok(!/0 open/.test(await row('Site issues').innerText())&&!/0 sent/.test(await row('Reports').innerText()),'no signal: no counts of nothing');
   ok(!/\b0 open issues\b/.test(await page.locator('main').innerText()),'no signal: This project shows no zero');
   await row('Notes for the next visit').filter({hasText:'copy on this phone'}).waitFor();
   ok(/2 notes · copy on this phone/.test(await row('Notes for the next visit').innerText()),'no signal: notes come from the copy on the phone');

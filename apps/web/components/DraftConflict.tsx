@@ -12,18 +12,18 @@ const STATUS: Record<CardDiff['status'], string> = {
   same: 'Same in both',
   changed: 'Changed in both',
   here: 'Only on this screen',
-  there: 'Only on the server',
+  there: 'Only in the saved copy',
 };
 /** What the server copy this screen built on says happened, when it is known. */
 const CHANGE: Record<NonNullable<CardDiff['change']>, string> = {
-  'changed-there': 'Changed on the server',
+  'changed-there': 'Changed in the saved copy',
   'changed-here': 'Changed on this screen',
-  'removed-there': 'Removed on the server',
+  'removed-there': 'Removed from the saved copy',
   'removed-here': 'Removed on this screen',
 };
 const CHOICE: Record<CardChoice, string> = {
   here: 'Keep this screen’s',
-  there: 'Keep the server’s',
+  there: 'Keep the saved copy’s',
   both: 'Keep both as two cards',
   none: 'Leave it out',
 };
@@ -83,7 +83,7 @@ export function DraftConflict({ here, there, base, saving, unheld, onSave }: {
 
     <div className="eng-conflict-all" role="group" aria-label="Keep a whole version">
       <button type="button" className="btn-sm" onClick={() => all('here')}>Keep everything on this screen</button>
-      <button type="button" className="btn-sm" onClick={() => all('there')}>Keep everything on the server</button>
+      <button type="button" className="btn-sm" onClick={() => all('there')}>Keep everything in the saved copy</button>
     </div>
 
     <div className="sec"><span className="lbl">{differing.length} card{differing.length === 1 ? '' : 's'} differ{differing.length === 1 ? 's' : ''}{same ? ` · ${same} the same` : ''}</span></div>
@@ -103,7 +103,7 @@ export function DraftConflict({ here, there, base, saving, unheld, onSave }: {
             const o = side === 'here' ? card.here! : card.there!;
             const other = side === 'here' ? card.there : card.here;
             return <div key={side} className={`eng-conflict-side ${choice === side || choice === 'both' ? 'is-kept' : ''}`}>
-              <span className="lbl">{side === 'here' ? 'On this screen' : 'On the server'}</span>
+              <span className="lbl">{side === 'here' ? 'On this screen' : 'Saved copy'}</span>
               <dl>{FIELDS.map(f => {
                 const value = f.value(o);
                 const differs = !!other && f.value(other) !== value;

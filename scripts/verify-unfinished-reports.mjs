@@ -60,11 +60,11 @@ try {
     await hold(page,{key:`${principal.id}::${lost.id}`,reportId:lost.id,principalId:principal.id,seq:'s2',observations:[card()],heldAt:'2026-10-20T07:00:00.000Z',baseVersion:1,report:lost});
     await hold(page,{key:`${principal.id}::${sent.id}`,reportId:sent.id,principalId:principal.id,seq:'s3',observations:[card()],heldAt:now,baseVersion:1,report:{...sent,state:'draft',observations:[]}});
     await page.route(`**/api/reports/${lost.id}`,route=>route.abort('internetdisconnected'));
-    await page.reload();await page.getByText('Not yet on the server').waitFor();
+    await page.reload();await page.getByText('Not saved to RELAY yet').waitFor();
     rows=list(page);
     check(await rows.count()===3,`${scheme}: two server drafts plus the phone-only copy (${await rows.count()})`);
     const top=await rows.nth(0).innerText();
-    check(top.includes('Kirkstall Gate')&&/not yet on the server/i.test(top)&&top.includes('3 cards')&&/last saved Mon,? 19 Oct/.test(top),`${scheme}: unsent edits flagged: ${top}`);
+    check(top.includes('Kirkstall Gate')&&/not saved to RELAY yet/i.test(top)&&top.includes('3 cards')&&/last saved Mon,? 19 Oct/.test(top),`${scheme}: unsent edits flagged: ${top}`);
     const phone=await rows.nth(2).innerText();
     check(/only on this phone/i.test(phone)&&phone.includes('Tetley Hall'),`${scheme}: phone-only copy shown when the server cannot answer: ${phone}`);
     check(!(await page.locator('body').innerText()).includes(sent.reference.split('-').slice(1).join('-')),`${scheme}: stale copy of a sent report left out`);

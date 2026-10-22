@@ -92,14 +92,14 @@ try {
       await open.getByLabel('Where',{exact:true}).fill('Level 3 corridor');
       await open.locator('textarea').first().fill('Containment complete');
       await open.locator('input[type=file]').first().setInputFiles({name:'a.jpg',mimeType:'image/jpeg',buffer:await jpeg('#996633')});
-      await open.getByText('On the server').last().waitFor({timeout:15000});
+      await open.getByText('Saved',{exact:true}).last().waitFor({timeout:15000});
       await open.getByRole('button',{name:'Done with this card'}).click();
       await page.locator('.eng-add-kinds').getByRole('button',{name:'+ Variation'}).first().click();
       await page.locator('.eng-slot.open').getByLabel('Where',{exact:true}).fill('Flat 1.01');
       await page.locator('.eng-slot.open textarea').first().fill('Move a socket 300mm left');
       await page.locator('.eng-slot.open').getByRole('button',{name:'Not yet',exact:true}).click();
       await page.locator('.eng-slot.open').getByRole('button',{name:'Done with this card'}).click();
-      await page.locator('.savestate b').filter({hasText:/Saved on server/}).waitFor({timeout:15000});
+      await page.locator('.savestate b').filter({hasText:/Saved to RELAY/}).waitFor({timeout:15000});
       // Back home: today's update is the big button, and is not listed again below it.
       await goHome();
       ok(await page.getByText('Carry on with today’s update').count()===1,`${scheme} home: today’s update is carried on from the big button`);
@@ -112,7 +112,7 @@ try {
     const check=await page.locator('#report-check').innerText();
     ok(/Sign · optional/i.test(check)&&/do not have to sign a site update/.test(check),`${scheme} check: signing a site update is optional`);
     ok(!/mailbox is live|raise variations|raise issues/.test(check),`${scheme} check: no "mailbox is live" or "raise issues"`);
-    ok(/tell them yourself if it cannot wait/.test(check),`${scheme} check: says to tell the project manager if it cannot wait`);
+    ok(/If it cannot wait, tell them yourself/.test(check),`${scheme} check: says to tell the project manager if it cannot wait`);
     await shot('check');
     {
       await page.getByRole('button',{name:'Send to office'}).click();

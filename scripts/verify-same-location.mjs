@@ -82,7 +82,7 @@ try {
     await action().click();
     eq(await rows.count(),5,`${label}: a fifth card was added`);
     ok(/Choose a kind|New/i.test(await rows.nth(2).innerText())&&/Progress/i.test(await rows.nth(1).innerText()),`${label}: the second new card goes after the first, not before it`);
-    await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached'});
+    await page.getByText('Saved to RELAY',{exact:true}).waitFor({state:'attached'});
     // The server's copy: location only, everything else blank, the source untouched.
     let saved;for(let n=0;n<20;n++){saved=getRecord('reports',draft.id);if(saved.observations.length===5)break;await new Promise(r=>setTimeout(r,250));}
     const obs=saved.observations;

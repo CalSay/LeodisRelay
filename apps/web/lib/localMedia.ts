@@ -12,7 +12,7 @@ export class PhotoRefused extends Error {
   /** A definite answer: the save carrying it is not replayed as it was (lib/saveRequest.ts). */
   readonly refused = true;
   constructor(readonly photoId: string, readonly reason: string) {
-    super(`A photograph was not accepted: ${reason ? reason[0]!.toLowerCase() + reason.slice(1) : 'the server would not take it.'} Remove it and take it again. Everything else is kept on this phone.`);
+    super(`A photograph was not accepted: ${reason ? reason[0]!.toLowerCase() + reason.slice(1) : 'RELAY would not take it.'} Remove it and take it again. Everything else is kept on this phone.`);
   }
 }
 
