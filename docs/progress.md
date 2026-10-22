@@ -4,6 +4,26 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Sixteenth release check: "Put forward as fixed" on the first screen again
+
+- Why: the sixteenth release check on main bc864b8 (#2-#179 minus #28, #130,
+  #142, #154, #176) found `verify-office-words` failing at 390 light: an issue
+  opened from "Came back from the office" with a long office note landed with
+  "Put forward as fixed" at 860px of 844. #174 put the raised photograph in
+  the facts; its landing step moved that row under the buttons only when the
+  camera button would be off the screen, and measured before the office's
+  note box had laid itself out (the box gains its "Show all of it" line in
+  its own first layout, pushing the buttons down afterwards).
+- Changed (`app/issues/[id]/page.tsx`, engineer view, `?update=1` only): the
+  landing step runs on the next frame and judges by the button row, so the
+  photograph moves under the buttons whenever "Put forward as fixed" would
+  otherwise be off the first screen. Nothing else on the page changes; no
+  Help line (it restores what #174's Help line already says).
+- Verified: typecheck, `npm test` (146 + 578), build. Browser:
+  office-words (67), came-back-to-update (36), issue-raised-photo (91),
+  simpler-issue-page (76), sent-back-reason (22).
+- Not verified: a real phone.
+
 ## 2026-10-22 — Office issue sheet: everything open at the same place
 
 - Why: the coordinator asked for a walk of an office person at 1440px on the
