@@ -22,7 +22,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Changed: on a phone (700px or less) each project's cards fold under its bar
   behind a "Show the 3 site updates" button (`aria-expanded`, "Hide the site
   updates" when open; `TodayProject` in `ProjectsView.tsx`, `.today-fold` in
-  `workspace.css`). Folded cards are not loaded. The desk is unchanged. The
+  `workspace.css`). Folded cards are not loaded, not even for the moment
+  before the page knows it is on a phone (`usePhoneKnown`); once opened they
+  stay loaded, so Hide and Show again do not read the reports again. The
+  desk is unchanged. The
   busy overview on a phone went from 6,890px to 4,622px tall, and "Not seen
   yet" now starts about 2,000px down.
 - Decisions (Claude): fold rather than cut the cards to one line, because the
@@ -33,7 +36,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `scripts/verify-today-from-site.mjs` now also checks, at 390px, that both
   projects start folded with their counts, the folded day is under one
   screen, the action groups follow it, axe finds nothing folded, each fold
-  opens and says so, and the desk has no fold (55 checks; fails on main).
+  opens and says so, Hide folds it again, opening again reads nothing new,
+  no card is read before a fold is opened, and the desk has no fold (58
+  checks; fails on main).
   Also passed: help, office-phone, office-sections, office-landing,
   office-links, office-progress, role-access, accessibility, day-walkthrough.
 - Not verified: a real phone; a live tenant.

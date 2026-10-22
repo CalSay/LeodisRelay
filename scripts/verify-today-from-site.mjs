@@ -85,6 +85,8 @@ try {
     const context=await browser.newContext({viewport:{width,height:phone?844:900},colorScheme:scheme,...(phone?{isMobile:true,hasTouch:true}:{})});
     await context.addCookies([{name:'relay_session',value:session,url:base}]);
     const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
+    const todayIds=new Set([samToday.id,sidToday.id,hanaToday.id,quiet.id]);let cardReads=0;
+    page.on('request',r=>{const m=new URL(r.url()).pathname.match(/^\/api\/reports\/([^/]+)$/);if(m&&todayIds.has(m[1]))cardReads++;});
     await page.goto(`${base}/office`);
     const section=page.locator('section.today-site');await section.waitFor();
     const folds=section.locator('button.today-fold');
@@ -101,8 +103,16 @@ try {
       check(notSeen.y>=box.y+box.height,`${label}: what needs the office comes straight after the day`);
       await axe(page,`${label} folded`);
       if(shot)await section.screenshot({path:join(shot,`today-from-site-folded-${scheme}-${width}.png`)});
+      check(cardReads===0,`${label}: folded cards are not loaded, not even for a moment before the fold (${cardReads} reads)`);
       for(let n=0;n<2;n++)await folds.nth(n).click();
       check(await folds.first().getAttribute('aria-expanded')==='true'&&flat(await folds.first().innerText())==='Hide the site updates',`${label}: an open fold says so and offers to hide`);
+      await section.locator('.from-site-visit').first().waitFor();
+      await page.waitForFunction(()=>!document.querySelector('.today-site .loading'),null,{timeout:15000});
+      const reads=cardReads;
+      await folds.first().click();
+      check(await folds.first().getAttribute('aria-expanded')==='false'&&flat(await folds.first().innerText())==='Show the 3 site updates'&&!(await blocks0(section).locator('.from-site-visit').first().isVisible()),`${label}: Hide folds the cards away again`);
+      await folds.first().click();
+      check(await blocks0(section).locator('.from-site-visit').first().isVisible()&&await section.locator('.loading').count()===0&&cardReads===reads,`${label}: opening again shows the cards at once, without reading the reports again (${cardReads-reads} reads)`);
     }else check(await folds.count()===0,`${label}: the desk shows the cards open, with no fold`);
     await section.locator('.from-site-visit').first().waitFor();
     await page.waitForFunction(()=>!document.querySelector('.today-site .loading'),null,{timeout:15000});
@@ -150,4 +160,5 @@ try {
   try{database().close();}catch{}
   rmSync(root,{recursive:true,force:true});
 }
+function blocks0(section){return section.locator('section.today-project').first();}
 function shortRef(reference){return reference.split('-').slice(1).join('-')||reference;}

@@ -89,7 +89,11 @@ function VisitMeta({ s, day }: { s: ProjectStats; day: string }) {
 
 /** True on a phone, where the register stands in for the project sheet. */
 function usePhone(): boolean {
-  const [phone, setPhone] = useState(false);
+  return usePhoneKnown() ?? false;
+}
+/** As usePhone, but null until the screen's width is known, for what should not show before then. */
+function usePhoneKnown(): boolean | null {
+  const [phone, setPhone] = useState<boolean | null>(null);
   useEffect(() => {
     const m = window.matchMedia('(max-width:700px)'); const on = () => setPhone(m.matches);
     on(); m.addEventListener('change', on); return () => m.removeEventListener('change', on);
@@ -423,7 +427,7 @@ function FromSiteVisits({ ctx, code, list, shown, empty, when, heldUpFirst }: { 
  * and its access problems come first.
  */
 function TodayFromSite({ ctx }: { ctx: Ctx }) {
-  const phone = usePhone();
+  const phone = usePhoneKnown();
   const shown = projectStatusGroups(ctx.projects).flatMap(g => g.projects).map(p => ctx.statOf(p.id))
     .filter((s): s is ProjectStats => !!s && s.standing.today.length > 0);
   const updates = shown.reduce((n, s) => n + s.standing.today.length, 0);
@@ -437,10 +441,11 @@ function TodayFromSite({ ctx }: { ctx: Ctx }) {
  * On a phone a project's cards fold under its bar, so the whole day reads in
  * one screen and what needs the office follows it; the desk shows them open.
  */
-function TodayProject({ ctx, s, phone }: { ctx: Ctx; s: ProjectStats; phone: boolean }) {
+function TodayProject({ ctx, s, phone }: { ctx: Ctx; s: ProjectStats; phone: boolean | null }) {
   const f = dayFound(s.standing.today), id = `today-${s.code}`;
-  const [open, setOpen] = useState(false);
-  const showCards = !phone || open;
+  const [open, setOpen] = useState(false), [opened, setOpened] = useState(false);
+  // Nothing loads until the width is known; once opened on a phone the cards stay loaded, hidden when folded.
+  const loadCards = phone === false || opened;
   const found = [f.defects ? count(f.defects, 'defect') : '', f.variations ? count(f.variations, 'variation') : ''].filter(Boolean).join(' and ');
   return <section className="today-project" aria-labelledby={id}>
     <a className="today-project-h" href={`#/projects/${s.code}`}>
@@ -452,8 +457,8 @@ function TodayProject({ ctx, s, phone }: { ctx: Ctx; s: ProjectStats; phone: boo
       </span>
       <span className="arrow" aria-hidden="true">›</span>
     </a>
-    {phone && <button type="button" className="today-fold" aria-expanded={open} aria-controls={`${id}-cards`} onClick={() => setOpen(o => !o)}>{open ? 'Hide the site updates' : f.updates === 1 ? 'Show the site update' : `Show the ${f.updates} site updates`}</button>}
-    {showCards && <div id={`${id}-cards`}><FromSiteVisits ctx={ctx} code={s.code} list={s.standing.today} shown={phone ? 2 : 3} empty="" when={r => `sent ${timeOf(r.serverAcknowledgedAt) || 'today'}`} heldUpFirst /></div>}
+    {phone && <button type="button" className="today-fold" aria-expanded={open} aria-controls={`${id}-cards`} onClick={() => { setOpen(o => !o); setOpened(true); }}>{open ? 'Hide the site updates' : f.updates === 1 ? 'Show the site update' : `Show the ${f.updates} site updates`}</button>}
+    {loadCards && <div id={`${id}-cards`} hidden={!!phone && !open}><FromSiteVisits ctx={ctx} code={s.code} list={s.standing.today} shown={phone ? 2 : 3} empty="" when={r => `sent ${timeOf(r.serverAcknowledgedAt) || 'today'}`} heldUpFirst /></div>}
   </section>;
 }
 /** "2 defects and 1 variation", or '' when the visit raised neither. */
