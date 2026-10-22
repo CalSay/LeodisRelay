@@ -35,7 +35,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   records are off, and the check failed on main at "Tetley Hall's day in one
   line". Screens: project files `ui-review/overview-first-screen/` (before,
   after; 1440, 1024 and 390, busy and small data).
-- Not verified: a real laptop or phone.
+- Not verified: a real laptop or phone; many more projects (a longer
+  project list still pushes the lists down).
+- Fresh review found: a check still looked for the old inspection's words,
+  so proved nothing (fixed); the Help line claimed more than was checked
+  (reworded); a phone briefly drew the desk order before the width was known
+  (now neither section shows until it is).
 
 ## 2026-10-22 — A visit is one person on site on one day
 

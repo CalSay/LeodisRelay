@@ -145,7 +145,7 @@ try {
     const samShown=await tetley.locator('.from-site-visit').nth(1).locator('li').count();
     check(samShown===(phone?2:3),`${label}: ${phone?2:3} lines a card, the rest in the report (${samShown})`);
     const text=flat(await section.innerText());
-    check(!text.includes('not today’s')&&!text.includes('Kirkstall yesterday')&&!text.includes('Scaffold tag'),`${label}: yesterday's updates and the inspection's checks are not read as today's`);
+    check(!text.includes('not today’s')&&!text.includes('Kirkstall yesterday')&&!text.includes('Containment fixings checked'),`${label}: yesterday's updates and the inspection's checks are not read as today's`);
     check(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)<=0,`${label}: no sideways scroll`);
     // The fix's wait, in calendar days.
     const fixRow=flat(await page.locator('.act').filter({hasText:'Fixed, to check'}).locator('.rt').first().innerText());
