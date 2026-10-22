@@ -20,7 +20,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
     are switched off, a weekly safety or tower inspection is no longer
     counted as a visit". The "A visit is one person on site on one day"
     line from #163 named the switched-off records. Fixed: that sentence is
-    taken out; the rest of the line and its example stay.
+    taken out, with the "14 visits this week" example after it, which only
+    that sentence explained (a fresh review's point).
   - An earlier, stopped run on 4714a18 failed `verify-deliveries` once
     ("focus returns to Record a delivery"); it passed in the full run on
     54c7c93 and 3 of 3 runs alone. Recorded, not changed.
