@@ -517,6 +517,14 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .issue-eng-facts dt{color:var(--text-2);font-size:13px;}
 .issue-eng-facts dd{margin:0;font-size:15px;overflow-wrap:anywhere;}
 .issue-eng-here{margin:12px 0;}
+/* The photograph from when it was raised (2026-10-22): a small row, so the buttons stay on the first screen. */
+.issue-eng-facts>div:has(>.issue-eng-shots){align-items:start;}
+.issue-eng-facts dd.issue-eng-shots{min-width:0;display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;}
+.issue-eng-shots a,.issue-eng-shots figure{flex:none;display:block;margin:0;width:80px;border-radius:6px;overflow:hidden;border:1px solid var(--line);}
+.issue-eng-shots a:focus-visible{outline:2px solid var(--brass);outline-offset:2px;}
+.issue-eng-shots img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;}
+.issue-eng-facts .late{color:var(--alert);}
+.issue-eng-shots-low{margin-top:12px;}
 .issue-eng-update{margin-top:8px;}
 /* What the office last wrote, above the buttons (issue and variation pages). */
 .eng-word-box{margin:0 0 12px;padding:8px 14px;border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:9px;background:var(--panel);}

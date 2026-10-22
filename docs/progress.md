@@ -45,6 +45,140 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   -engineer-layout, -editor-usability, -help, -old-drafts, -accessibility,
   -day-walkthrough, -draft-conflict, -offline-drafts.
 - Not verified: a real phone, a screen reader.
+## 2026-10-22 — Site updates: the same trade's previous visit
+
+- Why: the coordinator asked for a walk of an office person at 1440px opening
+  one received site update and asking "what changed on this site since the
+  last visit?" (busy example data, main 9a91c2b). The Inbox reader and the
+  project's report view said who sent it and what it found, but nothing about
+  when that trade was last there or what they said then: the office had to go
+  back to the register and hunt for the earlier report by hand. Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the office's view of progress clearer); nothing new asked of site.
+- Changed: `tradeVisits` (lib/tradeVisits.ts) finds the same trade's site
+  update before and after the one open, on the same project. Under a site
+  update's title, a line "‹ Previous Electrical update here · Wed 21 Oct, the
+  day before · Sam Spark · SPR-831" and, when there is a later one, "Next
+  Electrical update here ›". Selecting one opens it in the same place (the
+  Inbox reader stays in the Inbox, a project's report in the project). The
+  first update says "None before this one". Help "What's new" line.
+- Decided (Claude): counted as "Latest from site" counts (sent site updates
+  only, a sent correction in place of what it corrects, inspections left out).
+  The trade, not the person, because the office asks when Electrical was last
+  there, whoever went; an update with no trade is matched to the same person.
+  A report's own revisions are never its previous or next visit. Calendar days
+  for the gap ("4 days before"), because that is how the office counts between
+  visits. A side-by-side "what changed" comparison of cards was left out: card
+  text is free-written, so matching cards would guess; opening the two updates
+  is honest and one click.
+- Also fixed (found by the new check's axe run, on main before this): in dark,
+  the "Seen" tag on the picked Inbox row was 4.05:1 (washes stacked), now on
+  the panel colour; on a phone with a report open, the Inbox heading is kept
+  for screen readers (visually hidden) so "Reader" is not an orphan h3.
+- Verified: typecheck, `npm test` (146 + 577, five new unit tests), build.
+  New `scripts/verify-previous-trade-update.mjs` (44 checks, 1440 dark and
+  390 light): the line's words against the hand-made records, stepping back
+  and forward in the Inbox and in the project, a correction in place of what
+  it corrects, an old revision stepping past its correction, another
+  electrician counting, HVAC, a draft and an inspection skipped, no line on an
+  inspection or a trade's only update, and after stepping, "‹ Inbox" (phone)
+  or Back (desk) goes straight to the list (stepping in the Inbox replaces the
+  open report rather than adding to history), axe, tap size, no sideways
+  scroll. Also passed: verify-inbox-phone, -office-inbox, -office-progress,
+  -office-inspection, -help, -accessibility, -role-access, -engineer-layout,
+  -office-sections, -office-desk, -office-actions, -review-queue. A fresh
+  review found no correctness bugs; its two small points (the open report is
+  judged by its summary, as the others are; the phone Back) are fixed. A
+  future visit date can show as Next (left: the visit date is the engineer's).
+  The new check failed once on its first run after a build and passed three
+  times after; not seen again.
+  Walked on the busy seed at 1440 light and dark and 390.
+- Not verified: a real phone or screen reader.
+
+## 2026-10-22 — Gas Safe Register mark on report PDFs
+
+- Why: Cal sent the Gas Safe Register logo pack after #168 put the CHAS,
+  REFCOM and MCS marks in the PDF footer. Not a `docs/tasks.json` task.
+- Changed: `packages/documents/assets/accreditation-gas-safe.png` (150 px
+  high, 2 KB), listed fourth in `branding.ts` `accreditations` (upload
+  order). The #168 Help "What's new" line now names it too.
+- Verified: `npm run typecheck`, `npm test`, `node scripts/verify-long-pdfs.mjs`
+  (all 10 pass), sample PDFs looked at: the four marks fit the footer strip,
+  page counts unchanged. Not verified: printed on paper. Not live until the
+  next deploy.
+
+## 2026-10-22 — Issue page: the raised photograph near the top
+
+- Why: the coordinator asked for a walk of the engineer's issue page at 390px
+  on main 76fa669: an open issue, one the office sent back and one 30 days past
+  its target. "Add photograph", "Put forward as fixed" and the office's reason
+  were on the first screen in all three, but no photograph of the fault showed
+  anywhere until History was opened and scrolled: on site that photograph is
+  the quickest way to know which tray, socket or fitting is meant. The old
+  issue also gave its target date without saying it had passed, which the
+  office screens say since #157. Not a `docs/tasks.json` task, so no status
+  changed. Within Cal's 21 Oct direction (the engineer's job simpler).
+- Changed (`app/issues/[id]/page.tsx`, engineer view only): a "Photograph(s)"
+  row under "Who is fixing it" with the raised photographs as 80px
+  thumbnails; each opens a larger copy (`?variant=pdf`) in a new tab, as the
+  office's Check a fix does; an older inline photo is shown, not linked.
+  "Who is fixing it" adds ", N days past target" in red when past. History
+  keeps everything as before. Help "What's new" line.
+- Decided (Claude): opened from "Came back from the office" (`?update=1`)
+  with a very long description, the row would push "Add photograph" off the
+  landing screen (66px in `verify-came-back-to-update`'s longest case), so
+  for that visit only the row moves just under the buttons. Thumbnails are
+  80px, not 96px: at 96px the check's "long" case (a long description,
+  not the longest) landed with "Put forward as fixed" 8px off the screen;
+  at 80px it lands with both buttons in view and the row in place. Only the raised photographs, not later ones: those are
+  fixes and updates, still in History.
+- Verified: typecheck, `npm test` (146 + 569), build. New
+  `scripts/verify-issue-raised-photo.mjs` (91 checks, light and dark at
+  390x844: photograph, office reason and both buttons on the first screen;
+  larger copy loads; inline photo not linked; no row without a photograph;
+  days past target only when past; History still holds it; 48px buttons; axe
+  on the facts; no sideways scroll; longest description from Came back keeps
+  the camera in view; office page unchanged). Also passed: simpler-issue-page
+  (76), came-back-to-update (36), sent-back-reason (22), fix-forward-next
+  (73), sent-back-fix (29), issue-provenance (18), issue-assign (48),
+  issues-here (63), help, accessibility (584), role-access (95),
+  engineer-layout. Screens: project files `ui-review/issue-page-phone/`
+  (before and after at 390 light, after dark, office 1440 dark).
+- Not verified: a real phone; how a phone opens the larger copy in a new tab
+  when installed to the home screen. Left as is (review): an unassigned issue
+  with a past target date gets no "days past target", since a target is only
+  set on assignment.
+## 2026-10-22 — Site coverage: trades with no report yet this week
+
+- Why: the coordinator asked for a per-site line on Site coverage naming the
+  trades that reported there in the previous fortnight but have sent nothing
+  this week, so the office can see "No P&H report yet this week" without
+  reading fourteen columns of marks. Not a `docs/tasks.json` task, so no
+  status changed. Within Cal's 21 Oct direction (the office's view of
+  progress clearer); about progress reports, not people.
+- Changed: `siteCoverage` (lib/siteCoverage.ts) gives each project
+  `quietTrades`: the trades (Electrical, HVAC, P&H, as the marks use) with a
+  sent report from that site in the 14 days before this Monday and none from
+  Monday to today (London). Same records as the grid: sent only, a correction
+  stands in for what it corrects, switched-off safety and tower inspections
+  left out, reports with no trade ignored. `quietTradeWords` says it. Shown
+  under the project name, in the key, and Help "What's new".
+- Decided (Claude): always about today's week, and shown only on the
+  fortnight that holds today, so an older fortnight never carries this week's
+  words. Not on a Monday (nobody has had a working day yet, so every trade
+  would be named). Not on defects liability sites (visits are occasional, as
+  for "quiet"). Trade names in full in the line ("P&H", "Electrical"), as
+  elsewhere in office words. The one-visit rule (#163, #172) does not change
+  which trades reported, so the line reads the reports directly.
+- Verified: typecheck, `npm test` (146 + 572, two new unit tests), build.
+  New `scripts/verify-coverage-quiet-trades.mjs` (37 checks) runs two data
+  sets on their own servers: a small hand-made one (a draft, an old report,
+  a switched-off inspection and a defects liability site say nothing), and
+  the busy seed with this week's 014LME P&H turned back into drafts. Every
+  row's line is compared with a count made from the stored records, at 1440
+  dark and 390 light, and an older fortnight shows no line. Screens: project
+  files `ui-review/site-coverage/trades/`.
+- Not verified: a real phone or screen reader.
 
 ## 2026-10-22 — Leodis logo and accreditation marks on report PDFs
 

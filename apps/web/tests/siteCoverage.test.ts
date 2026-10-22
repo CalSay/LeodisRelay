@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Principal } from '@relay/platform';
-import { fortnightEnd, fortnightStart, shiftFortnight, siteCoverage, workingDaysBetween, type CoverageProjectSource } from '../lib/siteCoverage';
+import { fortnightEnd, fortnightStart, quietTradeWords, shiftFortnight, siteCoverage, workingDaysBetween, type CoverageProjectSource } from '../lib/siteCoverage';
 import type { Report } from '../lib/types';
 
 const engineer: Principal = { id:'entra:eng' as never, oid:'eng', name:'Sam Spark', email:'s@example.test', role:'Engineer', trade:'Electrical' };
@@ -96,4 +96,45 @@ test('one mark for each person on site each day, opening their site update', () 
   ], 'two electricians are two marks; one electrician\'s update and inspection are one, opening the update');
   assert.deepEqual(p!.days[4]!.map(v => v.references), [['011LME-SPR-011', '011LME-FFI-002']], 'without a sign-in, a person is known by their name, and the update still opens first');
   assert.equal(p!.days[4]![0]!.reportId, 'same-name');
+});
+
+test('names the trades that reported in the two weeks before this week but not yet this week', () => {
+  const pat = { author:'Pat Pipe', authorId:'entra:pat', authorTrade:'P&H' as const };
+  const hana = { author:'Hana Duct', authorId:'entra:hana', authorTrade:'HVAC' as const };
+  const projects = [project({ id:'p1' }), project({ id:'p2', projectNumber:'009LCP', status:'5. Defects Liability' })];
+  const reports = [
+    report({ id:'e-before', visitDate:'2026-10-07' }),
+    report({ id:'e-now', visitDate:'2026-10-19' }), // Electrical has reported this week
+    report({ id:'p-before', visitDate:'2026-10-14', ...pat }),
+    report({ id:'h-before', visitDate:'2026-10-05', ...hana }), // the first day of the two weeks
+    report({ id:'h-draft', visitDate:'2026-10-20', state:'draft', ...hana }), // a draft is not a report
+    report({ id:'old', visitDate:'2026-10-02', author:'Old Hand', authorId:'entra:old', authorTrade:'P&H' }),
+    (({ authorTrade: _, ...r }) => r as Report)(report({ id:'no-trade', visitDate:'2026-10-13', author:'Visitor', authorId:'entra:v' })),
+    report({ id:'dlp', projectId:'p2', visitDate:'2026-10-13', ...pat }),
+  ];
+  const [p1, p2] = siteCoverage(projects, reports, manager, START, TODAY).projects;
+  assert.deepEqual(p1!.quietTrades, ['HVAC', 'P&H']);
+  assert.deepEqual(p2!.quietTrades, [], 'defects liability visits are occasional');
+  // The same answer on an older fortnight: it is always about this week.
+  assert.deepEqual(siteCoverage(projects, reports, manager, '2026-09-28', TODAY).projects[0]!.quietTrades, ['HVAC', 'P&H']);
+  // A report later in the week (here an inspection) counts; one after today does not.
+  const later = siteCoverage(projects, [...reports, report({ id:'p-insp', visitDate:'2026-10-20', reportType:'first-fix-inspection', ...pat }), report({ id:'h-future', visitDate:'2026-10-21', ...hana })], manager, START, TODAY);
+  assert.deepEqual(later.projects[0]!.quietTrades, ['HVAC']);
+  // A corrected report stands in for the one it corrects, on its own visit day.
+  const moved = siteCoverage(projects, [...reports, report({ id:'p-fix', visitDate:'2026-10-20', corrects:'p-before', revision:2, ...pat })], manager, START, TODAY);
+  assert.deepEqual(moved.projects[0]!.quietTrades, ['HVAC'], 'the moved correction is this week; the original is gone');
+  // Monday: nobody has had a working day yet.
+  assert.deepEqual(siteCoverage(projects, reports, manager, START, '2026-10-19').projects[0]!.quietTrades, []);
+  // The two weeks run from the Monday a fortnight back (5 Oct) to last Sunday (18 Oct), both kept; the Sunday before is out.
+  const edges = siteCoverage([project({ id:'p3' })], [report({ id:'out', projectId:'p3', visitDate:'2026-10-04' }), report({ id:'last-sunday', projectId:'p3', visitDate:'2026-10-18', ...hana })], manager, START, TODAY);
+  assert.deepEqual(edges.projects[0]!.quietTrades, ['HVAC']);
+  // Sunday is still this week.
+  assert.deepEqual(siteCoverage(projects, reports, manager, START, '2026-10-25').projects[0]!.quietTrades, ['HVAC', 'P&H']);
+});
+
+test('says the quiet trades in plain words', () => {
+  assert.equal(quietTradeWords([]), '');
+  assert.equal(quietTradeWords(['P&H']), 'No P&H report yet this week');
+  assert.equal(quietTradeWords(['Electrical', 'P&H']), 'No Electrical or P&H report yet this week');
+  assert.equal(quietTradeWords(['Electrical', 'HVAC', 'P&H']), 'No Electrical, HVAC or P&H report yet this week');
 });

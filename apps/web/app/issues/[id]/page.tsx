@@ -8,6 +8,7 @@ import Link from "next/link";
 import { projectSuggestions, readPhoto, yourOpenIssues } from "@/lib/api";
 import type { Issue, Photo } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
+import { mediaId } from '@/lib/media';
 import { PhotoRefused, uploadPhotos } from '@/lib/localMedia';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { canManage } from '@/lib/auth/access';
@@ -97,18 +98,23 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   // Opened from "Came back from the office" (?update=1): bring the photograph
   // and the buttons into view once, but never push what is wrong under the
   // app bar, so the engineer still sees what and where without scrolling up.
+  // When even that leaves the photograph button out of view (a very long description), the photograph from when
+  // it was raised moves under the buttons for this visit, rather than the buttons going off the screen.
   const landed = useRef(false);
+  const [shotsLow, setShotsLow] = useState(false);
   useEffect(() => {
     if (update !== "1" || manager || !issue || landed.current) return;
-    landed.current = true;
     const buttons = document.querySelector(".issue-eng-update .btn-row");
+    const camera = document.querySelector(".issue-eng-update label.camera");
     const title = document.querySelector(".issue-eng-title");
-    if (!buttons || !title) return;
+    if (!buttons || !camera || !title) { landed.current = true; return; }
     const bar = document.querySelector(".appbar")?.getBoundingClientRect().bottom ?? 0;
     const need = buttons.getBoundingClientRect().bottom + 16 - window.innerHeight;
     const room = title.getBoundingClientRect().top - bar - 8;
+    if (!shotsLow && document.querySelector(".issue-eng-facts .issue-eng-shots") && camera.getBoundingClientRect().bottom - Math.max(0, Math.min(need, room)) > window.innerHeight) { setShotsLow(true); return; }
+    landed.current = true;
     if (need > 0 && room > 0) window.scrollBy(0, Math.min(need, room));
-  }, [update, manager, issue]);
+  }, [update, manager, issue, shotsLow]);
 
   // The button that was tapped has gone: move to what replaced it, once, so the result is read out.
   // Not again when the next issue arrives, which may be after the engineer has started typing a note.
@@ -314,6 +320,17 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
     // Opened from another site's home (its "Came back from the office" lists every site): say which site this one is on.
     const elsewhere = new URL(back, 'https://relay.local').searchParams.get('project');
     const otherSite = elsewhere && elsewhere !== issue.projectId ? project?.projectName : undefined;
+    // The photograph taken when it was raised shows which tray, socket or fitting it means (walk of 22 Oct 2026):
+    // shown small beside the facts, not only at the foot of History. Each opens larger in a tab of its own, as on the
+    // office's Check a fix; an older photo kept inline cannot, so it is shown and not linked.
+    const raisedPhotos = issue.events.find((e) => e.kind === "raised")?.photos ?? [];
+    const today = todayInLondon();
+    const shotsRow = raisedPhotos.length > 0 && <div><dt>{raisedPhotos.length === 1 ? "Photograph" : "Photographs"}</dt><dd className="issue-eng-shots">{raisedPhotos.map((photo, n) => {
+      const what = `Photograph ${n + 1} of ${raisedPhotos.length} from when it was raised${photo.caption ? `: ${photo.caption}` : ""}`;
+      return mediaId(photo.dataUrl)
+        ? <a key={photo.id} href={`${photo.dataUrl}?variant=pdf`} target="_blank" rel="noopener noreferrer" aria-label={`${what}, larger (opens in a new tab)`}><PhotoImage src={photo.dataUrl} alt="" /></a>
+        : <figure key={photo.id}><PhotoImage src={photo.dataUrl} alt={what} /></figure>;
+    })}</dd></div>;
     return (
       <main className="wrap eng-page issue-eng">
         <PageTitle title={`${issue.reference} · Issue`} />
@@ -329,7 +346,8 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
           {otherSite && <div><dt>Site</dt><dd>{otherSite}</dd></div>}
           <div><dt>Where</dt><dd>{issue.location || "Location not recorded"}</dd></div>
           {issue.actionNeeded.trim() && <div><dt>What needs doing</dt><dd>{issue.actionNeeded.trim()}</dd></div>}
-          <div><dt>Who is fixing it</dt><dd>{owner ? `${owner}${issue.targetDate ? `, by ${dateShort(issue.targetDate)}` : ""}` : "Nobody yet. The office will say who."}</dd></div>
+          <div><dt>Who is fixing it</dt><dd>{owner ? <>{owner}{issue.targetDate ? `, by ${dateShort(issue.targetDate)}` : ""}{isOverdueIssue(issue, today) && <span className="late">, {pastTarget(daysBetween(issue.targetDate, today))}</span>}</> : "Nobody yet. The office will say who."}</dd></div>
+          {!shotsLow && shotsRow}
         </dl>
 
         {word && <OfficeWordBox key={`${word.at}${word.note}`} word={word} />}
@@ -388,6 +406,8 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
             </div>
           </section>
         ))}
+
+        {shotsLow && shotsRow && <dl className="issue-eng-facts issue-eng-shots-low">{shotsRow}</dl>}
 
         {/* Standing there: every trade's open issues at this place, on the Issues tab (2026-10-22). Under the
             update, so what, where and the buttons stay on the first screen. */}
