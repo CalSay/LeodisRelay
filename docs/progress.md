@@ -31,7 +31,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `ReportReader` adds the two class names. `quickactions.css`: Quick actions
   in sans, 32px tall (44px on touch). PDF page: its own `pdf.css`, the page
   controls only once a PDF has loaded. Full report: its own `preview.css`,
-  details three across at a desk with the last one running to the row's end,
+  details three across at a desk (two on a phone), an odd last one spanning the empty cells,
   and on a phone the actions table fits the width. `Dialogs` Review: "visit
   22 Oct". No `globals.css` changes, no `packages/documents` changes, nothing
   added or taken away. #177's "Previous/Next update" line unchanged and its

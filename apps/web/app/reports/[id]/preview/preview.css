@@ -1,8 +1,15 @@
 /* The full report (Release 1, O4): the details under the title sit in even
    rows of three at a desk rather than five and one left over, and a last odd
    detail runs to the end of its row instead of leaving an empty box. */
-@media (min-width:560px){.doc-tb{grid-template-columns:repeat(3,minmax(0,1fr))}}
-.doc-tb>div:last-child{grid-column-end:-1}
+@media (min-width:560px){
+  .doc-tb{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .doc-tb>div:last-child:nth-child(3n+1){grid-column:1 / -1}
+  .doc-tb>div:last-child:nth-child(3n+2){grid-column:span 2}
+}
+@media (max-width:559px){
+  .doc-tb{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .doc-tb>div:last-child:nth-child(odd){grid-column:1 / -1}
+}
 /* On a phone the document keeps more of the width, and the summary table fits
    it, wrapping its words, rather than hiding the Owner column off to the side. */
 @media (max-width:559px){
