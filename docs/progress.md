@@ -4,6 +4,58 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — A site update says which day it is for
+
+- Why: a walk of an electrician at 390px on main 09bd55c, opening RELAY the
+  morning after leaving a site update unsent (on the same site, on another
+  site, and one started with no signal). The home screen was clear: the big
+  button starts today's update and yesterday's waits under Unfinished reports
+  as "visit Wed 21 Oct". A report started with no signal keeps the day it was
+  started on when it goes up (`started.visitDate`), and the server fixes the
+  visit date when a report is created, so the dates the office gets are
+  right. But once opened, neither the cards nor Check & send said the day
+  anywhere, so this morning's work could be added to yesterday's update and
+  reach the office filed under yesterday (site diary, Today from site, the
+  weekly figures). Coordinator's ask (walk and one pick); not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the office's view of progress, the engineer's job simpler).
+- Changed: `lib/visitDay.ts` (`visitDayWords`: "today, Thu 22 Oct",
+  "yesterday, Wed 21 Oct" or "Mon 19 Oct"; `leftFromEarlierDay`: an unsent
+  site update, not a correction or an inspection, for a day before today in
+  London). In `reports/[id]/page.tsx` an unsent report says "For …" under its
+  title; one left from an earlier day shows a note instead ("This update is
+  for yesterday, Wed 21 Oct. The office files everything in it under that
+  day. Send it as it is; anything from today goes in today's update.") with
+  "Go to today's update", which opens the engineer's own update for today on
+  that site (reading every page of the project's reports, so a busy site's
+  50 newest do not hide it), or starts one; with no signal it goes to the
+  Site page (which can start one offline), and any other failure is said on
+  the note. Check & send's "The office can read it straight
+  away" row starts "Filed under …". Help: a "What's new" line and the site
+  update guide's paragraph.
+- Decided (Claude): no way to change an update's day, and nothing moved
+  between updates: the day is what the office files by, and the server never
+  changes it after creation. Inspections and corrections get the day line but
+  no note: an inspection may take two days, and a correction keeps the day of
+  the report it corrects. Nothing is changed or removed in the older update.
+- Verified: typecheck, `npm test` (146 + 554, two new `visitDay` unit tests),
+  build. New `scripts/verify-old-drafts.mjs` (84 checks, light and dark at
+  390px, dark at 1440px): home lists yesterday's with its day; the note and
+  its day; Check & send's "Filed under yesterday"; Go to today's update makes
+  one dated today on the same site with "For today" and no note, and tapped
+  again opens the same one, also after 55 more reports are sent; yesterday's stays a draft with its day and cards
+  and is still listed; inspection and correction have no note; no signal goes
+  to the Site page; 48px button, axe on the title and note, no sideways
+  scroll. On main the first note check fails (no note). Also passed:
+  role-access, engineer-layout, signature-reload, report-editor,
+  editor-usability, editor-wide, quicker-update, quiet-card-list,
+  receipt-send-bar, offline-capture, offline-drafts, accessibility,
+  day-walkthrough, engineer-day, fewest-taps, came-back-to-update, help.
+  A fresh review found the first-page-only lookup and the silent failure;
+  both fixed. Screens: project files `ui-review/old-drafts/`.
+- Not verified: a real phone; London midnight on a real device clock.
+- Next: none from this walk.
+
 ## 2026-10-22 — A day's photographs on the first screen of a phone
 
 - Why: a walk at 390x844 (busy seed, Tetley Hall, 1,146 photographs, engineer

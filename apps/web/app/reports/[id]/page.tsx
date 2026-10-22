@@ -5,7 +5,9 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 import { PageTitle } from '@/components/PageTitle';
 import Link from "next/link";
 import {
+  createReport,
   getReport,
+  listReports,
   newObservation,
   openIssues as fetchOpenIssues,
   projectSuggestions,
@@ -25,7 +27,7 @@ import { CheckEditor } from "@/components/CheckEditor";
 import { InspectedName } from "@/components/InspectedName";
 import { CHECK_ANSWERS, checkCounts, checkHint, reportTypeOf } from "@/lib/reportTypes";
 import { SignaturePad } from "@/components/SignaturePad";
-import type { Issue as IssueSummary } from "@/lib/types";
+import type { Issue as IssueSummary, ReportSummary } from "@/lib/types";
 import { heldSendBusy, heldSendSettled } from '@/lib/heldSend';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { useRouter } from 'next/navigation';
@@ -39,6 +41,8 @@ import { CARD_TYPES, OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtu
 import { isBlankCard, placesToOffer, withoutBlankCards } from '@/lib/quickCards';
 import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 import { whenShort } from '@/lib/dates';
+import { londonDay } from '@/lib/weeklySummary';
+import { leftFromEarlierDay, visitDayWords } from '@/lib/visitDay';
 import { cardAtSameLocation, insertAfterSameLocation } from '@/lib/sameLocation';
 import { canUndo, removeCard, removedLabel, removePhoto, restoreRemoved, type Removed } from '@/lib/undoRemove';
 import { onPhotoUploads, uploadingPhotos } from '@/lib/localMedia';
@@ -112,6 +116,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [suggestions,setSuggestions] = useState<ProjectSuggestions>({ locations: [], companies: [] });
 
   const [report, setReport] = useState<Report | null>(null);
+  /** "Go to today’s update" tapped on an update left from an earlier day: finding or starting today's. */
+  const [toToday, setToToday] = useState(false);
+  const [toTodayError, setToTodayError] = useState('');
   /** Why the report could not be opened, said in place of it. */
   const [missing, setMissing] = useState<string | null>(null);
   /** The session has gone before the report opened: nothing to keep on screen, so sign in here. */
@@ -1125,6 +1132,29 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const sent = report.state === "submitted";
   const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
   const mine = principal ? ownsReport(principal, report) : false;
+  // The day the office files this report under. An update left from an earlier
+  // day says so, so this morning's work does not go on yesterday's visit.
+  const today = londonDay(new Date());
+  const visitDay = visitDayWords(report.visitDate, today);
+  const earlierDay = mine && leftFromEarlierDay(report, today);
+  /** Today's update on this site: the engineer's own if started, otherwise a new one. With no signal, the Site page, which can start one offline. */
+  async function openTodays() {
+    if (!report || toToday) return;
+    setToToday(true);setToTodayError('');
+    const home = `/engineer?project=${encodeURIComponent(report.projectId)}`;
+    const isTodays = (r: ReportSummary) => r.state === 'draft' && !r.corrects && reportTypeOf(r).id === 'progress' && r.visitDate === today && !!principal && ownsReport(principal, r);
+    try {
+      // Every page: on a busy site the engineer's own draft can be past the first 50 reports.
+      let todays: { id: string } | undefined, offset: number | null = 0;
+      while (!todays && offset !== null) { const page = await listReports(report.projectId, offset); todays = page.reports.find(isTodays); offset = page.next; }
+      const target = todays ?? await createReport(report.projectId, principal?.name ?? '');
+      router.push(withViewReturn(`/reports/${target.id}`, safeViewReturn(returnTo, home)));
+    } catch (e) {
+      if (e instanceof ApiError && e.offline) { router.push(home); return; }
+      setToTodayError(e instanceof Error ? e.message : 'Today’s update could not be opened. Please try again.');
+      setToToday(false);
+    }
+  }
   const counts = Object.fromEntries(KINDS.map(k => [k, report.observations.filter(o => o.type === k).length])) as Record<ObservationType, number>;
   const summed = ([
     ['update', 'Progress', '', ''],
@@ -1357,13 +1387,25 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         <div>
           <h1>{sent ? report.reference : type.name}</h1>
           {/* The tag says draft or sent, and a correction's note says which revision, so the line under the title does not repeat them. */}
-          <p className="sub">{sent ? type.name : <span className="ref">{report.reference}</span>} · {project?.projectName}</p>
+          <p className="sub">{sent ? type.name : <span className="ref">{report.reference}</span>} · {project?.projectName}
+            {/* The day the office files it under; an earlier day's note below says it instead. */}
+            {!sent && !earlierDay && <span className="eng-visit-day" style={{ display: "block" }}>For {visitDay}</span>}</p>
         </div>
         <span className={sent ? "tag tag-sent" : "tag tag-draft"}>{sent ? "Sent" : report.corrects ? `Correction draft` : "Draft"}</span>
       </div>
 
       {type.inspects && <InspectedName report={report} type={type} editable={!sent && mine}
         onRenamed={name => setReport(current => current ? { ...current, inspected: name } : current)} />}
+
+      {earlierDay && (
+        <div className="note eng-earlier-day" role="note" style={{ marginTop: 16, borderLeftColor: "var(--brass)" }}>
+          <p style={{ margin: 0 }}><strong>This update is for {visitDay}.</strong> The office files everything in it under that day. Send it as it is; anything from today goes in today’s update.</p>
+          <div className="btn-row" style={{ marginTop: 10 }}>
+            <button type="button" className="btn-quiet" onClick={() => void openTodays()} disabled={toToday}>{toToday ? 'Opening…' : 'Go to today’s update'}</button>
+          </div>
+          {toTodayError && <p role="alert" style={{ margin: "8px 0 0" }}>{toTodayError}</p>}
+        </div>
+      )}
 
       {/* A correction draft says what it corrects and why, so the sent report is
           never mistaken for something that can be edited. */}
@@ -1505,7 +1547,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
               {type.raisesRecords
                 ? <div className="eng-row"><div className="main"><b>{answers.action ? issuesSaid(report.observations.filter(o => o.check?.answer === 'action')) : 'No issues to raise'}</b><span>{answers.action ? `${report.observations.some(o => o.check?.answer === 'action' && o.linkedIssueId) ? 'Ones you linked are added to the issues already raised. ' : ''}Each action goes on the snag list with where it is, and is listed at the top of the PDF.` : 'Every check is satisfactory or does not apply: the area is ready to hand over.'}</span></div></div>
                 : <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} action${answers.action === 1 ? '' : 's'} listed on the inspection` : 'No actions to list'}</b><span>Printed at the top of the PDF with who is to do each one, and followed on Safety actions until a later inspection finds it put right. Nothing is added to the issue register.</span></div></div>}
-              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>RELAY does not email {project?.projectManager ?? 'the project manager'} yet. If it cannot wait, tell them yourself.</span></div></div>
+              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>Filed under {visitDay}. RELAY does not email {project?.projectManager ?? 'the project manager'} yet. If it cannot wait, tell them yourself.</span></div></div>
             </div>
           </div>}
 
@@ -1514,7 +1556,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             <div className="eng-list" style={{ marginTop: 8 }}>
               {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{issuesSaid(report.observations.filter(o => o.type === 'defect' || o.type === 'access'))}</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Ones you linked are added to the issues already raised. ' : ''}The office says who sorts them out; you’ll see who on your home screen.</span></div></div>}
               {counts.instruction > 0 && <div className="eng-row"><div className="main"><b>{counts.instruction} variation{counts.instruction === 1 ? '' : 's'} raised · need a quote</b><span>{report.observations.some(o => o.type === 'instruction' && o.workDone) ? 'Marked as already done: the office gets the client to agree it. ' : ''}The office prices it and puts it to the client.</span></div></div>}
-              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>RELAY does not email {project?.projectManager ?? 'the project manager'} yet. If it cannot wait, tell them yourself.</span></div></div>
+              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>Filed under {visitDay}. RELAY does not email {project?.projectManager ?? 'the project manager'} yet. If it cannot wait, tell them yourself.</span></div></div>
             </div>
           </div>}
           </div>
