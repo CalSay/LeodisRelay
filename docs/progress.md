@@ -8,8 +8,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
 - Why: task E7 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
   the engineer's phone). Branched from main at 5babd9d while E6 was in
-  progress; E6's files (the Issues view, `/issues/[id]`, the snag list) are
-  untouched. Before and after screenshots on the busy example data (40 days,
+  progress, then E6 (#201) and O7 (#200) merged in; E6's screens (the Issues
+  view, `/issues/[id]`, the snag list) are untouched. Before and after screenshots on the busy example data (40 days,
   Sam Spark, Tetley Hall), 390px light and dark and 1440px light, plus 1440px
   dark for Photographs, Search and Help, first screen and full page, are in
   the project files under `ui-review/release-1/E7/` (not in the repo).
@@ -43,6 +43,88 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   (51), photos-phone (76), photos-month (43), photo-uploads (22), site-notes
   (45), site-notes-offline (36), search (31), help (36), navigation (76),
   engineer-layout, engineer-nav (60), accessibility (584), role-access (95).
+- Not verified: a real phone, a screen reader.
+
+## 2026-10-22 — Release 1 polish E6: engineer Issues
+
+- Why: task E6 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
+  the engineer's phone). Branched from main at 5babd9d (E5, #199). Screenshots
+  before and after, 390px light and dark and 1440px light, are in
+  `ui-review/release-1/E6/` on the busy example data: Issues Yours, Open at a
+  place, an open issue, just put forward, waiting, closed, and the snag list.
+- What the walk found: Flag a defect and Snag list were two odd widths, and
+  Yours, Open and All issues were three small 13px buttons of different
+  widths at the left. On a phone "Put forward as fixed" and "Record an
+  update" each broke onto two lines. At a desk an issue's page ran 1,072px
+  wide, with the two buttons 512px each. The snag list's choices filled the
+  phone's first screen (Company and Trade one under the other), at a desk the
+  project's name was cut off ("Tetley Hall - Blc") and Print sat alone on a
+  second row; on a phone each photograph was 240px wide.
+- Changed: one block at the end of `engineer.css`, scoped to the Issues tabs,
+  the Issues heading and `.issue-eng`: the tabs are three equal 48px parts and
+  the two actions an even pair (both at most 480px wide); an issue's page is a
+  720px column at a desk; Back is 48px tall; the update buttons have less side
+  padding so each fits one line on a phone. In `snag.css`: the choices are
+  one grid (project twice as wide; Print at the end of the row under them);
+  on a phone Company and Trade share a row and photographs are 144px; Back
+  is 48px tall. A place's count in its heading now lines up with the place's
+  name (on paper too). The
+  page's two buttons and "Put forward as fixed" are where they were: on the
+  issue page the button sits 4px lower (Back is taller) and fits one line.
+  No `globals.css` changes, no shared component changes, no change to data
+  loading or the list's drawing (#188/#191).
+- No Help "What's new" line: nothing works differently.
+- Verified: `npm run typecheck`, `npm test` (146 + 591), `npm run build`.
+  Browser checks passed: came-back-to-update (36), office-words (67),
+  issues-here (63), simpler-issue-list (52), simpler-issue-page (76),
+  snag-list (24), fix-forward-next (73), accessibility (584); and on the first
+  version of the change also issue-raised-photo (91), issues-yours (48),
+  issues-laptop (284), same-place-issues (61), issue-at-place (38),
+  came-back-first (29), other-sites-came-back (32), issue-link (42),
+  engineer-layout.
+- Not verified: a real phone, a screen reader, printing the snag list on paper
+  (the new grid and Back apply on screen only; the heading alignment prints).
+
+## 2026-10-22 — Release 1 polish O7: Variations, Team and Admin
+
+- Why: task O7 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch";
+  21 Oct 12:59: sections must not blend into one). Branched from main at
+  1436bcc; O6 (#198) touches other files only. Before and after screenshots,
+  1440 light and dark and 390 light, first screen and full page, are in the
+  project files under `ui-review/release-1/O7/`: Variations (manager), Team
+  (Admin's list, a person chosen, Add a person; Manager's list), Admin
+  (each of its four sections). Busy example data, 40 days.
+- Found: nothing scrolled sideways. Variations showed a gold Price on every
+  row beside the gold "Price the oldest" (34 gold buttons on the first
+  filter); its two filter rows sat apart as two blocks; the variation's own
+  words wrapped to four or five lines at 1440 while the action column had
+  room; a phone card listed Quoted, Instructed and Margin as three "—" rows
+  before any price. On Team, choosing someone far down the Admin's list
+  opened their panel at the top of the page, off screen. Card edges used
+  `--line`, faint in dark mode, where O2 to O6 use `--line-2`. Long notes ran
+  the full 1440 width. On a phone the Admin chips, buttons and the person
+  form's inputs were 38 to 44px.
+- Changed: row Price/Reprice and Instruct are quiet buttons (same labels,
+  same dialogs), so "Price the oldest" is the page's one gold button. The
+  two filter rows join as on Issues (O3). At a desk the variation and project
+  columns keep a minimum width. In the phone and tablet card layout a money
+  cell with no figure is left out (a £0 figure still shows). On Team at a
+  desk the person panel stays beside the list (sticky, scrolls inside itself
+  if taller than the screen). Panels and filters `--line-2`; notes and
+  Admin's Site records switch keep a readable line. Phone controls 48px.
+  Scoped by new `variations-view`, `team-view`, `admin-view` classes in
+  `workspace.css`. No settings behaviour, routes, data, components or
+  `globals.css` tokens changed. Help "What's new" line.
+- Verified: typecheck, `npm test` (146 + 591), build; verify-accessibility
+  (584), -help (36), -first-day (94), -first-time-use (375), -office-desk
+  (73), -office-links (65), -office-registers (225), -office-top-bar (1917),
+  -register-downloads (100), -register-export (23), -role-access (95),
+  -september-office (43), -simpler-home (56), -team-last-sent (90),
+  -busy-projects (39 timings). The first run of office-desk and
+  office-top-bar caught the variation columns' minimum widths pushing the
+  row buttons past the panel at 1024 and 1366px; those widths now apply
+  from 1400px only, and both pass. No register button spills at 1280, 1366
+  or 1440px.
 - Not verified: a real phone, a screen reader.
 
 ## 2026-10-22 — Release 1 polish E5: inspections

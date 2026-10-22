@@ -58,7 +58,7 @@ function RosterTable({ ctx, members }: { ctx: Ctx; members: TeamMember[] | null 
 
 export function TeamView({ ctx }: { ctx: Ctx }) {
   const team = ctx.team;
-  return <div className="view">
+  return <div className="view team-view">
     <div className="pagehead"><div><h2>Team</h2><p>{team ? `${team.members.length} ${team.members.length === 1 ? 'person' : 'people'} · ${team.members.filter(m => m.session === 'active').length} signed in now` : 'Loading the team'}</p></div></div>
     {/* One list of people: the Admin's has the changes on it, everyone else's is read-only. The server refuses changes from anyone but the Admin. */}
     {ctx.me.admin ? <People ctx={ctx} /> : <RosterTable ctx={ctx} members={team?.members ?? null} />}
@@ -73,7 +73,7 @@ export function AdminView({ ctx }: { ctx: Ctx }) {
   if (!ctx.me.admin) return <div className="view"><div className="pagehead"><div><h2>Administration</h2><p>Admin role only</p></div></div><div className="empty">Administration is for the Admin role. Managers see the Team tab.</div></div>;
   const legacy = team?.legacyDrafts ?? [];
   const processing = team?.processing;
-  return <div className="view">
+  return <div className="view admin-view">
     <div className="pagehead"><div><h2>Administration</h2><p>Processing, older drafts and settings for Leodis Developments · signed in through Microsoft · people are on the Team tab</p></div>
       <div className="actions"><a className="btn btn-q" href="https://entra.microsoft.com" target="_blank" rel="noreferrer">Open Microsoft Entra ↗</a></div></div>
     <div className="filters">
