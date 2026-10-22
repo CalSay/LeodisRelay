@@ -62,7 +62,13 @@ try {
     await page.getByLabel('Defect photographs').setInputFiles({name:'leak.png',mimeType:'image/png',buffer:png});
     await page.getByLabel('What needs attention?').fill(LEAK);
     await page.getByLabel('Where on site?').fill('Flat 2.04 kitchen');
-    await page.getByLabel('Trade affected').selectOption('P&H');
+    // One tap, as on a site update card; it starts at Sam's own trade.
+    const trades=page.getByRole('group',{name:'Trade affected'});
+    eq(JSON.stringify(await trades.locator('button[aria-pressed=true]').allInnerTexts()),'["Electrical"]','the trade starts as Sam\'s own');
+    const ph=trades.getByRole('button',{name:'P&H',exact:true});
+    const b=await ph.boundingBox();ok(b.height>=47.5,`the trade buttons are a thumb's height (${Math.round(b.height)})`);
+    await ph.tap();
+    eq(JSON.stringify(await trades.locator('button[aria-pressed=true]').allInnerTexts()),'["P&H"]','one tap makes it P&H');
     await page.getByRole('button',{name:/^Send defect to /}).tap();
     await page.waitForFunction(()=>!document.querySelector('#defect-description'),null,{timeout:15000});
     await context.close();

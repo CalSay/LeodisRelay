@@ -26,6 +26,17 @@ import { usePrincipal } from './PrincipalContext';
  * card on a phone is what the office must have, and the rest is one tap away.
  */
 const TRADES = ['Electrical', 'HVAC', 'P&H', 'Other / non-Leodis'] as const;
+export type Trade = typeof TRADES[number];
+
+/** Trade affected as one tap each, shared by a site update's defect card and "Flag a defect" (2026-10-22). */
+export function TradeChoice({ value, onPick, hint }: { value?: string; onPick: (trade: Trade) => void; hint: string }) {
+  const id = useId();
+  return <>
+    <label id={`trade-${id}`}>Trade affected</label>
+    <div className="eng-seg" role="group" aria-labelledby={`trade-${id}`}>{TRADES.map(t => <button key={t} type="button" aria-pressed={value === t} onClick={() => onPick(t)}>{t === 'Other / non-Leodis' ? 'Other' : t}</button>)}</div>
+    <p className="hint">{hint}</p>
+  </>;
+}
 const SIZES: [RoughSize, string][] = [['half-day', '½ day'], ['day', '1 day'], ['two-days', '2 days'], ['more', 'More']];
 
 export function KindPicker({ onPick }: { onPick: (type: ObservationType) => void }) {
@@ -192,9 +203,7 @@ export function ObservationEditor({
           <textarea id={`what-${id}`} value={observation.whatHappened} onChange={(e) => set("whatHappened", e.target.value)} placeholder="Say what you saw" />
         </div>
         <div className="field">
-          <label id={`trade-${id}`}>Trade affected</label>
-          <div className="eng-seg" role="group" aria-labelledby={`trade-${id}`}>{TRADES.map(t => <button key={t} type="button" aria-pressed={observation.affectedTrade === t} onClick={() => set('affectedTrade', t)}>{t === 'Other / non-Leodis' ? 'Other' : t}</button>)}</div>
-          <p className="hint">Whose work it is, not who you are. “Other” covers the main contractor and other trades.</p>
+          <TradeChoice value={observation.affectedTrade} onPick={t => set('affectedTrade', t)} hint="Whose work it is, not who you are. “Other” covers the main contractor and other trades." />
         </div>
       </>}
 

@@ -8,7 +8,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
 - Why: the coordinator asked for a walk of an office manager using Site
   coverage to answer "which sites had nobody report this week, and which
-  trades are missing?", at 1440 and 390px on main eb4b076 (busy example
+  trades are missing?", at 1440 and 390px on main eb4b076, merged up to 76fa669 (busy example
   data and a small hand-made set). On the busy data, Hunslet Depot showed two
   "P&H" marks on Thu 22 Oct: one plumber, Pat Pipe, who sent a site update
   and a first fix inspection. That read as two plumbers on site, and it
@@ -48,6 +48,67 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a real phone or laptop, a screen reader.
 - Next: under each active site, say which trades that reported earlier in
   the fortnight have not reported this week.
+## 2026-10-22 — Fifteenth release check (main 54c7c93)
+
+- Why: a full check of main before the next deploy, after #165 (issues by
+  place), #166 (fixed, to check on Issues over time) and #167 (office desk
+  order) merged. Last passed: 73b6d8d (#2-#157). #142 and #154 are not on
+  main, so not checked.
+- Ran on 54c7c93 (#2-#27, #29-#129, #131-#141, #143-#153, #155-#167):
+  `npm ci`, typecheck, `npm test` (146 + 568), build, then all 121
+  `scripts/verify-*.mjs` one after another. 118 passed.
+  - `verify-undo-remove` and `verify-site-coverage` (Thursday to Sunday): the
+    known faults PR #142 fixes (waiting on Cal); not fixed again here.
+  - `verify-simpler-home`: with safety, permits and deliveries switched off
+    (the default), office Help said "While safety, permits and deliveries
+    are switched off, a weekly safety or tower inspection is no longer
+    counted as a visit". The "A visit is one person on site on one day"
+    line from #163 named the switched-off records. Fixed: that sentence is
+    taken out, with the "14 visits this week" example after it, which only
+    that sentence explained (a fresh review's point).
+  - An earlier, stopped run on 4714a18 failed `verify-deliveries` once
+    ("focus returns to Record a delivery"); it passed in the full run on
+    54c7c93 and 3 of 3 runs alone. Recorded, not changed.
+- With the fix on main eb4b076 (#169 merged after the check): typecheck,
+  `npm test` (146 + 569), build, simpler-home, help, issue-assign,
+  company-issues, role-access, issue-register and accessibility pass.
+- Deploy: no new settings, packages, data change or offline store version
+  (still `relay-public-v14`).
+- Not verified: a real phone, tablet, printer or screen reader; a live
+  tenant; Docker (no build change since the eleventh check).
+- Next: once #142 merges, rerun `verify-undo-remove` and
+  `verify-site-coverage`; then main is ready.
+## 2026-10-22 — Flag a defect: trade in one tap
+
+- Why: the walk in #169 found that on "Flag a defect" at 390px the trade
+  starts as the engineer's own and changing it (an electrician flagging a
+  plumber's leak as P&H) needs a native dropdown: open it, find P&H, close it.
+  On a site update card the same question is four buttons, one tap. Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the engineer's job simpler, fewer taps).
+- Changed: `TradeChoice` in `ObservationEditor.tsx` is the card's existing
+  four-button control (Electrical, HVAC, P&H, Other; 48px, `aria-pressed`),
+  now used by the defect card and by `IndividualDefect.tsx` in place of the
+  `<select>`. It still starts at the engineer's own trade, is held on the
+  phone with the rest of the draft, and is disabled with the form while it
+  sends. The hint also says what "Other" covers, as the card does. Help
+  "What's new" line.
+- Decided (Claude): reuse the card's control rather than a second copy, so
+  the two stay the same; kept it in `ObservationEditor.tsx` beside
+  `Suggestions`, which the defect form already borrows from there.
+- Verified: typecheck, `npm test` (146 + 569), build. `verify-engineer-layout`
+  now checks the four buttons, Electrical pressed at first, one tap to HVAC,
+  and HVAC still pressed after a reload. `verify-other-trade-defect` (59)
+  taps P&H instead of choosing it from a list and checks the buttons are 48px.
+  Also passed: defect-recent-places (87), defect-send-on-signal (96),
+  lighter-card (80), report-editor (58), came-back-to-update (36), help (36),
+  role-access (95), accessibility (584). Screens: project files
+  `ui-review/defect-trade/` (after: form, filled, no signal, sent at 390 light
+  and dark and 1440 dark; before: copied from the #169 and #113 runs).
+- Not verified: a real phone.
+- Fresh review found no correctness gaps; it suggested plainer hint words and
+  a hint for someone with no trade recorded ("Tap the trade whose work it
+  is."), both taken.
 
 ## 2026-10-22 — Unassigned issues say whose work it is
 
