@@ -34,8 +34,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Checks: `verify-issues-laptop` said "N days past target" sits beside the
   date at 1280px and wider; it now checks it is under the date, the filters
   are on one row and each box is readable at every width from 1024.
-- Left for lane E: the app bar on `/companies` at 1440 cuts "Sign out" to
-  "Sign ou…" (`app/layout.tsx`, task E1). Seen, not ours: the busy example
+- Seen on main before E1 (#190) merged, fixed there: the app bar on
+  `/companies` cut "Sign out" to "Sign ou…". Seen, not ours: the busy example
   data has no photo files, so photos show as broken images in the screenshots.
 - Verified: typecheck, `npm test` (146 + 591), build. Browser, one at a time:
   issues-laptop (284), check-fixes (70), issue-register (70),
@@ -48,6 +48,34 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   doubled line between the two filter rows was fixed. Left as noted: on a
   phone "Verify and close" is shown first but is still last in tab order.
 - Not verified: a real phone, a tablet, a screen reader.
+## 2026-10-22 — Release 1 polish E1: entry screens, hub and the app bar
+
+- Why: task E1 in `docs/release-1.md` (PR #182), from Cal's 22 Oct ask for a
+  top-notch UI on the engineer's phone and the office laptop. Not a
+  `docs/tasks.json` task, so no status changed.
+- Changed:
+  - Hub (`/`): Leodis Compliance Management shows "Coming later" and is not a
+    link, so nobody lands on its invented records. A phone that picked
+    Compliance before is asked again from the home screen icon instead of
+    being sent there. Decided by Claude (Cal's 14:11, 20 Oct); undone by
+    putting the link back in `app/page.tsx`.
+  - Entry screens on a phone fill the screen edge to edge rather than sitting
+    in a framed card; "Put RELAY on your home screen" lines up with the text,
+    has its own arrow and keeps the entry colours in dark mode; local sign-in
+    loses its stray rule and reads plainer.
+  - `/offline` uses the same layout as the other problem pages, with a button
+    to what is on the phone (`/offline.html`).
+  - App bar (`app/layout.tsx`): Sign out and the theme are two matching
+    buttons outside the links. Below 1024px they sit beside RELAY and the
+    links get an even grid below (was three or four ragged rows at 390px);
+    48px targets. Sign out no longer shows the name and role (it is in the
+    tooltip): at 900px the Admin's seven links ran under it.
+  - Help "What's new" line.
+- Verified: typecheck, `npm test` (146 + 581), build. Browser checks listed
+  in the PR. Screenshots before/after at 390 light and dark and 1440 light:
+  `/mnt/project-files/ui-review/release-1/E1/`. A fresh review found the
+  overlap above and three smaller faults; all fixed.
+- Not verified: a real phone, a home screen install.
 
 ## 2026-10-22 — Release 1 polish O2: a project's sheet and the projects pages
 
