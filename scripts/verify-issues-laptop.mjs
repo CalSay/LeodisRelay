@@ -7,7 +7,7 @@
 // "Clear filters" is on the filter row):
 // - at 1024-1279px the heading's buttons sit beside the title on one row, the
 //   five filters are on one row, the Project column gives way to the
-//   project's name under the reference, and "45d late" sits under the target;
+//   project's name under the reference, and "45 days past target" sits under the target;
 // - at 1280px and wider the Project column is back and nothing is under the
 //   reference; below 1024 the register is still cards with a Project line;
 // - every Work and Confirmation tag is on one line from 1024px up;
@@ -116,10 +116,10 @@ try {
         check(m.filterCut.length===0,`${label}: every filter box is wide enough to read (${m.filterCut.join(', ')})`);
         check(!m.projectColumn&&m.projectUnderRef,`${label}: the project's name is under the reference, not in a column`);
         check(/\S/.test(m.projectUnderRefText),`${label}: the name under the reference is the project's name`);
-        if(name==='open')check(m.late>0&&m.lateUnder,`${label}: "Nd late" is under the target date`);
+        if(name==='open')check(m.late>0&&m.lateUnder,`${label}: "N days past target" is under the target date`);
       }else{
         check(m.projectColumn&&!m.projectUnderRef,`${label}: the Project column is there and nothing is under the reference`);
-        if(name==='open')check(m.late>0&&m.lateBeside,`${label}: "Nd late" is beside the target date`);
+        if(name==='open')check(m.late>0&&m.lateBeside,`${label}: "N days past target" is beside the target date`);
       }
       if(width===1024&&name==='open'){
         check(m.firstRowTop<=520,`${label}: the first issue starts by 520px (${m.firstRowTop}px)`);

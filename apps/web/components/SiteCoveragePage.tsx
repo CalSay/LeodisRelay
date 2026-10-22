@@ -16,7 +16,7 @@ import { failure } from '@/lib/failure';
  * changes nothing. Rules in `lib/siteCoverage.ts`.
  */
 
-const fmtDay = (ymd: string, year = false) => dayShort(ymd, year);
+const fmtDay = (ymd: string, year: boolean | 'auto' = 'auto') => dayShort(ymd, year);
 const weekdayOf = (ymd: string) => dayShort(ymd, false).slice(0, 3);
 const dateOf = (ymd: string) => Number(ymd.slice(8));
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;

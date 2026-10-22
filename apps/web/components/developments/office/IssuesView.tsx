@@ -6,6 +6,7 @@ import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Btn, BtnQ, ConfirmTag, SortHead, WorkTag } from './bits';
 import { daysLate, fmtDay, isActive, isOverdue, shortRef } from './model';
+import { pastTarget } from '@/lib/dates';
 import type { SortDirection } from '@/lib/tableSorting';
 import { issueRegister } from '@/lib/api';
 import { MAX_PAGE_SIZE, VERIFICATION, VERIFICATION_LABEL, issueQueryParams, type IssuePage, type IssueSort, type IssueView, type Verification } from '@/lib/issueQuery';
@@ -137,7 +138,7 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
         <td className="c-project" data-label="Project">{name(i.projectId)}</td>
         <td className="due" data-label="Raised">{fmtDay(i.raisedAt)}{source(i) && <div className="rowsub">{source(i)}</div>}</td>
         <td data-label="Owner">{i.owner.trim() || <span className="late">Unassigned</span>}</td>
-        <td className="due" data-label="Target">{i.targetDate ? <><b className={late ? 'late' : ''}>{fmtDay(i.targetDate)}</b>{late && <span className="late-days"><span className="sep"> · </span>{daysLate(i.targetDate, day)}d late</span>}</> : <span className="fine">—</span>}</td>
+        <td className="due" data-label="Target">{i.targetDate ? <><b className={late ? 'late' : ''}>{fmtDay(i.targetDate)}</b>{late && <span className="late-days" style={{ whiteSpace: 'normal' }}><span className="sep"> · </span>{pastTarget(daysLate(i.targetDate, day))}</span>}</> : <span className="fine">—</span>}</td>
         <td data-label="Work"><WorkTag i={i} day={day} /></td><td data-label="Confirmation"><ConfirmTag i={i} reviewOn={!!ctx.statOf(i.projectId)?.reviewOn} /></td>
         <td className="c-actions" onClick={e => e.stopPropagation()}><div className="actions">
           {active && i.work === 'awaiting_verification' && !closureMine(i) && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: fixesHere })}>Verify</Btn>}
