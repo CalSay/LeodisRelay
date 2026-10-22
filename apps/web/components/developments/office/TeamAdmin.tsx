@@ -10,7 +10,7 @@ import { fmtWhen } from './model';
 import { welcomeText } from '@/lib/welcomeMessage';
 import { useFeatures } from '@/components/FeaturesContext';
 import { SAFETY_RECORDS_COVERS, SAFETY_RECORDS_NAME } from '@/lib/featureSwitch';
-import { lastSentWords } from '@/lib/teamActivity';
+import { lastSentWords, thisWeekWords } from '@/lib/teamActivity';
 
 const ROLE_WORDS: Record<string, string> = { Admin: 'Everything, plus the Admin tab', Manager: 'Office, all projects', Engineer: 'Own drafts, submitted reports, issues' };
 const sees = (m: TeamMember) => ROLE_WORDS[m.assignment.split('.')[0] ?? ''] ?? 'Not known until they sign in';
@@ -21,7 +21,9 @@ const roleWords = (assignment: string) => assignment.split('.').map(w => w === '
 /**
  * "Last sent": the site and day of their latest report, so the office can see
  * a new site reporting, or who has not got going yet, without opening anyone.
- * The site links to that report.
+ * The site links to that report. Under it, the days this week they sent a
+ * report for and how many sites, so "who has sent updates this week" needs no
+ * other page.
  */
 function LastSentCell({ ctx, m }: { ctx: Ctx; m: TeamMember }) {
   const project = m.lastSent && ctx.projects.find(p => p.id === m.lastSent!.projectId);
@@ -31,6 +33,7 @@ function LastSentCell({ ctx, m }: { ctx: Ctx; m: TeamMember }) {
       : project && m.lastSent ? <a className="rowtitle" style={{ fontSize: 13 }} href={`#/projects/${project.id}/report/${m.lastSent.reportId}`} onClick={e => e.stopPropagation()}>{w.title}</a>
       : <div className="rowtitle" style={{ fontSize: 13 }}>{w.title}</div>}
     {w.sub && <div className="rowsub">{w.sub}</div>}
+    {m.lastSent && <div className="rowsub" data-week>{thisWeekWords(m.thisWeek, ctx.day)}</div>}
   </td>;
 }
 
@@ -127,7 +130,7 @@ function People({ ctx }: { ctx: Ctx }) {
   const members = ctx.team?.members ?? null;
   const [sel, setSel] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const listed = (members ?? []).filter(m => m.onChecklist || m.session !== 'never');
+  const listed = (members ?? []).filter(m => m.onChecklist || m.session !== 'never' || !!m.lastSent);
   const selected = listed.find(m => m.email.toLowerCase() === sel);
   const unnamed = listed.filter(m => m.onChecklist && !m.name);
   const saved = () => { ctx.loadTeam(); void ctx.refresh(); };
