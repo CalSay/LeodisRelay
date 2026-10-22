@@ -15,8 +15,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the rest straight after the first screen is up, as a low-priority React
   update. Cards past the 30th get `content-visibility:auto` in
   `engineer.css`, so the browser lays out and paints only those near the
-  screen. Nothing on screen changes: every card is there a moment later, in
-  the same order. Speed only, so no Help line.
+  screen, holding 180px for each card not yet drawn at phone width (160px
+  wider), about the busy seed's average card, so the page starts near its
+  true length (Open 86,751 px against 89,503 drawn in full; All 295,653
+  against 265,733, as closed cards are shorter) and grows
+  or shrinks a little as cards scroll into view. Every card is there a moment
+  later, in the same order. Speed only, so no Help line.
 - Decided (Claude): not a "Show more" button (that would change the screen
   the Release 1 polish lane owns) and not on the first 30 cards, so a short
   list, and a card that has just been unfolded, behave exactly as before
