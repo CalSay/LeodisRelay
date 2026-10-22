@@ -42,8 +42,9 @@ below and fixes the release check finds.
 
 **Open pull requests that join Release 1 when merged**
 
-- #176 (a site update card stays calm while being filled in) and #181 (Put
-  forward as fixed stays on the first screen), both being worked on now.
+- #176 (a site update card stays calm while being filled in), being worked
+  on now. #181 (Put forward as fixed stays on the first screen) merged on
+  22 October.
 - #142 (Undo gets the focus back on a phone, and the site coverage check from
   Thursday to Sunday) is **needed**: it fixes a known fault. It waits on Cal's
   "carry on".
@@ -70,7 +71,7 @@ below and fixes the release check finds.
 Release 1 is ready to deploy when every line is ticked.
 
 1. Every polish task below (E1 to E7, O1 to O7) is merged.
-2. #176 and #181 are merged; #142 is merged.
+2. #176 and #142 are merged (#181 already is).
 3. `npm run typecheck`, `npm test` and `npm run build` pass on the release
    commit.
 4. Every `scripts/verify-*.mjs` check passes, run one at a time (they share
@@ -166,8 +167,7 @@ lane, tasks go in order. Never two threads in the same lane.
   sent. Safety and tower inspections are left alone (switched off).
 - **E6. Issues.** The Issues view of `/engineer` and "Where are you?" (its
   part of `EngineerWorkspace`, and `EngineerIssueList`), `/issues/[id]`,
-  putting a fix forward, `/issues/snag-list`. Wait for #181 to merge before
-  branching.
+  putting a fix forward, `/issues/snag-list`.
 - **E7. The engineer's other pages.** The Reports view of `/engineer`,
   `/my-week`, `/photos`, `/site-notes`, `/search`, `/help` (`MyWeekPage`,
   `PhotoLibraryPage`, `SiteNotesPage`, `SearchPage`, `HelpPage`). Photographs, Search and Help belong to this lane
@@ -207,7 +207,7 @@ template" thread open, and the PDFs change only there.
 
 ### Order
 
-Start E1 and O1 together. E3 waits for #176 and E6 for #181; if they are not
-merged when the lane gets there, do E4 or E5 first. When both lanes are done,
+Start E1 and O1 together. E3 waits for #176; if it is not merged when the lane
+gets there, do E4 or E5 first. When both lanes are done,
 run the release check (exit checklist 3 to 5), then ask Cal for the deploy
 go-ahead.
