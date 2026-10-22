@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'defect-fixed-on-the-spot', added: '2026-10-22', audience: 'site', title: 'Fixed a defect there and then? Say so from the receipt',
+    text: 'After you flag a defect, "Defect sent to the office" now has "Fixed it already?" under Back to Site. Tap it to take a photo of the fix, then "Put forward as fixed": the office gets it to check, with your photo of the fix, and someone else still checks it and closes it. No photo to add? Tap "No photo? Put forward as fixed". Only once the defect has reached the office. On the issue, "Who is fixing it" now names who put it forward as fixed. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'month-figures-read-true', added: '2026-10-22', audience: 'all', title: 'Month summary: figures that say what they count',
     text: 'On the Weekly summary\'s Month choice, the line under Site reports now says what the reports were, adding up to the figure: "59 site updates, 1 handover inspection, 1 first fix inspection", or "all site updates". Before, it counted progress cards ("42 site reports, 89 progress updates"), which read as more updates than reports. For this month, a week still to come no longer shows as a row of noughts, which looked like nobody was on site, and this week\'s row stops at today and says "so far". A month that is over is unchanged, and so is every figure. Checked in a desktop browser and a phone-sized window, and as a saved PDF, not on a printer.',
     link: { label: 'Open the Weekly summary', href: '/weekly-summary?period=month' } },
