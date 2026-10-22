@@ -34,6 +34,37 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   tenant; Docker (no build change since the eleventh check).
 - Next: once #142 merges, rerun `verify-undo-remove` and
   `verify-site-coverage`; then main is ready.
+## 2026-10-22 — Flag a defect: trade in one tap
+
+- Why: the walk in #169 found that on "Flag a defect" at 390px the trade
+  starts as the engineer's own and changing it (an electrician flagging a
+  plumber's leak as P&H) needs a native dropdown: open it, find P&H, close it.
+  On a site update card the same question is four buttons, one tap. Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the engineer's job simpler, fewer taps).
+- Changed: `TradeChoice` in `ObservationEditor.tsx` is the card's existing
+  four-button control (Electrical, HVAC, P&H, Other; 48px, `aria-pressed`),
+  now used by the defect card and by `IndividualDefect.tsx` in place of the
+  `<select>`. It still starts at the engineer's own trade, is held on the
+  phone with the rest of the draft, and is disabled with the form while it
+  sends. The hint also says what "Other" covers, as the card does. Help
+  "What's new" line.
+- Decided (Claude): reuse the card's control rather than a second copy, so
+  the two stay the same; kept it in `ObservationEditor.tsx` beside
+  `Suggestions`, which the defect form already borrows from there.
+- Verified: typecheck, `npm test` (146 + 569), build. `verify-engineer-layout`
+  now checks the four buttons, Electrical pressed at first, one tap to HVAC,
+  and HVAC still pressed after a reload. `verify-other-trade-defect` (59)
+  taps P&H instead of choosing it from a list and checks the buttons are 48px.
+  Also passed: defect-recent-places (87), defect-send-on-signal (96),
+  lighter-card (80), report-editor (58), came-back-to-update (36), help (36),
+  role-access (95), accessibility (584). Screens: project files
+  `ui-review/defect-trade/` (after: form, filled, no signal, sent at 390 light
+  and dark and 1440 dark; before: copied from the #169 and #113 runs).
+- Not verified: a real phone.
+- Fresh review found no correctness gaps; it suggested plainer hint words and
+  a hint for someone with no trade recorded ("Tap the trade whose work it
+  is."), both taken.
 
 ## 2026-10-22 — Unassigned issues say whose work it is
 
