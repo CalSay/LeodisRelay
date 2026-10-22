@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'weekly-summary-phone', added: '2026-10-22', audience: 'office', title: 'The Weekly summary reads on a phone',
+    text: 'On a phone, the Weekly summary\'s choices now take three rows instead of five: the project, then Week or Month beside "Print or save as PDF" (now a plain outlined button), then the steps back and forward. So the week\'s figures and the month\'s first two are on the first screen (on phones narrower than most, the week\'s first two). In the Month choice, "Week by week" shows each week as a small block with all six figures named (days on site, reports, issues raised and closed, variations raised and instructed). Before, only days and reports showed and the rest were hidden off the side of the screen. On a desk the print button now sits beside Week and Month. Printing is unchanged. Checked in a phone-sized browser, light and dark, not on a real phone.',
+    link: { label: 'Open the Weekly summary', href: '/weekly-summary' } },
   { id: 'shorter-check-and-send', added: '2026-10-22', audience: 'site', title: 'A shorter Check & send',
     text: 'Check & send on a site update now lists only the kinds of card in it, such as "Progress 1", instead of four boxes with three of them 0. Signing a site update is still optional, so the signature box stays folded behind "Add your signature" until you tap it; a draft you have already signed opens with it showing. A one-card update with photos now fits on about one phone screen. Inspections still show the signature box, because they must be signed. Checked in a phone-sized browser, not on a real phone.',
     link: { label: 'Open your home screen', href: '/engineer' } },
