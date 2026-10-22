@@ -1,3 +1,4 @@
+import { countVisits } from './visits';
 import { naturalOrder } from './naturalOrder';
 import type { Principal } from '@relay/platform';
 import { canReadReport } from './auth/access';
@@ -83,6 +84,8 @@ export interface WeeklySummary {
   reports: WeekReport[];
   engineers: string[];
   siteDays: string[];
+  /** One person on site on one day, up to today (lib/visits.ts), the same count as the office overview's visits. */
+  visits: number;
   kinds: Record<ObservationType, number>;
   issuesRaised: WeekIssue[];
   issuesFixed: WeekIssue[];
@@ -140,7 +143,8 @@ export function periodSummary(sources: WeekSources, principal: Principal, projec
   const monday = start;
   const inWeek = (ymd: string) => ymd >= start && ymd <= end;
 
-  const reports: WeekReport[] = sentReports(sources.reports, principal, projectId).filter(r => inWeek(r.visitDate)).map(r => {
+  const sent = sentReports(sources.reports, principal, projectId).filter(r => inWeek(r.visitDate));
+  const reports: WeekReport[] = sent.map(r => {
     const kinds = emptyKinds();
     const places = new Map<string, string>();
     for (const o of r.observations) {
@@ -200,7 +204,7 @@ export function periodSummary(sources: WeekSources, principal: Principal, projec
   return {
     projectId, start: monday, end, current: inWeek(today),
     reports, engineers: [...new Set(reports.map(r => r.author))].sort((a, b) => a.localeCompare(b)),
-    siteDays: [...new Set(reports.map(r => r.visitDate))].sort(), kinds,
+    siteDays: [...new Set(reports.map(r => r.visitDate))].sort(), visits: countVisits(sent.filter(r => r.visitDate <= today)), kinds,
     issuesRaised: byTime(issuesRaised), issuesFixed: byTime(issuesFixed), issuesClosed: byTime(issuesClosed), openNow,
     variationsRaised: byTime(variationsRaised), variationsInstructed: byTime(variationsInstructed),
     site: { talks: byDay(talks), permits: byDay(permits), deliveries: byDay(deliveries) },

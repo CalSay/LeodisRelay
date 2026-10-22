@@ -97,7 +97,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
 
   const day = today();
   const projects = useMemo(() => projectData.filter(p => principal && canAccessProject(principal, p.id) && REPORTABLE.includes(p.status)), [principal, projectData]);
-  const stats = useMemo(() => snap ? projects.map(p => projectStats(p, snap, day)) : [], [snap, projects, day]);
+  const stats = useMemo(() => snap ? projects.map(p => projectStats(p, snap, day, safetyRecords)) : [], [snap, projects, day, safetyRecords]);
   const statOf = useCallback((code: string) => stats.find(s => s.code === code), [stats]);
   const here = `/office#/${[route.tab, route.a, route.b, route.c].filter(Boolean).join('/')}`;
   const attn = useMemo(() => attention(stats, day, snap?.safety, here, snap?.permits, snap?.deliveries), [stats, day, snap?.safety, here, snap?.permits, snap?.deliveries]);

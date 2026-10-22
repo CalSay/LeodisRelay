@@ -124,7 +124,7 @@ export function WeeklySummaryPage({ initialProject, initialWeek, initialPeriod =
         </header>
 
         <dl className="week-stats">
-          <div><dt>Site reports</dt><dd>{s.reports.length}<small>{s.siteDays.length ? `${plural(s.siteDays.length, 'day')} on site` : 'no visits reported'}</small></dd></div>
+          <div><dt>Site reports</dt><dd>{s.reports.length}<small>{s.siteDays.length ? `${plural(s.visits, 'visit')} over ${plural(s.siteDays.length, 'day')}` : 'no visits reported'}</small></dd></div>
           <div><dt>Engineers</dt><dd>{s.engineers.length}<small>{s.engineers.length ? s.engineers.join(', ') : 'none reported'}</small></dd></div>
           <div><dt>Issues raised</dt><dd>{s.issuesRaised.length}<small>{plural(s.issuesClosed.length, 'closed', 'closed')} this week</small></dd></div>
           <div><dt>Variations raised</dt><dd className={s.variationsRaised.some(v => v.workDone && v.status !== 'Instructed') ? 'late' : ''}>{s.variationsRaised.length}<small>{plural(s.variationsInstructed.length, 'instructed', 'instructed')} this week</small></dd></div>

@@ -77,7 +77,7 @@ try {
     check(byLabel.Engineers===expected.engineers,`${label}: engineers ${byLabel.Engineers} match the records (${expected.engineers})`);
     check(byLabel['Issues raised']===expected.raised,`${label}: issues raised ${byLabel['Issues raised']} match the records (${expected.raised})`);
     check(byLabel['Variations raised']===expected.vraised,`${label}: variations raised ${byLabel['Variations raised']} match the records (${expected.vraised})`);
-    check((await page.locator('.week-stats small').first().innerText()).startsWith(`${expected.days} day`),`${label}: days on site match the records (${expected.days})`);
+    check((await page.locator('.week-stats small').first().innerText()).endsWith(`over ${expected.days} day${expected.days===1?'':'s'}`),`${label}: days on site match the records (${expected.days})`);
     check(await rows(page)===3,`${label}: the week's choices take three rows (${await rows(page)})`);
     // All four from 390px; narrower, the engineers' names wrap, so the first two.
     const onScreen=width>=390?4:2;
