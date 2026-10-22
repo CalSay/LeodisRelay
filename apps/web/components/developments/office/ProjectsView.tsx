@@ -21,7 +21,7 @@ import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, f
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
-import { WORK_LABEL, notAcknowledged, daysLate, attention, fmtDate, fmtDay, fmtReceived, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
+import { WORK_LABEL, notSeen, daysLate, attention, fmtDate, fmtDay, fmtReceived, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
 import { signatureMethod } from '@/lib/signature';
 import { dayShort, timeOf } from '@/lib/dates';
 import { LATEST_DAYS, dayFound, peopleWords, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
@@ -234,7 +234,7 @@ function ProjectGlance({ ctx }: { ctx: Ctx }) {
         const v = lastVisitWords(s.standing, day);
         const exposed = s.exposedVariations.length, unpriced = s.unpricedVariations.length;
         // The same count as the project register's Needs action chip; reports nobody in the office has opened are said beside it.
-        const action = s.needsAction + siteItems(ctx, s).length, unseen = s.reports.filter(notAcknowledged).length;
+        const action = s.needsAction + siteItems(ctx, s).length, unseen = notSeen(s.reports, ctx.day).recent.length;
         // The row opens the project (its name is the link, stretched over the row); last week's summary is its own link on top, for the Monday look back.
         return <li key={p.id}><div className="glance-row">
           <span className="glance-name"><a className="glance-open" href={`#/projects/${p.id}`}><b>{p.projectName}</b></a><span className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager}</span>
@@ -292,7 +292,7 @@ function actionGroups(ctx: Ctx): ActionGroup[] {
   const issueRow = (i: Issue, sub: string, action?: ReactNode) => <div key={i.id}><a className="rt" href={`#/projects/${i.projectId}/issue/${i.id}`}><b>{i.description}</b><span>{project(i.projectId)} · {sub}</span></a>{action}</div>;
   return [
     // Opening a report marks it seen, so each row is a link and nothing more.
-    { key: 'notAck', title: 'Not seen yet', sub: 'Received, nobody in the office has opened it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: anyReports ? 'Every report has been seen.' : 'No reports received yet.',
+    { key: 'notAck', title: 'Not seen yet', sub: 'Received in the last two weeks, nobody in the office has opened it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: anyReports ? 'Every report from the last two weeks has been seen.' : 'No reports received yet.',
       rows: a.notRead.slice(0, 4).map(r => reportRow(r)) },
     { key: 'unassigned', title: 'Unassigned issues', sub: 'Open, nobody owns the action', n: a.unassigned.length, tone: 'soon', all: '#/issues/show/unassigned', empty: anyOpen ? 'Every open issue has an owner.' : 'No open issues.',
       rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)) },
