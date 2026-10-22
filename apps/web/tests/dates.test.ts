@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dateShort, dayLong, dayShort, timeOf, whenShort } from '../lib/dates';
+import { dateShort, dayLong, dayShort, daysBetween, pastTarget, timeOf, whenShort } from '../lib/dates';
+import { dayLabel } from '../lib/myWeek';
 
 test('dates read the same way everywhere, with no locale commas or "Sept"', () => {
   assert.equal(dayShort('2026-09-16', true), 'Wed 16 Sep 2026');
@@ -35,4 +36,22 @@ test('missing or unreadable values give nothing to print', () => {
     assert.equal(f('not a date'), '');
     assert.equal(f('2026-02-30'), '');
   }
+});
+
+test('a day from another year says its year, so last November never reads as next month', () => {
+  const year = Number(new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' }).slice(0, 4));
+  const lastYear = `${year - 1}-11-07`, thisYear = `${year}-03-02`;
+  assert.match(dayLabel(lastYear), new RegExp(`^\\w{3} 7 Nov ${year - 1}$`));
+  assert.match(dayLabel(lastYear, true), new RegExp(`^\\w+day 7 November ${year - 1}$`));
+  assert.match(dayLabel(thisYear), /^\w{3} 2 Mar$/, 'this year needs no year');
+  assert.equal(dayLabel('not a day'), 'not a day');
+});
+
+test('a late item says how many days past its target, across the year end too', () => {
+  assert.equal(daysBetween('2025-11-07', '2026-10-22'), 349);
+  assert.equal(daysBetween('2026-10-21', '2026-10-22'), 1);
+  assert.equal(daysBetween('2026-03-28', '2026-03-30'), 2, 'the clocks going forward change nothing');
+  assert.equal(daysBetween('', '2026-10-22'), 0);
+  assert.equal(pastTarget(1), '1 day past target');
+  assert.equal(pastTarget(349), '349 days past target');
 });

@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { usePrincipal } from './PrincipalContext';
 import { canManage } from '@/lib/auth/access';
 import { OBSERVATION_TYPES } from '@/lib/fixtures';
-import { dayLabel, myWeekText, type MyWeek, type MyWeekFixOutcome, type MyWeekIssueKind, type MyWeekProject, type MyWeekRecordKind, type MyWeekReport } from '@/lib/myWeek';
+import { dayLabel, weekRange, myWeekText, type MyWeek, type MyWeekFixOutcome, type MyWeekIssueKind, type MyWeekProject, type MyWeekRecordKind, type MyWeekReport } from '@/lib/myWeek';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { londonDay, shiftWeek, weekEnd, weekStart } from '@/lib/weeklySummary';
 import { failure } from '@/lib/failure';
@@ -85,7 +85,7 @@ export function MyWeekPage({ initialWeek, returnTo }: { initialWeek: string; ret
     <div className="mw-head">
       <p className="lbl">My week</p>
       <h1>{principal?.name}</h1>
-      <p className="mw-range">{fmtDay(week)} to {fmtDay(weekEnd(week))} {weekEnd(week).slice(0, 4)}{w?.current ? ' · this week so far' : ''}</p>
+      <p className="mw-range">{weekRange(week, weekEnd(week))}{w?.current ? ' · this week so far' : ''}</p>
     </div>
     <div className="mw-controls mw-noprint">
       <div className="mw-step" role="group" aria-label="Choose the week">
