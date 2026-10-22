@@ -57,6 +57,10 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-tile.big>div{flex:1;min-width:0;}
 .eng-tile.big .arrow{font-family:var(--mono);color:var(--brass);}
 .eng-tile:disabled{opacity:.6;}
+.eng-tile.eng-tile-held{border-color:var(--caution);background:var(--caution-wash);}
+.eng-tile.eng-tile-held small{color:var(--text-2);}
+.eng-held-defects{margin-top:10px;}
+.eng-row.held{border-left-color:var(--caution);}
 
 /* ---- Lists ---------------------------------------------------------------- */
 .eng-list{border:1px solid var(--line);background:var(--panel);border-radius:9px;overflow:hidden;margin:0 0 6px;}

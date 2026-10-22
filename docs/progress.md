@@ -60,6 +60,83 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Screens in /mnt/project-files/ui-review/issue-at-place/.
 - Not verified: a real phone or screen reader.
 
+## 2026-10-22 — Site page: a defect not sent yet
+
+- Why: the coordinator asked for a walk of an engineer's end of day at 390px
+  on main 71e7f88, with one item saved with no signal, checking everything
+  reached the office. Sam sent a site update, then flagged a defect with no
+  signal: the defect screen said "Defect not sent yet", but once he tapped
+  Site nothing showed it, and the "Flag a defect" button still said "sent
+  straight away". A site update in the same state already says "Not sent yet"
+  on the big button. Not a `docs/tasks.json` task, so no status changed.
+  Within Cal's 21 Oct direction (the engineer's job simpler).
+- Changed (`EngineerWorkspace.tsx`, engineer home only): while a defect the
+  engineer tapped Send on is held on the phone (`heldDefectsToSend`), the
+  current project's button reads "Defect not sent yet · Only on this phone,
+  not at the office yet. Tap to see it." (caution colours) and opens the
+  defect with "Try again" as before. A defect held on another listed project
+  is one caution row under the buttons ("Defect not sent yet · Kirkstall Gate
+  - Phase 2"), opening that project's defect. `sendHeldDefect` now fires
+  `DEFECT_SETTLED_EVENT` whenever a send ends (by itself or a tap), so the
+  Site page reads again then, on `storage` (another tab) and on coming back
+  from the defect screen. Help "What's new" line.
+- Decided (Claude): the button changes in place, like the site update's big
+  button, rather than adding a new section, so nothing more is on screen. A
+  defect written but never sent, or one RELAY refused and handed back to
+  change, is not "waiting" and leaves the button as it was; the refusal
+  already has its own red note. The words say "only on this phone, not at
+  the office yet" rather than "goes by itself when there is signal": that is
+  true whatever holds it up (no signal, RELAY closed, signed out, a missing
+  photograph), and the defect screen gives the reason (review).
+- Verified: typecheck, `npm test` (146 + 572), build. New
+  `scripts/verify-defect-waiting-on-site.mjs` (99 checks, 390 light and dark,
+  1440 dark: the button before, while waiting, after RELAY is opened again,
+  and after it goes by itself; never-sent draft; another project's row and
+  its link; Site tapped during a slow send, then the button goes back by
+  itself; 48px targets; no sideways scroll). `verify-defect-send-on-signal`
+  now waits for "Defect not sent yet" on the Site page (96 pass). Also
+  passed: engineer-layout, engineer-day, came-back-first, home-and-sheet,
+  receipt-send-bar, other-trade-defect, defect-recent-places, help,
+  role-access, offline-capture, accessibility (584). defect-recent-places
+  failed once on a timeout and passed alone on a rerun. Screens: project files
+  `ui-review/defect-waiting/`.
+- Not verified: a real phone or real weak signal (simulated offline and a
+  blocked upload in a phone-sized browser).
+
+## 2026-10-22 — Weekly summary: an earlier week's open issues as they stood
+
+- Why: the coordinator asked for a walk of an office person at 1440 on the
+  busy example data telling a client "how did this project go this week?"
+  from the Weekly summary, project page and PDF. Wrong figure found: the
+  summary's "Open now" was always today's, on every week. Tetley Hall's week
+  of 1 June printed today said 390 open, 222 past target; at the end of that
+  week it was 260 and 138. The Month summary already reads a past month at its
+  end. The open figure was also only at the foot of the Issues section, below
+  every report and issue row. Not a `docs/tasks.json` task, so no status
+  changed. Within Cal's 21 Oct direction (the office's view of progress
+  clearer).
+- Changed: `periodSummary` (lib/weeklySummary.ts) gives `open` (was
+  `openNow`) with `asOf`: the period's last day once it is over, else today.
+  Today it is still `issueFigures`, so this week matches the project sheet;
+  otherwise `isOpenOn`/`isLateOn`/`isToCheckOn` (lib/issueTrend.ts), the rules
+  Issues over time and the Month use. The page says "Open at the end of the
+  week (Sun 18 Oct)" on a week that is over, "Open now" on this week; the
+  footnote says which. The Issues raised figure adds "· 390 open now" or
+  "· 260 open on Sun 7 Jun" on desks and on paper. Help "What's new" line.
+- Decided (Claude): on a phone the figure's open part is hidden (the open line
+  under Issues stays), because the extra line pushed the second row of figures
+  16px below the first screen that #150 keeps them on. On a week that is over,
+  "fixed and waiting to be checked" is words, not the register link, since the
+  register shows today's list. weeklySummary.ts now imports issueTrend.ts,
+  which imports it back; both only call each other inside functions.
+- Verified: `npm run typecheck`, `npm test` (146 + 573, new test for a past
+  week's standing), build. Browser: verify-weekly-summary (46, new checks for
+  last week at 390 and 1440, print, link vs words), weekly-phone (263),
+  issue-figures (48), office-links (65), check-fixes (70),
+  office-weekly-review (53), issue-trend (29), help (36), busy-home (35),
+  role-access (95). Busy data figures looked at in a desktop browser
+  (project files `ui-review/weekly-week-end/`). Not verified: a real phone or
+  printer.
 ## 2026-10-22 — Site updates: the same trade's previous visit
 
 - Why: the coordinator asked for a walk of an office person at 1440px opening

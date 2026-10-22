@@ -36,6 +36,8 @@ export function readReceipt(raw: string | null, requestId: string): DefectReceip
 
 /** Sent to the window when a held defect went by itself, or was refused; the defect screen showing it takes it (preventDefault). */
 export const DEFECT_RESULT_EVENT = 'relay-defect-result';
+/** Sent to the window whenever a send of a held defect ends, by itself or from a tap, however it went. */
+export const DEFECT_SETTLED_EVENT = 'relay-defect-settled';
 export interface DefectResult { key: string; requestId: string; result: DefectSendResult }
 
 export type DefectSendResult =
@@ -110,7 +112,11 @@ export function sendHeldDefect(key: string, defect: HeldDefect, onlyIfHeld: bool
   // Across tabs it waits its turn: the tab holding the lock gets the receipt (this one then skips) or gives up.
   const send = (locks ? locks.request(`relay-defect-send:${defect.requestId}`, () => post(key, defect, onlyIfHeld, deps)) as unknown as Promise<DefectSendResult> : post(key, defect, onlyIfHeld, deps))
     .then(result => { if (result.kind === 'refused') refusedHere.add(defect.requestId); else if (result.kind === 'sent') refusedHere.delete(defect.requestId); return result; })
-    .finally(() => inFlight.delete(defect.requestId));
+    .finally(() => {
+      inFlight.delete(defect.requestId);
+      // However it was sent, a page showing what waits on this phone can look again.
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event(DEFECT_SETTLED_EVENT));
+    });
   inFlight.set(defect.requestId, send);
   return send;
 }
