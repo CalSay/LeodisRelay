@@ -33,6 +33,9 @@ export interface ProjectStanding {
   tradesThisWeek: string[];
   /** Each trade's latest site update in the last LATEST_DAYS days, newest first: the reports whose progress the office reads. */
   latest: ReportSummary[];
+  /** Every site update with today's visit date, by trade and then as sent, so each project reads in the same order (Today from site on the office overview); today's inspections are counted. */
+  today: ReportSummary[];
+  inspectionsToday: number;
 }
 
 const addDays = (ymd: string, n: number) => { const d = new Date(`${ymd}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
@@ -61,8 +64,10 @@ export function projectStanding(project: { status: string }, reports: ReportSumm
   // Progress is in site updates; an inspection answers its checklist instead.
   // Today and the thirteen days before it.
   const from = addDays(today, -(LATEST_DAYS - 1));
-  const latest: ReportSummary[] = [];
+  const latest: ReportSummary[] = [], todays: ReportSummary[] = [];
+  let inspectionsToday = 0;
   for (const r of visits) {
+    if (r.visitDate === today) { if (r.checks || (r.reportType && r.reportType !== 'progress')) inspectionsToday++; else todays.push(r); }
     if (r.checks || (r.reportType && r.reportType !== 'progress') || r.visitDate < from) continue;
     if (!latest.some(x => (x.authorTrade ?? '') === (r.authorTrade ?? ''))) latest.push(r);
   }
@@ -73,6 +78,8 @@ export function projectStanding(project: { status: string }, reports: ReportSumm
     thisWeek: week.length,
     tradesThisWeek: [...new Set(week.map(r => r.authorTrade).filter((t): t is NonNullable<typeof t> => Boolean(t)))].sort(),
     latest,
+    today: todays.sort((a, b) => Number(!a.authorTrade) - Number(!b.authorTrade) || (a.authorTrade ?? '').localeCompare(b.authorTrade ?? '') || (a.serverAcknowledgedAt ?? '').localeCompare(b.serverAcknowledgedAt ?? '') || naturalOrder(a.reference, b.reference)),
+    inspectionsToday,
   };
 }
 
@@ -103,4 +110,16 @@ export function progressLines(report: Pick<Report, 'observations'>): ProgressLin
   return report.observations
     .filter(o => (o.type === 'update' || o.type === 'access') && (o.whatHappened.trim() || o.location.trim()))
     .map(o => ({ id: o.id, kind: o.type as 'update' | 'access', location: o.location.trim(), text: o.whatHappened.trim(), photos: o.photos.length }));
+}
+
+/** What a day's site updates found, from the counts each report already carries: what was held up and what the office has to answer. */
+export interface DayFound { updates: number; progress: number; access: number; defects: number; variations: number }
+export function dayFound(reports: ReportSummary[]): DayFound {
+  const out: DayFound = { updates: reports.length, progress: 0, access: 0, defects: 0, variations: 0 };
+  for (const r of reports) {
+    const k = r.kindCounts;
+    if (!k) { out.defects += r.defectCount; continue; }
+    out.progress += k.update; out.access += k.access; out.defects += k.defect; out.variations += k.instruction;
+  }
+  return out;
 }

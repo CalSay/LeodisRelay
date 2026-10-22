@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'today-from-site', added: '2026-10-22', audience: 'office', title: 'Today from site, every project in one place',
+    text: 'The office overview now has "Today from site" under "Where each project stands": one block for each project with a site update for today\'s visit, saying how many came in, how many access problems held people up, and the defects and variations raised for the office to answer. Under it is each update in the engineer\'s words, grouped by trade, with any access problems first. Each update opens its report, and each project\'s name opens its sheet. So at the end of the day you can read what every site did without opening each project or each report. "Waiting N days" on a fix to check now counts calendar days, so a fix put forward yesterday evening says "waiting 1 day" this morning, not 0, and matches the date it was put forward. Checked in a desktop browser, light and dark, and a phone-sized window.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'fix-waiting-from-put-forward', added: '2026-10-22', audience: 'office', title: 'How long a fix has waited, counted from when it was put forward',
     text: '"Waiting N days" on a fix to check now counts from when the engineer put it forward as fixed, so a note or photo added afterwards no longer starts the count again. The overview\'s Fixed, to check rows and Attention list the fix that has waited longest first, a project\'s Fixed, to check figure gives the oldest put forward, and "Verify the oldest" starts at the fix that has waited longest rather than the oldest defect. An issue\'s target date now reads "13 Oct" like everywhere else.',
     link: { label: 'Open the office', href: '/office' } },
@@ -488,7 +491,7 @@ export const GUIDE: Record<HelpTab, readonly GuideSection[]> = {
   ],
   office: [
     { id: 'office-day', heading: 'Your day in the office', ordered: true, steps: [
-      'Office opens on the office position. "Where each project stands" gives every project\'s last visit and everyone on site that day, its visits this week and by which trades, its open and overdue issues, its variations waiting and how much needs the office; a site with no report for three working days is marked. Under it: new reports, reports nobody in the office has opened yet, unassigned issues and issues fixed and waiting to be checked.',
+      'Office opens on the office position. "Where each project stands" gives every project\'s last visit and everyone on site that day, its visits this week and by which trades, its open and overdue issues, its variations waiting and how much needs the office; a site with no report for three working days is marked. "Today from site" then reads each project\'s site updates for today\'s visit, with its access problems and the defects and variations raised. Under it: new reports, reports nobody in the office has opened yet, unassigned issues and issues fixed and waiting to be checked.',
       'Open a project to read "Latest from site": each trade\'s newest site update from the last fortnight, in the engineer\'s own words, with what else it raised.',
       'Opening a report marks it "Seen" with your name and the time, and the engineer sees "Seen by the office" on it. There is nothing to press. Receipt and delivery do not count, and nor does opening a report you wrote yourself.',
       'A report\'s signature line says whether it was drawn or typed. A typed signature shows the statement the person ticked and who was signed in when it was sent.',
