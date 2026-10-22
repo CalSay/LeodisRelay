@@ -785,8 +785,8 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
   // Everything else at this place on the project: the register's open issues there and the photographs, as typed (no list of places).
   const place = issue.location.trim().replace(/\s+/g, ' ');
   const here = openAtPlace(ctx.snap?.issues ?? [], issue.projectId, place);
-  return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h3>{issue.description}</h3><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div>
+  return <div className="sheet issue-sheet">
+    <div className="sheet-title issue-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h3>{issue.description}</h3><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div>
       {place && ctx.snap && <p className="sheet-here">At <b>{place}</b>: {here.length ? <a href={placeRegisterHash(issue.projectId, place)}>{count(here.length, 'open issue')}</a> : 'no open issues'} · <Link href={`/photos?${new URLSearchParams({ project: issue.projectId, q: place, returnTo: officeReturn(ctx) })}`}>Photographs</Link></p>}</div>
       <div className="actions">
         <Link className="btn btn-q btn-sm" href={withViewReturn(`/issues/${issue.id}`, officeReturn(ctx))}>Issue page</Link>

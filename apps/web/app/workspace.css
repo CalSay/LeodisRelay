@@ -653,19 +653,9 @@ body:has(.ws){overflow:hidden auto}
   /* A download that went wrong says so on its own row, under the buttons, as on other widths. */
   .ws .issues-view>.pagehead:has(.download-problem){flex-wrap:wrap}
   .ws .issues-view>.pagehead:has(.download-problem)>.actions{flex:1 1 100%;flex-wrap:wrap}
-  .ws .issue-search{flex-wrap:nowrap}
-  .ws .issue-search label{flex:1 1 0;min-width:0}
-  .ws .issue-search label:is(:first-child,:nth-child(4)){flex-grow:1.4}
-  .ws .issue-search label>:is(input,select){width:100%;min-width:0;flex:1 1 auto}
-  .ws .issue-search>.btn{flex:none}
-  /* Narrowed: the five filters keep their row and "Clear filters" goes under them. */
-  .ws .issue-search:has(>.btn){flex-wrap:wrap}
-  .ws .issue-search:has(>.btn) label{flex-basis:18%}
   .ws table.issue-reg .c-project{display:none}
   .ws table.issue-reg .ref-project{display:block;white-space:normal;max-width:9.5em}
-  /* "45d late" goes under the target date, so the column is only as wide as a date. */
-  .ws table.issue-reg .late-days{display:block;font-family:var(--sans);font-size:12px;color:var(--text-3)}
-  .ws table.issue-reg .late-days .sep{display:none}
+  /* The filter row and "N days past target" under the date: from 1024px up, in the Release 1 O3 block below. */
 }
 /* An inspection in the office reader: its tally under the heading, then the checks that passed folded under one button. */
 .ws .check-tally{margin:var(--s2) 0 var(--s3);font-size:14px;color:var(--text-2)}
@@ -763,3 +753,58 @@ body:has(.ws){overflow:hidden auto}
   /* The name below says which project this is, so the column band's "Register · name" is kept for screen readers only. */
   .ws .cols[data-depth="2"]>.col:has(>.register-standing)>.col-head :is(h2,h4){position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 }
+
+/* ------------------------------------------------- office Issues (Release 1, O3)
+   The register's two filter rows read as one block under the heading, every
+   filter box is wide enough for its hint, and "N days past target" sits under
+   the date in plain type instead of wrapping through the column in capitals.
+   An issue's sheet takes the project sheet's look (O2): the title on the
+   sunken ground in large type, then its parts as cards with clear edges. */
+.ws .issues-view>.filters:has(+.issue-search){margin-bottom:calc(-1 * var(--s5))}
+@media (max-width:700px){.ws .issues-view>.filters:has(+.issue-search){margin-bottom:calc(-1 * var(--s4))}}
+.ws .issues-view>.filters{border-color:var(--line-2)}
+@media (min-width:1024px){
+  /* One row of filters; narrowed, "Clear filters" goes under them. */
+  .ws .issue-search{flex-wrap:nowrap}
+  .ws .issue-search label{flex:1 1 0;min-width:0}
+  .ws .issue-search label:is(:first-child,:nth-child(4)){flex-grow:1.4}
+  .ws .issue-search label>:is(input,select){width:100%;min-width:0;flex:1 1 auto}
+  .ws .issue-search>.btn{flex:none}
+  .ws .issue-search:has(>.btn){flex-wrap:wrap}
+  .ws .issue-search:has(>.btn) label{flex-basis:18%}
+  .ws table.issue-reg .late-days{display:block;font-family:var(--sans);font-size:12px;color:var(--text-3);white-space:normal}
+  .ws table.issue-reg .late-days .sep{display:none}
+}
+
+.ws .cols[data-depth="3"] .col-main>.colpad:has(>.issue-sheet){padding:var(--s5)}
+.ws .issue-sheet{background:none;border:0;padding:0}
+.ws .issue-title{padding:0 0 var(--s4);border:0;border-bottom:1px solid var(--edge);background:none}
+.ws .issue-title h3{margin:var(--s2) 0 var(--s1);font-size:22px;line-height:1.25;text-wrap:balance}
+.ws .issue-title .actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:var(--s2);max-width:45%}
+.ws .issue-title .actions .btn-q{background:var(--panel)}
+.ws .issue-sheet>.tb{margin-top:var(--s5);border-color:var(--line-2)}
+.ws .issue-sheet>.tb>div{border-color:var(--line-2)}
+.ws .issue-sheet>.note{margin-top:var(--s4)}
+.ws .issue-sheet>.sec-h{margin-top:var(--s6);margin-bottom:0;border-top-color:var(--line-2);border-bottom-color:var(--line-2)}
+/* The history reads as one card under its heading. */
+.ws .issue-sheet>.hist{padding:var(--s3) var(--s4);background:var(--panel);border:1px solid var(--line-2);border-top:0}
+.ws .issue-sheet>.hist:last-child{border-bottom:1px solid var(--line-2)}
+@media (max-width:1179px){
+  .ws .cols[data-depth="3"] .col-main>.colpad:has(>.issue-sheet){padding:var(--s4)}
+}
+@media (max-width:700px){
+  .ws .cols[data-depth="3"] .col-main>.colpad:has(>.issue-sheet){padding:12px}
+  .ws .issue-title .actions{max-width:none;justify-content:flex-start}
+  .ws .issue-title h3{font-size:20px}
+}
+
+/* Checking a fix: the decision buttons stay in view while the photos scroll, and
+   on a phone "Verify and close" is the first, full-width button, not cut off below. */
+.ws .cf-dialog .cf-foot{position:sticky;bottom:0;z-index:1}
+@media (max-width:700px){
+  .ws .cf-foot .spacer{display:none}
+  .ws .cf-foot>.btn{flex:1 1 0;justify-content:center}
+  .ws .cf-foot>.btn:not(.btn-q){order:-1;flex-basis:100%}
+}
+/* The trade's companies offered when assigning sit apart, not touching. */
+.ws .assign-offer .btn-row{display:flex;flex-wrap:wrap;gap:var(--s2)}
