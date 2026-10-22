@@ -29,10 +29,13 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Month beside "Print or save as PDF", which is a plain outlined button there;
   then Previous, This and Next in one row (labels may wrap inside the
   button). The sheet is a little tighter. The week's four figures and the
-  month's first two now end within the first 844px screen. "Week by week" on a phone
+  month's first two now end within the first 844px screen at 390px and
+  wider; at 360 and 375px the week's first two do (the engineers' names wrap). "Week by week" on a phone
   shows each week as a block: its dates (still opening that week), then its
   six figures, each named, three to a row; the header row is kept for
-  screen readers only. The table, its header and print are unchanged
+  screen readers only, the visible names are left out of what they read
+  (`content: … / ""`), and the table roles are written out so a browser
+  that drops a restyled table's meaning keeps it. The table, its header and print are unchanged
   (`@media screen` only). On the desk the print button moved beside Week and
   Month (it is next in the page order too), and the steps went to the
   second row; same height, and the project name is no longer cut short.
@@ -40,7 +43,8 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   existing checks and screen readers hear the same words. Print stays on a
   phone, outlined, because saving a PDF to send on is a real use.
 - Checks: typecheck, `npm test` (146 + 551), build. New
-  `scripts/verify-weekly-phone.mjs` (87 checks, 390px light and dark, busy
+  `scripts/verify-weekly-phone.mjs` (263 checks, 390px light and dark and
+  360, 375, 412 and 430px light, a mouse at 600px, busy
   seed over ten weeks: the week's figures against the records, three rows
   of choices, print beside Week and Month and outlined, figures on the first
   screen, every week's six named figures inside the screen, matching the
@@ -51,8 +55,14 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   photos-month, help, office-weekly-review, accessibility (584),
   role-access. Screens: project files `ui-review/weekly-phone/` (`before/`,
   `after/`).
-- Not verified: a real phone, a screen reader reading the stacked weeks,
-  phones narrower than 360px.
+- Review: a fresh-context review found that from about 400px print fell to
+  a row of its own (412px Android and large iPhones), that hovering print
+  with a mouse in a narrow window gave brass text on darker brass, that
+  screen readers would hear each figure's name twice, and that the month's
+  first two figures ended 7px below the screen at 360px; also the check's
+  port clashed with verify-photos-month. All fixed and now checked.
+- Not verified: a real phone, a screen reader (only Chromium's
+  accessibility tree), Safari, phones narrower than 360px.
 - Ideas for later (not built): on a phone the week's "On site" list runs to
   about 3,500px on a busy week, before Issues; folding each report's work
   lines, as Today from site does, would bring the issues up.

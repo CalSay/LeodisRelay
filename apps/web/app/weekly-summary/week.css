@@ -43,16 +43,20 @@
 .week-work button{margin-top:4px;min-height:44px;padding:0 12px;font-size:13px;}
 .week-foot{margin-top:24px;font-size:12.5px;color:var(--text-2);}
 @media (max-width:640px){
-  .week-sheet{padding:16px;}
+  .week-sheet{padding:14px;}
   .week-facts,.week-stats{grid-template-columns:repeat(2,minmax(0,1fr));}
   .week-rows > li{grid-template-columns:1fr;gap:2px;}
   /* Three rows of controls (project; week or month and print; the steps), so the period and its figures reach the first screen. */
-  .week-controls{gap:10px;padding:12px;margin-bottom:14px;}
+  .week-controls{gap:10px;padding:12px;margin-bottom:10px;}
+  /* The project has a row of its own at every phone width, so Week or Month and print always share the second. */
+  .week-controls label{flex-basis:100%;}
   .week-step{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}.week-step button{padding:2px 6px;font-size:13.5px;line-height:1.2;white-space:normal;}
   /* Reading comes first on a phone: print is a plain outlined button, not the gold one. */
   .week-controls .week-print{flex:1 1 auto;padding:0 10px;font-size:13.5px;background:var(--panel);color:var(--brass);border:1px solid var(--brass);}
   .week-controls .week-print:disabled{color:var(--text-3);border-color:var(--line-2);}
-  .week-sheet{padding:14px;}
+  /* A mouse in a narrow window: the gold button's hover would put brass text on darker brass. */
+  @media (hover:hover){.week-controls .week-print:hover:not(:disabled){background:var(--brass-wash);border-color:var(--brass);color:var(--brass);}}
+  .week-head{padding-bottom:12px;}
   .week-head h1{font-size:24px;}
   .week-facts{gap:6px 10px;}
   .week-facts dd{font-size:13px;}
@@ -118,6 +122,7 @@
 .month-lists details > .week-rows,.month-lists details > .week-none{padding:0 14px 6px;border-top:1px solid var(--line);}
 @media (max-width:640px){
   .month-stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .month-sheet .week-section{margin-top:20px;}
   .month-photos{grid-template-columns:repeat(2,minmax(0,1fr));}
   .week-period{flex:1 1 auto;}.week-period button{flex:1 1 0;padding:0 12px;min-height:48px;}
 }
@@ -130,7 +135,7 @@
   .month-weeks th,.month-weeks td{padding:0;border:0;text-align:left;}
   .month-weeks th[scope=row]{grid-column:1/-1;white-space:normal;}
   .month-weeks td{display:flex;flex-direction:column;justify-content:flex-end;font-size:17px;font-weight:600;}
-  .month-weeks td::before{content:attr(data-label);font:500 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:2px;}
+  .month-weeks td::before{content:attr(data-label);content:attr(data-label) / "";font:500 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:2px;}
   .month-weeks tfoot tr{border-top:2px solid var(--line-2);border-bottom:0;}
   .month-weeks tfoot th,.month-weeks tfoot td{border:0;}
 }
