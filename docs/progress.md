@@ -4,6 +4,50 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish O3: office Issues
+
+- Why: task O3 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch").
+  Before and after screenshots at 1440 light and dark and 390 light are in
+  the project files under `ui-review/release-1/O3/` (register Open and Fixed,
+  check a fix, send back, an issue's sheet, Assign, Issues by company). Busy
+  example data, 60 days, Office Manager. Branched after O2 (#189) merged.
+- Found: the register's filter chips and search boxes were two bands with a
+  gap, so they read as two things; at 1280px and wider the search boxes kept
+  their narrow width and cut "Who has to respond" short, and "7 Sep · 45 days
+  past target" wrapped down the Target column in capitals over three lines. An
+  issue's sheet was the old boxed panel next to O2's new project sheet. On a
+  phone the check a fix dialog put "Verify and close" alone on a second row
+  below the screen. The Assign dialog's company suggestions touched each other.
+- Changed: `workspace.css` new block at the end: the two filter rows joined
+  into one block; from 1024px up the search boxes share the row and "N days
+  past target" goes under the date (the 1024-1279 rules for these moved
+  there); `.issue-sheet` / `.issue-title` give an issue's sheet O2's look
+  (title in large type on the sunken ground, figures, notes and history as
+  cards with `--line-2` edges); the check a fix footer is sticky, and on a
+  phone "Verify and close" is the first, full-width button; gaps between the
+  Assign suggestions. `ProjectsView.tsx` adds the two class names to
+  `IssueSheet` only. No `globals.css` token changes; `IssueRegister`,
+  `CompanyIssuesPage` and data fetching untouched. Help "What's new" line.
+- Decided (Claude): Issues by company left as it is: its cards, figures and
+  edges already read clearly at both widths. "Back to Office" on it comes from
+  the shared `backLabel`, left alone.
+- Checks: `verify-issues-laptop` said "N days past target" sits beside the
+  date at 1280px and wider; it now checks it is under the date, the filters
+  are on one row and each box is readable at every width from 1024.
+- Seen on main before E1 (#190) merged, fixed there: the app bar on
+  `/companies` cut "Sign out" to "Sign ou…". Seen, not ours: the busy example
+  data has no photo files, so photos show as broken images in the screenshots.
+- Verified: typecheck, `npm test` (146 + 591), build. Browser, one at a time:
+  issues-laptop (284), check-fixes (70), issue-register (70),
+  office-registers (225), issue-assign (48), other-trade-defect (59),
+  company-issues (28), company-chases (32), office-phone (103),
+  office-sections (63), office-desk (73), issue-link (42), issue-at-place
+  (38), issue-figures (48), issue-provenance (18), office-links (65),
+  navigation (76), role-access (95), help (36), accessibility (584). A
+  fresh-context review passed with no findings; of its three notes, the
+  doubled line between the two filter rows was fixed. Left as noted: on a
+  phone "Verify and close" is shown first but is still last in tab order.
+- Not verified: a real phone, a tablet, a screen reader.
 ## 2026-10-22 — Release 1 polish E1: entry screens, hub and the app bar
 
 - Why: task E1 in `docs/release-1.md` (PR #182), from Cal's 22 Oct ask for a
