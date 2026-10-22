@@ -80,14 +80,14 @@
 /* Release 1 polish (O6). The controls and each report take the clearer card
    edge the office sheets and summaries use (O2 to O5), so a busy day's reports
    do not blend into each other (Cal, 21 Oct 12:59); the cards inside keep the
-   lighter edge. A photograph that has not loaded keeps to its square. On a
-   phone every control is a 48px tap target; the reference and revision links
-   get a 48px tap area without moving the text. */
+   lighter edge. A photograph that has not loaded no longer spills its
+   description out of its square. On a phone every control and link is a 48px
+   tap target. */
 .diary-controls,.diary-entry{border-color:var(--line-2);}
 .diary-photos img{overflow:hidden;}
 @media (max-width:640px){
   .diary-show button,.diary-controls select,.diary-controls input{min-height:48px;}
   .diary-record,.diary-more button{min-height:48px;}
-  .diary-entry-ref a.ref{padding:8px 0;margin:-8px 0;}
-  .diary-revisions a{padding:10px 0;}
+  .diary-entry-ref a.ref{min-height:48px;}
+  .diary-revisions a{display:inline-flex;align-items:center;min-height:48px;line-height:1.4;}
 }

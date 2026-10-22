@@ -24,10 +24,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Before handover's section headings sit over a rule and each trade after the
   first starts under one; Snag list to print 48px; on a phone the project
   choice and Print are 48px and Print is full width; Site coverage notes
-  under a rule at 82 characters; a photograph that has not loaded keeps to
-  its square in the diary. Phone tap targets: coverage marks, diary filters,
-  inputs, linked records and Show earlier days 48px; issue, report and
-  revision links get a 48px tap area by padding, so the text does not move.
+  under a rule at 82 characters; in the diary a photograph that has not
+  loaded no longer spills its description out of its square. Phone tap
+  targets 48px: coverage marks, diary filters, inputs, linked records, Show
+  earlier days, the diary's report and revision links and each Before
+  handover row's reference (rows are a little taller on a phone). A figure
+  on Before handover still shows a stronger edge on hover.
   Before handover's changes are screen only, so the printed copy is
   unchanged. #173's quiet-trades line and every figure are unchanged. No
   components, routes, data or `globals.css` tokens changed. Help "What's new"

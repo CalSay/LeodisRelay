@@ -57,7 +57,7 @@
    summaries use (O2 to O5); inside "Snags on our work" each trade starts under
    a rule, so Electrical, HVAC and P&H do not run into each other on a long
    list (Cal, 21 Oct 12:59). On a phone the controls are 48px and full width,
-   and each reference's tap area is 48px tall without moving the text. */
+   and each row's reference is a 48px tap target. */
 @media screen{
   .ho-controls,.ho-section,.ho-stat{border-color:var(--line-2);}
   .ho-stat.ho-stat-alert{border-color:color-mix(in srgb,var(--alert) 55%,transparent);}
@@ -67,9 +67,11 @@
   .ho-group+.ho-group{margin-top:22px;padding-top:8px;border-top:1px solid var(--line);}
   .ho-group h3 a{min-height:48px;}
 }
+@media screen and (hover:hover){.ho-stat:hover{border-color:var(--text-3);}}
 @media screen and (max-width:760px){
   .ho-section{padding:2px 14px 14px;}
   .ho-controls select,.ho-controls button{min-height:48px;}
   .ho-controls button{flex:1 1 100%;}
-  .ho-rows a.ref{padding:14px 0;}
+  .ho-tags a.ref{display:inline-flex;align-items:center;min-height:48px;}
+  .ho-rows .ho-tags{margin-bottom:0 !important;}
 }
