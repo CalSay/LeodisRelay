@@ -288,6 +288,9 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
     const owner = issue.owner.trim();
     // What the office asked or said last on an issue this engineer raised, while it waits on them: shown, not left in History.
     const word = principal && raisedIssue(issue, principal.id) ? issueWord(issue.events, principal) : undefined;
+    // Opened from another site's home (its "Came back from the office" lists every site): say which site this one is on.
+    const elsewhere = new URL(back, 'https://relay.local').searchParams.get('project');
+    const otherSite = elsewhere && elsewhere !== issue.projectId ? project?.projectName ?? issue.projectId : undefined;
     return (
       <main className="wrap eng-page issue-eng">
         <PageTitle title={`${issue.reference} · Issue`} />
@@ -300,6 +303,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
         </div>
         <h1 className="issue-eng-title">{issue.description}</h1>
         <dl className="issue-eng-facts">
+          {otherSite && <div><dt>Site</dt><dd>{otherSite}</dd></div>}
           <div><dt>Where</dt><dd>{issue.location || "Location not recorded"}</dd></div>
           {issue.actionNeeded.trim() && <div><dt>What needs doing</dt><dd>{issue.actionNeeded.trim()}</dd></div>}
           <div><dt>Who is fixing it</dt><dd>{owner ? `${owner}${issue.targetDate ? `, by ${dateShort(issue.targetDate)}` : ""}` : "Nobody yet. The office will say who."}</dd></div>
