@@ -4,6 +4,39 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Reuse a recent SharePoint read (slow pages on engineer phones, part 1)
+
+- Why: Cal finds pages slow on an engineer's phone, the Issues tab for one.
+  Timed the engineer pages at 390px (4x slower processor, Fast 4G) on the
+  live pilot's commit 03188ee and main 595e500 with the busy seed: both take
+  1.5-3 s with that much data (part 2 is about the long lists), but that is
+  the local store. On the pilot, which reads SharePoint, every request behind
+  the Issues tab, an issue, the Site page, the snag list, search, photos, the
+  diary and the summaries first read the whole Issue Tracker (and the
+  Variation Register) from Microsoft Graph, 200 rows a request, one after
+  another, before answering. Only the project list was reused (60 s). Main
+  does the same, so it does not fix this.
+- Changed: `lib/sharepoint/recentRead.ts`. A read of the Issue Tracker or the
+  Variation Register is reused for 15 s; up to 10 minutes old the stored copy
+  answers at once and a new read starts in the background; older than that, or
+  before the first read, the page waits as before. Anything about to change a
+  record (issue and variation POSTs, new variations, corrections) passes
+  `force` and still waits for a new read, so the SharePoint ETag check is
+  unchanged. The project list also answers from its copy up to 10 minutes old
+  while it is read again. Help "What's new" line.
+- Decided (Claude): 15 s and 10 minutes. RELAY's own changes go into the
+  local store at once and a read never replaces one that has not been sent,
+  so only edits made in SharePoint itself show a page or two later. No timer
+  reading SharePoint when nobody is using RELAY.
+- Verified: typecheck, `npm test` (146 + 587, 4 new in `recentRead.test.ts`).
+  A model with a stand-in for Graph (every request 350 ms, 300 issues,
+  scratch script, not committed): first open of the Site page 2.2 s both
+  before and after; then Issues, an issue, back, Site, snag list each waited
+  0.73-0.75 s before and 0-1 ms after.
+- Not verified: the live tenant's real Graph timings, or that the pilot's
+  `RELAY_SHAREPOINT_MODE` is read or write (its upgrade step talks to the
+  Variation Register, so it is very likely on). Not deployed.
+
 ## 2026-10-22 — Defect receipt: "Fixed it already?"
 
 - Why: the coordinator asked for a walk of an engineer at 390px who finds a

@@ -3,6 +3,7 @@ import type { Issue } from '../types';
 import { atomic, database, enqueue, getRecord, putRecord, records } from '../storage';
 import { cachedProject, projectIdentity, refreshProjects, reportableProject } from '../projects';
 import { assertProjectWrite, OPERATIONS, sharePointMode, writableProjectItemIds } from './config';
+import { recentRead } from './recentRead';
 import { graph, GraphError, type ListItem } from './graph';
 import { personLookup, principalForPerson, sitePeople } from './people';
 
@@ -128,63 +129,64 @@ export async function sendIssueOperation(operation: IssueOperation, operationId:
     if (current?.sync?.operationId === operationId) putRecord('issues', { ...current, sync: { status: 'synced', itemId: saved.id, etag: saved.eTag, ...(evidenceUrl ? {evidenceUrl}: {}) } });
   });
 }
-let refreshing: Promise<void> | undefined;
-export async function refreshIssues(): Promise<void> {
-  if (sharePointMode() === 'off') return;
-  if (refreshing) return refreshing;
-  refreshing = (async () => {
-    await refreshProjects();
-    const [rows, people] = await Promise.all([graph.items(OPERATIONS.issues), sitePeople()]);
-    const seen = new Set<string>();
-    const next: Issue[] = [];
-    for (const row of rows) {
-      const f = row.fields;
-      const projectId = projectIdentity(String(f.ProjectLookupId));
-      const project = cachedProject(projectId);
-      if (!project || !reportableProject(project)) continue;
-      const id = String(f.RELAY_x0020_Issue_x0020_ID ?? '');
-      if (!id) throw new Error('A SharePoint issue has no RELAY identity.');
-      if (seen.has(id)) throw new Error('Duplicate issue identity in SharePoint.');
-      seen.add(id);
-      const local = getRecord<Issue>('issues', id);
-      if (local?.sync && local.sync.status !== 'synced') continue;
-      const by = people.find(p => p.id === String(f.Raised_x0020_ByLookupId));
-      const closure = people.find(p => p.id === String(f.Closure_x0020_Submitted_x0020_ByLookupId));
-      const text = (v: unknown) => typeof v === 'string' ? v : '';
-      const affected = text(f.Affected_x0020_Trade);
-      const reporting = text(f.Reporting_x0020_Trade);
-      const work = enumKey(WORK, f.Work_x0020_Status);
-      const closedWithoutIndependentVerification = work === 'closed' && (!f.Verified_x0020_ByLookupId || !f.Closure_x0020_Submitted_x0020_ByLookupId || String(f.Verified_x0020_ByLookupId) === String(f.Closure_x0020_Submitted_x0020_ByLookupId));
-      next.push({ ...local, id, reference: text(f.Title), projectId,
-        description: text(f.Description), location: text(f.Location), actionNeeded: text(f.Required_x0020_Action),
-        confirmation: enumKey(CONFIRMATION, f.Confirmation_x0020_Status), work,
-        owner: text(f.External_x0020_Owner) || people.find(p => p.id === String(f.Assigned_x0020_ToLookupId))?.name || '',
-        targetDate: sharePointDay(text(f.Target_x0020_Date)), raisedAt: text(f.Raised_x0020_At),
-        raisedByReport: text(f.Source_x0020_Report_x0020_ID), reportedBy: by?.name,
-        reportedById: by ? principalForPerson(by) : undefined,
-        closureSubmittedBy: closure?.name, closureSubmittedById: closure ? principalForPerson(closure) : undefined,
-        reporterTrade: ['Electrical', 'HVAC', 'P&H'].includes(reporting) ? reporting as Issue['reporterTrade'] : undefined,
-        affectedTrade: affected === 'Other' ? 'Other / non-Leodis' : ['Electrical', 'HVAC', 'P&H'].includes(affected) ? affected as Issue['affectedTrade'] : undefined,
-        events: local?.events ?? [], sync: closedWithoutIndependentVerification
-          ? {status:'conflict', itemId:row.id, etag:row.eTag, error:'SharePoint closure lacks independent verification. Review the source item before continuing.'}
-          : { status: 'synced', itemId: row.id, etag: row.eTag,
-              ...(typeof f.Evidence_x0020_Link === 'object' && f.Evidence_x0020_Link
-                ? {evidenceUrl:String((f.Evidence_x0020_Link as {Url?:string}).Url ?? '')}
-                : text(f.Evidence_x0020_Link) ? {evidenceUrl:text(f.Evidence_x0020_Link)} : {}) },
-      });
-    }
-    atomic(() => {
-      for (const issue of next) {
-        const current = getRecord<Issue>('issues', issue.id);
-        if (!current?.sync || current.sync.status === 'synced') putRecord('issues', { ...issue, events: current?.events ?? issue.events });
-      }
-      // Keep history after deletion, but never continue presenting a deleted row as current.
-      for (const old of records<Issue>('issues')) if (old.sync?.status === 'synced' && !seen.has(old.id)) {
-        putRecord('issues', { ...old, sync: { ...old.sync, status: 'conflict', error: 'The SharePoint item was deleted or moved outside the connected project scope.' } });
-      }
+/** Reads the whole Issue Tracker into the local store. */
+async function readIssues(): Promise<void> {
+  await refreshProjects();
+  const [rows, people] = await Promise.all([graph.items(OPERATIONS.issues), sitePeople()]);
+  const seen = new Set<string>();
+  const next: Issue[] = [];
+  for (const row of rows) {
+    const f = row.fields;
+    const projectId = projectIdentity(String(f.ProjectLookupId));
+    const project = cachedProject(projectId);
+    if (!project || !reportableProject(project)) continue;
+    const id = String(f.RELAY_x0020_Issue_x0020_ID ?? '');
+    if (!id) throw new Error('A SharePoint issue has no RELAY identity.');
+    if (seen.has(id)) throw new Error('Duplicate issue identity in SharePoint.');
+    seen.add(id);
+    const local = getRecord<Issue>('issues', id);
+    if (local?.sync && local.sync.status !== 'synced') continue;
+    const by = people.find(p => p.id === String(f.Raised_x0020_ByLookupId));
+    const closure = people.find(p => p.id === String(f.Closure_x0020_Submitted_x0020_ByLookupId));
+    const text = (v: unknown) => typeof v === 'string' ? v : '';
+    const affected = text(f.Affected_x0020_Trade);
+    const reporting = text(f.Reporting_x0020_Trade);
+    const work = enumKey(WORK, f.Work_x0020_Status);
+    const closedWithoutIndependentVerification = work === 'closed' && (!f.Verified_x0020_ByLookupId || !f.Closure_x0020_Submitted_x0020_ByLookupId || String(f.Verified_x0020_ByLookupId) === String(f.Closure_x0020_Submitted_x0020_ByLookupId));
+    next.push({ ...local, id, reference: text(f.Title), projectId,
+      description: text(f.Description), location: text(f.Location), actionNeeded: text(f.Required_x0020_Action),
+      confirmation: enumKey(CONFIRMATION, f.Confirmation_x0020_Status), work,
+      owner: text(f.External_x0020_Owner) || people.find(p => p.id === String(f.Assigned_x0020_ToLookupId))?.name || '',
+      targetDate: sharePointDay(text(f.Target_x0020_Date)), raisedAt: text(f.Raised_x0020_At),
+      raisedByReport: text(f.Source_x0020_Report_x0020_ID), reportedBy: by?.name,
+      reportedById: by ? principalForPerson(by) : undefined,
+      closureSubmittedBy: closure?.name, closureSubmittedById: closure ? principalForPerson(closure) : undefined,
+      reporterTrade: ['Electrical', 'HVAC', 'P&H'].includes(reporting) ? reporting as Issue['reporterTrade'] : undefined,
+      affectedTrade: affected === 'Other' ? 'Other / non-Leodis' : ['Electrical', 'HVAC', 'P&H'].includes(affected) ? affected as Issue['affectedTrade'] : undefined,
+      events: local?.events ?? [], sync: closedWithoutIndependentVerification
+        ? {status:'conflict', itemId:row.id, etag:row.eTag, error:'SharePoint closure lacks independent verification. Review the source item before continuing.'}
+        : { status: 'synced', itemId: row.id, etag: row.eTag,
+            ...(typeof f.Evidence_x0020_Link === 'object' && f.Evidence_x0020_Link
+              ? {evidenceUrl:String((f.Evidence_x0020_Link as {Url?:string}).Url ?? '')}
+              : text(f.Evidence_x0020_Link) ? {evidenceUrl:text(f.Evidence_x0020_Link)} : {}) },
     });
-  })();
-  try { await refreshing; } finally { refreshing = undefined; }
+  }
+  atomic(() => {
+    for (const issue of next) {
+      const current = getRecord<Issue>('issues', issue.id);
+      if (!current?.sync || current.sync.status === 'synced') putRecord('issues', { ...issue, events: current?.events ?? issue.events });
+    }
+    // Keep history after deletion, but never continue presenting a deleted row as current.
+    for (const old of records<Issue>('issues')) if (old.sync?.status === 'synced' && !seen.has(old.id)) {
+      putRecord('issues', { ...old, sync: { ...old.sync, status: 'conflict', error: 'The SharePoint item was deleted or moved outside the connected project scope.' } });
+    }
+  });
+}
+const refreshIssuesRecent = recentRead(readIssues);
+/** The Issue Tracker as of a recent read (lib/sharepoint/recentRead.ts); `force` waits for a new one, for anything about to change a record. */
+export async function refreshIssues(force = false): Promise<void> {
+  if (sharePointMode() === 'off') return;
+  return refreshIssuesRecent(force);
 }
 export function failIssueOperation(operation: IssueOperation, error: unknown, operationId: string): void {
   const issue = getRecord<Issue>('issues', operation.issue.id);

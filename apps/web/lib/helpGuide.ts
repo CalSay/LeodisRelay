@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'sharepoint-reads-reused', added: '2026-10-22', audience: 'all', title: 'Pages with issues and variations open quicker',
+    text: 'Issues, the Site page, the snag list, an issue and the other pages that show issues or variations no longer wait for SharePoint every time you open one. RELAY reuses what it read from SharePoint in the last few seconds and fetches the latest behind the scenes, so a change made straight in SharePoint shows within a page or two. Anything you change in RELAY shows at once, as before, and saving a change still checks SharePoint first. Timed against a stand-in for SharePoint, not the live one.' },
   { id: 'defect-fixed-on-the-spot', added: '2026-10-22', audience: 'site', title: 'Fixed a defect there and then? Say so from the receipt',
     text: 'After you flag a defect, "Defect sent to the office" now has "Fixed it already?" under Back to Site. Tap it to take a photo of the fix, then "Put forward as fixed": the office gets it to check, with your photo of the fix, and someone else still checks it and closes it. No photo to add? Tap "No photo? Put forward as fixed". Only once the defect has reached the office. On the issue, "Who is fixing it" now names who put it forward as fixed. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'month-figures-read-true', added: '2026-10-22', audience: 'all', title: 'Month summary: figures that say what they count',

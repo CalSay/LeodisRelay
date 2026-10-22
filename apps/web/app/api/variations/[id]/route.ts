@@ -24,7 +24,7 @@ export async function POST(request: Request, context: { params: Promise<{ id: st
   const { id } = await context.params;
   const guard = await requireSession();
   if (!guard.ok) return guard.response;
-  try { await refreshVariations(); } catch { return NextResponse.json({reason:'SharePoint variations could not be refreshed. Please retry.'},{status:503}); }
+  try { await refreshVariations(true); } catch { return NextResponse.json({reason:'SharePoint variations could not be refreshed. Please retry.'},{status:503}); }
   const principal = guard.principal;
   const variation = getVariation(id);
   if (!variation) return NextResponse.json({ reason: 'No such variation.' }, { status: 404 });
