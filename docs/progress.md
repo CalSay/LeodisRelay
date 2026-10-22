@@ -33,6 +33,260 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   overlap above and three smaller faults; all fixed.
 - Not verified: a real phone, a home screen install.
 
+## 2026-10-22 — Release 1 polish O2: a project's sheet and the projects pages
+
+- Why: task O2 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch").
+  Before and after screenshots at 1440 light and dark and 390 light (viewport
+  and full) are in the project files under `ui-review/release-1/O2/`. Busy
+  example data, 60 days, Office Manager.
+- Found: the project sheet was one panel with every part inside it on the same
+  colour, so its parts ran together (Cal, 21 Oct 12:59), the same fault O1
+  fixed on the overview. The title sat in a boxed band under a "Projects ›
+  Project" trail the Projects column already gives. The issue bar floated
+  loose between the figures and Latest from site. The project's pages and its
+  details had no heading. The project manager's email broke mid-word
+  ("example.invali / d"). The register heading left "E" alone on a second
+  line. On a phone the project's name appeared only in small capitals in the
+  column band, and "And 2 more in the report" pushed the rest of its sentence
+  onto a line of its own. `/projects` had two rules between the heading and
+  the list (and two above the footnote); `/projects/[id]` had two rules under
+  the name, its details three across with one left over, and a gold button the
+  full width of a laptop.
+- Changed: `ProjectsView.tsx` (ProjectSheet title without the trail, figures
+  and bar in one `sheet-standing` block, headings "On this project" and
+  "Project details"; the phone register starts with the project's name, its
+  number and client); `workspace.css` new block at the end scoped to
+  `.cols[data-depth="2"]`, `.project-title`, `.sheet-standing`,
+  `.sheet-details`, `.register-name` and `.register-standing` (cards with
+  `--line-2` edges on the sunken ground as O1 does, PM column widest, balanced
+  register heading); new `app/projects/projects.css` scoped to
+  `.project-list-page` and `.project-page` (one rule, details four across,
+  button its own width above 700px, full width on a phone). No `globals.css`
+  token changes, no shared component changed (`IssueRegister` untouched).
+  Help "What's new" line.
+- Decided (Claude): the "Details · 011LME" column band stays at depth 2 (it
+  labels the column beside the register); O1 hid it only on the overview.
+  Branched after O1 (#186) merged, as it changes the same two files.
+- Left for lane E: the app bar on `/projects` at 390px wraps to three rows
+  (it is `app/layout.tsx`, task E1).
+- Checks: `verify-office-phone` read the register's whole name from the
+  column band; it now reads it from the new name line (whole, unclipped,
+  under the back link) and still checks the band says "Register · name" for
+  screen readers (103 checks, was 99).
+- Verified: typecheck, `npm test` (146 + 583), build. Browser, one at a time:
+  office-phone (103), office-progress (84), office-links (65), home-and-sheet
+  (254), office-landing (19), simpler-home (56), navigation (76),
+  office-registers (225), sheet-figures-laptop (548), office-desk (73),
+  office-sections (63), office-top-bar (1917), september-office (43),
+  issue-figures (48), role-access (95), help (36), accessibility (584). A
+  fresh-context review found five small things, all fixed (a 44px target for
+  "And N more", the name twice on a phone, one selector not scoped to the
+  sheet, Help wording).
+- Not verified: a real phone, a tablet, a screen reader.
+
+## 2026-10-22 — Reuse a recent SharePoint read (slow pages on engineer phones, part 1)
+
+- Why: Cal finds pages slow on an engineer's phone, the Issues tab for one.
+  Timed the engineer pages at 390px (4x slower processor, Fast 4G) on the
+  live pilot's commit 03188ee and main 595e500 with the busy seed: both take
+  1.5-3 s with that much data (part 2 is about the long lists), but that is
+  the local store. On the pilot, which reads SharePoint, every request behind
+  the Issues tab, an issue, the Site page, the snag list, search, photos, the
+  diary and the summaries first read the whole Issue Tracker (and the
+  Variation Register) from Microsoft Graph, 200 rows a request, one after
+  another, before answering. Only the project list was reused (60 s). Main
+  does the same, so it does not fix this.
+- Changed: `lib/sharepoint/recentRead.ts`. A read of the Issue Tracker or the
+  Variation Register is reused for 15 s; up to 10 minutes old the stored copy
+  answers at once and a new read starts in the background; older than that, or
+  before the first read, the page waits as before. Anything about to change a
+  record (issue and variation POSTs, new variations, corrections) passes
+  `force` and still waits for a new read, so the SharePoint ETag check is
+  unchanged. The project list also answers from its copy up to 10 minutes old
+  while it is read again, for pages only: anything that creates or changes a
+  record (a defect, a report started, a variation, a note, permit, delivery
+  or talk, and the issue and variation reads themselves) passes `current` and
+  keeps the old 60 s ceiling, so a project closed in SharePoint is not written
+  to from an old list (found by the fresh review). Help "What's new" line.
+- Decided (Claude): 15 s and 10 minutes. RELAY's own changes go into the
+  local store at once and a read never replaces one that has not been sent,
+  so only edits made in SharePoint itself show a page or two later. No timer
+  reading SharePoint when nobody is using RELAY.
+- Verified: typecheck, `npm test` (146 + 587, 4 new in `recentRead.test.ts`).
+  A model with a stand-in for Graph (every request 350 ms, 300 issues,
+  scratch script, not committed): first open of the Site page 2.2 s both
+  before and after; then Issues, an issue, back, Site, snag list each waited
+  0.73-0.75 s before and 0-1 ms after.
+- Not verified: the live tenant's real Graph timings, or that the pilot's
+  `RELAY_SHAREPOINT_MODE` is read or write (its upgrade step talks to the
+  Variation Register, so it is very likely on). Not deployed.
+
+## 2026-10-22 — Home screen icon: full screen, no web address bar
+
+- Why: Cal saved RELAY to his phone's home screen and it opens with a bar
+  showing the web address. Part of Release 1 (`docs/release-1.md`, engineer
+  phone). Not a `docs/tasks.json` task, so no status changed.
+- Found: the live manifest (fetched from app.relaybyleodis.com on 22 Oct) is
+  right: `display: standalone`, `scope: /`, icons 192 and 512 served as real
+  PNGs without signing in. So the bar comes from one of three things on the
+  phone's side: (1) the icon was saved as a plain shortcut (Android "Create
+  shortcut", or Safari with "Open as Web App" off), which opens a browser tab;
+  (2) Microsoft's sign-in is another web address, outside RELAY's scope, so the
+  phone shows a bar with it while signing in (an iPhone can finish it in a
+  browser sheet over RELAY); (3) Next.js 15 writes `appleWebApp.capable` only
+  as `mobile-web-app-capable`, not Apple's own `apple-mobile-web-app-capable`
+  that older iPhones look for.
+- Changed: `layout.tsx` adds `apple-mobile-web-app-capable`. `middleware.ts`
+  marks a visit to the icon's address (`/?open=app`) with a 5-minute cookie
+  (`lib/homeScreen.ts`), only when opened directly (Sec-Fetch-Site "none"),
+  so coming back to it from Microsoft's sign-in in a browser sheet over a
+  properly installed app is not mistaken for a shortcut (fresh review); `IconOpensBrowser` reads it once and, if the page is
+  not running full screen, says the icon opened the browser and how to add
+  RELAY again (iPhone or Android words), until "Got it". It stays through a
+  sign-in on the way in. The sign-in screen (`SignedInElsewhere`) carries on
+  to where it was going once a session exists when it comes back into view.
+  Install steps on the hub and sign-in say Install, not Create shortcut, and
+  to leave Open as Web App on. Help "What's new" line.
+- Decided (Claude): say it in the app rather than try to force full screen,
+  because a shortcut cannot be turned into an app from the page. The 12-hour
+  session was left alone: a longer one means fewer Microsoft sign-ins (and so
+  fewer bars) but a lost phone stays signed in longer; that is Cal's call.
+- Verified: typecheck, `npm test`, build, new `scripts/verify-home-screen.mjs`
+  (23 checks: tags and manifest, not marked when coming from another site,
+  note at 390 light/dark and 1440 on Android and
+  iPhone words, none when full screen or typed in, cookie read once, through
+  sign-in, sign-in carries on, stays put when still signed out). Full screen
+  is imitated by answering the display-mode query, as Chromium 141 cannot act
+  as an installed app. Screenshots in
+  `ui-review/release-1/home-screen/`.
+- Not verified: no real phone, so not which of the three causes Cal sees,
+  nor an iPhone's sign-in sheet. Live only after the next deploy; an icon
+  saved as a shortcut has to be removed and added again.
+
+## 2026-10-22 — Release 1 polish O1: office top bar and overview
+
+- Why: task O1 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" for
+  the office and the phone). Before and after screenshots at 1440 light and
+  dark, 1024 light and 390 light are in the project files under
+  `ui-review/release-1/O1/`. Busy example data, 60 days.
+- Found: the overview sat as one panel inside the column, with every section
+  inside that panel on the same colour, so the sections ran together (Cal,
+  21 Oct 12:59). A grey "Overview · Office" band repeated the Projects tab.
+  The "Office position" block used about 100px for a title, the company name
+  the top bar already shows, and the time. Up to eight gold Assign and Verify
+  buttons on the first screen. In the top bar the theme button had a frame
+  and nothing else did. On a phone the top bar took three rows (RELAY alone,
+  then Attention, name and Help, then search).
+- Changed (`workspace.css` new block at the end, its rules on classes only
+  the overview and the office top bar use; `ProjectsView.tsx` OfficeSheet and
+  the action lists):
+  the overview's sections are cards with `--line-2` edges on the sunken
+  ground; the column heading is kept for screen readers only (its text,
+  "Overview", is what the landing checks read); the title is one line
+  ("Office position · Updated ..." with the two buttons right); the list
+  buttons are quiet (`BtnQ`); the top bar's controls share one height and
+  frame, with a line before Help, Engineer view and Switch company; on a phone
+  the company name beside RELAY is hidden, so name, Attention and Help share
+  its row, and those three are 48px tall (narrower than 380px the name is
+  cut shorter so they keep the row). The company name is then not shown on
+  a phone's office desk; on a desk it stays in the top bar. No `globals.css` token changes, no shared component changed. The
+  Attention bell, its list and "Also needs attention" are untouched (#154 is
+  open on them). Help "What's new" line added.
+- Verified: typecheck, `npm test` (146 + 581), build. Browser, one at a
+  time: office-landing (19), office-phone (99), office-top-bar (1917),
+  office-sections (63), office-desk (73), office-actions (46),
+  office-registers (225), office-progress (84), office-links (65),
+  september-office (43), simpler-home (56), today-from-site (62),
+  not-seen-pile (58), home-and-sheet (254), navigation (76), seen-by-office
+  (45), office-words (67), help (36), accessibility (584), busy-projects
+  (39 timings within budget). No check needed changing.
+- Not verified: a real phone, a tablet, a screen reader.
+## 2026-10-22 — Defect receipt: "Fixed it already?"
+
+- Why: the coordinator asked for a walk of an engineer at 390px who finds a
+  small fault, fixes it there and then, and wants the office to know it was
+  found and already fixed. On main bc864b8 Sam flagged it (Flag a defect, a
+  photo, Send), then the receipt offered Back to Site, "Open issue" and "View
+  project issues": nothing said "I fixed it already". The way was "Open
+  issue", "Add photograph", "Put forward as fixed" on the issue page, which
+  then said "Who is fixing it: Nobody yet. The office will say who." 6 taps
+  from Site (7 with a Recent places chip). The domain already allows open to
+  awaiting verification for exactly this (platform `transitions.ts`). Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the engineer's job simpler, the office's view of progress clearer).
+- Changed: the receipt (`IndividualDefect.tsx`, `FixedAlready`) has "Fixed it
+  already? · Take a photo of the fix" straight under Back to Site. It opens
+  the camera; then the photo, "Put forward as fixed" and "Add another photo"
+  sit in one framed box. "No photo? Put forward as fixed" for a fix with
+  nothing to photograph. It is the issue page's `submit_closure` (photos
+  uploaded to the issue first, the issue's current etag read first), so the
+  office gets it on its usual list to check with both photographs, and someone
+  other than the engineer still closes it. The receipt then says "Put forward
+  as fixed. The office will check it and close it. If it is not finished, it
+  comes back to you." With no signal the photo stays and the words say so
+  (and that it will only go once). Only the receipt's words are a live
+  region, not its buttons, and focus moves to "Put forward as fixed" once a
+  photo is taken.
+  The engineer issue page's "Who is fixing it" names who put it forward as
+  fixed ("Sam Sparks fixed it") instead of "Nobody yet" once it is waiting to
+  be checked. A filled engineer button no longer turns grey under a mouse
+  (the global button hover won). Help "What's new" line.
+- Decided (Claude): on the receipt, not as a tick box on the defect form. The
+  receipt only exists once the defect has reached RELAY, so a defect held with
+  no signal never offers it (a held "fixed" would need its own retry path).
+  Back to Site stays first: most defects are not fixed on the spot. No note is
+  written for the engineer: the history shows it raised and put forward
+  minutes apart by the same person, which is what the office reads.
+- Verified: typecheck, `npm test` (146 + 578), build. New
+  `scripts/verify-fixed-on-the-spot.mjs` (99 checks, 390 light and dark, 1440
+  dark): the button under Back to Site; 5 taps from Site to put forward; a
+  photo added, a second removed, the issue awaiting verification by the
+  engineer with exactly one photo on the closure; the issue page names who
+  fixed it; the no-photo way; no signal keeps the photo, changes nothing at the
+  office, then goes once on a retry; focus after the photo; 48px targets; no sideways scroll; no page
+  errors. `verify-receipt-send-bar` now counts the receipt's own buttons only.
+- Not verified: a real phone's camera or real weak signal (files set in a
+  phone-sized browser, offline simulated).
+## 2026-10-22 — Real company address on report PDFs, no VAT number
+
+- Why: Cal sent the company address and asked why a report needs the VAT
+  number. It doesn't: a site report is not an invoice. Not a
+  `docs/tasks.json` task.
+- Changed: `branding.ts` address is Unit 3 Pool Business Park, Pool Road,
+  Pool in Wharfedale, Otley LS21 1FD; `registrationLines` (the placeholder
+  company and VAT numbers) removed with its rendering in `ReportDocument.tsx`.
+  No branding placeholders are left. The #168 Help "What's new" line says so.
+- Decided (Claude): the company number goes too, as we don't have the real
+  one and a made-up number on an issued report is worse than none. It can be
+  added back as one line in `branding.ts` if Cal wants it.
+- Verified: `npm run typecheck`, `npm test`, `node scripts/verify-long-pdfs.mjs`,
+  sample PDF first page looked at. Not verified: printed. Not live until the
+  next deploy.
+
+## 2026-10-22 — Release 1 defined
+
+- Why: Cal asked to "define a first release point and work towards that with
+  haste", with the UI on the engineer's phone and the office laptop top notch.
+  Not a `docs/tasks.json` task, so no status changed.
+- Changed: new `docs/release-1.md` (docs only). It says what Release 1 holds
+  (the engineer's site update, defects, issues and inspections on a phone; the
+  office overview, issues, inbox, coverage, weekly and month summary and PDFs
+  on a laptop), what stays out or hidden (safety, permits and deliveries
+  switched off; Compliance; Site information #28; email and SharePoint
+  unchanged from the pilot), an exit checklist, and 14 small UI polish tasks
+  in two lanes (E1-E7 engineer at 390px, O1-O7 office at 1440px, light and
+  dark) that name their screens and files so two threads never overlap.
+- Decided (Claude): #142 is needed for Release 1 (it fixes a known fault);
+  #130 and #154 join only if Cal says "carry on" before the final check. The
+  hub should show Compliance as "Coming later" rather than open sample data
+  (task E1). PDFs are left to Cal's own PDF template thread. Shared colour
+  tokens are not changed by polish tasks; shared components are restyled
+  from the calling screen. Fresh review fixed screen gaps (/projects, report
+  preview, the engineer's Reports and Issues views) and file names.
+- Verified: `npm test` (581 pass) on main b387483 before writing. No code
+  changed, so no browser checks were run.
+- Next: the coordinator dispatches E1 and O1.
+
 ## 2026-10-22 — Sixteenth release check: "Put forward as fixed" on the first screen again
 
 - Why: the sixteenth release check on main bc864b8 (#2-#179 minus #28, #130,
@@ -52,6 +306,49 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   office-words (67), came-back-to-update (36), issue-raised-photo (91),
   simpler-issue-page (76), sent-back-reason (22).
 - Not verified: a real phone.
+
+## 2026-10-22 — Month summary: figures that say what they count
+
+- Why: the coordinator asked for every figure on the Weekly summary's Month
+  choice (and its PDF) to be checked against counts taken straight from the
+  stored records, on the busy example data, for a past month and this one
+  (Tetley Hall, September 2026 and 1 to 22 October 2026, main 460e2b5). Every
+  figure matched: days on site (22, 16), site reports (61, 42), issues raised
+  (89, 66) and closed (71, 29), variations raised (19, 14) and instructed
+  (18, 9), each week row, open (354, 390), past target (196, 222) and fixed,
+  to check (110, 119) at the month's end. Two things read wrongly. The line
+  under Site reports counted update cards ("42 · 89 progress updates"), bigger
+  than the figure above it, and September's 61 held a first fix and a
+  handover inspection without saying so. This month showed "Mon 26 Oct to
+  Sat 31 Oct" as a row of noughts, which reads as a week nobody was on site,
+  and this week's row ran to Sunday on a Thursday. Not a `docs/tasks.json`
+  task, so no status changed. Within Cal's 21 Oct direction (the office's view
+  of progress clearer).
+- Changed (`lib/monthSummary.ts`, `MonthSheet.tsx`): `reportKinds` counts the
+  month's site reports by type (site updates and the non-safety inspections),
+  adding up to the figure; the line reads "59 site updates, 1 handover
+  inspection, 1 first fix inspection", or "all site updates". While the month
+  is going a week still to come has no row and this week's row ends today with
+  "so far"; the note under the table says weeks still to come are not shown.
+  A month that is over is unchanged. Help "What's new" line.
+- Decided (Claude): if anything in a later week or later this week is dated
+  after today (a visit date may be a day ahead), that week keeps its row and
+  its full end, so the rows always add up to the month. The busy seed has two
+  variation instructions dated 24 and 25 Oct (made five days after raising),
+  so on it this week's row stays "to Sun 25 Oct"; the browser check's own
+  data has none and shows "so far". Withdrawn issues stay counted under
+  Issues raised (1 in September, 2 in October), as the Weekly summary counts
+  them and tags them Withdrawn in the list; left alone.
+- Verified: typecheck, `npm test` (146 + 583; two new unit tests: rows this
+  month with and without something dated ahead, on a Monday and in a month
+  that is over; the Site reports line by type adding up, safety left out).
+  `verify-month-summary` (79, now also: no row after today, this week ends
+  today with "so far", the note, "all site updates" on last month),
+  `verify-month-print`, `verify-weekly-summary`, `verify-weekly-phone`,
+  `verify-help` passed. The busy-seed walk again after the change: the same
+  figures, the new line and no row for 26 to 31 Oct, 7 PDF pages as before.
+  Screens and PDFs in /mnt/project-files/ui-review/month-figures/.
+- Not verified: a real phone or printer.
 
 ## 2026-10-22 — Office issue sheet: everything open at the same place
 

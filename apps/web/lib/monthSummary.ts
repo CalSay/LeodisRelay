@@ -1,7 +1,7 @@
 import { naturalOrder } from './naturalOrder';
 import type { Principal } from '@relay/platform';
 import type { Issue } from './types';
-import { reportTypeOf } from './reportTypes';
+import { REPORT_TYPES, reportTypeOf } from './reportTypes';
 import { isSafetyRecordType } from './featureSwitch';
 import { companyKey } from './companyIssues';
 import { isLateOn, isOpenOn, isToCheckOn } from './issueTrend';
@@ -42,12 +42,14 @@ export function shiftMonth(ym: string, months: number): string {
   return d.toISOString().slice(0, 7);
 }
 
-/** A week of the month, cut to the days that fall in the month. */
+/** A week of the month, cut to the days that fall in the month and, while the month is going, to today. */
 export interface MonthWeek {
   /** The Monday that starts the week, which may be in the month before: the weekly page for it. */
   monday: string;
   from: string;
   to: string;
+  /** This week, cut to today: the rest of it has not happened yet. */
+  soFar: boolean;
   daysOnSite: number;
   reports: number;
   issuesRaised: number;
@@ -85,6 +87,9 @@ export interface MonthSummary {
   asOf: string;
   /** The month as the weekly summary counts it: every report, issue and variation change in the month. */
   period: WeeklySummary;
+  /** The month's site reports by kind, in report type order; they add up to the Site reports figure. */
+  reportKinds: { name: string; count: number }[];
+  /** A row a week. While the month is going, weeks still to come are left out. */
   weeks: MonthWeek[];
   places: MonthPlace[];
   /** Progress updates that said what was done but not where. */
@@ -95,6 +100,16 @@ export interface MonthSummary {
   companies: MonthCompany[];
   openAtEnd: number;
   photos: MonthPhoto[];
+}
+
+/**
+ * What the Site reports figure is made of, adding up to it: "59 site updates, 1 first fix inspection".
+ * Counting update cards here read as more progress updates than reports.
+ */
+export function reportKindsLine(kinds: MonthSummary['reportKinds']): string {
+  if (!kinds.length) return 'no visits reported';
+  if (kinds.length === 1 && kinds[0]!.name === 'Site update') return 'all site updates';
+  return kinds.map(k => `${k.count} ${k.name.toLowerCase()}${k.count === 1 ? '' : 's'}`).join(', ');
 }
 
 /** Up to this many places get a photograph. */
@@ -109,21 +124,32 @@ export function monthSummary(sources: WeekSources, principal: Principal, project
   const progress = sources.reports.filter(r => !isSafetyRecordType(r.reportType));
   const period = periodSummary({ reports: progress, issues: sources.issues, variations: sources.variations }, principal, projectId, start, end, today);
 
-  // A row a week, each cut to the month, so the rows add up to the month's figures.
+  // A row a week, each cut to the month, so the rows add up to the month's figures. While the month is going a
+  // week still to come has no row, and this week's row ends today, so a week nobody has reached never reads as a
+  // week with nobody on site. Anything dated after today (a visit date can be a day ahead) keeps its week whole.
   const weeks: MonthWeek[] = [];
   for (let monday = weekStart(start, start); monday <= end; monday = shiftWeek(monday, 1)) {
     const from = monday < start ? start : monday, to = weekEnd(monday) > end ? end : weekEnd(monday);
-    const inRow = (ymd: string) => ymd >= from && ymd <= to;
-    const atIn = (rows: { at: string }[]) => rows.filter(r => inRow(londonDay(r.at))).length;
-    weeks.push({ monday, from, to,
-      daysOnSite: period.siteDays.filter(inRow).length,
-      reports: period.reports.filter(r => inRow(r.visitDate)).length,
-      issuesRaised: atIn(period.issuesRaised), issuesClosed: atIn(period.issuesClosed),
-      variationsRaised: atIn(period.variationsRaised), variationsInstructed: atIn(period.variationsInstructed) });
+    const count = (last: string) => {
+      const inRow = (ymd: string) => ymd >= from && ymd <= last;
+      const atIn = (rows: { at: string }[]) => rows.filter(r => inRow(londonDay(r.at))).length;
+      return { daysOnSite: period.siteDays.filter(inRow).length,
+        reports: period.reports.filter(r => inRow(r.visitDate)).length,
+        issuesRaised: atIn(period.issuesRaised), issuesClosed: atIn(period.issuesClosed),
+        variationsRaised: atIn(period.variationsRaised), variationsInstructed: atIn(period.variationsInstructed) };
+    };
+    const row = count(to), total = (c: typeof row) => Object.values(c).reduce((n, v) => n + v, 0);
+    if (current && from > today && !total(row)) continue;
+    const soFar = current && from <= today && to > today && total(count(today)) === total(row);
+    weeks.push({ monday, from, to: soFar ? today : to, soFar, ...row });
   }
 
+  // Every report the Site reports figure counts, by kind: site updates and the inspections that are not health and safety.
+  const sentInMonth = sentReports(progress, principal, projectId).filter(r => r.visitDate >= start && r.visitDate <= end);
+  const reportKinds = REPORT_TYPES.map(t => ({ name: t.name, count: sentInMonth.filter(r => reportTypeOf(r).id === t.id).length })).filter(k => k.count > 0);
+
   // Where work moved on: every progress line in the month, grouped by place as written (ignoring case and spacing).
-  const reports = sentReports(progress, principal, projectId).filter(r => r.visitDate >= start && r.visitDate <= end && !reportTypeOf(r).checklist)
+  const reports = sentInMonth.filter(r => !reportTypeOf(r).checklist)
     .sort((a, b) => a.visitDate.localeCompare(b.visitDate) || naturalOrder(a.reference, b.reference));
   const places = new Map<string, MonthPlace>();
   const access = new Map<string, MonthAccess>();
@@ -176,7 +202,7 @@ export function monthSummary(sources: WeekSources, principal: Principal, project
   const companies = [...byCompany.values()].sort((a, b) => b.pastTarget - a.pastTarget || b.open.length - a.open.length || (a.owner ? b.owner ? a.owner.localeCompare(b.owner) : -1 : 1));
 
   return {
-    projectId, month: ym, start, end, current, asOf, period, weeks,
+    projectId, month: ym, start, end, current, asOf, period, reportKinds, weeks,
     places: [...places.values()].sort((a, b) => b.latest.day.localeCompare(a.latest.day) || naturalOrder(a.place, b.place)),
     unplaced, pastTarget,
     access: [...access.values()].filter(a => a.days.length > 1).sort((a, b) => b.times - a.times || naturalOrder(a.place, b.place)),

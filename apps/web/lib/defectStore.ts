@@ -14,7 +14,7 @@ export class DefectError extends Error { constructor(message:string,readonly sta
 export async function submitIndividualDefect(principal:Principal,input:DefectInput,files:{id:string;mime:string;bytes:Buffer}[]):Promise<Issue> {
   const invalid=validateDefect(input);if(invalid)throw new DefectError(invalid);
   if (sharePointMode() === 'read') throw new DefectError('Defect capture is disabled while the connection is read-only.',409);
-  await refreshProjects();
+  await refreshProjects(false, true);
   const project=cachedProject(input.projectId);
   if(!project||!reportableProject(project))throw new DefectError('This project is not open for reporting.');
   if(!canAccessProject(principal,project.id))throw new DefectError('You cannot report on this project.',403);

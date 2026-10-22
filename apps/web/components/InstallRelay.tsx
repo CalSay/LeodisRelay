@@ -57,9 +57,9 @@ export function InstallRelay({alwaysShow=false}: {alwaysShow?:boolean} = {}) {
         {prompt && <button className="btn-primary" disabled={busy} onClick={install}>{busy ? 'Opening…' : 'Install RELAY'}</button>}
         <p role="status" aria-live="polite">{message}</p>
         <h2>iPhone</h2>
-        <ol><li>Open this page in Safari.</li><li>Tap Share, the square with an arrow. It may be under the <strong>⋯</strong> button.</li><li>Tap <strong>Add to Home Screen</strong>, then <strong>Add</strong>.</li></ol>
+        <ol><li>Open this page in Safari.</li><li>Tap Share, the square with an arrow. It may be under the <strong>⋯</strong> button.</li><li>Tap <strong>Add to Home Screen</strong>. If you see <strong>Open as Web App</strong>, leave it on. Then tap <strong>Add</strong>.</li></ol>
         <h2>Android</h2>
-        <ol><li>Open this page in Chrome.</li><li>Tap <strong>Install RELAY</strong> above if you see it. If not, tap Chrome’s <strong>⋮</strong> menu.</li><li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>. The words differ a little between phones.</li></ol>
+        <ol><li>Open this page in Chrome.</li><li>Tap <strong>Install RELAY</strong> above if you see it. If not, tap Chrome’s <strong>⋮</strong> menu.</li><li>Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>. The words differ a little between phones. If it asks, choose <strong>Install</strong>, not Create shortcut: a shortcut opens RELAY in Chrome with the web address at the top.</li></ol>
         <p>Opened the link from Teams or an email? Open it in Safari or Chrome first.</p>
         <p>No signal on site? Open RELAY once with signal so it knows your sites. After that, with no signal you can still start your site update and take photos: they stay on your phone. Open RELAY again with signal to sign and send it. If the signal drops after you tap “Send to office”, RELAY keeps it and sends it by itself when signal comes back, while RELAY is open.</p>
         <p>Don’t clear your browser’s data or remove RELAY while something is waiting to send.</p>

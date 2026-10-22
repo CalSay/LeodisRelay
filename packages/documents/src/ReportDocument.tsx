@@ -544,11 +544,6 @@ export function ReportDocument({ report }: { report: DocReport }) {
                 {line}
               </Text>
             ))}
-            {BRANDING.registrationLines.map((line) => (
-              <Text key={line} style={s.companyLine}>
-                {line}
-              </Text>
-            ))}
           </View>
         </View>
 

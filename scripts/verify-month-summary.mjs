@@ -1,6 +1,7 @@
 // Browser check for the Month choice on the Weekly summary: last calendar month
 // of one project, seeded across week boundaries. Checks every figure against
-// the lists it opens and the week rows against the weekly pages, progress by
+// the lists it opens and the week rows against the weekly pages, this month
+// without weeks still to come, the Site reports line by kind, progress by
 // place, behind or stuck, open by company, photographs, no health and safety,
 // print, light and dark at 1440 and no sideways scroll at 390.
 // npm test && npm run build; set RELAY_PLAYWRIGHT_MODULE and RELAY_BROWSER_PATH if needed.
@@ -103,12 +104,25 @@ try {
     check(/this month so far/.test(await page.locator('.week-range').innerText()),'office: Month opens on this month, so far');
     check(await page.getByRole('button',{name:'Month',exact:true}).getAttribute('aria-pressed')==='true','office: Month is shown as chosen');
     check(!(await page.getByRole('button',{name:/Next month/}).isEnabled()),'office: no month after this one');
+    // This month: no row for a week still to come, and this week's row ends today.
+    {
+      const now=await (await page.request.get(`${base}/api/monthly-summary?projectId=proj-011lme&month=${thisMonth}`)).json();
+      const hrefs=await page.locator('.month-weeks tbody tr th a').evaluateAll(as=>as.map(a=>new URL(a.href).searchParams.get('week')));
+      check(hrefs.length===now.weeks.length&&hrefs.every(m=>m<=today),`office: this month has no row for a week still to come (${hrefs.join(', ')}, today ${today})`);
+      const thisWeek=now.weeks.at(-1),runsOn=(weekEnd(thisWeek.monday)>monthLast(thisMonth)?monthLast(thisMonth):weekEnd(thisWeek.monday))>today;
+      check(thisWeek.monday===weekStart(today,today)&&(runsOn?thisWeek.to===today&&thisWeek.soFar:!thisWeek.soFar),`office: this week's row ends today (${JSON.stringify(thisWeek)})`);
+      check((await page.locator('.month-weeks tbody tr').last().locator('th').innerText()).includes('so far')===runsOn,'office: this week says "so far" while it runs on past today');
+      check(/Weeks still to come are not shown/.test(await section(page,'Figures for the month').innerText()),'office: the note under the weeks says so');
+    }
     await page.getByRole('button',{name:/Previous month/}).click();await page.waitForURL(new RegExp(`month=${M}`));
     await page.locator('.month-sheet').filter({hasText:'last month'}).waitFor();
     // The tab title is set just after the sheet draws, so give it a moment.
     await page.waitForFunction(()=>document.title.startsWith('Monthly summary'),null,{timeout:5000}).catch(()=>{});
     check((await page.title()).startsWith('Monthly summary'),`office: the tab says Monthly summary (${await page.title()})`);
     const text=await page.locator('.month-sheet').innerText();
+    const reportsLine=await page.locator('.month-stats > div').filter({hasText:'Site reports'}).locator('small').innerText();
+    check(reportsLine==='all site updates',`office: Site reports says what the reports were, not a count of cards (${reportsLine})`);
+    check(!/Weeks still to come/.test(text),'office: a month that is over says nothing about weeks to come');
     check(!/toolbox|permit|deliver/i.test(text),'office: no toolbox talks, permits or deliveries, even switched on');
     check(!text.includes(tower.reference)&&!text.includes(draft.reference)&&!text.includes(before.reference)&&!text.includes(after.reference),'office: a tower inspection, a draft and reports either side of the month are left out');
 
