@@ -861,3 +861,37 @@ body:has(.ws){overflow:hidden auto}
   .ws .report-sheet .ro-qa-head>p{flex-basis:100%}
   .ws .report-sheet .ro-qa-btn{margin-left:0}
 }
+
+/* ------------------------------------ Variations, Team and Admin (Release 1, O7)
+   The parts of each page take the clearer card edge the other office pages
+   use (O2 to O6), so they do not blend into the ground (Cal, 21 Oct 12:59).
+   Variations: the two filter rows read as one block under the heading, as on
+   Issues (O3); the variation's own words get the room at a desk; on a phone a
+   card leaves out money it has not got yet. Team: a person chosen far down
+   the list opens beside it, not off the top of the screen. Long notes keep a
+   readable line. On a phone every control is a 48px tap target. */
+.ws :is(.variations-view,.team-view,.admin-view) .panel{border-color:var(--line-2)}
+.ws :is(.variations-view,.team-view,.admin-view) .panel-foot{border-top-color:var(--line-2);line-height:1.5;padding-right:max(var(--s4),calc(100% - 120ch))}
+.ws :is(.variations-view,.admin-view)>.filters{border-color:var(--line-2)}
+.ws .variations-view>.filters:has(+.filters){margin-bottom:calc(-1 * var(--s5))}
+.ws .team-view>.rowsub{margin:0;max-width:96ch}
+.ws .admin-view .adm-switch{max-width:960px}
+@media (min-width:1024px){
+  .ws .variations-view .filters select{min-height:32px}
+  .ws .team-view .two-wide>.panel:last-child{position:sticky;top:0;max-height:calc(100dvh - 180px);overflow-y:auto}
+}
+/* Wide enough for the buttons to stay inside the panel with the words at their minimum (verify-office-desk at 1366). */
+@media (min-width:1400px){
+  .ws .variations-view table.reg td.c-title{min-width:20em}
+  .ws .variations-view table.reg td[data-label="Project"]{min-width:9.5em}
+}
+@media (max-width:1023px){
+  /* Quoted, Instructed and Margin show once there is a figure; "—" three times says nothing. */
+  .ws .variations-view table.reg.cards tbody td.money:has(>.fine:only-child){display:none}
+}
+@media (max-width:700px){
+  .ws .variations-view>.filters:has(+.filters){margin-bottom:calc(-1 * var(--s4))}
+  .ws :is(.variations-view,.team-view,.admin-view) :is(.btn,.btn-q,.chip,select,input){min-height:48px}
+  .ws .variations-view table.reg.cards td.c-actions :is(.btn,.btn-q){min-height:48px}
+  .ws .team-view .f :is(input,select){font-size:16px}
+}

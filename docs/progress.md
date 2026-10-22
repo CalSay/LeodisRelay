@@ -4,6 +4,48 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish O7: Variations, Team and Admin
+
+- Why: task O7 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch";
+  21 Oct 12:59: sections must not blend into one). Branched from main at
+  1436bcc; O6 (#198) touches other files only. Before and after screenshots,
+  1440 light and dark and 390 light, first screen and full page, are in the
+  project files under `ui-review/release-1/O7/`: Variations (manager), Team
+  (Admin's list, a person chosen, Add a person; Manager's list), Admin
+  (each of its four sections). Busy example data, 40 days.
+- Found: nothing scrolled sideways. Variations showed a gold Price on every
+  row beside the gold "Price the oldest" (34 gold buttons on the first
+  filter); its two filter rows sat apart as two blocks; the variation's own
+  words wrapped to four or five lines at 1440 while the action column had
+  room; a phone card listed Quoted, Instructed and Margin as three "—" rows
+  before any price. On Team, choosing someone far down the Admin's list
+  opened their panel at the top of the page, off screen. Card edges used
+  `--line`, faint in dark mode, where O2 to O6 use `--line-2`. Long notes ran
+  the full 1440 width. On a phone the Admin chips, buttons and the person
+  form's inputs were 38 to 44px.
+- Changed: row Price/Reprice and Instruct are quiet buttons (same labels,
+  same dialogs), so "Price the oldest" is the page's one gold button. The
+  two filter rows join as on Issues (O3). At a desk the variation and project
+  columns keep a minimum width. In the phone and tablet card layout a money
+  cell with no figure is left out (a £0 figure still shows). On Team at a
+  desk the person panel stays beside the list (sticky, scrolls inside itself
+  if taller than the screen). Panels and filters `--line-2`; notes and
+  Admin's Site records switch keep a readable line. Phone controls 48px.
+  Scoped by new `variations-view`, `team-view`, `admin-view` classes in
+  `workspace.css`. No settings behaviour, routes, data, components or
+  `globals.css` tokens changed. Help "What's new" line.
+- Verified: typecheck, `npm test` (146 + 591), build; verify-accessibility
+  (584), -help (36), -first-day (94), -first-time-use (375), -office-desk
+  (73), -office-links (65), -office-registers (225), -office-top-bar (1917),
+  -register-downloads (100), -register-export (23), -role-access (95),
+  -september-office (43), -simpler-home (56), -team-last-sent (90),
+  -busy-projects (39 timings). The first run of office-desk and
+  office-top-bar caught the variation columns' minimum widths pushing the
+  row buttons past the panel at 1024 and 1366px; those widths now apply
+  from 1400px only, and both pass. No register button spills at 1280, 1366
+  or 1440px.
+- Not verified: a real phone, a screen reader.
+
 ## 2026-10-22 — Release 1 polish E4: defects and variations
 
 - Why: task E4 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
