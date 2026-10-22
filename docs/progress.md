@@ -52,6 +52,60 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   each screen in project files `ui-review/plain-words/` (before = main).
 - Not verified: real phones, screen readers.
 
+## 2026-10-22 — The Issues list on a small laptop
+
+- Why: a walk of an office manager at 1024 and 1280px on main 8af52ef (busy
+  example data from `scripts/seed-busy-projects.mjs`, 60 days; screens in
+  project files `ui-review/office-laptop/before|after/`). The overview, Inbox,
+  a project sheet and the Weekly summary read well. The Issues register at
+  1024px did not: the heading's buttons dropped under the title and the
+  filters took two rows, so the first issue started at 580px, and each Open
+  row averaged 184px because the description had about 110px and wrapped to
+  five or six lines while Work and Confirmation tags broke into a column of
+  words ("FIXED, / TO / CHECK"). 55 of 100 tags were on two or more lines at
+  every width from 1024 to 1365. Asked for by the coordinator as the walk's one
+  pick; not a `docs/tasks.json` task, so no status changed. Decided without
+  asking Cal (his autonomy message), within his 07:02 direction (the office's
+  view of progress).
+- Changed (`IssuesView.tsx`, `workspace.css`, only the Issues register): from
+  1024px its Work and Confirmation tags stay on one line. At 1024-1279px the
+  heading keeps its four buttons on one row beside the title (the summary line
+  wraps instead), the five filters share one row, the Project column gives way
+  to the project's name under the reference, and "45d late" goes under the
+  target date; with a filter set, "Clear filters" goes under the filters, and a
+  download that fails says so under the buttons. Below 1024px (cards) it is
+  as before; from 1280px only the tags change (one line, so no wider).
+- Measured (`RELAY_REPORT_ONLY=1` on main, then the branch, at 1024x800):
+  first issue 580px to 511px from the top; an Open row 184px to 106px, a
+  Fixed, to check row 144px to 123px; tags on two lines 55 of 100 to 0. At
+  1280px the rows are the same height as before (tags were not what made them
+  tall there) and the tags are on one line.
+- Decisions (Claude): the Project column goes rather than the description
+  being cut, because every reference already starts with the project's code
+  and the name under it keeps the full name in the row. Sorting by project is
+  not offered at 1024-1279px as a result; sorting by Ref groups by project.
+  The summary line wraps under the title rather than the buttons, because the
+  buttons are what you press. Kept to the Issues register: the Variations and
+  Inbox tables read well at 1024 in the walk.
+- Checks: typecheck, `npm test`, build. New `scripts/verify-issues-laptop.mjs`
+  (260 checks at 1000, 1024, 1100, 1180, 1279, 1280, 1365 and 1440px, light
+  and dark at 1024 and 1280, Open, Fixed, to check and with a location typed:
+  heading on one row,
+  filters on one row and wide enough to read, project under the reference or
+  in its column by width, "Nd late" under or beside the date, every tag on one
+  line, first issue by 520px and Open rows 130px or less at 1024, cards
+  with their Project line below 1024, nothing sideways, no cell
+  over the next, Verify inside its panel, a failed download's message inside
+  the heading, no page errors). Against main it fails as listed above. Also
+  passed: office-top-bar, issue-register, office-registers, check-fixes,
+  office-phone, office-desk, help, issue-figures, fix-waiting, accessibility,
+  role-access, engineer-layout, snag-list and issue-assign.
+- A fresh-context review found a failed download's message would have pushed
+  the heading sideways at 1024-1279 (now wraps under the buttons), the filter
+  boxes too narrow with "Clear filters" on the row (it now goes under them,
+  checked), and the Help text overstating "as before" at 1280-1365 (fixed).
+- Not verified: a real laptop with browser zoom or a larger system font, a
+  screen reader, a printer.
 ## 2026-10-22 — A shorter printed month
 
 - Why: a walk of an office manager at 1440px (latest main, busy example data
