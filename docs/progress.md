@@ -32,6 +32,9 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `ui-review/defect-trade/` (after: form, filled, no signal, sent at 390 light
   and dark and 1440 dark; before: copied from the #169 and #113 runs).
 - Not verified: a real phone.
+- Fresh review found no correctness gaps; it suggested plainer hint words and
+  a hint for someone with no trade recorded ("Tap the trade whose work it
+  is."), both taken.
 
 ## 2026-10-22 — Unassigned issues say whose work it is
 
