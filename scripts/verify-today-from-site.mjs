@@ -113,8 +113,9 @@ try {
       check(await folds.first().getAttribute('aria-expanded')==='false'&&flat(await folds.first().innerText())==='Show the 3 site updates'&&!(await blocks0(section).locator('.from-site-visit').first().isVisible()),`${label}: Hide folds the cards away again`);
       await folds.first().click();
       check(await blocks0(section).locator('.from-site-visit').first().isVisible()&&await section.locator('.loading').count()===0&&cardReads===reads,`${label}: opening again shows the cards at once, without reading the reports again (${cardReads-reads} reads)`);
-    }else check(await folds.count()===0,`${label}: the desk shows the cards open, with no fold`);
+    }
     await section.locator('.from-site-visit').first().waitFor();
+    if(!phone)check(await folds.count()===0,`${label}: the desk shows the cards open, with no fold`);
     await page.waitForFunction(()=>!document.querySelector('.today-site .loading'),null,{timeout:15000});
     const head=flat(await section.locator('.r').first().textContent());
     check(head.includes(dayShort(today))&&head.includes('4 updates'),`${label}: the section names today and counts its 4 updates (${head})`);
