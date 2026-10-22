@@ -21,10 +21,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `photoWhereOf`; `engineer.css`): a saved card shows a green dot at the end of
   its place's line, with "Saved" for screen readers only (the photo tiles'
   rule since #114). A card or photograph waiting only for the save already
-  under way says "Saving" (photo tiles "Uploading") in plain grey, not the
+  under way says "Saving" (photo tiles "Uploading") with a grey dot, not the
   amber warning. Work that has not gone up and is not being saved (no signal,
-  RELAY not answering, a refused save) keeps its amber line as before.
-  Inspections' check rows follow the same rule. A folded card at 390px is
+  RELAY not answering, a refused save) keeps its amber line as before, also
+  while RELAY retries it: the quiet "Saving" is only for a save after one
+  that worked, and only when the phone has kept its copy. Inspections' check
+  rows follow the same rule (not covered by the new check). A folded card at 390px is
   three lines (about 91px) instead of four (106px).
 - Decisions (Claude): the dot goes at the right of the place line, clear of
   the + so it is not read as part of the place name. Kept the amber line for
@@ -43,7 +45,12 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   quicker-inspections. undo-remove fails as on main (open PR #142 fixes it).
   Screens: project files `ui-review/site-update-trades/` (`walk/` before,
   `after/`, `check/`).
-- Not verified: a real phone, real weak signal, a screen reader.
+- Review: a fresh-context review found the cards would turn to "Saving"
+  every 15 seconds while RELAY retried a failed save, the "Saving" dot was
+  amber, screen readers would hear the place and "Saved" run together, and
+  the new check could catch photos still uploading. All fixed.
+- Not verified: a real phone, real weak signal, a screen reader; the wide
+  (desk) editor and inspection rows only through the existing checks.
 - Ideas for later (not built): the progress card has no trade, so a site
   manager writing up several trades files them all under their own trade on
   "Today from site"; "+ Another card here" and "Done with this card" sit

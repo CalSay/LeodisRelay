@@ -67,7 +67,9 @@ try {
         await page.locator('.savestate',{hasText:'Saving'}).waitFor();
         await page.waitForTimeout(600);
         const row=rows.nth(i);
-        eq(await row.locator('.eng-where').innerText(),'Saving','a card whose save is on its way says Saving');
+        // Its photographs may still be going up first, which says Uploading.
+        const said=await row.locator('.eng-where').innerText();
+        ok(/^(Saving|Uploading)$/.test(said),`a card whose save is on its way says Saving (got ${JSON.stringify(said)})`);
         ok(await row.locator('.eng-where-pending').count()===0,'it is not marked as not saved');
         const tiles=await open().locator('.shot .eng-where').allInnerTexts();
         ok(tiles.length===photos&&tiles.every(t=>t!=='Not saved to RELAY yet'),`its photographs are not marked as not saved (${tiles.join(', ')})`);

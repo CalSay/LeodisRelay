@@ -124,6 +124,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const lastHeld = useRef(true);
   const [waitingForHeld, setWaitingForHeld] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("clean");
+  // How the last save ended. A retry after a failed one is not shown as a calm "Saving" on the cards.
+  const lastSettled = useRef<SaveState>("clean");
+  useEffect(() => { if (saveState !== "saving") lastSettled.current = saveState; }, [saveState]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   /**
@@ -1135,7 +1138,8 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const offline = saveState === 'phone';
   const whereOf = new Map(report.observations.map(o => [o.id, cardWhere(o, onServer.cards[o.id], uploading, offline)]));
   // A save is already on its way, so a card still to go up is being saved, not missing.
-  const cardSaving = saveState === 'saving' && !offline;
+  const cardSaving = saveState === 'saving' && !offline && lastHeld.current
+    && (lastSettled.current === 'clean' || lastSettled.current === 'saved');
   /** A photograph's tile: one waiting only for the save under way says it is going up, not that it is missing. */
   const photoWhereOf = (o: Observation, photoId: string): Where | undefined => {
     const w = whereOf.get(o.id), at = o.photos.findIndex(p => p.id === photoId);
@@ -1205,7 +1209,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     return <button type="button" key={`row-${o.id}`} className={`eng-row eng-cardrow ${isOpen ? 'on' : ''} ${stopped ? 'late' : ''}`} aria-expanded={wide ? undefined : isOpen} aria-current={wide && isOpen ? 'true' : undefined} onClick={() => { if (!wide && isOpen) setSelectedSection(''); else openCard(o.id); }}>
       <span className="no">{String(i + 1).padStart(2, '0')}</span>
       <div className="main">
-        <span className="top"><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{choosing ? 'New' : k?.short ?? o.type}</span><b>{o.location.trim() || (choosing ? 'Choose a kind' : 'No location yet')}</b>{!choosing && <CardWhereMark where={whereOf.get(o.id)} saving={cardSaving} />}</span>
+        <span className="top"><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{choosing ? 'New' : k?.short ?? o.type}</span><b>{o.location.trim() || (choosing ? 'Choose a kind' : 'No location yet')}</b>{' '}{!choosing && <CardWhereMark where={whereOf.get(o.id)} saving={cardSaving} />}</span>
         {/* On the phone the open card shows its words and photos just below, so its row
             keeps only its heading and whether it is on the server yet. */}
         {!(isOpen && !wide) && <>
@@ -1229,7 +1233,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     return <button type="button" key={`row-${o.id}`} className={`eng-row eng-cardrow eng-checkrow ${isOpen ? 'on' : ''} ${stopped && answer ? 'late' : ''}`} aria-expanded={wide ? undefined : isOpen} aria-current={wide && isOpen ? 'true' : undefined} onClick={() => { if (!wide && isOpen) setSelectedSection(''); else openCard(o.id); }}>
       <span className="no">{String(i + 1).padStart(2, '0')}</span>
       <div className="main">
-        <span className="top"><span className={`kind answer-${answer?.tone ?? 'open'}`}>{answer?.label ?? 'To do'}</span><b>{o.check?.question}</b>{(answer || o.photos.length > 0) && <CardWhereMark where={whereOf.get(o.id)} saving={cardSaving} />}</span>
+        <span className="top"><span className={`kind answer-${answer?.tone ?? 'open'}`}>{answer?.label ?? 'To do'}</span><b>{o.check?.question}</b>{' '}{(answer || o.photos.length > 0) && <CardWhereMark where={whereOf.get(o.id)} saving={cardSaving} />}</span>
         {isOpen && !wide && stopped && answer && <span className="meta"><em>{stopped.message.slice((o.check?.question ?? '').length + 2)}</em></span>}
         {!(isOpen && !wide) && (text || o.photos.length > 0 || (stopped && answer)) && <span className="meta">{text ? text : ''}{text && o.photos.length ? ' · ' : ''}{o.photos.length ? photographs(o.photos.length) : ''}{stopped && answer ? <em>{text || o.photos.length ? ' · ' : ''}{stopped.message.slice((o.check?.question ?? '').length + 2)}</em> : null}</span>}
         {(answer || o.photos.length > 0) && <CardWhereLine where={whereOf.get(o.id)} saving={cardSaving} />}
@@ -1585,7 +1589,7 @@ function CardWhereMark({ where, saving }: { where: ReturnType<typeof cardWhere> 
   const quiet = quietWhere(where, saving);
   if (!quiet) return null;
   const words = quiet === 'server' ? WHERE.server : where!.where === 'uploading' ? WHERE.uploading : 'Saving';
-  return <span className={`eng-where eng-where-mark eng-where-${quiet}`}><span className={WHERE_DOT[quiet]} />{quiet === 'server' ? <span className="shot-where-said">{words}</span> : words}</span>;
+  return <span className={`eng-where eng-where-mark eng-where-${quiet}`}><span className={quiet === 'server' ? WHERE_DOT.server : 'dot'} />{quiet === 'server' ? <span className="shot-where-said">{words}</span> : words}</span>;
 }
 
 /** A line under a folded card when its work is not yet saved: what is still to go up. */
