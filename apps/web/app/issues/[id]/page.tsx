@@ -346,7 +346,7 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
           {otherSite && <div><dt>Site</dt><dd>{otherSite}</dd></div>}
           <div><dt>Where</dt><dd>{issue.location || "Location not recorded"}</dd></div>
           {issue.actionNeeded.trim() && <div><dt>What needs doing</dt><dd>{issue.actionNeeded.trim()}</dd></div>}
-          <div><dt>Who is fixing it</dt><dd>{owner ? <>{owner}{issue.targetDate ? `, by ${dateShort(issue.targetDate)}` : ""}{isOverdueIssue(issue, today) && <span className="late">, {pastTarget(daysBetween(issue.targetDate, today))}</span>}</> : "Nobody yet. The office will say who."}</dd></div>
+          <div><dt>Who is fixing it</dt><dd>{owner ? <>{owner}{issue.targetDate ? `, by ${dateShort(issue.targetDate)}` : ""}{isOverdueIssue(issue, today) && <span className="late">, {pastTarget(daysBetween(issue.targetDate, today))}</span>}</> : issue.work === "awaiting_verification" && issue.closureSubmittedBy ? `${issue.closureSubmittedBy} fixed it` : "Nobody yet. The office will say who."}</dd></div>
           {!shotsLow && shotsRow}
         </dl>
 

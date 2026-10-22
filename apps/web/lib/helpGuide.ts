@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'defect-fixed-on-the-spot', added: '2026-10-22', audience: 'site', title: 'Fixed a defect there and then? Say so from the receipt',
+    text: 'After you flag a defect, "Defect sent to the office" now has "Fixed it already?" under Back to Site. Tap it to take a photo of the fix, then "Put forward as fixed": the office gets it to check, with your photo of the fix, and someone else still checks it and closes it. No photo to add? Tap "No photo? Put forward as fixed". Only once the defect has reached the office. On the issue, "Who is fixing it" now names who put it forward as fixed. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'defect-waiting-on-site', added: '2026-10-22', audience: 'site', title: 'A defect not sent yet shows on the Site page',
     text: 'If you sent a defect with no signal and moved on, the Site page now says so: the "Flag a defect" button reads "Defect not sent yet" and "Only on this phone, not at the office yet" until it reaches the office, and tapping it opens the defect, with "Try again". A defect waiting on another of your projects gets its own line under the buttons. It still goes by itself once there is signal while RELAY is open. Before, the Site page still said "sent straight away", so at the end of the day you could not tell that a defect was only on your phone. Once it goes, the button goes back to "Flag a defect". Checked in a phone-sized browser with its signal switched off, not on a real phone.' },
   { id: 'weekly-summary-week-end', added: '2026-10-22', audience: 'all', title: 'Weekly summary: an earlier week gives its own open issues',

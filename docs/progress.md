@@ -4,6 +4,53 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Defect receipt: "Fixed it already?"
+
+- Why: the coordinator asked for a walk of an engineer at 390px who finds a
+  small fault, fixes it there and then, and wants the office to know it was
+  found and already fixed. On main bc864b8 Sam flagged it (Flag a defect, a
+  photo, Send), then the receipt offered Back to Site, "Open issue" and "View
+  project issues": nothing said "I fixed it already". The way was "Open
+  issue", "Add photograph", "Put forward as fixed" on the issue page, which
+  then said "Who is fixing it: Nobody yet. The office will say who." 6 taps
+  from Site (7 with a Recent places chip). The domain already allows open to
+  awaiting verification for exactly this (platform `transitions.ts`). Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the engineer's job simpler, the office's view of progress clearer).
+- Changed: the receipt (`IndividualDefect.tsx`, `FixedAlready`) has "Fixed it
+  already? · Take a photo of the fix" straight under Back to Site. It opens
+  the camera; then the photo, "Put forward as fixed" and "Add another photo"
+  sit in one framed box. "No photo? Put forward as fixed" for a fix with
+  nothing to photograph. It is the issue page's `submit_closure` (photos
+  uploaded to the issue first, the issue's current etag read first), so the
+  office gets it on its usual list to check with both photographs, and someone
+  other than the engineer still closes it. The receipt then says "Put forward
+  as fixed. The office will check it and close it. If it is not finished, it
+  comes back to you." With no signal the photo stays and the words say so
+  (and that it will only go once). Only the receipt's words are a live
+  region, not its buttons, and focus moves to "Put forward as fixed" once a
+  photo is taken.
+  The engineer issue page's "Who is fixing it" names who put it forward as
+  fixed ("Sam Sparks fixed it") instead of "Nobody yet" once it is waiting to
+  be checked. A filled engineer button no longer turns grey under a mouse
+  (the global button hover won). Help "What's new" line.
+- Decided (Claude): on the receipt, not as a tick box on the defect form. The
+  receipt only exists once the defect has reached RELAY, so a defect held with
+  no signal never offers it (a held "fixed" would need its own retry path).
+  Back to Site stays first: most defects are not fixed on the spot. No note is
+  written for the engineer: the history shows it raised and put forward
+  minutes apart by the same person, which is what the office reads.
+- Verified: typecheck, `npm test` (146 + 578), build. New
+  `scripts/verify-fixed-on-the-spot.mjs` (99 checks, 390 light and dark, 1440
+  dark): the button under Back to Site; 5 taps from Site to put forward; a
+  photo added, a second removed, the issue awaiting verification by the
+  engineer with exactly one photo on the closure; the issue page names who
+  fixed it; the no-photo way; no signal keeps the photo, changes nothing at the
+  office, then goes once on a retry; focus after the photo; 48px targets; no sideways scroll; no page
+  errors. `verify-receipt-send-bar` now counts the receipt's own buttons only.
+- Not verified: a real phone's camera or real weak signal (files set in a
+  phone-sized browser, offline simulated).
+
 ## 2026-10-22 — Site page: a defect not sent yet
 
 - Why: the coordinator asked for a walk of an engineer's end of day at 390px
