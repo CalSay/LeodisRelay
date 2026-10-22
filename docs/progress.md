@@ -4,6 +4,30 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 defined
+
+- Why: Cal asked to "define a first release point and work towards that with
+  haste", with the UI on the engineer's phone and the office laptop top notch.
+  Not a `docs/tasks.json` task, so no status changed.
+- Changed: new `docs/release-1.md` (docs only). It says what Release 1 holds
+  (the engineer's site update, defects, issues and inspections on a phone; the
+  office overview, issues, inbox, coverage, weekly and month summary and PDFs
+  on a laptop), what stays out or hidden (safety, permits and deliveries
+  switched off; Compliance; Site information #28; email and SharePoint
+  unchanged from the pilot), an exit checklist, and 14 small UI polish tasks
+  in two lanes (E1-E7 engineer at 390px, O1-O7 office at 1440px, light and
+  dark) that name their screens and files so two threads never overlap.
+- Decided (Claude): #142 is needed for Release 1 (it fixes a known fault);
+  #130 and #154 join only if Cal says "carry on" before the final check. The
+  hub should show Compliance as "Coming later" rather than open sample data
+  (task E1). PDFs are left to Cal's own PDF template thread. Shared colour
+  tokens are not changed by polish tasks; shared components are restyled
+  from the calling screen. Fresh review fixed screen gaps (/projects, report
+  preview, the engineer's Reports and Issues views) and file names.
+- Verified: `npm test` (581 pass) on main b387483 before writing. No code
+  changed, so no browser checks were run.
+- Next: the coordinator dispatches E1 and O1.
+
 ## 2026-10-22 — Sixteenth release check: "Put forward as fixed" on the first screen again
 
 - Why: the sixteenth release check on main bc864b8 (#2-#179 minus #28, #130,
