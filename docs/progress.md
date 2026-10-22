@@ -45,6 +45,37 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   when installed to the home screen. Left as is (review): an unassigned issue
   with a past target date gets no "days past target", since a target is only
   set on assignment.
+## 2026-10-22 — Site coverage: trades with no report yet this week
+
+- Why: the coordinator asked for a per-site line on Site coverage naming the
+  trades that reported there in the previous fortnight but have sent nothing
+  this week, so the office can see "No P&H report yet this week" without
+  reading fourteen columns of marks. Not a `docs/tasks.json` task, so no
+  status changed. Within Cal's 21 Oct direction (the office's view of
+  progress clearer); about progress reports, not people.
+- Changed: `siteCoverage` (lib/siteCoverage.ts) gives each project
+  `quietTrades`: the trades (Electrical, HVAC, P&H, as the marks use) with a
+  sent report from that site in the 14 days before this Monday and none from
+  Monday to today (London). Same records as the grid: sent only, a correction
+  stands in for what it corrects, switched-off safety and tower inspections
+  left out, reports with no trade ignored. `quietTradeWords` says it. Shown
+  under the project name, in the key, and Help "What's new".
+- Decided (Claude): always about today's week, and shown only on the
+  fortnight that holds today, so an older fortnight never carries this week's
+  words. Not on a Monday (nobody has had a working day yet, so every trade
+  would be named). Not on defects liability sites (visits are occasional, as
+  for "quiet"). Trade names in full in the line ("P&H", "Electrical"), as
+  elsewhere in office words. The one-visit rule (#163, #172) does not change
+  which trades reported, so the line reads the reports directly.
+- Verified: typecheck, `npm test` (146 + 572, two new unit tests), build.
+  New `scripts/verify-coverage-quiet-trades.mjs` (37 checks) runs two data
+  sets on their own servers: a small hand-made one (a draft, an old report,
+  a switched-off inspection and a defects liability site say nothing), and
+  the busy seed with this week's 014LME P&H turned back into drafts. Every
+  row's line is compared with a count made from the stored records, at 1440
+  dark and 390 light, and an older fortnight shows no line. Screens: project
+  files `ui-review/site-coverage/trades/`.
+- Not verified: a real phone or screen reader.
 
 ## 2026-10-22 — Leodis logo and accreditation marks on report PDFs
 
