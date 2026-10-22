@@ -8,6 +8,7 @@
 // - the page, the desk's columns, views and panels have nothing off to the
 //   right, on every office tab, with a report or an issue open, and on the
 //   office pages linked from the desk;
+// - the keyboard moves through the top bar in the order it reads;
 // - Attention, the name, the theme, Help, Engineer view, Switch company and
 //   the search box are each inside the window, not covered, not on top of each
 //   other, with words a person can read;
@@ -121,6 +122,11 @@ try {
       assert.match(words.search,/^Search projects/,`${label}: the search box says what it searches`);
       checks+=7;
       for(const i of items.filter(i=>['Attention','theme','Help','Engineer view','Switch company'].includes(i.name)))assert.ok(!i.cut,`${label}: ${i.name} is not cut short`);checks++;
+      // The keyboard moves through the bar in the order it reads: row by row, left to right.
+      const order=['logo','search','Attention','name','theme','Help','Engineer view','Switch company'].map(n=>items.find(i=>i.name===n));
+      for(const [n,b] of order.slice(1).entries()){const a=order[n];
+        assert.ok(b.top>=a.bottom-1||(Math.abs(b.top-a.top)<a.height&&b.left>=a.right-1),`${label}: ${b.name} comes after ${a.name} on screen, as it does with the keyboard`);}
+      checks++;
       const pressable=items.filter(i=>i.name!=='logo');
       for(const [n,a] of pressable.entries())for(const b of pressable.slice(n+1))
         assert.ok(a.right<=b.left+1||b.right<=a.left+1||a.bottom<=b.top+1||b.bottom<=a.top+1,`${label}: ${a.name} and ${b.name} do not overlap`);

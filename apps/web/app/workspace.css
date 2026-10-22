@@ -282,19 +282,18 @@ body:has(.ws){overflow:hidden auto}
 /* ---------------------------------------------------- narrower desk */
 /* A small laptop or a tablet on its side (701-1179px). The desk used to be
    held at 1180px, so the whole page scrolled sideways. Now it fits: the top
-   bar takes two rows (who you are, Attention and Help on the first; search,
-   Engineer view and Switch company on the second), and with a project open
-   the register and details share the width while "‹ Projects" goes back to
-   the project list. A table wider than its panel scrolls inside the panel. */
+   bar takes two rows (RELAY and the search box; then Attention, who is
+   signed in, the theme, Help, Engineer view and Switch company), in the same
+   order as the keyboard moves through them. With a project open the register
+   and details share the width while "‹ Projects" goes back to the project
+   list. A table wider than its panel scrolls inside the panel. */
 @media (min-width:701px) and (max-width:1179px){
-  .ws .topbar{height:auto;flex-wrap:wrap;row-gap:0;column-gap:var(--s4);padding:var(--s2) var(--s5)}
-  .ws .topbar-right{display:contents}
-  .ws .topbar-right>*{order:1}
-  .ws .topbar-right>.bell{margin-left:auto}
-  .ws .topbar::after{content:'';order:2;flex-basis:100%}
-  .ws .search{order:3;max-width:none;margin:var(--s2) 0 0}
-  .ws .topbar-right>a.tbtn{order:4;margin-top:var(--s2);white-space:nowrap}
-  .ws .whoami{max-width:220px;overflow:hidden;text-overflow:ellipsis}
+  .ws .topbar{height:auto;flex-wrap:wrap;row-gap:var(--s2);column-gap:var(--s5);padding:var(--s2) var(--s5)}
+  .ws .search{max-width:none}
+  .ws .topbar-right{flex-basis:100%;justify-content:flex-end}
+  .ws .topbar-right .tbtn{white-space:nowrap}
+  /* A long name gives way first, ending in "…"; the button still reads it in full. */
+  .ws .whoami{max-width:clamp(140px,calc(100vw - 540px),320px);overflow:hidden;text-overflow:ellipsis}
   .ws .attn-pop{top:100%}
   .ws .cols:is([data-depth="2"],[data-depth="3"]){grid-template-columns:minmax(0,2fr) minmax(0,3fr)}
   .ws .cols:is([data-depth="2"],[data-depth="3"])>.col:first-child{display:none}
@@ -304,9 +303,6 @@ body:has(.ws){overflow:hidden auto}
   /* The register heading wraps under "‹ Projects" rather than cutting the project's name. */
   .ws .cols>.col:nth-child(2) .col-head{flex-wrap:wrap;row-gap:var(--s1)}
   .ws .cols>.col:nth-child(2) .col-head :is(h2,h4){order:1;flex-basis:100%}
-}
-@media (min-width:701px) and (max-width:900px){
-  .ws .whoami{max-width:150px}
 }
 /* A project's figures two by two when the details column is narrow. */
 @media (min-width:701px) and (max-width:1023px){
