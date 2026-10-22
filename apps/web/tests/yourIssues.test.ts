@@ -48,3 +48,13 @@ test('a disputed issue counts as sent back', () => {
   const fresh = issue({ affectedTrade: 'Electrical', events: [ev('raised', 'Pat Pipe', 'entra:pat', '2026-10-20T09:00:00Z')] as Issue['events'] });
   assert.equal(yourIssues([fresh, disputed], sam).toDo[0]!.issue.id, disputed.id);
 });
+
+test('the fixes waiting for the office can be listed, newest put forward first', () => {
+  const early = issue({ affectedTrade: 'Electrical', work: 'awaiting_verification', events: [ev('closure_submitted', 'Sam Sparks', sam.id, '2026-10-10T09:00:00Z')] as Issue['events'] });
+  const late = issue({ affectedTrade: 'Electrical', work: 'awaiting_verification', events: [ev('closure_submitted', 'Sam Sparks', sam.id, '2026-10-14T09:00:00Z')] as Issue['events'] });
+  const open = issue({ affectedTrade: 'Electrical' });
+  const site = yourIssues([early, open, late], sam);
+  assert.equal(site.waiting, 2);
+  assert.deepEqual(site.waitingIssues.map(i => i.id), [late.id, early.id]);
+  assert.deepEqual(site.toDo.map(r => r.issue.id), [open.id]);
+});

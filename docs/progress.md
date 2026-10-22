@@ -4,6 +4,66 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — The checking fixes walk's small findings
+
+- Why: the checking fixes walk (project files
+  `ui-review/checking-fixes/walk-notes.md`) left small findings after #131 (the
+  dialog) and #134 (the top bar). Asked for by the coordinator; not a
+  `docs/tasks.json` task, so no status changed. Decided without asking Cal (his
+  autonomy message). All five still open on main b62f4ac are built here; none is
+  safety, supplier, FE-2, EXP-2 or EXP-4, so none was skipped.
+- Office, how long a fix has waited: "waiting N days" counted from the issue's
+  last event, so a note added after a fix was put forward started the count
+  again (a fix put forward 2 days ago with a note today said 0 days). It now
+  counts from the latest "put forward as fixed" (`putForwardAt`,
+  `lib/checkFix.ts`) on the overview's Fixed, to check rows, Attention and the
+  issue sheet, which also says the day it was put forward. The desk's trimmed
+  copy of an issue (`deskIssue`, #62) now keeps that event as well as the latest
+  one for a fix waiting to be checked, without notes or photos, so the desk
+  needs no extra request. Records with no such event fall back to the latest
+  event, as before.
+- Office, order: "Verify the oldest" picked the oldest defect, not the fix that
+  had waited longest. It now starts at the fix put forward longest ago, on the
+  server's button and the dialog's list alike (`byPutForward`); the overview,
+  Attention and each project's list use the same order. The project's Fixed, to
+  check figure said "put forward" with the date of whichever issue came first in
+  storage; it now says "oldest put forward" and that date. The register's own
+  order (target date) is unchanged: it is the office's choice of sort.
+- Office, issue sheet: the target read "2026-10-13" where every other screen
+  says "13 Oct"; it now reads the same.
+- Engineer, Issues "Yours": "3 put forward as fixed, waiting for the office to
+  check" was plain text. It now sits under the site's list (to do first) and
+  opens to show those fixes, newest put forward first; each opens its issue and
+  Back returns to Yours. Folded at first, so the page is no longer than before.
+- Engineer, home: "Came back from the office" counted a fix still waiting to be
+  checked as "from the office" when the office had assigned it before it was put
+  forward. A fix waiting for the office is no longer counted unless the office
+  has written to the engineer on it since; it is still listed with its "Fixed,
+  to check" tag, as the engineer's own records are.
+- Decisions (Claude): kept the button's words "Verify the oldest" (the oldest fix
+  is the one waiting longest; Help says so) so nobody relearns it; the waiting
+  fixes go under the to-do list rather than above it, so what is the engineer's
+  to do comes first.
+- Checks: typecheck, `npm test` (146 + 547; new tests in `checkFix.test.ts`,
+  `yourIssues.test.ts`, `busyProjects.test.ts`), build. New
+  `scripts/verify-fix-waiting.mjs` (41 checks: overview order and days, project
+  figure, issue sheet put forward/waiting/target, Verify the oldest then the
+  next, engineer home count; light and dark 1440, light 390; engineer 390 light
+  and 1440 dark; no sideways scroll, no page errors). It fails on main b62f4ac at
+  the first wait ("waiting 0 days" for a fix put forward 2 days ago).
+  `verify-issues-yours` now opens the waiting fixes and follows one to its issue
+  and back (48 checks). Also passed: check-fixes, came-back-first,
+  issue-register, office-landing, issue-figures, office-progress, office-desk,
+  office-sections, office-top-bar, engineer-layout, role-access, busy-projects,
+  other-sites-came-back, engineer-day, simpler-issue-list.
+- A fresh-context review found no blocking gap. From its notes: a question from
+  the office on a fix still waiting now counts on the engineer home (it was
+  listed with the office's words but left out of the count); the check's
+  longest-waiting fix now has the newest note, so the order check fails on main
+  too; the +/− on the fold is hidden from screen readers; stale comments fixed.
+- Not verified: a live tenant, real SharePoint issue lists, a real phone, a
+  screen reader.
+
 ## 2026-10-22 — The site diary starts higher on a phone
 
 - Why: a walk of the site diary at 390px (local example data from
