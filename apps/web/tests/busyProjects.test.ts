@@ -47,7 +47,7 @@ test('came back: the engineer’s latest issues and variations, cut so the merge
   // Same moment, so order in the list decides.
   issues.push(issue({ id:'tie-a', reportedById: engineer.id, raisedAt:'2026-10-30T10:00:00Z' }), issue({ id:'tie-b', reportedById: engineer.id, raisedAt:'2026-10-30T10:00:00Z' }));
   const variations = Array.from({ length: 9 }, (_, n) => variation({ id:`v${n}`, raisedAt:`2026-10-0${1 + n}T09:00:00Z`, ...(n % 2 ? { raisedById: other } : {}) }));
-  const back = cameBack(issues, variations, engineer.id);
+  const back = cameBack(issues, variations, engineer);
 
   // What the home worked out from every record: own records, newest change first, the first six.
   const at = (r: { raisedAt: string; events: { at: string }[] }) => r.events.at(-1)?.at ?? r.raisedAt;

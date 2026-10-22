@@ -4,6 +4,59 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — The office's reason reaches whoever is fixing it
+
+- Why: the "What the office asked" walk (PR #162) found that when the office
+  sends a fix back as "Not finished" with a reason, only the engineer who
+  raised the issue saw it at the top of the issue and on the home. Confirmed
+  at 390px on main b0d389f: Pat, an electrician who put Sam's socket fix
+  forward, had "Nothing on this project yet" under Came back from the office
+  (the only sign was "Reopened · Your trade" under Since your last visit,
+  without the reason), and the issue page had no box: the reason was only in
+  History. Coordinator's ask; not a `docs/tasks.json` task, so no status
+  changed. Within Cal's 21 Oct direction (the engineer's job simpler).
+- Changed: the issue page shows the office's words box (`OfficeWordBox`) to
+  whoever the issue is theirs to see to, the same rule as Issues "Yours"
+  (`isYours`: their trade, or worked on it), not only the raiser. For them
+  it shows only the "Not finished" reason (`lib/cameBack.ts` `sentBackWord`)
+  while it stands: their own event, anyone putting it forward again, a check
+  or handing it to another company ends it (a new target date does not);
+  a reopen of a checked and closed issue is not a send-back; other notes
+  stay for the raiser. Issues "Yours" uses the same rule for someone else's
+  issue (it showed any office note, and kept "Sent back" after someone
+  else put it forward again). `sentBackToYou`
+  / `cameBackIssue`: Came back from the office (this site and other sites)
+  also lists an issue the engineer put forward that the office sent back,
+  with "you put it forward" and the day instead of "you raised it". The
+  raiser's rules are unchanged. Help "What's new" line.
+- Decided (Claude): no new access. Every engineer who can open the issue
+  could already read the reason in History; the box only moves it up for
+  those it is meant for. Another trade still finds it in History. The home
+  lists only the one who put the fix forward, not the whole trade, so a
+  trade's home does not fill with others' issues; the same trade sees it on
+  the issue and first under Issues "Yours" (which already carried it).
+  A fresh review found the first cut let a stale reason stay after someone
+  else put it forward again or it was reassigned, and showed any office note
+  to the same trade; both fixed. A second review found a new target date
+  cleared it, a reopened closed issue counted, and the Yours list still
+  showed any note; all fixed and unit-tested. A third found a company named
+  on the report (no assignment event) lost the reason at a new target date;
+  fixed: the first company named since is then the baseline (so a hand-over
+  in that one case keeps the reason; accepted). Known, not changed: the
+  home's server cut to six newest before sorting (as before #162).
+- Verified: typecheck, `npm test` (146 + 560, one new unit test), build. New
+  `scripts/verify-sent-back-reason.mjs` (22 checks): Pat at 1440 dark and
+  390 light (the reason above Put forward on the first screen, the home row,
+  4 taps to put it forward again, then box and row go); Lee (same trade, not
+  involved) sees the box but no home row; Pete (another trade) sees no box;
+  Sam as before; a fix waiting on the office is not on Pat's home; axe on the
+  box; no sideways scroll; no page errors. Also passed: office-words,
+  sent-back-fix, came-back-to-update, busy-projects, engineer-layout,
+  role-access (95 HTTP checks), help, fix-forward-next, issues-yours,
+  simpler-issue-list, day-walkthrough.
+  Screens: project files `ui-review/sent-back-reason/` (before/, after/).
+- Not verified: a real phone.
+
 ## 2026-10-22 — Every open issue where the engineer is standing
 
 - Why: a walk at 390px on main d6ce82d with Sam (busy seed, Tetley Hall:

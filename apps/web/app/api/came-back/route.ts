@@ -14,9 +14,9 @@ export const dynamic = 'force-dynamic';
 
 /**
  * The engineer home's "Came back from the office" for one project: the
- * engineer's latest issues and variations, and the open issue count. The same
- * records and access rules as /api/issues and /api/variations, without
- * sending the phone every record on the project.
+ * engineer's latest issues (raised, or their fix sent back) and variations,
+ * and the open issue count. The same records and access rules as /api/issues
+ * and /api/variations, without sending the phone every record on the project.
  *
  * With `elsewhere=1`: what waits on the engineer on every other site they
  * report on (lib/cameBack.ts `cameBackElsewhere`), so the office's question at
@@ -39,5 +39,5 @@ export async function GET(request: Request) {
   }
   const issues = listIssues(projectId).filter(i => canAccessProject(guard.principal, i.projectId));
   const variations = listVariations(projectId).filter(v => canAccessProject(guard.principal, v.projectId));
-  return jsonResponse(request, cameBack(issues, variations, guard.principal.id));
+  return jsonResponse(request, cameBack(issues, variations, guard.principal));
 }

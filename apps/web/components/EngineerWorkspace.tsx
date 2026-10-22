@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiError, cameBack, cameBackElsewhere, createReport, getReport, listReports, projectIssues, yourOpenIssues } from '@/lib/api';
-import { cameBackRows, issueWord, raisedIssue, reportWord, variationWord, waitingOnYouFirst, issueReopened, officeActed, officeOpened, type OfficeWord } from '@/lib/cameBack';
+import { cameBackIssue, cameBackRows, issueWord, raisedIssue, sentBackWord, reportWord, variationWord, waitingOnYouFirst, issueReopened, officeActed, officeOpened, type OfficeWord } from '@/lib/cameBack';
 import { listHeld, type HeldDraft } from '@/lib/localDraft';
 import { offlineProjectsKey } from '@/lib/offlineStart';
 import { keepNotesOnDevice } from '@/lib/offlineNotes';
@@ -73,6 +73,8 @@ const fmtWhen = (iso?: string) => whenShort(iso);
 /** A visit day, with its year when it is not this year, since the list pages back through older reports. */
 const fmtVisit = (day: string) => dayShort(day) || day;
 const fmtDay = (iso?: string) => dayShort(iso);
+/** When this engineer last put the issue forward as fixed, for a row the office sent back to them. */
+const putForwardAt = (i: Issue, p: { id: string; name: string }) => [...i.events].reverse().find(e => e.kind === 'closure_submitted' && (e.actorId ? e.actorId === p.id : e.actor === p.name))?.at;
 
 type View = 'home' | 'projects' | 'issues' | 'reports' | 'defect';
 /**
@@ -224,7 +226,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
         if(!cancelled)setIssues(all);
       }).catch(e => {if(!cancelled)setError(e instanceof Error?e.message:'Unable to load issues.');});
     }
-    // What came back from the office on the things this engineer raised, in the office's words.
+    // What came back from the office on the things this engineer raised (or put forward and had sent back), in the office's words.
     if(view === 'home' && principal) {
       setBack(null);
       // Only the few records the rows need, not every issue and variation on the project.
@@ -235,11 +237,11 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
         const returnTo = engineerReturn();
         // `site`: the project name, on rows from a site other than the one the engineer is at.
         const reportRow = (r:ReportSummary, corrected:boolean, site?:string):Back => ({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:withViewReturn(`/reports/${r.id}`,returnTo), title:`${reportTypeOf(r).name} ${r.reference.split("-").slice(1).join("-")}`, sub:`${site ? `${site} · ` : ''}Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned', sentBack:r.review === 'returned' && !corrected, word:reportWord(r,corrected), office:officeOpened(r) });
-        const issueRow = (i:Issue, site?:string):Back => ({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}?update=1`,returnTo), title:i.description, sub:`${site ? `${site} · ` : ''}${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'}${site ? '' : ` · you raised it ${fmtDay(i.raisedAt)}`}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed', sentBack:i.confirmation === 'disputed' || issueReopened(i.events,principal), word:issueWord(i.events,principal), office:i.work === 'awaiting_verification' ? !!issueWord(i.events,principal) : officeActed(i.events,principal) });
+        const issueRow = (i:Issue, site?:string):Back => ({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}?update=1`,returnTo), title:i.description, sub:`${site ? `${site} · ` : ''}${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'}${site ? '' : raisedIssue(i,principal.id) ? ` · you raised it ${fmtDay(i.raisedAt)}` : ` · you put it forward ${fmtDay(putForwardAt(i,principal))}`}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed', sentBack:i.confirmation === 'disputed' || issueReopened(i.events,principal), word:raisedIssue(i,principal.id) ? issueWord(i.events,principal) : sentBackWord(i.events,principal), office:i.work === 'awaiting_verification' ? !!issueWord(i.events,principal) : officeActed(i.events,principal) });
         const variationRow = (v:Variation, site?:string):Back => ({ at:v.events.at(-1)?.at ?? v.raisedAt, key:v.id, href:withViewReturn(`/variations/${v.id}`,returnTo), title:v.description, sub:`${site ? `${site} · ` : ''}${v.reference.split('-').slice(1).join('-')} · ${v.location || 'no location'}${site ? '' : ` · you raised it ${fmtDay(v.raisedAt)}`}`, tags:<VariationTags v={v}/>, late:v.workDone && v.instruction === 'pending', word:variationWord(v.events,principal), office:officeActed(v.events,principal) });
         const here:Back[] = [];
         for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) here.push(reportRow(r,page.reports.some(c => c.corrects === r.id)));
-        for (const i of all) if (raisedIssue(i,principal.id)) here.push(issueRow(i));
+        for (const i of all) if (cameBackIssue(i,principal)) here.push(issueRow(i));
         for (const v of variations) if (v.raisedById === principal.id) here.push(variationRow(v));
         here.sort(waitingOnYouFirst);
         const reports = page.reports.filter(r => r.state === 'submitted').length;

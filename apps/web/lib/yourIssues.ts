@@ -1,5 +1,5 @@
 import type { Issue } from './types';
-import { isOpenIssue, issueReopened, issueWord, raisedIssue, type OfficeWord } from './cameBack';
+import { isOpenIssue, issueReopened, issueWord, raisedIssue, sentBackEvent, sentBackWord, type OfficeWord } from './cameBack';
 import { byPutForward } from './checkFix';
 
 /**
@@ -30,7 +30,10 @@ export function isYours(i: Issue, person: Person): boolean {
 export function yourIssues(issues: readonly Issue[], person: Person): YourSite {
   const mine = issues.filter(i => isYours(i, person));
   const toDo = mine.filter(i => i.work !== 'awaiting_verification')
-    .map(issue => ({ issue, word: issueWord(issue.events, person), sentBack: issueReopened(issue.events, person) || issue.confirmation === 'disputed', at: issue.events.at(-1)?.at ?? issue.raisedAt }))
+    .map(issue => raisedIssue(issue, person.id)
+      ? { issue, word: issueWord(issue.events, person), sentBack: issueReopened(issue.events, person) || issue.confirmation === 'disputed', at: issue.events.at(-1)?.at ?? issue.raisedAt }
+      // Someone else's issue: only the office's reason on a fix sent back, while it stands (cameBack.ts `sentBackEvent`).
+      : { issue, word: sentBackWord(issue.events, person), sentBack: !!sentBackEvent(issue.events, person) || issue.confirmation === 'disputed', at: issue.events.at(-1)?.at ?? issue.raisedAt })
     .sort((a, b) => Number(!!b.word || b.sentBack) - Number(!!a.word || a.sentBack) || b.at.localeCompare(a.at))
     .map(({ issue, word, sentBack }) => ({ issue, word, sentBack }));
   const waitingIssues = mine.filter(i => i.work === 'awaiting_verification').sort(byPutForward).reverse();
