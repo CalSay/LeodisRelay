@@ -4,6 +4,29 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Thirteenth release check: Undo gets the focus again on a phone
+
+- Why: the thirteenth release check ran all 101 browser checks on main
+  d66a60c (#2-#139 minus #28). 99 passed; two failed on every rerun.
+- `verify-undo-remove` (a real fault, since #133): on a phone, after typing in
+  a field and then tapping Remove card (or a photograph's Remove), focus went
+  to the top of the page instead of Undo, though a screen reader was told
+  "Undo is focused". Undo sits in the Send bar, which a phone hides while a
+  field has the keyboard; since #133 the bar comes back only after the tap has
+  settled, so Undo was still hidden when it was given the focus. It passes on
+  6def5e8. Fixed in `reports/[id]/page.tsx`: the removal shows the bar at once
+  (the tap is over by then), then focuses Undo. Undo still shows for sighted
+  people either way, so no Help line.
+- `verify-site-coverage` (the check, not the app): its quiet site's last
+  report was ten days before today, which is inside the current fortnight on
+  the fortnight's last four days (today, 22 Oct), so a chip showed on the row
+  meant to have none. It fails on 6def5e8 too. The report now goes the day
+  before the fortnight when ten days back is inside it.
+- Checks: typecheck, `npm test`, build; undo-remove (82), site-coverage (30),
+  day-walkthrough, report-editor, editor-usability, receipt-send-bar,
+  engineer-layout, offline-capture, accessibility.
+- Not verified: a real phone, a screen reader.
+
 ## 2026-10-22 — The site diary starts higher on a phone
 
 - Why: a walk of the site diary at 390px (local example data from

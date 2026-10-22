@@ -904,6 +904,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     holdUndo(false);
     // The Remove button pressed has gone, so focus goes to Undo rather than
     // the top of the page; while it is there the offer does not run out.
+    // Undo sits in the bar, which a phone hides while a field had the keyboard:
+    // the tap is over, so show the bar now or Undo cannot take the focus.
+    setTyping(false);
     requestAnimationFrame(() => undoButton.current?.focus({ preventScroll: true }));
   }
 
