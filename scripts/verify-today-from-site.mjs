@@ -5,13 +5,16 @@
 //
 // Records: Tetley Hall has three site updates today (two electricians, Sid at 11:00
 // and Sam at 16:00, and Hana, HVAC, at 09:00) and an inspection; Sam's access
-// problem is his fifth card, so it shows only if held-up lines come first. Kirkstall
-// Gate's last update was yesterday, so it has no block. Hunslet Depot has one quiet
+// problem is his fifth card, so it shows only if held-up lines come first. The
+// inspection is a first fix one: a safety inspection is not counted while the safety
+// records are switched off (#163). Kirkstall Gate's last update was yesterday, so it
+// has no block. Hunslet Depot has one quiet
 // update today. A fix put forward 23.5 hours ago waits "1 day" (a calendar day), not
 // the 0 whole days the overview used to say.
 // Checks, light and dark at 1440 and light at 390: the section's day and count;
 // on a phone each project's cards fold under its bar (the day fits on one screen,
-// what needs the office follows, each fold opens and says so);
+// what needs the office follows, each fold opens and says so); on the desk what
+// needs the office comes first, on the first screen, and the day follows it;
 // one edged block a project with an update today, in the overview's project order;
 // each block's headline (updates and inspections, access problems, what was
 // raised); the cards by trade then as sent, every update today and not only each
@@ -55,7 +58,7 @@ const samToday=sent(T,sam,today,15,[card('update','Level 1 corridor','Containmen
   card('update','Riser 2','Cable pulled to the distribution board'),card('update','Plant room','Board dressed and labelled'),card('access','Level 2 west','Blocked by stacked plasterboard, moved to level 3'),card('defect','Flat 311 bathroom','Cracked faceplate')]);
 const sidToday=sent(T,sid,today,10,[card('update','Stair core B','Emergency lighting first fix done')]);
 const hanaToday=sent(T,hana,today,8,[card('update','Level 3 ceiling void','Ductwork hangers fitted'),card('instruction','Plant room','Extra grille asked for'),card('instruction','Roof','Second fan asked for')]);
-sent(T,sam,today,12,[{...card('update','','Scaffold tag in date'),check:{question:'Scaffold tagged',answer:'ok'}}],'safety-inspection');
+sent(T,sam,today,12,[{...card('update','','Containment fixings checked'),check:{question:'Containment fixed',answer:'ok'}}],'first-fix-inspection');
 sent(T,pat,addDays(today,-1),14,[card('update','Basement','Yesterday’s pipework, not today’s')]);
 sent(K,pat,addDays(today,-1),14,[card('update','Bin store','Kirkstall yesterday')]);
 const quiet=sent(H,hana,today,11,[card('update','Welfare kitchen','Extract fan fitted and tested')]);
@@ -115,7 +118,13 @@ try {
       check(await blocks0(section).locator('.from-site-visit').first().isVisible()&&await section.locator('.loading').count()===0&&cardReads===reads,`${label}: opening again shows the cards at once, without reading the reports again (${cardReads-reads} reads)`);
     }
     await section.locator('.from-site-visit').first().waitFor();
-    if(!phone)check(await folds.count()===0,`${label}: the desk shows the cards open, with no fold`);
+    if(!phone){
+      check(await folds.count()===0,`${label}: the desk shows the cards open, with no fold`);
+      // On the desk what needs the office comes before the day's cards, and starts on the first screen.
+      const lists=await page.locator('.act').first().boundingBox(),day=await section.boundingBox(),glance=await page.locator('section.glance').boundingBox();
+      check(lists.y>=glance.y+glance.height&&lists.y+lists.height<=day.y,`${label}: what needs the office comes between Where each project stands and the day (lists ${Math.round(lists.y)}, day ${Math.round(day.y)})`);
+      check(lists.y<900,`${label}: what needs the office starts on the first screen (${Math.round(lists.y)}px)`);
+    }
     await page.waitForFunction(()=>!document.querySelector('.today-site .loading'),null,{timeout:15000});
     const head=flat(await section.locator('.r').first().textContent());
     check(head.includes(dayShort(today))&&head.includes('4 updates'),`${label}: the section names today and counts its 4 updates (${head})`);
@@ -136,7 +145,7 @@ try {
     const samShown=await tetley.locator('.from-site-visit').nth(1).locator('li').count();
     check(samShown===(phone?2:3),`${label}: ${phone?2:3} lines a card, the rest in the report (${samShown})`);
     const text=flat(await section.innerText());
-    check(!text.includes('not today’s')&&!text.includes('Kirkstall yesterday')&&!text.includes('Scaffold tag'),`${label}: yesterday's updates and the inspection's checks are not read as today's`);
+    check(!text.includes('not today’s')&&!text.includes('Kirkstall yesterday')&&!text.includes('Containment fixings checked'),`${label}: yesterday's updates and the inspection's checks are not read as today's`);
     check(await page.evaluate(()=>document.documentElement.scrollWidth-document.documentElement.clientWidth)<=0,`${label}: no sideways scroll`);
     // The fix's wait, in calendar days.
     const fixRow=flat(await page.locator('.act').filter({hasText:'Fixed, to check'}).locator('.rt').first().innerText());

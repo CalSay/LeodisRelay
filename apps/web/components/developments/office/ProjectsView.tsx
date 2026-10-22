@@ -185,6 +185,9 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const safety = snap.safety?.totals;
   // Switched off by the office (lib/featureSwitch.ts): no button to a page that is not in use.
   const { safetyRecords } = useFeatures();
+  const phone = usePhoneKnown();
+  // Keyed, so a width change moves the two sections instead of building them again.
+  const lists = <ActionGroups key="lists" groups={groups} />, today = <TodayFromSite key="today" ctx={ctx} />;
   // Where each project stands comes first: it is the question the office opens RELAY to answer.
   // The totals, overdue count and latest reports that used to sit here are in that list, the
   // action groups and the Inbox, so they are no longer repeated; nor are the tab counts above it.
@@ -196,8 +199,11 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
     </span></div>}
     <ActionStrip groups={groups} />
     <ProjectGlance ctx={ctx} />
-    <TodayFromSite ctx={ctx} />
-    <ActionGroups groups={groups} />
+    {/* On the desk what needs the office comes before what site did today: on a busy afternoon
+        the day's cards run past a screen, and these lists used to start two screens down. A
+        phone has the count tiles at the top for these lists, and folds the day to its bars, so
+        the day stays first there. Neither shows until the width is known, so a phone never swaps them. */}
+    {phone === null ? null : phone ? [today, lists] : [lists, today]}
     <SecH right={<a href="#/issues">All →</a>}>Also needs attention</SecH>
     <AttentionList ctx={ctx} limit={6} />
     <p className="rowsub" style={{ marginTop: 16 }}>Opening a report marks it seen by the office. Choose a project to see where it stands.</p>
