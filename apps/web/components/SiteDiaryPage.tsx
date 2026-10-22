@@ -10,7 +10,7 @@ import { canManage } from '@/lib/auth/access';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
 import { DIARY_KINDS, isDiaryKind, type DiaryCard, type DiaryEntry, type SiteDiary } from '@/lib/siteDiary';
 import type { ObservationType } from '@/lib/fixtures';
-import { dateShort, dayLong, whenShort } from '@/lib/dates';
+import { dateShort, dayLong, timeOf, whenShort } from '@/lib/dates';
 import { failure as failed } from '@/lib/failure';
 
 /**
@@ -21,7 +21,8 @@ import { failure as failed } from '@/lib/failure';
 
 const fmtDay = (ymd: string) => dayLong(ymd);
 const fmtShort = (ymd: string) => dateShort(ymd);
-const fmtSent = (at: string) => whenShort(at);
+// Sent on the visit day, the day heading already says the date, so only the time is new.
+const fmtSent = (at: string, day: string) => dateShort(at) === dateShort(day) ? timeOf(at) : whenShort(at);
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const KIND: Record<ObservationType, [string, string]> = { update: ['Progress', 'progress'], defect: ['Defect', 'defect'], access: ['Access problem', 'access'], instruction: ['Variation required', 'variation'], check: ['Check', 'progress'] };
 const PHOTOS_SHOWN = 4;
@@ -47,18 +48,18 @@ function Card({ c, entry, here }: { c: DiaryCard; entry: DiaryEntry; here: strin
   </li>;
 }
 
-function Entry({ e, here, filtered }: { e: DiaryEntry; here: string; filtered: boolean }) {
+function Entry({ e, day, here, filtered }: { e: DiaryEntry; day: string; here: string; filtered: boolean }) {
   const [current, ...earlier] = e.revisions;
   return <article className="diary-entry" aria-label={`${e.reference} revision ${e.revision}, ${e.author}`}>
     <header className="diary-entry-head">
       <p className="diary-entry-ref"><Link className="ref" href={withViewReturn(`/reports/${e.reportId}`, here)}>{e.reference}</Link>
-        <span className="tag tag-sent">Rev {e.revision}</span>
+        {e.revision > 1 && <span className="tag tag-sent">Rev {e.revision}</span>}
         {e.review === 'pending' && <span className="tag tag-draft">Awaiting review</span>}
         {e.review === 'returned' && <span className="tag tag-alert">Returned for changes</span>}</p>
-      <p className="diary-by">{[e.author, e.trade, e.sentAt ? `sent ${fmtSent(e.sentAt)}` : ''].filter(Boolean).join(' · ')}</p>
+      <p className="diary-by">{[e.author, e.trade, e.sentAt ? `sent ${fmtSent(e.sentAt, day)}` : ''].filter(Boolean).join(' · ')}</p>
       {earlier.length > 0 && <div className="diary-revisions">
         <p>Corrects rev {earlier[0]!.revision}{current?.correctionReason ? <>: <q>{current.correctionReason}</q></> : '.'}</p>
-        <p>Earlier {earlier.length === 1 ? 'revision' : 'revisions'}: {earlier.map((r, n) => <span key={r.id}>{n > 0 && ', '}<Link href={withViewReturn(`/reports/${r.id}`, here)}>rev {r.revision}{r.sentAt ? `, sent ${fmtSent(r.sentAt)}` : ''}</Link></span>)}</p>
+        <p>Earlier {earlier.length === 1 ? 'revision' : 'revisions'}: {earlier.map((r, n) => <span key={r.id}>{n > 0 && ', '}<Link href={withViewReturn(`/reports/${r.id}`, here)}>rev {r.revision}{r.sentAt ? `, sent ${fmtSent(r.sentAt, day)}` : ''}</Link></span>)}</p>
       </div>}
     </header>
     {e.inspection && <p className="diary-inspection"><b>{e.inspection.name}</b>{[`${e.inspection.ok} satisfactory`, plural(e.inspection.action, 'action'), `${e.inspection.na} not applicable`].join(' · ')}</p>}
@@ -74,6 +75,8 @@ export function SiteDiaryPage({ initialProject, initialFind, initialShow, return
   const principal = usePrincipal();
   const router = useRouter();
   const [projectId, setProjectId] = useState(projects.some(p => p.id === initialProject) ? initialProject : projects.length === 1 ? projects[0]!.id : '');
+  // Picked on this page, the list stays, so a wrong pick can be changed; arrived with a site, the heading names it.
+  const [pickedHere, setPickedHere] = useState(false);
   const [find, setFind] = useState(initialFind);
   const [words, setWords] = useState(initialFind.trim());
   const [show, setShow] = useState<ObservationType | ''>(isDiaryKind(initialShow) ? initialShow : '');
@@ -141,9 +144,9 @@ export function SiteDiaryPage({ initialProject, initialFind, initialShow, return
   return <main className="eng-page diary-page">
     <Link href={back} className="back">&larr; {backLabel(back)}</Link>
     <div className="eng-heading"><h1>Site diary{project ? ` · ${project.projectName}` : ''}</h1>
-      <p>Every visit to site, day by day, made from the reports engineers sent. Nothing extra to fill in: each entry links to the report it came from.</p></div>
-    <div className="diary-controls">
-      <label>Project<select value={projectId} onChange={e => setProjectId(e.target.value)}>
+      <p>Every visit, day by day, from the reports sent.</p></div>
+    <div className={`diary-controls${project && !pickedHere ? ' diary-has-project' : ''}`}>
+      <label className="diary-project">Project<select value={projectId} onChange={e => { setProjectId(e.target.value); setPickedHere(true); }}>
         <option value="">Choose a project</option>
         {projects.map(p => <option key={p.id} value={p.id}>{p.projectNumber} {p.projectName}</option>)}
       </select></label>
@@ -166,7 +169,7 @@ export function SiteDiaryPage({ initialProject, initialFind, initialShow, return
         <ol className="diary-days">{days.map(d => <li key={d.day} className="diary-day">
           <section aria-labelledby={`day-${d.day}`}>
             <h2 id={`day-${d.day}`}><span>{fmtDay(d.day)}</span><small>{d.engineers.join(', ')}{d.entries.length > 1 ? ` · ${plural(d.entries.length, 'report')}` : ''}</small></h2>
-            {d.entries.map(e => <Entry key={e.reportId} e={e} here={here} filtered={filtered} />)}
+            {d.entries.map(e => <Entry key={e.reportId} e={e} day={d.day} here={here} filtered={filtered} />)}
           </section>
         </li>)}</ol>
         {error && <div className="note note-bad" role="alert">{error}</div>}

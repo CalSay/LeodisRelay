@@ -4,6 +4,35 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — The site diary starts higher on a phone
+
+- Why: a walk of the site diary at 390px (local example data from
+  `scripts/verify-site-diary.mjs`; screens in project files
+  `ui-review/site-diary/`) found the first screen was mostly heading and
+  controls: a three-line explanation, a Project list already set to the site
+  the engineer came from, Find and the filter buttons. The first visit began
+  about 685px down a 900px screen. Each entry also carried "Rev 1" and
+  repeated the date the day heading gives. Asked for by the coordinator as the
+  walk's one pick; not a `docs/tasks.json` task, so no status changed.
+  Decided without asking Cal (his autonomy message).
+- Changed (`components/SiteDiaryPage.tsx`, `app/diary/diary.css`): the
+  explanation is one line; below 640px the Project list hides when the diary
+  is opened with a project (it still shows with none chosen, after picking one
+  on the page so a wrong pick can be changed, and on wide screens); the Rev tag shows only from rev 2; a report (or earlier revision)
+  sent on its visit day says "sent 12:00", otherwise the day and time as before.
+  The first visit now starts about 550px down.
+- Decided: hide the list on phones rather than everywhere, so the office desk
+  can still switch project without going back; an engineer switches site from
+  the home, as everywhere else.
+- Help: one "What's new" line for everyone.
+- Checks: typecheck; `npm test`; build; `scripts/verify-site-diary.mjs` (43
+  checks, 8 new: no Project list on the phone when opened from a site, but
+  shown with none chosen and kept after a pick on the page, first visit within
+  the first 600px, no Rev tag on an uncorrected report, time only when sent on
+  the visit day, the list still shown at 1440). Also passed: help,
+  role-access, engineer-layout, accessibility.
+- Not verified: a real phone, a screen reader.
+
 ## 2026-10-22 — Back to Site after a defect, and nothing under the Send bar
 
 - Why: the two-site walk (project files `ui-review/two-site-day/walk-notes.md`,
