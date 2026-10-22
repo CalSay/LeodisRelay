@@ -527,6 +527,17 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .issue-eng-update .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .issue-eng-update .btn-row button{min-height:48px;width:100%;}
 .issue-more .issue-eng-facts{margin-top:4px;}
+/* Just put forward as fixed (2026-10-22): said plainly, then straight on to the next of the engineer's issues on this site. */
+.issue-eng-done{margin-top:8px;display:grid;gap:10px;}
+.issue-eng-done:focus{outline:none;}
+.issue-eng-done h2{font-size:17px;margin:0;}
+.issue-eng-done p{margin:0;}
+.issue-eng-next{flex-direction:column;gap:2px;text-align:center;overflow-wrap:anywhere;}
+.issue-eng-next span{font-weight:600;}
+.issue-eng-next small{font-size:13px;opacity:.9;}
+.issue-eng-done .eng-secondary{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;padding:12px 18px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel);color:var(--text);text-decoration:none;font:500 15px/1.2 var(--sans);}
+.issue-eng-add{margin-top:8px;}
+.issue-eng-add .issue-eng-update .btn-row{grid-template-columns:1fr;}
 /* "Change kind" sits with Remove; the four kind buttons come out only after it is tapped (2026-10-21). */
 .eng-card-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
 .eng-card-foot .eng-remove-card{margin-top:0;}

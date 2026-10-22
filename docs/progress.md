@@ -4,6 +4,48 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Straight on to the next issue after putting a fix forward
+
+- Why: a walk of an electrician on a 390px phone (latest main, local example
+  data: six of their issues on Tetley Hall) putting three fixes forward with a
+  photograph and a note found five taps a fix (the issue, photograph, note,
+  "Put forward as fixed", then Back to the list for the next), and after the tap
+  the page stayed as it was: the empty form and "Record an update" still there,
+  only a thin note saying it was done. Picked by this thread and posted before
+  building, under Cal's 21 Oct ask to make the engineer's job simpler. Not a
+  `docs/tasks.json` task; no status changed.
+- Changed: on the engineer's issue page, "Put forward as fixed" now gives a box,
+  "Put forward as fixed. The office will check it. If it is not finished, it
+  comes back to you on the Site page.", with one big button to the next of the
+  engineer's issues on the same site ("Next: Spur not labelled", where, and how
+  many are left to do there), then Back. The next one is the top of the site's
+  "Yours" list (`nextYourIssue` in `lib/yourIssues.ts`, the same rule and order
+  as the Issues tab), never the one just done, another site's, or one already
+  waiting on the office. With none left it says "That was the last one for you
+  on <site>". While an issue is waiting on the office (just put forward or opened
+  later), the form is folded under "Add a note for the office", which still
+  records an update. Focus moves to the box, as the tapped button has gone. The
+  office's issue page is unchanged.
+- Decided: offer the next issue only on the same site (the engineer is on that
+  site; other sites stay on the Issues tab), and only straight after putting one
+  forward, not on any issue opened later that is already waiting. If the list
+  cannot be fetched (no signal), the box shows with Back and no Next, rather than
+  guessing.
+- Help: a "What's new" line.
+- Checks: typecheck, `npm test` (new unit test for `nextYourIssue`), build. New
+  `scripts/verify-fix-forward-next.mjs` (71 checks): six fixes put forward one
+  after another from the Issues tab in 24 taps (four a fix: photograph, note, Put
+  forward, Next; it was five with Back), Next names the top of "Yours" each time
+  with where and how many are left, never another site, trade or engineer's
+  issue, box and Next on screen without scrolling at 390px, focus on the box,
+  form folded, each Next opens the issue fresh; the last says so with no Next;
+  with no answer for the list, the box still shows with Back; opened later, the
+  plain note shows and the fold records an update that leaves it Fixed, to
+  check; the office keeps Verify and close; light and dark, no sideways scroll,
+  axe, no page errors. Screens in project files `ui-review/fix-forward/` (before
+  = main, after = this change).
+- Not verified: real phones, real weak signal, screen readers.
+
 ## 2026-10-22 — Back to Site after a defect, and nothing under the Send bar
 
 - Why: the two-site walk (project files `ui-review/two-site-day/walk-notes.md`,
