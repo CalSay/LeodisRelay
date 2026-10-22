@@ -23,7 +23,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   record (issue and variation POSTs, new variations, corrections) passes
   `force` and still waits for a new read, so the SharePoint ETag check is
   unchanged. The project list also answers from its copy up to 10 minutes old
-  while it is read again. Help "What's new" line.
+  while it is read again, for pages only: anything that creates or changes a
+  record (a defect, a report started, a variation, a note, permit, delivery
+  or talk, and the issue and variation reads themselves) passes `current` and
+  keeps the old 60 s ceiling, so a project closed in SharePoint is not written
+  to from an old list (found by the fresh review). Help "What's new" line.
 - Decided (Claude): 15 s and 10 minutes. RELAY's own changes go into the
   local store at once and a read never replaces one that has not been sent,
   so only edits made in SharePoint itself show a page or two later. No timer

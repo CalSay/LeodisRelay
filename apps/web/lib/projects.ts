@@ -34,12 +34,17 @@ export function reportableProject(p: ConnectedProject): boolean {
     (!p.source || readable === null || readable.includes(p.source.itemId));
 }
 let refreshing: Promise<ConnectedProject[]> | undefined;
-export async function refreshProjects(force = false): Promise<ConnectedProject[]> {
+/**
+ * The Project Tracker. `force` reads it now. `current` keeps the old 60-second
+ * ceiling for anything about to create or change a record, so a project closed
+ * in SharePoint is not written to from a list kept for ten minutes.
+ */
+export async function refreshProjects(force = false, current = false): Promise<ConnectedProject[]> {
   if (sharePointMode() === 'off') return FIXTURE_PROJECTS;
   const stamp = getRecord<{ id: string; at: number }>('sharepoint-status', 'projects');
   if (!force && stamp && Date.now() - stamp.at < 60000) return cachedProjects();
   // Up to ten minutes old, the stored list answers at once and a new read starts behind it (lib/sharepoint/recentRead.ts).
-  if (!force && stamp && Date.now() - stamp.at < STALE_MS) { readProjects().catch(() => {}); return cachedProjects(); }
+  if (!force && !current && stamp && Date.now() - stamp.at < STALE_MS) { readProjects().catch(() => {}); return cachedProjects(); }
   return readProjects();
 }
 /** Reads the Project Tracker into the local store; one read at a time. */

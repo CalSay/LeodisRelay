@@ -118,7 +118,7 @@ export async function sendVariationOperation(operation: VariationOperation, oper
 
 /** Reads the whole Variation Register into the local store. */
 async function readVariations(): Promise<void> {
-  await refreshProjects();
+  await refreshProjects(false, true);
   const [rows, people] = await Promise.all([graph.items(OPERATIONS.variations), sitePeople()]);
   const seen = new Set<string>();
   const next: Variation[] = [];

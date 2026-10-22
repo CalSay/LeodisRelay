@@ -131,7 +131,7 @@ export async function sendIssueOperation(operation: IssueOperation, operationId:
 }
 /** Reads the whole Issue Tracker into the local store. */
 async function readIssues(): Promise<void> {
-  await refreshProjects();
+  await refreshProjects(false, true);
   const [rows, people] = await Promise.all([graph.items(OPERATIONS.issues), sitePeople()]);
   const seen = new Set<string>();
   const next: Issue[] = [];

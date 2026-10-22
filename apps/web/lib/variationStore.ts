@@ -115,7 +115,7 @@ export async function raiseOfficeVariation(principal: Pick<Principal, 'id' | 'na
   if (note.length > 4000) return refuse('Keep the note under 4,000 characters.');
   if (input.trade && !VARIATION_TRADES.includes(input.trade as VariationTrade)) return refuse('Choose a trade from the list.');
   if (input.reason && !VARIATION_REASONS.includes(input.reason as VariationReason)) return refuse('Choose a reason from the list.');
-  await refreshProjects();
+  await refreshProjects(false, true);
   const project = cachedProject(input.projectId);
   if (!project || !reportableProject(project)) return refuse('This project is not open for variations.');
 
