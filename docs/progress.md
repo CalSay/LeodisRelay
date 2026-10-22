@@ -37,7 +37,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   Help "What's new" line.
 - Decided (Claude): the "Details · 011LME" column band stays at depth 2 (it
   labels the column beside the register); O1 hid it only on the overview.
-  Built on O1's branch (#186), which changes the same two files.
+  Branched after O1 (#186) merged, as it changes the same two files.
 - Left for lane E: the app bar on `/projects` at 390px wraps to three rows
   (it is `app/layout.tsx`, task E1).
 - Checks: `verify-office-phone` read the register's whole name from the
