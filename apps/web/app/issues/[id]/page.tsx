@@ -98,22 +98,29 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
   // Opened from "Came back from the office" (?update=1): bring the photograph
   // and the buttons into view once, but never push what is wrong under the
   // app bar, so the engineer still sees what and where without scrolling up.
-  // When even that leaves the photograph button out of view (a very long description), the photograph from when
+  // When even that leaves the buttons out of view (a very long description or office note), the photograph from when
   // it was raised moves under the buttons for this visit, rather than the buttons going off the screen.
   const landed = useRef(false);
   const [shotsLow, setShotsLow] = useState(false);
   useEffect(() => {
     if (update !== "1" || manager || !issue || landed.current) return;
-    const buttons = document.querySelector(".issue-eng-update .btn-row");
-    const camera = document.querySelector(".issue-eng-update label.camera");
-    const title = document.querySelector(".issue-eng-title");
-    if (!buttons || !camera || !title) { landed.current = true; return; }
-    const bar = document.querySelector(".appbar")?.getBoundingClientRect().bottom ?? 0;
-    const need = buttons.getBoundingClientRect().bottom + 16 - window.innerHeight;
-    const room = title.getBoundingClientRect().top - bar - 8;
-    if (!shotsLow && document.querySelector(".issue-eng-facts .issue-eng-shots") && camera.getBoundingClientRect().bottom - Math.max(0, Math.min(need, room)) > window.innerHeight) { setShotsLow(true); return; }
-    landed.current = true;
-    if (need > 0 && room > 0) window.scrollBy(0, Math.min(need, room));
+    // Measured on the next frame: the office's note box only knows it is long (and gains its "Show all of it" line)
+    // after its own first layout, which would otherwise move the buttons down after they were measured.
+    const frame = requestAnimationFrame(() => {
+      const buttons = document.querySelector(".issue-eng-update .btn-row");
+      const camera = document.querySelector(".issue-eng-update label.camera");
+      const title = document.querySelector(".issue-eng-title");
+      if (!buttons || !camera || !title) { landed.current = true; return; }
+      const bar = document.querySelector(".appbar")?.getBoundingClientRect().bottom ?? 0;
+      const need = buttons.getBoundingClientRect().bottom + 16 - window.innerHeight;
+      const room = title.getBoundingClientRect().top - bar - 8;
+      // Judged by the buttons, not only the camera: a long office note can leave "Put forward as fixed" off the
+      // screen with the camera still in view (sixteenth release check, verify-office-words).
+      if (!shotsLow && document.querySelector(".issue-eng-facts .issue-eng-shots") && buttons.getBoundingClientRect().bottom - Math.max(0, Math.min(need, room)) > window.innerHeight) { setShotsLow(true); return; }
+      landed.current = true;
+      if (need > 0 && room > 0) window.scrollBy(0, Math.min(need, room));
+    });
+    return () => cancelAnimationFrame(frame);
   }, [update, manager, issue, shotsLow]);
 
   // The button that was tapped has gone: move to what replaced it, once, so the result is read out.

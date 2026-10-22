@@ -241,6 +241,12 @@ body:has(.ws){overflow:hidden auto}
 .ws .sheet{background:var(--panel);border:1px solid var(--line);padding:var(--s4)}
 .ws .sheet-title{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s4);padding:var(--s3);border:1px solid var(--line);border-left:3px solid var(--acc);background:var(--panel-2)}
 .ws .sheet-title :is(h3,h4){margin:6px 0 var(--s1);font-size:18px;font-weight:500;letter-spacing:-.015em}
+/* What else is open at an issue's place, and its photographs, under the issue's title (2026-10-22). */
+.ws .sheet-here{margin:var(--s2) 0 0;font-size:13px;line-height:1.5;color:var(--text-2)}
+.ws .sheet-here b{font-weight:500;color:var(--text)}
+.ws .sheet-here a{display:inline-block;padding:3px 0;color:var(--text);text-decoration:underline;text-underline-offset:3px}
+.ws .sheet-here a:hover{color:var(--acc)}
+@media (pointer:coarse){.ws .sheet-here a{padding:12px 0}}
 /* The same trade's last and next site update, under a report's title (lib/tradeVisits.ts). */
 .ws .trade-visits{display:flex;gap:var(--s2);margin-top:var(--s2)}
 .ws .trade-visit{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:2px;padding:8px 12px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:13px;line-height:1.4}
