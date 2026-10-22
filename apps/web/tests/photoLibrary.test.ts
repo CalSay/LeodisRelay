@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Principal } from '@relay/platform';
-import { isPhotoDay, matchesPhoto, photoDays, photoLibrary, type LibrarySources } from '../lib/photoLibrary';
+import { isPhotoDay, isPhotoMonth, matchesPhoto, photoDays, photoLibrary, photoMonths, type LibrarySources } from '../lib/photoLibrary';
 import type { Issue, IssueEvent, Observation, Photo, Report, Variation } from '../lib/types';
 
 const engineer: Principal = { id:'entra:eng' as never, oid:'eng', name:'Sam Spark', email:'s@example.test', role:'Engineer', trade:'Electrical' };
@@ -118,4 +118,25 @@ test('only a real calendar day is taken from the address', () => {
   assert.equal(isPhotoDay('2026-02-30'), false);
   assert.equal(isPhotoDay('13/10/2026'), false);
   assert.equal(isPhotoDay(''), false);
+});
+
+test('a month choice lists each calendar month with photographs, newest first, by the day each is grouped under', () => {
+  const lib = photoLibrary({ ...none, reports:[
+    report({ id:'sep', visitDate:'2026-09-30', observations:[card({ photos:[photo('a')] })] }),
+    report({ id:'oct1', visitDate:'2026-10-01', reference:'011LME-SPR-002', observations:[card({ photos:[photo('b'), photo('c')] })] }),
+    report({ id:'oct2', visitDate:'2026-10-31', reference:'011LME-SPR-003', observations:[card({ photos:[photo('d')] })] }),
+  ], issues:[issue({ events:[ev('verified', '2026-09-30T23:30:00Z', [photo('e')])] })] }, engineer, 'p1');
+  // 23:30 UTC on 30 September is 00:30 on 1 October in the UK, so the fix photograph counts in October.
+  assert.deepEqual(photoMonths(lib.photos), [{ month:'2026-10', count:4 }, { month:'2026-09', count:1 }]);
+  assert.deepEqual(photoMonths(lib.photos, '2026-08').map(m => `${m.month}:${m.count}`), ['2026-10:4', '2026-09:1', '2026-08:0']);
+  assert.equal(photoMonths(lib.photos, '2026-10').length, 2);
+  assert.deepEqual(photoMonths([]), []);
+});
+
+test('only a real calendar month is taken from the address', () => {
+  assert.equal(isPhotoMonth('2026-10'), true);
+  assert.equal(isPhotoMonth('2026-13'), false);
+  assert.equal(isPhotoMonth('2026-00'), false);
+  assert.equal(isPhotoMonth('2026-10-13'), false);
+  assert.equal(isPhotoMonth(''), false);
 });

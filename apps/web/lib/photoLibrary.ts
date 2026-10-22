@@ -135,3 +135,19 @@ export function photoDays(photos: LibraryPhoto[], chosen = ''): { day: string; c
   if (chosen && !out.some(d => d.day === chosen)) { out.push({ day: chosen, count: 0 }); out.sort((a, b) => b.day.localeCompare(a.day)); }
   return out;
 }
+
+/** A month as the page's address carries it: a real calendar month, "2026-10". */
+export const isPhotoMonth = (value: string) => /^\d{4}-(0[1-9]|1[0-2])$/.test(value);
+
+/**
+ * The calendar months that have photographs, newest first, each with how
+ * many: the choices for "Show me October's photographs", by the same day
+ * each photograph is grouped under. Like photoDays(), a chosen month with
+ * none is kept in its place with 0.
+ */
+export function photoMonths(photos: LibraryPhoto[], chosen = ''): { month: string; count: number }[] {
+  const out: { month: string; count: number }[] = [];
+  for (const p of photos) { const month = p.day.slice(0, 7), last = out.at(-1); if (last?.month === month) last.count++; else out.push({ month, count: 1 }); }
+  if (chosen && !out.some(m => m.month === chosen)) { out.push({ month: chosen, count: 0 }); out.sort((a, b) => b.month.localeCompare(a.month)); }
+  return out;
+}

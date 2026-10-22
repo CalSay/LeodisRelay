@@ -31,6 +31,9 @@ export function monthOf(ym: string | undefined, today: string): string {
   const m = ym ? MONTH.exec(ym) : null;
   return m && Number(m[2]) >= 1 && Number(m[2]) <= 12 ? ym! : today.slice(0, 7);
 }
+const MONTH_NAME = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+/** "October 2026". */
+export const monthName = (ym: string) => MONTH_NAME.format(new Date(`${ym}-01T12:00:00Z`));
 export const monthFirst = (ym: string) => `${ym}-01`;
 export function monthLast(ym: string): string { const [y, m] = ym.split('-').map(Number) as [number, number]; return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10); }
 export function shiftMonth(ym: string, months: number): string {
