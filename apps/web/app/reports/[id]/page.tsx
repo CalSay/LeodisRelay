@@ -1451,18 +1451,18 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           )}
           {sentByItself && <p style={{ margin: "0 0 8px" }} role="status"><strong>Sent to the office by itself once it could get through ({fmtWhen(sentByItself)}).</strong></p>}
           <p style={{ margin: 0 }}>
-            It cannot be changed now; to put something right, make a correction.{" "}
-            <Link href={withViewReturn(`/reports/${report.id}/preview`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))} style={{ color: "var(--brass)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-              See the full report &rarr;
-            </Link>
+            It cannot be changed now; to put something right, make a correction.
           </p>
+          <Link className="eng-full-report" href={withViewReturn(`/reports/${report.id}/preview`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))}>
+            See the full report &rarr;
+          </Link>
           {/* Each step after sending, the same steps the office sees. An
               engineer sees received and seen, with the PDF and delivery folded
               away unless one went wrong; the office sees every step open. */}
           <SubmissionStages report={report} tagClass={toneClass} when={fmtWhen} fold={!principal || !canManage(principal)} />
           {mine && !correcting && !sentAway && (
             <div className="btn-row" style={{ marginTop: 12 }}>
-              <button className="btn-sm" onClick={() => setCorrecting(true)}>
+              <button className="btn-quiet eng-correct" onClick={() => setCorrecting(true)}>
                 {report.review === "returned" ? "Make the correction" : "Make a correction"}
               </button>
             </div>

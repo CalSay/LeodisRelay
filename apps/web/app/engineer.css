@@ -617,3 +617,22 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
   .eng-workspace .eng-inspections .eng-tile-wide>.kind{display:none;}
   .eng-workspace .eng-band{padding:14px 16px;}
 }
+
+/* Release 1 polish E3 (2026-10-22): the site update editor and its sent
+   receipt. Scoped to .eng-report-editor and .eng-report-sent. */
+/* Back is a thumb's width tall, like every other control on the page. */
+.eng-report-editor>.back,.eng-report-sent>.back{min-height:48px;padding-block:8px;}
+/* Change kind, Remove and Clear read at the same size as the buttons round them, not 12px. */
+.eng-report-editor .eng-card-foot .btn-sm,.eng-report-editor .eng-card .head .btn-sm,.eng-report-editor #sign-panel .btn-sm{font-size:15px;}
+.eng-report-editor #sign-panel .btn-sm{min-height:48px;min-width:96px;}
+/* "What sending does" is a heading like "In this report", ruled across, with the same room above it. */
+.eng-report-editor .eng-does{margin-top:var(--s6);}
+.eng-report-editor .eng-does>.lbl{display:flex;align-items:center;gap:var(--s3);}
+.eng-report-editor .eng-does>.lbl::after{content:"";flex:1;height:1px;background:var(--line);}
+/* The receipt: the full report link and Make a correction are big enough to tap. */
+.eng-report-sent .eng-full-report{display:flex;align-items:center;width:fit-content;min-height:48px;color:var(--brass);text-decoration:underline;text-underline-offset:3px;}
+.eng-report-sent .eng-correct{min-height:48px;font-size:15px;padding:0 18px;}
+/* Two versions of a draft, or changes left after it was sent elsewhere: the
+   choices read at button size, and "Photographs" no longer runs into its value. */
+.eng-report-editor .eng-conflict-all .btn-sm,.eng-report-sent .eng-sent-away-actions .btn-sm{font-size:15px;}
+.eng-report-editor .eng-conflict-side dl>div{grid-template-columns:96px 1fr;}
