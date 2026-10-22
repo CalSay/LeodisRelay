@@ -2,7 +2,7 @@
    Tiles are square thumbnails so a phone shows three across and a desk six. */
 .photos-page{max-width:1120px;}
 .photos-page .eng-heading{margin:16px 0 18px;}
-.photos-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.2fr);gap:12px;margin:0 0 18px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+.photos-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin:0 0 18px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
 .photos-controls label{display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--text-2);min-width:0;}
 .photos-controls select,.photos-controls input{width:100%;}
 .photos-show{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;}

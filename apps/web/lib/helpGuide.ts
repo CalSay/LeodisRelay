@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'photos-by-month', added: '2026-10-22', audience: 'all', title: 'Photographs from one month',
+    text: 'Photographs now has a Month choice beside Day: pick a month, such as "October 2026", to see that calendar month\'s photographs, newest day first, with how many each month has. "Previous month", "This month" and "Next month" step a month at a time, as on the Weekly summary\'s Month choice, and "Every month" goes back to the full list. With a month chosen, the Day choice lists only that month\'s days. On the Weekly summary\'s Month choice, "Every photograph from October 2026, by day" under "A few photographs" opens it. The month stays in the page\'s link. Checked in a desktop browser, light and dark, and a phone-sized window.',
+    link: { label: 'Open Photographs', href: '/photos' } },
   { id: 'came-back-every-site', added: '2026-10-22', audience: 'site', title: 'The office\'s questions from your other sites',
     text: '"Came back from the office" on your home screen now also lists what the office wrote on, or sent back, at your other sites, after the site you are on, with the site\'s name at the start of the line. So a question about a fix at one site shows while you are at another, without switching site. Your own new reports and defects from other sites are not listed there. Tap one to open it; the issue shows which site it is on. The list is no longer than before. Checked in a phone-sized browser, not on a real phone.',
     link: { label: 'Open your home screen', href: '/engineer' } },
@@ -286,7 +289,7 @@ export const GUIDE_LINKS: readonly GuideLink[] = [
   { label: 'Office', href: '/office', audience: 'office', text: 'The office position first, then Inbox, Issues, Variations and Team.' },
   { label: 'Search', href: '/search', audience: 'all', text: 'The words in every report, issue and variation.' },
   { label: 'Site diary', href: '/diary', audience: 'all', text: 'Each project day by day, from the reports sent.' },
-  { label: 'Photographs', href: '/photos', audience: 'all', text: 'Every photograph on a project, newest first; pick a day or find a place.' },
+  { label: 'Photographs', href: '/photos', audience: 'all', text: 'Every photograph on a project, newest first; pick a month or a day, or find a place.' },
   { label: 'Weekly summary', href: '/weekly-summary', audience: 'all', text: 'A project\'s week on one page, for the site meeting.' },
   { label: 'Snag list', href: '/issues/snag-list', audience: 'all', text: 'Open issues for one company or trade, to print.' },
   { label: 'Safety actions', href: '/safety-actions', audience: 'all', safetyRecords: true, text: 'What the safety and tower inspections found, until it is put right, and which towers are due.' },

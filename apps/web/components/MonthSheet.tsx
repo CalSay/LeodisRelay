@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { ConnectedProject } from '@/lib/projects';
 import { withViewReturn } from '@/lib/viewNavigation';
-import { shiftMonth, type MonthLateIssue, type MonthSummary } from '@/lib/monthSummary';
+import { monthName, shiftMonth, type MonthLateIssue, type MonthSummary } from '@/lib/monthSummary';
 import { fmtAt, fmtDay, plural, IssueRows, VariationRows } from './summaryRows';
 import { PhotoImage } from './PhotoImage';
 
@@ -15,8 +15,6 @@ import { PhotoImage } from './PhotoImage';
  * stay off paper.
  */
 
-const MONTH_NAME = new Intl.DateTimeFormat('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-export const monthName = (ym: string) => MONTH_NAME.format(new Date(`${ym}-01T12:00:00Z`));
 const range = (from: string, to: string) => from === to ? fmtDay(from) : `${fmtDay(from)} to ${fmtDay(to)}`;
 
 /** Lines shown on screen before "Show all"; print always shows every one. */
@@ -155,6 +153,7 @@ export function MonthSheet({ m, project, today, thisMonth, here, manager }: { m:
         </Link>
         <p><b>{ph.place}</b></p><p className="week-meta">{fmtDay(ph.day)} · {[ph.author, ph.trade].filter(Boolean).join(' · ')}</p>
       </li>)}</ul> : <p className="week-none">No progress photographs were sent for visits this month.</p>}
+      <p className="week-total week-noprint"><Link href={withViewReturn(`/photos?${new URLSearchParams({ project: m.projectId, month: m.month })}`, here)}>Every photograph from {name}, by day</Link></p>
     </section>
 
     <section className="week-section week-noprint month-lists">
