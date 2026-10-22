@@ -4,6 +4,72 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — The office fits a smaller laptop or a tablet
+
+- Why: the checking fixes walk (#131) found the office top bar 156px wider
+  than a 1024px window, so the whole page scrolled sideways. The cause was
+  wider than the top bar: the office desk (`.ws`) was held at `min-width:
+  1180px`, so every tab scrolled sideways below 1180px, and on busy data the
+  Issues and Variations registers ran past their panel up to about 1250px.
+- What changed (CSS only, `workspace.css`): no minimum width. From 701 to
+  1179px the top bar takes two rows (RELAY and the search box; then
+  Attention, name, theme, Help, Engineer view, Switch company, in the same
+  order as the keyboard moves through them); a long name gives way first and
+  ends in "…" (the full name is still read out and the button still signs
+  out), and the Attention list opens under the taller bar. With a project open, the Projects
+  column steps aside and the register and details share the width, with
+  "‹ Projects" at the top of the register (the link the phone already had);
+  a project's figures go two by two below 1024px. Below 1024px the office
+  registers (Inbox, Issues, Variations, Team, Admin) use the phone's one-card-per-row layout and
+  the "Order" choice in place of column headings; up to 1365px registers pack
+  their cell padding, wrap tags and stack a row's buttons, so Verify and Not
+  finished stay inside the panel. The Team tab's side panel is 360px there.
+  At every width the register heading wraps rather than cutting the
+  project's name (it was cut at 1280 and 1440 too on "Register · Tetley Hall
+  - Block E"); that is the only change at 1366px and wider. Phone (700px and
+  below) is unchanged.
+- Decisions (Claude, under Cal's 2026-10-20 14:11 autonomy): cards rather
+  than a sideways-scrolling table below 1024, because a table scrolled inside
+  its panel hid the Verify buttons off to the right; two top bar rows rather
+  than a "More" menu, so every item stays one tap away and in words. A
+  fresh-context review found the first two-row layout (Attention on row one,
+  search on row two) took the keyboard from the logo down to the search box
+  and back up; the rows now follow the page order and the check tests it.
+- Checks: typecheck, `npm test`, build. New `scripts/verify-office-top-bar.mjs`
+  (busy example data, an Admin with a long name): at 768, 1024, 1280 and
+  1440px, on the overview, a project, a project with an issue open, Inbox,
+  Inbox with a report open, Issues, Fixed to check, Variations, Team and
+  Admin, nothing scrolls sideways (page, columns, views, panels); every top
+  bar item reads in the same order as the keyboard reaches it, is inside the window, not covered, not overlapping another, at
+  least 24px, and says what it is in words; Help and Attention open, and
+  Attention's list is inside the window under the bar; "‹ Projects" shows
+  whenever the Projects column does not; the register heading shows the whole
+  name; the first Verify button is inside its panel; coverage, companies,
+  issue trend, weekly summary, site diary, photographs, search and Help do
+  not scroll sideways; light and dark for the overview, a project and Issues;
+  no page errors. 1,917 checks. Also passed with `RELAY_WIDTHS=701,768,800,900,
+  1023,1100,1179,1180,1200,1366` (4,791 checks). It fails on main at the
+  first page (overview at 768px scrolls sideways). Screenshots in project
+  files `ui-review/office-top-bar/`. Also passed: office-sections,
+  office-phone, office-desk, office-registers, issue-register, check-fixes,
+  office-inbox, inbox-phone, office-landing, home-and-sheet, office-links,
+  office-progress, office-words, issue-figures, accessibility, help,
+  role-access, search, engineer-layout. `npm test` once failed in
+  `offlineStart.test` ("a report started with signal still takes today")
+  between midnight London time and midnight UTC; #133 fixed that test, and
+  `npm test` passes after bringing it in.
+- Found, not fixed: the Leodis Compliance office (`/compliance`, screens over
+  invented sample data, not in the first release) is still held at 1240px and
+  has no phone layout; it scrolls sideways below 1240px. The other walk notes
+  (the issue sheet's "2026-10-13" target date, "waiting N days" counting from
+  the last event, the engineer's waiting-fixes line that cannot be opened,
+  "Came back from the office" listing fixes still waiting) are not in the top
+  bar and are left for their own task.
+- Not verified: a real tablet or small laptop, touch on a tablet, a screen
+  reader, browser zoom.
+- docs/tasks.json: no task covers this (a fix from a walk, like #131), so it
+  is unchanged.
+
 ## 2026-10-22 — Two flaky browser checks, two real bugs (one fixed by #132)
 
 - Why: `verify-busy-projects` and `verify-day-walkthrough` failed now and then
@@ -52,6 +118,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a real phone (the tap order there is press, release, then the
   mouse events; the fix waits for the click, which covers it), a screen reader.
 - Next: nothing from this task.
+
 ## 2026-10-21 — Issues over time quick again on busy projects
 
 - Why: the twelfth release check (main 40ff4fd, #2-#129) ran every browser
