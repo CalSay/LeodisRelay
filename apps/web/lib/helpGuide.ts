@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'pdf-leodis-logo', added: '2026-10-22', audience: 'all', title: 'The Leodis Developments logo on report PDFs',
+    text: 'Site update and inspection PDFs now carry the Leodis Developments logo at the top of the first page, in place of the empty box marked "LOGO". Reports already sent keep the PDF they were made with; a correction or a new report gets the logo. The address, company numbers and accreditation marks are still stand-ins until the real ones are supplied. Checked by making example PDFs, not printed.' },
   { id: 'issue-trend-to-check', added: '2026-10-22', audience: 'all', title: 'Issues over time shows what is waiting for the office',
     text: 'Issues over time now splits each week\'s open issues three ways: past target, fixed, to check, and the rest. Its headline, Open now, chart and week-by-week table say how many are fixed and waiting for the office to check ("119 of them are fixed and waiting for the office to check"), the same figure as the project sheet. Before, those sat in grey with the issues still to be done, so a growing list could not tell you whether site or the office was behind. Checked in a desktop browser and a phone-sized window, not on a real phone.',
     link: { label: 'Open Issues over time', href: '/issue-trend' } },

@@ -4,6 +4,26 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Leodis Developments logo on report PDFs
+
+- Why: Cal asked what the PDF template looks like, was shown examples with the
+  dashed "LOGO" placeholder, and sent the Leodis Developments logo files
+  (grey, light and a PSD). Not a `docs/tasks.json` task, so no status changed.
+- Changed: `packages/documents/assets/leodis-developments-logo.png` (the grey
+  logo, trimmed and scaled to 640 × 389, 128 colours, 39 KB) is drawn at the
+  top left of page 1 at 82 × 50 pt, read from disk like the fonts.
+  `branding.ts` now holds the logo file; the address, company and VAT numbers
+  and accreditation marks stay marked TODO. Help "What's new" line.
+- Decided (Claude): the grey version, because PDFs are white paper and the
+  light version is white lettering for dark backgrounds. Sized to the logo's
+  own proportions rather than the old 132 × 40 box, which would have shrunk it
+  to an unreadable 25 pt high or stretched it.
+- Verified: `npm run typecheck`, `npm test`, `node scripts/verify-long-pdfs.mjs`
+  (all 10 worst-case PDFs pass), `scripts/render-sample-pdfs.mjs`: page counts
+  unchanged, each PDF about 40 KB larger (the logo, embedded once). Not
+  verified: printed on paper; the weekly summary print has no logo (unchanged).
+- Not live: the pilot runs 03188ee; this needs a deploy.
+
 ## 2026-10-22 — Issues over time shows what is waiting for the office
 
 - Why: a walk of an office manager at 1440px and 390px on main 117df61 (busy
