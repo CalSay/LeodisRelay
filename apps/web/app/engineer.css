@@ -665,3 +665,28 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-report-sent.eng-inspection .eng-sent-card.tone-neutral:not(.tone-neutral+.tone-neutral){border-top-width:1px;border-top-left-radius:9px;border-top-right-radius:9px;}
 .eng-report-sent.eng-inspection .eng-sent-card.tone-neutral:not(:has(+.tone-neutral)){margin-bottom:10px;border-bottom-left-radius:9px;border-bottom-right-radius:9px;}
 .eng-report-sent.eng-inspection .eng-sent-card.tone-neutral .kind:is(.answer-ok,.answer-na){border-color:transparent;background:none;padding-inline:0;}
+
+/* Release 1 polish E4 (2026-10-22): a defect on its own, its receipt, and a
+   variation's page. Scoped to .eng-defect, .eng-defect-receipt and .eng-variation. */
+/* The two boxes of the form sit one gap apart, not a gap plus each box's margin. */
+.eng-defect .eng-defect-grid{gap:16px;align-items:start;margin-top:16px;}
+.eng-defect .eng-defect-grid>.eng-panel{margin:0;}
+.eng-defect .eng-defect-grid+.eng-help{margin-top:12px;}
+.eng-defect .eng-defect-held{margin-top:16px;}
+.eng-defect .eng-defect-held>.eng-help:first-child{margin-top:0;}
+.eng-defect .eng-defect-photos button{min-height:48px;font-size:14px;}
+.eng-defect-receipt .eng-fixed .eng-defect-photos button{min-height:48px;padding:0 4px;white-space:nowrap;}
+/* The receipt is a short column at a desk too, not buttons a screen wide. */
+.eng-defect-receipt{max-width:560px;margin-inline:auto;}
+.eng-defect-receipt-actions button.eng-secondary{background:var(--panel);border-color:var(--line-2);color:var(--text);}
+/* With a photo of the fix taken, "Put forward as fixed" is the one gold button; Back to Site steps back. */
+.eng-defect-receipt-actions:has(.eng-fixed-open)>.eng-primary{background:var(--panel);border:1px solid var(--line-2);color:var(--text);font-weight:500;}
+@media (hover:hover){.eng-defect-receipt-actions:has(.eng-fixed-open)>button.eng-primary:hover:not(:disabled){background:var(--panel-2);border-color:var(--line-2);filter:none;}}
+/* A variation: Back is a thumb's width tall, the office's answer has room under the heading,
+   the history's dates fit on two lines, and the note box matches the boxes above it. */
+.eng-variation>.back{min-height:48px;padding-block:8px;}
+.eng-variation>.pagehead{padding-bottom:var(--s4);}
+.eng-variation>.eng-band{margin-top:20px;}
+.eng-variation .eng-hist .t{width:84px;}
+.eng-variation .eng-variation-note .field{margin-top:0;}
+.eng-variation .eng-variation-note button{min-width:140px;font-size:15px;}
