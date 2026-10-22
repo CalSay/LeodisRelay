@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'coverage-one-mark', added: '2026-10-22', audience: 'office', title: 'Site coverage: one mark for each person on site',
+    text: 'On Site coverage, each mark on a day is now one person who reported from that site, however many reports they sent. Before, an engineer who sent a site update and a first fix inspection on the same day showed as two marks, which looked like two people of that trade on site. Now two "Elec" marks always mean two electricians, the same count of visits as the office overview. Selecting a mark opens that person\'s site update, and pointing at it names every report they sent that day. Checked in a desktop browser and a phone-sized window, light and dark, not on a real phone.',
+    link: { label: 'Open Site coverage', href: '/coverage' } },
   { id: 'defect-trade-one-tap', added: '2026-10-22', audience: 'site', title: 'Flag a defect: trade in one tap',
     text: 'On "Flag a defect", "Trade affected" is now four buttons (Electrical, HVAC, P&H and Other), the same as on a site update card, instead of a list to open. It still starts at your own trade, so if the problem is yours there is nothing to change; if it is another trade\'s work, such as a plumber\'s leak, tap theirs. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'assign-by-trade', added: '2026-10-22', audience: 'office', title: 'Unassigned issues say whose work it is',

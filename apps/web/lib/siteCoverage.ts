@@ -13,7 +13,8 @@ import { weekStart } from './weeklySummary';
  *
  * It reads sent reports only (never drafts), placed on the visit day the
  * engineer gave. A sent correction stands in for the report it corrects, so a
- * visit is counted once. Nothing is stored and nothing is expected of
+ * visit is counted once, and a person's reports from one day are one visit
+ * (one person on site on one day, as `lib/visits.ts` counts). Nothing is stored and nothing is expected of
  * engineers: there is no rota and no rule that a site must report daily. The
  * "quiet" flag is a prompt to look, not a breach.
  */
@@ -45,14 +46,19 @@ export function workingDaysBetween(from: string, to: string): number {
   return n;
 }
 
-export interface CoverageVisit { reportId: string; reference: string; author: string; trade?: string; revision: number }
+export interface CoverageVisit {
+  /** The report a mark opens: the person's site update that day, else their first report. */
+  reportId: string; reference: string; author: string; trade?: string; revision: number;
+  /** The references of every report the person sent from site that day, the opened one first. */
+  references: string[];
+}
 export interface CoverageProject {
   projectId: string;
   projectNumber: string;
   projectName: string;
   projectManager: string;
   active: boolean;
-  /** One entry per day of the fortnight, in order. */
+  /** One entry per day of the fortnight, in order: one visit for each person on site that day. */
   days: CoverageVisit[][];
   /** Every trade that reported in the fortnight, so a missing one is easy to spot. */
   trades: string[];
@@ -85,8 +91,16 @@ export function siteCoverage(projects: CoverageProjectSource[], reports: Report[
   const sent = reports.filter(r => r.state === 'submitted' && canReadReport(principal, r));
   const superseded = new Set(sent.map(r => r.corrects).filter((id): id is string => Boolean(id)));
   const visits = sent.filter(r => !superseded.has(r.id) && DAY.test(r.visitDate));
-  const visit = (r: Report): CoverageVisit => ({ reportId: r.id, reference: r.reference, author: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}), revision: r.revision });
+  const visit = (r: Report, references = [r.reference]): CoverageVisit => ({ reportId: r.id, reference: r.reference, author: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}), revision: r.revision, references });
   const order = (a: Report, b: Report) => (a.authorTrade ?? '~').localeCompare(b.authorTrade ?? '~') || a.author.localeCompare(b.author) || naturalOrder(a.reference, b.reference);
+  const person = (r: Report) => r.authorId ?? r.author.trim();
+  /** A day's reports, already in order, as one visit for each person. */
+  const byPerson = (dayReports: Report[]): CoverageVisit[] => {
+    const people = new Map<string, Report[]>();
+    for (const r of dayReports) people.set(person(r), [...(people.get(person(r)) ?? []), r]);
+    // Their site update first, so the mark opens what they wrote about the day.
+    return [...people.values()].map(rs => { const ordered = [...rs.filter(r => !r.reportType), ...rs.filter(r => r.reportType)]; return visit(ordered[0]!, ordered.map(r => r.reference)); });
+  };
 
   return {
     start, end, today, days,
@@ -98,7 +112,7 @@ export function siteCoverage(projects: CoverageProjectSource[], reports: Report[
       const workingDaysSince = latest ? workingDaysBetween(latest.visitDate, today) : -1;
       return {
         projectId: p.id, projectNumber: p.projectNumber, projectName: p.projectName, projectManager: p.projectManager, active,
-        days: days.map(d => inRange.filter(r => r.visitDate === d).map(visit)),
+        days: days.map(d => byPerson(inRange.filter(r => r.visitDate === d))),
         trades: [...new Set(inRange.map(r => r.authorTrade).filter((t): t is NonNullable<Report['authorTrade']> => Boolean(t)))].sort(),
         ...(latest ? { last: { ...visit(latest), visitDate: latest.visitDate }, workingDaysSince } : {}),
         quiet: active && (!latest || workingDaysSince >= QUIET_WORKING_DAYS),

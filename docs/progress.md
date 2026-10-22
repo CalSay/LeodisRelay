@@ -4,6 +4,50 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Site coverage: one mark for each person on site
+
+- Why: the coordinator asked for a walk of an office manager using Site
+  coverage to answer "which sites had nobody report this week, and which
+  trades are missing?", at 1440 and 390px on main eb4b076, merged up to 76fa669 (busy example
+  data and a small hand-made set). On the busy data, Hunslet Depot showed two
+  "P&H" marks on Thu 22 Oct: one plumber, Pat Pipe, who sent a site update
+  and a first fix inspection. That read as two plumbers on site, and it
+  disagreed with the office overview, which since #163 counts one visit per
+  person per day. The same thing showed on Kirkstall Gate, Thu 15 Oct. It
+  also meant two "Elec" marks could not be told apart from one electrician
+  sending two reports, the worry raised about the Team "This week" line
+  (#159). Not a `docs/tasks.json` task, so no status changed. Within Cal's
+  21 Oct direction (the office's view of progress clearer).
+- Changed: `siteCoverage` (lib/siteCoverage.ts) gives one entry per person per
+  day, a person known by sign-in or else by name, as `countVisits` does. It
+  opens their site update (else their first report), and `references` lists
+  every report they sent that day. On the page, the mark's label and title
+  name the person and all their reports, the day reads "3 people on site",
+  and the key says "Each mark is one person … so two Elec marks are two
+  electricians". Help "What's new" line.
+- Decided (Claude): no count or badge on a mark with more than one report,
+  because a number on a mark would read as people again; the other reports
+  are named on the mark and are one tap away on the report. The "which trades
+  have not reported this week" line is left for a later task.
+- Verified: typecheck, `npm test` (146 + 570, one new unit test, and the
+  existing test's second engineer given their own sign-in), build. New
+  `scripts/verify-coverage-one-mark.mjs` (17 checks): Sam's update and
+  inspection are one mark opening the update and naming both, Jo (a second
+  electrician) is a second Elec mark, at 1440 dark and 390 light, no
+  sideways scroll. `verify-visits-this-week` (19) and `verify-help` pass.
+  `verify-site-coverage` fails at "a draft is not a visit" on this branch and
+  on main alike (the Thu-Sun test-data fault fixed in #142). Busy data after
+  the change: Hunslet Thu 22 shows 3 marks for 3 people (was 4). Screens:
+  project files `ui-review/site-coverage/` (before-busy, after-busy,
+  after-small).
+- Fresh review found: a mark could open the inspection when a person's two
+  reports differed in name spacing or trade (now the site update is chosen
+  within each person's reports), and the Help line claimed desktop light
+  (now "light and dark" across the two widths). Both fixed, with the unit
+  test covering the first.
+- Not verified: a real phone or laptop, a screen reader.
+- Next: under each active site, say which trades that reported earlier in
+  the fortnight have not reported this week.
 ## 2026-10-22 — Fifteenth release check (main 54c7c93)
 
 - Why: a full check of main before the next deploy, after #165 (issues by
