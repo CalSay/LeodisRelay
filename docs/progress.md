@@ -47,6 +47,68 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   files `ui-review/not-seen-pile/before|after`.
 - Not verified: a real phone or laptop, browsers other than Chromium 141.
 - Next: none from this walk.
+## 2026-10-22 — The Weekly summary reads on a phone
+
+- Why: a walk of an office manager at 390px (latest main, busy example data
+  from `scripts/seed-busy-projects.mjs`) reading Tetley Hall's Weekly summary
+  for last week (12 to 18 Oct) and its Month choice for September, to answer
+  "how did this project do?". The figures matched the records, recounted
+  from the store: week 13 site reports over 5 days, 3 engineers, 22 issues
+  raised, 6 put forward as fixed, 0 closed (the seed checks fixes 15 days
+  after raising, so none fell last week), 2 variations raised and 2
+  instructed; September 22 days, 61 reports, 143 progress updates, 89
+  raised, 71 closed, 19 and 18 variations. The 14 safety and tower
+  inspections are left off because the safety switch is off. Reading it did not fit a phone:
+  the choices (project, Week/Month, three step buttons on two rows, a full
+  width gold "Print or save as PDF") filled the first screen, so no figure
+  showed until about 770px down, and "Week by week" showed only Week, Days
+  and Reports; issues and variations were off the side in a sideways scroll
+  with nothing to say so. Asked for by the coordinator as the walk's one
+  pick; not a `docs/tasks.json` task, so no status changed. Decided without
+  asking Cal (his autonomy message), within his 07:02 direction (the
+  office's view of progress).
+- Changed (`WeeklySummaryPage.tsx`, `MonthSheet.tsx`, `weekly-summary/week.css`):
+  on a phone (640px or less) the choices take three rows: the project; Week or
+  Month beside "Print or save as PDF", which is a plain outlined button there;
+  then Previous, This and Next in one row (labels may wrap inside the
+  button). The sheet is a little tighter. The week's four figures and the
+  month's first two now end within the first 844px screen at 390px and
+  wider; at 360 and 375px the week's first two do (the engineers' names wrap). "Week by week" on a phone
+  shows each week as a block: its dates (still opening that week), then its
+  six figures, each named, three to a row; the header row is kept for
+  screen readers only, the visible names are left out of what they read
+  (`content: … / ""`), and the table roles are written out so a browser
+  that drops a restyled table's meaning keeps it. The table, its header and print are unchanged
+  (`@media screen` only). On the desk the print button moved beside Week and
+  Month (it is next in the page order too), and the steps went to the
+  second row; same height, and the project name is no longer cut short.
+- Decisions (Claude): kept the button names ("← Previous week" and so on) so
+  existing checks and screen readers hear the same words. Print stays on a
+  phone, outlined, because saving a PDF to send on is a real use.
+- Checks: typecheck, `npm test` (146 + 551), build. New
+  `scripts/verify-weekly-phone.mjs` (263 checks, 390px light and dark and
+  360, 375, 412 and 430px light, a mouse at 600px, busy
+  seed over ten weeks: the week's figures against the records, three rows
+  of choices, print beside Week and Month and outlined, figures on the first
+  screen, every week's six named figures inside the screen, matching the
+  month's records and adding up to the month line and the figures above, a
+  week opens from its line, no sideways scroll, axe; 1440 and print still a
+  table with its header). It fails on main ("the week's choices take three
+  rows (5)"). Also passed: weekly-summary, month-summary, month-print,
+  photos-month, help, office-weekly-review, accessibility (584),
+  role-access. Screens: project files `ui-review/weekly-phone/` (`before/`,
+  `after/`).
+- Review: a fresh-context review found that from about 400px print fell to
+  a row of its own (412px Android and large iPhones), that hovering print
+  with a mouse in a narrow window gave brass text on darker brass, that
+  screen readers would hear each figure's name twice, and that the month's
+  first two figures ended 7px below the screen at 360px; also the check's
+  port clashed with verify-photos-month. All fixed and now checked.
+- Not verified: a real phone, a screen reader (only Chromium's
+  accessibility tree), Safari, phones narrower than 360px.
+- Ideas for later (not built): on a phone the week's "On site" list runs to
+  about 3,500px on a busy week, before Issues; folding each report's work
+  lines, as Today from site does, would bring the issues up.
 ## 2026-10-22 — A shorter Check & send for a site update
 
 - Why: a walk of an engineer at 390px (latest main 3b03173) sending the
