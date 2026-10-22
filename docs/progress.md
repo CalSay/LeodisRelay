@@ -4,6 +4,64 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — A visit is one person on site on one day
+
+- Why: a walk of an office manager at 1440px on main 172c277 (busy example
+  data) opening Tetley Hall from the overview to answer "how's this job
+  going?". Checked against the records: the overview's This week and the
+  project's Last visit said 13 or 14 visits (two seeds), the Weekly summary
+  for the same week 11 site reports on 4 days. The records were 11 site
+  updates and 3 safety and tower inspections, each sent by someone who also
+  sent an update that day, so one engineer on site for a day counted twice,
+  and the Weekly summary leaves those inspections out while the safety
+  records are switched off. Also: the Project page header said "124 fixed, to
+  check" where the project's figure said 119 (it counted withdrawn issues).
+  Coordinator's ask (walk and one pick, with the second fix if small); not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the office's view of progress clearer).
+- Changed: `lib/visits.ts` `countVisits` (one person, by sign-in or name, on
+  one visit day) used by `projectStanding` (overview This week, Last visit's
+  "N visits this week") and `weeklySummary` (new `visits`; Site reports now
+  reads "11 visits over 4 days" under the report count). With the safety
+  records switched off, `projectStanding` leaves out weekly safety and tower
+  inspections, as the Weekly summary does (`projectStats` and `OfficeDesk`
+  pass the switch); first fix and handover inspections still count. Site
+  coverage (`api/site-coverage`) leaves them out too while switched off, so
+  its last visit and quiet sites agree with the office's.
+  `IssueRegister` (Project page): "fixed, to check" and Closed leave withdrawn
+  issues out, as `lib/officeActions.ts` does; withdrawn issues stay under All.
+  Help "What's new" line.
+- Decided (Claude): a visit is a person-day, not a report, because the
+  office's question is who was on site; the Weekly summary keeps its report
+  count as the big figure (it lists reports) and gives visits under it.
+- Verified: typecheck, `npm test` (146 + 561), build. New
+  `scripts/verify-visits-this-week.mjs` (19 checks; busy seed plus a first fix
+  inspection on the day of a site update and a tower inspection alone from a
+  new person today; 1440px light and dark): that tower inspection is neither a
+  visit nor today's Last visit; overview,
+  project sheet and Weekly summary give the same visits as the records'
+  people-days, fewer than the reports; Weekly still counts every report;
+  Project page's fixed, to check and Closed equal the records without
+  withdrawn issues. On main it fails at the first figure (13 visits for 11).
+  Screens: project files `ui-review/project-page/` (before, after).
+  `verify-office-progress` now expects 2 visits for Tetley Hall (Sam's
+  update, its correction and his safety inspection are one visit) and names
+  in the new order; `verify-weekly-phone` reads "N visits over D days". Also
+  passed: issue-figures, office-weekly-review, weekly-summary, office-actions,
+  team-last-sent, snag-list, first-time-use, month-summary, office-landing,
+  help, role-access, engineer-layout, sheet-figures-laptop, office-desk,
+  day-walkthrough, busy-home. `verify-site-coverage` fails at "a draft is not
+  a visit", the known Thursday-to-Sunday fault in the check that PR #142
+  fixes; not changed here.
+- Not verified: a real laptop; the switch turned on (then the inspections
+  count as visits everywhere, as before).
+- Fresh review found: Site coverage would disagree with the office on last
+  visit and quiet sites (fixed as above); the check did not prove the switch
+  part (tower-only visit added); Help gave the wrong cause for "14 against
+  11" (reworded); the Weekly summary could count a visit dated tomorrow
+  (visits now up to today, as the overview).
+- Next: none from this walk.
+
 ## 2026-10-22 — The office's questions before saved drafts on the engineer home
 
 - Why: a walk at 390px on main 73b6d8d with Sam (busy seed, Thursday): three

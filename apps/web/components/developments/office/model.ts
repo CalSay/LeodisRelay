@@ -99,7 +99,8 @@ export interface ProjectStats {
   /** Last visit, this week's visits and each trade's latest site update (lib/projectStanding.ts). */
   standing: ProjectStanding;
 }
-export function projectStats(project: FixtureProject, snap: Snapshot, day: string): ProjectStats {
+/** `safetyRecords` is the office's switch for the safety records; off, a project's visits leave the safety and tower inspections out. */
+export function projectStats(project: FixtureProject, snap: Snapshot, day: string, safetyRecords = true): ProjectStats {
   const issues = snap.issues.filter(i => i.projectId === project.id);
   const reports = snap.reports.filter(r => r.projectId === project.id).sort(byReceived);
   const drafts = snap.drafts.filter(r => r.projectId === project.id);
@@ -127,7 +128,7 @@ export function projectStats(project: FixtureProject, snap: Snapshot, day: strin
     instructedValue: variations.filter(v => v.instruction === 'instructed').reduce((n, v) => n + (v.instructedValue ?? v.quotedValue ?? 0), 0),
     rollup: rollup(issues, day),
     needsAction: 0,
-    standing: projectStanding(project, reports, day),
+    standing: projectStanding(project, reports, day, safetyRecords),
   };
   s.needsAction = new Set([...s.overdue, ...s.verify, ...s.unassigned, ...s.disputed].map(i => i.id)).size + s.failed.length + s.pendingReview.length
     + new Set([...s.unpricedVariations, ...s.exposedVariations].map(v => v.id)).size;

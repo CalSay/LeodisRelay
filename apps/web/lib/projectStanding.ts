@@ -2,6 +2,8 @@ import { naturalOrder } from './naturalOrder';
 import { ACTIVE_PROJECT_STATUS } from './projectGroups';
 import { QUIET_WORKING_DAYS, workingDaysBetween } from './siteCoverage';
 import { weekStart } from './weeklySummary';
+import { countVisits } from './visits';
+import { isSafetyRecordType } from './featureSwitch';
 import type { Report, ReportSummary } from './types';
 
 /**
@@ -10,7 +12,8 @@ import type { Report, ReportSummary } from './types';
  * say what progress was made. Read only from the reports engineers already
  * send; nothing new is asked of site.
  *
- * Counted as site coverage counts them (lib/siteCoverage.ts): sent reports on
+ * Counted as site coverage counts them (lib/siteCoverage.ts; both leave out the
+ * safety and tower inspections while those records are switched off): sent reports on
  * the visit day the engineer gave, a sent correction standing in for the
  * report it corrects, and an active site with no report for
  * QUIET_WORKING_DAYS working days marked quiet. A site in defects liability
@@ -28,7 +31,7 @@ export interface ProjectStanding {
   /** Full working days since the last visit (today is still going, so it is not counted). */
   workingDaysSince?: number;
   quiet: boolean;
-  /** Visits from Monday to today, and the trades that made them, in name order. */
+  /** Visits from Monday to today (one person on site on one day, lib/visits.ts), and the trades that made them, in name order. */
   thisWeek: number;
   tradesThisWeek: string[];
   /** Each trade's latest site update in the last LATEST_DAYS days, newest first: the reports whose progress the office reads. */
@@ -43,8 +46,13 @@ const DAY = /^\d{4}-\d{2}-\d{2}$/;
 // The same order as Site coverage's latest visit, so both name the same person on a busy day.
 const newest = (a: ReportSummary, b: ReportSummary) => b.visitDate.localeCompare(a.visitDate) || naturalOrder(b.reference, a.reference);
 
-export function projectStanding(project: { status: string }, reports: ReportSummary[], today: string): ProjectStanding {
-  const sent = reports.filter(r => r.state === 'submitted');
+/**
+ * `safetyRecords` is the office's switch (lib/featureSwitch.ts): while it is off,
+ * the weekly safety and tower inspections are left out, as the Weekly summary
+ * leaves them out, so a visit counted here is one the office can read there.
+ */
+export function projectStanding(project: { status: string }, reports: ReportSummary[], today: string, safetyRecords = true): ProjectStanding {
+  const sent = reports.filter(r => r.state === 'submitted' && (safetyRecords || !isSafetyRecordType(r.reportType)));
   const superseded = new Set(sent.map(r => r.corrects).filter((id): id is string => Boolean(id)));
   const visits = sent.filter(r => !superseded.has(r.id) && DAY.test(r.visitDate) && r.visitDate <= today).sort(newest);
   const latestVisit = visits[0];
@@ -75,7 +83,7 @@ export function projectStanding(project: { status: string }, reports: ReportSumm
     ...(latestVisit ? { last: { reportId: latestVisit.id, visitDate: latestVisit.visitDate, author: latestVisit.author, ...(latestVisit.authorTrade ? { trade: latestVisit.authorTrade } : {}) }, workingDaysSince } : {}),
     lastDayPeople,
     quiet: project.status === ACTIVE_PROJECT_STATUS && (!latestVisit || workingDaysSince >= QUIET_WORKING_DAYS),
-    thisWeek: week.length,
+    thisWeek: countVisits(week),
     tradesThisWeek: [...new Set(week.map(r => r.authorTrade).filter((t): t is NonNullable<typeof t> => Boolean(t)))].sort(),
     latest,
     today: todays.sort((a, b) => Number(!a.authorTrade) - Number(!b.authorTrade) || (a.authorTrade ?? '').localeCompare(b.authorTrade ?? '') || (a.serverAcknowledgedAt ?? '').localeCompare(b.serverAcknowledgedAt ?? '') || naturalOrder(a.reference, b.reference)),
