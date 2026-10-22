@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'inspection-tally-first', added: '2026-10-22', audience: 'office', title: 'An inspection shows what needs action first',
+    text: 'When the office opens an inspection (in the Inbox or a project), a line under Inspection results now says how it went ("3 need action · 8 satisfactory · 1 not applicable") and only the checks needing action are listed, each with its issue. The satisfactory and not applicable checks fold under one button ("Show the 8 satisfactory and 1 not applicable checks"); a passing check the office has added a note to stays in view. The PDF and Full report still list every check. Checked in a desktop browser, light and dark, and a phone-sized window, not on a real phone.',
+    link: { label: 'Open the Inbox', href: '/office#/inbox' } },
   { id: 'team-this-week', added: '2026-10-22', audience: 'office', title: 'See who has sent updates this week on the Team tab',
     text: 'On the Team tab, under each person\'s "Last sent", a line now says which days this week they sent a report for and how many sites ("This week: Mon, Tue, today · 3 sites"), or "Nothing sent this week". It counts the day each visit was for, Monday to today, not hours on site. Someone who signed in without being on the list now stays on the Team tab after signing out, as long as they have sent a report in the last two weeks. Checked in a desktop browser, light and dark, and a phone-sized window.',
     link: { label: 'Open the Team tab', href: '/office#/team' } },

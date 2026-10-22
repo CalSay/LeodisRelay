@@ -469,6 +469,11 @@ function foundOthers(r: ReportSummary): string {
 }
 
 /* ---------------------------------------------------------------- reader */
+/** The folded checks in words: "8 satisfactory and 1 not applicable checks". */
+function passedWords(list: Observation[]): string {
+  const ok = list.filter(o => o.check?.answer === 'ok').length, na = list.length - ok;
+  return `${[ok && `${ok} satisfactory`, na && `${na} not applicable`].filter(Boolean).join(' and ')} ${list.length === 1 ? 'check' : 'checks'}`;
+}
 export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; crumbsHome?: string }) {
   /** Managers and Admins get quick actions on each section and see the change log. */
   const correcting = canCorrect(ctx.me.role);
@@ -489,7 +494,9 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
   const [acting, setActing] = useState<string | null>(null);
   const [reloadFixes, setReloadFixes] = useState(0);
   const sections = useRef<Record<string, HTMLDivElement | null>>({});
-  useEffect(() => { setActing(null); }, [id]);
+  // An inspection's satisfactory and not applicable checks start folded, report by report.
+  const [showPassed, setShowPassed] = useState(false);
+  useEffect(() => { setActing(null); setShowPassed(false); }, [id]);
   useEffect(() => {
     if (!correcting) return;
     let stopped = false;
@@ -521,38 +528,7 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
     const r = !recordId ? undefined : type === 'issue' ? ctx.snap?.issues.find(i => i.id === recordId) : ctx.snap?.variations.find(v => v.id === recordId);
     return r ? <a className="ref" href={`#/projects/${code}/${type}/${r.id}`}>{shortRef(r.reference)}</a> : <span className="ref">{type === 'issue' ? 'another issue' : 'another variation'}</span>;
   };
-  async function retrySharePoint() {
-    setRetryingSharePoint(true); setSharePointRetry('');
-    try {
-      const response = await fetch('/api/admin/sharepoint', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({reportId:report!.id}) });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.reason ?? 'The SharePoint retry could not be queued.');
-      setSharePointRetry('Retry queued. This report will refresh when processing finishes.');
-      await ctx.refresh();
-    } catch (retryError) {
-      setSharePointRetry(retryError instanceof Error ? retryError.message : 'The SharePoint retry could not be queued.');
-    } finally { setRetryingSharePoint(false); }
-  }
-  return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href={crumbsHome ?? `#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>{reportTypeOf(report).document}</div><h3>Visit {fmtDate(report.visitDate)}</h3>{report.inspected && reportTypeOf(report).inspects && <div className="rowsub sheet-inspected">{reportTypeOf(report).inspects!.label}: <b>{report.inspected}</b></div>}<div className="rowsub"><span className="ref">{report.reference}</span><span className="sep">/</span>{engineer}{report.authorTrade ? ` · ${report.authorTrade}` : ''}<span className="sep">/</span>Rev {report.revision}{correctedCount > 0 && <><span className="sep">/</span><span className="ro-qa-chip">{correctedCount} corrected</span></>}</div></div>
-      <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/preview`, officeReturn(ctx))}>Full report</Link><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/pdf`, officeReturn(ctx))}>PDF</Link>
-        {canReview && <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'review', report: summary })}>Review</Btn>}
-        {ctx.me.admin && report.sharepoint?.status === 'failed' && <Btn className="btn-sm" disabled={retryingSharePoint} onClick={() => void retrySharePoint()}>{retryingSharePoint ? 'Queuing…' : 'Retry SharePoint'}</Btn>}</div></div>
-    <SubmissionStages report={report} tagClass={t => `tag ${toneTag(t)}`} when={fmtWhen} />
-    {sharePointRetry && <div className="note"><span>{sharePointRetry}</span></div>}
-    {correcting && fixError && <div className="note warn"><span><b>Quick actions unavailable.</b> {fixError}</span></div>}
-    {report.review === 'returned' && <div className="note bad"><span><b>Sent back by {report.reviewedBy ? ctx.nameOf(report.reviewedById, report.reviewedBy) : 'the office'}</b>{report.reviewedAt ? ` on ${fmtDay(report.reviewedAt)}` : ''}: {report.reviewNote} {superseded ? '' : 'The engineer can send a corrected revision.'}</span></div>}
-    {superseded && <div className="note info"><span><b>Superseded by rev {superseded.revision}</b>{superseded.state === 'draft' ? ', a correction in progress on site.' : '.'} </span>{superseded.state === 'submitted' && <a className="btn btn-q btn-sm" href={`#/projects/${code}/report/${superseded.id}`}>Open rev {superseded.revision}</a>}</div>}
-    {report.corrects && <div className="note info"><span><b>Rev {report.revision} supersedes rev {report.revision - 1}.</b> {report.correctionReason}</span><a className="btn btn-q btn-sm" href={`#/projects/${code}/report/${report.corrects}`}>Open rev {report.revision - 1}</a></div>}
-    {report.review === 'pending' && !canReview && <div className="note warn"><span><b>Awaiting review.</b> You wrote this report, so someone else has to review it.</span></div>}
-    {report.delivery === 'failed' && <div className="note bad"><span><b>{report.deliveryErrorStage === 'delivery' ? 'Could not be delivered.' : 'Could not be processed.'}</b> {report.deliveryError ?? 'The worker gave up on this report.'} The report is on file; {report.deliveryErrorStage === 'delivery' ? 'the notification is what failed.' : report.deliveryErrorStage === 'pdf' ? 'making the PDF is what failed.' : 'the PDF and the notification are what failed.'}</span></div>}
-    {(report.delivery === 'outbox' || report.issued?.transport === 'outbox') && <div className="note"><span>{project?.projectManager ?? 'The project manager'} has not been notified by email yet: the pilot holds notification emails in a local outbox. The report is on file and readable here.</span></div>}
-    {decisions.length > 0 && <><SecH>Actions and decisions</SecH>
-      <div className="rmenu">{decisions.map(o => { const vo = o.type === 'instruction' ? variationOf(o.id) : undefined; return <div key={o.id}><div className="rt"><b>{o.type === 'instruction' ? 'Variation to instruct' : `Action for ${o.owner.trim() || 'nobody yet'}`} · {o.check ? `${o.check.question}${o.location.trim() ? ` · ${o.location}` : ''}` : o.location || 'no location'}</b><span>{o.type === 'instruction' ? o.whatHappened : o.actionNeeded}{o.type !== 'instruction' && !o.owner.trim() && ' · no owner named'}</span></div>{o.type === 'instruction' ? (vo ? <><a className="ref" href={`#/projects/${code}/variation/${vo.id}`}>{shortRef(vo.reference)}</a><InstructionTag v={vo} /></> : <span className="kind tone-variation">Variation</span>) : o.check && !reportTypeOf(report).raisesRecords ? <span className="kind tone-defect">On this inspection</span> : raisedRef(o.id, raised, code, report, o.linkedIssueId ? ctx.snap?.issues.find(i => i.id === o.linkedIssueId) : undefined)}</div>; })}</div></>}
-    {reportTypeOf(report).checklist
-      ? <SecH right={<span className="r">{report.observations.length} checks</span>}>Inspection results</SecH>
-      : <SecH right={<span className="r">{report.observations.length} update{report.observations.length === 1 ? '' : 's'}</span>}>Found on this visit</SecH>}
-    {report.observations.length ? report.observations.map(o => {
+  const section = (o: Observation) => {
       const type = OBSERVATION_TYPES.find(t => t.value === o.type);
       // A check moved off Action needed in a correction keeps its link, but no longer speaks for the issue.
       const linked = o.linkedIssueId && (!o.check || o.check.answer === 'action') ? ctx.snap?.issues.find(i => i.id === o.linkedIssueId) : undefined;
@@ -587,7 +563,50 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
             onDone={() => { setActing(null); setReloadFixes(n => n + 1); void ctx.refresh(); }} />}
           {correcting && cs.length > 0 && <ChangeLog ctx={ctx} list={cs} />}
         </div></div>;
-    }) : <div className="empty">No updates were recorded on this visit.</div>}
+  };
+  const checklist = !!reportTypeOf(report).checklist;
+  const tally = { action: 0, ok: 0, na: 0 };
+  if (checklist) for (const o of report.observations) if (o.check?.answer && o.check.answer in tally) tally[o.check.answer as keyof typeof tally]++;
+  // A passing check someone corrected stays in view with its change log.
+  const folds = (o: Observation) => checklist && (o.check?.answer === 'ok' || o.check?.answer === 'na') && !corrections.some(c => c.observationId === o.id);
+  const shownFirst = report.observations.filter(o => !folds(o)), folded = report.observations.filter(folds);
+  async function retrySharePoint() {
+    setRetryingSharePoint(true); setSharePointRetry('');
+    try {
+      const response = await fetch('/api/admin/sharepoint', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({reportId:report!.id}) });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.reason ?? 'The SharePoint retry could not be queued.');
+      setSharePointRetry('Retry queued. This report will refresh when processing finishes.');
+      await ctx.refresh();
+    } catch (retryError) {
+      setSharePointRetry(retryError instanceof Error ? retryError.message : 'The SharePoint retry could not be queued.');
+    } finally { setRetryingSharePoint(false); }
+  }
+  return <div className="sheet">
+    <div className="sheet-title"><div><div className="crumbs"><a href={crumbsHome ?? `#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>{reportTypeOf(report).document}</div><h3>Visit {fmtDate(report.visitDate)}</h3>{report.inspected && reportTypeOf(report).inspects && <div className="rowsub sheet-inspected">{reportTypeOf(report).inspects!.label}: <b>{report.inspected}</b></div>}<div className="rowsub"><span className="ref">{report.reference}</span><span className="sep">/</span>{engineer}{report.authorTrade ? ` · ${report.authorTrade}` : ''}<span className="sep">/</span>Rev {report.revision}{correctedCount > 0 && <><span className="sep">/</span><span className="ro-qa-chip">{correctedCount} corrected</span></>}</div></div>
+      <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/preview`, officeReturn(ctx))}>Full report</Link><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/pdf`, officeReturn(ctx))}>PDF</Link>
+        {canReview && <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'review', report: summary })}>Review</Btn>}
+        {ctx.me.admin && report.sharepoint?.status === 'failed' && <Btn className="btn-sm" disabled={retryingSharePoint} onClick={() => void retrySharePoint()}>{retryingSharePoint ? 'Queuing…' : 'Retry SharePoint'}</Btn>}</div></div>
+    <SubmissionStages report={report} tagClass={t => `tag ${toneTag(t)}`} when={fmtWhen} />
+    {sharePointRetry && <div className="note"><span>{sharePointRetry}</span></div>}
+    {correcting && fixError && <div className="note warn"><span><b>Quick actions unavailable.</b> {fixError}</span></div>}
+    {report.review === 'returned' && <div className="note bad"><span><b>Sent back by {report.reviewedBy ? ctx.nameOf(report.reviewedById, report.reviewedBy) : 'the office'}</b>{report.reviewedAt ? ` on ${fmtDay(report.reviewedAt)}` : ''}: {report.reviewNote} {superseded ? '' : 'The engineer can send a corrected revision.'}</span></div>}
+    {superseded && <div className="note info"><span><b>Superseded by rev {superseded.revision}</b>{superseded.state === 'draft' ? ', a correction in progress on site.' : '.'} </span>{superseded.state === 'submitted' && <a className="btn btn-q btn-sm" href={`#/projects/${code}/report/${superseded.id}`}>Open rev {superseded.revision}</a>}</div>}
+    {report.corrects && <div className="note info"><span><b>Rev {report.revision} supersedes rev {report.revision - 1}.</b> {report.correctionReason}</span><a className="btn btn-q btn-sm" href={`#/projects/${code}/report/${report.corrects}`}>Open rev {report.revision - 1}</a></div>}
+    {report.review === 'pending' && !canReview && <div className="note warn"><span><b>Awaiting review.</b> You wrote this report, so someone else has to review it.</span></div>}
+    {report.delivery === 'failed' && <div className="note bad"><span><b>{report.deliveryErrorStage === 'delivery' ? 'Could not be delivered.' : 'Could not be processed.'}</b> {report.deliveryError ?? 'The worker gave up on this report.'} The report is on file; {report.deliveryErrorStage === 'delivery' ? 'the notification is what failed.' : report.deliveryErrorStage === 'pdf' ? 'making the PDF is what failed.' : 'the PDF and the notification are what failed.'}</span></div>}
+    {(report.delivery === 'outbox' || report.issued?.transport === 'outbox') && <div className="note"><span>{project?.projectManager ?? 'The project manager'} has not been notified by email yet: the pilot holds notification emails in a local outbox. The report is on file and readable here.</span></div>}
+    {decisions.length > 0 && <><SecH>Actions and decisions</SecH>
+      <div className="rmenu">{decisions.map(o => { const vo = o.type === 'instruction' ? variationOf(o.id) : undefined; return <div key={o.id}><div className="rt"><b>{o.type === 'instruction' ? 'Variation to instruct' : `Action for ${o.owner.trim() || 'nobody yet'}`} · {o.check ? `${o.check.question}${o.location.trim() ? ` · ${o.location}` : ''}` : o.location || 'no location'}</b><span>{o.type === 'instruction' ? o.whatHappened : o.actionNeeded}{o.type !== 'instruction' && !o.owner.trim() && ' · no owner named'}</span></div>{o.type === 'instruction' ? (vo ? <><a className="ref" href={`#/projects/${code}/variation/${vo.id}`}>{shortRef(vo.reference)}</a><InstructionTag v={vo} /></> : <span className="kind tone-variation">Variation</span>) : o.check && !reportTypeOf(report).raisesRecords ? <span className="kind tone-defect">On this inspection</span> : raisedRef(o.id, raised, code, report, o.linkedIssueId ? ctx.snap?.issues.find(i => i.id === o.linkedIssueId) : undefined)}</div>; })}</div></>}
+    {checklist
+      ? <><SecH right={<span className="r">{report.observations.length} checks</span>}>Inspection results</SecH>
+        <p className="check-tally">{tally.action > 0 ? <b className="late">{tally.action} {tally.action === 1 ? 'needs' : 'need'} action</b> : <b>No actions</b>}{tally.ok > 0 && <> · {tally.ok} satisfactory</>}{tally.na > 0 && <> · {tally.na} not applicable</>}</p></>
+      : <SecH right={<span className="r">{report.observations.length} update{report.observations.length === 1 ? '' : 's'}</span>}>Found on this visit</SecH>}
+    {report.observations.length ? <>{shownFirst.map(section)}
+      {/* Checks that passed fold under one line, so the ones needing action are what the office reads first. */}
+      {folded.length > 0 && <div className="checks-passed">
+        <button type="button" className="btn btn-q btn-sm" aria-expanded={showPassed} onClick={() => setShowPassed(v => !v)}>{showPassed ? 'Hide' : 'Show'} the {passedWords(folded)}</button>
+        {showPassed && folded.map(section)}</div>}</> : <div className="empty">No updates were recorded on this visit.</div>}
     <SecH>Signature</SecH>
     {/* Typed or drawn is said in words, so the office never mistakes one for the other. */}
     <div className="rowsub">{report.signature ? `${SIGNED_HOW[signatureMethod(report.signature)]} ${report.signature.name} · ${fmtWhen(report.signature.signedAt)}${report.signature.typed && report.signature.signedInAs ? ` · signed in as ${report.signature.signedInAs}` : ''}` : 'No signature captured'} · Generated by Leodis Relay</div>

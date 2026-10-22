@@ -4,6 +4,44 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — An inspection shows what needs action first in the office
+
+- Why: a walk of an office manager at 1440px and 390px on main 79f39c9
+  reading a handover inspection that had just come in (12 checks: 3 action
+  needed, 1 not applicable; a first fix inspection with none beside it), in
+  the Inbox, the reader and the Full report / PDF. Figures agree with the
+  records: the Inbox's "3 actions" and "no actions", the reader's three
+  actions and their issues ISS-001 to 003, the PDF's actions arising. No
+  wrong number found. But the reader then listed all 12 checks alike, each
+  with Quick actions and "0 photographs", so the three failures sat among
+  eight satisfactory rows (3,596px on a phone) with no line saying how the
+  inspection went, and "Not applicable" ran into its check's text.
+  Coordinator's ask (walk and one pick); not a `docs/tasks.json` task, so no
+  status changed. Within Cal's 21 Oct direction (the office's view clearer).
+- Changed (`ReportReader` in `office/ProjectsView.tsx`, `workspace.css`):
+  under "Inspection results" a tally line ("3 need action · 8 satisfactory ·
+  1 not applicable", or "No actions · …"); checks needing action listed
+  first, in checklist order; satisfactory and not applicable checks fold
+  under one button ("Show the 8 satisfactory and 1 not applicable checks",
+  aria-expanded), closed again for each report. A passing check with a
+  correction (an office note) stays above the fold with its change log. The
+  answer tag wraps in its column. Breadcrumb links are underlined (axe
+  link-in-text-block failed on the reader's "Tetley Hall" crumb). Site
+  updates, the PDF and Full report are unchanged. Help "What's new" line.
+- Decided (Claude): fold rather than drop the passing checks, so the office
+  can still read or note on any of them; the heading keeps "12 checks".
+- Verified: typecheck, `npm test`, build. New
+  `scripts/verify-office-inspection.mjs` (66 checks, 1440px light and dark,
+  390px light): tally equals the answers; only the three action checks with
+  their issues before the fold; the button's words and aria-expanded; nine
+  in order when opened; "Not applicable" does not overlap; a note on a
+  satisfactory check keeps it in view after a reload (7 + 1 folded); a clean
+  first fix inspection says No actions and folds all 12; axe on the reader;
+  no sideways scroll. Also ran: see the PR. Screens: project files
+  `ui-review/office-inspection/before|after`.
+- Not verified: a real phone; a screen reader.
+- Next: none from this walk.
+
 ## 2026-10-22 — Fourteenth release check (main 993445f, then 73b6d8d)
 
 - Why: a full check of main before the next deploy. Last passed: 6def5e8
