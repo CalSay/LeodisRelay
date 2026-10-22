@@ -573,6 +573,10 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-card-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
 .eng-card-foot .eng-remove-card{margin-top:0;}
 .eng-card-foot .btn-sm,.eng-card .head .btn-sm{min-height:48px;}
+/* Speed (2026-10-22): past the first 30 cards (EngineerIssueList FIRST_CARDS), the browser lays out and paints only the cards near the screen. */
+.eng-issue-list>.eng-issue-card:nth-child(n+31){content-visibility:auto;contain-intrinsic-size:auto 160px;}
+/* The size held for a card not yet drawn: the average card on the busy seed, so the page is nearly its true length from the start. */
+@media(max-width:450px){.eng-issue-list>.eng-issue-card:nth-child(n+31){contain-intrinsic-size:auto 180px;}}
 
 /* App bar (layout.tsx), on every page that has it. Sign out and the theme sit
    together as two matching buttons, apart from the page links. On a phone or a
