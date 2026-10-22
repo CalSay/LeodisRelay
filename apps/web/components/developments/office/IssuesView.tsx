@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import type { Issue } from '@/lib/types';
+import { byPutForward } from '@/lib/checkFix';
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Btn, BtnQ, ConfirmTag, SortHead, WorkTag } from './bits';
@@ -99,8 +100,8 @@ export function IssuesView({ ctx }: { ctx: Ctx }) {
     }
   };
   const fixesHere = () => searched(filter);
-  // "Verify the oldest" goes on oldest first, by the register's own rule for which is oldest, leaving out the person's own closures.
-  const oldestFirst = async () => (await searched('verify')).filter(i => !closureMine(i)).sort((a, b) => a.raisedAt.localeCompare(b.raisedAt) || a.reference.localeCompare(b.reference));
+  // "Verify the oldest" goes on longest waiting first, by the register's own rule (lib/checkFix.ts), leaving out the person's own closures.
+  const oldestFirst = async () => (await searched('verify')).filter(i => !closureMine(i)).sort(byPutForward);
   const narrowed = !!(project || trade || location || company || verification);
   const first = (result.page - 1) * result.pageSize + 1, last = first + shown.length - 1;
   // The file holds this search, every page of it, in the order on screen.

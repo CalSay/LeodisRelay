@@ -26,6 +26,120 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   day-walkthrough, report-editor, editor-usability, receipt-send-bar,
   engineer-layout, offline-capture, accessibility.
 - Not verified: a real phone, a screen reader.
+## 2026-10-22 — Straight on to the next issue after putting a fix forward
+
+- Why: a walk of an electrician on a 390px phone (latest main, local example
+  data: six of their issues on Tetley Hall) putting three fixes forward with a
+  photograph and a note found five taps a fix (the issue, photograph, note,
+  "Put forward as fixed", then Back to the list for the next), and after the tap
+  the page stayed as it was: the empty form and "Record an update" still there,
+  only a thin note saying it was done. Picked by this thread and posted before
+  building, under Cal's 21 Oct ask to make the engineer's job simpler. Not a
+  `docs/tasks.json` task; no status changed.
+- Changed: on the engineer's issue page, "Put forward as fixed" now gives a box,
+  "Put forward as fixed. It is waiting for the office to check it. If it is not
+  finished, it comes back to you.", with one big button to the next of the
+  engineer's issues on the same site ("Next: Spur not labelled", where, and how
+  many are left to do there), then Back. The next one is the top of the site's
+  "Yours" list (`nextYourIssue` in `lib/yourIssues.ts`, the same rule and order
+  as the Issues tab), never the one just done, another site's, or one already
+  waiting on the office. With none left it says "That was the last one for you
+  on <site>". While an issue is waiting on the office (just put forward or opened
+  later), the form is folded under "Add a note for the office", which still
+  records an update. Focus moves to the box once, as the tapped button has gone (not again
+  when the next issue arrives, so a note being typed is not interrupted). The
+  office's issue page is unchanged.
+- Decided: offer the next issue only on the same site (the engineer is on that
+  site; other sites stay on the Issues tab), and only straight after putting one
+  forward, not on any issue opened later that is already waiting. If the list
+  cannot be fetched (no signal), the box shows with Back and no Next, rather than
+  guessing.
+- Help: a "What's new" line.
+- Checks: typecheck, `npm test` (new unit test for `nextYourIssue`), build. New
+  `scripts/verify-fix-forward-next.mjs` (73 checks): six fixes put forward one
+  after another from the Issues tab in 24 counted taps (the first issue, then
+  four a fix: photograph, note, Put forward, Next; on main it was five, with Back
+  and the next card), Next names the top of "Yours" each time
+  with where and how many are left, never another site, trade or engineer's
+  issue, box and Next on screen without scrolling at 390px, focus on the box,
+  form folded, each Next opens that issue ready to put forward; the last says
+  so with no Next; when the list answers slowly, a note typed meanwhile keeps
+  focus;
+  with no answer for the list, the box still shows with Back; opened later, the
+  plain note shows and the fold records an update that leaves it Fixed, to
+  check; the office keeps Verify and close; light and dark, no sideways scroll,
+  axe, no page errors. Screens in project files `ui-review/fix-forward/` (before
+  = main, after = this change). Also passed: came-back-first,
+  came-back-to-update, engineer-day, issue-assign, issues-yours, my-week-counts,
+  office-words, other-sites-came-back, photo-library, photos-month,
+  simpler-issue-page, help, engineer-layout, role-access, accessibility, search,
+  signature-reload. A fresh-context review found four gaps, all fixed: the box
+  promised the Site page for issues the engineer had not raised (now "it comes
+  back to you"); focus jumped back to the box when a slow answer arrived (now
+  once only, checked with a 2.5 s answer); the Help line named only "Back to
+  Issues"; and the check's tap count and "fresh" check claimed more than they
+  tested (taps now counted, the check renamed).
+- Not verified: real phones, real weak signal, screen readers.
+
+## 2026-10-22 — The checking fixes walk's small findings
+
+- Why: the checking fixes walk (project files
+  `ui-review/checking-fixes/walk-notes.md`) left small findings after #131 (the
+  dialog) and #134 (the top bar). Asked for by the coordinator; not a
+  `docs/tasks.json` task, so no status changed. Decided without asking Cal (his
+  autonomy message). All five still open on main b62f4ac are built here; none is
+  safety, supplier, FE-2, EXP-2 or EXP-4, so none was skipped.
+- Office, how long a fix has waited: "waiting N days" counted from the issue's
+  last event, so a note added after a fix was put forward started the count
+  again (a fix put forward 2 days ago with a note today said 0 days). It now
+  counts from the latest "put forward as fixed" (`putForwardAt`,
+  `lib/checkFix.ts`) on the overview's Fixed, to check rows, Attention and the
+  issue sheet, which also says the day it was put forward. The desk's trimmed
+  copy of an issue (`deskIssue`, #62) now keeps that event as well as the latest
+  one for a fix waiting to be checked, without notes or photos, so the desk
+  needs no extra request. Records with no such event fall back to the latest
+  event, as before.
+- Office, order: "Verify the oldest" picked the oldest defect, not the fix that
+  had waited longest. It now starts at the fix put forward longest ago, on the
+  server's button and the dialog's list alike (`byPutForward`); the overview,
+  Attention and each project's list use the same order. The project's Fixed, to
+  check figure said "put forward" with the date of whichever issue came first in
+  storage; it now says "oldest put forward" and that date. The register's own
+  order (target date) is unchanged: it is the office's choice of sort.
+- Office, issue sheet: the target read "2026-10-13" where every other screen
+  says "13 Oct"; it now reads the same.
+- Engineer, Issues "Yours": "3 put forward as fixed, waiting for the office to
+  check" was plain text. It now sits under the site's list (to do first) and
+  opens to show those fixes, newest put forward first; each opens its issue and
+  Back returns to Yours. Folded at first, so the page is no longer than before.
+- Engineer, home: "Came back from the office" counted a fix still waiting to be
+  checked as "from the office" when the office had assigned it before it was put
+  forward. A fix waiting for the office is no longer counted unless the office
+  has written to the engineer on it since; it is still listed with its "Fixed,
+  to check" tag, as the engineer's own records are.
+- Decisions (Claude): kept the button's words "Verify the oldest" (the oldest fix
+  is the one waiting longest; Help says so) so nobody relearns it; the waiting
+  fixes go under the to-do list rather than above it, so what is the engineer's
+  to do comes first.
+- Checks: typecheck, `npm test` (146 + 547; new tests in `checkFix.test.ts`,
+  `yourIssues.test.ts`, `busyProjects.test.ts`), build. New
+  `scripts/verify-fix-waiting.mjs` (41 checks: overview order and days, project
+  figure, issue sheet put forward/waiting/target, Verify the oldest then the
+  next, engineer home count; light and dark 1440, light 390; engineer 390 light
+  and 1440 dark; no sideways scroll, no page errors). It fails on main b62f4ac at
+  the first wait ("waiting 0 days" for a fix put forward 2 days ago).
+  `verify-issues-yours` now opens the waiting fixes and follows one to its issue
+  and back (48 checks). Also passed: check-fixes, came-back-first,
+  issue-register, office-landing, issue-figures, office-progress, office-desk,
+  office-sections, office-top-bar, engineer-layout, role-access, busy-projects,
+  other-sites-came-back, engineer-day, simpler-issue-list.
+- A fresh-context review found no blocking gap. From its notes: a question from
+  the office on a fix still waiting now counts on the engineer home (it was
+  listed with the office's words but left out of the count); the check's
+  longest-waiting fix now has the newest note, so the order check fails on main
+  too; the +/− on the fold is hidden from screen readers; stale comments fixed.
+- Not verified: a live tenant, real SharePoint issue lists, a real phone, a
+  screen reader.
 
 ## 2026-10-22 — The site diary starts higher on a phone
 

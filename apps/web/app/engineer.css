@@ -299,7 +299,7 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-primary{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;padding:12px 18px;border:1px solid var(--brass);border-radius:8px;background:var(--brass);color:var(--brass-ink);text-decoration:none;font-weight:500;}
 .eng-issue-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;}.eng-issue-tabs button{font-size:13px;padding:10px 12px;}.eng-issue-tabs [aria-pressed=true]{border-color:var(--brass);background:var(--brass-wash);color:var(--brass);}
 .eng-issue-list{display:grid;gap:12px;}.eng-issue-card.late{border-left:3px solid var(--alert);}.eng-issue-card .eng-word{margin:4px 0;font-size:13.5px;line-height:1.4;color:var(--text);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
-.eng-yours-count{margin-left:10px;font:600 12px/1 var(--sans);color:var(--text-2);white-space:nowrap;}.eng-yours-waiting{margin:4px 0 12px;}.eng-yours-empty button{margin-top:12px;min-height:48px;}.eng-issue-card{display:flex;gap:16px;padding:16px;border:1px solid var(--line);border-radius:9px;background:var(--ground);color:var(--text);text-decoration:none;align-items:flex-start;}
+.eng-yours-count{margin-left:10px;font:600 12px/1 var(--sans);color:var(--text-2);white-space:nowrap;}.eng-yours-wait{margin:12px 0 0;border:1px solid var(--line);border-radius:9px;background:var(--panel);}.eng-yours-wait>summary.eng-yours-waiting{display:flex;align-items:center;min-height:48px;padding:8px 40px 8px 14px;position:relative;cursor:pointer;list-style:none;color:var(--text-2);font-size:14px;}.eng-yours-wait>summary::-webkit-details-marker{display:none;}.eng-yours-wait>summary::after{content:'+' / '';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:18px;color:var(--text-3);}.eng-yours-wait[open]>summary::after{content:'−' / '';}.eng-yours-wait>:not(summary){padding:0 12px 12px;}.eng-yours-empty button{margin-top:12px;min-height:48px;}.eng-issue-card{display:flex;gap:16px;padding:16px;border:1px solid var(--line);border-radius:9px;background:var(--ground);color:var(--text);text-decoration:none;align-items:flex-start;}
 .eng-issue-copy{min-width:0;flex:1;}.eng-issue-card h3{font-size:17px;line-height:1.4;margin:8px 0;overflow-wrap:anywhere;}.eng-issue-card p{color:var(--text-2);font-size:13px;margin:8px 0;}
 .eng-issue-thumb{width:90px;flex-shrink:0;}.eng-issue-thumb img{width:90px;height:90px;object-fit:cover;border-radius:7px;}.eng-issue-meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px;}.eng-issue-meta .lbl{overflow-wrap:anywhere;}
 .eng-project-context{background:var(--band);color:var(--band-text);border:1px solid var(--band-line);border-radius:9px;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:14px;}.eng-project-context small,.eng-project-context strong{display:block;}.eng-project-context small{font:10px var(--mono);letter-spacing:1px;color:var(--band-brass);margin-bottom:6px;}
@@ -527,6 +527,17 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .issue-eng-update .btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .issue-eng-update .btn-row button{min-height:48px;width:100%;}
 .issue-more .issue-eng-facts{margin-top:4px;}
+/* Just put forward as fixed (2026-10-22): said plainly, then straight on to the next of the engineer's issues on this site. */
+.issue-eng-done{margin-top:8px;display:grid;gap:10px;}
+.issue-eng-done:focus{outline:none;}
+.issue-eng-done h2{font-size:17px;margin:0;}
+.issue-eng-done p{margin:0;}
+.issue-eng-next{flex-direction:column;gap:2px;text-align:center;overflow-wrap:anywhere;}
+.issue-eng-next span{font-weight:600;}
+.issue-eng-next small{font-size:13px;opacity:.9;}
+.issue-eng-done .eng-secondary{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;padding:12px 18px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel);color:var(--text);text-decoration:none;font:500 15px/1.2 var(--sans);}
+.issue-eng-add{margin-top:8px;}
+.issue-eng-add .issue-eng-update .btn-row{grid-template-columns:1fr;}
 /* "Change kind" sits with Remove; the four kind buttons come out only after it is tapped (2026-10-21). */
 .eng-card-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
 .eng-card-foot .eng-remove-card{margin-top:0;}
