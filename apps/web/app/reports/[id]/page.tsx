@@ -143,6 +143,12 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
   /** Signed by typing the name and ticking the statement, in place of a drawing (lib/signature.ts). */
   const [signatureTyped, setSignatureTyped] = useState(false);
+  /** An optional signature folds behind one button until it is wanted (a signed draft shows it open). */
+  const [signShown, setSignShown] = useState(false);
+  const signPanel = useRef<HTMLElement>(null);
+  /** Tapped open: focus follows to the pad, as the button it replaced is gone. */
+  const focusSign = useRef(false);
+  useEffect(() => { if (signShown && focusSign.current) { focusSign.current = false; signPanel.current?.focus(); } }, [signShown]);
   const nameFilled = useRef(false);
   /** The draft as the server last accepted it, so every card can say whether it is on the server. */
   const [onServer, setOnServer] = useState<OnServer>({ cards: {} });
@@ -1120,7 +1126,15 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
   const mine = principal ? ownsReport(principal, report) : false;
   const counts = Object.fromEntries(KINDS.map(k => [k, report.observations.filter(o => o.type === k).length])) as Record<ObservationType, number>;
+  const summed = ([
+    ['update', 'Progress', '', ''],
+    ['defect', 'Defects', 'late', 'go on the issue list'],
+    ['instruction', 'Variations', 'soon', 'for the office to price'],
+    ['access', 'Access', '', 'go on the issue list'],
+  ] as [ObservationType, string, string, string][]).filter(([kind]) => counts[kind] > 0);
   const type = reportTypeOf(report);
+  // Open by itself when something is already there: a drawing, a typed signature, or a name other than the author's.
+  const signOpen = type.signatureRequired || signShown || Boolean(signatureImage) || signatureTyped || Boolean(signerName.trim() && signerName.trim() !== report.author);
   /** An inspection: fixed checks, answered one by one, rather than cards the engineer adds. */
   const checklist = Boolean(type.checklist);
   const answers = checkCounts(report.observations);
@@ -1474,17 +1488,15 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
           {whereAll.text && <p className={`eng-where eng-where-${whereAll.where}`} aria-live="polite"><span className={WHERE_DOT[whereAll.where]} />{whereAll.text}</p>}
 
-          <div className="sec"><h2 className="lbl">{checklist ? 'In this inspection' : 'In this report'}</h2></div>
+          {(checklist || summed.length > 0) && <div className="sec"><h2 className="lbl">{checklist ? 'In this inspection' : 'In this report'}</h2></div>}
           {checklist ? <dl className="eng-sum">
             <div><dt>Satisfactory</dt><dd>{answers.ok}</dd></div>
             <div><dt>Action needed</dt><dd className={answers.action ? 'late' : ''}>{answers.action}<small>{answers.action ? (type.raisesRecords ? 'go on the snag list' : 'on the action list') : ''}</small></dd></div>
             <div><dt>Not applicable</dt><dd>{answers.na}</dd></div>
             <div><dt>To answer</dt><dd className={answers.open ? 'soon' : ''}>{answers.open}</dd></div>
-          </dl> : <dl className="eng-sum">
-            <div><dt>Progress</dt><dd>{counts.update}</dd></div>
-            <div><dt>Defects</dt><dd className={counts.defect ? 'late' : ''}>{counts.defect}<small>{counts.defect ? 'go on the issue list' : ''}</small></dd></div>
-            <div><dt>Variations</dt><dd className={counts.instruction ? 'soon' : ''}>{counts.instruction}<small>{counts.instruction ? 'for the office to price' : ''}</small></dd></div>
-            <div><dt>Access</dt><dd>{counts.access}<small>{counts.access ? 'go on the issue list' : ''}</small></dd></div>
+          </dl> : summed.length > 0 && <dl className={`eng-sum eng-sum-${summed.length}`}>
+            {/* Only the kinds in this update: three zeros were three more things to read past. */}
+            {summed.map(([kind, label, tone, said]) => <div key={kind}><dt>{label}</dt><dd className={tone}>{counts[kind]}<small>{said}</small></dd></div>)}
           </dl>}
 
           {checklist && <div className="eng-does">
@@ -1511,13 +1523,14 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           <div className="sec"><h2 className="lbl">{type.signatureRequired ? 'Sign' : 'Sign · optional'}</h2></div>
           {type.signatureRequired && <p className="hint eng-sign-hint">An inspection is signed by the person who carried it out: draw your signature, or type your name if you can’t draw.</p>}
 
-          <section className="panel">
+          {!signOpen ? <button type="button" className="btn-quiet btn-wide eng-sign-open" onClick={() => { focusSign.current = true; setSignShown(true); }}>Add your signature</button>
+          : <section className="panel" id="sign-panel" ref={signPanel} tabIndex={-1} aria-label="Your signature">
             <div className="panel-body">
               <SignaturePad
                 name={signerName}
                 initialImage={signatureImage}
                 onNameChange={(next) => updateSignature(next, signatureImage, signatureTyped)}
-                onChange={(image) => updateSignature(signerName, image)}
+                onChange={(image) => { setSignShown(true); updateSignature(signerName, image); }}
                 {...(type.signatureRequired ? {
                   typed: signatureTyped,
                   onTypedChange: (next: boolean) => updateSignature(signerName, null, next),
@@ -1525,7 +1538,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
                 } : {})}
               />
             </div>
-          </section>
+          </section>}
           </div>
         </div>}
 
