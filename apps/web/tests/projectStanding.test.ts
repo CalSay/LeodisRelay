@@ -35,6 +35,30 @@ test('this week counts visits from Monday by trade, and a correction stands in f
   assert.deepEqual(st.tradesThisWeek, ['Electrical', 'P&H']);
 });
 
+test('a visit is one person on site on one day: an update and an inspection the same day count once', () => {
+  const st = projectStanding(ACTIVE, [
+    sent({ visitDate: '2026-10-19', authorId: 'entra:sam' }),
+    sent({ visitDate: '2026-10-19', authorId: 'entra:sam', reportType: 'tower-inspection', checks: { ok: 5, action: 0, na: 0, open: 0 } }),
+    sent({ visitDate: '2026-10-20', authorId: 'entra:sam', reportType: 'safety-inspection', checks: { ok: 5, action: 0, na: 0, open: 0 } }),
+    sent({ visitDate: '2026-10-20', author: 'Hana Duct', authorTrade: 'HVAC' }),
+    sent({ visitDate: '2026-10-20', author: ' Hana Duct ', authorTrade: 'HVAC', reportType: 'first-fix-inspection' }),
+  ], TODAY);
+  assert.equal(st.thisWeek, 3, 'Sam on Monday and Tuesday, Hana on Tuesday');
+});
+
+test('with the safety records switched off, a day with only a safety or tower inspection is not a visit', () => {
+  const reports = [
+    sent({ id: 'u', visitDate: '2026-10-19' }),
+    sent({ id: 't', visitDate: '2026-10-20', reportType: 'tower-inspection', checks: { ok: 5, action: 0, na: 0, open: 0 } }),
+    sent({ id: 'f', visitDate: '2026-10-20', author: 'Hana Duct', authorTrade: 'HVAC', reportType: 'first-fix-inspection' }),
+  ];
+  assert.equal(projectStanding(ACTIVE, reports, TODAY).thisWeek, 3);
+  const off = projectStanding(ACTIVE, reports, TODAY, false);
+  assert.equal(off.thisWeek, 2, 'a first fix inspection is our own work and still counts');
+  assert.equal(off.last?.reportId, 'f');
+  assert.deepEqual(off.lastDayPeople, [{ author: 'Hana Duct', trade: 'HVAC' }]);
+});
+
 test('an active site with no report for three working days is quiet; one in defects liability never is', () => {
   const reports = [sent({ visitDate: '2026-10-15' })]; // Thursday: Friday, Monday, Tuesday since
   assert.equal(projectStanding(ACTIVE, reports, TODAY).workingDaysSince, 3);
