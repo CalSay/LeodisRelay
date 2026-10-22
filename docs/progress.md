@@ -40,6 +40,11 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the change: Hunslet Thu 22 shows 3 marks for 3 people (was 4). Screens:
   project files `ui-review/site-coverage/` (before-busy, after-busy,
   after-small).
+- Fresh review found: a mark could open the inspection when a person's two
+  reports differed in name spacing or trade (now the site update is chosen
+  within each person's reports), and the Help line claimed desktop light
+  (now "light and dark" across the two widths). Both fixed, with the unit
+  test covering the first.
 - Not verified: a real phone or laptop, a screen reader.
 - Next: under each active site, say which trades that reported earlier in
   the fortnight have not reported this week.

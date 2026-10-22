@@ -92,14 +92,14 @@ export function siteCoverage(projects: CoverageProjectSource[], reports: Report[
   const superseded = new Set(sent.map(r => r.corrects).filter((id): id is string => Boolean(id)));
   const visits = sent.filter(r => !superseded.has(r.id) && DAY.test(r.visitDate));
   const visit = (r: Report, references = [r.reference]): CoverageVisit => ({ reportId: r.id, reference: r.reference, author: r.author, ...(r.authorTrade ? { trade: r.authorTrade } : {}), revision: r.revision, references });
-  // Site updates before inspections, so a person's mark opens what they wrote about the day.
-  const order = (a: Report, b: Report) => (a.authorTrade ?? '~').localeCompare(b.authorTrade ?? '~') || a.author.localeCompare(b.author) || Number(Boolean(a.reportType)) - Number(Boolean(b.reportType)) || naturalOrder(a.reference, b.reference);
+  const order = (a: Report, b: Report) => (a.authorTrade ?? '~').localeCompare(b.authorTrade ?? '~') || a.author.localeCompare(b.author) || naturalOrder(a.reference, b.reference);
   const person = (r: Report) => r.authorId ?? r.author.trim();
   /** A day's reports, already in order, as one visit for each person. */
   const byPerson = (dayReports: Report[]): CoverageVisit[] => {
     const people = new Map<string, Report[]>();
     for (const r of dayReports) people.set(person(r), [...(people.get(person(r)) ?? []), r]);
-    return [...people.values()].map(rs => visit(rs[0]!, rs.map(r => r.reference)));
+    // Their site update first, so the mark opens what they wrote about the day.
+    return [...people.values()].map(rs => { const ordered = [...rs.filter(r => !r.reportType), ...rs.filter(r => r.reportType)]; return visit(ordered[0]!, ordered.map(r => r.reference)); });
   };
 
   return {

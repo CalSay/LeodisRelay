@@ -87,13 +87,13 @@ test('one mark for each person on site each day, opening their site update', () 
     report({ id:'spr', visitDate:'2026-10-15', reference:'011LME-SPR-009' }),
     report({ id:'jo', visitDate:'2026-10-15', reference:'011LME-SPR-010', author:'Jo Wire', authorId:'entra:jo' as never }),
     report({ id:'same-name', visitDate:'2026-10-16', reference:'011LME-SPR-011', author:'Sam Spark ', authorId:undefined as never }),
-    report({ id:'by-name', visitDate:'2026-10-16', reference:'011LME-SPR-012', author:'Sam Spark', authorId:undefined as never }),
+    report({ id:'by-name', visitDate:'2026-10-16', reference:'011LME-FFI-002', author:'Sam Spark', authorId:undefined as never, reportType:'first-fix-inspection' }),
   ], manager, START, TODAY);
   const [p] = c.projects;
   assert.deepEqual(p!.days[3]!.map(v => [v.reportId, v.author, v.references]), [
     ['jo', 'Jo Wire', ['011LME-SPR-010']],
     ['spr', 'Sam Spark', ['011LME-SPR-009', '011LME-FFI-001']],
   ], 'two electricians are two marks; one electrician\'s update and inspection are one, opening the update');
-  assert.deepEqual(p!.days[4]!.map(v => v.references), [['011LME-SPR-012', '011LME-SPR-011']], 'without a sign-in, a person is known by their name');
-  assert.equal(p!.last?.reportId, 'by-name');
+  assert.deepEqual(p!.days[4]!.map(v => v.references), [['011LME-SPR-011', '011LME-FFI-002']], 'without a sign-in, a person is known by their name, and the update still opens first');
+  assert.equal(p!.days[4]![0]!.reportId, 'same-name');
 });
