@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'pdf-leodis-logo', added: '2026-10-22', audience: 'all', title: 'Leodis logo and accreditations on report PDFs',
+    text: 'Site update and inspection PDFs now carry the Leodis Developments logo at the top of the first page, in place of the empty box marked "LOGO", and the CHAS, REFCOM F-Gas and MCS marks along the foot of every page, in place of the empty boxes. Reports already sent keep the PDF they were made with; a correction or a new report gets the new look. The address and company numbers are still stand-ins until the real ones are supplied. Checked by making example PDFs, not printed.' },
   { id: 'coverage-one-mark', added: '2026-10-22', audience: 'office', title: 'Site coverage: one mark for each person on site',
     text: 'On Site coverage, each mark on a day is now one person who reported from that site, however many reports they sent. Before, an engineer who sent a site update and a first fix inspection on the same day showed as two marks, which looked like two people of that trade on site. Now two "Elec" marks always mean two electricians, the same count of visits as the office overview. Selecting a mark opens that person\'s site update, and pointing at it names every report they sent that day. Checked in a desktop browser and a phone-sized window, light and dark, not on a real phone.',
     link: { label: 'Open Site coverage', href: '/coverage' } },

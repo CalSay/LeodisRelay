@@ -31,6 +31,7 @@ import { BRANDING } from "./branding.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const fontDir = path.join(here, "..", "fonts");
+const assetDir = path.join(here, "..", "assets");
 
 /*
  * Fonts are bundled and registered from disk. Registering from a URL would put a
@@ -119,15 +120,7 @@ const s = StyleSheet.create({
   },
 
   masthead: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  logoBox: {
-    borderWidth: 1,
-    borderColor: RULE,
-    borderStyle: "dashed",
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: WASH,
-  },
-  logoText: { fontSize: 7, letterSpacing: 1.8, color: FAINT, fontWeight: 500 },
+  logo: { objectFit: "contain" },
   companyBlock: { alignItems: "flex-end" },
   companyName: { fontSize: 9, fontWeight: 600 },
   companyLine: { fontSize: 7, color: FAINT, lineHeight: 1.5 },
@@ -537,11 +530,12 @@ export function ReportDocument({ report }: { report: DocReport }) {
     >
       <Page size="A4" style={s.page}>
         <View style={s.masthead}>
-          {/* Sized to the space the real mark will need, so the layout is proven
-              at the right proportions rather than against a gap. */}
-          <View style={[s.logoBox, { width: BRANDING.logo.widthPt, height: BRANDING.logo.heightPt }]}>
-            <Text style={s.logoText}>{BRANDING.logo.label}</Text>
-          </View>
+          {/* Read from disk like the fonts, so an issued document never depends on
+              a network call to draw its own letterhead. */}
+          <Image
+            style={[s.logo, { width: BRANDING.logo.widthPt, height: BRANDING.logo.heightPt }]}
+            src={path.join(assetDir, BRANDING.logo.file)}
+          />
 
           <View style={s.companyBlock}>
             <Text style={s.companyName}>{BRANDING.companyName}</Text>
