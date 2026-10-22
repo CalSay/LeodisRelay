@@ -46,6 +46,89 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `ui-review/defect-waiting/`.
 - Not verified: a real phone or real weak signal (simulated offline and a
   blocked upload in a phone-sized browser).
+## 2026-10-22 — Weekly summary: an earlier week's open issues as they stood
+
+- Why: the coordinator asked for a walk of an office person at 1440 on the
+  busy example data telling a client "how did this project go this week?"
+  from the Weekly summary, project page and PDF. Wrong figure found: the
+  summary's "Open now" was always today's, on every week. Tetley Hall's week
+  of 1 June printed today said 390 open, 222 past target; at the end of that
+  week it was 260 and 138. The Month summary already reads a past month at its
+  end. The open figure was also only at the foot of the Issues section, below
+  every report and issue row. Not a `docs/tasks.json` task, so no status
+  changed. Within Cal's 21 Oct direction (the office's view of progress
+  clearer).
+- Changed: `periodSummary` (lib/weeklySummary.ts) gives `open` (was
+  `openNow`) with `asOf`: the period's last day once it is over, else today.
+  Today it is still `issueFigures`, so this week matches the project sheet;
+  otherwise `isOpenOn`/`isLateOn`/`isToCheckOn` (lib/issueTrend.ts), the rules
+  Issues over time and the Month use. The page says "Open at the end of the
+  week (Sun 18 Oct)" on a week that is over, "Open now" on this week; the
+  footnote says which. The Issues raised figure adds "· 390 open now" or
+  "· 260 open on Sun 7 Jun" on desks and on paper. Help "What's new" line.
+- Decided (Claude): on a phone the figure's open part is hidden (the open line
+  under Issues stays), because the extra line pushed the second row of figures
+  16px below the first screen that #150 keeps them on. On a week that is over,
+  "fixed and waiting to be checked" is words, not the register link, since the
+  register shows today's list. weeklySummary.ts now imports issueTrend.ts,
+  which imports it back; both only call each other inside functions.
+- Verified: `npm run typecheck`, `npm test` (146 + 573, new test for a past
+  week's standing), build. Browser: verify-weekly-summary (46, new checks for
+  last week at 390 and 1440, print, link vs words), weekly-phone (263),
+  issue-figures (48), office-links (65), check-fixes (70),
+  office-weekly-review (53), issue-trend (29), help (36), busy-home (35),
+  role-access (95). Busy data figures looked at in a desktop browser
+  (project files `ui-review/weekly-week-end/`). Not verified: a real phone or
+  printer.
+## 2026-10-22 — Site updates: the same trade's previous visit
+
+- Why: the coordinator asked for a walk of an office person at 1440px opening
+  one received site update and asking "what changed on this site since the
+  last visit?" (busy example data, main 9a91c2b). The Inbox reader and the
+  project's report view said who sent it and what it found, but nothing about
+  when that trade was last there or what they said then: the office had to go
+  back to the register and hunt for the earlier report by hand. Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the office's view of progress clearer); nothing new asked of site.
+- Changed: `tradeVisits` (lib/tradeVisits.ts) finds the same trade's site
+  update before and after the one open, on the same project. Under a site
+  update's title, a line "‹ Previous Electrical update here · Wed 21 Oct, the
+  day before · Sam Spark · SPR-831" and, when there is a later one, "Next
+  Electrical update here ›". Selecting one opens it in the same place (the
+  Inbox reader stays in the Inbox, a project's report in the project). The
+  first update says "None before this one". Help "What's new" line.
+- Decided (Claude): counted as "Latest from site" counts (sent site updates
+  only, a sent correction in place of what it corrects, inspections left out).
+  The trade, not the person, because the office asks when Electrical was last
+  there, whoever went; an update with no trade is matched to the same person.
+  A report's own revisions are never its previous or next visit. Calendar days
+  for the gap ("4 days before"), because that is how the office counts between
+  visits. A side-by-side "what changed" comparison of cards was left out: card
+  text is free-written, so matching cards would guess; opening the two updates
+  is honest and one click.
+- Also fixed (found by the new check's axe run, on main before this): in dark,
+  the "Seen" tag on the picked Inbox row was 4.05:1 (washes stacked), now on
+  the panel colour; on a phone with a report open, the Inbox heading is kept
+  for screen readers (visually hidden) so "Reader" is not an orphan h3.
+- Verified: typecheck, `npm test` (146 + 577, five new unit tests), build.
+  New `scripts/verify-previous-trade-update.mjs` (44 checks, 1440 dark and
+  390 light): the line's words against the hand-made records, stepping back
+  and forward in the Inbox and in the project, a correction in place of what
+  it corrects, an old revision stepping past its correction, another
+  electrician counting, HVAC, a draft and an inspection skipped, no line on an
+  inspection or a trade's only update, and after stepping, "‹ Inbox" (phone)
+  or Back (desk) goes straight to the list (stepping in the Inbox replaces the
+  open report rather than adding to history), axe, tap size, no sideways
+  scroll. Also passed: verify-inbox-phone, -office-inbox, -office-progress,
+  -office-inspection, -help, -accessibility, -role-access, -engineer-layout,
+  -office-sections, -office-desk, -office-actions, -review-queue. A fresh
+  review found no correctness bugs; its two small points (the open report is
+  judged by its summary, as the others are; the phone Back) are fixed. A
+  future visit date can show as Next (left: the visit date is the engineer's).
+  The new check failed once on its first run after a build and passed three
+  times after; not seen again.
+  Walked on the busy seed at 1440 light and dark and 390.
+- Not verified: a real phone or screen reader.
 
 ## 2026-10-22 — Gas Safe Register mark on report PDFs
 
