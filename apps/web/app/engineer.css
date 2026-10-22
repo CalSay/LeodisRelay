@@ -144,6 +144,9 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-sum dd{margin:2px 0 0;font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
 .eng-sum dd small{display:block;font-size:11px;color:var(--text-3);font-family:var(--sans);letter-spacing:0;}
 .eng-sum dd.late{color:var(--alert);}.eng-sum dd.soon{color:var(--caution);}
+.eng-sum-1{grid-template-columns:1fr;}.eng-sum-2{grid-template-columns:repeat(2,1fr);}.eng-sum-3{grid-template-columns:repeat(3,1fr);}
+/* An optional signature, folded until it is wanted. */
+.eng-sign-open{min-height:48px;font-size:15px;margin-bottom:12px;}
 .eng-finds{display:grid;gap:6px;}
 .eng-does{margin:12px 0 0;}
 .eng-does .eng-row{cursor:default;}
@@ -333,7 +336,7 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
   .eng-report-editor{padding-bottom:var(--actionbar-space,190px);}
   .eng-workspace h1{font-size:26px;}
   .eng-project-context{flex-wrap:wrap;}.eng-panel{padding:14px;}.eng-report-link{flex-wrap:wrap;}
-  .eng-sum{grid-template-columns:repeat(2,1fr);}.eng-sum div:nth-child(2n){border-right:0;}.eng-sum div:nth-child(-n+2){border-bottom:1px solid var(--line);}
+  .eng-sum:not(.eng-sum-1,.eng-sum-3){grid-template-columns:repeat(2,1fr);}.eng-sum:not(.eng-sum-3) div:nth-child(2n){border-right:0;}.eng-sum:not(.eng-sum-1,.eng-sum-2,.eng-sum-3) div:nth-child(-n+2){border-bottom:1px solid var(--line);}
   .eng-card{padding:14px 12px;border-left-width:5px;}
   .eng-card .head{align-items:stretch;}
   .eng-card .head>div{width:100%;justify-content:space-between;}
