@@ -46,6 +46,7 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   `ui-review/defect-waiting/`.
 - Not verified: a real phone or real weak signal (simulated offline and a
   blocked upload in a phone-sized browser).
+
 ## 2026-10-22 — Weekly summary: an earlier week's open issues as they stood
 
 - Why: the coordinator asked for a walk of an office person at 1440 on the
