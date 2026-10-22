@@ -41,7 +41,7 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
   useEffect(() => { if (window.matchMedia('(max-width:700px)').matches) window.scrollTo(0, 0); }, [depth, s?.code, id]);
   const projects = s && <ProjectsCol key="projects" ctx={ctx} current={s} />;
   const main = <div key="main" className="col col-main">
-      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h2>{s ? 'Details' : 'Overview'}</h2><i>{s ? s.project.projectNumber : 'Office'}</i></div>
+      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h2>{s ? 'Details' : 'Overview'}</h2>{s && <i>{s.project.projectNumber}</i>}</div>
       <div className="colpad">
         {!ctx.snap ? <div className="loading">Loading office records</div>
           : kind === 'report' && id ? <ReportReader ctx={ctx} id={id} />
@@ -195,7 +195,8 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   // The totals, overdue count and latest reports that used to sit here are in that list, the
   // action groups and the Inbox, so they are no longer repeated; nor are the tab counts above it.
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h3>Office position</h3><div className="rowsub">Updated {fmtWhen(snap.loadedAt)}</div></div>
+    {/* One line: the top bar already names the company, so the title says only what this is and how fresh it is. */}
+    <div className="sheet-title office-title"><div><h3>Office position</h3><span className="rowsub">Updated {fmtWhen(snap.loadedAt)}</span></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link>{safetyRecords && <Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions{safety ? ` · ${safety.open} open` : ''}</Link>}</div></div>
     {!snap.reports.length && !snap.issues.length && !snap.variations.length && <div className="note info office-first" role="status"><span>
       <b>Nothing has come in from site yet.</b> Reports arrive in the Inbox as engineers send them, and their defects and variations fill the Issues and Variations registers. Choose a project to see its sheet, or open Help for how RELAY works.
@@ -299,14 +300,15 @@ function actionGroups(ctx: Ctx): ActionGroup[] {
   const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
   const reportRow = (r: ReportSummary, action?: ReactNode) => <div key={r.id}><a className="rt" href={`#/projects/${r.projectId}/report/${r.id}`}><b>{project(r.projectId)} · {r.author}</b><span>{shortRef(r.reference)} · received {fmtReceived(r.serverAcknowledgedAt, ctx.day)}</span></a>{action}</div>;
   const issueRow = (i: Issue, sub: string, action?: ReactNode) => <div key={i.id}><a className="rt" href={`#/projects/${i.projectId}/issue/${i.id}`}><b>{i.description}</b><span>{project(i.projectId)} · {sub}</span></a>{action}</div>;
+  // Every row's button is the quiet kind: a screen of gold buttons says nothing about which comes first.
   return [
     // Opening a report marks it seen, so each row is a link and nothing more.
     { key: 'notAck', title: 'Not seen yet', sub: 'Received in the last two weeks, nobody in the office has opened it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: anyReports ? 'Every report from the last two weeks has been seen.' : 'No reports received yet.',
       rows: a.notRead.slice(0, 4).map(r => reportRow(r)) },
     { key: 'unassigned', title: 'Unassigned issues', sub: 'Open, nobody owns the action', n: a.unassigned.length, tone: 'soon', all: '#/issues/show/unassigned', empty: anyOpen ? 'Every open issue has an owner.' : 'No open issues.',
-      rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · ${issueTradeWords(i)} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)) },
+      rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · ${issueTradeWords(i)} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <BtnQ className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</BtnQ>)) },
     { key: 'verify', title: 'Fixed, to check', sub: 'Put forward as fixed; someone else checks it', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be checked.',
-      rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · ${againWords(i) ? `${againWords(i)} · ` : ''}${waitingWords(i, ctx.day)}`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: () => Promise.resolve(a.verify) })}>Verify</Btn>)) },
+      rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · ${againWords(i) ? `${againWords(i)} · ` : ''}${waitingWords(i, ctx.day)}`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: () => Promise.resolve(a.verify) })}>Verify</BtnQ>)) },
   ];
 }
 /** On a phone the groups stack under the project list, so their counts are gathered at the top, each a tap from its group. */
