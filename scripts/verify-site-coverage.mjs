@@ -32,7 +32,8 @@ const report=(extra)=>{const r={id:randomUUID(),projectId:'proj-011lme',referenc
 const todays=report({reference:'011LME-SPR-101'});
 const theirs=report({reference:'011LME-SPR-102',visitDate:addDays(today,-1),author:hvac.name,authorId:hvac.id,authorTrade:'HVAC'});
 const older=report({reference:'011LME-SPR-090',visitDate:addDays(previous,2)});
-const quietLast=report({reference:'014LME-SPR-050',projectId:'proj-014lme',visitDate:addDays(today,-10),author:hvac.name,authorId:hvac.id,authorTrade:'HVAC'});
+// The quiet site's last report falls on the Friday before the fortnight, whatever day the check runs (today - 10 fell inside it from Thursday to Sunday).
+const quietLast=report({reference:'014LME-SPR-050',projectId:'proj-014lme',visitDate:addDays(start,-3),author:hvac.name,authorId:hvac.id,authorTrade:'HVAC'});
 const draft=report({reference:'014LME-SPR-051',projectId:'proj-014lme',state:'draft',serverAcknowledgedAt:undefined,lastSavedAt:now});
 const tender=report({reference:'021LME-SPR-001',projectId:'proj-021lme'});
 const quietDays=workingDaysBetween(quietLast.visitDate,today);
