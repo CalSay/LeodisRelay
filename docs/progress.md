@@ -4,6 +4,65 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Attention shows what is waiting, kind by kind
+
+- Why: a walk of an office manager at 1440px on main 09bd55c (busy example
+  data from `scripts/seed-busy-projects.mjs`) asking of each overview figure
+  "does this tell me what to act on today?". Checked against the records:
+  the top bar's "Attention 1,369" was 614 overdue issues (the companies'
+  work) + 363 fixes to check + 84 unassigned + 308 variations to price or
+  instruct. No other screen shows that sum as one list, and opening it drew
+  all 1,369 rows. "Unassigned issues 84" and "Fixed, to check 363" match the
+  records and each one needs doing (59 of the 84 raised in the last two
+  weeks; 248 of the 363 put forward over 90 days ago, but an old unchecked
+  fix still needs checking, so they were left as they are; the pile is how
+  the example data is made). Asked for by the coordinator as the walk's one
+  pick; not a `docs/tasks.json` task, so no status changed. Decided without
+  asking Cal (his autonomy message), within his 07:02 direction (the
+  office's view of progress) and 12:59 ask (clear section edges).
+- Changed: the Attention button says "Attention" with a dot (red when
+  anything waits, green when nothing; screen readers hear "something is
+  waiting" or "nothing waiting"; the dot is filled when something waits
+  and an empty ring when nothing does, so it is not colour alone), not a
+  summed figure. Its list
+  (`attentionGroups` in `office/model.ts`, `OfficeDesk.tsx`) has one group a
+  kind: reports that could not be processed, safety,
+  permits and deliveries (listed in full, one line a project), overdue
+  issues, variations done not instructed, reports awaiting review, disputed
+  issues, fixed to check, unassigned issues, variations needing a quote
+  (deliveries now sit with safety and permits, ahead of overdue issues).
+  Each group's heading gives its figure and opens the Inbox, Issues or
+  Variations filter with the same rule; opened again from that same list
+  (after changing its filter or project) it starts the list again; the
+  first one is listed under it with
+  its button (Verify still goes on through every fix on the list). "Needs a
+  quote" counts every unpriced variation, done or not, like its filter.
+  The overview groups, "Also needs attention", each project's Needs action
+  and the tab badges are unchanged.
+- Decided (Claude): no summed figure at all rather than a smaller one; any
+  total of unlike jobs (late company work, checks, owners, prices) has no
+  single list behind it. One example per kind, so every kind fits the first
+  screen of the list. Each project's "Needs action" is still a sum, but it
+  opens that project's own Needs action list, so it was left.
+- Verified: typecheck, `npm test`, build. New
+  `scripts/verify-attention-figures.mjs` (76 checks, busy seed, 1440px light
+  and dark, 390px light): no figure on the button and its spoken words; one
+  group a kind in order; each figure equals the records (614, 86, 363, 84,
+  308) and the filter chip it opens; one row each; axe; no sideways scroll.
+  `verify-office-top-bar`, `verify-permits`, `verify-deliveries` and
+  `verify-day-walkthrough` updated from "Attention N equals the lines" to the
+  site group's figure equalling its lines. Also passed: office-top-bar,
+  permits, deliveries, day-walkthrough, help, office-actions, office-desk,
+  office-phone, office-landing, office-sections, office-words,
+  not-seen-pile, check-fixes, role-access. Screens: project files `ui-review/attention-figures/before|after`.
+- Not verified: a real phone or laptop, browsers other than Chromium 141.
+- Known limit: the figures count the Active and Defects Liability projects
+  the desk shows; the Issues, Variations and Inbox filters also count records
+  left on a project with another status (as the tab badges already do), so
+  they can be higher there. Not seen on the busy data (all its projects are
+  Active or Defects Liability). Not checked by the new script: the Inbox and
+  Disputed groups, which the busy data has none of.
+- Next: none from this walk.
 ## 2026-10-22 — "Not seen yet" counts the last two weeks
 
 - Why: a walk of an office manager at 1440 and 390px on main 199503f (busy

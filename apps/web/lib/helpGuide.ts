@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'attention-by-kind', added: '2026-10-22', audience: 'office', title: 'Attention shows what is waiting, kind by kind',
+    text: 'In the office, Attention in the top bar no longer adds everything into one number. It has a dot when something is waiting, and its list now has one line for each kind: overdue issues, variations done but not instructed, fixes to check, unassigned issues, disputed issues, variations needing a quote, and any report that could not be processed or is waiting for review. Each line gives the same figure as the Issues, Variations or Inbox list it opens, with the first one underneath and its button (Verify, Assign, Price). Safety, permit and delivery lines, when those are switched on, are listed in full. Checked in a desktop browser and a phone-sized window, not on a real phone.',
+    link: { label: 'Open the office', href: '/office' } },
   { id: 'not-seen-two-weeks', added: '2026-10-22', audience: 'office', title: 'Not seen yet means the last two weeks',
     text: '"Not seen yet" in the office now counts the reports received in the last two weeks that nobody in the office has opened, so it can come down to nought once you have read what came in. Older reports nobody opened are no longer counted; the Inbox says how many there are and "List them too" shows them. A report that a correction has replaced is not counted either: open the correction. Nothing is marked seen for you, so an engineer still sees "Seen by the office" only when someone opened it. Checked in a desktop browser and a phone-sized window, not on a real phone.',
     link: { label: 'Open the Inbox', href: '/office#/inbox/show/notAck' } },

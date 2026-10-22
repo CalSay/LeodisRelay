@@ -183,12 +183,12 @@ try {
     const also=page.locator('.sheet > .rmenu').last();
     await also.getByText(ONE_TITLE).waitFor();
     check(/Edmundson Electrical: 2 reels short, rest promised Thursday · arrived/.test(await also.locator('a',{hasText:ONE_TITLE}).innerText()),'office: Also needs attention says who, what was short and when it arrived');
-    const bell=page.getByRole('button',{name:/^Attention \d+$/});
+    const bell=page.getByRole('button',{name:/^Attention\s*,\s*something is waiting$/});
     await bell.click();
     const pop=page.locator('.attn-pop');
     const titles=await pop.locator('.mini b').allInnerTexts();
     check(titles.includes(ONE_TITLE),`office: the Attention list has the delivery: ${JSON.stringify(titles.slice(0,6))}`);
-    check(Number((await bell.innerText()).match(/\d+/)[0])===titles.length,'office: the Attention count is the number of lines');
+    check(await pop.locator('.attn-group',{hasText:'Safety, permits and deliveries'}).evaluate(g=>Number(g.querySelector('.attn-gh b').textContent)===g.querySelectorAll('.mini').length),'office: the Safety, permits and deliveries figure is the number of its lines, all listed');
     await pop.getByRole('link',{name:ONE_TITLE}).click();
     await page.waitForURL(new RegExp(`/deliveries\\?project=${P}&returnTo=`));await cards(page).first().waitFor();
     check(await page.locator('a.back').first().innerText()==='← Back to Office','office: Back says Back to Office');

@@ -14,7 +14,7 @@ import type { FixtureProject } from '@/lib/fixtures';
 import type { Issue } from '@/lib/types';
 import type { Ctx, Route } from './ctx';
 import { Dialogs, type Dialog } from './Dialogs';
-import { attention, isActive, isOverdue, projectStats, shortRef, today, type Snapshot } from './model';
+import { attention, attentionGroups, isActive, isOverdue, projectStats, shortRef, today, type Snapshot } from './model';
 import { ProjectsView } from './ProjectsView';
 import { InboxView } from './InboxView';
 import { IssuesView } from './IssuesView';
@@ -23,6 +23,8 @@ import { AdminView, TeamView } from './TeamAdmin';
 import { Btn, BtnQ } from './bits';
 
 const REPORTABLE = ['4. Active', '5. Defects Liability'];
+/** How many of each kind the Attention list shows under its figure, so every kind fits on one screen; the figure opens the rest. */
+const ATTN_SHOWN = 1;
 
 /**
  * The Developments office: one workspace for Managers and Admins.
@@ -124,6 +126,14 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
   ];
   const results = q.trim().length >= 2 ? search(q, ctx) : [];
 
+  const attnGroups = useMemo(() => attentionGroups(attn), [attn]);
+  // A group opened again from the list it already opened: the filter or project may have been changed since, so start
+  // that list again from the bare tab, or the heading would do nothing and its figure would not match the screen.
+  const again = (e: React.MouseEvent, href: string) => {
+    if (window.location.hash !== href) return;
+    e.preventDefault(); e.stopPropagation(); setAttnOpen(false);
+    go(`#/${href.split('/')[1]}`); setTimeout(() => go(href), 0);
+  };
   const attnFixes = attn.flatMap(x => x.action?.kind === 'verify' && x.action.issue ? [x.action.issue] : []);
   const actionFor = (i: typeof attn[number]) => {
     const a = i.action; if (!a) return null;
@@ -151,7 +161,7 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
           {q.trim().length >= 2 && <Link className="results-all" href={`/search?${new URLSearchParams({ q: q.trim(), returnTo: here })}`}>Search the words in every report, issue and variation →</Link>}</div>}
       </div>
       <div className="topbar-right">
-        <button type="button" className={`bell ${attn.length ? '' : 'quiet'}`} onClick={() => setAttnOpen(o => !o)} aria-expanded={attnOpen}>Attention <b>{attn.length}</b></button>
+        <button type="button" className={`bell ${attn.length ? '' : 'quiet'}`} onClick={() => setAttnOpen(o => !o)} aria-expanded={attnOpen}>Attention<i className="bell-dot" aria-hidden="true" /><span className="sr">{attn.length ? ', something is waiting' : ', nothing waiting'}</span></button>
         <form action="/api/auth/signout" method="POST" style={{ display: 'inline' }}><button type="submit" className="whoami" title="Sign out">{me.name} · <em>{me.role}</em></button></form>
         <ThemeToggle />
         <button type="button" className="tbtn tbtn-help" onClick={() => setDialog({ kind: 'help' })}>Help{!newcomer && newToYou > 0 && <i className="tbtn-new" aria-label={`${newToYou} new`}>{newToYou}</i>}</button>
@@ -159,11 +169,15 @@ export function OfficeDesk({ fallback }: { fallback: string }) {
         <Link className="tbtn" href="/">Switch company</Link>
       </div>
       {attnOpen && <div className="attn-pop">
-        <div className="panel-head"><h2 style={{ color: attn.length ? 'var(--alert)' : 'var(--ok)' }}>Needs attention</h2><a className="more" href="#/issues">Issues →</a></div>
-        {attn.length ? attn.map(i => <div key={i.key} className="mini">
-          <div className="mini-b"><a href={i.go}><b>{i.title}</b></a><div className="rowsub">{i.sub}</div><div style={{ marginTop: 6 }}><span className={`tag ${i.tag.cls}`}>{i.tag.label}</span></div></div>
-          {actionFor(i)}
-        </div>) : <div className="empty">Nothing needs attention.</div>}
+        <div className="panel-head"><h2 style={{ color: attn.length ? 'var(--alert)' : 'var(--ok)' }}>Needs attention</h2></div>
+        {/* One group a kind, each figure the same as the list it opens, with the first of them underneath. */}
+        {attnGroups.length ? attnGroups.map(g => <section key={g.key} className="attn-group" aria-label={g.title}>
+          <h3 className="attn-gh">{g.go ? <a href={g.go} onClick={e => again(e, g.go!)}><span>{g.title}</span><b>{g.n}</b><span aria-hidden="true">›</span></a> : <span className="attn-gh-in"><span>{g.title}</span><b>{g.n}</b></span>}</h3>
+          {(g.go ? g.items.slice(0, ATTN_SHOWN) : g.items).map(i => <div key={i.key} className="mini">
+            <div className="mini-b"><a href={i.go}><b>{i.title}</b></a><div className="rowsub">{i.sub}</div><div style={{ marginTop: 6 }}><span className={`tag ${i.tag.cls}`}>{i.tag.label}</span></div></div>
+            {actionFor(i)}
+          </div>)}
+        </section>) : <div className="empty">Nothing needs attention.</div>}
       </div>}
     </header>
     <nav className="hnav" aria-label="Office">

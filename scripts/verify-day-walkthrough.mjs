@@ -338,14 +338,14 @@ try {
     const also=p.locator('.sheet > .rmenu').last();
     await also.getByText('2 safety actions open').waitFor();checks++;
     ok(await also.getByText('Podium P1, plant room: tower inspection due').count()===1,`${label}: Also needs attention has the podium due`);
-    const bell=p.getByRole('button',{name:/^Attention \d+$/});
+    const bell=p.getByRole('button',{name:/^Attention\s*,\s*something is waiting$/});
     await bell.click();
     const pop=p.locator('.attn-pop');
     const titles=await pop.locator('.mini b').allInnerTexts();
     const tower=titles.indexOf('Podium P1, plant room: tower inspection due'),actions=titles.indexOf('2 safety actions open');
     ok(tower===0&&actions===1,`${label}: Attention leads with the podium due, then the open actions: ${JSON.stringify(titles.slice(0,4))}`);
     ok(!titles.includes('Weekly safety inspection due'),`${label}: no weekly inspection due, one was sent today`);
-    ok(Number((await bell.innerText()).match(/\d+/)[0])===titles.length,`${label}: the Attention count is the number of lines`);
+    ok(await pop.locator('.attn-group',{hasText:'Safety, permits and deliveries'}).evaluate(g=>Number(g.querySelector('.attn-gh b').textContent)===g.querySelectorAll('.mini').length),`${label}: the Safety, permits and deliveries figure is the number of its lines, all listed`);
     const SHORT='Short delivery from Edmundson Electrical, not sorted yet';
     ok(titles.includes(SHORT),`${label}: Attention has the short delivery`);
     ok(!titles.some(t=>/permit/i.test(t)),`${label}: no permit line, the permit was closed in time`);

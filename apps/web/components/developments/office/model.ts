@@ -228,6 +228,34 @@ export function attention(stats: ProjectStats[], day: string, safety?: SafetyAct
   return out.sort((a, b) => rank(a) - rank(b));
 }
 
+export interface AttentionGroup { key: string; title: string; n: number; go?: string; items: AttentionItem[] }
+const kindOf = (t: AttentionItem) => t.key.slice(0, 2);
+/**
+ * The Attention list, one group a kind. Each figure uses the same rule as the
+ * Inbox, Issues or Variations filter it opens, over the projects the desk
+ * shows (Active and Defects Liability; the filters also count any record left
+ * on a project with another status, as the tab badges do). The safety, permit and delivery lines are
+ * one a project and open their own pages, so they are listed whole. A summed
+ * figure is not given: late company work, fixes to check, issues to assign
+ * and variations to price are different jobs, and a total of them told the
+ * office nothing it could work down.
+ */
+const GROUPS: { key: string; title: string; go?: string; has: (t: AttentionItem) => boolean }[] = [
+  { key: 'ne', title: 'Reports that could not be processed', go: '#/inbox/show/failed', has: t => kindOf(t) === 'ne' },
+  { key: 'site', title: 'Safety, permits and deliveries', has: t => ['tw', 'sa', 'pw', 'si', 'dl'].includes(kindOf(t)) },
+  { key: 'od', title: 'Overdue issues', go: '#/issues/show/overdue', has: t => kindOf(t) === 'od' },
+  { key: 'vx', title: 'Variations done, not instructed', go: '#/variations/show/exposed', has: t => kindOf(t) === 'vx' },
+  { key: 'rv', title: 'Reports awaiting review', go: '#/inbox/show/review', has: t => kindOf(t) === 'rv' },
+  { key: 'dp', title: 'Disputed issues', go: '#/issues/show/disputed', has: t => kindOf(t) === 'dp' },
+  { key: 'vf', title: 'Fixed, to check', go: '#/issues/show/verify', has: t => kindOf(t) === 'vf' },
+  { key: 'ua', title: 'Unassigned issues', go: '#/issues/show/unassigned', has: t => kindOf(t) === 'ua' },
+  // The Variations filter "Needs a quote" counts every one not priced, done or not, so this does too.
+  { key: 'vq', title: 'Variations needing a quote', go: '#/variations/show/unpriced', has: t => !!t.action?.variation && isUnpriced(t.action.variation) },
+];
+export function attentionGroups(items: AttentionItem[]): AttentionGroup[] {
+  return GROUPS.map(g => { const mine = items.filter(g.has); return { key: g.key, title: g.title, go: g.go, n: mine.length, items: mine }; }).filter(g => g.n > 0);
+}
+
 /**
  * Safety actions' lines for Needs attention, on the projects in view, each
  * linking to that project's Safety actions page. Towers due, open actions,

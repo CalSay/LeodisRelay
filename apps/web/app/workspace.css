@@ -47,6 +47,9 @@ body:has(.ws){overflow:hidden auto}
 .ws .bell:hover{border-color:var(--line-2)}
 .ws .bell b{color:var(--alert);font-weight:500}
 .ws .bell.quiet b{color:var(--ok)}
+.ws .bell-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--alert);margin-left:6px;vertical-align:middle}
+/* Filled when something waits, an empty ring when nothing does, so the two differ by shape and not only colour. */
+.ws .bell.quiet .bell-dot{background:none;box-shadow:inset 0 0 0 2px var(--ok)}
 .ws .tbtn{font-family:var(--sans);font-size:13px;color:var(--text-2);padding:4px 6px}
 .ws .tbtn:hover{color:var(--text)}
 .ws .tbtn-new{font:500 10px var(--mono);font-style:normal;margin-left:6px;padding:1px 6px;border-radius:9px;background:var(--acc);color:var(--acc-ink,#fff)}
@@ -54,6 +57,13 @@ body:has(.ws){overflow:hidden auto}
 .ws .themebtn{display:inline-flex;align-items:center;gap:6px;font-family:var(--sans);font-size:13px;color:var(--text-2);border:1px solid var(--line);padding:4px 8px;min-height:0;border-radius:var(--r);margin:0;min-width:0}
 .ws .themebtn:hover{color:var(--acc);border-color:var(--acc)}
 .ws .attn-pop{position:absolute;right:24px;top:56px;width:440px;background:var(--panel);border:1px solid var(--alert);border-top:0;border-left-width:3px;box-shadow:0 12px 28px rgba(0,0,0,.14);z-index:6;max-height:70vh;overflow:auto}
+.ws .attn-group{border-top:2px solid var(--edge)}
+.ws .attn-group:first-of-type{border-top:0}
+.ws .attn-gh{margin:0;font:inherit}
+.ws .attn-gh>a,.ws .attn-gh-in{display:flex;align-items:baseline;gap:var(--s3);padding:var(--s3) var(--s4);background:var(--panel-2);border-bottom:1px solid var(--line);color:var(--text);font-size:14px;font-weight:500}
+.ws .attn-gh>a:hover{background:var(--acc-wash)}
+.ws .attn-gh b{margin-left:auto;font:500 16px var(--sans);color:var(--alert)}
+.ws .attn-gh>a>span[aria-hidden]{color:var(--text-3)}
 .ws .hnav{flex:none;display:flex;background:var(--panel);border-bottom:1px solid var(--edge);padding:0 var(--s5)}
 .ws .hnav a{font-family:var(--sans);font-size:14px;color:var(--text-2);padding:var(--s3) var(--s4);border-bottom:2px solid transparent;display:flex;align-items:center;gap:var(--s2)}
 .ws .hnav a:hover{color:var(--text)}
