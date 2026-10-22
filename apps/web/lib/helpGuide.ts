@@ -29,15 +29,12 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
-<<<<<<< HEAD
   { id: 'variations-team-admin-edges', added: '2026-10-22', audience: 'office', title: 'Variations, Team and Admin: calmer and clearer',
     text: 'On the Variations tab, Price the oldest is now the one gold button: each row\'s Price and Instruct are plain, so the page no longer shows a gold button on every line, and the two rows of filters read as one block. On a phone a variation leaves out Quoted, Instructed and Margin until there is a figure. On Team, the Admin\'s panel for a person stays beside the list when they are chosen far down it. Each part of these pages has a clearer edge. Nothing was added or taken away. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
     link: { label: 'Open Variations', href: '/office#/variations' } },
-=======
   { id: 'handover-diary-edges', added: '2026-10-22', audience: 'all', title: 'Before handover and the site diary: clearer parts',
     text: 'Before handover now starts each trade\'s snags under a rule, so Electrical, HVAC and P&H no longer run into each other on a long list, and each list, report and figure has a clearer edge, here and in the site diary and Site coverage. On a phone the buttons, filters and report links are easier to tap. Nothing was added or taken away, and the printed Before handover is unchanged. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
     link: { label: 'Open the site diary', href: '/diary' } },
->>>>>>> origin/main
   { id: 'summaries-cards', added: '2026-10-22', audience: 'all', title: 'Weekly and month summaries: clearer parts',
     text: 'On screen, the Weekly summary\'s week and month now show each part (On site, Issues, Variations, and each part of the month) as its own card with a clear edge, instead of one long sheet where the parts ran into each other. The figures and what they count are unchanged, and the printed copy is unchanged. Issues over time now prints or saves as a PDF without the menu bar and project choice. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
     link: { label: 'Open the Weekly summary', href: '/weekly-summary' } },
