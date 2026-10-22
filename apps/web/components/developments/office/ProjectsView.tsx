@@ -630,11 +630,14 @@ const SIGNED_HOW = { drawn: 'Signature drawn by', typed: 'Signed by typing the n
  * in the Inbox reader; elsewhere it opens in the project.
  */
 function TradeVisitsBar({ report, ctx, code, inInbox }: { report: Report; ctx: Ctx; code: string; inInbox: boolean }) {
-  const visits = tradeVisits(report, ctx.snap?.reports ?? []);
+  // The summary carries the inspection counts, so this report is judged as the others are.
+  const visits = tradeVisits(ctx.snap?.reports.find(r => r.id === report.id) ?? report, ctx.snap?.reports ?? []);
   if (!visits) return null;
   const whose = visits.trade ? `${visits.who} update` : `update from ${visits.who}`;
   const href = (id: string) => inInbox ? `#/inbox/${id}` : `#/projects/${code}/report/${id}`;
-  const step = (v: TradeVisit, direction: 'before' | 'after') => <a className={`trade-visit ${direction === 'before' ? 'prev' : 'next'}`} href={href(v.id)}>
+  const step = (v: TradeVisit, direction: 'before' | 'after') => <a className={`trade-visit ${direction === 'before' ? 'prev' : 'next'}`} href={href(v.id)}
+    // In the Inbox, stepping replaces the open report, so "‹ Inbox" on a phone still goes straight back to the list.
+    onClick={inInbox ? e => { e.preventDefault(); window.location.replace(href(v.id)); } : undefined}>
     <span className="k">{direction === 'before' ? <><span aria-hidden="true">‹ </span>Previous {whose} here</> : <>Next {whose} here<span aria-hidden="true"> ›</span></>}</span>
     <span className="v"><b>{dayShort(v.visitDate)}</b>, {gapWords(v.visitDate, report.visitDate, direction)} · {v.author} · <span className="ref">{shortRef(v.reference)}</span></span></a>;
   return <nav className="trade-visits" aria-label={`Other ${visits.trade ? `${visits.who} updates` : `updates from ${visits.who}`} on this site`}>

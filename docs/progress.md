@@ -35,12 +35,22 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the panel colour; on a phone with a report open, the Inbox heading is kept
   for screen readers (visually hidden) so "Reader" is not an orphan h3.
 - Verified: typecheck, `npm test` (146 + 577, five new unit tests), build.
-  New `scripts/verify-previous-trade-update.mjs` (42 checks, 1440 dark and
+  New `scripts/verify-previous-trade-update.mjs` (44 checks, 1440 dark and
   390 light): the line's words against the hand-made records, stepping back
   and forward in the Inbox and in the project, a correction in place of what
   it corrects, an old revision stepping past its correction, another
   electrician counting, HVAC, a draft and an inspection skipped, no line on an
-  inspection or a trade's only update, axe, tap size, no sideways scroll.
+  inspection or a trade's only update, and after stepping, "‹ Inbox" (phone)
+  or Back (desk) goes straight to the list (stepping in the Inbox replaces the
+  open report rather than adding to history), axe, tap size, no sideways
+  scroll. Also passed: verify-inbox-phone, -office-inbox, -office-progress,
+  -office-inspection, -help, -accessibility, -role-access, -engineer-layout,
+  -office-sections, -office-desk, -office-actions, -review-queue. A fresh
+  review found no correctness bugs; its two small points (the open report is
+  judged by its summary, as the others are; the phone Back) are fixed. A
+  future visit date can show as Next (left: the visit date is the engineer's).
+  The new check failed once on its first run after a build and passed three
+  times after; not seen again.
   Walked on the busy seed at 1440 light and dark and 390.
 - Not verified: a real phone or screen reader.
 

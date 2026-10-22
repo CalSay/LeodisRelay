@@ -97,6 +97,11 @@ try {
     check(flat(await prev.innerText())===`‹ Previous Electrical update here ${words(E,C)}`,`${label}: another electrician's update counts as the trade's previous visit: ${flat(await prev.innerText())}`);
     check(flat(await next.innerText())===`Next Electrical update here › ${words(D,C)}`,`${label}: and the next one is today's: ${flat(await next.innerText())}`);
     await next.click();await page.waitForFunction(id=>location.hash===`#/inbox/${id}`,D.id);await opened(D);check(true,`${label}: next steps forward again`);
+    // Opened from the list, stepping back and forth and then "‹ Inbox" lands on the list in one tap, not on the last report read.
+    await page.goto(`${base}/office#/inbox`);await page.locator('tbody tr').filter({hasText:D.reference}).first().click();await opened(D);
+    await prev.click();await opened(C);await next.click();await opened(D);
+    if(phone){await page.getByRole('button',{name:'Back to Inbox'}).click();}else{await page.goBack();}
+    await page.waitForFunction(()=>location.hash==='#/inbox');check(true,`${label}: ${phone?'"‹ Inbox"':'browser Back'} after stepping goes straight to the list`);
 
     // In the project: Ali's update steps back to the correction, never to the report it replaced.
     await page.goto(`${base}/office#/projects/${P}/report/${E.id}`);await opened(E);await bar.waitFor();
