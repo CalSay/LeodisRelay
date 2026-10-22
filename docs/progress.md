@@ -4,6 +4,44 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Release 1 polish O6: Site coverage, Before handover, site diary
+
+- Why: task O6 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch";
+  21 Oct 12:59: sections must not blend into one). Branched after O5 (#196)
+  merged (82b06f7). Before and after screenshots, 1440 light and dark and 390
+  light and dark (office manager, and the engineer for Before handover and the
+  diary), first screen and full page, are in the project files under
+  `ui-review/release-1/O6/`. Busy example data, 40 days, Tetley Hall.
+- Found: the three pages were already in good order and scrolled sideways
+  nowhere. The rest was small: every card edge used `--line`, which all but
+  disappears in dark mode, while O2 to O5 moved to `--line-2`; on Before
+  handover the 74 open snags were one card in which Electrical, HVAC and P&H
+  followed each other with only a small heading between them; on a phone the
+  coverage marks were 28px tall, the handover controls and the diary's
+  filters 44px, the diary's linked records 40px, and the report and issue
+  references a single text line; the coverage notes ran 1,190px wide at 1440.
+- Changed (each page's own CSS only, appended blocks): card edges `--line-2`;
+  Before handover's section headings sit over a rule and each trade after the
+  first starts under one; Snag list to print 48px; on a phone the project
+  choice and Print are 48px and Print is full width; Site coverage notes
+  under a rule at 82 characters; in the diary a photograph that has not
+  loaded no longer spills its description out of its square. Phone tap
+  targets 48px: coverage marks, diary filters, inputs, linked records, Show
+  earlier days, the diary's report and revision links and each Before
+  handover row's reference (rows are a little taller on a phone). A figure
+  on Before handover still shows a stronger edge on hover.
+  Before handover's changes are screen only, so the printed copy is
+  unchanged. #173's quiet-trades line and every figure are unchanged. No
+  components, routes, data or `globals.css` tokens changed. Help "What's new"
+  line.
+- Verified: typecheck, `npm test` (146 + 591), build; verify-coverage-one-mark
+  (17), -coverage-quiet-trades (37), -before-handover (33), -site-diary (43),
+  -role-access (95), -accessibility (584). verify-site-coverage fails at
+  "office: a draft is not a visit", the same on main without this change (the
+  known Thursday-to-Sunday failure until #142 merges).
+- Not verified: a real phone, a real printer, a screen reader. The busy data's
+  photographs have no image files, so the diary screenshots show empty
+  squares where photographs would be.
 ## 2026-10-22 — Release 1 polish E4: defects and variations
 
 - Why: task E4 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
