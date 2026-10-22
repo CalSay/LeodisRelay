@@ -42,6 +42,54 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a real phone, a real printer, a screen reader. The busy data's
   photographs have no image files, so the diary screenshots show empty
   squares where photographs would be.
+## 2026-10-22 — Release 1 polish E4: defects and variations
+
+- Why: task E4 in `docs/release-1.md` (Cal, 22 Oct 10:02: UI "top notch" on
+  the engineer's phone). Branched after E3 (#195) merged (5bcc556).
+  Screenshots before and after, 390px light and dark and 1440px light, are in
+  `ui-review/release-1/E4/`: Flag a defect empty and filled, Defect not sent
+  yet, the receipt, the receipt with a photo of the fix, a new variation
+  card, a sent update with one variation, and a variation's page with the
+  office's note, done on a say-so, and instructed.
+- What the walk found: on Flag a defect the two boxes sat about 50px apart
+  on a phone (the grid gap plus each box's margin) and at a desk the photo box
+  stretched to the height of the form. "Defect not sent yet" still said "Sent
+  on its own, straight away" under the heading and repeated the site's name
+  as a heading of its own. On the receipt, once a photo of the fix was taken
+  there were two gold buttons (Back to Site and Put forward as fixed); "View
+  project issues" was grey while "Open issue" above it was white; at a desk
+  the buttons ran the full 1070px; "Remove photo" was 44px. On a variation's
+  page the office's answer was said twice (a tag at the top, then the band),
+  the instructed date read "2026-10-22", the history's dates broke over three
+  lines, a "Variation" tag sat on a page that is only ever a variation, the
+  note box was the office's panel style, and Back was 41 to 44px.
+- Changed: one block at the end of `engineer.css`, scoped to `.eng-defect`,
+  `.eng-defect-receipt` and `.eng-variation`: one 16px gap between the
+  defect's boxes, the photo box its own height at a desk, Remove photo 48px,
+  the receipt a 560px column at a desk, both quiet buttons white, and with a
+  photo of the fix Back to Site turns to a plain outlined button so Put
+  forward as fixed is the one gold button; on a variation Back 48px, the
+  history's date column wide enough for "Thu 22 Oct". `IndividualDefect`: the
+  "Sent on its own" line and the site's name heading are left off "Defect not
+  sent yet". `variations/[id]`: the answer tag at the top and the Variation
+  tag go, the instructed date reads "Thu 22 Oct", the note box is an
+  `eng-panel`. No `globals.css` changes, no shared component changes, no
+  change to sending, held defects or "Fixed it already?".
+- The variation card and the sent update's receipt are the site update
+  editor, polished in E3: looked at again here (screenshots 06 and 07) and
+  left as they are.
+- No Help "What's new" line: nothing works differently.
+- Fresh review found: hovering the stepped-back Back to Site with a mouse
+  turned it gold again (the existing hover rule won). Fixed with a hover rule
+  in the same block. Nothing else.
+- Verified: `npm run typecheck`, `npm test` (146 + 591), `npm run build`.
+  Browser checks passed, one at a time: defect-recent-places (87),
+  defect-send-on-signal (96), defect-waiting-on-site (99), fixed-on-the-spot
+  (105), receipt-send-bar (58), engineer-layout, other-trade-defect (59),
+  engineer-day (37), office-words (67), simpler-home (56), role-access (95),
+  accessibility (584). Every control on the ten screens is 48px or more and
+  none scrolls sideways at 390px or 1440px.
+- Not verified: a real phone, real weak signal, a screen reader.
 
 ## 2026-10-22 — Release 1 polish E3: the site update editor
 
