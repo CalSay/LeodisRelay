@@ -17,6 +17,7 @@ import { InstallRelay } from '@/components/InstallRelay';
 import { HeldWork } from '@/components/HeldWork';
 import { DefectsOnSignal } from '@/components/DefectsOnSignal';
 import { SignedOutPrompt } from '@/components/SignedOutPrompt';
+import { IconOpensBrowser } from '@/components/IconOpensBrowser';
 import { ProjectContext } from '@/components/ProjectContext';
 import { refreshProjects, reportableProject, type ConnectedProject } from '@/lib/projects';
 import { sharePointMode } from '@/lib/sharepoint/config';
@@ -53,6 +54,10 @@ export const metadata: Metadata = {
   title: { default: "RELAY", template: "%s · RELAY" },
   description: "Leodis site reporting",
   appleWebApp: { capable:true, title:'RELAY', statusBarStyle:'default' },
+  // Next.js writes appleWebApp.capable as the newer "mobile-web-app-capable"
+  // only. Older iPhones still look for Apple's own name before opening the
+  // home screen icon full screen, without Safari's address bar.
+  other: { 'apple-mobile-web-app-capable': 'yes' },
 };
 
 export const viewport: Viewport = {
@@ -129,6 +134,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
         <InstallRelay /></WorkspaceChrome>
         <SignedOutPrompt />
+        <IconOpensBrowser />
         <FeaturesContext features={{ safetyRecords: safetyRecordsOn() }}><PrincipalContext principal={principal}><HeldWork /><DefectsOnSignal /><ProjectContext projects={projects} error={projectError}>{children}</ProjectContext></PrincipalContext></FeaturesContext>
       </body>
     </html>
