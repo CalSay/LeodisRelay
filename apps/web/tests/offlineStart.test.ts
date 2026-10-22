@@ -9,6 +9,7 @@ import {database} from '../lib/storage';
 import {fitStartedChecks,heldCounts,isClientKey,offlineTypes,planHeldSend,sentLine,startedKey,startedReportId,startedTitle,visitDateProblem,type HeldWork} from '../lib/offlineStart';
 import {HANDOVER_CHECKLIST,SAFETY_CHECKLIST,invalidShape,reportTypeOf,startingCards} from '../lib/reportTypes';
 import {unfinishedReports} from '../lib/unfinishedReports';
+import {londonDay} from '../lib/weeklySummary';
 import type {Observation} from '../lib/types';
 
 const engineer:Principal = {id:'entra:offline-engineer' as never,oid:'offline-engineer',name:'K. Wright',email:'k@example.test',role:'Engineer',trade:'HVAC'};
@@ -153,7 +154,8 @@ test('starting a report begun offline, against the real store',async t => {
 
     await t.test('a report started with signal still takes today and keeps no key',() => {
       const today = createReport('proj-011lme',engineer.name,engineer);
-      assert.equal(today.visitDate,new Date().toISOString().slice(0,10));
+      // Today in the office calendar: between 23:00 and midnight UTC in summer it is already tomorrow in London.
+      assert.equal(today.visitDate,londonDay(new Date()));
       assert.equal(getReport(today.id)?.id,today.id);
     });
   } finally {

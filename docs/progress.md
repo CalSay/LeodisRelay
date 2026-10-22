@@ -61,6 +61,54 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   shown while at this one; the defect receipt has no way back to Site; the Send
   bar covers part of "What sending does".
 
+## 2026-10-22 — Two flaky browser checks, two real bugs (one fixed by #132)
+
+- Why: `verify-busy-projects` and `verify-day-walkthrough` failed now and then
+  on cloud machines and passed on a rerun, so release checks waved them
+  through. Asked for by the coordinator; not a `docs/tasks.json` task, so no
+  status changed. Decided without asking Cal (his autonomy message).
+- Busy projects: the over-budget failure tonight was real. #128 made Issues over
+  time read every issue's London day again for each of its twelve weeks, so
+  `/api/issue-trend` went from 23 ms to 85-101 ms against a 100 ms budget: it
+  failed only when it crossed 100. Found here and fixed the same way in
+  parallel by #132 (merged first, so this PR keeps #132's code). Its budget is
+  now 60 ms (about 25 ms with the fix), so a slowdown like that fails every
+  time (checked on a 40ff4fd build: 83, 99 and 100 ms, all failed).
+- Busy projects, the machine: misses in earlier release checks (10-80 ms on some
+  API calls, 0.5-2 s on some pages, on old and new builds alike) were a
+  shared machine stalling. A page or API call over its time budget is now
+  timed again (pages up to three tries, APIs three more calls) and the fastest
+  counts; the output says when. Budgets unchanged; sizes count the first try
+  and are never retried. A real slowdown is slow every time and still fails.
+- Day walkthrough: the "More for the office" failure was a real phone bug.
+  While typing, the Check & send bar hides; a tap low on the screen made the
+  text box lose focus, the bar came back under the finger between press and
+  release, and the tap went nowhere. Whether it hit depended on where the card
+  had scrolled to. `reports/[id]/page.tsx` now changes the bar only once the
+  tap is over (after the click, a cancelled touch, or half a second after
+  the finger lifts with no click). The
+  walkthrough now scrolls "More for the office" to the bottom of the screen
+  while typing and taps it on purpose: fails on the old build 2 of 2, passes
+  with the fix.
+- Both checks now stop with a plain message if a server from an earlier run is
+  still on their port (it answered in place of the new one, with other data).
+- Also: `offlineStart.test.ts` expected the UTC date where the app uses
+  London's, so `npm test` failed every night between 23:00 and midnight UTC in
+  summer time. It now expects `londonDay`.
+- Help: one "What's new" line for engineers (the tap).
+- Checks: typecheck; `npm test` (146 + 535) at 23:05 UTC; build.
+  Five runs in a row of each, after the fresh review's fixes: busy-projects
+  5/5 (38 timings, nothing needed timing again); day-walkthrough 5/5 (117
+  checks). Before the fixes, on the same machine: busy-projects failed 1 of 1
+  (issue-trend 101 ms), day-walkthrough failed 1 of 3 at "More for the
+  office", 5 of 5 times when the card sat low on the screen. With budgets set
+  impossibly low, the second go runs in a new browser and still fails.
+  Fresh review: no correctness bugs; four small gaps fixed (a re-timed API
+  call's status is checked; second goes start in a new browser so they are no
+  warmer; a long press no longer brings the bar back mid-tap; What's new wording).
+- Not verified: a real phone (the tap order there is press, release, then the
+  mouse events; the fix waits for the click, which covers it), a screen reader.
+- Next: nothing from this task.
 ## 2026-10-21 — Issues over time quick again on busy projects
 
 - Why: the twelfth release check (main 40ff4fd, #2-#129) ran every browser
