@@ -30,7 +30,14 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Checks: `verify-day-walkthrough` read "N open issues" from the This project
   heading; it now checks the heading does not repeat the count (the Site
   issues row check above it still checks the number).
-- Verified: see the PR for the typecheck, tests, build and browser checks run.
+- Verified (after rebasing on E1 #190 and #191/#192): typecheck, `npm test`
+  (146 + 591), build. Browser, one at a time: engineer-layout, busy-home (35),
+  engineer-day (37), day-walkthrough (117), home-and-sheet (254),
+  came-back-first (29), engineer-nav (60), accessibility (584), first-time-use
+  (375); before the rebase also defect-waiting-on-site (99), first-day (94),
+  role-access (95), other-sites-came-back (32). A fresh-context review found
+  "Show N more" 3px out of line, one heading rule reaching the Reports and
+  Issues views, and this entry missing the checks; all fixed.
 - Not verified: a real phone or a screen reader.
 
 ## 2026-10-22 — Issues lists draw the first 30 cards first (slow pages on engineer phones, part 2)
