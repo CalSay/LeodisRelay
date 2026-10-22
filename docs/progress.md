@@ -4,6 +4,18 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Gas Safe Register mark on report PDFs
+
+- Why: Cal sent the Gas Safe Register logo pack after #168 put the CHAS,
+  REFCOM and MCS marks in the PDF footer. Not a `docs/tasks.json` task.
+- Changed: `packages/documents/assets/accreditation-gas-safe.png` (150 px
+  high, 2 KB), listed fourth in `branding.ts` `accreditations` (upload
+  order). The #168 Help "What's new" line now names it too.
+- Verified: `npm run typecheck`, `npm test`, `node scripts/verify-long-pdfs.mjs`
+  (all 10 pass), sample PDFs looked at: the four marks fit the footer strip,
+  page counts unchanged. Not verified: printed on paper. Not live until the
+  next deploy.
+
 ## 2026-10-22 — Issue page: the raised photograph near the top
 
 - Why: the coordinator asked for a walk of the engineer's issue page at 390px
