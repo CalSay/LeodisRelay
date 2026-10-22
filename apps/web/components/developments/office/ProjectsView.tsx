@@ -26,6 +26,7 @@ import { signatureMethod } from '@/lib/signature';
 import { dayShort, pastTarget, timeOf } from '@/lib/dates';
 import { LATEST_DAYS, dayFound, peopleWords, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
 import { issueTradeWords } from '@/lib/snagList';
+import { gapWords, tradeVisits, type TradeVisit } from '@/lib/tradeVisits';
 import { OUR_CONTRACT, canCorrect, duplicateOf, isWithinContract, modesFor, pickPool, pickTag, priorOwner, type Target } from './corrections';
 import './quickactions.css';
 
@@ -595,6 +596,7 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
       <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/preview`, officeReturn(ctx))}>Full report</Link><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/pdf`, officeReturn(ctx))}>PDF</Link>
         {canReview && <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'review', report: summary })}>Review</Btn>}
         {ctx.me.admin && report.sharepoint?.status === 'failed' && <Btn className="btn-sm" disabled={retryingSharePoint} onClick={() => void retrySharePoint()}>{retryingSharePoint ? 'Queuing…' : 'Retry SharePoint'}</Btn>}</div></div>
+    <TradeVisitsBar report={report} ctx={ctx} code={code} inInbox={crumbsHome === '#/inbox'} />
     <SubmissionStages report={report} tagClass={t => `tag ${toneTag(t)}`} when={fmtWhen} />
     {sharePointRetry && <div className="note"><span>{sharePointRetry}</span></div>}
     {correcting && fixError && <div className="note warn"><span><b>Quick actions unavailable.</b> {fixError}</span></div>}
@@ -622,6 +624,27 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
   </div>;
 }
 const SIGNED_HOW = { drawn: 'Signature drawn by', typed: 'Signed by typing the name', 'name only': 'Signed' } as const;
+/**
+ * The same trade's site updates either side of this one (lib/tradeVisits.ts), so
+ * the office can open the last visit and see what changed. In the Inbox it stays
+ * in the Inbox reader; elsewhere it opens in the project.
+ */
+function TradeVisitsBar({ report, ctx, code, inInbox }: { report: Report; ctx: Ctx; code: string; inInbox: boolean }) {
+  // The summary carries the inspection counts, so this report is judged as the others are.
+  const visits = tradeVisits(ctx.snap?.reports.find(r => r.id === report.id) ?? report, ctx.snap?.reports ?? []);
+  if (!visits) return null;
+  const whose = visits.trade ? `${visits.who} update` : `update from ${visits.who}`;
+  const href = (id: string) => inInbox ? `#/inbox/${id}` : `#/projects/${code}/report/${id}`;
+  const step = (v: TradeVisit, direction: 'before' | 'after') => <a className={`trade-visit ${direction === 'before' ? 'prev' : 'next'}`} href={href(v.id)}
+    // In the Inbox, stepping replaces the open report, so "‹ Inbox" on a phone still goes straight back to the list.
+    onClick={inInbox ? e => { e.preventDefault(); window.location.replace(href(v.id)); } : undefined}>
+    <span className="k">{direction === 'before' ? <><span aria-hidden="true">‹ </span>Previous {whose} here</> : <>Next {whose} here<span aria-hidden="true"> ›</span></>}</span>
+    <span className="v"><b>{dayShort(v.visitDate)}</b>, {gapWords(v.visitDate, report.visitDate, direction)} · {v.author} · <span className="ref">{shortRef(v.reference)}</span></span></a>;
+  return <nav className="trade-visits" aria-label={`Other ${visits.trade ? `${visits.who} updates` : `updates from ${visits.who}`} on this site`}>
+    {visits.previous ? step(visits.previous, 'before') : <span className="trade-visit prev none"><span className="k">Previous {whose} here</span><span className="v">None before this one</span></span>}
+    {visits.next && step(visits.next, 'after')}
+  </nav>;
+}
 function raisedRef(observationId: string, raised: Issue[], code: string, report: Report, linked?: Issue) {
   // A correction raises nothing new: its updates point at the issue the original raised.
   const i = raised.find(x => sectionOf(x, report) === observationId) ?? linked;
