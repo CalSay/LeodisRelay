@@ -68,8 +68,8 @@ test('a checklist reworded on the server since signing breaks the signature',() 
 test('the note once held work has gone up says what reached the office',() => {
   assert.equal(sentLine([{reference:'LD-SSI-001',started:true,submitted:true}]),'The inspection you signed on this phone has gone to the office.');
   assert.equal(sentLine([{reference:'a',started:true,submitted:true},{reference:'b',started:true,submitted:true}]),'From this phone: 2 signed inspections sent to the office.');
-  assert.equal(sentLine([{reference:'a',started:true,submitted:true},{reference:'b',started:false}]),'From this phone: 1 signed inspection sent to the office; 1 report on the server as a draft until you sign and send.');
-  assert.match(sentLine([{reference:'a',started:true}]),/stays a draft until you sign and send/);
+  assert.equal(sentLine([{reference:'a',started:true,submitted:true},{reference:'b',started:false}]),'From this phone: 1 signed inspection sent to the office; 1 report saved to RELAY as a draft until you send it.');
+  assert.match(sentLine([{reference:'a',started:true}]),/stays a draft until you send it/);
 });
 
 test('the home screen marks a signed inspection as not sent yet',() => {
@@ -287,7 +287,7 @@ test('a signed inspection goes to the office by itself, only as it was signed',a
       const again = await sendHeldWork(engineer.id);
       server.failSave = false;
       assert.equal(first.problems.length,1);
-      assert.match(first.problems[0]!.reason,/server is not answering.*kept on this phone as it is/);
+      assert.match(first.problems[0]!.reason,/RELAY is not answering.*kept on this phone as it is/);
       assert.doesNotMatch(first.problems[0]!.reason,/502|Bad Gateway/);
       assert.equal(again.problems.length,0,'named once');
       const [kept] = await listHeld(engineer.id);

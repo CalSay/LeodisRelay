@@ -86,7 +86,7 @@ try {
     await shot('update-defect');
     await page.evaluate(()=>document.activeElement?.blur());await tap(page.locator('.actionbar').getByRole('button',{name:/Check & send/}));
     await page.locator('#report-check').waitFor();
-    await page.getByText('Saved on server',{exact:true}).waitFor({timeout:15000});
+    await page.getByText('Saved to RELAY',{exact:true}).waitFor({timeout:15000});
     eq(await overflow(),false,`${label}: no sideways scroll on the check step`);
     const raised=(await page.locator('.eng-does .eng-row b').first().innerText()).trim();
     eq(raised,linking?'1 added to an issue already raised · not yet reviewed':'1 issue raised · not yet reviewed',`${label}: what sending does counts a linked defect apart`);

@@ -73,7 +73,7 @@ try {
     await where.click();
     // Since #133 the bar steps aside once the tap has finished, not mid-tap: wait for it.
     ok(await page.locator('.actionbar').waitFor({state:'hidden',timeout:3000}).then(()=>true,()=>false),`${scheme}: action bar hidden while a field has the keyboard`);
-    if(scheme==='light'){await where.fill('Plant room east');await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached'});}
+    if(scheme==='light'){await where.fill('Plant room east');await page.getByText('Saved to RELAY',{exact:true}).waitFor({state:'attached'});}
     await shot(page,`editor-${scheme}-typing`);
     await page.locator('.eng-slot.open .eng-done').click();
     ok(await page.locator('.actionbar').waitFor({state:'visible',timeout:3000}).then(()=>true,()=>false),`${scheme}: action bar back once the field is left`);

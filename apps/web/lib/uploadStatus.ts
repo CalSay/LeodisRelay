@@ -3,9 +3,9 @@ import type { Observation } from './types';
 /** Where a card or a photograph is, in the words the engineer sees. */
 export type Where = 'server' | 'uploading' | 'pending' | 'phone';
 export const WHERE: Record<Where, string> = {
-  server: 'On the server',
+  server: 'Saved',
   uploading: 'Uploading',
-  pending: 'Not yet on the server',
+  pending: 'Not saved to RELAY yet',
   phone: 'Only on this phone',
 };
 
@@ -73,7 +73,7 @@ export function reportWhere(cards: readonly CardWhere[], offline: boolean, other
   const leftPhotos = photos - cards.reduce((n, c) => n + c.photosOnServer, 0);
   if (!cards.length && !others.removed && !others.signature) return { where: 'server', text: '' };
   if (!left && !leftPhotos && !others.removed && !others.signature) {
-    return { where: 'server', text: `${cards.length === 1 ? `The ${noun}` : cards.length === 2 ? `Both ${noun}s` : `All ${cards.length} ${noun}s`}${photos ? ` and ${photos === 1 ? (cards.length === 1 ? 'its photograph' : '1 photograph') : `${photos} photographs`}` : ''} ${cards.length === 1 && !photos ? 'is' : 'are'} on the server.` };
+    return { where: 'server', text: `${cards.length === 1 ? `The ${noun}` : cards.length === 2 ? `Both ${noun}s` : `All ${cards.length} ${noun}s`}${photos ? ` and ${photos === 1 ? (cards.length === 1 ? 'its photograph' : '1 photograph') : `${photos} photographs`}` : ''} ${cards.length === 1 && !photos ? 'is' : 'are'} saved to RELAY.` };
   }
   const items = [left && plural(left, noun), leftPhotos && plural(leftPhotos, 'photograph'),
     others.removed && plural(others.removed, `removed ${noun}`), others.signature && 'the signature'].filter((x): x is string => !!x);
@@ -82,8 +82,8 @@ export function reportWhere(cards: readonly CardWhere[], offline: boolean, other
   const many = left + leftPhotos + others.removed + (others.signature ? 1 : 0) > 1;
   if (cards.some(c => c.where === 'uploading')) return { where: 'uploading', text: `${sentence} ${many ? 'are' : 'is'} still uploading.` };
   // A save already under way: say so, rather than that the work is missing from the server.
-  if (others.saving && !offline) return { where: 'uploading', text: `${sentence} ${many ? 'are' : 'is'} being saved to the server.` };
+  if (others.saving && !offline) return { where: 'uploading', text: `${sentence} ${many ? 'are' : 'is'} being saved to RELAY.` };
   return offline
-    ? { where: 'phone', text: `${sentence} ${many ? 'are' : 'is'} only on this phone. ${many ? 'They go up by themselves' : 'It goes up by itself'} when the server can be reached.` }
-    : { where: 'pending', text: `${sentence} ${many ? 'are' : 'is'} not yet on the server.` };
+    ? { where: 'phone', text: `${sentence} ${many ? 'are' : 'is'} only on this phone. ${many ? 'They go up by themselves' : 'It goes up by itself'} when RELAY can be reached.` }
+    : { where: 'pending', text: `${sentence} ${many ? 'are' : 'is'} not saved to RELAY yet.` };
 }

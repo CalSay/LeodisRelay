@@ -82,11 +82,11 @@ try {
     if(phone){await card.locator('.eng-done').click();ok(/Containment run complete/.test(await page.locator('.eng-cardrow').first().innerText()),`${label}: the folded row shows the card again`);}
     await page.locator('.actionbar').getByRole('button',{name:/Check & send/}).click();
     await page.locator('#report-check').waitFor();
-    await page.getByText('Saved on server',{exact:true}).waitFor({timeout:15000});
+    await page.getByText('Saved to RELAY',{exact:true}).waitFor({timeout:15000});
     const note=page.locator('.find-note').first();
     ok(/optional/i.test(await note.locator('.find-kind').innerText()),`${label}: a suggestion is labelled Optional, not Check`);
     eq(await page.locator('.find-stop').count(),0,`${label}: nothing stops this update`);
-    ok(/^The card and its photograph are on the server\.$/.test((await page.locator('.eng-check .eng-where').innerText()).trim()),`${label}: where the work is, in words`);
+    ok(/^The card and its photograph are saved to RELAY\.$/.test((await page.locator('.eng-check .eng-where').innerText()).trim()),`${label}: where the work is, in words`);
     const send=page.getByRole('button',{name:'Send to office'});
     // The tap on "Check & send" landed where "Send to office" now is: on a phone it must not look pressed or hovered.
     if(phone){
@@ -134,7 +134,7 @@ try {
     else ok(await page.locator('#card-editor > div:not([hidden])').getByText('Safe ways in and out').isVisible(),`${label}: the stop opens the first check still to answer`);
     await page.locator('.actionbar').getByRole('button',{name:/Check & send/}).click();
     await page.locator('#report-check').waitFor();
-    await page.getByText(/All 12 checks are on the server/).waitFor({timeout:15000});
+    await page.getByText(/All 12 checks are saved to RELAY/).waitFor({timeout:15000});
     ok(true,`${label}: an inspection says checks, not cards`);
     eq(await overflow(),false,`${label}: no sideways scroll on the check step`);
     await shot('inspection-check-step');

@@ -193,11 +193,11 @@ export function sentLine(sent: readonly { reference: string; projectName?: strin
   if (!submitted) {
     const started = sent.filter(s => s.started).length;
     const what = sent.length === 1
-      ? `${started ? 'The report you started' : 'Your changes'} on this phone ${started ? 'is' : 'are'} now on the server`
-      : `${plural(sent.length, 'report')} from this phone are now on the server`;
-    return `${what}. ${sent.length === 1 ? 'It stays a draft' : 'They stay drafts'} until you sign and send.`;
+      ? `${started ? 'The report you started' : 'Your changes'} on this phone ${started ? 'is' : 'are'} now saved to RELAY`
+      : `${plural(sent.length, 'report')} from this phone are now saved to RELAY`;
+    return `${what}. ${sent.length === 1 ? 'It stays a draft' : 'They stay drafts'} until you send ${sent.length === 1 ? 'it' : 'them'}.`;
   }
   const parts = [`${plural(submitted, 'signed inspection')} sent to the office`];
-  if (drafts) parts.push(`${plural(drafts, 'report')} on the server as ${drafts === 1 ? 'a draft' : 'drafts'} until you sign and send`);
+  if (drafts) parts.push(`${plural(drafts, 'report')} saved to RELAY as ${drafts === 1 ? 'a draft' : 'drafts'} until you send ${drafts === 1 ? 'it' : 'them'}`);
   return `From this phone: ${parts.join('; ')}.`;
 }

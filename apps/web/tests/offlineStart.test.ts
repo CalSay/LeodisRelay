@@ -46,9 +46,9 @@ test('what goes up by itself: reports started offline, then copies typed on the 
 
 test('the words once held work has gone up',() => {
   assert.equal(sentLine([]),'');
-  assert.equal(sentLine([{reference:'R1',started:true}]),'The report you started on this phone is now on the server. It stays a draft until you sign and send.');
-  assert.equal(sentLine([{reference:'R1',started:false}]),'Your changes on this phone are now on the server. It stays a draft until you sign and send.');
-  assert.equal(sentLine([{reference:'R1',started:true},{reference:'R2',started:false}]),'2 reports from this phone are now on the server. They stay drafts until you sign and send.');
+  assert.equal(sentLine([{reference:'R1',started:true}]),'The report you started on this phone is now saved to RELAY. It stays a draft until you send it.');
+  assert.equal(sentLine([{reference:'R1',started:false}]),'Your changes on this phone are now saved to RELAY. It stays a draft until you send it.');
+  assert.equal(sentLine([{reference:'R1',started:true},{reference:'R2',started:false}]),'2 reports from this phone are now saved to RELAY. They stay drafts until you send them.');
   assert.deepEqual(heldCounts([card('a',2),card('b',1)]),{cards:2,photos:3});
   assert.equal(isClientKey(KEY),true);
   assert.equal(isClientKey('not-a-key'),false);

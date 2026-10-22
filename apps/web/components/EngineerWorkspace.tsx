@@ -56,7 +56,7 @@ function ReportTags({r}:{r:ReportSummary}) {
 function IssueTags({i}:{i:Issue}) {
   if (i.confirmation === 'withdrawn') return <span className="tag tag-draft">Withdrawn</span>;
   if (i.work === 'closed') return <span className="tag tag-sent">Closed</span>;
-  return <><span className={`tag ${i.confirmation === 'disputed' ? 'tag-alert' : 'tag-draft'}`}>{ISSUE_WORK[i.work]}</span>{i.owner.trim() ? <span>{i.owner}{i.targetDate ? ` · target ${dateShort(i.targetDate, 'auto') || i.targetDate}` : ''}</span> : <span>not yet assigned</span>}</>;
+  return <><span className={`tag ${i.confirmation === 'disputed' ? 'tag-alert' : 'tag-draft'}`}>{ISSUE_WORK[i.work]}</span>{i.owner.trim() ? <span>{i.owner}{i.targetDate ? ` · target ${dateShort(i.targetDate, 'auto') || i.targetDate}` : ''}</span> : <span>nobody on it yet</span>}</>;
 }
 /** The office's answer on a variation the engineer raised. */
 export function VariationTags({v}:{v:Variation}) {
@@ -90,11 +90,11 @@ interface Back { at: string; key: string; href: string; title: string; sub: stri
 /** Where an unfinished report stands, in words an engineer can act on. */
 function UnfinishedTags({r,waiting=false}:{r:UnfinishedReport;waiting?:boolean}) {
   if (waiting && !r.signed && !r.started) return <><span className="tag tag-caution">Not sent yet</span><span>no signal when you tapped Send · open it with signal and it goes to the office</span></>;
-  if (r.signed) return <><span className="tag tag-caution">Signed · not sent yet</span><span>{r.problem ? `not sent yet: ${r.problem}` : `signed on this phone ${fmtWhen(r.changedAt)} · goes to the office by itself when RELAY reaches the server`}</span></>;
-  if (r.started) return <><span className="tag tag-alert">Only on this phone</span><span>{r.problem ? `not accepted yet: ${r.problem}` : `started without signal ${fmtWhen(r.changedAt)} · goes up when RELAY can reach the server`}</span></>;
+  if (r.signed) return <><span className="tag tag-caution">Signed · not sent yet</span><span>{r.problem ? `not sent yet: ${r.problem}` : `signed on this phone ${fmtWhen(r.changedAt)} · goes to the office by itself when there is signal`}</span></>;
+  if (r.started) return <><span className="tag tag-alert">Only on this phone</span><span>{r.problem ? `not accepted yet: ${r.problem}` : `started without signal ${fmtWhen(r.changedAt)} · goes up by itself when there is signal`}</span></>;
   if (r.device === 'only') return <><span className="tag tag-alert">Only on this phone</span><span>changed {fmtWhen(r.changedAt)} · open it with signal to save</span></>;
-  if (r.device === 'unsent') return <><span className="tag tag-alert">Not yet on the server</span><span>changed {fmtWhen(r.changedAt)}{r.savedAt ? ` · last saved ${fmtWhen(r.savedAt)}` : ''}</span></>;
-  return <><span className="tag tag-draft">Draft</span><span>{r.savedAt ? `saved ${fmtWhen(r.savedAt)}` : 'saved on server'}</span></>;
+  if (r.device === 'unsent') return <><span className="tag tag-alert">Not saved to RELAY yet</span><span>changed {fmtWhen(r.changedAt)}{r.savedAt ? ` · last saved ${fmtWhen(r.savedAt)}` : ''}</span></>;
+  return <><span className="tag tag-draft">Draft</span><span>{r.savedAt ? `saved ${fmtWhen(r.savedAt)}` : 'saved to RELAY'}</span></>;
 }
 
 /** Line icons for the navigation; the label beside each one carries the meaning. */
@@ -299,10 +299,10 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
             {currentDraft
               ? <Link className="eng-tile big eng-tile-main" href={withViewReturn(`/reports/${currentDraft.id}`,engineerReturn())}><div>{waiting.has(currentDraft.id)
                 ? <><b>{currentDraft.corrects ? 'Send the correction' : 'Send today’s update'}</b><small>Not sent yet: there was no signal when you tapped Send. Open it with signal and it goes to the office.</small></>
-                : <><b>{currentDraft.corrects ? 'Carry on with the correction' : 'Carry on with today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'on server'}</small></>}</div><span className="arrow" aria-hidden="true">→</span></Link>
-              : <button type="button" className="eng-tile big eng-tile-main" onClick={()=>void startReport('update')} disabled={creating}><div><b>{creating?'Starting…':'Start today’s site update'}</b><small>Progress, photographs, defects and variations, then sign and send to the office</small></div><span className="arrow" aria-hidden="true">→</span></button>}
+                : <><b>{currentDraft.corrects ? 'Carry on with the correction' : 'Carry on with today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'to RELAY'}</small></>}</div><span className="arrow" aria-hidden="true">→</span></Link>
+              : <button type="button" className="eng-tile big eng-tile-main" onClick={()=>void startReport('update')} disabled={creating}><div><b>{creating?'Starting…':'Start today’s site update'}</b><small>Progress, photographs, defects and variations, then send to the office</small></div><span className="arrow" aria-hidden="true">→</span></button>}
             <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo and a short note, sent straight away</small></div></button>
-            <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work that needs an instruction</small></div></button>
+            <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work, for the office to price</small></div></button>
           </div>
           {unfinished.length > 0 && <section aria-labelledby="eng-unfinished-title">
             <div className="eng-section-title"><h2 id="eng-unfinished-title">Unfinished reports</h2><span className="r">{unfinished.length}</span></div>
@@ -325,7 +325,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
             <p className="eng-section-note">A walk round one area with a checklist, signed and sent as its own report.</p>
             <div className="eng-tiles">
               {inspections.map(({ type, draft }) => draft
-                ? <Link key={type.id} className="eng-tile eng-tile-wide" href={withViewReturn(`/reports/${draft.id}`,engineerReturn())}><span className="kind answer-ok">{type.tag}</span><div><b>{draft.corrects ? `Carry on with the ${type.name.toLowerCase()} correction` : `Carry on with the ${type.name.toLowerCase()}`}{draft.inspected ? ` of ${draft.inspected}` : ''}</b><small>{draft.checks ? `${draft.checks.ok + draft.checks.action + draft.checks.na} of ${draft.observationCount} checks answered` : `${draft.observationCount} checks`} · saved {fmtWhen(draft.lastSavedAt) || 'on server'}</small></div><span className="arrow" aria-hidden="true">→</span></Link>
+                ? <Link key={type.id} className="eng-tile eng-tile-wide" href={withViewReturn(`/reports/${draft.id}`,engineerReturn())}><span className="kind answer-ok">{type.tag}</span><div><b>{draft.corrects ? `Carry on with the ${type.name.toLowerCase()} correction` : `Carry on with the ${type.name.toLowerCase()}`}{draft.inspected ? ` of ${draft.inspected}` : ''}</b><small>{draft.checks ? `${draft.checks.ok + draft.checks.action + draft.checks.na} of ${draft.observationCount} checks answered` : `${draft.observationCount} checks`} · saved {fmtWhen(draft.lastSavedAt) || 'to RELAY'}</small></div><span className="arrow" aria-hidden="true">→</span></Link>
                 : type.inspects ? <NameThenStart key={type.id} type={type} creating={creating} onStart={name=>void startReport(undefined,type.id,name)} />
                 : <button key={type.id} type="button" className="eng-tile eng-tile-wide" onClick={()=>void startReport(undefined,type.id)} disabled={creating}><span className="kind answer-ok">{type.tag}</span><div><b>Do a {type.name.toLowerCase()}</b><small>{type.blurb}</small></div><span className="arrow" aria-hidden="true">→</span></button>)}
             </div>
@@ -336,7 +336,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
             <div className="eng-section-title"><h2 id="eng-project-title">This project</h2><span className="r">{back && !back.failed ? `${back.open} open issue${back.open===1?'':'s'}` : ''}</span></div>
             <div className="eng-list">
               <button type="button" className="eng-row" onClick={()=>navigate('issues','open')}><div className="main"><b>Site issues</b><span>{back && !back.failed ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
-              <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back && !back.failed ? `${back.reports} on file · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
+              <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back && !back.failed ? `${back.reports} sent · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
               <SiteNotesRow key={projectId} projectId={projectId} href={`/site-notes?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
               {projectPage('/photos','Photographs','Every photograph, by location')}
             </div>

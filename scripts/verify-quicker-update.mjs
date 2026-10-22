@@ -149,7 +149,7 @@ try {
       ok(boxes.every(b=>b.x>=c.x-0.5&&b.x+b.w<=c.x+c.width+0.5),`${label}: the tiles stay inside the card`);
       // "On the server" is read out on each, but only a dot shows.
       const said=await tiles.locator('.eng-where').allInnerTexts();
-      ok(said.length===4&&said.every(t=>t.trim()==='On the server'),`${label}: each photo still says "On the server" to a screen reader (${JSON.stringify(said)})`);
+      ok(said.length===4&&said.every(t=>t.trim()==='Saved'),`${label}: each photo still says "On the server" to a screen reader (${JSON.stringify(said)})`);
       const shown=await tiles.first().locator('.eng-where').evaluate(e=>Math.round(e.getBoundingClientRect().width));
       ok(shown<=24,`${label}: "On the server" is a dot, not words, on the tile (${shown}px wide)`);
       for(let i=0;i<4;i++){
@@ -181,7 +181,7 @@ try {
       const where=tiles.nth(3).locator('.eng-where');
       await page.waitForFunction(()=>{const w=document.querySelectorAll('.shots .shot')[3]?.querySelector('.eng-where');return w&&!w.classList.contains('eng-where-server');},null,{timeout:15000}).catch(()=>{});
       const words=(await where.innerText()).trim(),width5=await where.evaluate(e=>Math.round(e.getBoundingClientRect().width));
-      ok(words!=='On the server'&&width5>60,`${label}: a photo not on the server yet says so on the picture ("${words}", ${width5}px)`);
+      ok(words!=='Saved'&&width5>60,`${label}: a photo not on the server yet says so on the picture ("${words}", ${width5}px)`);
       await shot('photo-no-signal');
       await context.setOffline(false);
       ok(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1),`${label}: no sideways scrolling`);

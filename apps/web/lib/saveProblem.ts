@@ -16,22 +16,22 @@ const kept = (held: boolean) => held ? 'Your work is kept on this phone.' : 'Thi
 export function saveProblem(error: unknown, held: boolean, cardOf: (photoId: string) => string | undefined): { state: SaveProblemState; message: string } {
   if (error instanceof PhotoRefused) {
     const card = cardOf(error.photoId);
-    const why = error.reason ? `${error.reason[0]!.toLowerCase()}${error.reason.slice(1)}` : 'the server would not take it.';
+    const why = error.reason ? `${error.reason[0]!.toLowerCase()}${error.reason.slice(1)}` : 'RELAY would not take it.';
     return { state: 'error', message: `A photograph on ${card ? `the card “${card}”` : 'a card'} was not accepted: ${why} Remove it and take it again. ${kept(held)}` };
   }
   if (error instanceof ApiError && error.signedOut) {
-    return { state: 'signedout', message: `You have been signed out, so this is not saved to the server yet. ${kept(held)} Sign in again and it saves by itself.` };
+    return { state: 'signedout', message: `You have been signed out, so this is not saved to RELAY yet. ${kept(held)} Sign in again and it saves by itself.` };
   }
   if (error instanceof ApiError && error.passing) {
-    return { state: 'server', message: `RELAY’s server is not answering just now, so this is not saved to the server yet. ${kept(held)} RELAY tries again by itself.` };
+    return { state: 'server', message: `RELAY is not answering just now, so this is not saved to RELAY yet. ${kept(held)} RELAY tries again by itself.` };
   }
-  const said = error instanceof Error && error.message ? error.message : 'This could not be saved to the server.';
+  const said = error instanceof Error && error.message ? error.message : 'This could not be saved to RELAY.';
   return { state: 'error', message: `${said} ${kept(held)}` };
 }
 
 export function sendProblem(error: unknown, held: boolean, cardOf: (photoId: string) => string | undefined): string {
   if (error instanceof ApiError && error.signedOut) return `You have been signed out, so this has not been sent. ${kept(held)} Sign in again, then send it.`;
-  if (error instanceof ApiError && error.passing) return `RELAY’s server is not answering just now, so this has not been sent. ${kept(held)} Try again in a minute.`;
+  if (error instanceof ApiError && error.passing) return `RELAY is not answering just now, so this has not been sent. ${kept(held)} Try again in a minute.`;
   if (error instanceof PhotoRefused) return saveProblem(error, held, cardOf).message.replace('was not accepted', 'was not accepted, so this has not been sent');
   const said = error instanceof Error && error.message ? error.message : 'This could not be sent.';
   return `${said} ${kept(held)}`;

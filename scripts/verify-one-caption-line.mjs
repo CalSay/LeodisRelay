@@ -106,7 +106,7 @@ try {
     eq((await lines()).at(-1),'Optional 5 photographs have no caption',`${label}: a caption typed takes one off the count`);
 
     // It still sends with the rest uncaptioned.
-    await page.getByText('Saved on server',{exact:true}).waitFor({timeout:20000});
+    await page.getByText('Saved to RELAY',{exact:true}).waitFor({timeout:20000});
     await tap(page.getByRole('button',{name:'Send to office'}));
     await page.locator('.pagehead .tag-sent').waitFor({timeout:20000});
     const sent=await page.evaluate(async id=>(await fetch(`/api/reports/${id}`)).json(),report);

@@ -41,7 +41,7 @@ try {
       await page.mouse.move(box.x+20,box.y+box.height/2);await page.mouse.down();
       for(let x=20;x<box.width-20;x+=12)await page.mouse.move(box.x+x,box.y+box.height/2+Math.sin(x/15)*20);
       await page.mouse.up();
-      await page.getByText('Saved on server').waitFor();
+      await page.getByText('Saved to RELAY',{exact:true}).waitFor();
       const saved=getReport(draft.id).draftSignature;
       assert.equal(saved?.name,'G. Stephenson','name saved to the server');
       assert.match(saved?.dataUrl??'',/^data:image\/png;base64,/,'drawing saved to the server');

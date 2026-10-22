@@ -59,21 +59,21 @@ try {
     await card().getByLabel('Where',{exact:true}).fill('Level 3 corridor');
     await card().locator('textarea').first().fill('Containment complete');
     await card().locator('input[type=file]').first().setInputFiles({name:'a.jpg',mimeType:'image/jpeg',buffer:await jpeg('#996633')});
-    await card().getByText('On the server').last().waitFor({timeout:15000});
+    await card().getByText('Saved',{exact:true}).last().waitFor({timeout:15000});
     const done=async()=>{if(width<=800)await card().getByRole('button',{name:'Done with this card'}).click();};
     await done();
     await page.locator('.eng-add-kinds').getByRole('button',{name:'+ Defect'}).first().click();
     await card().getByLabel('Where',{exact:true}).fill('Flat 1.01');
     await card().locator('textarea').first().fill('Cracked socket faceplate');
     await card().locator('input[type=file]').first().setInputFiles({name:'b.jpg',mimeType:'image/jpeg',buffer:await jpeg('#336699')});
-    await card().getByText('On the server').last().waitFor({timeout:15000});
+    await card().getByText('Saved',{exact:true}).last().waitFor({timeout:15000});
     await done();
     await page.locator('.eng-add-kinds').getByRole('button',{name:'+ Variation'}).first().click();
     await card().getByLabel('Where',{exact:true}).fill('Flat 1.01');
     await card().locator('textarea').first().fill('Move a socket 300mm left');
     await card().getByRole('button',{name:'Not yet',exact:true}).click();
     await done();
-    await page.locator('.savestate b').filter({hasText:/Saved on server/}).waitFor({timeout:15000});
+    await page.locator('.savestate b').filter({hasText:/Saved to RELAY/}).waitFor({timeout:15000});
     return {who,context,page,errors,id,label,shot};
   }
   const toCheck=async page=>{await page.getByRole('button',{name:/Check & send/}).last().click();await page.locator('#report-check').waitFor();};

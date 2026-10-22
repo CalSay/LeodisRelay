@@ -61,15 +61,15 @@ type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "signedout"
  */
 const SAVE: Record<SaveState, { dot: string; text: string }> = {
   clean: { dot: "dot", text: "" },
-  saving: { dot: "dot dot-busy", text: "Saving to server" },
-  saved: { dot: "dot dot-ok", text: "Saved on server" },
+  saving: { dot: "dot dot-busy", text: "Saving to RELAY" },
+  saved: { dot: "dot dot-ok", text: "Saved to RELAY" },
   phone: { dot: "dot dot-busy", text: "On this phone only · goes up with signal" },
   // The dangerous state, and the only one that warrants alarm: the work is
   // neither on the server nor held on the device, so closing the page loses it.
   unheld: { dot: "dot dot-bad", text: "NOT SAVED ANYWHERE — keep this page open" },
   // Neither is anyone's fault on site, and the work is on the phone: amber, not red.
   signedout: { dot: "dot dot-busy", text: "Signed out · kept on this phone" },
-  server: { dot: "dot dot-busy", text: "Server not answering · kept on this phone" },
+  server: { dot: "dot dot-busy", text: "RELAY not answering · kept on this phone" },
   // Refused (a photograph the server cannot read, a box too long): the message says what to change.
   error: { dot: "dot dot-bad", text: "Not saved · kept on this phone" },
   conflict: { dot: "dot dot-bad", text: "Saved elsewhere too — choose what to keep" },
@@ -1092,7 +1092,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   if (!report) {
     return (
       <main className="wrap eng-page">
-        <div className="empty" style={{ marginTop: 32 }} role="status">{waitingForHeld ? 'Putting the work from this phone onto the server first…' : 'Loading'}</div>
+        <div className="empty" style={{ marginTop: 32 }} role="status">{waitingForHeld ? 'Saving the work on this phone to RELAY first…' : 'Loading'}</div>
       </main>
     );
   }
@@ -1479,18 +1479,18 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
             <span className="lbl">What sending does</span>
             <div className="eng-list" style={{ marginTop: 8 }}>
               {type.raisesRecords
-                ? <div className="eng-row"><div className="main"><b>{answers.action ? issuesSaid(report.observations.filter(o => o.check?.answer === 'action')) : 'No issues to raise'}</b><span>{answers.action ? `${report.observations.some(o => o.check?.answer === 'action' && o.linkedIssueId) ? 'Linked ones add a sighting to the existing issue. ' : ''}Each action goes on the snag list with where it is, and is listed at the top of the PDF.` : 'Every check is satisfactory or does not apply: the area is ready to hand over.'}</span></div></div>
+                ? <div className="eng-row"><div className="main"><b>{answers.action ? issuesSaid(report.observations.filter(o => o.check?.answer === 'action')) : 'No issues to raise'}</b><span>{answers.action ? `${report.observations.some(o => o.check?.answer === 'action' && o.linkedIssueId) ? 'Ones you linked are added to the issues already raised. ' : ''}Each action goes on the snag list with where it is, and is listed at the top of the PDF.` : 'Every check is satisfactory or does not apply: the area is ready to hand over.'}</span></div></div>
                 : <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} action${answers.action === 1 ? '' : 's'} listed on the inspection` : 'No actions to list'}</b><span>Printed at the top of the PDF with who is to do each one, and followed on Safety actions until a later inspection finds it put right. Nothing is added to the issue register.</span></div></div>}
-              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>{project?.projectManager ?? 'The project manager'} is emailed only once RELAY’s email is switched on; until then, tell them yourself if it cannot wait.</span></div></div>
+              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>RELAY does not email {project?.projectManager ?? 'the project manager'} yet. If it cannot wait, tell them yourself.</span></div></div>
             </div>
           </div>}
 
           {!checklist && report.observations.length > 0 && <div className="eng-does">
             <span className="lbl">What sending does</span>
             <div className="eng-list" style={{ marginTop: 8 }}>
-              {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{issuesSaid(report.observations.filter(o => o.type === 'defect' || o.type === 'access'))}</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Linked ones add a sighting to the existing issue. ' : ''}The office assigns them; you’ll see who and when on your home screen.</span></div></div>}
-              {counts.instruction > 0 && <div className="eng-row"><div className="main"><b>{counts.instruction} variation{counts.instruction === 1 ? '' : 's'} raised · need a quote</b><span>{report.observations.some(o => o.type === 'instruction' && o.workDone) ? 'Marked as already done: the office gets the client’s sign-off before it is invoiced. ' : ''}The office prices it and puts it to the client.</span></div></div>}
-              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>{project?.projectManager ?? 'The project manager'} is emailed only once RELAY’s email is switched on; until then, tell them yourself if it cannot wait.</span></div></div>
+              {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{issuesSaid(report.observations.filter(o => o.type === 'defect' || o.type === 'access'))}</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Ones you linked are added to the issues already raised. ' : ''}The office says who sorts them out; you’ll see who on your home screen.</span></div></div>}
+              {counts.instruction > 0 && <div className="eng-row"><div className="main"><b>{counts.instruction} variation{counts.instruction === 1 ? '' : 's'} raised · need a quote</b><span>{report.observations.some(o => o.type === 'instruction' && o.workDone) ? 'Marked as already done: the office gets the client to agree it. ' : ''}The office prices it and puts it to the client.</span></div></div>}
+              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>RELAY does not email {project?.projectManager ?? 'the project manager'} yet. If it cannot wait, tell them yourself.</span></div></div>
             </div>
           </div>}
           </div>
@@ -1532,7 +1532,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           </div>}
           {/* Why the work is not on the server, where it is seen: above the button, not below the cards. */}
           {waiting && step === 'check' && !submitError && <div className="note eng-save-problem is-waiting eng-send-waiting" role="status">
-            <b>{waiting === 'signal' ? 'Waiting for signal.' : 'Waiting for RELAY’s server.'}</b> It goes to the office by itself as soon as {waiting === 'signal' ? 'this phone has signal' : 'it answers'}, while RELAY is open. It is kept on this phone until then.
+            <b>{waiting === 'signal' ? 'Waiting for signal.' : 'Waiting for RELAY to answer.'}</b> It goes to the office by itself as soon as {waiting === 'signal' ? 'this phone has signal' : 'it answers'}, while RELAY is open. It is kept on this phone until then.
             <div><button type="button" className="btn-quiet btn-sm" onClick={() => stopWaiting(report.id)}>Don’t send yet</button></div>
           </div>}
           {(submitError || (saveProblemText && !(waiting && step === 'check'))) && <div className={`note eng-save-problem ${!submitError && (saveState === 'signedout' || saveState === 'server') ? 'is-waiting' : 'note-bad'}`} role="alert">{submitError ?? saveProblemText}</div>}

@@ -151,7 +151,7 @@ async function post(key: string, defect: HeldDefect, onlyIfHeld: boolean, deps: 
   }
   if (response.status === 401) return { kind: 'waiting', reason: 'You are signed out. Your defect is kept on this phone and goes once you sign in again.' };
   // 400 is the route's own "could not be received, retry the same submission" (a body cut short, say).
-  if (response.ok || response.status >= 500 || [400, 408, 429].includes(response.status)) return { kind: 'waiting', reason: 'RELAY’s server did not answer properly. Your defect is kept on this phone and goes by itself when it does.' };
+  if (response.ok || response.status >= 500 || [400, 408, 429].includes(response.status)) return { kind: 'waiting', reason: 'RELAY did not answer properly. Your defect is kept on this phone and goes by itself when it does.' };
   return refuse(data.reason ?? 'RELAY could not take this defect.', response.status === 422 || response.status === 413);
 }
 

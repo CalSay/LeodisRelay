@@ -139,7 +139,7 @@ try {
     const note=page.locator('.held-send .note-ok');
     await note.waitFor({timeout:30000});
     const noteText=await note.innerText();
-    check(/2 reports from this phone are now on the server\. They stay drafts until you sign and send\./.test(noteText),`${scheme}: says what went up: ${noteText}`);
+    check(/2 reports from this phone are now saved to RELAY\. They stay drafts until you send them\./.test(noteText),`${scheme}: says what went up: ${noteText}`);
     const fresh=mine().filter(r=>!before.has(r.id)&&r.id!==draft.id&&r.id!==conflict?.id);
     check(fresh.length===1,`${scheme}: one new report on the server, not two`);
     const made=getReport(fresh[0].id);
