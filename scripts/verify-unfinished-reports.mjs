@@ -46,6 +46,9 @@ try {
     const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`${base}/engineer?project=proj-011lme`);
     await page.getByRole('heading',{name:'Unfinished reports'}).waitFor();
+    // Drafts saved to RELAY fold into one line when there are several (2026-10-22): open it to read them.
+    const unfold=()=>page.locator('details.eng-saved-drafts summary').click();
+    await unfold();
     let rows=list(page);
     check(await rows.count()===2,`${scheme}: both drafts listed, not someone else's or a sent one (${await rows.count()})`);
     const first=await rows.nth(0).innerText(),second=await rows.nth(1).innerText();
@@ -61,14 +64,18 @@ try {
     await hold(page,{key:`${principal.id}::${sent.id}`,reportId:sent.id,principalId:principal.id,seq:'s3',observations:[card()],heldAt:now,baseVersion:1,report:{...sent,state:'draft',observations:[]}});
     await page.route(`**/api/reports/${lost.id}`,route=>route.abort('internetdisconnected'));
     await page.reload();await page.getByText('Not saved to RELAY yet').waitFor();
+    // The phone's copies show at once; a copy the server did not list waits for the server's answer (here, no answer).
+    await page.getByText('Only on this phone').waitFor();
     rows=list(page);
     check(await rows.count()===3,`${scheme}: two server drafts plus the phone-only copy (${await rows.count()})`);
     const top=await rows.nth(0).innerText();
     check(top.includes('Kirkstall Gate')&&/not saved to RELAY yet/i.test(top)&&top.includes('3 cards')&&/last saved Mon,? 19 Oct/.test(top),`${scheme}: unsent edits flagged: ${top}`);
-    const phone=await rows.nth(2).innerText();
+    // What could be lost comes first, in full; the draft saved to RELAY stays below it.
+    const phone=await rows.nth(1).innerText();
     check(/only on this phone/i.test(phone)&&phone.includes('Tetley Hall'),`${scheme}: phone-only copy shown when the server cannot answer: ${phone}`);
     check(!(await page.locator('body').innerText()).includes(sent.reference.split('-').slice(1).join('-')),`${scheme}: stale copy of a sent report left out`);
-    await rows.nth(1).click();await page.waitForURL(`**/reports/${tetley.id}**`);
+    check(!(await page.locator('details.eng-saved-drafts').count()),`${scheme}: one draft saved to RELAY is listed, not folded`);
+    await rows.nth(2).click();await page.waitForURL(`**/reports/${tetley.id}**`);
     check(true,`${scheme}: a row opens its draft`);
     if(screenshot){await page.goBack();await page.getByText('Only on this phone').waitFor();await page.screenshot({path:join(screenshot,`unfinished-${scheme}-${width}.png`),fullPage:true});}
     assert.deepEqual(errors,[],`${scheme}: page errors`);
