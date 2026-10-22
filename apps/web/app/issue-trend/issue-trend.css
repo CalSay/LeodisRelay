@@ -5,7 +5,7 @@
 .it-page{max-width:900px;--it-open:#878881;}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .it-page{--it-open:#8a9299;}}
 :root[data-theme="dark"] .it-page{--it-open:#8a9299;}
-.it-controls{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 16px;padding:14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);}
+.it-controls{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;margin:0 0 16px;padding:14px;border:1px solid var(--line-2);border-radius:10px;background:var(--panel);}
 .it-controls label{font:500 10.5px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
 .it-controls select{flex:1 1 240px;min-height:44px;}
 .it-sheet h1{margin:4px 0 8px;}
@@ -13,14 +13,14 @@
 .it-verdict-good{border-color:color-mix(in srgb,var(--ok) 45%,transparent);background:color-mix(in srgb,var(--ok) 10%,transparent);}
 .it-verdict-bad{border-color:color-mix(in srgb,var(--caution) 45%,transparent);background:var(--caution-wash);}
 .it-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:0 0 14px;}
-.it-stat{display:flex;flex-direction:column;min-width:0;border:1px solid var(--line);border-radius:8px;padding:12px 14px;background:var(--panel);}
+.it-stat{display:flex;flex-direction:column;min-width:0;border:1px solid var(--line-2);border-radius:8px;padding:12px 14px;background:var(--panel);}
 .it-stat.it-stat-alert{border-color:color-mix(in srgb,var(--alert) 45%,transparent);background:var(--alert-wash);}
 .it-stat-label{font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--text-3);}
 .it-stat-n{margin-top:4px;font-size:26px;font-weight:600;line-height:1.1;}
 .it-stat-of{font-size:14px;font-weight:500;color:var(--text-2);}
 .it-stat small{display:block;font-size:12.5px;color:var(--text-2);margin-top:4px;overflow-wrap:anywhere;}
 .it-page a.ref,.it-links a{color:var(--brass);text-decoration:underline;text-underline-offset:3px;}
-.it-chart,.it-section{margin:0 0 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:14px 16px;}
+.it-chart,.it-section{margin:0 0 14px;border:1px solid var(--line-2);border-radius:10px;background:var(--panel);padding:14px 16px;}
 .eng-page .it-chart h2,.eng-page .it-section h2{margin:0 0 4px;font-size:17px;}
 .it-legend{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;margin:0;font-size:12.5px;color:var(--text-2);}
 .it-legend>span{white-space:nowrap;}
@@ -68,3 +68,30 @@
   .it-wk-short{display:inline;}
 }
 .it-empty p{margin:0;}
+/* Printed or saved as a PDF (Release 1, O5): the sheet alone, black on white
+   on A4, as the weekly summary prints. The bars keep their colours, and the
+   legend and table still name each one. */
+@media print{
+  @page{size:A4;margin:14mm 12mm;}
+  body{--panel:#fff;--panel-2:#fff;--ground:#fff;--text:#111;--text-2:#333;--text-3:#555;--line:#ccc;--line-2:#999;--brass:#5a4612;--alert:#8f2f19;--caution:#7d5a12;--ok:#22573a;--alert-wash:transparent;--caution-wash:transparent;}
+  html,body{background:#fff !important;color:#111;color-scheme:light;}
+  .appbar,.install-help,.it-page>.back,.it-controls,.it-links{display:none !important;}
+  .banner{position:static !important;background:none !important;color:#111 !important;border-bottom:1px solid #999;font-size:9px;}
+  .eng-page.it-page{padding:0;max-width:none;}
+  /* Above the dark theme's open grey, so paper always has the light one. */
+  :root .eng-page.it-page,:root[data-theme] .eng-page.it-page{--it-open:#878881;}
+  /* A4 is narrower than 760px, so the phone layout is undone for paper. */
+  .it-chart,.it-section{padding:14px 16px;}
+  .it-stat-n{font-size:26px;}
+  .it-bars{height:180px;}
+  .it-col{padding:0 3px;}
+  .it-table th,.it-table td{padding:7px 8px;}
+  .it-table thead th{letter-spacing:.12em;}
+  .it-table small{display:inline;}
+  .it-stats{grid-template-columns:repeat(4,minmax(0,1fr)) !important;}
+  .it-verdict,.it-stat,.it-chart,.it-section{background:#fff !important;break-inside:avoid;}
+  .it-stack>span,.it-key{-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .it-col.it-col-on{background:none;}
+  .it-page a.ref{color:#111;text-decoration:none;}
+  .it-wk-long{display:inline !important;}.it-wk-short{display:none !important;}
+}

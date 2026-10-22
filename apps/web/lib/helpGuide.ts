@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'summaries-cards', added: '2026-10-22', audience: 'all', title: 'Weekly and month summaries: clearer parts',
+    text: 'On screen, the Weekly summary\'s week and month now show each part (On site, Issues, Variations, and each part of the month) as its own card with a clear edge, instead of one long sheet where the parts ran into each other. The figures and what they count are unchanged, and the printed copy is unchanged. Issues over time now prints or saves as a PDF without the menu bar and project choice. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
+    link: { label: 'Open the Weekly summary', href: '/weekly-summary' } },
   { id: 'office-reader-tidier', added: '2026-10-22', audience: 'office', title: 'Reading a report: more room and clearer parts',
     text: 'With a report open in the Inbox, the report now takes half the page instead of a narrow strip, so its title, the last and next visit and its stages read on a line or two, and the list keeps each row to one or two lines. A report opens on its visit date in large type with each part as a card, like an issue\'s sheet, in the Inbox and in a project. Quick actions is a plain button. In the full report the details sit in even rows with no empty boxes, and on a phone the actions table fits the screen. The PDF page shows its page buttons and zoom on one bar once the PDF has loaded. Nothing was added or taken away. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
     link: { label: 'Open the Inbox', href: '/office#/inbox' } },

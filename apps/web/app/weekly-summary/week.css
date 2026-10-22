@@ -153,3 +153,27 @@
   .month-photos{grid-template-columns:repeat(4,minmax(0,1fr));}
   .month-sheet .week-section{break-inside:auto;}
 }
+
+/* Release 1 polish (O5). On screen each part of the summary is a card with a
+   clear edge (Cal, 21 Oct 12:59), as the project and issue sheets are (O2,
+   O3): the title and facts sit on the page ground, the figures are tiles, and
+   On site, Issues, Variations and each of the month's parts is a card. The
+   sheet itself is no longer a box, so there is no box inside a box. Paper is
+   unchanged: these rules are screen only. */
+@media screen{
+  .week-controls{border-color:var(--line-2);}
+  .week-sheet{background:none;border:0;border-radius:0;padding:0;}
+  .week-head{padding:4px 0 0;border-bottom:0;}
+  .week-head h1{text-wrap:balance;}
+  .week-stats div{background:var(--panel);border-color:var(--line-2);}
+  .week-section,.month-sheet .week-section{margin-top:16px;padding:2px 20px 18px;background:var(--panel);border:1px solid var(--line-2);border-radius:10px;}
+  .week-section h2,.month-sheet .week-section h2{margin-top:14px;border-bottom:1px solid var(--line);}
+  /* The month's figures card holds its own tiles: they take the sunken ground so they read as tiles, not as a second card. */
+  .month-sheet .month-stats div{background:var(--panel-2);border-color:var(--line);}
+  .week-foot{margin-top:18px;}
+}
+@media screen and (max-width:640px){
+  .week-head{padding-top:6px;}
+  .week-section,.month-sheet .week-section{margin-top:12px;padding:0 14px 14px;}
+  .week-section h2,.month-sheet .week-section h2{margin-top:12px;}
+}
