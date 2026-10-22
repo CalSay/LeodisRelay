@@ -30,6 +30,15 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   the variation sheet and its "No signed copy" note. `instructionParts` in
   `lib/variations.ts` now leaves out a missing part; the register and sheet
   say "no reference recorded" when nothing is known. Unit test added.
+  Rechecked after the fix with the walk's variation screens (engineer page,
+  office sheet and register, 390 and 1440, light and dark) and these browser
+  checks: office-registers (225), office-desk (73), september-office (43),
+  engineer-day (37), office-links (65), search (31), accessibility (584).
+- Docker: the image built from a clean `git archive` of de9d726 starts
+  healthy (`/api/health` ok, `/signin` 200 with local sign-in allowed). The
+  check machine pulled the Node base image through Google's Docker Hub mirror
+  because Docker Hub refused it (rate limit); the repo's Dockerfile is
+  unchanged.
 - Seen and not faults: broken photograph boxes and 404s (the busy seed
   points at photographs it never writes), "The PDF is still being made" (no
   PDF worker in the walk), "Seen Fri 23 Oct" in the future (the seed dates
