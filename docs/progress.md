@@ -37,6 +37,97 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 - Not verified: a real laptop, browsers other than Chromium 141.
 - Next: Projects-column issue rows truncated at 1180-1365 (same walk).
 
+## 2026-10-22 — A quieter list of cards in a site update
+
+- Why: a walk of an engineer at 390px (latest main) writing one site update
+  across five places (flats, corridor, roof, stair core, plant room) with seven
+  photographs, then Check & send: 24 taps, four for each extra place (add,
+  where, what happened, photo), none of them spare. The clutter was in the list
+  of cards above the one being written: every saved card had a line of its own
+  saying so (the bar at the bottom says it too), and each time a card folded it
+  showed amber "Not saved to RELAY yet · changes and 1 photograph" for a second
+  or two while its save went through, which reads as a fault. Asked for by the
+  coordinator as the walk's one pick; not a `docs/tasks.json` task, so no
+  status changed. Decided without asking Cal (his autonomy message), within his
+  07:02 direction (less on screen for engineers).
+- Changed (`reports/[id]/page.tsx` `CardWhereMark`, `CardWhereLine`,
+  `photoWhereOf`; `engineer.css`): a saved card shows a green dot at the end of
+  its place's line, with "Saved" for screen readers only (the photo tiles'
+  rule since #114). A card or photograph waiting only for the save already
+  under way says "Saving" (photo tiles "Uploading") with a grey dot, not the
+  amber warning. Work that has not gone up and is not being saved (no signal,
+  RELAY not answering, a refused save) keeps its amber line as before, also
+  while RELAY retries it: the quiet "Saving" is only for a save after one
+  that worked, and only when the phone has kept its copy. Inspections' check
+  rows follow the same rule (not covered by the new check). A folded card at 390px is
+  three lines (about 91px) instead of four (106px).
+- Decisions (Claude): the dot goes at the right of the place line, clear of
+  the + so it is not read as part of the place name. Kept the amber line for
+  real problems: that is the one an engineer must notice.
+- Checks: typecheck, `npm test` (146 + 551), build. New
+  `scripts/verify-quiet-card-list.mjs` (66 checks, 390px light and dark: five
+  places and seven photos in at most 24 taps, a held save shows "Saving" with
+  no "not saved" on the card or its photos, every saved card one dot on its
+  place's line with "Saved" for screen readers, folded cards 96px or less, no
+  signal keeps its amber line, the office gets every place and photo). It
+  fails on main ("a card whose save is on its way says Saving"). Also passed,
+  one at a time: photo-uploads, send-on-signal, quicker-update, fewest-taps,
+  lighter-card, engineer-layout, offline-capture, one-caption-line,
+  draft-conflict, editor-wide, report-editor, day-walkthrough, engineer-day,
+  accessibility (584), offline-drafts, handover-offline, offline-inspection,
+  quicker-inspections. undo-remove fails as on main (open PR #142 fixes it).
+  Screens: project files `ui-review/site-update-trades/` (`walk/` before,
+  `after/`, `check/`).
+- Review: a fresh-context review found the cards would turn to "Saving"
+  every 15 seconds while RELAY retried a failed save, the "Saving" dot was
+  amber, screen readers would hear the place and "Saved" run together, and
+  the new check could catch photos still uploading. All fixed.
+- Not verified: a real phone, real weak signal, a screen reader; the wide
+  (desk) editor and inspection rows only through the existing checks.
+- Ideas for later (not built): the progress card has no trade, so a site
+  manager writing up several trades files them all under their own trade on
+  "Today from site"; "+ Another card here" and "Done with this card" sit
+  between the open card and "+ Progress" for an update across many places.
+
+## 2026-10-22 — Today from site fits a phone
+
+- Why: a walk of an office manager at 390px on the office overview (latest
+  main, busy example data from `scripts/seed-busy-projects.mjs`; screens in
+  project files `ui-review/office-overview-phone/`), asking "what happened on
+  site today and what needs me?". The figures matched the records: 9 updates
+  today, 3 a project; each bar's access and raised counts add up to its cards;
+  1,542 not seen equals the projects' 553 + 493 + 496; Attention 1,369 equals
+  their needs-action figures. The read did not fit a phone: the nine cards
+  under "Today from site" ran to about 2,700px, so "Not seen yet",
+  "Unassigned issues" and "Fixed, to check" started about 4,700px down.
+  Asked for by the coordinator as the walk's one pick; not a
+  `docs/tasks.json` task, so no status changed. Decided without asking Cal
+  (his autonomy message), within his 07:02 direction (the office's view of
+  progress).
+- Changed: on a phone (700px or less) each project's cards fold under its bar
+  behind a "Show the 3 site updates" button (`aria-expanded`, "Hide the site
+  updates" when open; `TodayProject` in `ProjectsView.tsx`, `.today-fold` in
+  `workspace.css`). Folded cards are not loaded, not even for the moment
+  before the page knows it is on a phone (`usePhoneKnown`); once opened they
+  stay loaded, so Hide and Show again do not read the reports again. The
+  desk is unchanged. The
+  busy overview on a phone went from 6,890px to 4,622px tall, and "Not seen
+  yet" now starts about 2,000px down.
+- Decisions (Claude): fold rather than cut the cards to one line, because the
+  bar already says what the day found and the cards are the engineers' words,
+  read when wanted. Folded by default on every visit (not remembered), so the
+  overview always opens the same way.
+- Checks: typecheck, `npm test` (146 + 551), build.
+  `scripts/verify-today-from-site.mjs` now also checks, at 390px, that both
+  projects start folded with their counts, the folded day is under one
+  screen, the action groups follow it, axe finds nothing folded, each fold
+  opens and says so, Hide folds it again, opening again reads nothing new,
+  no card is read before a fold is opened, and the desk has no fold (58
+  checks; fails on main).
+  Also passed: help, office-phone, office-sections, office-landing,
+  office-links, office-progress, role-access, accessibility, day-walkthrough.
+- Not verified: a real phone; a live tenant.
+
 ## 2026-10-22 — Plain words on engineer screens
 
 - Why: Cal's 21 Oct ask that RELAY be easy for hands-on engineers, "not IT
