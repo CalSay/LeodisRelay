@@ -4,6 +4,46 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Site updates: the same trade's previous visit
+
+- Why: the coordinator asked for a walk of an office person at 1440px opening
+  one received site update and asking "what changed on this site since the
+  last visit?" (busy example data, main 9a91c2b). The Inbox reader and the
+  project's report view said who sent it and what it found, but nothing about
+  when that trade was last there or what they said then: the office had to go
+  back to the register and hunt for the earlier report by hand. Not a
+  `docs/tasks.json` task, so no status changed. Within Cal's 21 Oct direction
+  (the office's view of progress clearer); nothing new asked of site.
+- Changed: `tradeVisits` (lib/tradeVisits.ts) finds the same trade's site
+  update before and after the one open, on the same project. Under a site
+  update's title, a line "‹ Previous Electrical update here · Wed 21 Oct, the
+  day before · Sam Spark · SPR-831" and, when there is a later one, "Next
+  Electrical update here ›". Selecting one opens it in the same place (the
+  Inbox reader stays in the Inbox, a project's report in the project). The
+  first update says "None before this one". Help "What's new" line.
+- Decided (Claude): counted as "Latest from site" counts (sent site updates
+  only, a sent correction in place of what it corrects, inspections left out).
+  The trade, not the person, because the office asks when Electrical was last
+  there, whoever went; an update with no trade is matched to the same person.
+  A report's own revisions are never its previous or next visit. Calendar days
+  for the gap ("4 days before"), because that is how the office counts between
+  visits. A side-by-side "what changed" comparison of cards was left out: card
+  text is free-written, so matching cards would guess; opening the two updates
+  is honest and one click.
+- Also fixed (found by the new check's axe run, on main before this): in dark,
+  the "Seen" tag on the picked Inbox row was 4.05:1 (washes stacked), now on
+  the panel colour; on a phone with a report open, the Inbox heading is kept
+  for screen readers (visually hidden) so "Reader" is not an orphan h3.
+- Verified: typecheck, `npm test` (146 + 577, five new unit tests), build.
+  New `scripts/verify-previous-trade-update.mjs` (42 checks, 1440 dark and
+  390 light): the line's words against the hand-made records, stepping back
+  and forward in the Inbox and in the project, a correction in place of what
+  it corrects, an old revision stepping past its correction, another
+  electrician counting, HVAC, a draft and an inspection skipped, no line on an
+  inspection or a trade's only update, axe, tap size, no sideways scroll.
+  Walked on the busy seed at 1440 light and dark and 390.
+- Not verified: a real phone or screen reader.
+
 ## 2026-10-22 — Site coverage: trades with no report yet this week
 
 - Why: the coordinator asked for a per-site line on Site coverage naming the

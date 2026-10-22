@@ -112,6 +112,8 @@ body:has(.ws){overflow:hidden auto}
 .ws table.reg tr:last-child td{border-bottom:0}
 .ws table.reg tbody tr:hover{background:var(--acc-wash)}
 .ws table.reg tr.sel{background:var(--acc-wash);box-shadow:inset 2px 0 0 var(--acc)}
+/* A tag keeps its own ground on the picked row, so two washes never stack below contrast (dark "Seen" was 4.05:1). */
+.ws table.reg tr.sel .tag{background:var(--panel)}
 .ws table.reg.tight td,.ws table.reg.tight th{padding:var(--s2) var(--s3);font-size:12px}
 .ws table.reg tr.clickable{cursor:pointer}
 .ws .rowtitle{font-weight:500;font-size:14px}
@@ -239,6 +241,17 @@ body:has(.ws){overflow:hidden auto}
 .ws .sheet{background:var(--panel);border:1px solid var(--line);padding:var(--s4)}
 .ws .sheet-title{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--s4);padding:var(--s3);border:1px solid var(--line);border-left:3px solid var(--acc);background:var(--panel-2)}
 .ws .sheet-title :is(h3,h4){margin:6px 0 var(--s1);font-size:18px;font-weight:500;letter-spacing:-.015em}
+/* The same trade's last and next site update, under a report's title (lib/tradeVisits.ts). */
+.ws .trade-visits{display:flex;gap:var(--s2);margin-top:var(--s2)}
+.ws .trade-visit{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:2px;padding:8px 12px;border:1px solid var(--line);background:var(--panel);color:var(--text);font-size:13px;line-height:1.4}
+.ws .trade-visit.next{text-align:right}
+.ws .trade-visit .k{font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:var(--acc);font-weight:500}
+.ws .trade-visit .v{color:var(--text-2)}
+.ws .trade-visit .v b{font-weight:500;color:var(--text)}
+.ws .trade-visit .ref{white-space:nowrap}
+.ws .trade-visit.none .k{color:var(--text-3)}
+.ws a.trade-visit:hover{border-color:var(--acc);background:var(--acc-wash)}
+.ws a.trade-visit:hover .k{text-decoration:underline;text-underline-offset:2px}
 .ws .crumbs{font-family:var(--mono);font-size:11px;color:var(--text-3);letter-spacing:.03em}
 .ws .crumbs a,.ws .crumbs button{font-weight:500;color:var(--acc);font:inherit}
 /* Underlined, so a crumb reads as a link by more than its colour (axe link-in-text-block). */
@@ -356,6 +369,9 @@ body:has(.ws){overflow:hidden auto}
   .ws .colpad.sticky-foot{margin-top:0}
   .ws .sheet{padding:12px}
   .ws .sheet-title{flex-direction:column}
+  .ws .trade-visits{flex-direction:column}
+  .ws .trade-visit{min-height:var(--touch)}
+  .ws .trade-visit.next{text-align:left}
   .ws .arow .nm,.ws .arow .nm small{white-space:normal}
   .ws .arow{min-height:var(--touch)}
   .ws .item,.ws .mini{min-height:var(--touch)}
@@ -450,7 +466,9 @@ body:has(.ws){overflow:hidden auto}
    than opening under the whole list; "‹ Inbox" goes back to the same place. */
 .ws .inbox-back{display:none}
 @media (max-width:700px){
-  .ws .view.inbox-reading>.pagehead,.ws .view.inbox-reading>.filters,.ws .view.inbox-reading .inbox-list-panel{display:none}
+  .ws .view.inbox-reading>.filters,.ws .view.inbox-reading .inbox-list-panel{display:none}
+  /* Out of sight but still read out, so the Reader heading keeps "Inbox" above it (axe heading-order). */
+  .ws .view.inbox-reading>.pagehead{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
   .ws .inbox-back{display:inline-flex;align-items:center;min-height:44px;margin:-10px 0;padding:0 var(--s2) 0 0;background:none;border:0;font-family:var(--mono);font-size:12px;color:var(--acc);letter-spacing:.04em;cursor:pointer;white-space:nowrap}
 }
 /* Registers: one card per row on a phone, and on a tablet or narrow window

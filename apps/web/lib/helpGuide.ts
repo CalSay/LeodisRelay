@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'office-previous-trade-update', added: '2026-10-22', audience: 'office', title: 'Site updates: open the same trade\'s previous visit',
+    text: 'When the office opens a site update, a line under its title now names the same trade\'s previous update on that site, for example "Previous Electrical update here: Wed 21 Oct, the day before · Sam Spark", and the next one when there is a later one. Select it to open that update and see what changed since the trade was last there. It works in the Inbox reader and in the project. A correction counts in place of the update it corrects, inspections are left out, and an update with no trade is matched to the same person. Checked in a desktop browser (light and dark) and a phone-sized window, not on a real phone.',
+    link: { label: 'Open the Inbox', href: '/office#/inbox' } },
   { id: 'coverage-quiet-trades', added: '2026-10-22', audience: 'office', title: 'Site coverage: trades with no report yet this week',
     text: 'On Site coverage, an active site now says which of its trades have not sent a report yet this week, for example "No P&H report yet this week". A trade is named when it sent a report from that site in the two weeks before this week but none from Monday to today, so a trade that has finished there is not named for ever. It shows from Tuesday, only on the fortnight that holds today, and never on defects liability sites. It is a prompt to ask how that work is going, not a check on anyone. Checked in a desktop browser (dark) and a phone-sized window (light), not on a real phone.',
     link: { label: 'Open Site coverage', href: '/coverage' } },
