@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'defect-trade-one-tap', added: '2026-10-22', audience: 'site', title: 'Flag a defect: trade in one tap',
+    text: 'On "Flag a defect", "Trade affected" is now four buttons (Electrical, HVAC, P&H and Other), the same as on a site update card, instead of a list to open. It still starts at your own trade, so if the problem is yours there is nothing to change; if it is another trade\'s work, such as a plumber\'s leak, tap theirs. Checked in a phone-sized browser, not on a real phone.' },
   { id: 'assign-by-trade', added: '2026-10-22', audience: 'office', title: 'Unassigned issues say whose work it is',
     text: 'When an engineer flags a defect that is another trade\'s work, such as an electrician spotting a plumber\'s leak, the office can now see whose it is straight away. Each row under "Unassigned issues" on the office overview gives the trade the engineer chose, and so do the Assign box on the office desk and "Who puts it right" on the issue page. They also offer, as one-tap choices, the companies the office has already given that trade\'s work on the project. Tapping one only fills in Responsible, so the office still chooses and presses Assign. A defect marked "Other" offers no company, because "Other" covers many trades. Checked in a desktop browser and a phone-sized window, not on a real phone.' },
   { id: 'office-lists-first', added: '2026-10-22', audience: 'office', title: 'What needs you, straight under the projects',
