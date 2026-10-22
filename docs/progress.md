@@ -39,7 +39,10 @@ Earlier history is in `docs/optimisation-progress.md` and the dated docs.
   else put it forward again or it was reassigned, and showed any office note
   to the same trade; both fixed. A second review found a new target date
   cleared it, a reopened closed issue counted, and the Yours list still
-  showed any note; all fixed and unit-tested. Known, not changed: the
+  showed any note; all fixed and unit-tested. A third found a company named
+  on the report (no assignment event) lost the reason at a new target date;
+  fixed: the first company named since is then the baseline (so a hand-over
+  in that one case keeps the reason; accepted). Known, not changed: the
   home's server cut to six newest before sorting (as before #162).
 - Verified: typecheck, `npm test` (146 + 560, one new unit test), build. New
   `scripts/verify-sent-back-reason.mjs` (22 checks): Pat at 1440 dark and

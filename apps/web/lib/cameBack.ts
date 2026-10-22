@@ -29,18 +29,20 @@ export const isOpenIssue = (i: Issue): boolean => i.work !== 'closed' && i.confi
  */
 type Assigned = Written & { to?: string };
 export function sentBackEvent<E extends Assigned>(events: readonly E[], principal: { id: string; name: string }): E | undefined {
-  const handedTo = new Set<string>();
+  // Companies it was handed to since, newest first.
+  const handedTo: string[] = [];
   for (let i = events.length - 1; i >= 0; i--) {
     const e = events[i]!;
     if (e.actorId ? e.actorId === principal.id : e.actor === principal.name) return undefined;
     if (e.kind === 'closure_submitted' || e.kind === 'verified') return undefined;
-    if (e.kind === 'assigned') { handedTo.add(e.to?.trim() ?? ''); continue; }
+    if (e.kind === 'assigned') { handedTo.push(e.to?.trim() ?? ''); continue; }
     if (e.kind !== 'reopened') continue;
     // Who it was with when it was sent back, and what came just before: a fix put forward, not a check.
     const before = events.slice(0, i).reverse();
     if (before.find(b => b.kind === 'closure_submitted' || b.kind === 'verified')?.kind !== 'closure_submitted') return undefined;
-    const owner = before.find(b => b.kind === 'assigned')?.to?.trim() ?? '';
-    return [...handedTo].every(to => to === owner) ? e : undefined;
+    // A company named on the report, or an older assignment, records no `to`: then the first one named since is who it was with.
+    const owner = before.find(b => b.kind === 'assigned' && b.to?.trim())?.to?.trim() ?? handedTo.at(-1);
+    return handedTo.every(to => !to || to === owner) ? e : undefined;
   }
   return undefined;
 }

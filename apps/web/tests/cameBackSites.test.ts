@@ -69,7 +69,7 @@ test('a fix the engineer put forward and the office sent back comes back to them
   const withdrawn = issue({ confirmation: 'withdrawn', events: sentBack.events });
   // Lee put it forward again after Pat's was sent back; or the office gave it to another contractor.
   const fixedByLee = issue({ work: 'awaiting_verification', events: [raised(), putForward, notFinished, ev('closure_submitted', 'Lee Live', 'entra:lee', '2026-10-21T12:00:00Z')] as Issue['events'] });
-  const reassigned = issue({ work: 'assigned', events: [raised(), putForward, notFinished, { ...ev('assigned', 'Olive Office', 'entra:olive', '2026-10-21T12:00:00Z'), to: 'Bolt' }] as Issue['events'] });
+  const reassigned = issue({ work: 'assigned', events: [raised(), { ...ev('assigned', 'Olive Office', 'entra:olive', '2026-10-21T09:30:00Z'), to: 'Acme' }, putForward, notFinished, { ...ev('assigned', 'Olive Office', 'entra:olive', '2026-10-21T12:00:00Z'), to: 'Bolt' }] as Issue['events'] });
   // Another site person's update does not answer it for Pat.
   const leeUpdated = issue({ work: 'in_progress', events: [raised(), putForward, notFinished, ev('progress', 'Lee Live', 'entra:lee', '2026-10-21T12:00:00Z', 'Parts ordered')] as Issue['events'] });
   // A new target date for the same company, after the send-back, leaves it standing; a closed issue reopened is not a send-back.
@@ -77,8 +77,10 @@ test('a fix the engineer put forward and the office sent back comes back to them
   const sameCompany = issue({ work: 'in_progress', events: [raised(), assign('Acme', '2026-10-21T09:30:00Z'), putForward, notFinished, assign('Acme', '2026-10-21T12:00:00Z')] as Issue['events'] });
   const otherCompany = issue({ work: 'in_progress', events: [raised(), assign('Acme', '2026-10-21T09:30:00Z'), putForward, notFinished, assign('Bolt', '2026-10-21T12:00:00Z')] as Issue['events'] });
   const closedThenReopened = issue({ work: 'in_progress', events: [raised(), putForward, ev('verified', 'Olive Office', 'entra:olive', '2026-10-21T10:30:00Z'), notFinished] as Issue['events'] });
-  const all = [sentBack, waiting, answered, byName, someoneElsesFix, withdrawn, fixedByLee, reassigned, leeUpdated, sameCompany, otherCompany, closedThenReopened];
-  const expected = [sentBack.id, byName.id, leeUpdated.id, sameCompany.id];
+  // The company was named on the report, so no assignment came before: a target date afterwards still leaves it standing.
+  const namedOnReport = issue({ work: 'in_progress', events: [raised(), putForward, notFinished, assign('Acme', '2026-10-21T12:00:00Z')] as Issue['events'] });
+  const all = [sentBack, waiting, answered, byName, someoneElsesFix, withdrawn, fixedByLee, reassigned, leeUpdated, sameCompany, otherCompany, closedThenReopened, namedOnReport];
+  const expected = [sentBack.id, byName.id, leeUpdated.id, sameCompany.id, namedOnReport.id];
   assert.deepEqual(all.filter(i => sentBackToYou(i, pat)).map(i => i.id), expected);
   assert.deepEqual(cameBack(all, [], pat).issues.map(i => i.id).sort(), [...expected].sort());
   assert.deepEqual(cameBackElsewhere({ issues: all, variations: [], reports: [] }, pat, sites).issues.map(i => i.id).sort(), [...expected].sort());
