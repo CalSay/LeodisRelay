@@ -20,14 +20,11 @@ export default function LocalSignInPage({
 
   return (
     <EntryFrame><div className="entry-login entry-local">
-      <div className="pagehead">
-        <div>
-          <h1>Local sign-in</h1>
-          <p className="entry-copy">Development only — no identity is checked</p>
-        </div>
-      </div>
+      <p className="entry-kicker">DEVELOPMENT ONLY</p>
+      <h1>Local sign-in</h1>
+      <p className="entry-copy">No identity is checked. Type any name to carry on.</p>
 
-      <form action="/api/auth/callback" method="GET" style={{ marginTop: 24 }}>
+      <form action="/api/auth/callback" method="GET">
         <input type="hidden" name="state" value={state} />
         <input type="hidden" name="returnTo" value={returnTo} />
         <div className="field">
@@ -42,8 +39,8 @@ export default function LocalSignInPage({
             autoFocus
           />
           <p className="hint">
-            This name is recorded as the author of anything you capture, so use different names to
-            test review and verification.
+            This name is recorded as the author of anything you capture. Use different names to
+            try the office checking someone else&apos;s work.
           </p>
         </div>
         <button className="entry-cta" type="submit" disabled={name.trim() === ""}>

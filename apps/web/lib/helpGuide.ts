@@ -29,6 +29,8 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'entry-screens-tidy', added: '2026-10-22', audience: 'all', title: 'Sign-in and the company choice, tidied',
+    text: 'On a phone, the sign-in and "Select your company" screens now fill the screen like an app, and "Put RELAY on your home screen" lines up with the rest. Leodis Compliance Management shows "Coming later" and does not open yet: it is not part of this first release, and its screens only had made-up records in them. On pages with the menu along the top, Sign out and the theme are two matching buttons beside RELAY, and on a phone the page links sit in a tidy grid underneath instead of wrapping in ragged rows. Sign out no longer shows your name and role, so the links never run under it. Checked in a phone-sized browser and on a laptop, light and dark, not on a real phone.' },
   { id: 'office-project-sheet-tidier', added: '2026-10-22', audience: 'office', title: 'A tidier project sheet',
     text: 'A project\'s sheet in the office now opens on the project\'s name in large type, and each part below it is its own card with a clear edge: the four figures with the issue bar under them, then Latest from site, the project\'s pages and its details, each under its own heading. On a phone the project\'s name heads the page. The separate Projects list and project page have one rule under the heading instead of two, the details four across on a laptop, and a smaller Start a site update button there. Nothing was added or taken away. Checked in a desktop browser at 1440px (light and dark) and a phone-sized one, not on a real phone.',
     link: { label: 'Open the office', href: '/office' } },
