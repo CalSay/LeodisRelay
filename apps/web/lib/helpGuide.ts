@@ -29,6 +29,9 @@ export interface WhatsNew {
 
 /** Newest first. Only what has been merged; nothing promised. */
 export const WHATS_NEW: readonly WhatsNew[] = [
+  { id: 'issues-where-you-are', added: '2026-10-22', audience: 'site', title: 'Every open issue where you are standing',
+    text: 'On the Issues tab, tap "Open" and pick your place under "Where are you?": the list then shows only the issues at that place, from every trade, with how many there are ("Flat 204 kitchen · 31 open"). The places are the ones already typed on the site\'s issues, each with its count, and a place also brings in the smaller places inside it, so "Flat 204" includes "Flat 204 kitchen". On an issue, "Every open issue here", under "Update this issue", opens the same list. After you open an issue, Back brings you to the same place. Checked in a phone-sized browser, not on a real phone.',
+    link: { label: 'Open the Issues tab', href: '/engineer?view=issues&show=open' } },
   { id: 'inspection-tally-first', added: '2026-10-22', audience: 'office', title: 'An inspection shows what needs action first',
     text: 'When the office opens an inspection (in the Inbox or a project), a line under Inspection results now says how it went ("3 need action · 8 satisfactory · 1 not applicable") and only the checks needing action are listed, each with its issue. The satisfactory and not applicable checks fold under one button ("Show the 8 satisfactory and 1 not applicable checks"); a passing check the office has added a note to stays in view. The PDF and Full report still list every check. Checked in a desktop browser, light and dark, and a phone-sized window, not on a real phone.',
     link: { label: 'Open the Inbox', href: '/office#/inbox' } },

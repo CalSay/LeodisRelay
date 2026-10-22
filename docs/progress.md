@@ -4,6 +4,54 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Every open issue where the engineer is standing
+
+- Why: a walk at 390px on main d6ce82d with Sam (busy seed, Tetley Hall:
+  390 open issues across 15 places) standing in one flat and wanting every
+  open issue there, his and other trades', to fix or check. Issues → Open was
+  one list 89,503px long, and Flat 204 kitchen's 31 issues were spread from
+  5,757px to 86,411px down. Yours listed 616 cards, only his. Search for
+  "Flat 204" mixed in another site and closed issues and stopped at 25. The
+  Snag list groups by place, but Flat 204 kitchen started 11,606px down (all
+  trades). Coordinator's ask (walk and one pick); not a `docs/tasks.json`
+  task, so no status changed. Within Cal's 21 Oct direction (fewer taps,
+  less on screen for engineers).
+- Changed: on Issues → Open or All issues for one project, "Where are you?"
+  lists the places typed on the issues shown, each with its count, after
+  "Every place (390)". Picking one lists only the issues at that place (or a
+  smaller place inside it, at word edges, so "Flat 204" brings in "Flat 204
+  kitchen", never "Flat 2041"; "Flat 204 kitchen" does not bring in "Flat
+  204" or every "Kitchen"), from every trade, under
+  "Tetley Hall - Block E · Flat 204 kitchen · 31 open". The place is kept in
+  the address, so Back from an issue returns to it; All issues keeps it; Yours,
+  All projects and changing project drop it. An engineer's issue page has
+  an "Every open issue here" row under "Update this issue" (not beside Where:
+  that pushed the buttons off the first screen), opening that list. New
+  `lib/issuePlaces.ts` (with tests); `EngineerWorkspace.tsx`,
+  `app/engineer/page.tsx`, `app/issues/[id]/page.tsx`, `engineer.css`. Help
+  "What's new" line.
+- Decided (Claude): places come only from what people typed on the issues
+  (no location list, EXP-4), one per place however it was typed, in the
+  spelling used most and natural order. No choice on All projects, where two
+  sites can both have a "Plant room". A place from a link with nothing open
+  stays chosen, and the list says "No open issues at …" rather than
+  quietly showing everything.
+- Verified: typecheck, `npm test` (146 + 562), build. New
+  `scripts/verify-issues-here.mjs` (63 checks, 390px light and dark, 1440px
+  dark, busy seed): Issues, Open, the place in three taps; the choices and
+  counts equal `issuePlaces`; exactly the 31 open issues at Flat 204 kitchen,
+  from more than one engineer; 7,905px instead of 89,503px at 390px; Back
+  from an issue, All issues, All projects, Yours; "Every open issue here";
+  a place typed in another case or spacing; a place with none open; 48px
+  controls, no sideways scroll, axe, no page errors. Fresh review: fixed its
+  points (a place listed bigger places and every bare "Kitchen" too; the
+  count beside a place with none typed said 0; heading words; a place in the
+  address with Yours or All projects). Screens: project files
+  `ui-review/issues-here/before|after`.
+- Not verified: a real phone; a screen reader.
+- Next: none from this walk. Possible later: the same choice on the Snag
+  list, which already groups by place.
+
 ## 2026-10-22 — An inspection shows what needs action first in the office
 
 - Why: a walk of an office manager at 1440px and 390px on main 79f39c9

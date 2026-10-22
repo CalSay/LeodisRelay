@@ -381,6 +381,10 @@ export default function IssuePage({ params, searchParams }: { params: Promise<{ 
           </section>
         ))}
 
+        {/* Standing there: every trade's open issues at this place, on the Issues tab (2026-10-22). Under the
+            update, so what, where and the buttons stay on the first screen. */}
+        {issue.location.trim() && <div className="eng-list issue-eng-here"><Link className="eng-row" href={`/engineer?${new URLSearchParams({ project: issue.projectId, view: "issues", show: "open", place: issue.location.trim() })}`}><div className="main"><b>Every open issue here</b><span>{issue.location.trim()} · every trade</span></div><span className="chev">›</span></Link></div>}
+
         <details className="eng-more-detail issue-more">
           <summary>History · {issue.events.length}<small>Every update, and the detail the office keeps</small></summary>
           <div>
