@@ -4,6 +4,63 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Defect cards ask only about issues in the same place
+
+- Why: a walk of one engineer's day on two sites at 390px (Tetley Hall then
+  Kirkstall Gate, local example data; notes, tap counts and screenshots in
+  project files `ui-review/two-site-day/`) found every defect card put
+  "Is this something already raised?" between Where and What's wrong, listing up
+  to six open issues from anywhere on site, each with a photo: at Flat 1.03 it
+  listed issues in Riser 2 and Flat 2.04. With two open issues it took about
+  290px; on a busy site six rows and "Show all", and a wrong tap links the new
+  defect to an old issue. The coordinator approved it as the walk's one pick. Not
+  a `docs/tasks.json` task; no status changed.
+- Changed: defect and access cards list only the open issues at the card's place
+  and the one the card is linked to (`issuesHere` in `lib/issueLink.ts`). With
+  none, one line says "No open issue at Flat 1.03." (or asks for the place first),
+  and "Link to an issue somewhere else · 11 open" opens the full picker as before;
+  "Only issues at Flat 1.03" folds it again. A link made before, to an issue
+  anywhere, is always listed and stays chosen. Variation cards are unchanged (their
+  question is already folded under "More for the office"). It filters the issues
+  the report page already has, so it works the same with no signal.
+- Decided: places are typed, not picked from a list, so "the same place" is the
+  same words ignoring case and spaces, or one place inside the other ("Block E"
+  and "Block E, flat 2.04"; "Flat 2" and "Flat 2.04"), so a defect seen again in
+  a part of a room still finds its issue. The shorter one must sit between word
+  edges, so "Level 1" no longer matches "Level 12" (the old contains rule did).
+  The picker's ordering uses the same rule.
+- Also (small, approved): the number beside "Came back from the office" counted
+  every row, including the report and defects the engineer had just sent. It now
+  says "N from the office" and counts only rows the office has done something on
+  (opened or reviewed a report; assigned, checked, sent back, confirmed, priced,
+  decided or wrote on an issue or variation: `officeActed`/`officeOpened` in
+  `lib/cameBack.ts`); with none it shows no number. The rows are unchanged.
+- Help: a "What's new" line.
+- Checks: typecheck, `npm test` (146 + 540; between 23:00 and 00:00 UTC
+  `offlineStart.test.ts` fails on main too, fixed separately in #133), build. New
+  `scripts/verify-same-place-issues.mjs` (61 checks, light and dark at
+  390px): nothing listed before a place; at a new place one line (117px instead
+  of a list) and the rest one tap away, counted, 48px; "Flat 2.04" lists the flat
+  and its bathroom, "Level 1" not "Level 12"; linking an issue elsewhere through
+  the fold, kept and shown after folding and after a reload; a link to an issue
+  since withdrawn still says it is linked and "No — this is new" unlinks it; an
+  access card with
+  no signal matches the issues already on the phone; home counts "1 from the
+  office" before and after sending a report and defects; no sideways scroll, no
+  page errors. `verify-issue-link` now opens the fold before checking the full
+  picker. Also passed: issue-link, fewest-taps, engineer-day, came-back-first,
+  simpler-home, seen-by-office, office-words, came-back-to-update, home-and-sheet,
+  issues-yours, help, engineer-layout, role-access, accessibility, quicker-update,
+  same-location, editor-wide, editor-usability, report-editor, offline-capture.
+  A fresh-context review found two things, both fixed: a card linked to an issue
+  no longer open lost "No — this is new" and the linking hint; and folding the
+  list away when nothing was left elsewhere removed the button with focus on it
+  (focus now goes to the chosen answer).
+- Not verified: real phones, real weak signal, screen readers.
+- Seen on the walk, left as notes: the office's question on another site is not
+  shown while at this one; the defect receipt has no way back to Site; the Send
+  bar covers part of "What sending does".
+
 ## 2026-10-21 — Issues over time quick again on busy projects
 
 - Why: the twelfth release check (main 40ff4fd, #2-#129) ran every browser

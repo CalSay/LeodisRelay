@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { issueReopened, issueWord, reportWord, variationWord, waitingOnYouFirst } from '../lib/cameBack';
+import { issueReopened, issueWord, officeActed, officeOpened, reportWord, variationWord, waitingOnYouFirst } from '../lib/cameBack';
 
 const latestWord = issueWord;
 
@@ -119,4 +119,17 @@ test('an issue the office reopened counts as sent back, with or without a note, 
   assert.equal(issueReopened([raised, fixed, ev('reopened', 'Olive Office', '', 'entra:olive'), ev('progress', 'Sam Sparks', 'On it', 'entra:sam')], sam), false);
   assert.equal(issueReopened([raised, ev('assigned', 'Olive Office', '', 'entra:olive')], sam), false);
   assert.equal(issueReopened([raised, fixed, ev('reopened', 'Olive Office', '', 'entra:olive'), ev('closure_submitted', 'Priya Pipe', 'Done', 'entra:priya'), ev('verified', 'Olive Office', '', 'entra:olive')], sam), false);
+});
+
+test('only what the office did counts as come back, not the engineer’s own new records', () => {
+  const raised = ev('raised', 'Sam Sparks', '', 'entra:sam');
+  assert.equal(officeActed([raised], sam), false, 'a defect just flagged');
+  assert.equal(officeActed([raised, ev('progress', 'Sam Sparks', 'Half done', 'entra:sam'), ev('closure_submitted', 'Sam Sparks', '', 'entra:sam')], sam), false, 'his own updates');
+  assert.equal(officeActed([raised, ev('progress', 'Pat Pipes', 'Seen it too', 'entra:pat')], sam), false, 'another engineer’s update is not the office');
+  assert.equal(officeActed([raised, ev('assigned', 'Olive Office', '', 'entra:olive')], sam), true, 'assigned');
+  assert.equal(officeActed([raised, ev('reopened', 'Olive Office', 'Not finished', 'entra:olive')], sam), true, 'sent back');
+  assert.equal(officeActed([ev('raised', 'Sam Sparks', ''), ev('priced', 'Olive Office', 'Quoted £120.')], sam), true, 'a variation priced, told apart by name on older events');
+  assert.equal(officeOpened({ review: 'not_required' }), false, 'a report only received');
+  assert.equal(officeOpened({ review: 'not_required', acknowledged: { by: 'Olive', at: '' } }), true, 'opened by the office');
+  assert.equal(officeOpened({ review: 'returned' }), true, 'returned');
 });

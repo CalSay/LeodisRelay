@@ -57,6 +57,21 @@ export function issueReopened(events: readonly Written[], principal: { id: strin
   return false;
 }
 
+/**
+ * The office has done something on a record this engineer raised: assigned,
+ * checked, sent back, confirmed, priced, decided or wrote on it. What site
+ * people do (raising it, an update, putting it forward as fixed) is not. The
+ * home's "Came back from the office" counts these rows only (2026-10-22), so a
+ * defect just flagged or a report just sent is listed but not counted.
+ */
+export function officeActed(events: readonly Written[], principal: { id: string; name: string }): boolean {
+  const mine = (e: Written) => e.actorId ? e.actorId === principal.id : e.actor === principal.name;
+  return events.some(e => !mine(e) && e.kind !== 'raised' && e.kind !== 'progress' && e.kind !== 'closure_submitted');
+}
+
+/** The office opened a sent report, or reviewed it. */
+export const officeOpened = (r: { review?: string; acknowledged?: unknown }): boolean => !!r.acknowledged || r.review === 'approved' || r.review === 'returned';
+
 /** Who wrote to the engineer on a record they raised, when, and what. */
 export interface OfficeWord { by: string; at: string; note: string }
 type Written = { at: string; actor: string; actorId?: string; kind: string; note: string; correctionId?: string; source?: unknown };

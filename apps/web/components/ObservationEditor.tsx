@@ -10,7 +10,7 @@ import { overLimit, TEXT_MAX } from '@/lib/textLimits';
 import type { Issue, RoughSize } from "@/lib/types";
 import { CARD_TYPES, OBSERVATION_TYPES, type ObservationType } from "@/lib/fixtures";
 import { VARIATION_REASONS } from "@/lib/variations";
-import { issueThumbnail, linkCandidates, shortReference } from '@/lib/issueLink';
+import { issueThumbnail, issuesHere, linkCandidates, shortReference } from '@/lib/issueLink';
 import { usePrincipal } from './PrincipalContext';
 
 /**
@@ -152,9 +152,9 @@ export function ObservationEditor({
 
   const alreadyRaised = raisesIssue && openIssues.length > 0 && <div className="field">
     <label id={`link-${id}`}>Is this something already raised?</label>
-    <IssueLinkPicker labelledBy={`link-${id}`} issues={openIssues} location={observation.location} linkedId={observation.linkedIssueId} onPick={linkIssue}
-      none={['No — this is new', 'Sending raises a new issue for the office to assign.']} />
-    <p className="hint">{observation.linkedIssueId ? "This will be added to that issue's history rather than raising a new one." : "Linking avoids raising a second issue for the same defect."}</p>
+    <IssueLinkPicker labelledBy={`link-${id}`} issues={openIssues} location={observation.location} linkedId={observation.linkedIssueId} onPick={linkIssue} nearby
+      none={['No — this is new', 'Sending raises a new issue for the office to assign.']}
+      hint={observation.linkedIssueId ? "This will be added to that issue's history rather than raising a new one." : "Linking avoids raising a second issue for the same defect."} />
   </div>;
 
   const changeButton = <button ref={changeRef} type="button" className="btn-quiet btn-sm eng-change-kind" aria-expanded={choosingKind} aria-controls={choosingKind ? `kinds-${id}` : undefined} onClick={() => setChoosingKind(v => !v)}>Change kind</button>;
@@ -294,25 +294,51 @@ function MoreDetail({ filled, hint, children }: { filled: boolean; hint: string;
  * Open issues on the project as pictures and words rather than refs, nearest
  * location first, so the engineer can tell which one they are looking at.
  */
-function IssueLinkPicker({ labelledBy, issues, location, linkedId, onPick, none }: {
+/**
+ * The open issues a card can be linked to. With `nearby` (defect and access
+ * cards, 2026-10-22) it lists only the issues at the card's place and the one it
+ * is linked to; when there are none it says so in one line, and every other open
+ * issue waits behind "Link to an issue somewhere else", so the engineer is not
+ * asked about issues across the site before saying what is wrong. It filters the
+ * issues the page already has, so it works the same with no signal.
+ */
+function IssueLinkPicker({ labelledBy, issues, location, linkedId, onPick, none, hint, nearby = false }: {
   labelledBy: string;
   issues: Issue[];
   location: string;
   linkedId: string | undefined;
   onPick: (issueId: string | undefined) => void;
   none: [title: string, detail: string];
+  hint?: string;
+  nearby?: boolean;
 }) {
   const [showAll, setShowAll] = useState(false);
+  const [elsewhereOpen, setElsewhereOpen] = useState(false);
+  const near = nearby && !elsewhereOpen;
   const { shown, hidden } = linkCandidates(issues, location, linkedId, showAll);
+  const { here, elsewhere } = issuesHere(issues, location, linkedId);
+  const list = near ? here : shown;
+  const place = location.trim();
+  function toggleElsewhere() {
+    // Folding away with nothing left elsewhere removes this button: focus goes to the chosen answer instead of being lost.
+    if (elsewhereOpen && !elsewhere) requestAnimationFrame(() => document.querySelector<HTMLElement>(`[aria-labelledby="${labelledBy}"] [aria-pressed="true"]`)?.focus());
+    setElsewhereOpen(v => !v); setShowAll(false);
+  }
   return <>
-    <div className="eng-linklist" role="group" aria-labelledby={labelledBy}>
+    {near && !list.length && !linkedId
+      ? <p className="eng-help eng-link-none">{place ? `No open issue at ${place}.` : 'Say where, and any issue still open there shows here.'}</p>
+      : <div className="eng-linklist" role="group" aria-labelledby={labelledBy}>
       <button type="button" className="eng-linkrow" aria-pressed={!linkedId} onClick={() => onPick(undefined)}><div><b>{none[0]}</b><small>{none[1]}</small></div></button>
-      {shown.map(i => { const p = issueThumbnail(i); return <button key={i.id} type="button" className="eng-linkrow" aria-pressed={linkedId === i.id} onClick={() => onPick(i.id)}>
+      {list.map(i => { const p = issueThumbnail(i); return <button key={i.id} type="button" className="eng-linkrow" aria-pressed={linkedId === i.id} onClick={() => onPick(i.id)}>
         <div className={p ? 'thumb' : 'thumb empty'}>{p ? <PhotoImage src={p.dataUrl} alt="" /> : <span aria-hidden="true">No photo</span>}</div>
         <div><b>{i.description || 'No description'}</b><small>{shortReference(i.reference)} · {i.location || 'no location'} · {i.owner || 'unassigned'}</small></div>
       </button>; })}
-    </div>
-    {(hidden > 0 || showAll) && <button type="button" className="eng-suggestions-toggle" onClick={() => setShowAll(v => !v)}>{showAll ? 'Show fewer issues' : `Show all ${shown.length + hidden} open issues`}</button>}
+    </div>}
+    {!near && (hidden > 0 || showAll) && <button type="button" className="eng-suggestions-toggle" onClick={() => setShowAll(v => !v)}>{showAll ? 'Show fewer issues' : `Show all ${shown.length + hidden} open issues`}</button>}
+    {nearby && (elsewhereOpen || elsewhere > 0) && <button type="button" className="eng-suggestions-toggle eng-link-elsewhere" aria-expanded={elsewhereOpen} onClick={toggleElsewhere}>
+      {elsewhereOpen ? (place ? `Only issues at ${place}` : 'Hide the other issues') : `Link to an issue somewhere else · ${elsewhere} open`}
+    </button>}
+    {hint && (list.length > 0 || !near || !!linkedId) && <p className="hint">{hint}</p>}
   </>;
 }
 

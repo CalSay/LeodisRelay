@@ -54,7 +54,10 @@ try {
     const defectGroup=page.getByRole('group',{name:'Is this something already raised?'});
     await defectGroup.waitFor();
     const rows=defectGroup.locator('.eng-linkrow');
-    eq(await rows.count(),1+6,`${tag}: "this is new" plus six issues before "Show all"`);
+    // A defect card lists only the issues at its own place (2026-10-22); the other seven are one tap away.
+    eq(await rows.count(),1+1,`${tag}: "this is new" plus the one issue at the card's place`);
+    await page.getByRole('button',{name:'Link to an issue somewhere else · 7 open'}).click();
+    eq(await rows.count(),1+6,`${tag}: then "this is new" plus six issues before "Show all"`);
     const first=rows.nth(1);
     ok((await first.innerText()).includes('Fire stopping missing around the cable tray'),`${tag}: the issue at the card's location is listed first, by its description`);
     ok(/ISS-008 · Level 3 riser · unassigned/.test(await first.innerText()),`${tag}: short reference, location and owner under the description`);
