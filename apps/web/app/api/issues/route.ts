@@ -25,7 +25,7 @@ export async function GET(request: Request) {
     const day = new Date().toLocaleDateString('en-CA', { timeZone: 'Europe/London' });
     return jsonResponse(request, issueRegister(guard.principal, parseIssueQuery(url.searchParams), day));
   }
-  // The office desk's snapshot: every issue this person may see, each with its latest event only.
+  // The office desk's snapshot: every issue this person may see, each with its latest event only (and, for a fix to check, when it was put forward).
   if (url.searchParams.get("view") === "desk") {
     return jsonResponse(request, { issues: listIssues(projectId).filter(i=>canAccessProject(guard.principal,i.projectId)).map(deskIssue) });
   }

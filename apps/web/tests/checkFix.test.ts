@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {applyCommand,getIssue} from '../lib/issueStore';
 import {database,putRecord} from '../lib/storage';
-import {SEND_BACK_REASON,fixEvidence} from '../lib/checkFix';
+import {SEND_BACK_REASON,byPutForward,fixEvidence,putForwardAt} from '../lib/checkFix';
 import type {Issue,IssueEvent,Photo} from '../lib/types';
 
 const shot=(id:string):Photo=>({id,dataUrl:`/api/media/${id}`,caption:'',capturedAt:'2026-10-20T10:00:00Z'});
@@ -50,4 +50,14 @@ test('a fix is sent back only with a reason; older records without one are left 
     assert.ok(applyCommand('cf-1',{kind:'reopen',note:'',...office}).ok,'a closed issue reopens as before');
     assert.equal(getIssue('cf-old')?.events.at(-1)?.note,'','the older record is untouched');
   }finally{database().close();rmSync(root,{recursive:true,force:true});}
+});
+
+test('a fix waits from when it was last put forward, not from a note added since or when the defect was raised',()=>{
+  const a={reference:'R-2',raisedAt:'2026-09-01T09:00:00Z',events:[ev('raised','2026-09-01T09:00:00Z'),ev('closure_submitted','2026-10-10T09:00:00Z'),ev('progress','2026-10-15T09:00:00Z','Photo added')]};
+  const b={reference:'R-1',raisedAt:'2026-10-05T09:00:00Z',events:[ev('raised','2026-10-05T09:00:00Z'),ev('closure_submitted','2026-10-06T09:00:00Z'),ev('reopened','2026-10-07T09:00:00Z','Not yet',[],'Jo Office'),ev('closure_submitted','2026-10-12T09:00:00Z')]};
+  const c={reference:'R-3',raisedAt:'2026-10-01T09:00:00Z',events:[]};
+  assert.equal(putForwardAt(a),'2026-10-10T09:00:00Z','a later note does not restart the wait');
+  assert.equal(putForwardAt(b),'2026-10-12T09:00:00Z','the latest time it was put forward');
+  assert.equal(putForwardAt(c),'2026-10-01T09:00:00Z','no history: when it was raised');
+  assert.deepEqual([b,a,c].sort(byPutForward).map(i=>i.reference),['R-3','R-2','R-1'],'longest waiting first, though R-2 was raised first');
 });

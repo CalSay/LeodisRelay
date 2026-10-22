@@ -60,3 +60,13 @@ test('the next issue after putting one forward is the top of the same site\'s li
   assert.deepEqual(nextYourIssue([{ ...done, work: 'assigned' }], sam, 'p1', done.id), { left: 0 }, 'the one just done is left out even if the list has not caught up');
   assert.deepEqual(nextYourIssue([otherSite, theirs], sam, 'p1', done.id), { left: 0 }, 'other sites and other trades are not offered');
 });
+
+test('the fixes waiting for the office can be listed, newest put forward first', () => {
+  const early = issue({ affectedTrade: 'Electrical', work: 'awaiting_verification', events: [ev('closure_submitted', 'Sam Sparks', sam.id, '2026-10-10T09:00:00Z')] as Issue['events'] });
+  const late = issue({ affectedTrade: 'Electrical', work: 'awaiting_verification', events: [ev('closure_submitted', 'Sam Sparks', sam.id, '2026-10-14T09:00:00Z')] as Issue['events'] });
+  const open = issue({ affectedTrade: 'Electrical' });
+  const site = yourIssues([early, open, late], sam);
+  assert.equal(site.waiting, 2);
+  assert.deepEqual(site.waitingIssues.map(i => i.id), [late.id, early.id]);
+  assert.deepEqual(site.toDo.map(r => r.issue.id), [open.id]);
+});
