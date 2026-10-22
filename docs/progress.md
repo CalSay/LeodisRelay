@@ -4,6 +4,36 @@ Append one entry per thread, newest at the top. Keep each entry short:
 what changed, how it was verified, what was not verified, and what comes next.
 Earlier history is in `docs/optimisation-progress.md` and the dated docs.
 
+## 2026-10-22 — Fifteenth release check (main 54c7c93)
+
+- Why: a full check of main before the next deploy, after #165 (issues by
+  place), #166 (fixed, to check on Issues over time) and #167 (office desk
+  order) merged. Last passed: 73b6d8d (#2-#157). #142 and #154 are not on
+  main, so not checked.
+- Ran on 54c7c93 (#2-#27, #29-#129, #131-#141, #143-#153, #155-#167):
+  `npm ci`, typecheck, `npm test` (146 + 568), build, then all 121
+  `scripts/verify-*.mjs` one after another. 118 passed.
+  - `verify-undo-remove` and `verify-site-coverage` (Thursday to Sunday): the
+    known faults PR #142 fixes (waiting on Cal); not fixed again here.
+  - `verify-simpler-home`: with safety, permits and deliveries switched off
+    (the default), office Help said "While safety, permits and deliveries
+    are switched off, a weekly safety or tower inspection is no longer
+    counted as a visit". The "A visit is one person on site on one day"
+    line from #163 named the switched-off records. Fixed: that sentence is
+    taken out, with the "14 visits this week" example after it, which only
+    that sentence explained (a fresh review's point).
+  - An earlier, stopped run on 4714a18 failed `verify-deliveries` once
+    ("focus returns to Record a delivery"); it passed in the full run on
+    54c7c93 and 3 of 3 runs alone. Recorded, not changed.
+- With the fix on main eb4b076 (#169 merged after the check): typecheck,
+  `npm test` (146 + 569), build, simpler-home, help, issue-assign,
+  company-issues, role-access, issue-register and accessibility pass.
+- Deploy: no new settings, packages, data change or offline store version
+  (still `relay-public-v14`).
+- Not verified: a real phone, tablet, printer or screen reader; a live
+  tenant; Docker (no build change since the eleventh check).
+- Next: once #142 merges, rerun `verify-undo-remove` and
+  `verify-site-coverage`; then main is ready.
 ## 2026-10-22 — Flag a defect: trade in one tap
 
 - Why: the walk in #169 found that on "Flag a defect" at 390px the trade
