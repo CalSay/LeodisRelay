@@ -45,6 +45,8 @@ test('open issues are split into our snags by trade, fixes waiting to be checked
   assert.equal(level1!.location, 'level 1');
   assert.equal(level1!.description, 'Loose cover');
   assert.equal(level2!.overdue, true, 'past its target');
+  assert.equal(level2!.daysLate, 5, 'how many days past its target');
+  assert.equal(level1!.daysLate, 0, 'no target, not late');
   assert.equal(level2!.owner, 'Sparks Ltd');
   const disputed = h.ours[1]!.issues[0]!;
   assert.equal(disputed.disputed, true);
@@ -53,6 +55,13 @@ test('open issues are split into our snags by trade, fixes waiting to be checked
   assert.deepEqual(h.others.map(i => [i.reference, i.trade]), [['011LME-ISS-006', undefined], ['011LME-ISS-003', undefined], ['011LME-ISS-005', 'Other / non-Leodis']],
     'no affected trade recorded is not assumed to be ours, even when an engineer of ours reported it');
   assert.deepEqual(h.totals, { ours:3, toCheck:1, others:3, variations:0, workDone:0, safety:0, overdue:1, outstanding:7 });
+  assert.equal(h.toCheck[0]!.daysLate, 0, 'waiting to be checked is not counted as late');
+});
+
+test('a snag whose target was last year counts its days across the year end', () => {
+  n = 0;
+  const h = beforeHandover(project, { reports:[], issues:[issue({ affectedTrade:'Electrical', targetDate:'2025-11-07', owner:'Sparks Ltd' })], variations:[] }, engineer, TODAY);
+  assert.deepEqual([h.ours[0]!.issues[0]!.overdue, h.ours[0]!.issues[0]!.daysLate], [true, 347]);
 });
 
 test('variations not yet instructed or declined are listed, work already done first', () => {

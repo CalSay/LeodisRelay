@@ -69,7 +69,7 @@ try {
     await page.waitForFunction(()=>/Issues over time/.test(document.title));
     check(true,'engineer: the tab is named Issues over time');
     const verdict=await page.locator('.it-verdict').innerText();
-    check(/Getting shorter: 3 issues open, down from 6 four weeks ago\./.test(verdict),`engineer: the headline says which way it is going: ${JSON.stringify(verdict)}`);
+    check(/^Getting shorter: 3 issues open, down from 6 four weeks ago\.$/.test(verdict),`engineer: the headline says which way it is going: ${JSON.stringify(verdict)}`);
     const stats=(await page.locator('.it-stats').innerText()).replace(/\s+/g,' ');
     check(/Open now 3 1 past target/i.test(stats),`engineer: open now and past target: ${stats}`);
     check(/Last four weeks 1 raised 4 closed/i.test(stats),`engineer: raised and closed in four weeks: ${stats}`);
@@ -88,7 +88,7 @@ try {
     const rows=page.locator('.it-table tbody tr');
     check(await rows.count()===12,'engineer: twelve rows in the table');
     const first=(await rows.first().innerText()).replace(/\s+/g,' ');
-    check(/so far 1 0 3 1$/.test(first),`engineer: this week's row: ${first}`);
+    check(/so far 1 0 3 1 0$/.test(first),`engineer: this week's row: ${first}`);
     const totalRaised=await rows.evaluateAll(trs=>trs.reduce((n,tr)=>n+Number(tr.children[1].textContent),0));
     check(totalRaised===7,`engineer: raised over the weeks shown leaves out withdrawn and other projects (${totalRaised})`);
     const width=await page.evaluate(()=>document.documentElement.scrollWidth);

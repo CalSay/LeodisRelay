@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ApiError, cameBack, cameBackElsewhere, createReport, getReport, listReports, projectIssues, yourOpenIssues } from '@/lib/api';
-import { cameBackRows, issueWord, raisedIssue, reportWord, variationWord, waitingOnYouFirst, issueReopened, officeActed, officeOpened, type OfficeWord } from '@/lib/cameBack';
+import { cameBackIssue, cameBackRows, issueWord, raisedIssue, sentBackWord, reportWord, variationWord, waitingOnYouFirst, issueReopened, officeActed, officeOpened, type OfficeWord } from '@/lib/cameBack';
 import { listHeld, type HeldDraft } from '@/lib/localDraft';
 import { offlineProjectsKey } from '@/lib/offlineStart';
 import { keepNotesOnDevice } from '@/lib/offlineNotes';
@@ -13,10 +13,12 @@ import type { FixtureProject } from '@/lib/fixtures';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import { usePrincipal } from './PrincipalContext';
 import { waitingToSend } from '@/lib/sendOnSignal';
+import { DEFECT_SETTLED_EVENT, heldDefectsToSend } from '@/lib/heldDefect';
 import { SafetyActionsRow } from './SafetyActionsRow';
 import { ownsReport } from '@/lib/auth/access';
 import { EngineerIssueList, WordLine, isOpen } from './EngineerIssueList';
 import { yourIssues } from '@/lib/yourIssues';
+import { issuePlaces, issuesAtPlace } from '@/lib/issuePlaces';
 import { IndividualDefect } from './IndividualDefect';
 import { SinceLastVisit } from './SinceLastVisit';
 import { SiteNotesRow } from './SiteNotesRow';
@@ -25,7 +27,7 @@ import { ToolboxTalksRow } from './ToolboxTalksRow';
 import { PermitsRow } from './PermitsRow';
 import { PageTitle } from './PageTitle';
 import { ISSUE_WORK, acknowledgementStatus, deliveryStatus, reviewStatus, toneClass } from '@/lib/status';
-import { fmtMoney, variationValue } from '@/lib/variations';
+import { fmtMoney, instructionParts, variationValue } from '@/lib/variations';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { withViewReturn } from '@/lib/viewNavigation';
 import { CHECKLIST_TYPES, INSPECTED_MAX, inspectedName, reportTypeOf, type ReportTypeDef, type ReportTypeId } from '@/lib/reportTypes';
@@ -56,11 +58,11 @@ function ReportTags({r}:{r:ReportSummary}) {
 function IssueTags({i}:{i:Issue}) {
   if (i.confirmation === 'withdrawn') return <span className="tag tag-draft">Withdrawn</span>;
   if (i.work === 'closed') return <span className="tag tag-sent">Closed</span>;
-  return <><span className={`tag ${i.confirmation === 'disputed' ? 'tag-alert' : 'tag-draft'}`}>{ISSUE_WORK[i.work]}</span>{i.owner.trim() ? <span>{i.owner}{i.targetDate ? ` · target ${dateShort(i.targetDate, 'auto') || i.targetDate}` : ''}</span> : <span>not yet assigned</span>}</>;
+  return <><span className={`tag ${i.confirmation === 'disputed' ? 'tag-alert' : 'tag-draft'}`}>{ISSUE_WORK[i.work]}</span>{i.owner.trim() ? <span>{i.owner}{i.targetDate ? ` · target ${dateShort(i.targetDate, 'auto') || i.targetDate}` : ''}</span> : <span>nobody on it yet</span>}</>;
 }
 /** The office's answer on a variation the engineer raised. */
 export function VariationTags({v}:{v:Variation}) {
-  if (v.instruction === 'instructed') return <><span className="tag tag-sent">Instructed</span><span>{v.instructionReference} · {fmtMoney(variationValue(v))}</span></>;
+  if (v.instruction === 'instructed') return <><span className="tag tag-sent">Instructed</span><span>{instructionParts(v.instructionReference, fmtMoney(variationValue(v)))}</span></>;
   if (v.instruction === 'declined') return <span className="tag tag-draft">Declined</span>;
   if (v.instruction === 'within_contract') return <><span className="tag tag-draft">Within contract</span><span>not charged</span></>;
   if (v.workDone) return <><span className="tag tag-alert">Done, not instructed</span><span>the office is getting the client’s sign-off</span></>;
@@ -72,6 +74,8 @@ const fmtWhen = (iso?: string) => whenShort(iso);
 /** A visit day, with its year when it is not this year, since the list pages back through older reports. */
 const fmtVisit = (day: string) => dayShort(day) || day;
 const fmtDay = (iso?: string) => dayShort(iso);
+/** When this engineer last put the issue forward as fixed, for a row the office sent back to them. */
+const putForwardAt = (i: Issue, p: { id: string; name: string }) => [...i.events].reverse().find(e => e.kind === 'closure_submitted' && (e.actorId ? e.actorId === p.id : e.actor === p.name))?.at;
 
 type View = 'home' | 'projects' | 'issues' | 'reports' | 'defect';
 /**
@@ -90,11 +94,11 @@ interface Back { at: string; key: string; href: string; title: string; sub: stri
 /** Where an unfinished report stands, in words an engineer can act on. */
 function UnfinishedTags({r,waiting=false}:{r:UnfinishedReport;waiting?:boolean}) {
   if (waiting && !r.signed && !r.started) return <><span className="tag tag-caution">Not sent yet</span><span>no signal when you tapped Send · open it with signal and it goes to the office</span></>;
-  if (r.signed) return <><span className="tag tag-caution">Signed · not sent yet</span><span>{r.problem ? `not sent yet: ${r.problem}` : `signed on this phone ${fmtWhen(r.changedAt)} · goes to the office by itself when RELAY reaches the server`}</span></>;
-  if (r.started) return <><span className="tag tag-alert">Only on this phone</span><span>{r.problem ? `not accepted yet: ${r.problem}` : `started without signal ${fmtWhen(r.changedAt)} · goes up when RELAY can reach the server`}</span></>;
+  if (r.signed) return <><span className="tag tag-caution">Signed · not sent yet</span><span>{r.problem ? `not sent yet: ${r.problem}` : `signed on this phone ${fmtWhen(r.changedAt)} · goes to the office by itself when there is signal`}</span></>;
+  if (r.started) return <><span className="tag tag-alert">Only on this phone</span><span>{r.problem ? `not accepted yet: ${r.problem}` : `started without signal ${fmtWhen(r.changedAt)} · goes up by itself when there is signal`}</span></>;
   if (r.device === 'only') return <><span className="tag tag-alert">Only on this phone</span><span>changed {fmtWhen(r.changedAt)} · open it with signal to save</span></>;
-  if (r.device === 'unsent') return <><span className="tag tag-alert">Not yet on the server</span><span>changed {fmtWhen(r.changedAt)}{r.savedAt ? ` · last saved ${fmtWhen(r.savedAt)}` : ''}</span></>;
-  return <><span className="tag tag-draft">Draft</span><span>{r.savedAt ? `saved ${fmtWhen(r.savedAt)}` : 'saved on server'}</span></>;
+  if (r.device === 'unsent') return <><span className="tag tag-alert">Not saved to RELAY yet</span><span>changed {fmtWhen(r.changedAt)}{r.savedAt ? ` · last saved ${fmtWhen(r.savedAt)}` : ''}</span></>;
+  return <><span className="tag tag-draft">Draft</span><span>{r.savedAt ? `saved ${fmtWhen(r.savedAt)}` : 'saved to RELAY'}</span></>;
 }
 
 /** Line icons for the navigation; the label beside each one carries the meaning. */
@@ -107,8 +111,8 @@ const navIcons = {
   search: navIcon(<><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4.5 4.5"/></>),
 };
 
-export function EngineerWorkspace({projects,drafts,initialProject,initialView,initialShow,initialScope}: {
-  projects:FixtureProject[]; drafts:ReportSummary[]; initialProject?:string; initialView?:string; initialShow?:string; initialScope?:string;
+export function EngineerWorkspace({projects,drafts,initialProject,initialView,initialShow,initialScope,initialPlace}: {
+  projects:FixtureProject[]; drafts:ReportSummary[]; initialProject?:string; initialView?:string; initialShow?:string; initialScope?:string; initialPlace?:string;
 }) {
   const principal = usePrincipal();
   const router = useRouter();
@@ -117,6 +121,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
   const [ready,setReady] = useState(false);
   const [scope,setScope] = useState(initialScope === 'all' ? 'all' : 'current');
   const [show,setShow] = useState<IssueShow>(showOf(initialShow));
+  // Where the engineer is standing, picked from the places typed on this project's issues; only with Open or All issues on one project.
+  const [place,setPlace] = useState(showOf(initialShow) !== 'yours' && initialScope !== 'all' ? initialPlace?.trim().replace(/\s+/g,' ') ?? '' : '');
   // Where the list comes from: the engineer's own on every site, every project, or this one.
   const sourceOf = (s: IssueShow, sc: string) => s === 'yours' ? 'yours' : sc === 'all' ? 'all' : 'one';
   const issueSource = sourceOf(show, scope);
@@ -126,6 +132,16 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
   /** Reports sent with no signal on this phone, still to go (lib/sendOnSignal.ts). Read after the first render, as the server cannot know. */
   const [waiting,setWaiting] = useState<ReadonlySet<string>>(() => new Set());
   useEffect(() => { if (principal) setWaiting(new Set(waitingToSend(principal.id))); }, [principal]);
+  /** Projects with a defect sent with no signal, still on this phone (lib/heldDefect.ts). Read again when a send of one ends (by itself or a tap), on a change from another tab, and on coming back from the defect screen. */
+  const [heldDefects,setHeldDefects] = useState<readonly string[]>([]);
+  useEffect(() => {
+    if (!principal) return;
+    const read = () => { const now = heldDefectsToSend(principal.id).map(h => h.defect.projectId).sort(); setHeldDefects(was => was.join() === now.join() ? was : now); };
+    read();
+    window.addEventListener(DEFECT_SETTLED_EVENT, read);
+    window.addEventListener('storage', read);
+    return () => { window.removeEventListener(DEFECT_SETTLED_EVENT, read); window.removeEventListener('storage', read); };
+  }, [principal, view]);
   const [back,setBack] = useState<{ rows: Back[]; open: number; reports: number; failed?: boolean; offline?: boolean } | null>(null);
   const [error,setError] = useState('');
   const [creating,setCreating] = useState(false);
@@ -133,6 +149,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
   const [next,setNext] = useState<number | null>(null);
   const [retry,setRetry] = useState(0);
   const [held,setHeld] = useState<{ copies: HeldDraft[]; deviceOnly: Set<string> }>({ copies: [], deviceOnly: new Set() });
+  // Whether the phone's own copies have been read: until then a draft cannot be told safe, so Unfinished reports waits rather than show in one place and jump to another.
+  const [heldRead,setHeldRead] = useState(false);
   const project = projects.find(p => p.id === projectId);
   const ownDrafts = drafts.filter(r => r.projectId === projectId);
   // Today's site update (or a correction) in progress, and any inspection in
@@ -150,7 +168,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
   const inspections = CHECKLIST_TYPES.map(type => ({ type, draft: ownDrafts.find(r => reportTypeOf(r).id === type.id) }))
     .filter(({ type, draft }) => safetyRecords || draft || !isSafetyRecordType(type.id));
   const preference = `relay-project:${principal?.id}`;
-  const engineerReturn = (target: View = 'home') => `/engineer?project=${encodeURIComponent(projectId)}${target === 'home' ? '' : `&view=${target}`}${target === 'issues' ? `${show === 'yours' ? '' : `&show=${show}`}${show !== 'yours' && scope === 'all' ? '&scope=all' : ''}` : ''}`;
+  const engineerReturn = (target: View = 'home') => `/engineer?project=${encodeURIComponent(projectId)}${target === 'home' ? '' : `&view=${target}`}${target === 'issues' ? `${show === 'yours' ? '' : `&show=${show}`}${show !== 'yours' && scope === 'all' ? '&scope=all' : ''}${show !== 'yours' && scope !== 'all' && place ? `&place=${encodeURIComponent(place)}` : ''}` : ''}`;
 
   // `firstChoice`: a first day on this phone, with more than one site and nothing
   // started, so the engineer picks their site rather than being put on the first
@@ -185,6 +203,8 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
     if (!principal) return;
     let cancelled = false;
     void listHeld(principal.id).then(async copies => {
+      // What this phone holds is known at once; the server is asked only about copies it did not list, which can be slow on weak signal.
+      if (!cancelled) { setHeld({ copies, deviceOnly: new Set() }); setHeldRead(true); }
       const unlisted = copies.filter(c => !c.started && !drafts.some(d => d.id === c.reportId));
       const answers = await Promise.all(unlisted.map(c => getReport(c.reportId).then(() => null, e => e instanceof ApiError && e.offline ? c.reportId : null)));
       if (!cancelled) setHeld({ copies, deviceOnly: new Set(answers.filter((id): id is string => !!id)) });
@@ -217,7 +237,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
         if(!cancelled)setIssues(all);
       }).catch(e => {if(!cancelled)setError(e instanceof Error?e.message:'Unable to load issues.');});
     }
-    // What came back from the office on the things this engineer raised, in the office's words.
+    // What came back from the office on the things this engineer raised (or put forward and had sent back), in the office's words.
     if(view === 'home' && principal) {
       setBack(null);
       // Only the few records the rows need, not every issue and variation on the project.
@@ -228,11 +248,11 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
         const returnTo = engineerReturn();
         // `site`: the project name, on rows from a site other than the one the engineer is at.
         const reportRow = (r:ReportSummary, corrected:boolean, site?:string):Back => ({ at:r.serverAcknowledgedAt ?? r.lastSavedAt ?? '', key:r.id, href:withViewReturn(`/reports/${r.id}`,returnTo), title:`${reportTypeOf(r).name} ${r.reference.split("-").slice(1).join("-")}`, sub:`${site ? `${site} · ` : ''}Sent ${fmtWhen(r.serverAcknowledgedAt)}`, tags:<ReportTags r={r}/>, late:r.review === 'returned', sentBack:r.review === 'returned' && !corrected, word:reportWord(r,corrected), office:officeOpened(r) });
-        const issueRow = (i:Issue, site?:string):Back => ({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}?update=1`,returnTo), title:i.description, sub:`${site ? `${site} · ` : ''}${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'}${site ? '' : ` · you raised it ${fmtDay(i.raisedAt)}`}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed', sentBack:i.confirmation === 'disputed' || issueReopened(i.events,principal), word:issueWord(i.events,principal), office:i.work === 'awaiting_verification' ? !!issueWord(i.events,principal) : officeActed(i.events,principal) });
+        const issueRow = (i:Issue, site?:string):Back => ({ at:i.events.at(-1)?.at ?? i.raisedAt, key:i.id, href:withViewReturn(`/issues/${i.id}?update=1`,returnTo), title:i.description, sub:`${site ? `${site} · ` : ''}${i.reference.split('-').slice(1).join('-')} · ${i.location || 'no location'}${site ? '' : raisedIssue(i,principal.id) ? ` · you raised it ${fmtDay(i.raisedAt)}` : ` · you put it forward ${fmtDay(putForwardAt(i,principal))}`}`, tags:<IssueTags i={i}/>, late:i.confirmation === 'disputed', sentBack:i.confirmation === 'disputed' || issueReopened(i.events,principal), word:raisedIssue(i,principal.id) ? issueWord(i.events,principal) : sentBackWord(i.events,principal), office:i.work === 'awaiting_verification' ? !!issueWord(i.events,principal) : officeActed(i.events,principal) });
         const variationRow = (v:Variation, site?:string):Back => ({ at:v.events.at(-1)?.at ?? v.raisedAt, key:v.id, href:withViewReturn(`/variations/${v.id}`,returnTo), title:v.description, sub:`${site ? `${site} · ` : ''}${v.reference.split('-').slice(1).join('-')} · ${v.location || 'no location'}${site ? '' : ` · you raised it ${fmtDay(v.raisedAt)}`}`, tags:<VariationTags v={v}/>, late:v.workDone && v.instruction === 'pending', word:variationWord(v.events,principal), office:officeActed(v.events,principal) });
         const here:Back[] = [];
         for (const r of page.reports) if (r.state === 'submitted' && ownsReport(principal,r)) here.push(reportRow(r,page.reports.some(c => c.corrects === r.id)));
-        for (const i of all) if (raisedIssue(i,principal.id)) here.push(issueRow(i));
+        for (const i of all) if (cameBackIssue(i,principal)) here.push(issueRow(i));
         for (const v of variations) if (v.raisedById === principal.id) here.push(variationRow(v));
         here.sort(waitingOnYouFirst);
         const reports = page.reports.filter(r => r.state === 'submitted').length;
@@ -256,14 +276,15 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
   function pickIssues(nextShow:IssueShow, nextScope = scope) {
     if (sourceOf(nextShow, nextScope) !== issueSource) setIssues(null);
     setShow(nextShow);setScope(nextScope);
+    if (nextShow === 'yours' || nextScope === 'all') setPlace('');
   }
   // The Issues tab opens on Yours; the home's "Site issues" row, which counts every trade on this project, opens Open.
   function navigate(to:View, issueShow:IssueShow = 'yours') {
     if (to==='issues' && sourceOf(issueShow, 'current') !== issueSource) setIssues(null);
-    setView(to);setOffset(0);setError('');if(to==='issues'){setScope('current');setShow(issueShow);}
+    setView(to);setOffset(0);setError('');if(to==='issues'){setScope('current');setShow(issueShow);setPlace('');}
   }
   function selectProject(id:string) {
-    setFirstChoice(false);setProjectId(id);setOffset(0);setScope('current');setView('home');
+    setFirstChoice(false);setProjectId(id);setOffset(0);setScope('current');setPlace('');setView('home');
     try{localStorage.setItem(preference,id);}catch{}
   }
   // A new site update opens on its first card, a progress card, rather than a picker: the kind can be changed on the card.
@@ -280,6 +301,24 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
   // One row on the home screen for a page about the current project.
   const projectPage = (path: string, title: string, note: string) => <Link className="eng-row" href={`${path}?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}><div className="main"><b>{title}</b><span>{note}</span></div><span className="chev">›</span></Link>;
 
+  // A draft saved to RELAY is safe and waits for whenever the engineer gets back to it, so it does not push the
+  // office's questions off the first screen: those drafts go under "Came back from the office", folded into one
+  // line when there are several. Anything that could be lost (only on this phone, not saved yet, signed but not
+  // sent, refused) is listed in full above the office's questions, and the section goes there with it.
+  const atRisk = unfinished.filter(r => r.started || r.device || r.signed || r.problem || waiting.has(r.id));
+  const saved = unfinished.filter(r => !atRisk.includes(r));
+  const unfinishedRow = (r:UnfinishedReport) => r.started ? <a key={r.id} href="/offline.html" className="eng-row late"><div className="main"><b>New {r.typeName.toLowerCase()} · {r.projectName}</b><span>No reference yet · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r} waiting={waiting.has(r.id)}/></div></div><span className="chev">›</span></a> : <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : r.typeName} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r} waiting={waiting.has(r.id)}/></div></div><span className="chev">›</span></Link>;
+  const oldestVisit = saved.map(r => r.visitDate).sort()[0];
+  const unfinishedSection = heldRead && unfinished.length > 0 && <section aria-labelledby="eng-unfinished-title" className="eng-unfinished">
+    <div className="eng-section-title"><h2 id="eng-unfinished-title">Unfinished reports</h2><span className="r">{atRisk.length || saved.length === 1 ? unfinished.length : ''}</span></div>
+    {atRisk.length > 0 && <div className="eng-list">{atRisk.map(unfinishedRow)}</div>}
+    {saved.length === 1 && <div className="eng-list">{saved.map(unfinishedRow)}</div>}
+    {saved.length > 1 && <details className="eng-saved-drafts">
+      <summary>{atRisk.length ? `${saved.length} more drafts, saved to RELAY` : `${saved.length} drafts saved to RELAY`}<span>{saved.every(r => r.visitDate === oldestVisit) ? `Visit ${fmtDay(oldestVisit)}` : `Oldest visit ${fmtDay(oldestVisit)}`} · {new Set(saved.map(r => r.projectId)).size > 1 ? `${new Set(saved.map(r => r.projectId)).size} sites` : saved[0]!.projectName} · open to carry on</span></summary>
+      <div className="eng-list">{saved.map(unfinishedRow)}</div>
+    </details>}
+  </section>;
+
   return <main className="eng-workspace">
     <PageTitle title={VIEW_TITLES[view]} />
     {principal?.role !== 'Engineer' && <p className="eng-preview">Engineer layout preview · Signed in as {principal?.role}. Your permissions and report authorship are unchanged.</p>}
@@ -291,7 +330,7 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
       {view!=='home' && view!=='projects' && <div className="eng-project-context"><div><small>CURRENT PROJECT</small><strong>{project.projectName}</strong></div></div>}
       {error && <div className="note note-bad" role="alert">{error} <button onClick={()=>{setError('');setRetry(n=>n+1);}}>Retry</button></div>}
       {view==='home' && <>
-        <div className="eng-heading eng-heading-home"><p className="lbl">On site</p><h1>{principal?.name}</h1><p>{principal?.trade ? `${principal.trade} engineer` : principal?.role} · {fmtDay(new Date().toISOString())}</p></div>
+        <div className="eng-heading eng-heading-home"><h1>{principal?.name}</h1><p>{principal?.trade ? `${principal.trade} engineer` : principal?.role} · {fmtDay(new Date().toISOString())}</p></div>
         <div className="eng-home-grid"><div>
           <section className="eng-band"><span className="lbl">Current project</span><h2>{project.projectName}</h2><p><span className="ref" style={{color:'inherit'}}>{project.projectNumber}</span> · {project.projectManager}, project manager · <button type="button" onClick={()=>navigate('projects')}>Change ›</button></p></section>
           {/* The job: a site update with photographs, issues and variations, sent to the office. One big button, then the two quick ones. */}
@@ -299,18 +338,18 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
             {currentDraft
               ? <Link className="eng-tile big eng-tile-main" href={withViewReturn(`/reports/${currentDraft.id}`,engineerReturn())}><div>{waiting.has(currentDraft.id)
                 ? <><b>{currentDraft.corrects ? 'Send the correction' : 'Send today’s update'}</b><small>Not sent yet: there was no signal when you tapped Send. Open it with signal and it goes to the office.</small></>
-                : <><b>{currentDraft.corrects ? 'Carry on with the correction' : 'Carry on with today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'on server'}</small></>}</div><span className="arrow" aria-hidden="true">→</span></Link>
-              : <button type="button" className="eng-tile big eng-tile-main" onClick={()=>void startReport('update')} disabled={creating}><div><b>{creating?'Starting…':'Start today’s site update'}</b><small>Progress, photographs, defects and variations, then sign and send to the office</small></div><span className="arrow" aria-hidden="true">→</span></button>}
-            <button type="button" className="eng-tile" onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div><b>Flag a defect</b><small>Photo and a short note, sent straight away</small></div></button>
-            <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work that needs an instruction</small></div></button>
+                : <><b>{currentDraft.corrects ? 'Carry on with the correction' : 'Carry on with today’s update'}</b><small>{currentDraft.observationCount} card{currentDraft.observationCount===1?'':'s'} · saved {fmtWhen(currentDraft.lastSavedAt) || 'to RELAY'}</small></>}</div><span className="arrow" aria-hidden="true">→</span></Link>
+              : <button type="button" className="eng-tile big eng-tile-main" onClick={()=>void startReport('update')} disabled={creating}><div><b>{creating?'Starting…':'Start today’s site update'}</b><small>Progress, photographs, defects and variations, then send to the office</small></div><span className="arrow" aria-hidden="true">→</span></button>}
+            {/* A defect sent with no signal is not at the office yet: the tile says so until it goes, and opens it. */}
+            <button type="button" className={`eng-tile${heldDefects.includes(projectId) ? ' eng-tile-held' : ''}`} onClick={()=>navigate('defect')}><span className="kind tone-defect">Defect</span><div>{heldDefects.includes(projectId)
+              ? <><b>Defect not sent yet</b><small>Only on this phone, not at the office yet. Tap to see it.</small></>
+              : <><b>Flag a defect</b><small>Photo and a short note, sent straight away</small></>}</div></button>
+            <button type="button" className="eng-tile" onClick={()=>void startReport('instruction')} disabled={creating}><span className="kind tone-variation">Variation</span><div><b>Request a variation</b><small>Extra work, for the office to price</small></div></button>
           </div>
-          {unfinished.length > 0 && <section aria-labelledby="eng-unfinished-title">
-            <div className="eng-section-title"><h2 id="eng-unfinished-title">Unfinished reports</h2><span className="r">{unfinished.length}</span></div>
-            <div className="eng-list">
-              {unfinished.map(r => r.started ? <a key={r.id} href="/offline.html" className="eng-row late"><div className="main"><b>New {r.typeName.toLowerCase()} · {r.projectName}</b><span>No reference yet · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r} waiting={waiting.has(r.id)}/></div></div><span className="chev">›</span></a> : <Link key={r.id} href={withViewReturn(`/reports/${r.id}`,engineerReturn())} className={`eng-row ${r.device ? 'late' : ''}`}><div className="main"><b>{r.correction ? 'Correction' : r.typeName} · {r.projectName}</b><span>{r.reference.split('-').slice(1).join('-')} · visit {fmtDay(r.visitDate)} · {r.checklist ? `${r.cards} checks` : `${r.cards} card${r.cards===1?'':'s'}`}</span><div className="stat"><UnfinishedTags r={r} waiting={waiting.has(r.id)}/></div></div><span className="chev">›</span></Link>)}
-            </div>
-          </section>}
-          {/* Straight under the main buttons, above Inspections, so on a phone the office's answer is on the first screen. */}
+          {/* A full load: the workspace reads its project and view from the address only when it opens. */}
+          {projects.some(p => p.id !== projectId && heldDefects.includes(p.id)) && <div className="eng-list eng-held-defects">{projects.filter(p => p.id !== projectId && heldDefects.includes(p.id)).map(p => <a key={p.id} className="eng-row held" href={`/engineer?${new URLSearchParams({ project: p.id, view: 'defect' })}`}><div className="main"><b>Defect not sent yet · {p.projectName}</b><span>Only on this phone, not at the office yet</span></div><span className="chev">›</span></a>)}</div>}
+          {atRisk.length > 0 && unfinishedSection}
+          {/* Straight under the main buttons (and anything unfinished that could be lost), above drafts saved to RELAY and Inspections, so on a phone the office's answer is on the first screen. */}
           <section className="eng-came-back" aria-labelledby="eng-came-back-title">
             <div className="eng-section-title"><h2 id="eng-came-back-title">Came back from the office</h2><span className="r">{back && !back.failed ? (fromOffice ? `${fromOffice} from the office` : '') : back ? '' : '…'}</span></div>
             <div className="eng-list">
@@ -320,12 +359,13 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
                 : <div className="eng-empty">Nothing on this project yet. Reports you send, defects you flag and variations you request show here with the office’s answer.</div>}
             </div>
           </section>
+          {!atRisk.length && unfinishedSection}
           <section aria-labelledby="eng-inspections-title" className="eng-inspections">
             <div className="eng-section-title"><h2 id="eng-inspections-title">Inspections</h2></div>
             <p className="eng-section-note">A walk round one area with a checklist, signed and sent as its own report.</p>
             <div className="eng-tiles">
               {inspections.map(({ type, draft }) => draft
-                ? <Link key={type.id} className="eng-tile eng-tile-wide" href={withViewReturn(`/reports/${draft.id}`,engineerReturn())}><span className="kind answer-ok">{type.tag}</span><div><b>{draft.corrects ? `Carry on with the ${type.name.toLowerCase()} correction` : `Carry on with the ${type.name.toLowerCase()}`}{draft.inspected ? ` of ${draft.inspected}` : ''}</b><small>{draft.checks ? `${draft.checks.ok + draft.checks.action + draft.checks.na} of ${draft.observationCount} checks answered` : `${draft.observationCount} checks`} · saved {fmtWhen(draft.lastSavedAt) || 'on server'}</small></div><span className="arrow" aria-hidden="true">→</span></Link>
+                ? <Link key={type.id} className="eng-tile eng-tile-wide" href={withViewReturn(`/reports/${draft.id}`,engineerReturn())}><span className="kind answer-ok">{type.tag}</span><div><b>{draft.corrects ? `Carry on with the ${type.name.toLowerCase()} correction` : `Carry on with the ${type.name.toLowerCase()}`}{draft.inspected ? ` of ${draft.inspected}` : ''}</b><small>{draft.checks ? `${draft.checks.ok + draft.checks.action + draft.checks.na} of ${draft.observationCount} checks answered` : `${draft.observationCount} checks`} · saved {fmtWhen(draft.lastSavedAt) || 'to RELAY'}</small></div><span className="arrow" aria-hidden="true">→</span></Link>
                 : type.inspects ? <NameThenStart key={type.id} type={type} creating={creating} onStart={name=>void startReport(undefined,type.id,name)} />
                 : <button key={type.id} type="button" className="eng-tile eng-tile-wide" onClick={()=>void startReport(undefined,type.id)} disabled={creating}><span className="kind answer-ok">{type.tag}</span><div><b>Do a {type.name.toLowerCase()}</b><small>{type.blurb}</small></div><span className="arrow" aria-hidden="true">→</span></button>)}
             </div>
@@ -333,10 +373,11 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
         </div><div>
           <SinceLastVisit key={project.id} projectId={project.id} returnTo={engineerReturn()}/>
           <section aria-labelledby="eng-project-title">
-            <div className="eng-section-title"><h2 id="eng-project-title">This project</h2><span className="r">{back && !back.failed ? `${back.open} open issue${back.open===1?'':'s'}` : ''}</span></div>
+            {/* The open issue count is on the Site issues row below, so the heading does not repeat it. */}
+            <div className="eng-section-title"><h2 id="eng-project-title">This project</h2></div>
             <div className="eng-list">
               <button type="button" className="eng-row" onClick={()=>navigate('issues','open')}><div className="main"><b>Site issues</b><span>{back && !back.failed ? `${back.open} open · every trade` : 'Every trade'}</span></div><span className="chev">›</span></button>
-              <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back && !back.failed ? `${back.reports} on file · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
+              <button type="button" className="eng-row" onClick={()=>navigate('reports')}><div className="main"><b>Reports</b><span>{back && !back.failed ? `${back.reports} sent · every trade` : 'Sent by every trade'}</span></div><span className="chev">›</span></button>
               <SiteNotesRow key={projectId} projectId={projectId} href={`/site-notes?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('home') })}`}/>
               {projectPage('/photos','Photographs','Every photograph, by location')}
             </div>
@@ -372,13 +413,34 @@ export function EngineerWorkspace({projects,drafts,initialProject,initialView,in
       {view==='reports' && <><div className="eng-heading"><h1>Reports</h1><p>Your drafts and the reports every trade has sent on this project.</p></div><div className="eng-actions"><button onClick={()=>void startReport('update')} disabled={creating}>{creating?'Starting…':'Start another site update'}</button></div><nav className="eng-more" aria-label="More from these reports"><span className="lbl">Also on this project</span><div><Link className="eng-link-button" href={`/diary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Site diary</Link><Link className="eng-link-button" href={`/weekly-summary?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Weekly summary</Link><Link className="eng-link-button" href={`/photos?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Photographs</Link>{safetyRecords && <Link className="eng-link-button" href={`/safety-actions?${new URLSearchParams({ project: projectId, returnTo: engineerReturn('reports') })}`}>Safety actions</Link>}<Link className="eng-link-button" href={`/my-week?${new URLSearchParams({ returnTo: engineerReturn('reports') })}`}>My week</Link></div></nav>{reports===null ? !error && <p role="status">Loading reports…</p> : <section className="eng-panel">{reports.length ? reports.map(r=><Link className="eng-report-link" href={withViewReturn(`/reports/${r.id}`,engineerReturn('reports'))} key={r.id}><span><strong>{r.reference}</strong><small>{r.author} · {r.authorTrade ?? 'Trade not recorded'} · visit {fmtVisit(r.visitDate)}</small></span><span style={{display:'flex',gap:6,flexWrap:'wrap',justifyContent:'flex-end'}}><ReportTags r={r}/></span></Link>) : <p className="eng-empty">{offset ? 'No reports on this page.' : 'No reports yet on this project. Reports you and other trades send show here.'}</p>}</section>}<div className="btn-row">{offset>0 && <button onClick={()=>setOffset(Math.max(0,offset-50))}>Newer reports</button>}{next!==null && <button onClick={()=>setOffset(next)}>Older reports</button>}</div></>}
       {view==='issues' && <><div className="eng-heading"><h1>Issues{show!=='yours'&&scope==='all'?' · All projects':''}</h1><p>{show==='yours'?`On every site you work on: issues you raised or added to${principal?.trade ? `, or for your trade (${principal.trade})` : ''}, still to do.`:scope==='all'?'Each issue group names its project.':'Issues on this project, from every trade.'}</p><div className="eng-actions"><button onClick={()=>navigate('defect')}>Flag a defect</button><Link className="eng-link-button" href={`/issues/snag-list?${new URLSearchParams({ project: projectId, ...(principal?.trade ? { trade: principal.trade } : {}), returnTo: engineerReturn('issues') })}`}>Snag list{principal?.trade ? ` · ${principal.trade}` : ''}</Link></div></div>
         <div className="eng-issue-tabs" role="group" aria-label="Which issues to show">{ISSUE_SHOWS.map(([id,label])=><button key={id} type="button" aria-pressed={show===id} onClick={()=>pickIssues(id)}>{label}</button>)}</div>
-        {show!=='yours' && <div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Show<select id="eng-issue-scope" value={scope} onChange={e=>pickIssues(show,e.target.value)}><option value="current">This project: {project.projectName}</option><option value="all">All projects</option></select></label></div>}
+        {show!=='yours' && <div className="eng-issue-controls"><label htmlFor="eng-issue-scope">Show<select id="eng-issue-scope" value={scope} onChange={e=>pickIssues(show,e.target.value)}><option value="current">This project: {project.projectName}</option><option value="all">All projects</option></select></label>
+          {scope!=='all' && issues!==null && <PlacePicker issues={show==='open'?issues.filter(isOpen):issues} place={place} onPick={setPlace}/>}</div>}
         {issues===null ? !error && <p role="status">Loading issues…</p>
           : show==='yours' ? <YourIssues projects={projects} issues={issues} projectId={projectId} returnTo={engineerReturn('issues')} onAll={()=>pickIssues('all','all')}/>
-          : (scope==='all'?projects:[project]).map(p=>{const here=issues.filter(i=>i.projectId===p.id);const rows=(show==='open'?here.filter(isOpen):here).map(issue=>({issue}));return <section className="eng-panel" key={p.id}><h2>{p.projectName}</h2><EngineerIssueList rows={rows} empty={show==='open'?'No open issues on this project.':'No issues have been raised on this project.'} returnTo={engineerReturn('issues')}/></section>;})}</>}
+          : (scope==='all'?projects:[project]).map(p=>{const here=issues.filter(i=>i.projectId===p.id);const listed=show==='open'?here.filter(isOpen):here;const at=scope==='all'?'':place;const rows=issuesAtPlace(listed,at).map(issue=>({issue}));return <section className="eng-panel" key={p.id} aria-labelledby={`issues-${p.id}`}><h2 id={`issues-${p.id}`}>{p.projectName}{at && <> · {at}<span className="eng-yours-count">· {rows.length} {show==='open'?'open':rows.length===1?'issue':'issues'}</span></>}</h2><EngineerIssueList rows={rows} empty={at?(show==='open'?`No open issues at ${at}.`:`No issues have been raised at ${at}.`):show==='open'?'No open issues on this project.':'No issues have been raised on this project.'} returnTo={engineerReturn('issues')}/></section>;})}</>}
       {view==='defect' && <IndividualDefect key={project.id} project={project} onIssues={()=>navigate('issues','open')} onSite={()=>navigate('home')} returnTo={engineerReturn('issues')}/>}
     </>}
   </main>;
+}
+
+/**
+ * "Where are you?" on the Issues tab (2026-10-22): the places typed on the
+ * issues listed, each with how many are there, so an engineer standing in one
+ * flat sees every trade's issues there and nothing else. Free text as typed,
+ * never a list kept by the office (EXP-4). A place chosen before (from an
+ * issue's link or Back) that has none listed stays in the choice, so the list
+ * explains itself as empty.
+ */
+function PlacePicker({issues,place,onPick}:{issues:Issue[];place:string;onPick:(place:string)=>void}) {
+  const places = issuePlaces(issues);
+  const chosen = places.find(p => p.place.toLowerCase() === place.toLowerCase());
+  const value = chosen?.place ?? place;
+  if (!places.length && !place) return null;
+  return <label htmlFor="eng-issue-place">Where are you?<select id="eng-issue-place" value={value} onChange={e=>onPick(e.target.value)}>
+    <option value="">Every place ({issues.length})</option>
+    {place && !chosen && <option value={place}>{place} ({issuesAtPlace(issues,place).length})</option>}
+    {places.map(p => <option key={p.place} value={p.place}>{p.place} ({p.count})</option>)}
+  </select></label>;
 }
 
 /**

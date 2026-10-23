@@ -54,8 +54,8 @@ export function failureMessage(status: number, reason: string | undefined, what:
       // A reason from RELAY itself (SharePoint not answering, say) is better than a guess.
       if (reason) return join(reason, kept);
       return join(what, status === 502 || status === 503 || status === 504
-        ? 'RELAY’s server could not be reached just now.'
-        : 'Something went wrong on RELAY’s server.', kept, 'Try again in a minute. If it keeps happening, tell the office.');
+        ? 'RELAY could not be reached just now.'
+        : 'Something went wrong in RELAY.', kept, 'Try again in a minute. If it keeps happening, tell the office.');
     case 'not-found':
       // "No such issue." is the server talking to itself; a fuller reason is kept.
       return reason && !/^No such |not found\.?$/i.test(reason) ? join(reason, kept) : join(what, 'It could not be found. It may have been removed, or the link may be wrong.', kept);

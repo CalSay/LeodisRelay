@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import type { Variation } from '@/lib/types';
-import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, fmtMoney, fmtPct, isCharged, marginPct, variationValue } from '@/lib/variations';
+import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, fmtMoney, fmtPct, instructionParts, isCharged, marginPct, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
 import { registerFileName, toCsv, variationRows } from '@/lib/registerExport';
 import { Btn, BtnQ, InstructionTag, Money, SortHead } from './bits';
@@ -86,7 +86,7 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
   const d = (kind: 'variation-price' | 'variation-instruct' | 'variation-decline' | 'variation-reopen' | 'variation-details', variation: Variation) => ctx.setDialog({ kind, variation });
-  return <div className="view">
+  return <div className="view variations-view">
     <div className="pagehead"><div><h2>Variations</h2><p>{counts.pending} awaiting instruction{narrowed ? ' in this search' : ` across ${ctx.projects.length} projects`} · {counts.unpriced ? `${counts.unpriced} without a quote` : 'all priced'} · {counts.exposed ? <span className="late">{counts.exposed} done without an instruction</span> : 'nothing done uninstructed'} · {counts.instructed ? `${counts.instructed} instructed worth ${fmtMoney(instructedTotal)}` : '0 instructed'} · {counts.declined} declined{counts.within ? ` · ${counts.within} within contract` : ''}</p></div>
       <div className="actions"><BtnQ onClick={() => ctx.setDialog({ kind: 'variation-new', projects: ctx.projects, ...(project ? { projectId: project } : {}), opened: v => ctx.go(`#/projects/${v.projectId}/variation/${v.id}`) })}>Add variation</BtnQ>{shown.length > 0 && <BtnQ onClick={download} aria-label={`Download ${shown.length} ${shown.length === 1 ? 'variation' : 'variations'} as a spreadsheet (CSV)`}>Download spreadsheet</BtnQ>}{counts.unpriced > 0 && <Btn onClick={() => { const v = shown.find(isUnpriced) ?? scoped.find(isUnpriced); if (v) d('variation-price', v); }}>Price the oldest</Btn>}</div></div>
     <div className="filters">
@@ -110,13 +110,13 @@ export function VariationsView({ ctx }: { ctx: Ctx }) {
         <td className="c-title"><div className="rowtitle" style={{ fontSize: 13 }}>{v.description}</div><div className="rowsub">{v.location || 'no location'} · {v.trade ?? 'trade not set'} · {v.reason ?? 'reason not set'}{v.workDone && <> · <span className="late">work already done</span></>}</div></td>
         <td data-label="Project">{name(v.projectId)}</td>
         <td className="due" data-label="Raised">{fmtDay(v.raisedAt)}<div className="rowsub">{source(v)} · {ctx.nameOf(v.raisedById, v.raisedBy)}</div></td>
-        <td data-label="Instruction"><InstructionTag v={v} />{v.instruction === 'instructed' && <div className="rowsub">{v.instructionReference} · {v.instructedBy} · {v.instructedOn}</div>}{v.instruction === 'declined' && <div className="rowsub">{v.events.slice().reverse().find(e => e.kind === 'declined')?.note}</div>}{v.instruction === 'within_contract' && <div className="rowsub">Not charged{v.events.slice().reverse().find(e => e.kind === 'within_contract')?.note ? ` · ${v.events.slice().reverse().find(e => e.kind === 'within_contract')?.note}` : ''}</div>}</td>
+        <td data-label="Instruction"><InstructionTag v={v} />{v.instruction === 'instructed' && <div className="rowsub">{instructionParts(v.instructionReference, v.instructedBy, v.instructedOn) || 'no reference recorded'}</div>}{v.instruction === 'declined' && <div className="rowsub">{v.events.slice().reverse().find(e => e.kind === 'declined')?.note}</div>}{v.instruction === 'within_contract' && <div className="rowsub">Not charged{v.events.slice().reverse().find(e => e.kind === 'within_contract')?.note ? ` · ${v.events.slice().reverse().find(e => e.kind === 'within_contract')?.note}` : ''}</div>}</td>
         <td className="money" data-label="Quoted"><Money n={v.quotedValue} /></td>
         <td className="money" data-label="Instructed"><Money n={v.instruction === 'instructed' ? variationValue(v) : undefined} /></td>
         <td className="money" data-label="Margin">{!isCharged(v) ? <span className="fine">—</span> : <><Money n={margin} className={margin !== undefined && margin < 0 ? 'late' : ''} />{pct !== undefined && <div className="rowsub num">{fmtPct(pct)}</div>}</>}</td>
         <td className="c-actions" onClick={e => e.stopPropagation()}><div className="actions">
-          {v.instruction === 'pending' && (v.quotedValue === undefined ? <Btn className="btn-sm" onClick={() => d('variation-price', v)}>Price</Btn> : <BtnQ className="btn-sm" onClick={() => d('variation-price', v)}>Reprice</BtnQ>)}
-          {v.instruction === 'pending' && (v.quotedValue === undefined ? <BtnQ className="btn-sm" onClick={() => d('variation-instruct', v)}>Instruct</BtnQ> : <Btn className="btn-sm" onClick={() => d('variation-instruct', v)}>Instruct</Btn>)}
+          {v.instruction === 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-price', v)}>{v.quotedValue === undefined ? 'Price' : 'Reprice'}</BtnQ>}
+          {v.instruction === 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-instruct', v)}>Instruct</BtnQ>}
           {v.instruction === 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-decline', v)}>Decline</BtnQ>}
           {v.instruction !== 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-reopen', v)}>Reopen</BtnQ>}
         </div></td></tr>; }) : <tr><td colSpan={9} className="empty">{snap.variations.length === 0 && !narrowed ? FIRST : <>{EMPTY[filter]}{narrowed ? ' for these filters' : ''}.</>}{narrowed && <> <button type="button" className="btn btn-q btn-sm" onClick={clear}>Clear filters</button></>}</td></tr>}

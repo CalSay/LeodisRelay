@@ -94,7 +94,7 @@ try {
     await where.fill('Flat 1.03');
     eq(await question.locator('.eng-linkrow').count(),0,`${scheme} defect at Flat 1.03: no issues from elsewhere listed`);
     ok((await question.innerText()).includes('No open issue at Flat 1.03.'),`${scheme} defect at Flat 1.03: says so in one line`);
-    ok(!(await question.innerText()).includes('Linking avoids'),`${scheme} defect at Flat 1.03: no hint about linking when there is nothing to link`);
+    ok(!(await question.innerText()).includes('raised twice'),`${scheme} defect at Flat 1.03: no hint about linking when there is nothing to link`);
     const elsewhere=question.locator('button.eng-link-elsewhere');
     // Pat's seven, both engineers' two each, and what the light run sent.
     const totalOpen=listIssues(P).filter(i=>i.work!=='closed'&&i.confirmation!=='withdrawn').length;
@@ -134,8 +134,8 @@ try {
     rows=await rowTexts();
     ok(rows.length===2&&rows[1].includes('Fire stopping missing'),`${scheme} defect: the issue linked elsewhere stays listed and chosen (${rows.join(' | ')})`);
     eq(await riser.getAttribute('aria-pressed'),'true',`${scheme} defect: still linked`);
-    ok((await question.innerText()).includes("This will be added to that issue's history"),`${scheme} defect: says what linking does`);
-    await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached',timeout:20000});
+    ok((await question.innerText()).includes("It goes on that issue, not as a new one"),`${scheme} defect: says what linking does`);
+    await page.getByText('Saved to RELAY',{exact:true}).waitFor({state:'attached',timeout:20000});
     await page.waitForTimeout(1200);
     await page.reload();
     await page.locator('.eng-cardrow').nth(1).waitFor();
@@ -153,7 +153,7 @@ try {
       if(await page.locator('.eng-cardrow').nth(1).getAttribute('aria-expanded')!=='true')await page.locator('.eng-cardrow').nth(1).tap();
       const linkedQuestion=open().locator('.field',{has:page.getByText('Is this something already raised?')});
       await linkedQuestion.locator('.eng-linkrow').first().waitFor({timeout:20000});
-      ok((await linkedQuestion.innerText()).includes("This will be added to that issue's history"),'dark: a link to an issue no longer open still says so');
+      ok((await linkedQuestion.innerText()).includes("It goes on that issue, not as a new one"),'dark: a link to an issue no longer open still says so');
       const unlink=linkedQuestion.getByRole('button',{name:/No — this is new/});
       eq(await unlink.getAttribute('aria-pressed'),'false','dark: "No — this is new" is there to unlink it');
       await unlink.tap();
@@ -174,7 +174,7 @@ try {
     await context.setOffline(false);
     eq(await sideways(),false,`${scheme} report: no sideways scroll`);
     // Send it: the home's number still counts only what the office did.
-    await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached',timeout:30000});
+    await page.getByText('Saved to RELAY',{exact:true}).waitFor({state:'attached',timeout:30000});
     await open().locator('textarea').first().fill('Plant room locked, no key on site');
     await open().getByLabel('Where',{exact:true}).fill('Plant room');
     await page.evaluate(()=>document.activeElement?.blur());
@@ -185,7 +185,7 @@ try {
     await page.evaluate(()=>document.activeElement?.blur());
     await page.locator('.actionbar').getByRole('button',{name:/Check & send/}).tap();
     await page.locator('#report-check').waitFor();
-    await page.getByText('Saved on server',{exact:true}).waitFor({timeout:20000});
+    await page.getByText('Saved to RELAY',{exact:true}).waitFor({timeout:20000});
     await page.getByRole('button',{name:'Send to office'}).tap();
     await page.locator('.pagehead .tag-sent').waitFor({timeout:20000});
     while(await runOneJob());

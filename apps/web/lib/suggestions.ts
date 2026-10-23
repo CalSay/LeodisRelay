@@ -13,7 +13,14 @@ import type { Issue, Report, Variation } from './types';
  * was last typed. Newest first.
  */
 export interface SuggestionSources { reports: Report[]; issues: Issue[]; variations: Variation[] }
-export interface ProjectSuggestions { locations: string[]; companies: string[] }
+export interface ProjectSuggestions {
+  locations: string[]; companies: string[];
+  /** The companies already given each trade's issues here, for the office's Assign box. Absent from older servers. */
+  byTrade?: Partial<Record<TradeWithCompany, string[]>>;
+}
+/** "Other / non-Leodis" covers the main contractor and every other trade, so it never points at one company. */
+export const TRADES_WITH_COMPANY = ['Electrical', 'HVAC', 'P&H'] as const;
+export type TradeWithCompany = typeof TRADES_WITH_COMPANY[number];
 
 export const SUGGESTION_LIMIT = 12;
 
@@ -47,5 +54,32 @@ export function projectSuggestions({ reports, issues, variations }: SuggestionSo
   }
   for (const i of issues) { places.note(i.location, i.raisedAt); companies.note(i.owner, lastActivity(i), NOT_A_COMPANY); }
   for (const v of variations) places.note(v.location, v.raisedAt);
-  return { locations: places.list(limit), companies: companies.list(limit) };
+  return { locations: places.list(limit), companies: companies.list(limit), byTrade: companiesByTrade(issues) };
+}
+
+/** How many of a trade's companies the Assign box offers first. */
+export const TRADE_COMPANY_LIMIT = 3;
+
+/**
+ * For each trade, the companies the office has already put on that trade's
+ * issues on this project (open or closed), newest first: the one most likely
+ * to put a new defect of that trade right. Only the trade the engineer chose
+ * (`affectedTrade`) counts, never the reporter's own trade, and a suggestion
+ * only: the office still picks or types who is responsible.
+ */
+export function companiesByTrade(issues: Issue[], limit = TRADE_COMPANY_LIMIT): Partial<Record<TradeWithCompany, string[]>> {
+  const out: Partial<Record<TradeWithCompany, string[]>> = {};
+  for (const trade of TRADES_WITH_COMPANY) {
+    const named = newestFirst();
+    for (const i of issues) if (i.affectedTrade === trade) named.note(i.owner, lastActivity(i), NOT_A_COMPANY);
+    const list = named.list(limit);
+    if (list.length) out[trade] = list;
+  }
+  return out;
+}
+
+/** The companies to offer first for this issue: its trade's, or none when its trade is not one company's. */
+export function companiesForIssue(issue: Pick<Issue, 'affectedTrade'>, byTrade: ProjectSuggestions['byTrade']): string[] {
+  const trade = issue.affectedTrade;
+  return trade && (TRADES_WITH_COMPANY as readonly string[]).includes(trade) ? byTrade?.[trade as TradeWithCompany] ?? [] : [];
 }

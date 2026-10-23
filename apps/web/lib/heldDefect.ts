@@ -36,6 +36,8 @@ export function readReceipt(raw: string | null, requestId: string): DefectReceip
 
 /** Sent to the window when a held defect went by itself, or was refused; the defect screen showing it takes it (preventDefault). */
 export const DEFECT_RESULT_EVENT = 'relay-defect-result';
+/** Sent to the window whenever a send of a held defect ends, by itself or from a tap, however it went. */
+export const DEFECT_SETTLED_EVENT = 'relay-defect-settled';
 export interface DefectResult { key: string; requestId: string; result: DefectSendResult }
 
 export type DefectSendResult =
@@ -110,7 +112,11 @@ export function sendHeldDefect(key: string, defect: HeldDefect, onlyIfHeld: bool
   // Across tabs it waits its turn: the tab holding the lock gets the receipt (this one then skips) or gives up.
   const send = (locks ? locks.request(`relay-defect-send:${defect.requestId}`, () => post(key, defect, onlyIfHeld, deps)) as unknown as Promise<DefectSendResult> : post(key, defect, onlyIfHeld, deps))
     .then(result => { if (result.kind === 'refused') refusedHere.add(defect.requestId); else if (result.kind === 'sent') refusedHere.delete(defect.requestId); return result; })
-    .finally(() => inFlight.delete(defect.requestId));
+    .finally(() => {
+      inFlight.delete(defect.requestId);
+      // However it was sent, a page showing what waits on this phone can look again.
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event(DEFECT_SETTLED_EVENT));
+    });
   inFlight.set(defect.requestId, send);
   return send;
 }
@@ -151,7 +157,7 @@ async function post(key: string, defect: HeldDefect, onlyIfHeld: boolean, deps: 
   }
   if (response.status === 401) return { kind: 'waiting', reason: 'You are signed out. Your defect is kept on this phone and goes once you sign in again.' };
   // 400 is the route's own "could not be received, retry the same submission" (a body cut short, say).
-  if (response.ok || response.status >= 500 || [400, 408, 429].includes(response.status)) return { kind: 'waiting', reason: 'RELAY’s server did not answer properly. Your defect is kept on this phone and goes by itself when it does.' };
+  if (response.ok || response.status >= 500 || [400, 408, 429].includes(response.status)) return { kind: 'waiting', reason: 'RELAY did not answer properly. Your defect is kept on this phone and goes by itself when it does.' };
   return refuse(data.reason ?? 'RELAY could not take this defect.', response.status === 422 || response.status === 413);
 }
 

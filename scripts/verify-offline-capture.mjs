@@ -139,7 +139,7 @@ try {
     const note=page.locator('.held-send .note-ok');
     await note.waitFor({timeout:30000});
     const noteText=await note.innerText();
-    check(/2 reports from this phone are now on the server\. They stay drafts until you sign and send\./.test(noteText),`${scheme}: says what went up: ${noteText}`);
+    check(/2 reports from this phone are now saved to RELAY\. They stay drafts until you send them\./.test(noteText),`${scheme}: says what went up: ${noteText}`);
     const fresh=mine().filter(r=>!before.has(r.id)&&r.id!==draft.id&&r.id!==conflict?.id);
     check(fresh.length===1,`${scheme}: one new report on the server, not two`);
     const made=getReport(fresh[0].id);
@@ -169,8 +169,11 @@ try {
         // Wait for it to go: the home screen re-reads what the phone holds a moment after the refresh.
         if(r.id!==conflict?.id)check(await row.waitFor({state:'detached',timeout:10000}).then(()=>true,()=>false),`${scheme}: ${ref} is not listed twice`);
       } else {
-        await row.waitFor();
-        check((await row.innerText()).includes(ref),`${scheme}: ${ref} is under Unfinished reports with its reference`);
+        // Two or more saved to RELAY fold into one line (2026-10-22), so such a row may be there but folded;
+        // the one changed elsewhere could be lost, so it must be listed in full.
+        await row.waitFor({state:r.id===conflict?.id?'visible':'attached'});
+        check(r.id===conflict?.id||await row.evaluate(a=>!a.closest('details')||!!a.closest('details.eng-saved-drafts')),`${scheme}: ${ref} is listed or in the saved drafts' fold`);
+        check((await row.textContent()).includes(ref),`${scheme}: ${ref} is under Unfinished reports with its reference`);
       }
     }
     const keys=await heldKeys(page);

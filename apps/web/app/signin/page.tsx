@@ -7,6 +7,7 @@ import { signInErrorMessage } from "@/lib/auth/signInErrors";
 import { safeReturnTo } from '@relay/platform';
 import { EntryFrame } from '@/components/EntryFrame';
 import { InstallRelay } from '@/components/InstallRelay';
+import { SignedInElsewhere } from '@/components/SignedInElsewhere';
 
 export const metadata: Metadata = { title: 'Sign in' };
 
@@ -58,6 +59,7 @@ export default async function SignInPage({
         <p className="entry-fine">{afterSignIn(destination, isEntra)}</p>
         {!isEntra && <div className="entry-notice"><strong>Development only — identity is not checked.</strong><br />Microsoft sign-in is not configured.<details><summary>Setup details</summary>Missing: {missing.join(', ')}.</details></div>}
         <InstallRelay />
+        <SignedInElsewhere destination={destination} />
       </div>
     </div></EntryFrame>
   );

@@ -1,14 +1,16 @@
 'use client';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
 import type { Issue, ReportSummary, Variation } from '@/lib/types';
 import type { FixtureProject } from '@/lib/fixtures';
-import { issueCommand, raiseVariation, reviewReportDecision, variationCommand } from '@/lib/api';
+import { issueCommand, projectSuggestions, raiseVariation, reviewReportDecision, variationCommand } from '@/lib/api';
 import { VARIATION_REASONS, VARIATION_TRADES, estimatedMargin, expectedCost, fmtMoney, fmtPct, marginPct, readCosting, suggestedQuote, type Costing } from '@/lib/variations';
 import { Modal, formValues, toast } from '@/components/workspace/hooks';
 import { InstallRelay } from '@/components/InstallRelay';
 import { Btn, BtnQ } from './bits';
 import { CheckFix } from './CheckFix';
-import { today } from './model';
+import { fmtDay, today } from './model';
+import { issueTradeWords } from '@/lib/snagList';
+import { companiesForIssue } from '@/lib/suggestions';
 
 export type Dialog =
   | { kind: 'assign'; issue: Issue; owners: string[] }
@@ -38,6 +40,16 @@ export function Dialogs({ d, close, done, me }: { d: Dialog; close: () => void; 
   const [error, setError] = useState('');
   // One identity per opened dialog: pressing the button twice, or retrying after a dropped connection, never raises a second variation.
   const [requestId] = useState(() => crypto.randomUUID());
+  // Assigning: the companies already doing this issue's trade on the project, read fresh, offered first. A suggestion; the office still picks.
+  const [offer, setOffer] = useState<string[]>([]);
+  const assigning = d.kind === 'assign' ? d.issue : null;
+  useEffect(() => {
+    setOffer([]);
+    if (!assigning) return;
+    let live = true;
+    projectSuggestions(assigning.projectId).then(s => { if (live) setOffer(companiesForIssue(assigning, s.byTrade)); }).catch(() => {});
+    return () => { live = false; };
+  }, [assigning]);
   const shell = (title: string, sub: string, body: ReactNode, foot: ReactNode) => <>
     <div className="dlg-head"><div>{sub && <div className="crumbs">{sub}</div>}<h2>{title}</h2></div><button type="button" className="x" onClick={close} aria-label="Close">×</button></div>
     <div className="dlg-body">{body}{error && <div className="note bad" style={{ margin: 0 }}><span>{error}</span></div>}</div>
@@ -59,7 +71,11 @@ export function Dialogs({ d, close, done, me }: { d: Dialog; close: () => void; 
       return `${i.reference} assigned to ${owner}${v.target ? `, target ${v.target}` : ''}.`;
     })}>
       {shell(i.owner ? 'Reassign' : 'Assign', `${i.reference} · ${i.location || 'no location'}`, <>
-        <div className="note info" style={{ margin: 0 }}><span><b>{i.description}</b>{i.actionNeeded && <><br />Action: {i.actionNeeded}</>}</span></div>
+        <div className="note info" style={{ margin: 0 }}><span><b>{i.description}</b><br />Trade: {issueTradeWords(i)}{i.actionNeeded && <><br />Action: {i.actionNeeded}</>}</span></div>
+        {offer.length > 0 && <div className="f assign-offer" role="group" aria-labelledby="assign-offer-h">
+          <p id="assign-offer-h" className="rowsub" style={{ margin: 0 }}>Already doing {i.affectedTrade} work on this project</p>
+          <div className="btn-row">{offer.map(o => <BtnQ key={o} className="btn-sm" onClick={e => { const box = e.currentTarget.form?.elements.namedItem('owner'); if (box instanceof HTMLInputElement) { box.value = o; box.focus(); } }}>{o}</BtnQ>)}</div>
+        </div>}
         <div className="f-row">
           <div className="f"><label>Responsible</label><input name="owner" list="owners" defaultValue={i.owner} placeholder="Person or company" autoFocus /><datalist id="owners">{d.owners.map(o => <option key={o} value={o} />)}</datalist></div>
           <div className="f"><label>Target date</label><input name="target" type="date" defaultValue={i.targetDate || ''} min={today()} /></div>
@@ -227,7 +243,7 @@ function TriageForm({ d, busy, shell, close, decide }: { d: Extract<Dialog, { ki
 
 function ReviewForm({ r, busy, shell, close, decide }: { r: ReportSummary; busy: boolean; shell: Shell; close: () => void; decide: (decision: 'approve' | 'return', note: string) => Promise<void> }) {
   const [note, setNote] = useState('');
-  return shell('Review', `${r.reference} · ${r.author} · visit ${r.visitDate}`, <>
+  return shell('Review', `${r.reference} · ${r.author} · visit ${fmtDay(r.visitDate)}`, <>
     <div className="note info" style={{ margin: 0 }}><span>Reviewed as the person signed in; a report cannot be reviewed by whoever wrote it. {r.defectCount > 0 ? `Approving confirms the ${r.defectCount} issue${r.defectCount === 1 ? '' : 's'} it raised. Sending it back marks them for triage; any work already done stands.` : 'Approving accepts it for issue.'} The engineer sees the note and can send a corrected revision.</span></div>
     <div className="f"><label>Comments · required if sending back</label><textarea value={note} onChange={e => setNote(e.target.value)} placeholder="What needs changing, or a note for the file" autoFocus /></div>
   </>, <>

@@ -117,7 +117,7 @@ async function editorStates(scheme,width,phone){
   await open().locator('.shot img').first().waitFor();
   await state('update-card');
   if(phone)await open().locator('.eng-done').click();
-  await checkStep();await page.getByText('Saved on server',{exact:true}).waitFor({timeout:15000});
+  await checkStep();await page.getByText('Saved to RELAY',{exact:true}).waitFor({timeout:15000});
   await state('update-check');
   await page.getByRole('button',{name:'Send to office'}).click();await page.locator('.pagehead .tag-sent').waitFor();
   await state('update-sent');

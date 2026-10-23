@@ -13,9 +13,9 @@ const RAW = /\((?:4|5)\d\d\)|HTTP \d{3}|Bad Gateway|Microsoft Graph|TypeError|un
 
 test('a proxy error page reads as the server not answering, with what to do and no code', () => {
   const said = failureMessage(502, undefined, 'The note could not be saved.', 'What you typed is still here.');
-  assert.equal(said, 'The note could not be saved. RELAY’s server could not be reached just now. What you typed is still here. Try again in a minute. If it keeps happening, tell the office.');
+  assert.equal(said, 'The note could not be saved. RELAY could not be reached just now. What you typed is still here. Try again in a minute. If it keeps happening, tell the office.');
   assert.doesNotMatch(said, RAW);
-  assert.match(failureMessage(500, undefined, 'The list could not be loaded.'), /Something went wrong on RELAY’s server\. Try again in a minute/);
+  assert.match(failureMessage(500, undefined, 'The list could not be loaded.'), /Something went wrong in RELAY\. Try again in a minute/);
 });
 
 test('the server’s own words are kept when it gave them', () => {
@@ -54,10 +54,10 @@ test('the report editor says where the work is for each kind of failed save', ()
   const card = () => 'Level 2 corridor';
   const out = saveProblem(new ApiError('Please sign in again.', false, 401), true, card);
   assert.equal(out.state, 'signedout');
-  assert.match(out.message, /^You have been signed out, so this is not saved to the server yet\. Your work is kept on this phone\. Sign in again and it saves by itself\.$/);
+  assert.match(out.message, /^You have been signed out, so this is not saved to RELAY yet\. Your work is kept on this phone\. Sign in again and it saves by itself\.$/);
   const down = saveProblem(new ApiError('x', false, 502), true, card);
   assert.equal(down.state, 'server');
-  assert.match(down.message, /RELAY’s server is not answering.*kept on this phone.*tries again by itself/);
+  assert.match(down.message, /RELAY is not answering.*kept on this phone.*tries again by itself/);
   const photo = saveProblem(new PhotoRefused('p1', 'The file is not a supported photograph.'), true, card);
   assert.equal(photo.state, 'error');
   assert.equal(photo.message, 'A photograph on the card “Level 2 corridor” was not accepted: the file is not a supported photograph. Remove it and take it again. Your work is kept on this phone.');
@@ -71,7 +71,7 @@ test('the report editor says where the work is for each kind of failed save', ()
   assert.match(refusedHere.message, /could not tell it came from its own page.*Reload the page.*kept on this phone/);
   assert.equal(crossSite.refused, true);
   assert.match(sendProblem(new ApiError('x', false, 401), true, card), /signed out, so this has not been sent\. Your work is kept on this phone\. Sign in again, then send it\./);
-  assert.match(sendProblem(new PhotoRefused('p1', ''), true, card), /was not accepted, so this has not been sent: the server would not take it/);
+  assert.match(sendProblem(new PhotoRefused('p1', ''), true, card), /was not accepted, so this has not been sent: RELAY would not take it/);
 });
 
 test('photographs not added are named with why, and the good ones counted', () => {

@@ -46,10 +46,15 @@ try {
   // Individual defect: default trade, local restoration, photo upload, and an
   // intentionally lost receipt. Retry must return the same issue without sending a report.
   await page.getByRole('button',{name:/Flag a defect/}).click();
-  assert.equal(await page.getByLabel('Trade affected',{exact:true}).inputValue(),'Electrical');
+  // Trade affected is one tap each, as on a site update card, starting at the engineer's own trade.
+  const trades=page.getByRole('group',{name:'Trade affected',exact:true});
+  const pressed=()=>trades.locator('button[aria-pressed=true]').allInnerTexts();
+  assert.deepEqual(await trades.getByRole('button').allInnerTexts(),['Electrical','HVAC','P&H','Other']);
+  assert.deepEqual(await pressed(),['Electrical']);
   await page.getByLabel('What needs attention?',{exact:true}).fill('Missing HVAC support');
   await page.getByLabel('Where on site?',{exact:true}).fill('Level 2 corridor');
-  await page.getByLabel('Trade affected',{exact:true}).selectOption('HVAC');
+  await trades.getByRole('button',{name:'HVAC',exact:true}).click();
+  assert.deepEqual(await pressed(),['HVAC']);
   const sharp=require('sharp');
   const png=await sharp({create:{width:24,height:24,channels:3,background:'#997744'}}).png().toBuffer();
   await page.getByLabel('Defect photographs',{exact:true}).setInputFiles({name:'defect.png',mimeType:'image/png',buffer:png});
@@ -57,6 +62,7 @@ try {
   await page.goto(base+'/engineer?project=proj-011lme&view=defect');
   await page.getByRole('button',{name:'Remove photo 1',exact:true}).waitFor();
   assert.equal(await page.getByLabel('What needs attention?',{exact:true}).inputValue(),'Missing HVAC support');
+  assert.deepEqual(await pressed(),['HVAC'],'the chosen trade survives a reload');
   await page.setViewportSize({width:390,height:844});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Defect form phone overflow');
   if(screenshot)await page.screenshot({path:join(screenshot,'defect-phone.png'),fullPage:true});
@@ -89,7 +95,7 @@ try {
   const visible=page.locator('#card-editor > div:not([hidden])');
   await visible.getByLabel('What happened',{exact:true}).fill('Tablet section survives rotation');
   await visible.getByLabel('Where',{exact:true}).fill('Roof');
-  try { await page.getByText('Saved on server',{exact:true}).waitFor(); }
+  try { await page.getByText('Saved to RELAY',{exact:true}).waitFor(); }
   catch(error) { console.error(await page.locator('main').innerText()); throw error; }
   // Below 900px the cards fold into a list and the open one unfolds under its row.
   await page.setViewportSize({width:820,height:1180});

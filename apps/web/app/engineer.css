@@ -57,6 +57,10 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-tile.big>div{flex:1;min-width:0;}
 .eng-tile.big .arrow{font-family:var(--mono);color:var(--brass);}
 .eng-tile:disabled{opacity:.6;}
+.eng-tile.eng-tile-held{border-color:var(--caution);background:var(--caution-wash);}
+.eng-tile.eng-tile-held small{color:var(--text-2);}
+.eng-held-defects{margin-top:10px;}
+.eng-row.held{border-left-color:var(--caution);}
 
 /* ---- Lists ---------------------------------------------------------------- */
 .eng-list{border:1px solid var(--line);background:var(--panel);border-radius:9px;overflow:hidden;margin:0 0 6px;}
@@ -144,6 +148,9 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-sum dd{margin:2px 0 0;font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums;letter-spacing:-.02em;}
 .eng-sum dd small{display:block;font-size:11px;color:var(--text-3);font-family:var(--sans);letter-spacing:0;}
 .eng-sum dd.late{color:var(--alert);}.eng-sum dd.soon{color:var(--caution);}
+.eng-sum-1{grid-template-columns:1fr;}.eng-sum-2{grid-template-columns:repeat(2,1fr);}.eng-sum-3{grid-template-columns:repeat(3,1fr);}
+/* An optional signature, folded until it is wanted. */
+.eng-sign-open{min-height:48px;font-size:15px;margin-bottom:12px;}
 .eng-finds{display:grid;gap:6px;}
 .eng-does{margin:12px 0 0;}
 .eng-does .eng-row{cursor:default;}
@@ -172,6 +179,7 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 /* Whether a card or photograph has reached the server. Green only when it has. */
 .eng-where{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2);}
 .eng-where-pending,.eng-where-phone{color:var(--caution);font-weight:600;}
+.eng-cardrow .top .eng-where-mark{display:inline-flex;flex:none;margin-left:auto;font-size:12px;}
 .eng-check .eng-where{margin:12px 0 4px;padding:10px 12px;font-size:14px;border:1px solid var(--line);border-radius:var(--r);background:var(--panel);}
 .eng-check .eng-where-server{background:var(--ok-wash);}
 .eng-check .eng-where-pending,.eng-check .eng-where-phone{background:var(--caution-wash);}
@@ -295,8 +303,22 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-defect-summary dt{font-size:12px;color:var(--text-2);margin-top:16px;}.eng-defect-summary dd{margin:6px 0;overflow-wrap:anywhere;}.eng-defect-receipt{text-align:center;}
 /* Back to Site first: one way back to the visit, then the issue itself (2026-10-22). */
 .eng-defect-receipt-actions{display:grid;gap:10px;margin-top:18px;}
+/* Fixed on the spot (2026-10-22): the receipt's second step, a photograph of the fix then "Put forward as fixed". */
+.eng-fixed{display:grid;gap:10px;text-align:left;}
+.eng-fixed-camera{position:relative;display:flex;align-items:center;gap:14px;min-height:64px;padding:12px 18px;border:1.5px solid var(--brass);border-radius:8px;background:var(--brass-wash);color:var(--brass);cursor:pointer;}
+.eng-fixed-camera span{display:grid;gap:2px;}.eng-fixed-camera small{color:var(--text-2);font-size:13px;}
+.eng-fixed-camera.eng-fixed-more{min-height:48px;justify-content:center;background:var(--panel);border:1px solid var(--line-2);color:var(--text);}
+.eng-fixed-camera input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;}
+.eng-fixed-camera:has(input:focus-visible){outline:2px solid var(--brass);outline-offset:2px;}
+.eng-fixed-nophoto{min-height:48px;margin:0;padding:8px 12px;border:0;background:none;color:var(--text-2);font:500 14px/1.3 var(--sans);text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+.eng-fixed-open{padding:12px;border:1.5px solid var(--brass);border-radius:8px;background:var(--brass-wash);}
+.eng-fixed-title{margin:0;color:var(--text);font-size:14px;}.eng-fixed-title b{color:var(--brass);}
+.eng-fixed .eng-defect-photos{margin:0;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));}.eng-fixed .eng-defect-photos img{height:104px;}.eng-fixed .eng-defect-photos button{min-height:44px;}
+.eng-fixed-done{margin:0;padding:14px 16px;border:1px solid var(--line-2);border-left:3px solid var(--brass);border-radius:8px;background:var(--panel);text-align:left;line-height:1.45;}
 .eng-defect-receipt-actions .eng-secondary{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;margin:0;padding:12px 18px;border:1px solid var(--line-2);border-radius:8px;background:var(--panel);color:var(--text);text-decoration:none;font:500 15px/1.2 var(--sans);}
 .eng-primary{display:flex;align-items:center;justify-content:center;min-height:52px;width:100%;padding:12px 18px;border:1px solid var(--brass);border-radius:8px;background:var(--brass);color:var(--brass-ink);text-decoration:none;font-weight:500;}
+/* A mouse over the button version kept the global grey hover, leaving brass-ink words on grey (seen 2026-10-22 at 1440). */
+@media (hover:hover){button.eng-primary:hover:not(:disabled){background:var(--brass);border-color:var(--brass);filter:brightness(1.08);}}
 .eng-issue-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;}.eng-issue-tabs button{font-size:13px;padding:10px 12px;}.eng-issue-tabs [aria-pressed=true]{border-color:var(--brass);background:var(--brass-wash);color:var(--brass);}
 .eng-issue-list{display:grid;gap:12px;}.eng-issue-card.late{border-left:3px solid var(--alert);}.eng-issue-card .eng-word{margin:4px 0;font-size:13.5px;line-height:1.4;color:var(--text);overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .eng-yours-count{margin-left:10px;font:600 12px/1 var(--sans);color:var(--text-2);white-space:nowrap;}.eng-yours-wait{margin:12px 0 0;border:1px solid var(--line);border-radius:9px;background:var(--panel);}.eng-yours-wait>summary.eng-yours-waiting{display:flex;align-items:center;min-height:48px;padding:8px 40px 8px 14px;position:relative;cursor:pointer;list-style:none;color:var(--text-2);font-size:14px;}.eng-yours-wait>summary::-webkit-details-marker{display:none;}.eng-yours-wait>summary::after{content:'+' / '';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:18px;color:var(--text-3);}.eng-yours-wait[open]>summary::after{content:'−' / '';}.eng-yours-wait>:not(summary){padding:0 12px 12px;}.eng-yours-empty button{margin-top:12px;min-height:48px;}.eng-issue-card{display:flex;gap:16px;padding:16px;border:1px solid var(--line);border-radius:9px;background:var(--ground);color:var(--text);text-decoration:none;align-items:flex-start;}
@@ -332,7 +354,7 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
   .eng-report-editor{padding-bottom:var(--actionbar-space,190px);}
   .eng-workspace h1{font-size:26px;}
   .eng-project-context{flex-wrap:wrap;}.eng-panel{padding:14px;}.eng-report-link{flex-wrap:wrap;}
-  .eng-sum{grid-template-columns:repeat(2,1fr);}.eng-sum div:nth-child(2n){border-right:0;}.eng-sum div:nth-child(-n+2){border-bottom:1px solid var(--line);}
+  .eng-sum:not(.eng-sum-1,.eng-sum-3){grid-template-columns:repeat(2,1fr);}.eng-sum:not(.eng-sum-3) div:nth-child(2n){border-right:0;}.eng-sum:not(.eng-sum-1,.eng-sum-2,.eng-sum-3) div:nth-child(-n+2){border-bottom:1px solid var(--line);}
   .eng-card{padding:14px 12px;border-left-width:5px;}
   .eng-card .head{align-items:stretch;}
   .eng-card .head>div{width:100%;justify-content:space-between;}
@@ -492,14 +514,14 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-section-note{font-size:13px;line-height:1.5;color:var(--text-2);margin:-4px 0 10px;}
 .eng-inspections{margin-top:8px;}
 .eng-home-grid .eng-row{min-height:56px;}
-.eng-more-pages{margin-top:10px;border:1px solid var(--line);border-radius:9px;background:var(--panel);}
-.eng-more-pages>summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:3px;min-height:56px;justify-content:center;padding:10px 40px 10px 14px;position:relative;font-size:14px;font-weight:500;}
-.eng-more-pages>summary::-webkit-details-marker{display:none;}
-.eng-more-pages>summary::after{content:'+';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:18px;color:var(--text-3);}
-.eng-more-pages[open]>summary::after{content:'−';}
-.eng-more-pages>summary span{font-size:12px;font-weight:400;color:var(--text-3);}
-.eng-more-pages>summary:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:9px;}
-.eng-more-pages .eng-list{border:0;border-top:1px solid var(--line);border-radius:0 0 9px 9px;margin:0;}
+.eng-more-pages,.eng-saved-drafts{margin-top:10px;border:1px solid var(--line);border-radius:9px;background:var(--panel);}
+.eng-more-pages>summary,.eng-saved-drafts>summary{list-style:none;cursor:pointer;display:flex;flex-direction:column;gap:3px;min-height:56px;justify-content:center;padding:10px 40px 10px 14px;position:relative;font-size:14px;font-weight:500;}
+.eng-more-pages>summary::-webkit-details-marker,.eng-saved-drafts>summary::-webkit-details-marker{display:none;}
+.eng-more-pages>summary::after,.eng-saved-drafts>summary::after{content:'+';position:absolute;right:16px;top:50%;transform:translateY(-50%);font-family:var(--mono);font-size:18px;color:var(--text-3);}
+.eng-more-pages[open]>summary::after,.eng-saved-drafts[open]>summary::after{content:'−';}
+.eng-more-pages>summary span,.eng-saved-drafts>summary span{font-size:12px;font-weight:400;color:var(--text-3);}
+.eng-more-pages>summary:focus-visible,.eng-saved-drafts>summary:focus-visible{outline:2px solid var(--brass);outline-offset:2px;border-radius:9px;}
+.eng-more-pages .eng-list,.eng-saved-drafts .eng-list{border:0;border-top:1px solid var(--line);border-radius:0 0 9px 9px;margin:0;}
 .eng-home-grid>div>.eng-section-title:first-child{margin-top:0;}
 .eng-home-grid .eng-since{margin-top:22px;}
 /* Came back from the office sits under the main buttons (2026-10-21), so Since your last visit now heads the second column. */
@@ -512,6 +534,15 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .issue-eng-facts>div{display:grid;grid-template-columns:8.5em 1fr;gap:10px;align-items:baseline;}
 .issue-eng-facts dt{color:var(--text-2);font-size:13px;}
 .issue-eng-facts dd{margin:0;font-size:15px;overflow-wrap:anywhere;}
+.issue-eng-here{margin:12px 0;}
+/* The photograph from when it was raised (2026-10-22): a small row, so the buttons stay on the first screen. */
+.issue-eng-facts>div:has(>.issue-eng-shots){align-items:start;}
+.issue-eng-facts dd.issue-eng-shots{min-width:0;display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;}
+.issue-eng-shots a,.issue-eng-shots figure{flex:none;display:block;margin:0;width:80px;border-radius:6px;overflow:hidden;border:1px solid var(--line);}
+.issue-eng-shots a:focus-visible{outline:2px solid var(--brass);outline-offset:2px;}
+.issue-eng-shots img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;}
+.issue-eng-facts .late{color:var(--alert);}
+.issue-eng-shots-low{margin-top:12px;}
 .issue-eng-update{margin-top:8px;}
 /* What the office last wrote, above the buttons (issue and variation pages). */
 .eng-word-box{margin:0 0 12px;padding:8px 14px;border:1px solid var(--line);border-left:3px solid var(--brass);border-radius:9px;background:var(--panel);}
@@ -542,3 +573,147 @@ body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,
 .eng-card-foot{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px;}
 .eng-card-foot .eng-remove-card{margin-top:0;}
 .eng-card-foot .btn-sm,.eng-card .head .btn-sm{min-height:48px;}
+/* Speed (2026-10-22): past the first 30 cards (EngineerIssueList FIRST_CARDS), the browser lays out and paints only the cards near the screen. */
+.eng-issue-list>.eng-issue-card:nth-child(n+31){content-visibility:auto;contain-intrinsic-size:auto 160px;}
+/* The size held for a card not yet drawn: the average card on the busy seed, so the page is nearly its true length from the start. */
+@media(max-width:450px){.eng-issue-list>.eng-issue-card:nth-child(n+31){contain-intrinsic-size:auto 180px;}}
+
+/* App bar (layout.tsx), on every page that has it. Sign out and the theme sit
+   together as two matching buttons, apart from the page links. On a phone or a
+   small laptop they stay beside the brand and the links get a grid of
+   their own below, instead of wrapping into three or four ragged rows. Sign
+   out names nobody, so it never crowds the links (the name is in its tooltip). */
+.appbar .nav{margin-left:auto;}
+@media (min-width:1024px){.appbar .nav{flex-wrap:nowrap;}.appbar .nav a{padding:8px 10px;white-space:nowrap;}}
+.appbar-tools{display:flex;align-items:center;gap:8px;flex:none;}
+.appbar-tools form{margin:0;}
+.appbar-tools .themebtn{margin-left:0;}
+.appbar-tools .whoami{font:13px var(--sans);letter-spacing:0;color:var(--text-2);border-color:var(--line);min-height:32px;}
+@media (max-width:1023px){
+  .appbar .appbar-inner{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 8px;}
+  .appbar-tools{grid-column:2;grid-row:1;}
+  .appbar .nav{grid-column:1/-1;grid-row:2;width:auto;margin:0 calc(-1 * var(--s4));padding:4px 8px 0;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(auto-fit,minmax(80px,1fr));gap:2px;}
+  .appbar .nav a{display:flex;align-items:center;justify-content:center;text-align:center;min-height:48px;padding:6px 4px;line-height:1.3;}
+  .appbar-tools .whoami,.appbar-tools .themebtn{min-height:48px;}
+  body:has(.eng-workspace) .appbar .nav,body:has(.eng-report-editor) .appbar .nav,body:has(.eng-page) .appbar .nav,body:has(.eng-chrome) .appbar .nav{display:none;}
+}
+
+/* Release 1 polish E2 (2026-10-22): the Site and Projects views. Scoped to
+   .eng-workspace so the editor and other pages are untouched. */
+/* Group labels and folded lines start where the row text starts (row: 14px padding + 3px edge). */
+.eng-workspace .eng-since-group,.eng-workspace .eng-since-more{padding-left:17px;}
+.eng-workspace .eng-more-pages>summary,.eng-workspace .eng-saved-drafts>summary{padding-left:17px;}
+.eng-workspace .eng-heading-home h1{margin:0;}
+/* Projects: the site's name is what the engineer looks for, so it reads first and larger. */
+.eng-workspace .eng-project-list button{padding:16px;}
+.eng-workspace .eng-project-list strong{font-size:17px;font-weight:600;line-height:1.3;overflow-wrap:anywhere;}
+.eng-workspace .eng-project-list small{font-size:13px;margin:6px 0 10px;}
+.eng-workspace .eng-project-list span{font-weight:500;}
+@media(max-width:600px){
+  /* A phone: one box per group, not a box in a box, so the cards keep their width. */
+  .eng-workspace .eng-project-group{padding:12px;}
+  .eng-workspace .eng-project-groups{gap:20px;}
+  /* The inspection's name already says what it is: drop the tag so the words get the width. */
+  .eng-workspace .eng-inspections .eng-tile-wide>.kind{display:none;}
+  .eng-workspace .eng-band{padding:14px 16px;}
+}
+
+/* Release 1 polish E3 (2026-10-22): the site update editor and its sent
+   receipt. Scoped to .eng-report-editor and .eng-report-sent. */
+/* Back is a thumb's width tall, like every other control on the page. */
+.eng-report-editor>.back,.eng-report-sent>.back{min-height:48px;padding-block:8px;}
+/* Change kind, Remove and Clear read at the same size as the buttons round them, not 12px. */
+.eng-report-editor .eng-card-foot .btn-sm,.eng-report-editor .eng-card .head .btn-sm,.eng-report-editor #sign-panel .btn-sm{font-size:15px;}
+.eng-report-editor #sign-panel .btn-sm{min-height:48px;min-width:96px;}
+/* "What sending does" is a heading like "In this report", ruled across, with the same room above it. */
+.eng-report-editor .eng-does{margin-top:var(--s6);}
+.eng-report-editor .eng-does>.lbl{display:flex;align-items:center;gap:var(--s3);}
+.eng-report-editor .eng-does>.lbl::after{content:"";flex:1;height:1px;background:var(--line);}
+/* The receipt: the full report link and Make a correction are big enough to tap. */
+.eng-report-sent .eng-full-report{display:flex;align-items:center;width:fit-content;min-height:48px;color:var(--brass);text-decoration:underline;text-underline-offset:3px;}
+.eng-report-sent .eng-correct{min-height:48px;font-size:15px;padding:0 18px;}
+/* Two versions of a draft, or changes left after it was sent elsewhere: the
+   choices read at button size, and "Photographs" no longer runs into its value. */
+.eng-report-editor .eng-conflict-all .btn-sm,.eng-report-sent .eng-sent-away-actions .btn-sm{font-size:15px;}
+.eng-report-editor .eng-conflict-side dl>div{grid-template-columns:96px 1fr;}
+
+/* Release 1 polish E5 (2026-10-22): pre-handover and first fix inspections.
+   Scoped to .eng-inspection (an inspection's editor or sent receipt). */
+/* A check's row: the answer and its saving dot on one line, the question under
+   them at the row's full width, so it never breaks a word to a line in the
+   300px list at a desk. "Saving" is said once, in the bar at the foot; the row
+   keeps its dot (the word stays for screen readers). */
+.eng-inspection .eng-checkrow .top{flex-wrap:wrap;row-gap:6px;}
+.eng-inspection .eng-checkrow .top b{order:2;flex:1 1 100%;}
+.eng-inspection .eng-checkrow .top .eng-where-mark{order:1;margin-left:auto;align-items:center;gap:0;width:8px;overflow:hidden;white-space:nowrap;color:transparent;}
+@media (max-width:899px){
+  /* On a phone the list is a screen wide: the answer sits beside the question as before. */
+  .eng-inspection .eng-checkrow .top{flex-wrap:nowrap;}
+  .eng-inspection .eng-checkrow .top b{order:0;flex:1 1 auto;}
+  .eng-inspection .eng-checkrow .top .eng-where-mark{order:0;}
+}
+/* The sent receipt: a passing check is one quiet row of a list, not a card of
+   its own, so the checks needing action stand out and twelve checks are not
+   two screens long. */
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center;margin:0;padding:10px 14px;border-radius:0;border-top-width:0;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>.head{display:contents;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>.head>.lbl{grid-column:1;grid-row:1;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>.head>.kind{grid-column:2;grid-row:1;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>p{grid-column:1/-1;grid-row:2;margin-top:2px;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>p b{font-weight:500;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral>small{grid-column:1/-1;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral:not(.tone-neutral+.tone-neutral){border-top-width:1px;border-top-left-radius:9px;border-top-right-radius:9px;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral:not(:has(+.tone-neutral)){margin-bottom:10px;border-bottom-left-radius:9px;border-bottom-right-radius:9px;}
+.eng-report-sent.eng-inspection .eng-sent-card.tone-neutral .kind:is(.answer-ok,.answer-na){border-color:transparent;background:none;padding-inline:0;}
+
+/* Release 1 polish E4 (2026-10-22): a defect on its own, its receipt, and a
+   variation's page. Scoped to .eng-defect, .eng-defect-receipt and .eng-variation. */
+/* The two boxes of the form sit one gap apart, not a gap plus each box's margin. */
+.eng-defect .eng-defect-grid{gap:16px;align-items:start;margin-top:16px;}
+.eng-defect .eng-defect-grid>.eng-panel{margin:0;}
+.eng-defect .eng-defect-grid+.eng-help{margin-top:12px;}
+.eng-defect .eng-defect-held{margin-top:16px;}
+.eng-defect .eng-defect-held>.eng-help:first-child{margin-top:0;}
+.eng-defect .eng-defect-photos button{min-height:48px;font-size:14px;}
+.eng-defect-receipt .eng-fixed .eng-defect-photos button{min-height:48px;padding:0 4px;white-space:nowrap;}
+/* The receipt is a short column at a desk too, not buttons a screen wide. */
+.eng-defect-receipt{max-width:560px;margin-inline:auto;}
+.eng-defect-receipt-actions button.eng-secondary{background:var(--panel);border-color:var(--line-2);color:var(--text);}
+/* With a photo of the fix taken, "Put forward as fixed" is the one gold button; Back to Site steps back. */
+.eng-defect-receipt-actions:has(.eng-fixed-open)>.eng-primary{background:var(--panel);border:1px solid var(--line-2);color:var(--text);font-weight:500;}
+@media (hover:hover){.eng-defect-receipt-actions:has(.eng-fixed-open)>button.eng-primary:hover:not(:disabled){background:var(--panel-2);border-color:var(--line-2);filter:none;}}
+/* A variation: Back is a thumb's width tall, the office's answer has room under the heading,
+   the history's dates fit on two lines, and the note box matches the boxes above it. */
+.eng-variation>.back{min-height:48px;padding-block:8px;}
+.eng-variation>.pagehead{padding-bottom:var(--s4);}
+.eng-variation>.eng-band{margin-top:20px;}
+.eng-variation .eng-hist .t{width:84px;}
+.eng-variation .eng-variation-note .field{margin-top:0;}
+.eng-variation .eng-variation-note button{min-width:140px;font-size:15px;}
+
+/* Release 1 polish E7 (2026-10-22): the Reports view. .eng-report-link is only used there.
+   On a phone every row reads the same way: reference, who and when, then the tags under them,
+   instead of the tags sitting beside one row and dropping under the next. */
+.eng-panel:has(>.eng-report-link){border-color:var(--line-2);}
+.eng-report-link:last-child{border-bottom:0;}
+@media (max-width:640px){
+  .eng-report-link{flex-direction:column;align-items:flex-start;gap:8px;padding:12px 0;}
+  .eng-report-link>span:first-child{width:100%;}
+  .eng-report-link>span:last-child{justify-content:flex-start !important;} /* over the inline style that suits a desk */
+  .eng-report-link small{margin-top:3px;}
+}
+
+/* Release 1 polish E6 (2026-10-22): the Issues view, an issue's page and
+   putting a fix forward. Scoped to .eng-issue-tabs, the Issues heading and .issue-eng. */
+/* Yours, Open and All issues read as one choice: three equal parts at button size. */
+.eng-issue-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;max-width:480px;}
+.eng-issue-tabs button{font-size:15px;min-height:48px;padding:8px 6px;}
+/* Flag a defect and the Snag list sit side by side as a pair, not two odd widths. */
+.eng-heading:has(+.eng-issue-tabs) .eng-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));max-width:480px;margin-bottom:0;}
+.eng-heading:has(+.eng-issue-tabs) .eng-actions>*{width:100%;min-width:0;justify-content:center;text-align:center;}
+/* An issue at a desk is a column a person reads, not buttons a screen wide. */
+.issue-eng{max-width:720px;margin-inline:auto;}
+/* Back is a thumb's width tall, like every other control on the page. */
+.issue-eng>.back{min-height:48px;padding-block:8px;}
+/* "Put forward as fixed" and "Record an update" each on one line on a phone. */
+.issue-eng-update .btn-row button{padding-inline:8px;}

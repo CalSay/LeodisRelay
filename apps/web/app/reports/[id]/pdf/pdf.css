@@ -1,0 +1,15 @@
+/* The in-app PDF viewer (Release 1, O4): page buttons, the page count and
+   zoom sit on one tidy bar above the page, and wrap onto two rows on a phone. */
+.pdf-tools{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) var(--s3);margin-top:var(--s4);padding:var(--s3) 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.pdf-tools .pdf-page{min-width:8em;text-align:center;font-family:var(--mono);font-size:12px;color:var(--text-2)}
+.pdf-tools .pdf-zoom{display:inline-flex;align-items:center;gap:var(--s2);margin-left:auto;font-size:14px;color:var(--text-2)}
+.pdf-tools .pdf-zoom select{width:auto;min-width:9em}
+.pdf-tools .back{margin:0}
+.pdf-status{margin-top:var(--s4);color:var(--text-2)}
+.pdf-problem{margin-top:var(--s4)}
+.pdf-problem p{margin:0 0 var(--s3)}
+@media (max-width:700px){
+  .pdf-tools .pdf-zoom{margin-left:0}
+  .pdf-tools>button{flex:1 1 0;min-height:48px}
+  .pdf-tools .pdf-page{flex:1 1 100%;order:-1;text-align:left}
+}

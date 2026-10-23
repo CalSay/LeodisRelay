@@ -4,7 +4,7 @@ import { Fragment, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { safeViewReturn, backLabel, withViewReturn } from '@/lib/viewNavigation';
-import { QUIET_WORKING_DAYS, fortnightStart, isWeekend, shiftFortnight, type CoverageProject, type CoverageVisit, type SiteCoverage } from '@/lib/siteCoverage';
+import { QUIET_WORKING_DAYS, fortnightStart, quietTradeWords, isWeekend, shiftFortnight, type CoverageProject, type CoverageVisit, type SiteCoverage } from '@/lib/siteCoverage';
 import { londonDay } from '@/lib/weeklySummary';
 import { dayShort } from '@/lib/dates';
 import { failure } from '@/lib/failure';
@@ -16,13 +16,15 @@ import { failure } from '@/lib/failure';
  * changes nothing. Rules in `lib/siteCoverage.ts`.
  */
 
-const fmtDay = (ymd: string, year = false) => dayShort(ymd, year);
+const fmtDay = (ymd: string, year: boolean | 'auto' = 'auto') => dayShort(ymd, year);
 const weekdayOf = (ymd: string) => dayShort(ymd, false).slice(0, 3);
 const dateOf = (ymd: string) => Number(ymd.slice(8));
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`;
 const TRADE_SHORT: Record<string, string> = { Electrical: 'Elec', HVAC: 'HVAC', 'P&H': 'P&H' };
 const short = (v: CoverageVisit) => (v.trade && TRADE_SHORT[v.trade]) || 'Other';
 const who = (v: CoverageVisit) => `${v.author}${v.trade ? `, ${v.trade}` : ''}`;
+/** The reports behind a mark: one person may send a site update and an inspection on the same day. */
+const refs = (v: CoverageVisit) => [`${v.reference}${v.revision > 1 ? ` rev ${v.revision}` : ''}`, ...v.references.slice(1)].join(', ');
 
 function sinceWords(p: CoverageProject, today: string): string {
   if (!p.last) return 'No report sent from this site yet';
@@ -81,16 +83,19 @@ export function SiteCoveragePage({ initialStart, returnTo }: { initialStart: str
   const started = s?.projects.some(p => p.last) ?? false;
   const quiet = started ? active.filter(p => p.quiet) : [];
   const reportedToday = active.filter(p => p.last?.visitDate === s?.today).length;
+  // The quiet trades line is about this week, so it is shown only on a fortnight that holds today.
+  const showsThisWeek = !!s && s.start <= s.today && s.today <= s.end;
   const weekOf = (p: CoverageProject, day: string) => `/weekly-summary?${new URLSearchParams({ project: p.projectId, week: day, returnTo: here })}`;
 
   const row = (p: CoverageProject) => <tr key={p.projectId} className={p.quiet && started ? 'cov-quiet' : ''}>
     <th scope="row">
       <Link className="cov-project" href={weekOf(p, s!.days[7]! <= s!.today ? s!.days[7]! : s!.start)}>{p.projectName}</Link>
       <span className="cov-sub"><span className="ref">{p.projectNumber}</span>{p.projectManager ? ` · ${p.projectManager}` : ''}</span>
+      {showsThisWeek && p.quietTrades.length > 0 && <span className="cov-sub cov-trades-quiet">{quietTradeWords(p.quietTrades)}</span>}
     </th>
     {s!.days.map((d, i) => <td key={d} className={`${isWeekend(d) ? 'cov-weekend' : ''} ${d === s!.today ? 'cov-today' : ''} ${d > s!.today ? 'cov-future' : ''}`}>
-      {p.days[i]!.length > 0 && <ul className="cov-visits" aria-label={`${fmtDay(d)}: ${plural(p.days[i]!.length, 'report')}`}>{p.days[i]!.map(v => <li key={v.reportId}>
-        <Link className="cov-chip" href={withViewReturn(`/reports/${v.reportId}`, here)} title={`${v.reference}${v.revision > 1 ? ` rev ${v.revision}` : ''} · ${who(v)}`} aria-label={`${v.reference}, ${who(v)}`}>{short(v)}</Link>
+      {p.days[i]!.length > 0 && <ul className="cov-visits" aria-label={`${fmtDay(d)}: ${plural(p.days[i]!.length, 'person', 'people')} on site`}>{p.days[i]!.map(v => <li key={v.reportId}>
+        <Link className="cov-chip" href={withViewReturn(`/reports/${v.reportId}`, here)} title={`${who(v)} · ${refs(v)}`} aria-label={`${who(v)}, ${refs(v)}`}>{short(v)}</Link>
       </li>)}</ul>}
     </td>)}
     <td className="cov-last">
@@ -154,7 +159,8 @@ export function SiteCoveragePage({ initialStart, returnTo }: { initialStart: str
           </div>}
 
         <footer className="cov-foot">
-          <p><b>Elec</b> Electrical · <b>HVAC</b> HVAC · <b>P&amp;H</b> Plumbing and heating · <b>Other</b> trade not recorded. Each mark is one report sent from site, on the visit day the engineer gave; select it to open the report. Select a project for its weekly summary.</p>
+          <p><b>Elec</b> Electrical · <b>HVAC</b> HVAC · <b>P&amp;H</b> Plumbing and heating · <b>Other</b> trade not recorded. Each mark is one person who sent a report from site that day, on the visit day the engineer gave, so two Elec marks are two electricians. Select a mark to open their report: their site update, if they also sent an inspection that day. Select a project for its weekly summary.</p>
+          <p>Under an active site, &ldquo;No P&amp;H report yet this week&rdquo; names a trade that sent a report from there in the two weeks before this week but none from Monday to today. It is shown from Tuesday, on the fortnight that holds today, as a prompt to check how that work is going.</p>
           <p>Made from reports sent to the office; drafts and work still on an engineer&rsquo;s phone are not shown. A corrected report replaces the one it corrects. Working days are Monday to Friday; bank holidays are not known, so they count. Defects liability sites are never marked as quiet, because visits there are occasional.</p>
         </footer>
       </>}

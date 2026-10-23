@@ -4,16 +4,16 @@ import type { Tone } from '@/lib/status';
 import { INSTRUCTION_LABEL } from '@/lib/variations';
 import { reviewInUse } from '@/lib/reviewQueue';
 import { confirmationLabel } from '@/lib/issueConfirmation';
-import { isActiveIssue, isOverdueIssue, isUnassigned, isVerify, issueFigures, londonDay, notAcknowledged } from '@/lib/officeActions';
+import { isActiveIssue, isOverdueIssue, isUnassigned, isVerify, issueFigures, londonDay, notAcknowledged, notSeen } from '@/lib/officeActions';
 import { isDisputedIssue, isNotReviewedIssue } from '@/lib/issueQuery';
 import { dateShort, dayLong, timeOf, whenShort } from '@/lib/dates';
-import { byPutForward, putForwardAt } from '@/lib/checkFix';
+import { againWords, byPutForward, waitingWords } from '@/lib/checkFix';
 import { safetyAttention, type SafetyActions } from '@/lib/safetyActions';
 import { permitAttention, type PermitsAll } from '@/lib/permits';
 import { deliveryAttention, type DeliveriesAll } from '@/lib/deliveries';
 import { projectStanding, type ProjectStanding } from '@/lib/projectStanding';
 
-export { isUnassigned, isVerify, notAcknowledged };
+export { isUnassigned, isVerify, notAcknowledged, notSeen };
 
 /**
  * What the office desk derives from the records it loads. Pure functions over
@@ -99,7 +99,8 @@ export interface ProjectStats {
   /** Last visit, this week's visits and each trade's latest site update (lib/projectStanding.ts). */
   standing: ProjectStanding;
 }
-export function projectStats(project: FixtureProject, snap: Snapshot, day: string): ProjectStats {
+/** `safetyRecords` is the office's switch for the safety records; off, a project's visits leave the safety and tower inspections out. */
+export function projectStats(project: FixtureProject, snap: Snapshot, day: string, safetyRecords = true): ProjectStats {
   const issues = snap.issues.filter(i => i.projectId === project.id);
   const reports = snap.reports.filter(r => r.projectId === project.id).sort(byReceived);
   const drafts = snap.drafts.filter(r => r.projectId === project.id);
@@ -127,7 +128,7 @@ export function projectStats(project: FixtureProject, snap: Snapshot, day: strin
     instructedValue: variations.filter(v => v.instruction === 'instructed').reduce((n, v) => n + (v.instructedValue ?? v.quotedValue ?? 0), 0),
     rollup: rollup(issues, day),
     needsAction: 0,
-    standing: projectStanding(project, reports, day),
+    standing: projectStanding(project, reports, day, safetyRecords),
   };
   s.needsAction = new Set([...s.overdue, ...s.verify, ...s.unassigned, ...s.disputed].map(i => i.id)).size + s.failed.length + s.pendingReview.length
     + new Set([...s.unpricedVariations, ...s.exposedVariations].map(v => v.id)).size;
@@ -185,10 +186,6 @@ export const toneTag = (tone: Tone): string => tone === 'sent' ? 'tag-ok' : tone
 export function daysLate(target: string, day: string): number {
   return Math.round((Date.parse(day) - Date.parse(target)) / 86400000);
 }
-export function daysSince(iso: string | undefined, now = Date.now()): number {
-  return iso ? Math.floor((now - Date.parse(iso)) / 86400000) : 0;
-}
-
 /** "Wed 21 Oct, 14:05", in the words of lib/dates.ts like every other page. */
 export function fmtWhen(iso?: string): string {
   return whenShort(iso) || 'Not recorded';
@@ -217,7 +214,7 @@ export function attention(stats: ProjectStats[], day: string, safety?: SafetyAct
     for (const i of s.overdue) out.push({ key: `od-${i.id}`, title: i.description, sub: `${s.project.projectName} · ${i.owner || 'unassigned'} · target ${fmtDay(i.targetDate)}`, tag: { label: `${daysLate(i.targetDate, day)}d overdue`, cls: 'tag-alert' }, go: `#/projects/${s.code}/issue/${i.id}` });
     // Work done on a say-so with nothing in writing: every day it waits is a day harder to invoice.
     for (const v of s.exposedVariations) out.push({ key: `vx-${v.id}`, title: v.description, sub: `${s.project.projectName} · work done, no written instruction · ${v.quotedValue === undefined ? 'not yet priced' : 'quoted, awaiting instruction'}`, tag: { label: 'Not instructed', cls: 'tag-alert' }, go: `#/projects/${s.code}/variation/${v.id}`, action: v.quotedValue === undefined ? { label: 'Price', kind: 'price', primary: true, variation: v } : { label: 'Instruct', kind: 'instruct', primary: true, variation: v } });
-    for (const i of s.verify) out.push({ key: `vf-${i.id}`, title: i.description, sub: `${s.project.projectName} · closure by ${i.closureSubmittedBy ?? 'unknown'} · waiting ${daysSince(putForwardAt(i))} days`, tag: { label: 'Fixed, to check', cls: 'tag-caution' }, go: `#/projects/${s.code}/issue/${i.id}`, action: { label: 'Verify', kind: 'verify', primary: true, issue: i } });
+    for (const i of s.verify) out.push({ key: `vf-${i.id}`, title: i.description, sub: `${s.project.projectName} · closure by ${i.closureSubmittedBy ?? 'unknown'} · ${againWords(i) ? `${againWords(i)} · ` : ''}${waitingWords(i, day)}`, tag: { label: 'Fixed, to check', cls: 'tag-caution' }, go: `#/projects/${s.code}/issue/${i.id}`, action: { label: 'Verify', kind: 'verify', primary: true, issue: i } });
     for (const i of s.unassigned) out.push({ key: `ua-${i.id}`, title: i.description, sub: `${s.project.projectName} · nobody owns it · raised ${fmtDay(i.raisedAt)}`, tag: { label: 'Unassigned', cls: 'tag-caution' }, go: `#/projects/${s.code}/issue/${i.id}`, action: { label: 'Assign', kind: 'assign', primary: true, issue: i } });
     for (const i of s.disputed) out.push({ key: `dp-${i.id}`, title: i.description, sub: `${s.project.projectName} · the report that raised it was returned · needs a decision`, tag: { label: 'Disputed', cls: 'tag-alert' }, go: `#/projects/${s.code}/issue/${i.id}`, action: { label: 'Triage', kind: 'triage', issue: i } });
     for (const v of s.unpricedVariations.filter(v => !v.workDone)) out.push({ key: `vq-${v.id}`, title: v.description, sub: `${s.project.projectName} · variation raised ${fmtDay(v.raisedAt)} by ${v.raisedBy} · no quote yet`, tag: { label: 'Needs a quote', cls: 'tag-caution' }, go: `#/projects/${s.code}/variation/${v.id}`, action: { label: 'Price', kind: 'price', variation: v } });

@@ -59,7 +59,7 @@ try {
     for(const p of [a,b]){p.on('pageerror',e=>errors.push(e.message));await p.goto(`${base}/reports/${draft.id}`);await p.locator('.eng-cardrow').first().waitFor();}
     // Tab A saves; tab B has nothing unsaved, so it takes tab A's copy by itself.
     await (await what(a,'obs-riser')).fill('Containment complete, tray labelled');
-    await state(a,'Saved on server');
+    await state(a,'Saved to RELAY');
     await b.bringToFront();
     await (await what(b,'obs-riser')).waitFor();
     await b.waitForFunction(()=>document.querySelector('#what-obs-riser')?.value==='Containment complete, tray labelled',null,{timeout:8000});
@@ -71,7 +71,7 @@ try {
     await state(b,'On this phone only');
     await a.bringToFront();
     await (await what(a,'obs-riser')).fill('Tray labelled and photographed');
-    await state(a,'Saved on server');
+    await state(a,'Saved to RELAY');
     await b.bringToFront();
     await b.locator('.eng-conflict').waitFor({timeout:8000});
     ok(await b.getByRole('heading',{name:'This draft was also changed somewhere else'}).isVisible(),'tab B says it was changed elsewhere');
@@ -86,9 +86,9 @@ try {
     // Tab A carries on: its edits replace the shared held copy and its save releases it.
     await a.bringToFront();
     await (await what(a,'obs-riser')).fill('Tray labelled, photographed and signed off');
-    await state(a,'Saved on server');
+    await state(a,'Saved to RELAY');
     await (await what(a,'obs-plant')).fill('Pumps set, awaiting commissioning');
-    await state(a,'Saved on server');
+    await state(a,'Saved to RELAY');
     // Tab B's work was set aside on the device, so a reload comes back to the same choice.
     await b.bringToFront();
     await b.reload();
@@ -98,7 +98,7 @@ try {
     await changed.getByRole('button',{name:'Keep both as two cards'}).click();
     ok(await b.getByText('Saving keeps 3 cards.').isVisible(),'the summary counts what is kept');
     await b.getByRole('button',{name:'Save this version'}).click();
-    await state(b,'Saved on server');
+    await state(b,'Saved to RELAY');
     const merged=getReport(draft.id).observations.map(o=>o.whatHappened);
     eq(merged,['Tray labelled, fire stopping to do','Tray labelled, photographed and signed off','Pumps set, awaiting commissioning'],'both wordings saved as two cards, tab A’s other card kept');
     eq(await b.evaluate(()=>new Promise(r=>{const o=indexedDB.open('relay-drafts');o.onsuccess=()=>{const q=o.result.transaction('unsent').objectStore('unsent').getAllKeys();q.onsuccess=()=>{o.result.close();r(q.result.filter(k=>String(k).includes('::aside::')).length);};};})),0,'the set-aside copy is dropped once the choice is saved');
@@ -126,17 +126,17 @@ try {
     await page.evaluate(()=>window.dispatchEvent(new Event('online')));
     await page.locator('.eng-conflict').waitFor({timeout:20000});
     ok(await page.locator('[data-card="obs-plant"]').getByText('Only on this screen').isVisible(),'a card only here is shown');
-    ok(await page.locator('[data-card="obs-phone"]').getByText('Only on the server').isVisible(),'a card only on the server is shown');
+    ok(await page.locator('[data-card="obs-phone"]').getByText('Only in the saved copy').isVisible(),'a card only on the server is shown');
     ok(await noSideways(page),'no sideways scroll at 1440px');
     if(shots)await page.screenshot({path:join(shots,'conflict-offline-1440-dark.png'),fullPage:true});
     // A reload comes back to the same choice: the work here is held on the device.
     await page.reload();
     await page.locator('.eng-conflict').waitFor({timeout:20000});
     ok(await page.locator('[data-card="obs-plant"]').getByText('Pumps set and aligned').isVisible(),'the work here survives a reload during the choice');
-    await page.getByRole('button',{name:'Keep everything on the server'}).click();
+    await page.getByRole('button',{name:'Keep everything in the saved copy'}).click();
     ok(await page.getByText('1 card is left out.').isVisible(),'leaving a card out is said, not silent');
     await page.getByRole('button',{name:'Save this version'}).click();
-    await state(page,'Saved on server');
+    await state(page,'Saved to RELAY');
     eq(getReport(draft.id).observations.map(o=>o.id),['obs-riser','obs-phone'],'the server’s version kept as chosen');
     eq(errors,[],'offline laptop: page errors');
     await context.close();

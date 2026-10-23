@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import type { ConnectedProject } from '@/lib/projects';
 import { withViewReturn } from '@/lib/viewNavigation';
-import { monthName, shiftMonth, type MonthLateIssue, type MonthSummary } from '@/lib/monthSummary';
+import { monthName, reportKindsLine, shiftMonth, type MonthLateIssue, type MonthSummary } from '@/lib/monthSummary';
 import { fmtAt, fmtDay, plural, IssueRows, VariationRows } from './summaryRows';
 import { PhotoImage } from './PhotoImage';
+import { pastTarget } from '@/lib/dates';
 
 /**
  * One project's calendar month, for the monthly progress meeting
@@ -17,11 +18,28 @@ import { PhotoImage } from './PhotoImage';
 
 const range = (from: string, to: string) => from === to ? fmtDay(from) : `${fmtDay(from)} to ${fmtDay(to)}`;
 
-/** Lines shown on screen before "Show all"; print always shows every one. */
+/**
+ * Lines shown on screen before "Show all". Print shows every place, but only
+ * the longest-late issues unless "Show all" is open: on a busy project the
+ * whole list ran to twenty pages, and each company's count prints below it.
+ */
 const PLACES_SHOWN = 12, LATE_SHOWN = 10;
 
 type ListKey = 'days' | 'reports' | 'raised' | 'closed' | 'vraised' | 'vinstructed';
 const LIST_NAME: Record<ListKey, string> = { days: 'Days on site', reports: 'Site reports', raised: 'Issues raised', closed: 'Issues closed', vraised: 'Variations raised', vinstructed: 'Variations instructed' };
+
+/**
+ * The week-by-week columns. On a phone each week is a block of six labelled
+ * figures instead of a table row (week.css): seven columns at 390px hid the
+ * issues and variations behind a sideways scroll. The roles are explicit
+ * because some browsers drop a table's meaning once it is laid out as blocks;
+ * the visible labels are left out of what screen readers say, as the header
+ * row already names each figure.
+ */
+const WEEK_COLUMNS = ['Days on site', 'Reports', 'Issues raised', 'Issues closed', 'Variations raised', 'Variations instructed'];
+function WeekFigures({ v }: { v: number[] }) {
+  return <>{v.map((n, i) => <td key={WEEK_COLUMNS[i]} data-label={WEEK_COLUMNS[i]} role="cell">{n}</td>)}</>;
+}
 
 function ShowAll({ total, shown, all, onToggle, what }: { total: number; shown: number; all: boolean; onToggle: () => void; what: string }) {
   if (total <= shown) return null;
@@ -29,8 +47,8 @@ function ShowAll({ total, shown, all, onToggle, what }: { total: number; shown: 
 }
 
 function LateRows({ rows, here, all }: { rows: MonthLateIssue[]; here: string; all: boolean }) {
-  return <ul className="week-rows">{rows.map((i, n) => <li key={i.id} className={!all && n >= LATE_SHOWN ? 'month-extra' : undefined}>
-    <span className="week-when late">{plural(i.daysLate, 'day')} late</span>
+  return <ul className="week-rows">{rows.map((i, n) => <li key={i.id} className={!all && n >= LATE_SHOWN ? 'month-extra month-late-extra' : undefined}>
+    <span className="week-when late">{pastTarget(i.daysLate)}</span>
     <div><p><Link className="ref" href={withViewReturn(`/issues/${i.id}`, here)}>{i.reference}</Link> <span className="tag tag-alert">Target {fmtDay(i.targetDate, true)}</span></p>
       <p className="week-desc">{i.description}</p>
       <p className="week-meta">{[i.location || 'No location recorded', i.owner || 'Not yet assigned', i.trade].filter(Boolean).join(' · ')}</p></div>
@@ -80,7 +98,7 @@ export function MonthSheet({ m, project, today, thisMonth, here, manager }: { m:
       <h2 id="month-figures">Figures for the month<span>{range(m.start, m.current ? today : m.end)}</span></h2>
       <dl className="week-stats month-stats">
         <div><dt>Days on site</dt><dd>{figure("days", total.days)}<small>{p.engineers.length ? p.engineers.join(', ') : 'no visits reported'}</small></dd></div>
-        <div><dt>Site reports</dt><dd>{figure("reports", total.reports)}<small>{plural(p.kinds.update, 'progress update')}</small></dd></div>
+        <div><dt>Site reports</dt><dd>{figure("reports", total.reports)}<small>{reportKindsLine(m.reportKinds)}</small></dd></div>
         <div><dt>Issues raised</dt><dd>{figure("raised", total.raised)}<small>this month</small></dd></div>
         <div><dt>Issues closed</dt><dd>{figure("closed", total.closed)}<small>checked and closed this month</small></dd></div>
         <div><dt>Variations raised</dt><dd>{figure("vraised", total.vraised, notInstructed > 0)}<small>{notInstructed ? `${notInstructed} done, not instructed` : 'this month'}</small></dd></div>
@@ -89,17 +107,17 @@ export function MonthSheet({ m, project, today, thisMonth, here, manager }: { m:
 
       <h3>Week by week</h3>
       <div className="month-weeks-wrap">
-        <table className="month-weeks">
-          <thead><tr><th scope="col">Week</th><th scope="col">Days on site</th><th scope="col">Reports</th><th scope="col">Issues raised</th><th scope="col">Issues closed</th><th scope="col">Variations raised</th><th scope="col">Variations instructed</th></tr></thead>
-          <tbody>{m.weeks.map(w => <tr key={w.monday}>
+        <table className="month-weeks" role="table">
+          <thead role="rowgroup"><tr role="row"><th scope="col" role="columnheader">Week</th>{WEEK_COLUMNS.map(c => <th key={c} scope="col" role="columnheader">{c}</th>)}</tr></thead>
+          <tbody role="rowgroup">{m.weeks.map(w => <tr key={w.monday} role="row">
             {/* A full page load: this screen keeps its week or month in state, so the week opens fresh and Back returns to the month as it was. */}
-            <th scope="row"><a href={weekHref(w.monday)}>{range(w.from, w.to)}</a>{w.from !== w.monday && <small>week from {fmtDay(w.monday)}</small>}</th>
-            <td>{w.daysOnSite}</td><td>{w.reports}</td><td>{w.issuesRaised}</td><td>{w.issuesClosed}</td><td>{w.variationsRaised}</td><td>{w.variationsInstructed}</td>
+            <th scope="row" role="rowheader"><a href={weekHref(w.monday)}>{range(w.from, w.to)}</a>{w.from !== w.monday && <small>week from {fmtDay(w.monday)}</small>}{w.soFar && <small>so far</small>}</th>
+            <WeekFigures v={[w.daysOnSite, w.reports, w.issuesRaised, w.issuesClosed, w.variationsRaised, w.variationsInstructed]} />
           </tr>)}</tbody>
-          <tfoot><tr><th scope="row">{name.split(' ')[0]}</th><td>{total.days}</td><td>{total.reports}</td><td>{total.raised}</td><td>{total.closed}</td><td>{total.vraised}</td><td>{total.vinstructed}</td></tr></tfoot>
+          <tfoot role="rowgroup"><tr role="row"><th scope="row" role="rowheader">{name.split(' ')[0]}</th><WeekFigures v={[total.days, total.reports, total.raised, total.closed, total.vraised, total.vinstructed]} /></tr></tfoot>
         </table>
       </div>
-      <p className="week-total">A week that runs into the next or last month counts only its days in {name.split(' ')[0]}. Open a week for its full summary.</p>
+      <p className="week-total">A week that runs into the next or last month counts only its days in {name.split(' ')[0]}.{m.current ? ' Weeks still to come are not shown.' : ''} Open a week for its full summary.</p>
     </section>
 
     <section className="week-section">
@@ -120,6 +138,7 @@ export function MonthSheet({ m, project, today, thisMonth, here, manager }: { m:
       <h3>Issues past their target {when}</h3>
       {pastTargetTotal ? <LateRows rows={m.pastTarget} here={here} all={allLate} /> : <p className="week-none">No open issues were past their target {when}.</p>}
       <ShowAll total={pastTargetTotal} shown={LATE_SHOWN} all={allLate} onToggle={() => setAllLate(a => !a)} what="issues" />
+      {!allLate && pastTargetTotal > LATE_SHOWN && <p className="week-total month-print-only">And {pastTargetTotal - LATE_SHOWN} more past their target {when}, each no more days past target than these. Each company&rsquo;s open and past-target figures are under &ldquo;Still open, with whom&rdquo;.</p>}
       <h3>Access problems on more than one day</h3>
       {m.access.length ? <ul className="week-rows">{m.access.map(a => <li key={a.place}>
         <span className="week-when">{plural(a.days.length, 'day')}</span>

@@ -91,10 +91,12 @@ try {
       await page.waitForFunction(()=>scrollY===0);
       const head=await page.locator('.cols[data-depth="2"] > .col:nth-child(2) > .col-head').boundingBox();
       assert.ok(head.y>=0&&head.y<300,`${label}: the register opens at its top (${head.y})`);checks++;
-      // The project's name is shown in full: it wraps under the back link rather than being cut off.
-      const title=await page.locator('.cols[data-depth="2"] > .col:nth-child(2) > .col-head h2').evaluate(h=>{const r=h.getBoundingClientRect(),b=h.parentElement.querySelector('.col-back').getBoundingClientRect();return {cut:h.scrollWidth>h.clientWidth+1,right:r.right,below:r.top>=b.bottom-1};});
-      assert.ok(!title.cut&&title.right<=width,`${label}: the register heading shows the whole project name`);checks++;
-      assert.ok(title.below,`${label}: the heading has its own line under the back link`);checks++;
+      // The project's name is shown in full under the back link rather than being cut off. Since Release 1 O2 it is
+      // the plain name at the top of the register; the column band's "Register · name" is kept for screen readers.
+      const title=await page.locator('.cols[data-depth="2"] > .col:nth-child(2)').evaluate(c=>{const h=c.querySelector('.register-name'),r=h.getBoundingClientRect(),b=c.querySelector('.col-head .col-back').getBoundingClientRect();return {cut:h.scrollWidth>h.clientWidth+1,right:r.right,below:r.top>=b.bottom-1,whole:h.textContent.includes('Tetley Hall - Block E'),band:c.querySelector('.col-head h2').textContent};});
+      assert.ok(title.whole&&!title.cut&&title.right<=width,`${label}: the register shows the whole project name`);checks++;
+      assert.ok(title.below,`${label}: the name has its own line under the back link`);checks++;
+      assert.match(title.band,/^Register · Tetley Hall - Block E/,`${label}: the column heading still names the register for screen readers`);checks++;
       if(shot)await page.screenshot({path:join(shot,`office-phone-register-${width}-${colorScheme}.png`)});
       await phone.close();
     }

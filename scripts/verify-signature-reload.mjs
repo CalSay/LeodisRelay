@@ -34,14 +34,16 @@ try {
     const context=await browser.newContext({viewport:{width:390,height:844},colorScheme:scheme});await context.addCookies([{name:'relay_session',value:session,url:base}]);
     const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
     await page.goto(`${base}/reports/${draft.id}#check`); // the signature is on the Check & send step
-    const pad=page.locator('canvas.sigpad');await pad.scrollIntoViewIfNeeded();
+    const pad=page.locator('canvas.sigpad');
     if(scheme==='light'){
+      // An optional signature folds behind one button until it is wanted.
+      await page.getByRole('button',{name:'Add your signature'}).click();await pad.scrollIntoViewIfNeeded();
       await page.getByLabel('Your name',{exact:true}).fill('G. Stephenson');
       const box=await pad.boundingBox();
       await page.mouse.move(box.x+20,box.y+box.height/2);await page.mouse.down();
       for(let x=20;x<box.width-20;x+=12)await page.mouse.move(box.x+x,box.y+box.height/2+Math.sin(x/15)*20);
       await page.mouse.up();
-      await page.getByText('Saved on server').waitFor();
+      await page.getByText('Saved to RELAY',{exact:true}).waitFor();
       const saved=getReport(draft.id).draftSignature;
       assert.equal(saved?.name,'G. Stephenson','name saved to the server');
       assert.match(saved?.dataUrl??'',/^data:image\/png;base64,/,'drawing saved to the server');

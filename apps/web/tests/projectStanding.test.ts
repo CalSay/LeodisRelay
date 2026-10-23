@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { LATEST_DAYS, PEOPLE_SHOWN, peopleWords, progressLines, projectStanding, recentDay } from '../lib/projectStanding';
+import { LATEST_DAYS, PEOPLE_SHOWN, dayFound, peopleWords, progressLines, projectStanding, recentDay } from '../lib/projectStanding';
 import type { Report, ReportSummary } from '../lib/types';
 
 const TODAY = '2026-10-21'; // a Wednesday
@@ -33,6 +33,30 @@ test('this week counts visits from Monday by trade, and a correction stands in f
   ], TODAY);
   assert.equal(st.thisWeek, 2, 'Sunday is last week; the corrected report is one visit');
   assert.deepEqual(st.tradesThisWeek, ['Electrical', 'P&H']);
+});
+
+test('a visit is one person on site on one day: an update and an inspection the same day count once', () => {
+  const st = projectStanding(ACTIVE, [
+    sent({ visitDate: '2026-10-19', authorId: 'entra:sam' }),
+    sent({ visitDate: '2026-10-19', authorId: 'entra:sam', reportType: 'tower-inspection', checks: { ok: 5, action: 0, na: 0, open: 0 } }),
+    sent({ visitDate: '2026-10-20', authorId: 'entra:sam', reportType: 'safety-inspection', checks: { ok: 5, action: 0, na: 0, open: 0 } }),
+    sent({ visitDate: '2026-10-20', author: 'Hana Duct', authorTrade: 'HVAC' }),
+    sent({ visitDate: '2026-10-20', author: ' Hana Duct ', authorTrade: 'HVAC', reportType: 'first-fix-inspection' }),
+  ], TODAY);
+  assert.equal(st.thisWeek, 3, 'Sam on Monday and Tuesday, Hana on Tuesday');
+});
+
+test('with the safety records switched off, a day with only a safety or tower inspection is not a visit', () => {
+  const reports = [
+    sent({ id: 'u', visitDate: '2026-10-19' }),
+    sent({ id: 't', visitDate: '2026-10-20', reportType: 'tower-inspection', checks: { ok: 5, action: 0, na: 0, open: 0 } }),
+    sent({ id: 'f', visitDate: '2026-10-20', author: 'Hana Duct', authorTrade: 'HVAC', reportType: 'first-fix-inspection' }),
+  ];
+  assert.equal(projectStanding(ACTIVE, reports, TODAY).thisWeek, 3);
+  const off = projectStanding(ACTIVE, reports, TODAY, false);
+  assert.equal(off.thisWeek, 2, 'a first fix inspection is our own work and still counts');
+  assert.equal(off.last?.reportId, 'f');
+  assert.deepEqual(off.lastDayPeople, [{ author: 'Hana Duct', trade: 'HVAC' }]);
 });
 
 test('an active site with no report for three working days is quiet; one in defects liability never is', () => {
@@ -112,4 +136,28 @@ test('who was on site in words: one with their trade, a few by name, then "and N
   assert.equal(peopleWords([{ author: 'Sam Spark', trade: 'Electrical' }, { author: 'Hana Duct', trade: 'HVAC' }]), 'Sam Spark and Hana Duct');
   assert.equal(PEOPLE_SHOWN, 3);
   assert.equal(peopleWords(['A', 'B', 'C', 'D', 'E'].map(author => ({ author }))), 'A, B and 3 more');
+});
+
+test('today from site: every site update sent for today, by trade and then as sent, with inspections counted apart', () => {
+  const st = projectStanding(ACTIVE, [
+    sent({ id: 'e1', reference: '011LME-SPR-020', serverAcknowledgedAt: `${TODAY}T15:00:00.000Z` }),
+    sent({ id: 'e2', reference: '011LME-SPR-022', author: 'Sid Spark', serverAcknowledgedAt: `${TODAY}T09:00:00.000Z` }), // a second electrician: both are read, not only the trade's newest
+    sent({ id: 'h', reference: '011LME-SPR-021', author: 'Hana Duct', authorTrade: 'HVAC' }),
+    (() => { const r = sent({ id: 'none', reference: '011LME-SPR-024', author: 'Ann Other' }); delete r.authorTrade; return r; })(),
+    sent({ id: 'insp', reference: '011LME-FFI-003', checks: { ok: 4, action: 1, na: 0, open: 0 } } as Partial<ReportSummary>),
+    sent({ id: 'yday', visitDate: '2026-10-20', author: 'Pat Pipe', authorTrade: 'P&H' }),
+    sent({ id: 'draft', state: 'draft' }),
+    sent({ id: 'old', reference: '011LME-SPR-019', visitDate: TODAY }),
+    sent({ id: 'fix', reference: '011LME-SPR-023', corrects: 'old', revision: 2 }),
+  ], TODAY);
+  assert.deepEqual(st.today.map(r => r.id), ['e2', 'e1', 'fix', 'h', 'none'], 'Electrical as sent, then HVAC, then no trade; yesterday, drafts and the corrected report are left out');
+  assert.equal(st.inspectionsToday, 1);
+  assert.deepEqual(projectStanding(ACTIVE, [sent({ visitDate: '2026-10-20' })], TODAY).today, []);
+});
+
+test('what a day found adds up each report\'s cards, and an older report without them counts its defects', () => {
+  const k = (update: number, defect: number, access: number, instruction: number) => ({ update, defect, access, instruction, check: 0 });
+  assert.deepEqual(dayFound([sent({ kindCounts: k(3, 2, 1, 0) }), sent({ kindCounts: k(1, 0, 2, 2) }), sent({ defectCount: 2 })]),
+    { updates: 3, progress: 4, access: 3, defects: 4, variations: 2 });
+  assert.deepEqual(dayFound([]), { updates: 0, progress: 0, access: 0, defects: 0, variations: 0 });
 });

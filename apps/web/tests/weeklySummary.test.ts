@@ -59,6 +59,18 @@ test('lists sent reports by visit day, never drafts, other projects or other wee
   assert.equal(s.current, false);
 });
 
+test('counts visits as the office overview does: one person on site on one day', () => {
+  const s = weeklySummary({ ...none, reports:[
+    report({ id:'a', visitDate:'2026-10-13' }),
+    report({ id:'b', visitDate:'2026-10-13', reference:'011LME-FFI-001', reportType:'first-fix-inspection' }),
+    report({ id:'c', visitDate:'2026-10-13', reference:'011LME-SPR-002', author:'Pat Pipe', authorId:other.id }),
+    report({ id:'d', visitDate:'2026-10-14', reference:'011LME-SPR-003' }),
+  ] }, manager, 'p1', MONDAY, TODAY);
+  assert.equal(s.reports.length, 4);
+  assert.equal(s.visits, 3, 'Sam\'s update and inspection on Tuesday are one visit');
+  assert.deepEqual(s.siteDays, ['2026-10-13', '2026-10-14']);
+});
+
 test('says what was done on each visit: progress updates in the order written, nothing else', () => {
   const s = weeklySummary({ ...none, reports:[
     report({ id:'tue', observations:[
@@ -105,12 +117,30 @@ test('keeps issue events apart: raised, put forward as fixed, and checked and cl
   assert.deepEqual(s.issuesClosed.map(i => i.id), ['closed'], 'verified then reopened is not shown as closed');
 });
 
-test('counts what is open now, past target and waiting to be checked', () => {
+test('this week counts what is open now, past target and waiting to be checked', () => {
   const s = weeklySummary({ ...none, issues:[
     issue({ id:'a', targetDate:'2026-10-19' }), issue({ id:'b', targetDate:'2026-10-20' }), issue({ id:'c', targetDate:'2026-10-01', work:'awaiting_verification' }),
     issue({ id:'d', work:'closed' }), issue({ id:'e', confirmation:'withdrawn', targetDate:'2026-10-01' }),
-  ] }, manager, 'p1', MONDAY, TODAY);
-  assert.deepEqual(s.openNow, { total:3, pastTarget:1, toCheck:1 });
+  ] }, manager, 'p1', '2026-10-19', TODAY);
+  assert.deepEqual(s.open, { asOf:TODAY, total:3, pastTarget:1, toCheck:1 });
+});
+
+test('a week that is over gives its issues as they stood at the end of its Sunday, not today', () => {
+  const issues = [
+    issue({ id:'late', raisedAt:'2026-10-01T09:00:00Z', targetDate:'2026-10-05' }),
+    // Closed after that Sunday: still open then.
+    issue({ id:'closedLater', raisedAt:'2026-10-01T09:00:00Z', work:'closed', events:[ev('verified', '2026-10-16T09:00:00Z')] }),
+    // Put forward that week and checked since: fixed, to check then, and not past target.
+    issue({ id:'putForward', raisedAt:'2026-10-01T09:00:00Z', targetDate:'2026-10-03', work:'closed', events:[ev('closure_submitted', '2026-10-08T09:00:00Z'), ev('verified', '2026-10-14T09:00:00Z')] }),
+    // Raised after that week, closed before it ended, or withdrawn: not counted.
+    issue({ id:'newer', raisedAt:'2026-10-13T09:00:00Z' }),
+    issue({ id:'closedThen', raisedAt:'2026-10-01T09:00:00Z', work:'closed', events:[ev('verified', '2026-10-09T09:00:00Z')] }),
+    issue({ id:'withdrawn', raisedAt:'2026-10-01T09:00:00Z', confirmation:'withdrawn' }),
+  ];
+  const before = weeklySummary({ ...none, issues }, manager, 'p1', '2026-10-05', TODAY);
+  assert.deepEqual(before.open, { asOf:'2026-10-11', total:3, pastTarget:1, toCheck:1 });
+  const now = weeklySummary({ ...none, issues }, manager, 'p1', '2026-10-19', TODAY);
+  assert.deepEqual(now.open, { asOf:TODAY, total:2, pastTarget:1, toCheck:0 }, 'this week keeps today\'s figures');
 });
 
 test('lists variations raised and instructed in the week, with work done before instruction', () => {

@@ -63,6 +63,16 @@ export function suggestedQuote(c: Costing): number | undefined {
 
 const GBP = new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP', minimumFractionDigits: 2, maximumFractionDigits: 2 });
 export const fmtMoney = (n: number | undefined): string => n === undefined ? '—' : GBP.format(n);
+
+/**
+ * The parts of a variation's instruction that are known, joined with " · ".
+ * A variation read from the Variation Register can be Instructed with the
+ * reference, who or when left blank there, so a missing part is left out
+ * rather than shown as "undefined".
+ */
+export function instructionParts(...parts: (string | undefined)[]): string {
+  return parts.map(p => (p ?? '').trim()).filter(Boolean).join(' · ');
+}
 export const fmtPct = (n: number | undefined): string => n === undefined ? '—' : `${(n * 100).toFixed(1)}%`;
 export const fmtHours = (n: number | undefined): string => n === undefined ? '—' : `${n % 1 === 0 ? n : n.toFixed(1)} h`;
 

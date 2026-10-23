@@ -71,7 +71,7 @@ async function editor(scheme,width){
   await typeName(page,'Tess Typed');
   await press(page,statement(page));
   await page.locator('.sigtyped-name',{hasText:'Tess Typed'}).waitFor();
-  await page.getByText('Saved on server',{exact:true}).waitFor({timeout:15000});
+  await page.getByText('Saved to RELAY',{exact:true}).waitFor({timeout:15000});
   check(getReport(draft.id).draftSignature?.typed===true&&getReport(draft.id).draftSignature.name==='Tess Typed'&&!getReport(draft.id).draftSignature.dataUrl,`${label}: the draft holds a typed signature, no drawing: ${JSON.stringify(getReport(draft.id).draftSignature)}`);
   check(await send.isEnabled()&&!/Sign below/.test(await page.locator('#report-check').innerText()),`${label}: a typed name and tick are enough to send`);
   // A reload keeps it typed and ticked.

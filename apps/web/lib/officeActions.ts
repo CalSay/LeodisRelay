@@ -28,6 +28,32 @@ export const issueFigures = (issues: Issue[], day: string): IssueFigures => ({
   toCheck: issues.filter(isVerify).length,
 });
 export const notAcknowledged = (r: ReportSummary): boolean => r.state === 'submitted' && !r.acknowledged;
+/** How far back "Not seen yet" looks, in calendar days counting today. */
+export const NOT_SEEN_DAYS = 14;
+export interface NotSeen {
+  /** Received in the last NOT_SEEN_DAYS days and not opened: what the office still has to read. */
+  recent: ReportSummary[];
+  /** Received before then and never opened. Not counted, so the figure can fall to nought. */
+  older: ReportSummary[];
+  /** The first day counted as recent, YYYY-MM-DD. */
+  from: string;
+}
+/**
+ * Sent reports nobody in the office has opened, split at two weeks back from
+ * `day` (London calendar). A report a sent correction replaces is left out:
+ * the correction is the one to read. Nothing is marked seen here, so an
+ * engineer's "Seen by the office" still means someone opened it.
+ */
+export function notSeen(reports: ReportSummary[], day: string): NotSeen {
+  const d = new Date(`${day}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - (NOT_SEEN_DAYS - 1));
+  const from = d.toISOString().slice(0, 10);
+  const replaced = new Set(reports.filter(r => r.state === 'submitted' && r.corrects).map(r => r.corrects));
+  const unseen = reports.filter(r => notAcknowledged(r) && !replaced.has(r.id));
+  // A sent report always has a received time; one without is kept in view rather than hidden.
+  const isRecent = (r: ReportSummary) => !r.serverAcknowledgedAt || londonDay(r.serverAcknowledgedAt) >= from;
+  return { recent: unseen.filter(isRecent), older: unseen.filter(r => !isRecent(r)), from };
+}
 /**
  * Whether this person opening the report marks it seen by the office: a sent
  * report nobody in the office has opened, opened by a Manager or Admin who is
@@ -36,18 +62,20 @@ export const notAcknowledged = (r: ReportSummary): boolean => r.state === 'submi
 export const opensAsSeen = (r: Pick<ReportSummary, 'state' | 'acknowledged' | 'authorId'>, viewer: { id: string; role?: string }): boolean =>
   r.state === 'submitted' && !r.acknowledged && (viewer.role === 'Admin' || viewer.role === 'Manager') && r.authorId !== viewer.id;
 
+/** Kept on a fix waiting to be checked: when it was put forward, and whether it was sent back before ("put forward again", lib/checkFix.ts). A few events, not the history. */
+const CHECK_ROUNDS = new Set<Issue['events'][number]['kind']>(['closure_submitted', 'reopened', 'verified']);
 /**
  * An issue as the office desk's registers and totals use it: every field, and
  * only its latest event, without its note or photographs. A fix waiting to be
- * checked also keeps its latest "put forward as fixed", so "waiting N days"
- * counts from then and not from a note added since (lib/checkFix.ts). The issue's own page loads its whole history. On a busy
+ * checked also keeps its rounds of put forward, sent back and verified, so
+ * "waiting N days" counts from the latest put forward and not from a note
+ * added since, and a fix sent back before says "put forward again" (lib/checkFix.ts). The issue's own page loads its whole history. On a busy
  * register the full histories were most of a 10 MB answer, fetched every
  * 15 seconds.
  */
 export const deskIssue = (i: Issue): Issue => {
-  const last = i.events.at(-1);
-  const put = i.work === 'awaiting_verification' ? [...i.events].reverse().find(e => e.kind === 'closure_submitted') : undefined;
-  const kept = put && put !== last ? [put, last!] : last ? [last] : [];
+  const waiting = i.work === 'awaiting_verification';
+  const kept = i.events.filter((e, n) => n === i.events.length - 1 || (waiting && CHECK_ROUNDS.has(e.kind)));
   return { ...i, events: kept.map(e => ({ ...e, note: '', photos: [] })) };
 };
 
@@ -77,7 +105,7 @@ export interface OfficeActions {
   since: string;
   /** Newest first. */
   newReports: ReportSummary[];
-  /** Newest first, like the Inbox it opens, so today's reports are never behind older ones. */
+  /** Not seen yet (`notSeen` recent), newest first, like the Inbox it opens, so today's reports are never behind older ones. */
   notRead: ReportSummary[];
   /** Oldest raised first. */
   unassigned: Issue[];
@@ -90,7 +118,7 @@ export function officeActions(reports: ReportSummary[], issues: Issue[], day: st
   return {
     since,
     newReports: reports.filter(r => isNewReport(r, since)).sort((a, b) => received(b).localeCompare(received(a))),
-    notRead: reports.filter(notAcknowledged).sort((a, b) => received(b).localeCompare(received(a))),
+    notRead: notSeen(reports, day).recent.sort((a, b) => received(b).localeCompare(received(a))),
     unassigned: issues.filter(isUnassigned).sort((a, b) => a.raisedAt.localeCompare(b.raisedAt)),
     verify: issues.filter(isVerify).sort(byPutForward),
   };

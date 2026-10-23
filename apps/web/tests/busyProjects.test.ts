@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { gunzipSync } from 'node:zlib';
 import { naturalOrder } from '../lib/naturalOrder';
 import { londonDay } from '../lib/weeklySummary';
+import { againWords } from '../lib/checkFix';
 import { deskIssue, londonDay as officeLondonDay, officeActions } from '../lib/officeActions';
 import { CAME_BACK_ROWS, cameBack, isOpenIssue, raisedIssue } from '../lib/cameBack';
 import { COMPRESS_FROM, jsonResponse } from '../lib/jsonResponse';
@@ -46,7 +47,7 @@ test('came back: the engineer’s latest issues and variations, cut so the merge
   // Same moment, so order in the list decides.
   issues.push(issue({ id:'tie-a', reportedById: engineer.id, raisedAt:'2026-10-30T10:00:00Z' }), issue({ id:'tie-b', reportedById: engineer.id, raisedAt:'2026-10-30T10:00:00Z' }));
   const variations = Array.from({ length: 9 }, (_, n) => variation({ id:`v${n}`, raisedAt:`2026-10-0${1 + n}T09:00:00Z`, ...(n % 2 ? { raisedById: other } : {}) }));
-  const back = cameBack(issues, variations, engineer.id);
+  const back = cameBack(issues, variations, engineer);
 
   // What the home worked out from every record: own records, newest change first, the first six.
   const at = (r: { raisedAt: string; events: { at: string }[] }) => r.events.at(-1)?.at ?? r.raisedAt;
@@ -72,6 +73,11 @@ test('the office desk’s issues keep every field and their latest event, withou
   // A note after the fix was put forward: the desk keeps both, so "waiting N days" counts from the put forward.
   const noted = deskIssue(issue({ id:'n', work:'awaiting_verification', events:[event('2026-10-01T10:00:00Z', { kind:'raised' }), event('2026-10-09T10:00:00Z', { kind:'closure_submitted' }), event('2026-10-12T10:00:00Z', { kind:'progress' })] }));
   assert.deepEqual(noted.events.map(e => [e.kind, e.at, e.note, e.photos.length]), [['closure_submitted', '2026-10-09T10:00:00Z', '', 0], ['progress', '2026-10-12T10:00:00Z', '', 0]]);
+  // Sent back before: the desk keeps each round (no notes), so the row can say "put forward again" as the full issue does.
+  const again = issue({ id:'g', work:'awaiting_verification', events:[event('2026-10-01T10:00:00Z', { kind:'raised' }), event('2026-10-05T10:00:00Z', { kind:'closure_submitted' }), event('2026-10-06T10:00:00Z', { kind:'reopened', note:'Back box loose' }), event('2026-10-07T10:00:00Z', { kind:'progress' }), event('2026-10-09T10:00:00Z', { kind:'closure_submitted' })] });
+  assert.deepEqual(deskIssue(again).events.map(e => [e.kind, e.note]), [['closure_submitted', ''], ['reopened', ''], ['closure_submitted', '']]);
+  assert.equal(againWords(deskIssue(again)), againWords(again));
+  assert.equal(againWords(deskIssue(again)), 'put forward again');
   // Waiting with no put forward recorded (older records): only the latest event.
   assert.deepEqual(deskIssue(issue({ id:'w', work:'awaiting_verification', events:[event('2026-10-01T10:00:00Z', { kind:'raised' })] })).events.map(e => e.kind), ['raised']);
   // Not waiting to be checked: only the latest event, as before.

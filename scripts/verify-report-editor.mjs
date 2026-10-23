@@ -73,7 +73,7 @@ try {
     await where.click();
     // Since #133 the bar steps aside once the tap has finished, not mid-tap: wait for it.
     ok(await page.locator('.actionbar').waitFor({state:'hidden',timeout:3000}).then(()=>true,()=>false),`${scheme}: action bar hidden while a field has the keyboard`);
-    if(scheme==='light'){await where.fill('Plant room east');await page.getByText('Saved on server',{exact:true}).waitFor({state:'attached'});}
+    if(scheme==='light'){await where.fill('Plant room east');await page.getByText('Saved to RELAY',{exact:true}).waitFor({state:'attached'});}
     await shot(page,`editor-${scheme}-typing`);
     await page.locator('.eng-slot.open .eng-done').click();
     ok(await page.locator('.actionbar').waitFor({state:'visible',timeout:3000}).then(()=>true,()=>false),`${scheme}: action bar back once the field is left`);
@@ -81,7 +81,7 @@ try {
     ok(/Plant room east/.test(await rows.nth(2).innerText()),`${scheme}: folded row shows the edit`);
     // Check & send is its own step, Back returns to the cards.
     await page.locator('.actionbar').getByRole('button',{name:'Check & send →'}).click();
-    await page.getByText('Sign here').waitFor();
+    await page.locator('#report-check').waitFor();
     ok(page.url().endsWith('#check'),`${scheme}: check step has its own history entry`);
     eq(await rows.count(),0,`${scheme}: cards are not on the check step`);
     ok(await page.getByRole('button',{name:'Send to office'}).isDisabled(),`${scheme}: a stop finding blocks sending`);

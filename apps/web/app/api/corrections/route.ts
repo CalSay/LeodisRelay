@@ -37,8 +37,8 @@ export async function POST(request: Request) {
   const input = read.value;
   // Refresh first, as the issue and variation routes do, so the change is made against the current SharePoint record.
   try {
-    if (input.targetType === 'issue') await refreshIssues();
-    if (input.targetType === 'variation') await refreshVariations();
+    if (input.targetType === 'issue') await refreshIssues(true);
+    if (input.targetType === 'variation') await refreshVariations(true);
   } catch {
     return NextResponse.json({ reason: `SharePoint ${input.targetType === 'issue' ? 'issues' : 'variations'} could not be refreshed. Please retry.` }, { status: 503 });
   }

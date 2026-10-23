@@ -6,6 +6,7 @@ import { listReports } from '@/lib/serverStore';
 import { refreshProjects, reportableProject } from '@/lib/projects';
 import { fortnightStart, siteCoverage } from '@/lib/siteCoverage';
 import { londonDay } from '@/lib/weeklySummary';
+import { withoutSafetyReports } from '@/lib/features';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,5 +22,6 @@ export async function GET(request: Request) {
   const open = projects.filter(p => reportableProject(p) && canAccessProject(guard.principal, p.id));
   const today = londonDay(new Date());
   const start = fortnightStart(new URL(request.url).searchParams.get('start') ?? undefined, today);
-  return jsonResponse(request, siteCoverage(open, open.flatMap(p => listReports(p.id)), guard.principal, start, today));
+  // Switched off, the safety and tower inspections are left out, as the office's Last visit and quiet sites leave them out.
+  return jsonResponse(request, siteCoverage(open, withoutSafetyReports(open.flatMap(p => listReports(p.id))), guard.principal, start, today));
 }

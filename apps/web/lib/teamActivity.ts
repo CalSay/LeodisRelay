@@ -1,5 +1,6 @@
 import { recentDay } from './projectStanding';
 import { dateShort, whenShort } from './dates';
+import { weekStart } from './weeklySummary';
 
 /**
  * Whether someone on the Team tab has got going: signed in yet, and the site
@@ -12,6 +13,9 @@ import { dateShort, whenShort } from './dates';
 export interface LastSent { reportId: string; projectId: string; visitDate: string; at: string }
 
 interface SentReport { id: string; projectId: string; visitDate: string; state: string; authorId?: string; serverAcknowledgedAt?: string }
+
+/** The days this week someone sent a report for, and the sites, as the Team tab shows them. */
+export interface SentThisWeek { days: string[]; projectIds: string[] }
 
 /**
  * Each author's latest sent report, by account id: the latest visit day, then
@@ -41,6 +45,52 @@ export function latestOf(byAuthor: Map<string, LastSent>, ids: Iterable<string>)
     if (sent && (!best || !later(best, sent.visitDate, sent.at))) best = sent;
   }
   return best;
+}
+
+/**
+ * The visit days from Monday up to `today` that each author sent a report for,
+ * and the sites, by account id. A report counts on the day of the visit, as on
+ * Site coverage, so an update sent late still counts for the day it is about.
+ * A correction falls on the same day as the report it corrects, so it adds
+ * nothing. Drafts and reports with no account are left out.
+ */
+export function sentThisWeekByAuthor(reports: readonly SentReport[], today: string): Map<string, SentThisWeek> {
+  const monday = weekStart(today, today);
+  const days = new Map<string, Set<string>>(), sites = new Map<string, Set<string>>();
+  for (const r of reports) {
+    if (r.state !== 'submitted' || !r.authorId || !r.serverAcknowledgedAt || r.visitDate < monday || r.visitDate > today) continue;
+    if (!days.has(r.authorId)) { days.set(r.authorId, new Set()); sites.set(r.authorId, new Set()); }
+    days.get(r.authorId)!.add(r.visitDate); sites.get(r.authorId)!.add(r.projectId);
+  }
+  return new Map([...days].map(([id, d]) => [id, { days: [...d].sort(), projectIds: [...sites.get(id)!].sort() }]));
+}
+
+/** This week across several accounts' reports (one person can have more than one account id over time). */
+export function weekOf(byAuthor: Map<string, SentThisWeek>, ids: Iterable<string>): SentThisWeek | undefined {
+  const days = new Set<string>(), sites = new Set<string>();
+  for (const id of ids) {
+    const w = byAuthor.get(id);
+    w?.days.forEach(d => days.add(d));
+    w?.projectIds.forEach(p => sites.add(p));
+  }
+  return days.size ? { days: [...days].sort(), projectIds: [...sites].sort() } : undefined;
+}
+
+const WEEKDAY = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const weekdayOf = (ymd: string) => WEEKDAY[(new Date(`${ymd}T12:00:00Z`).getUTCDay() + 6) % 7]!;
+
+/**
+ * The Team tab's line under "Last sent" for this week, for someone who has
+ * sent something: "This week: Mon, Tue, Thu · 3 sites", "This week: today",
+ * or "Nothing sent this week". Days the visit was for, not hours on site.
+ */
+export function thisWeekWords(week: SentThisWeek | undefined, today: string): string {
+  // A list loaded last week and left open reads as nothing this week, not last week's days.
+  const monday = weekStart(today, today);
+  const mine = week?.days.filter(d => d >= monday && d <= today) ?? [];
+  if (!week || !mine.length) return 'Nothing sent this week';
+  const days = mine.map(d => (d === today ? 'today' : weekdayOf(d))).join(', ');
+  return `This week: ${days}${week.projectIds.length > 1 ? ` · ${week.projectIds.length} sites` : ''}`;
 }
 
 export interface LastSentWords {

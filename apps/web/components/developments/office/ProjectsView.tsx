@@ -11,19 +11,23 @@ import { useMarkSeen } from '@/components/useMarkSeen';
 import { useFeatures } from '@/components/FeaturesContext';
 import { projectStatusGroups } from '@/lib/projectGroups';
 import { officeActions } from '@/lib/officeActions';
-import { putForwardAt } from '@/lib/checkFix';
+import { againWords, putForwardAt, sentBackBefore, waitingWords } from '@/lib/checkFix';
 import { withViewReturn } from '@/lib/viewNavigation';
 import { shiftWeek, weekStart } from '@/lib/weeklySummary';
 import { confirmationNote } from '@/lib/issueConfirmation';
+import { openAtPlace, placeRegisterHash } from '@/lib/issueQuery';
 import type { Correction, CorrectionAction, Issue, Observation, Report, ReportSummary, Variation } from '@/lib/types';
 import { revisionsBefore, sectionOf } from '@/lib/sectionMatch';
-import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, marginPct, signedCopyLink, variationValue } from '@/lib/variations';
+import { INSTRUCTION_LABEL, estimatedMargin, expectedCost, fmtHours, fmtMoney, fmtPct, instructionParts, marginPct, signedCopyLink, variationValue } from '@/lib/variations';
 import type { Ctx } from './ctx';
 import { dialogFor } from './OfficeDesk';
 import { Bar, BarKey, Btn, BtnQ, ConfirmTag, DeliveryTag, InstructionTag, Meta, Money, ReviewTag, SecH, Tag, WorkTag } from './bits';
-import { WORK_LABEL, notAcknowledged, daysLate, daysSince, attention, fmtDate, fmtDay, fmtReceived, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
+import { WORK_LABEL, notSeen, daysLate, attention, fmtDate, fmtDay, fmtReceived, fmtWhen, isActive, isOverdue, deliveryItems, permitItems, safetyItems, shortRef, toneTag, type ProjectStats } from './model';
 import { signatureMethod } from '@/lib/signature';
-import { LATEST_DAYS, peopleWords, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
+import { dayShort, pastTarget, timeOf } from '@/lib/dates';
+import { LATEST_DAYS, dayFound, peopleWords, progressLines, recentDay, type ProjectStanding } from '@/lib/projectStanding';
+import { issueTradeWords } from '@/lib/snagList';
+import { gapWords, tradeVisits, type TradeVisit } from '@/lib/tradeVisits';
 import { OUR_CONTRACT, canCorrect, duplicateOf, isWithinContract, modesFor, pickPool, pickTag, priorOwner, type Target } from './corrections';
 import './quickactions.css';
 
@@ -37,7 +41,7 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
   useEffect(() => { if (window.matchMedia('(max-width:700px)').matches) window.scrollTo(0, 0); }, [depth, s?.code, id]);
   const projects = s && <ProjectsCol key="projects" ctx={ctx} current={s} />;
   const main = <div key="main" className="col col-main">
-      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h2>{s ? 'Details' : 'Overview'}</h2><i>{s ? s.project.projectNumber : 'Office'}</i></div>
+      <div className="col-head">{s && <a className="col-back" href={kind ? `#/projects/${s.code}` : '#/projects'}>‹ {kind ? 'Register' : 'Projects'}</a>}<h2>{s ? 'Details' : 'Overview'}</h2>{s && <i>{s.project.projectNumber}</i>}</div>
       <div className="colpad">
         {!ctx.snap ? <div className="loading">Loading office records</div>
           : kind === 'report' && id ? <ReportReader ctx={ctx} id={id} />
@@ -57,7 +61,7 @@ export function ProjectsView({ ctx }: { ctx: Ctx }) {
 /** "1 report", "3 issues". */
 const count = (n: number, one: string) => `${n} ${one}${n === 1 ? '' : 's'}`;
 function officeReturn(ctx: Ctx): string {
-  const route = [ctx.route.tab, ctx.route.a, ctx.route.b, ctx.route.c].filter((part): part is string => !!part);
+  const route = [ctx.route.tab, ctx.route.a, ctx.route.b, ctx.route.c, ctx.route.d].filter((part): part is string => !!part);
   return `/office#/${route.join('/')}`;
 }
 
@@ -88,7 +92,11 @@ function VisitMeta({ s, day }: { s: ProjectStats; day: string }) {
 
 /** True on a phone, where the register stands in for the project sheet. */
 function usePhone(): boolean {
-  const [phone, setPhone] = useState(false);
+  return usePhoneKnown() ?? false;
+}
+/** As usePhone, but null until the screen's width is known, for what should not show before then. */
+function usePhoneKnown(): boolean | null {
+  const [phone, setPhone] = useState<boolean | null>(null);
   useEffect(() => {
     const m = window.matchMedia('(max-width:700px)'); const on = () => setPhone(m.matches);
     on(); m.addEventListener('change', on); return () => m.removeEventListener('change', on);
@@ -114,7 +122,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   </a>;
   const variationRow = (v: Variation) => <a key={v.id} className={`arow ${kind === 'variation' && id === v.id ? 'on' : ''}`} href={`#/projects/${s.code}/variation/${v.id}`}>
     <span className="ref">{shortRef(v.reference)}</span>
-    <span className="nm">{v.description}<small>{v.location || 'no location'} · {v.instruction === 'instructed' ? `${fmtMoney(variationValue(v))} · ${v.instructionReference}` : v.quotedValue !== undefined ? `quoted ${fmtMoney(v.quotedValue)}` : 'not priced'}{v.workDone && v.instruction === 'pending' ? ' · work done' : ''}</small></span>
+    <span className="nm">{v.description}<small>{v.location || 'no location'} · {v.instruction === 'instructed' ? instructionParts(fmtMoney(variationValue(v)), v.instructionReference) : v.quotedValue !== undefined ? `quoted ${fmtMoney(v.quotedValue)}` : 'not priced'}{v.workDone && v.instruction === 'pending' ? ' · work done' : ''}</small></span>
     <InstructionTag v={v} />
   </a>;
   const draftRow = (r: ReportSummary) => <div key={r.id} className="arow"><span className="ref fine">DRAFT</span><span className="nm">{r.author}{r.authorTrade ? ` · ${r.authorTrade}` : ''} · visit {fmtDay(r.visitDate)}<small>Saved {fmtWhen(r.lastSavedAt)} · {r.observationCount} card{r.observationCount === 1 ? '' : 's'} · {r.corrects ? 'correction in progress' : 'contents private until sent'}</small></span><Tag label="Draft" cls="tag-caution" /></div>;
@@ -128,7 +136,7 @@ function RegisterCol({ ctx, s, kind, id }: { ctx: Ctx; s: ProjectStats; kind: st
   return <div className="col">
     <div className="col-head"><a className="col-back" href="#/projects">‹ Projects</a><h2>Register · {s.project.projectName}</h2><i>{s.reports.length} report{s.reports.length === 1 ? '' : 's'} · {s.active.length} open</i></div>
     {/* A phone shows this column in place of the project sheet, so the sheet's four figures, the project's own pages and what site said come first. */}
-    {phone && <div className="phone-only register-standing"><SheetFigures ctx={ctx} s={s} /><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /><LatestFromSite ctx={ctx} s={s} shown={2} /></div>}
+    {phone && <div className="phone-only register-standing"><p className="register-name">{s.project.projectName}<span className="rowsub"><span className="ref">{s.project.projectNumber}</span> · {s.project.clientName}</span></p><SheetFigures ctx={ctx} s={s} /><ProjectLinks ctx={ctx} projectId={s.project.id} heading="h3" projectPage /><LatestFromSite ctx={ctx} s={s} shown={2} /></div>}
     <div className="filters" style={{ border: 0, borderBottom: '1px solid var(--line)', padding: '8px 16px' }}>
       {([['action', `Needs action · ${s.needsAction + onSite.length}`], ['reports', `Reports · ${s.reports.length}`], ['issues', `Issues · ${s.issues.length}`], ['variations', `Variations · ${s.variations.length}`], ['drafts', `Drafts · ${s.drafts.length}`]] as [Filter, string][]).map(([k, l]) => <button type="button" key={k} className={`chip ${filter === k ? 'on' : ''}`} onClick={() => setFilter(k)}>{l}</button>)}
     </div>
@@ -180,18 +188,26 @@ function OfficeSheet({ ctx }: { ctx: Ctx }) {
   const safety = snap.safety?.totals;
   // Switched off by the office (lib/featureSwitch.ts): no button to a page that is not in use.
   const { safetyRecords } = useFeatures();
+  const phone = usePhoneKnown();
+  // Keyed, so a width change moves the two sections instead of building them again.
+  const lists = <ActionGroups key="lists" groups={groups} />, today = <TodayFromSite key="today" ctx={ctx} />;
   // Where each project stands comes first: it is the question the office opens RELAY to answer.
   // The totals, overdue count and latest reports that used to sit here are in that list, the
   // action groups and the Inbox, so they are no longer repeated; nor are the tab counts above it.
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs">Leodis Developments</div><h3>Office position</h3><div className="rowsub">Updated {fmtWhen(snap.loadedAt)}</div></div>
+    {/* One line: the top bar already names the company, so the title says only what this is and how fresh it is. */}
+    <div className="sheet-title office-title"><div><h3>Office position</h3><span className="rowsub">Updated {fmtWhen(snap.loadedAt)}</span></div>
       <div className="actions"><Link className="btn btn-q btn-sm" href={`/coverage?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Site coverage</Link><Link className="btn btn-q btn-sm" href={`/companies?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Issues by company</Link>{safetyRecords && <Link className="btn btn-q btn-sm" href={`/safety-actions?${new URLSearchParams({ returnTo: officeReturn(ctx) })}`}>Safety actions{safety ? ` · ${safety.open} open` : ''}</Link>}</div></div>
     {!snap.reports.length && !snap.issues.length && !snap.variations.length && <div className="note info office-first" role="status"><span>
       <b>Nothing has come in from site yet.</b> Reports arrive in the Inbox as engineers send them, and their defects and variations fill the Issues and Variations registers. Choose a project to see its sheet, or open Help for how RELAY works.
     </span></div>}
     <ActionStrip groups={groups} />
     <ProjectGlance ctx={ctx} />
-    <ActionGroups groups={groups} />
+    {/* On the desk what needs the office comes before what site did today: on a busy afternoon
+        the day's cards run past a screen, and these lists used to start two screens down. A
+        phone has the count tiles at the top for these lists, and folds the day to its bars, so
+        the day stays first there. Neither shows until the width is known, so a phone never swaps them. */}
+    {phone === null ? null : phone ? [today, lists] : [lists, today]}
     <SecH right={<a href="#/issues">All →</a>}>Also needs attention</SecH>
     <AttentionList ctx={ctx} limit={6} />
     <p className="rowsub" style={{ marginTop: 16 }}>Opening a report marks it seen by the office. Choose a project to see where it stands.</p>
@@ -228,7 +244,7 @@ function ProjectGlance({ ctx }: { ctx: Ctx }) {
         const v = lastVisitWords(s.standing, day);
         const exposed = s.exposedVariations.length, unpriced = s.unpricedVariations.length;
         // The same count as the project register's Needs action chip; reports nobody in the office has opened are said beside it.
-        const action = s.needsAction + siteItems(ctx, s).length, unseen = s.reports.filter(notAcknowledged).length;
+        const action = s.needsAction + siteItems(ctx, s).length, unseen = notSeen(s.reports, ctx.day).recent.length;
         // The row opens the project (its name is the link, stretched over the row); last week's summary is its own link on top, for the Monday look back.
         return <li key={p.id}><div className="glance-row">
           <span className="glance-name"><a className="glance-open" href={`#/projects/${p.id}`}><b>{p.projectName}</b></a><span className="rowsub"><span className="ref">{p.projectNumber}</span> · {p.projectManager}</span>
@@ -284,14 +300,15 @@ function actionGroups(ctx: Ctx): ActionGroup[] {
   const closureMine = (i: Issue) => i.closureSubmittedById ? i.closureSubmittedById === ctx.me.id : i.closureSubmittedBy === ctx.me.name;
   const reportRow = (r: ReportSummary, action?: ReactNode) => <div key={r.id}><a className="rt" href={`#/projects/${r.projectId}/report/${r.id}`}><b>{project(r.projectId)} · {r.author}</b><span>{shortRef(r.reference)} · received {fmtReceived(r.serverAcknowledgedAt, ctx.day)}</span></a>{action}</div>;
   const issueRow = (i: Issue, sub: string, action?: ReactNode) => <div key={i.id}><a className="rt" href={`#/projects/${i.projectId}/issue/${i.id}`}><b>{i.description}</b><span>{project(i.projectId)} · {sub}</span></a>{action}</div>;
+  // Every row's button is the quiet kind: a screen of gold buttons says nothing about which comes first.
   return [
     // Opening a report marks it seen, so each row is a link and nothing more.
-    { key: 'notAck', title: 'Not seen yet', sub: 'Received, nobody in the office has opened it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: anyReports ? 'Every report has been seen.' : 'No reports received yet.',
+    { key: 'notAck', title: 'Not seen yet', sub: 'Received in the last two weeks, nobody in the office has opened it', n: a.notRead.length, tone: 'soon', all: '#/inbox/show/notAck', empty: anyReports ? 'Every report from the last two weeks has been seen.' : 'No reports received yet.',
       rows: a.notRead.slice(0, 4).map(r => reportRow(r)) },
     { key: 'unassigned', title: 'Unassigned issues', sub: 'Open, nobody owns the action', n: a.unassigned.length, tone: 'soon', all: '#/issues/show/unassigned', empty: anyOpen ? 'Every open issue has an owner.' : 'No open issues.',
-      rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</Btn>)) },
+      rows: a.unassigned.slice(0, 4).map(i => issueRow(i, `${i.location || 'no location'} · ${issueTradeWords(i)} · raised ${fmtDay(i.raisedAt)}`, i.work === 'awaiting_verification' ? <span className="rowsub">Verify first</span> : <BtnQ className="btn-sm" onClick={() => ctx.setDialog(dialogFor('assign', i, ctx))}>Assign</BtnQ>)) },
     { key: 'verify', title: 'Fixed, to check', sub: 'Put forward as fixed; someone else checks it', n: a.verify.length, tone: 'soon', all: '#/issues/show/verify', empty: 'Nothing waiting to be checked.',
-      rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · waiting ${daysSince(putForwardAt(i))} days`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: () => Promise.resolve(a.verify) })}>Verify</Btn>)) },
+      rows: a.verify.slice(0, 4).map(i => issueRow(i, `closure by ${i.closureSubmittedBy ?? 'unknown'} · ${againWords(i) ? `${againWords(i)} · ` : ''}${waitingWords(i, ctx.day)}`, closureMine(i) ? <span className="rowsub">You submitted it</span> : <BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'verify', issue: i, list: () => Promise.resolve(a.verify) })}>Verify</BtnQ>)) },
   ];
 }
 /** On a phone the groups stack under the project list, so their counts are gathered at the top, each a tap from its group. */
@@ -345,21 +362,24 @@ function ProjectSheet({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   // Where it stands, then what site said; the project's other pages and its details after them. What needs the office
   // and every report are in the register column beside the sheet (a phone shows that column instead), so not repeated here.
   return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href="#/projects">Projects</a><span>›</span>Project</div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
+    {/* The Projects column beside the sheet is the way back, so the title is the project alone. */}
+    <div className="sheet-title project-title"><div><h3>{p.projectName}</h3><div className="rowsub"><span className="ref">{p.projectNumber}</span><span className="sep">/</span>{p.clientName}<span className="sep">/</span>{p.division}<span className="sep">/</span>{p.status}</div></div>
       <div className="actions"><BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'variation-new', projects: ctx.projects, projectId: p.id, opened: v => ctx.go(`#/projects/${s.code}/variation/${v.id}`) })}>Add variation</BtnQ><Link className="btn btn-q btn-sm" href={withViewReturn(`/projects/${p.id}`, officeReturn(ctx))}>Project page</Link></div></div>
-    <SheetFigures ctx={ctx} s={s} />
-    <div style={{ marginTop: 12 }}><Bar c={s.rollup} /><Meta c={s.rollup} /></div>
+    {/* The figures and the issue bar under them read as one block. */}
+    <div className="sheet-standing"><SheetFigures ctx={ctx} s={s} /><div className="sheet-bar"><Bar c={s.rollup} /><Meta c={s.rollup} /></div></div>
     {!phone && <LatestFromSite ctx={ctx} s={s} />}
-    {s.drafts.length > 0 && <p className="rowsub" style={{ marginTop: 12 }}>{s.drafts.length} draft{s.drafts.length === 1 ? '' : 's'} in progress on site. Contents stay private until sent.</p>}
+    {s.drafts.length > 0 && <p className="rowsub sheet-drafts">{s.drafts.length} draft{s.drafts.length === 1 ? '' : 's'} in progress on site. Contents stay private until sent.</p>}
+    <SecH>On this project</SecH>
     <ProjectLinks ctx={ctx} projectId={p.id} />
-    <dl className="tb" style={{ marginTop: 12 }}><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
+    <SecH>Project details</SecH>
+    <dl className="tb sheet-details"><div><dt>Project manager</dt><dd>{p.projectManager}<small>{p.projectManagerEmail}</small></dd></div><div><dt>Client account</dt><dd className="num">{p.clientAccountNumber}</dd></div><div><dt>Review</dt><dd>{p.reviewRequired ? 'Required' : 'Not required'}<small>{p.reviewRequired ? 'reports wait for a decision' : 'reports issue on submission'}</small></dd></div><div><dt>Engineers · 30 days</dt><dd>{engineers.length}<small>{engineers.join(', ') || 'no reports in the last month'}</small></dd></div></dl>
   </div>;
 }
 
 /** Where the project stands in four figures. Each opens what it counts: the last visit's report, or the register on this project and filter. */
 function SheetFigures({ ctx, s }: { ctx: Ctx; s: ProjectStats }) {
   const v = lastVisitWords(s.standing, ctx.day);
-  return <dl className="tb"><div><dt>Last visit</dt><dd className={`big ${v.quiet ? 'late' : ''}`}><Go href={s.standing.last && `#/projects/${s.code}/report/${s.standing.last.reportId}`}>{v.when}<small>{v.quiet ? `${v.quiet} · ` : ''}{v.who} · {count(s.standing.thisWeek, 'visit')} this week</small></Go></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}><Go href={s.overdue.length ? `#/issues/show/overdue/${s.project.id}` : undefined}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day)))} days past target` : 'nothing past its target'} · {s.active.length} open</small></Go></dd></div><div><dt>Fixed, to check</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}><Go href={s.verify.length ? `#/issues/show/verify/${s.project.id}` : undefined}>{s.verify.length}<small>{s.verify.length ? `oldest put forward ${fmtDay(putForwardAt(s.verify[0]!))}` : 'nothing waiting to be checked'}</small></Go></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}><Go href={s.pendingVariations.length ? `#/variations/show/pending/${s.project.id}` : undefined}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></Go></dd></div></dl>;
+  return <dl className="tb"><div><dt>Last visit</dt><dd className={`big ${v.quiet ? 'late' : ''}`}><Go href={s.standing.last && `#/projects/${s.code}/report/${s.standing.last.reportId}`}>{v.when}<small>{v.quiet ? `${v.quiet} · ` : ''}{v.who} · {count(s.standing.thisWeek, 'visit')} this week</small></Go></dd></div><div><dt>Overdue actions</dt><dd className={`big ${s.overdue.length ? 'late' : ''}`}><Go href={s.overdue.length ? `#/issues/show/overdue/${s.project.id}` : undefined}>{s.overdue.length}<small>{s.overdue.length ? `oldest ${pastTarget(Math.max(...s.overdue.map(i => daysLate(i.targetDate, ctx.day))))}` : 'nothing past its target'} · {s.active.length} open</small></Go></dd></div><div><dt>Fixed, to check</dt><dd className={`big ${s.verify.length ? 'soon' : ''}`}><Go href={s.verify.length ? `#/issues/show/verify/${s.project.id}` : undefined}>{s.verify.length}<small>{s.verify.length ? `oldest put forward ${fmtDay(putForwardAt(s.verify[0]!))}` : 'nothing waiting to be checked'}</small></Go></dd></div><div><dt>Variations</dt><dd className={`big ${s.exposedVariations.length ? 'late' : s.pendingVariations.length ? 'soon' : ''}`}><Go href={s.pendingVariations.length ? `#/variations/show/pending/${s.project.id}` : undefined}>{s.pendingVariations.length}<small>{s.pendingVariations.length ? `awaiting instruction${s.unpricedVariations.length ? ` · ${s.unpricedVariations.length} to price` : ''}` : 'none awaiting instruction'}{s.instructedValue ? ` · ${fmtMoney(s.instructedValue)} instructed` : ''}</small></Go></dd></div></dl>;
 }
 
 /** How many progress lines each trade shows before "and N more in the report"; a phone's register shows two. */
@@ -371,11 +391,21 @@ const LINES_SHOWN = 4;
  * counted here, not repeated. Reads the reports the register lists.
  */
 function LatestFromSite({ ctx, s, shown = LINES_SHOWN }: { ctx: Ctx; s: ProjectStats; shown?: number }) {
-  const latest = s.standing.latest;
-  const ids = latest.map(r => r.id).join(',');
+  return <section aria-labelledby={`from-site-${s.code}`}>
+    <SecH right={<span className="r">each trade’s newest update</span>}><span id={`from-site-${s.code}`}>Latest from site</span></SecH>
+    <FromSiteVisits ctx={ctx} code={s.code} list={s.standing.latest} shown={shown} empty={`No site update in the last ${LATEST_DAYS} days.`} />
+  </section>;
+}
+
+/**
+ * Site updates as cards: who sent it, its progress and access lines, and what
+ * else it raised. Reads each report in full for its lines; a load that failed
+ * is tried again with the desk's next refresh.
+ */
+function FromSiteVisits({ ctx, code, list, shown, empty, when, heldUpFirst }: { ctx: Ctx; code: string; list: ReportSummary[]; shown: number; empty: string; when?: (r: ReportSummary) => string; heldUpFirst?: boolean }) {
+  const ids = list.map(r => r.id).join(',');
   const [loaded, setLoaded] = useState<{ ids: string; reports: Map<string, Report> } | null>(null);
   const [failed, setFailed] = useState('');
-  // A load that failed is tried again with the desk's next refresh.
   const retry = failed === ids ? ctx.snap?.loadedAt : '';
   useEffect(() => {
     if (!ids) return;
@@ -385,22 +415,64 @@ function LatestFromSite({ ctx, s, shown = LINES_SHOWN }: { ctx: Ctx; s: ProjectS
       .catch(() => { if (!stopped) setFailed(ids); });
     return () => { stopped = true; };
   }, [ids, retry]);
-  const body = !latest.length ? <div className="empty" style={{ padding: 14 }}>No site update in the last {LATEST_DAYS} days.</div>
-    : failed === ids ? <div className="empty" style={{ padding: 14 }}>The latest reports could not be loaded just now. RELAY will try again; each one also opens from the project’s reports.</div>
-    : loaded?.ids !== ids ? <div className="loading" style={{ minHeight: 80 }}>Loading what site said</div>
-    : <div className="from-site">{latest.map(r => {
-      const full = loaded.reports.get(r.id); const lines = full ? progressLines(full) : [];
-      const others = foundOthers(r);
-      return <article key={r.id} className="from-site-visit">
-        <a className="from-site-h" href={`#/projects/${s.code}/report/${r.id}`}><b>{r.authorTrade ?? 'Trade not recorded'}</b><span>{r.author} · {visitDay(r.visitDate, ctx.day)} · <span className="ref">{shortRef(r.reference)}</span></span><span className="arrow" aria-hidden="true">›</span></a>
-        {lines.length ? <ul>{lines.slice(0, shown).map(l => <li key={l.id}>{l.kind === 'access' && <span className="kind tone-access">Access</span>}<b>{l.location || 'No location'}</b>{l.text ? ` — ${l.text}` : ''}</li>)}</ul>
-          : <p className="rowsub">{full ? 'No progress written on this visit.' : 'This report could not be opened here.'}</p>}
-        {(lines.length > shown || others) && <p className="rowsub">{lines.length > shown && <a className="from-site-more" href={`#/projects/${s.code}/report/${r.id}`}>And {lines.length - shown} more in the report</a>}{lines.length > shown && '.'}{lines.length > shown && others ? ' ' : ''}{others ? `Also raised ${others}.` : ''}</p>}
-      </article>;
-    })}</div>;
-  return <section aria-labelledby={`from-site-${s.code}`}>
-    <SecH right={<span className="r">each trade’s newest update</span>}><span id={`from-site-${s.code}`}>Latest from site</span></SecH>
-    {body}
+  if (!list.length) return <div className="empty" style={{ padding: 14 }}>{empty}</div>;
+  if (failed === ids) return <div className="empty" style={{ padding: 14 }}>The latest reports could not be loaded just now. RELAY will try again; each one also opens from the project’s reports.</div>;
+  if (loaded?.ids !== ids) return <div className="loading" style={{ minHeight: 80 }}>Loading what site said</div>;
+  return <div className="from-site">{list.map(r => {
+    const full = loaded.reports.get(r.id), written = full ? progressLines(full) : [];
+    // Held up first where asked, so the access problems the day's headline counts come before "and N more".
+    const lines = heldUpFirst ? [...written.filter(l => l.kind === 'access'), ...written.filter(l => l.kind !== 'access')] : written;
+    const others = foundOthers(r);
+    return <article key={r.id} className="from-site-visit">
+      <a className="from-site-h" href={`#/projects/${code}/report/${r.id}`}><b>{r.authorTrade ?? 'Trade not recorded'}</b><span>{r.author} · {when ? when(r) : visitDay(r.visitDate, ctx.day)} · <span className="ref">{shortRef(r.reference)}</span></span><span className="arrow" aria-hidden="true">›</span></a>
+      {lines.length ? <ul>{lines.slice(0, shown).map(l => <li key={l.id}>{l.kind === 'access' && <span className="kind tone-access">Access</span>}<b>{l.location || 'No location'}</b>{l.text ? ` — ${l.text}` : ''}</li>)}</ul>
+        : <p className="rowsub">{full ? 'No progress written on this visit.' : 'This report could not be opened here.'}</p>}
+      {(lines.length > shown || others) && <p className="rowsub">{lines.length > shown && <a className="from-site-more" href={`#/projects/${code}/report/${r.id}`}>And {lines.length - shown} more in the report</a>}{lines.length > shown && '.'}{lines.length > shown && others ? ' ' : ''}{others ? `Also raised ${others}.` : ''}</p>}
+    </article>;
+  })}</div>;
+}
+
+/**
+ * The end of the day's read, across every project in one place: each project
+ * with a site update for today's visit, what the day found (held up by access, and the
+ * defects and variations the office now has to answer), then each update's
+ * progress lines. The same cards as a project's Latest from site, so nothing
+ * new to learn; every update for today's visit is read, not only each trade's newest,
+ * and its access problems come first.
+ */
+function TodayFromSite({ ctx }: { ctx: Ctx }) {
+  const phone = usePhoneKnown();
+  const shown = projectStatusGroups(ctx.projects).flatMap(g => g.projects).map(p => ctx.statOf(p.id))
+    .filter((s): s is ProjectStats => !!s && s.standing.today.length > 0);
+  const updates = shown.reduce((n, s) => n + s.standing.today.length, 0);
+  return <section className="today-site" aria-labelledby="today-site-h">
+    <SecH right={<span className="r">{dayShort(ctx.day)}{updates ? ` · ${count(updates, 'update')}` : ''}</span>}><span id="today-site-h">Today from site</span></SecH>
+    {shown.length ? shown.map(s => <TodayProject key={s.project.id} ctx={ctx} s={s} phone={phone} />)
+      : <div className="empty" style={{ padding: 14 }}>No site update sent for today yet. Each project’s Latest from site has its last ones.</div>}
+  </section>;
+}
+/**
+ * On a phone a project's cards fold under its bar, so the whole day reads in
+ * one screen and what needs the office follows it; the desk shows them open.
+ */
+function TodayProject({ ctx, s, phone }: { ctx: Ctx; s: ProjectStats; phone: boolean | null }) {
+  const f = dayFound(s.standing.today), id = `today-${s.code}`;
+  const [open, setOpen] = useState(false), [opened, setOpened] = useState(false);
+  // Nothing loads until the width is known; once opened on a phone the cards stay loaded, hidden when folded.
+  const loadCards = phone === false || opened;
+  const found = [f.defects ? count(f.defects, 'defect') : '', f.variations ? count(f.variations, 'variation') : ''].filter(Boolean).join(' and ');
+  return <section className="today-project" aria-labelledby={id}>
+    <a className="today-project-h" href={`#/projects/${s.code}`}>
+      <b id={id}>{s.project.projectName}</b>
+      <span className="today-found">
+        <span>{count(f.updates, 'site update')}{s.standing.inspectionsToday ? `, ${count(s.standing.inspectionsToday, 'inspection')}` : ''}</span>
+        <span className={f.access ? 'late' : ''}>{f.access ? `${count(f.access, 'access problem')}` : 'nothing held up'}</span>
+        <span className={found ? 'soon' : ''}>{found ? `raised ${found}` : 'no defects or variations'}</span>
+      </span>
+      <span className="arrow" aria-hidden="true">›</span>
+    </a>
+    {phone && <button type="button" className="today-fold" aria-expanded={open} aria-controls={`${id}-cards`} onClick={() => { setOpen(o => !o); setOpened(true); }}>{open ? 'Hide the site updates' : f.updates === 1 ? 'Show the site update' : `Show the ${f.updates} site updates`}</button>}
+    {loadCards && <div id={`${id}-cards`} hidden={!!phone && !open}><FromSiteVisits ctx={ctx} code={s.code} list={s.standing.today} shown={phone ? 2 : 3} empty="" when={r => `sent ${timeOf(r.serverAcknowledgedAt) || 'today'}`} heldUpFirst /></div>}
   </section>;
 }
 /** "2 defects and 1 variation", or '' when the visit raised neither. */
@@ -411,6 +483,11 @@ function foundOthers(r: ReportSummary): string {
 }
 
 /* ---------------------------------------------------------------- reader */
+/** The folded checks in words: "8 satisfactory and 1 not applicable checks". */
+function passedWords(list: Observation[]): string {
+  const ok = list.filter(o => o.check?.answer === 'ok').length, na = list.length - ok;
+  return `${[ok && `${ok} satisfactory`, na && `${na} not applicable`].filter(Boolean).join(' and ')} ${list.length === 1 ? 'check' : 'checks'}`;
+}
 export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; crumbsHome?: string }) {
   /** Managers and Admins get quick actions on each section and see the change log. */
   const correcting = canCorrect(ctx.me.role);
@@ -431,7 +508,9 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
   const [acting, setActing] = useState<string | null>(null);
   const [reloadFixes, setReloadFixes] = useState(0);
   const sections = useRef<Record<string, HTMLDivElement | null>>({});
-  useEffect(() => { setActing(null); }, [id]);
+  // An inspection's satisfactory and not applicable checks start folded, report by report.
+  const [showPassed, setShowPassed] = useState(false);
+  useEffect(() => { setActing(null); setShowPassed(false); }, [id]);
   useEffect(() => {
     if (!correcting) return;
     let stopped = false;
@@ -463,38 +542,7 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
     const r = !recordId ? undefined : type === 'issue' ? ctx.snap?.issues.find(i => i.id === recordId) : ctx.snap?.variations.find(v => v.id === recordId);
     return r ? <a className="ref" href={`#/projects/${code}/${type}/${r.id}`}>{shortRef(r.reference)}</a> : <span className="ref">{type === 'issue' ? 'another issue' : 'another variation'}</span>;
   };
-  async function retrySharePoint() {
-    setRetryingSharePoint(true); setSharePointRetry('');
-    try {
-      const response = await fetch('/api/admin/sharepoint', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({reportId:report!.id}) });
-      const body = await response.json();
-      if (!response.ok) throw new Error(body.reason ?? 'The SharePoint retry could not be queued.');
-      setSharePointRetry('Retry queued. This report will refresh when processing finishes.');
-      await ctx.refresh();
-    } catch (retryError) {
-      setSharePointRetry(retryError instanceof Error ? retryError.message : 'The SharePoint retry could not be queued.');
-    } finally { setRetryingSharePoint(false); }
-  }
-  return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href={crumbsHome ?? `#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>{reportTypeOf(report).document}</div><h3>Visit {fmtDate(report.visitDate)}</h3>{report.inspected && reportTypeOf(report).inspects && <div className="rowsub sheet-inspected">{reportTypeOf(report).inspects!.label}: <b>{report.inspected}</b></div>}<div className="rowsub"><span className="ref">{report.reference}</span><span className="sep">/</span>{engineer}{report.authorTrade ? ` · ${report.authorTrade}` : ''}<span className="sep">/</span>Rev {report.revision}{correctedCount > 0 && <><span className="sep">/</span><span className="ro-qa-chip">{correctedCount} corrected</span></>}</div></div>
-      <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/preview`, officeReturn(ctx))}>Full report</Link><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/pdf`, officeReturn(ctx))}>PDF</Link>
-        {canReview && <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'review', report: summary })}>Review</Btn>}
-        {ctx.me.admin && report.sharepoint?.status === 'failed' && <Btn className="btn-sm" disabled={retryingSharePoint} onClick={() => void retrySharePoint()}>{retryingSharePoint ? 'Queuing…' : 'Retry SharePoint'}</Btn>}</div></div>
-    <SubmissionStages report={report} tagClass={t => `tag ${toneTag(t)}`} when={fmtWhen} />
-    {sharePointRetry && <div className="note"><span>{sharePointRetry}</span></div>}
-    {correcting && fixError && <div className="note warn"><span><b>Quick actions unavailable.</b> {fixError}</span></div>}
-    {report.review === 'returned' && <div className="note bad"><span><b>Sent back by {report.reviewedBy ? ctx.nameOf(report.reviewedById, report.reviewedBy) : 'the office'}</b>{report.reviewedAt ? ` on ${fmtDay(report.reviewedAt)}` : ''}: {report.reviewNote} {superseded ? '' : 'The engineer can send a corrected revision.'}</span></div>}
-    {superseded && <div className="note info"><span><b>Superseded by rev {superseded.revision}</b>{superseded.state === 'draft' ? ', a correction in progress on site.' : '.'} </span>{superseded.state === 'submitted' && <a className="btn btn-q btn-sm" href={`#/projects/${code}/report/${superseded.id}`}>Open rev {superseded.revision}</a>}</div>}
-    {report.corrects && <div className="note info"><span><b>Rev {report.revision} supersedes rev {report.revision - 1}.</b> {report.correctionReason}</span><a className="btn btn-q btn-sm" href={`#/projects/${code}/report/${report.corrects}`}>Open rev {report.revision - 1}</a></div>}
-    {report.review === 'pending' && !canReview && <div className="note warn"><span><b>Awaiting review.</b> You wrote this report, so someone else has to review it.</span></div>}
-    {report.delivery === 'failed' && <div className="note bad"><span><b>{report.deliveryErrorStage === 'delivery' ? 'Could not be delivered.' : 'Could not be processed.'}</b> {report.deliveryError ?? 'The worker gave up on this report.'} The report is on file; {report.deliveryErrorStage === 'delivery' ? 'the notification is what failed.' : report.deliveryErrorStage === 'pdf' ? 'making the PDF is what failed.' : 'the PDF and the notification are what failed.'}</span></div>}
-    {(report.delivery === 'outbox' || report.issued?.transport === 'outbox') && <div className="note"><span>{project?.projectManager ?? 'The project manager'} has not been notified by email yet: the pilot holds notification emails in a local outbox. The report is on file and readable here.</span></div>}
-    {decisions.length > 0 && <><SecH>Actions and decisions</SecH>
-      <div className="rmenu">{decisions.map(o => { const vo = o.type === 'instruction' ? variationOf(o.id) : undefined; return <div key={o.id}><div className="rt"><b>{o.type === 'instruction' ? 'Variation to instruct' : `Action for ${o.owner.trim() || 'nobody yet'}`} · {o.check ? `${o.check.question}${o.location.trim() ? ` · ${o.location}` : ''}` : o.location || 'no location'}</b><span>{o.type === 'instruction' ? o.whatHappened : o.actionNeeded}{o.type !== 'instruction' && !o.owner.trim() && ' · no owner named'}</span></div>{o.type === 'instruction' ? (vo ? <><a className="ref" href={`#/projects/${code}/variation/${vo.id}`}>{shortRef(vo.reference)}</a><InstructionTag v={vo} /></> : <span className="kind tone-variation">Variation</span>) : o.check && !reportTypeOf(report).raisesRecords ? <span className="kind tone-defect">On this inspection</span> : raisedRef(o.id, raised, code, report, o.linkedIssueId ? ctx.snap?.issues.find(i => i.id === o.linkedIssueId) : undefined)}</div>; })}</div></>}
-    {reportTypeOf(report).checklist
-      ? <SecH right={<span className="r">{report.observations.length} checks</span>}>Inspection results</SecH>
-      : <SecH right={<span className="r">{report.observations.length} update{report.observations.length === 1 ? '' : 's'}</span>}>Found on this visit</SecH>}
-    {report.observations.length ? report.observations.map(o => {
+  const section = (o: Observation) => {
       const type = OBSERVATION_TYPES.find(t => t.value === o.type);
       // A check moved off Action needed in a correction keeps its link, but no longer speaks for the issue.
       const linked = o.linkedIssueId && (!o.check || o.check.answer === 'action') ? ctx.snap?.issues.find(i => i.id === o.linkedIssueId) : undefined;
@@ -529,7 +577,52 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
             onDone={() => { setActing(null); setReloadFixes(n => n + 1); void ctx.refresh(); }} />}
           {correcting && cs.length > 0 && <ChangeLog ctx={ctx} list={cs} />}
         </div></div>;
-    }) : <div className="empty">No updates were recorded on this visit.</div>}
+  };
+  const checklist = !!reportTypeOf(report).checklist;
+  const tally = { action: 0, ok: 0, na: 0, open: 0 };
+  // An older record can hold a check sent unanswered; it is counted, so the figures add up to the checks.
+  if (checklist) for (const o of report.observations) { const a = o.check?.answer; if (a === 'action' || a === 'ok' || a === 'na') tally[a]++; else tally.open++; }
+  // A passing check someone corrected stays in view with its change log.
+  const folds = (o: Observation) => checklist && (o.check?.answer === 'ok' || o.check?.answer === 'na') && !corrections.some(c => c.observationId === o.id);
+  const shownFirst = report.observations.filter(o => !folds(o)), folded = report.observations.filter(folds);
+  async function retrySharePoint() {
+    setRetryingSharePoint(true); setSharePointRetry('');
+    try {
+      const response = await fetch('/api/admin/sharepoint', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({reportId:report!.id}) });
+      const body = await response.json();
+      if (!response.ok) throw new Error(body.reason ?? 'The SharePoint retry could not be queued.');
+      setSharePointRetry('Retry queued. This report will refresh when processing finishes.');
+      await ctx.refresh();
+    } catch (retryError) {
+      setSharePointRetry(retryError instanceof Error ? retryError.message : 'The SharePoint retry could not be queued.');
+    } finally { setRetryingSharePoint(false); }
+  }
+  return <div className="sheet report-sheet">
+    <div className="sheet-title report-title"><div><div className="crumbs"><a href={crumbsHome ?? `#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>{reportTypeOf(report).document}</div><h3>Visit {fmtDate(report.visitDate)}</h3>{report.inspected && reportTypeOf(report).inspects && <div className="rowsub sheet-inspected">{reportTypeOf(report).inspects!.label}: <b>{report.inspected}</b></div>}<div className="rowsub"><span className="ref">{report.reference}</span><span className="sep">/</span>{engineer}{report.authorTrade ? ` · ${report.authorTrade}` : ''}<span className="sep">/</span>Rev {report.revision}{correctedCount > 0 && <><span className="sep">/</span><span className="ro-qa-chip">{correctedCount} corrected</span></>}</div></div>
+      <div className="actions"><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/preview`, officeReturn(ctx))}>Full report</Link><Link className="btn btn-q btn-sm" href={withViewReturn(`/reports/${report.id}/pdf`, officeReturn(ctx))}>PDF</Link>
+        {canReview && <Btn className="btn-sm" onClick={() => summary && ctx.setDialog({ kind: 'review', report: summary })}>Review</Btn>}
+        {ctx.me.admin && report.sharepoint?.status === 'failed' && <Btn className="btn-sm" disabled={retryingSharePoint} onClick={() => void retrySharePoint()}>{retryingSharePoint ? 'Queuing…' : 'Retry SharePoint'}</Btn>}</div></div>
+    <TradeVisitsBar report={report} ctx={ctx} code={code} inInbox={crumbsHome === '#/inbox'} />
+    <SubmissionStages report={report} tagClass={t => `tag ${toneTag(t)}`} when={fmtWhen} />
+    {sharePointRetry && <div className="note"><span>{sharePointRetry}</span></div>}
+    {correcting && fixError && <div className="note warn"><span><b>Quick actions unavailable.</b> {fixError}</span></div>}
+    {report.review === 'returned' && <div className="note bad"><span><b>Sent back by {report.reviewedBy ? ctx.nameOf(report.reviewedById, report.reviewedBy) : 'the office'}</b>{report.reviewedAt ? ` on ${fmtDay(report.reviewedAt)}` : ''}: {report.reviewNote} {superseded ? '' : 'The engineer can send a corrected revision.'}</span></div>}
+    {superseded && <div className="note info"><span><b>Superseded by rev {superseded.revision}</b>{superseded.state === 'draft' ? ', a correction in progress on site.' : '.'} </span>{superseded.state === 'submitted' && <a className="btn btn-q btn-sm" href={`#/projects/${code}/report/${superseded.id}`}>Open rev {superseded.revision}</a>}</div>}
+    {report.corrects && <div className="note info"><span><b>Rev {report.revision} supersedes rev {report.revision - 1}.</b> {report.correctionReason}</span><a className="btn btn-q btn-sm" href={`#/projects/${code}/report/${report.corrects}`}>Open rev {report.revision - 1}</a></div>}
+    {report.review === 'pending' && !canReview && <div className="note warn"><span><b>Awaiting review.</b> You wrote this report, so someone else has to review it.</span></div>}
+    {report.delivery === 'failed' && <div className="note bad"><span><b>{report.deliveryErrorStage === 'delivery' ? 'Could not be delivered.' : 'Could not be processed.'}</b> {report.deliveryError ?? 'The worker gave up on this report.'} The report is on file; {report.deliveryErrorStage === 'delivery' ? 'the notification is what failed.' : report.deliveryErrorStage === 'pdf' ? 'making the PDF is what failed.' : 'the PDF and the notification are what failed.'}</span></div>}
+    {(report.delivery === 'outbox' || report.issued?.transport === 'outbox') && <div className="note"><span>{project?.projectManager ?? 'The project manager'} has not been notified by email yet: the pilot holds notification emails in a local outbox. The report is on file and readable here.</span></div>}
+    {decisions.length > 0 && <><SecH>Actions and decisions</SecH>
+      <div className="rmenu">{decisions.map(o => { const vo = o.type === 'instruction' ? variationOf(o.id) : undefined; return <div key={o.id}><div className="rt"><b>{o.type === 'instruction' ? 'Variation to instruct' : `Action for ${o.owner.trim() || 'nobody yet'}`} · {o.check ? `${o.check.question}${o.location.trim() ? ` · ${o.location}` : ''}` : o.location || 'no location'}</b><span>{o.type === 'instruction' ? o.whatHappened : o.actionNeeded}{o.type !== 'instruction' && !o.owner.trim() && ' · no owner named'}</span></div>{o.type === 'instruction' ? (vo ? <><a className="ref" href={`#/projects/${code}/variation/${vo.id}`}>{shortRef(vo.reference)}</a><InstructionTag v={vo} /></> : <span className="kind tone-variation">Variation</span>) : o.check && !reportTypeOf(report).raisesRecords ? <span className="kind tone-defect">On this inspection</span> : raisedRef(o.id, raised, code, report, o.linkedIssueId ? ctx.snap?.issues.find(i => i.id === o.linkedIssueId) : undefined)}</div>; })}</div></>}
+    {checklist
+      ? <><SecH right={<span className="r">{report.observations.length} checks</span>}>Inspection results</SecH>
+        <p className="check-tally">{tally.action > 0 ? <b className="late">{tally.action} {tally.action === 1 ? 'needs' : 'need'} action</b> : <b>No actions</b>}{tally.ok > 0 && <> · {tally.ok} satisfactory</>}{tally.na > 0 && <> · {tally.na} not applicable</>}{tally.open > 0 && <> · {tally.open} not answered</>}</p></>
+      : <SecH right={<span className="r">{report.observations.length} update{report.observations.length === 1 ? '' : 's'}</span>}>Found on this visit</SecH>}
+    {report.observations.length ? <>{shownFirst.map(section)}
+      {/* Checks that passed fold under one line, so the ones needing action are what the office reads first. */}
+      {folded.length > 0 && <div className="checks-passed">
+        <button type="button" className="btn btn-q btn-sm" aria-expanded={showPassed} onClick={() => { if (showPassed && folded.some(o => o.id === acting)) setActing(null); setShowPassed(v => !v); }}>{showPassed ? 'Hide' : 'Show'} the {passedWords(folded)}</button>
+        {showPassed && folded.map(section)}</div>}</> : <div className="empty">No updates were recorded on this visit.</div>}
     <SecH>Signature</SecH>
     {/* Typed or drawn is said in words, so the office never mistakes one for the other. */}
     <div className="rowsub">{report.signature ? `${SIGNED_HOW[signatureMethod(report.signature)]} ${report.signature.name} · ${fmtWhen(report.signature.signedAt)}${report.signature.typed && report.signature.signedInAs ? ` · signed in as ${report.signature.signedInAs}` : ''}` : 'No signature captured'} · Generated by Leodis Relay</div>
@@ -537,6 +630,27 @@ export function ReportReader({ ctx, id, crumbsHome }: { ctx: Ctx; id: string; cr
   </div>;
 }
 const SIGNED_HOW = { drawn: 'Signature drawn by', typed: 'Signed by typing the name', 'name only': 'Signed' } as const;
+/**
+ * The same trade's site updates either side of this one (lib/tradeVisits.ts), so
+ * the office can open the last visit and see what changed. In the Inbox it stays
+ * in the Inbox reader; elsewhere it opens in the project.
+ */
+function TradeVisitsBar({ report, ctx, code, inInbox }: { report: Report; ctx: Ctx; code: string; inInbox: boolean }) {
+  // The summary carries the inspection counts, so this report is judged as the others are.
+  const visits = tradeVisits(ctx.snap?.reports.find(r => r.id === report.id) ?? report, ctx.snap?.reports ?? []);
+  if (!visits) return null;
+  const whose = visits.trade ? `${visits.who} update` : `update from ${visits.who}`;
+  const href = (id: string) => inInbox ? `#/inbox/${id}` : `#/projects/${code}/report/${id}`;
+  const step = (v: TradeVisit, direction: 'before' | 'after') => <a className={`trade-visit ${direction === 'before' ? 'prev' : 'next'}`} href={href(v.id)}
+    // In the Inbox, stepping replaces the open report, so "‹ Inbox" on a phone still goes straight back to the list.
+    onClick={inInbox ? e => { e.preventDefault(); window.location.replace(href(v.id)); } : undefined}>
+    <span className="k">{direction === 'before' ? <><span aria-hidden="true">‹ </span>Previous {whose} here</> : <>Next {whose} here<span aria-hidden="true"> ›</span></>}</span>
+    <span className="v"><b>{dayShort(v.visitDate)}</b>, {gapWords(v.visitDate, report.visitDate, direction)} · {v.author} · <span className="ref">{shortRef(v.reference)}</span></span></a>;
+  return <nav className="trade-visits" aria-label={`Other ${visits.trade ? `${visits.who} updates` : `updates from ${visits.who}`} on this site`}>
+    {visits.previous ? step(visits.previous, 'before') : <span className="trade-visit prev none"><span className="k">Previous {whose} here</span><span className="v">None before this one</span></span>}
+    {visits.next && step(visits.next, 'after')}
+  </nav>;
+}
 function raisedRef(observationId: string, raised: Issue[], code: string, report: Report, linked?: Issue) {
   // A correction raises nothing new: its updates point at the issue the original raised.
   const i = raised.find(x => sectionOf(x, report) === observationId) ?? linked;
@@ -665,10 +779,15 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
   const source = issue.raisedByReport ? ctx.snap?.reports.find(r => r.id === issue.raisedByReport) : undefined;
   const active = isActive(issue); const overdue = isOverdue(issue, ctx.day); const reviewOn = !!ctx.statOf(issue.projectId)?.reviewOn;
   const closureMine = issue.closureSubmittedById ? issue.closureSubmittedById === ctx.me.id : issue.closureSubmittedBy === ctx.me.name;
+  const back = issue.work === 'awaiting_verification' ? sentBackBefore(issue) : undefined;
   const d = (kind: string) => ctx.setDialog(dialogFor(kind, issue, ctx));
   const linkedVariations = ctx.snap?.variations.filter(v => v.linkedIssueId === issue.id) ?? [];
-  return <div className="sheet">
-    <div className="sheet-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h3>{issue.description}</h3><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div></div>
+  // Everything else at this place on the project: the register's open issues there and the photographs, as typed (no list of places).
+  const place = issue.location.trim().replace(/\s+/g, ' ');
+  const here = openAtPlace(ctx.snap?.issues ?? [], issue.projectId, place);
+  return <div className="sheet issue-sheet">
+    <div className="sheet-title issue-title"><div><div className="crumbs"><a href={`#/projects/${code}`}>{project?.projectName ?? 'Project'}</a><span>›</span>Issue</div><h3>{issue.description}</h3><div className="rowsub"><span className="ref">{issue.reference}</span><span className="sep">/</span>{issue.location || 'Location not recorded'}<span className="sep">/</span>{issue.affectedTrade ?? (issue.reporterTrade ? `reported by ${issue.reporterTrade}` : 'trade not recorded')}</div>
+      {place && ctx.snap && <p className="sheet-here">At <b>{place}</b>: {here.length ? <a href={placeRegisterHash(issue.projectId, place)}>{count(here.length, 'open issue')}</a> : 'no open issues'} · <Link href={`/photos?${new URLSearchParams({ project: issue.projectId, q: place, returnTo: officeReturn(ctx) })}`}>Photographs</Link></p>}</div>
       <div className="actions">
         <Link className="btn btn-q btn-sm" href={withViewReturn(`/issues/${issue.id}`, officeReturn(ctx))}>Issue page</Link>
         {active && issue.work !== 'awaiting_verification' && (issue.owner ? <BtnQ className="btn-sm" onClick={() => d('assign')}>Reassign</BtnQ> : <Btn className="btn-sm" onClick={() => d('assign')}>Assign</Btn>)}
@@ -678,10 +797,10 @@ export function IssueSheet({ ctx, id }: { ctx: Ctx; id: string }) {
         {active && issue.confirmation === 'disputed' && <Btn className="btn-sm" onClick={() => ctx.setDialog({ kind: 'triage', issue })}>Triage</Btn>}
         {active && issue.confirmation === 'provisional' && <><BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'confirm', issue })}>Confirm</BtnQ><BtnQ className="btn-sm" onClick={() => ctx.setDialog({ kind: 'withdraw', issue })}>Withdraw</BtnQ></>}
       </div></div>
-    <dl className="tb"><div><dt>Work</dt><dd><WorkTag i={issue} day={ctx.day} /><small>{WORK_LABEL[issue.work]}{overdue ? ` · ${daysLate(issue.targetDate, ctx.day)} days past target` : ''}</small></dd></div><div><dt>Confirmation</dt><dd><ConfirmTag i={issue} reviewOn={reviewOn} /><small>{confirmationNote(issue.confirmation, reviewOn)}</small></dd></div><div><dt>Owner</dt><dd>{issue.owner.trim() || <span className="late">Unassigned</span>}</dd></div><div><dt>Target</dt><dd className={`num ${overdue ? 'late' : ''}`}>{issue.targetDate ? fmtDay(issue.targetDate) : '—'}</dd></div></dl>
+    <dl className="tb"><div><dt>Work</dt><dd><WorkTag i={issue} day={ctx.day} /><small>{WORK_LABEL[issue.work]}{overdue ? ` · ${pastTarget(daysLate(issue.targetDate, ctx.day))}` : ''}</small></dd></div><div><dt>Confirmation</dt><dd><ConfirmTag i={issue} reviewOn={reviewOn} /><small>{confirmationNote(issue.confirmation, reviewOn)}</small></dd></div><div><dt>Owner</dt><dd>{issue.owner.trim() || <span className="late">Unassigned</span>}</dd></div><div><dt>Target</dt><dd className={`num ${overdue ? 'late' : ''}`}>{issue.targetDate ? fmtDay(issue.targetDate) : '—'}</dd></div></dl>
     {issue.actionNeeded && <div className="note info"><span><b>Action needed.</b> {issue.actionNeeded}</span></div>}
     {issue.confirmation === 'disputed' && <div className="note bad"><span><b>Disputed.</b> The report that raised this was sent back. Any work already done stands; the observation needs a decision.</span></div>}
-    {issue.work === 'awaiting_verification' && <div className={`note ${closureMine ? 'warn' : 'good'}`}><span><b>Closure submitted by {ctx.nameOf(issue.closureSubmittedById, issue.closureSubmittedBy ?? 'unknown')}</b> · put forward {fmtDay(putForwardAt(issue))}, waiting {daysSince(putForwardAt(issue))} days. {closureMine ? 'You submitted this closure, so someone else has to verify it.' : 'Verify it if the work is done, or send it back as not finished.'}</span></div>}
+    {issue.work === 'awaiting_verification' && <div className={`note ${closureMine ? 'warn' : 'good'}`}><span><b>Closure submitted by {ctx.nameOf(issue.closureSubmittedById, issue.closureSubmittedBy ?? 'unknown')}</b> · put forward {fmtDay(putForwardAt(issue))}, {waitingWords(issue, ctx.day)}. {back && <> {back.times > 1 ? `Sent back ${back.times} times. Last by` : 'Sent back by'} {back.by} on {fmtDay(back.at)}{back.note ? <>: <q>{back.note}</q></> : ', with no reason given'}.</>} {closureMine ? 'You submitted this closure, so someone else has to verify it.' : 'Verify it if the work is done, or send it back as not finished.'}</span></div>}
     {linkedVariations.length > 0 && <div className="note info"><span><b>Variation{linkedVariations.length === 1 ? '' : 's'} on this issue:</b> {linkedVariations.map((v, i) => <span key={v.id}>{i > 0 && ', '}<a className="ref" href={`#/projects/${code}/variation/${v.id}`}>{shortRef(v.reference)}</a> {INSTRUCTION_LABEL[v.instruction].toLowerCase()}</span>)}.</span></div>}
     <dl className="tb two" style={{ marginTop: 12 }}><div><dt>Source</dt><dd>{source ? <>Raised by <a className="ref" href={`#/projects/${code}/report/${source.id}`}>{shortRef(source.reference)}</a> · {fmtDay(issue.raisedAt)}</> : issue.source === 'individual' ? <>Flagged on site by {issue.reportedBy ?? 'unknown'} · {fmtDay(issue.raisedAt)}</> : <>Raised {fmtDay(issue.raisedAt)}</>}<small>{issue.reportedBy ?? issue.events[0]?.actor ?? 'Reporter not recorded'}{issue.reporterTrade ? ` · ${issue.reporterTrade}` : ''}</small></dd></div><div><dt>Progress notes</dt><dd>Add updates and photographs on the issue page.<small>Engineers can submit the work as complete there; the office verifies here.</small></dd></div></dl>
     <SecH right={<span className="r">{issue.events.length}</span>}>History</SecH>
@@ -716,11 +835,11 @@ export function VariationSheet({ ctx, id }: { ctx: Ctx; id: string }) {
         {v.instruction === 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-decline')}>Decline</BtnQ>}
         {v.instruction !== 'pending' && <BtnQ className="btn-sm" onClick={() => d('variation-reopen')}>Reopen</BtnQ>}
       </div></div>
-    <dl className="tb"><div><dt>Instruction</dt><dd><InstructionTag v={v} /><small>{v.instruction === 'instructed' ? `${v.instructionReference} · ${v.instructedBy} · ${v.instructedOn}` : v.instruction === 'declined' ? 'the client will not instruct it' : v.instruction === 'within_contract' ? 'within our contract, so not charged' : v.quotedValue === undefined ? 'price it before it can be put to the client' : 'quoted, waiting on the client'}</small></dd></div><div><dt>Quoted</dt><dd><Money n={v.quotedValue} /><small>{cost !== undefined ? `expected cost ${fmtMoney(cost)}` : 'not costed'}</small></dd></div><div><dt>Instructed value</dt><dd><Money n={v.instruction === 'instructed' ? value : undefined} /><small>{v.instruction === 'instructed' ? (v.instructedValue === undefined ? 'on rates; quote carried' : v.instructedValue === v.quotedValue ? 'as quoted' : `quoted ${fmtMoney(v.quotedValue)}`) : 'fixed once instructed'}</small></dd></div><div><dt>Estimated margin</dt><dd className={margin !== undefined && margin < 0 ? 'late' : ''}><Money n={v.instruction === 'declined' ? undefined : margin} /><small>{pct !== undefined && v.instruction !== 'declined' ? `${fmtPct(pct)} of ${v.instruction === 'instructed' ? 'the instructed value' : 'the quote'}` : 'needs a cost and a value'}</small></dd></div></dl>
+    <dl className="tb"><div><dt>Instruction</dt><dd><InstructionTag v={v} /><small>{v.instruction === 'instructed' ? instructionParts(v.instructionReference, v.instructedBy, v.instructedOn) || 'no reference recorded' : v.instruction === 'declined' ? 'the client will not instruct it' : v.instruction === 'within_contract' ? 'within our contract, so not charged' : v.quotedValue === undefined ? 'price it before it can be put to the client' : 'quoted, waiting on the client'}</small></dd></div><div><dt>Quoted</dt><dd><Money n={v.quotedValue} /><small>{cost !== undefined ? `expected cost ${fmtMoney(cost)}` : 'not costed'}</small></dd></div><div><dt>Instructed value</dt><dd><Money n={v.instruction === 'instructed' ? value : undefined} /><small>{v.instruction === 'instructed' ? (v.instructedValue === undefined ? 'on rates; quote carried' : v.instructedValue === v.quotedValue ? 'as quoted' : `quoted ${fmtMoney(v.quotedValue)}`) : 'fixed once instructed'}</small></dd></div><div><dt>Estimated margin</dt><dd className={margin !== undefined && margin < 0 ? 'late' : ''}><Money n={v.instruction === 'declined' ? undefined : margin} /><small>{pct !== undefined && v.instruction !== 'declined' ? `${fmtPct(pct)} of ${v.instruction === 'instructed' ? 'the instructed value' : 'the quote'}` : 'needs a cost and a value'}</small></dd></div></dl>
     {v.workDone && v.instruction === 'pending' && <div className="note bad"><span><b>Work already carried out with nothing in writing.</b> Get the client’s sign-off recorded as a chargeable variation before it is invoiced; a signature that only confirms attendance is not an instruction. See the variation sign-off note in the docs.</span></div>}
     {v.instruction === 'pending' && v.quotedValue === undefined && !v.workDone && <div className="note warn"><span><b>Not yet priced.</b> Labour, parts, plant and an uplift give the expected cost and a suggested quote; the quoted value is the office’s call.</span></div>}
     {v.instruction === 'instructed' && v.signedInstruction && <div className="note good"><span><b>Signed copy on file.</b></span>{signedCopyLink(v) && <a className="btn btn-q btn-sm" href={signedCopyLink(v)} target="_blank" rel="noreferrer">Open signed copy ↗</a>}</div>}
-    {v.instruction === 'instructed' && !v.signedInstruction && <div className="note warn"><span><b>No signed copy linked.</b> The instruction is recorded as {v.instructionReference}; add the link to the signed document when it is filed.</span></div>}
+    {v.instruction === 'instructed' && !v.signedInstruction && <div className="note warn"><span><b>No signed copy linked.</b> The instruction is recorded{v.instructionReference ? ` as ${v.instructionReference}` : ''}; add the link to the signed document when it is filed.</span></div>}
     <dl className="tb two" style={{ marginTop: 12 }}>
       <div><dt>Source</dt><dd>{source ? <>Raised by <a className="ref" href={`#/projects/${code}/report/${source.id}`}>{shortRef(source.reference)}</a> · {fmtDay(v.raisedAt)}</> : <>Raised {fmtDay(v.raisedAt)}</>}<small>{ctx.nameOf(v.raisedById, v.raisedBy)}{v.raiserTrade ? ` · ${v.raiserTrade}` : ''}{v.askedBy && <> · asked for on site by {v.askedBy}</>}{linked && <> · on issue <a className="ref" href={`#/projects/${code}/issue/${linked.id}`}>{shortRef(linked.reference)}</a></>}</small></dd></div>
       <div><dt>Expected cost</dt><dd>{cost === undefined ? <span className="fine">Not costed</span> : <span className="money">{fmtMoney(cost)}</span>}<small>{cost === undefined ? 'labour × rate + parts + plant' : `${fmtHours(v.labourHours)} × ${fmtMoney(v.labourRate)} labour · ${fmtMoney(v.partsCost)} parts · ${fmtMoney(v.plantSubcontract)} plant${v.upliftPct !== undefined ? ` · ${v.upliftPct}% uplift` : ''}`}</small></dd></div>

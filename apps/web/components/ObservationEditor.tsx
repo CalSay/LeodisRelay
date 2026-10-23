@@ -26,6 +26,17 @@ import { usePrincipal } from './PrincipalContext';
  * card on a phone is what the office must have, and the rest is one tap away.
  */
 const TRADES = ['Electrical', 'HVAC', 'P&H', 'Other / non-Leodis'] as const;
+export type Trade = typeof TRADES[number];
+
+/** Trade affected as one tap each, shared by a site update's defect card and "Flag a defect" (2026-10-22). */
+export function TradeChoice({ value, onPick, hint }: { value?: string; onPick: (trade: Trade) => void; hint: string }) {
+  const id = useId();
+  return <>
+    <label id={`trade-${id}`}>Trade affected</label>
+    <div className="eng-seg" role="group" aria-labelledby={`trade-${id}`}>{TRADES.map(t => <button key={t} type="button" aria-pressed={value === t} onClick={() => onPick(t)}>{t === 'Other / non-Leodis' ? 'Other' : t}</button>)}</div>
+    <p className="hint">{hint}</p>
+  </>;
+}
 const SIZES: [RoughSize, string][] = [['half-day', '½ day'], ['day', '1 day'], ['two-days', '2 days'], ['more', 'More']];
 
 export function KindPicker({ onPick }: { onPick: (type: ObservationType) => void }) {
@@ -153,8 +164,8 @@ export function ObservationEditor({
   const alreadyRaised = raisesIssue && openIssues.length > 0 && <div className="field">
     <label id={`link-${id}`}>Is this something already raised?</label>
     <IssueLinkPicker labelledBy={`link-${id}`} issues={openIssues} location={observation.location} linkedId={observation.linkedIssueId} onPick={linkIssue} nearby
-      none={['No — this is new', 'Sending raises a new issue for the office to assign.']}
-      hint={observation.linkedIssueId ? "This will be added to that issue's history rather than raising a new one." : "Linking avoids raising a second issue for the same defect."} />
+      none={['No — this is new', 'Sending adds it to the issue list as a new one.']}
+      hint={observation.linkedIssueId ? "It goes on that issue, not as a new one." : "Pick it so the same defect is not raised twice."} />
   </div>;
 
   const changeButton = <button ref={changeRef} type="button" className="btn-quiet btn-sm eng-change-kind" aria-expanded={choosingKind} aria-controls={choosingKind ? `kinds-${id}` : undefined} onClick={() => setChoosingKind(v => !v)}>Change kind</button>;
@@ -192,9 +203,7 @@ export function ObservationEditor({
           <textarea id={`what-${id}`} value={observation.whatHappened} onChange={(e) => set("whatHappened", e.target.value)} placeholder="Say what you saw" />
         </div>
         <div className="field">
-          <label id={`trade-${id}`}>Trade affected</label>
-          <div className="eng-seg" role="group" aria-labelledby={`trade-${id}`}>{TRADES.map(t => <button key={t} type="button" aria-pressed={observation.affectedTrade === t} onClick={() => set('affectedTrade', t)}>{t === 'Other / non-Leodis' ? 'Other' : t}</button>)}</div>
-          <p className="hint">Whose work it is, not who you are. “Other” covers the main contractor and other trades.</p>
+          <TradeChoice value={observation.affectedTrade} onPick={t => set('affectedTrade', t)} hint="Whose work it is, not who you are. “Other” covers the main contractor and other trades." />
         </div>
       </>}
 
@@ -206,7 +215,7 @@ export function ObservationEditor({
         {alreadyRaised}
       </>}
 
-      {raisesIssue && <MoreDetail filled={!!(observation.actionNeeded.trim() || observation.owner.trim())} hint="What needs doing, and who should respond. Leave them and the office assigns it.">
+      {raisesIssue && <MoreDetail filled={!!(observation.actionNeeded.trim() || observation.owner.trim())} hint="What needs doing, and who should do it. Leave them blank and the office will say who.">
         <div className="two">
         <div className="field">
           <label htmlFor={`action-${id}`}>What needs doing</label>
@@ -216,7 +225,7 @@ export function ObservationEditor({
           <label htmlFor={`owner-${id}`}>Who needs to respond</label>
           <input id={`owner-${id}`} type="text" value={observation.owner} onChange={(e) => set("owner", e.target.value)} placeholder="Name or company" autoComplete="off" />
           <Suggestions title="Recent companies" fewer="Show fewer companies" values={companies} current={observation.owner} onPick={c => set("owner", c)} />
-          <p className="hint">{companies.length ? 'Choose one or type any name. ' : ''}Leave blank if you do not know; the office assigns it rather than guessing.</p>
+          <p className="hint">{companies.length ? 'Choose one or type any name. ' : ''}Leave blank if you do not know; the office will say who.</p>
         </div>
         </div>
       </MoreDetail>}
@@ -230,7 +239,7 @@ export function ObservationEditor({
         <div className="field">
           <label id={`done-${id}`}>Has the work already been done?</label>
           <div className="eng-seg ynq" role="group" aria-labelledby={`done-${id}`}><button type="button" className="yes" aria-pressed={observation.workDone === true} onClick={() => set('workDone', true)}>Yes, on a say-so</button><button type="button" className="no" aria-pressed={observation.workDone === false} onClick={() => set('workDone', false)}>Not yet</button></div>
-          {observation.workDone && <p className="hint eng-hint-late">The office gets the client to sign for it as chargeable before it is invoiced. Name who asked.</p>}
+          {observation.workDone && <p className="hint eng-hint-late">The office gets the client to agree it. Name who asked.</p>}
         </div>
         {observation.workDone && <div className="field">
           <label htmlFor={`asked-${id}`}>Who asked for it on site · optional</label>
@@ -260,7 +269,7 @@ export function ObservationEditor({
           <label id={`link-${id}`}>Is this on an issue already?</label>
           <IssueLinkPicker labelledBy={`link-${id}`} issues={openIssues} location={observation.location} linkedId={observation.linkedIssueId} onPick={(issueId) => issueId ? set('linkedIssueId', issueId) : unset('linkedIssueId')}
             none={['No', 'Not tied to an issue already raised here.']} />
-          <p className="hint">A defect that turns out to be someone else’s damage becomes a chargeable variation on that issue.</p>
+          <p className="hint">Pick the issue if someone else’s damage made this extra work.</p>
         </div>}
         </MoreDetail>
       </>}

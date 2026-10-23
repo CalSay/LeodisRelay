@@ -132,7 +132,7 @@ export function SiteNotesPage({ initialProject, returnTo }: { initialProject: st
     <div className="sn-head">
       <p className="lbl">{project ? `${project.projectNumber} · ${project.projectName}` : 'Site'}</p>
       <h1>Notes for the next visit</h1>
-      <p className="sn-intro">Leave word for whoever is on site next: where a key is, an area that is locked, what is coming up. Notes stay here until someone marks them done with. They are not part of any report and are not sent to anyone.</p>
+      <p className="sn-intro">Leave word for whoever is on site next: where a key is, an area that is locked, what is coming up. Notes stay here until someone marks them done with. They are not sent to anyone.</p>
     </div>
     {projects.length > 1 && <div className="sn-controls">
       <label htmlFor="sn-project">Project</label>
@@ -176,7 +176,7 @@ export function SiteNotesPage({ initialProject, returnTo }: { initialProject: st
             {data.live && <button type="button" className="btn-quiet sn-done" onClick={() => void mark(n, false)} disabled={!!busy} aria-label={`Put back: ${n.text.slice(0, 60)}`}>{busy === n.id ? 'Saving…' : 'Put back'}</button>}
           </li>)}</ul>
         </details>}
-        <p className="sn-foot">Anyone on the project can leave a note or mark one done with, and RELAY keeps who did it and when. Something the client or project manager needs to know still goes in a site update.</p>
+        <p className="sn-foot">Anything the project manager needs to know still goes in a site update.</p>
       </>}
     <p className="eng-sr" role="status">{said}</p>
   </main>;

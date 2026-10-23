@@ -39,6 +39,11 @@ const duct=issue({reference:'011LME-ISS-403',description:'Duct insulation torn',
 const plaster=issue({reference:'011LME-ISS-404',description:'Ceiling tile cracked',location:'Lobby',affectedTrade:'Other / non-Leodis',owner:'Ceilings Co'});
 issue({reference:'011LME-ISS-405',description:'Closed one',affectedTrade:'Electrical',work:'closed'});
 issue({reference:'014LME-ISS-001',projectId:'proj-014lme',description:'On another project',affectedTrade:'Electrical'});
+// Dates from another year: a late snag says how many days late, never a date with no year that reads as one still to come.
+issue({reference:'014LME-ISS-002',projectId:'proj-014lme',description:'Late since last year',affectedTrade:'Electrical',owner:'Sparks Ltd',targetDate:daysAgo(350)});
+issue({reference:'014LME-ISS-003',projectId:'proj-014lme',description:'Due next year',affectedTrade:'Electrical',owner:'Sparks Ltd',targetDate:daysAgo(-400)});
+issue({reference:'014LME-ISS-004',projectId:'proj-014lme',description:'Late by a day',affectedTrade:'HVAC',owner:'Cool Air Ltd',targetDate:daysAgo(1)});
+report({reference:'014LME-PHI-001',projectId:'proj-014lme',visitDate:daysAgo(380),observations:[check_('y-ok','labels','ok')]});
 const vo=(extra)=>{const v={id:randomUUID(),projectId:'proj-011lme',description:'Variation',location:'',workDone:false,instruction:'pending',source:'report',raisedBy:engineer.name,raisedAt:now,events:[],...extra};putRecord('variations',v);return v;};
 const doneVo=vo({reference:'011LME-VO-501',description:'Extra sockets in the plant room',location:'Plant room',workDone:true});
 vo({reference:'011LME-VO-502',description:'Move the panel',quotedValue:900});
@@ -85,7 +90,7 @@ try {
     check(/Our snags\s*2/i.test(stats)&&/Waiting to be checked\s*1/i.test(stats)&&/Other trades\s*1/i.test(stats)&&/Variations\s*2\s*1 done, not instructed/i.test(stats)&&/Safety actions\s*1/i.test(stats),`engineer: counts: ${JSON.stringify(stats)}`);
     const ours=await section(page,'ho-ours').innerText();
     check(/Electrical/.test(ours)&&/HVAC/.test(ours)&&ours.includes(labels.reference)&&ours.includes(duct.reference),'engineer: our snags by trade');
-    check(/Past target/i.test(ours)&&ours.includes('Sparks Ltd')&&ours.includes('from 011LME-PHI-001'),`engineer: a snag says past target, who, and the inspection that raised it: ${JSON.stringify(ours)}`);
+    check(/2 days past target/i.test(ours)&&ours.includes('Sparks Ltd')&&ours.includes('from 011LME-PHI-001'),`engineer: a snag says past target, who, and the inspection that raised it: ${JSON.stringify(ours)}`);
     check(!ours.includes('Closed one')&&!ours.includes('On another project')&&!ours.includes(covers.reference),'engineer: closed, other projects and fixed ones are not in our snags');
     const toCheck=await section(page,'ho-check').innerText();
     check(toCheck.includes(covers.reference)&&toCheck.includes('put forward as fixed by Sparks Ltd'),`engineer: a fix waiting to be checked says who fixed it: ${JSON.stringify(toCheck)}`);
@@ -131,6 +136,19 @@ try {
     const link=page.getByRole('link',{name:'Before handover'});await link.waitFor();
     await link.click();await page.waitForURL(/\/handover\?project=proj-011lme&returnTo=/);await page.locator('.ho-sheet').waitFor();
     check(/7 things still open/.test(await page.locator('.ho-verdict').innerText()),'manager: the same list from the office');
+    // Another project, with dates from other years.
+    await page.locator('#ho-project').selectOption('proj-014lme');await page.locator('.ho-sheet').waitFor();
+    await page.waitForFunction(()=>document.querySelector('#ho-title')?.textContent?.includes('Kirkstall'));
+    const late=await section(page,'ho-ours').innerText();
+    const year=ymd=>ymd.slice(0,4);
+    check(/\b350 days past target/i.test(late)&&/\b1 day past target/i.test(late),`manager: late snags say how many days past target: ${JSON.stringify(late)}`);
+    check(!/Past target [A-Z]/i.test(late),`manager: no late snag gives a date with no year: ${JSON.stringify(late)}`);
+    check(new RegExp(`Target \\w{3} \\d{1,2} \\w{3} ${year(daysAgo(-400))}`,'i').test(late),`manager: a target next year shows its year: ${JSON.stringify(late)}`);
+    const oldInsp=await section(page,'ho-inspections').innerText();
+    check(new RegExp(`\\w{3} \\d{1,2} \\w{3} ${year(daysAgo(380))} · `).test(oldInsp),`manager: an inspection from another year shows its year: ${JSON.stringify(oldInsp)}`);
+    check(/\b2 past target/.test(await page.locator('.ho-verdict').innerText()),'manager: the headline counts both late snags');
+    if(screenshot)await page.screenshot({path:join(screenshot,'days-late-dark-1440.png'),fullPage:true});
+    await page.locator('#ho-project').selectOption('proj-011lme');await page.waitForFunction(()=>document.querySelector('#ho-title')?.textContent?.includes('Tetley'));
     if(screenshot)await page.screenshot({path:join(screenshot,'before-handover-dark-1440.png'),fullPage:true});
     await page.emulateMedia({media:'print'});
     check(!(await page.locator('.appbar').isVisible())&&!(await page.locator('.ho-controls').isVisible())&&!(await page.locator('.back').isVisible()),'print: app bar, controls and back link hidden');

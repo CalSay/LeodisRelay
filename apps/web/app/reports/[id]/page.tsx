@@ -5,7 +5,9 @@ import { use, useCallback, useEffect, useRef, useState } from "react";
 import { PageTitle } from '@/components/PageTitle';
 import Link from "next/link";
 import {
+  createReport,
   getReport,
+  listReports,
   newObservation,
   openIssues as fetchOpenIssues,
   projectSuggestions,
@@ -25,7 +27,7 @@ import { CheckEditor } from "@/components/CheckEditor";
 import { InspectedName } from "@/components/InspectedName";
 import { CHECK_ANSWERS, checkCounts, checkHint, reportTypeOf } from "@/lib/reportTypes";
 import { SignaturePad } from "@/components/SignaturePad";
-import type { Issue as IssueSummary } from "@/lib/types";
+import type { Issue as IssueSummary, ReportSummary } from "@/lib/types";
 import { heldSendBusy, heldSendSettled } from '@/lib/heldSend';
 import { usePrincipal } from '@/components/PrincipalContext';
 import { useRouter } from 'next/navigation';
@@ -39,6 +41,8 @@ import { CARD_TYPES, OBSERVATION_TYPES, type ObservationType } from '@/lib/fixtu
 import { isBlankCard, placesToOffer, withoutBlankCards } from '@/lib/quickCards';
 import { backLabel, safeViewReturn, withViewReturn } from '@/lib/viewNavigation';
 import { whenShort } from '@/lib/dates';
+import { londonDay } from '@/lib/weeklySummary';
+import { leftFromEarlierDay, visitDayWords } from '@/lib/visitDay';
 import { cardAtSameLocation, insertAfterSameLocation } from '@/lib/sameLocation';
 import { canUndo, removeCard, removedLabel, removePhoto, restoreRemoved, type Removed } from '@/lib/undoRemove';
 import { onPhotoUploads, uploadingPhotos } from '@/lib/localMedia';
@@ -61,15 +65,15 @@ type SaveState = "clean" | "saving" | "saved" | "phone" | "unheld" | "signedout"
  */
 const SAVE: Record<SaveState, { dot: string; text: string }> = {
   clean: { dot: "dot", text: "" },
-  saving: { dot: "dot dot-busy", text: "Saving to server" },
-  saved: { dot: "dot dot-ok", text: "Saved on server" },
+  saving: { dot: "dot dot-busy", text: "Saving to RELAY" },
+  saved: { dot: "dot dot-ok", text: "Saved to RELAY" },
   phone: { dot: "dot dot-busy", text: "On this phone only · goes up with signal" },
   // The dangerous state, and the only one that warrants alarm: the work is
   // neither on the server nor held on the device, so closing the page loses it.
   unheld: { dot: "dot dot-bad", text: "NOT SAVED ANYWHERE — keep this page open" },
   // Neither is anyone's fault on site, and the work is on the phone: amber, not red.
   signedout: { dot: "dot dot-busy", text: "Signed out · kept on this phone" },
-  server: { dot: "dot dot-busy", text: "Server not answering · kept on this phone" },
+  server: { dot: "dot dot-busy", text: "RELAY not answering · kept on this phone" },
   // Refused (a photograph the server cannot read, a box too long): the message says what to change.
   error: { dot: "dot dot-bad", text: "Not saved · kept on this phone" },
   conflict: { dot: "dot dot-bad", text: "Saved elsewhere too — choose what to keep" },
@@ -112,6 +116,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [suggestions,setSuggestions] = useState<ProjectSuggestions>({ locations: [], companies: [] });
 
   const [report, setReport] = useState<Report | null>(null);
+  /** "Go to today’s update" tapped on an update left from an earlier day: finding or starting today's. */
+  const [toToday, setToToday] = useState(false);
+  const [toTodayError, setToTodayError] = useState('');
   /** Why the report could not be opened, said in place of it. */
   const [missing, setMissing] = useState<string | null>(null);
   /** The session has gone before the report opened: nothing to keep on screen, so sign in here. */
@@ -124,6 +131,9 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const lastHeld = useRef(true);
   const [waitingForHeld, setWaitingForHeld] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("clean");
+  // How the last save ended. A retry after a failed one is not shown as a calm "Saving" on the cards.
+  const lastSettled = useRef<SaveState>("clean");
+  useEffect(() => { if (saveState !== "saving") lastSettled.current = saveState; }, [saveState]);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   /**
@@ -140,6 +150,12 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   const [signatureImage, setSignatureImage] = useState<string | null>(null);
   /** Signed by typing the name and ticking the statement, in place of a drawing (lib/signature.ts). */
   const [signatureTyped, setSignatureTyped] = useState(false);
+  /** An optional signature folds behind one button until it is wanted (a signed draft shows it open). */
+  const [signShown, setSignShown] = useState(false);
+  const signPanel = useRef<HTMLElement>(null);
+  /** Tapped open: focus follows to the pad, as the button it replaced is gone. */
+  const focusSign = useRef(false);
+  useEffect(() => { if (signShown && focusSign.current) { focusSign.current = false; signPanel.current?.focus(); } }, [signShown]);
   const nameFilled = useRef(false);
   /** The draft as the server last accepted it, so every card can say whether it is on the server. */
   const [onServer, setOnServer] = useState<OnServer>({ cards: {} });
@@ -968,6 +984,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   // ready to type: folded, it only cost a tap. An inspection opens at its first
   // check still to answer, as it does on a wide screen. Once, as the draft opens.
   const openedBlank = useRef('');
+  /** The open card, and that card again if it was new when it opened: one being filled in for the first time. */
+  const startedBlank = useRef<{ open: string | null; step: string; card: string | null }>({ open: null, step: '', card: null });
+  /** Cards the engineer has left, or seen on the check step: not new again unless still blank. */
+  const leftCards = useRef(new Set<string>());
   /** Checks given their first answer here, which moves on at most once. */
   const movedOn = useRef(new Set<string>());
   useEffect(() => {
@@ -1095,32 +1115,48 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   if (!report) {
     return (
       <main className="wrap eng-page">
-        <div className="empty" style={{ marginTop: 32 }} role="status">{waitingForHeld ? 'Putting the work from this phone onto the server first…' : 'Loading'}</div>
+        <div className="empty" style={{ marginTop: 32 }} role="status">{waitingForHeld ? 'Saving the work on this phone to RELAY first…' : 'Loading'}</div>
       </main>
     );
   }
 
   const project = report.projectSnapshot ?? getProject(report.projectId);
-  // A card added and not used yet is left off when the engineer goes to check
-  // and send (withoutBlankCards), so while writing cards it is not "stopping"
-  // anything: no red warning on a card that has only just been opened. On the
-  // check step (reached by the address too, without that tidy) it still
-  // stops sending, as the server would refuse it.
-  const blank = new Set(step === 'check' ? [] : report.observations.filter(isBlankCard).map(o => o.id));
-  const findings = reviewReport(report).filter(f => !blank.has(f.observationId));
-  const stop = findings.filter((f) => f.blocking);
-  // An inspection just started has every check unanswered: one line for them
-  // all, opening the first, rather than a dozen identical stops.
-  const unansweredStops = stop.filter(f => f.field === 'answer');
-  const stopRows = unansweredStops.length > 1
-    ? stop.flatMap(f => f.field !== 'answer' ? [f] : f === unansweredStops[0] ? [{ ...f, message: `${unansweredStops.length} checks not answered yet` }] : [])
-    : stop;
-  const note = findings.filter((f) => !f.blocking);
   const sent = report.state === "submitted";
   const photos = report.observations.reduce((n, o) => n + o.photos.length, 0);
   const mine = principal ? ownsReport(principal, report) : false;
+  // The day the office files this report under. An update left from an earlier
+  // day says so, so this morning's work does not go on yesterday's visit.
+  const today = londonDay(new Date());
+  const visitDay = visitDayWords(report.visitDate, today);
+  const earlierDay = mine && leftFromEarlierDay(report, today);
+  /** Today's update on this site: the engineer's own if started, otherwise a new one. With no signal, the Site page, which can start one offline. */
+  async function openTodays() {
+    if (!report || toToday) return;
+    setToToday(true);setToTodayError('');
+    const home = `/engineer?project=${encodeURIComponent(report.projectId)}`;
+    const isTodays = (r: ReportSummary) => r.state === 'draft' && !r.corrects && reportTypeOf(r).id === 'progress' && r.visitDate === today && !!principal && ownsReport(principal, r);
+    try {
+      // Every page: on a busy site the engineer's own draft can be past the first 50 reports.
+      let todays: { id: string } | undefined, offset: number | null = 0;
+      while (!todays && offset !== null) { const page = await listReports(report.projectId, offset); todays = page.reports.find(isTodays); offset = page.next; }
+      const target = todays ?? await createReport(report.projectId, principal?.name ?? '');
+      router.push(withViewReturn(`/reports/${target.id}`, safeViewReturn(returnTo, home)));
+    } catch (e) {
+      if (e instanceof ApiError && e.offline) { router.push(home); return; }
+      setToTodayError(e instanceof Error ? e.message : 'Today’s update could not be opened. Please try again.');
+      setToToday(false);
+    }
+  }
   const counts = Object.fromEntries(KINDS.map(k => [k, report.observations.filter(o => o.type === k).length])) as Record<ObservationType, number>;
+  const summed = ([
+    ['update', 'Progress', '', ''],
+    ['defect', 'Defects', 'late', 'go on the issue list'],
+    ['instruction', 'Variations', 'soon', 'for the office to price'],
+    ['access', 'Access', '', 'go on the issue list'],
+  ] as [ObservationType, string, string, string][]).filter(([kind]) => counts[kind] > 0);
   const type = reportTypeOf(report);
+  // Open by itself when something is already there: a drawing, a typed signature, or a name other than the author's.
+  const signOpen = type.signatureRequired || signShown || Boolean(signatureImage) || signatureTyped || Boolean(signerName.trim() && signerName.trim() !== report.author);
   /** An inspection: fixed checks, answered one by one, rather than cards the engineer adds. */
   const checklist = Boolean(type.checklist);
   const answers = checkCounts(report.observations);
@@ -1132,11 +1168,53 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   // An inspection opens at the first check still to answer.
   const open = report.observations.some(o => o.id === selectedSection) ? selectedSection
     : wide ? (checklist ? (unanswered[0] ?? report.observations[0])?.id ?? null : report.observations.at(-1)?.id ?? null) : null;
+  // A card added and not used yet is left off when the engineer goes to check
+  // and send (withoutBlankCards), so while writing cards it is not "stopping"
+  // anything: no red warning on a card that has only just been opened. On the
+  // check step (reached by the address too, without that tidy) it still
+  // stops sending, as the server would refuse it.
+  const blank = new Set(step === 'check' ? [] : report.observations.filter(isBlankCard).map(o => o.id));
+  // Nor is a card the engineer opened new (blank, or from "+ Another card
+  // here") and is still filling in: typing where they are should not turn it
+  // red before they reach "What happened" or the camera. It shows once they
+  // leave the card or go to Check & send, and coming back to it from there (a
+  // Stop, say) shows it as before.
+  // A card from "+ Another card here" (it has a place, so is not blank) is
+  // new only until it is first left or seen on the check step; a card still
+  // blank when it opens has nothing in it to warn about yet, so it always is.
+  if (step === 'check') report.observations.forEach(o => leftCards.current.add(o.id));
+  // Coming back from the check step counts too: a card still blank there (a reload
+  // at Check & send skips the tidy) is new again; one with anything in it is not.
+  if (step === 'check' || startedBlank.current.open !== open || startedBlank.current.step !== step) {
+    if (startedBlank.current.open) leftCards.current.add(startedBlank.current.open);
+    const card = report.observations.find(o => o.id === open);
+    startedBlank.current = { open, step, card: step === 'cards' && !checklist && card && (isBlankCard(card) || (picking.includes(card.id) && !leftCards.current.has(card.id))) ? card.id : null };
+  }
+  const writing = step === 'cards' ? startedBlank.current.card : null;
+  // Only its stops: a note (such as photographs with no caption, which may cover other cards) is not red.
+  const findings = reviewReport(report).filter(f => !blank.has(f.observationId) && !(f.blocking && f.observationId === writing));
+  const stop = findings.filter((f) => f.blocking);
+  // An inspection just started has every check unanswered: one line for them
+  // all, opening the first, rather than a dozen identical stops.
+  const unansweredStops = stop.filter(f => f.field === 'answer');
+  const stopRows = unansweredStops.length > 1
+    ? stop.flatMap(f => f.field !== 'answer' ? [f] : f === unansweredStops[0] ? [{ ...f, message: `${unansweredStops.length} checks not answered yet` }] : [])
+    : stop;
+  const note = findings.filter((f) => !f.blocking);
   const shortRef = report.reference.split('-').slice(1).join('-');
   // Where each card and photograph is. Offline means the server could not be
   // reached, so anything not yet on it is only on this phone.
   const offline = saveState === 'phone';
   const whereOf = new Map(report.observations.map(o => [o.id, cardWhere(o, onServer.cards[o.id], uploading, offline)]));
+  // A save is already on its way, so a card still to go up is being saved, not missing.
+  const cardSaving = saveState === 'saving' && !offline && lastHeld.current
+    && (lastSettled.current === 'clean' || lastSettled.current === 'saved');
+  /** A photograph's tile: one waiting only for the save under way says it is going up, not that it is missing. */
+  const photoWhereOf = (o: Observation, photoId: string): Where | undefined => {
+    const w = whereOf.get(o.id), at = o.photos.findIndex(p => p.id === photoId);
+    const each = w && at >= 0 ? w.each[at] : undefined;
+    return each === 'pending' && cardSaving ? 'uploading' : each;
+  };
   // Removing a card or changing the signature also waits for a save, so the summary never goes green before it lands.
   const whereAll = reportWhere([...whereOf.values()], offline, {
     removed: Object.keys(onServer.cards).filter(cardId => !whereOf.has(cardId)).length,
@@ -1200,7 +1278,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     return <button type="button" key={`row-${o.id}`} className={`eng-row eng-cardrow ${isOpen ? 'on' : ''} ${stopped ? 'late' : ''}`} aria-expanded={wide ? undefined : isOpen} aria-current={wide && isOpen ? 'true' : undefined} onClick={() => { if (!wide && isOpen) setSelectedSection(''); else openCard(o.id); }}>
       <span className="no">{String(i + 1).padStart(2, '0')}</span>
       <div className="main">
-        <span className="top"><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{choosing ? 'New' : k?.short ?? o.type}</span><b>{o.location.trim() || (choosing ? 'Choose a kind' : 'No location yet')}</b></span>
+        <span className="top"><span className={`kind tone-${k?.tone ?? 'neutral'}`}>{choosing ? 'New' : k?.short ?? o.type}</span><b>{o.location.trim() || (choosing ? 'Choose a kind' : 'No location yet')}</b>{' '}{!choosing && <CardWhereMark where={whereOf.get(o.id)} saving={cardSaving} />}</span>
         {/* On the phone the open card shows its words and photos just below, so its row
             keeps only its heading and whether it is on the server yet. */}
         {!(isOpen && !wide) && <>
@@ -1209,7 +1287,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         </>}
         {/* Opened from a Stop, the card still says what stops it. */}
         {isOpen && !wide && !choosing && stopped && <span className="meta"><em>{unlabelled(stopped.message, o)}</em></span>}
-        {!choosing && <CardWhereLine where={whereOf.get(o.id)} />}
+        {!choosing && <CardWhereLine where={whereOf.get(o.id)} saving={cardSaving} />}
       </div>
       {!wide && <span className="chev" aria-hidden="true">{isOpen ? '−' : '+'}</span>}
     </button>;
@@ -1224,10 +1302,10 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
     return <button type="button" key={`row-${o.id}`} className={`eng-row eng-cardrow eng-checkrow ${isOpen ? 'on' : ''} ${stopped && answer ? 'late' : ''}`} aria-expanded={wide ? undefined : isOpen} aria-current={wide && isOpen ? 'true' : undefined} onClick={() => { if (!wide && isOpen) setSelectedSection(''); else openCard(o.id); }}>
       <span className="no">{String(i + 1).padStart(2, '0')}</span>
       <div className="main">
-        <span className="top"><span className={`kind answer-${answer?.tone ?? 'open'}`}>{answer?.label ?? 'To do'}</span><b>{o.check?.question}</b></span>
+        <span className="top"><span className={`kind answer-${answer?.tone ?? 'open'}`}>{answer?.label ?? 'To do'}</span><b>{o.check?.question}</b>{' '}{(answer || o.photos.length > 0) && <CardWhereMark where={whereOf.get(o.id)} saving={cardSaving} />}</span>
         {isOpen && !wide && stopped && answer && <span className="meta"><em>{stopped.message.slice((o.check?.question ?? '').length + 2)}</em></span>}
         {!(isOpen && !wide) && (text || o.photos.length > 0 || (stopped && answer)) && <span className="meta">{text ? text : ''}{text && o.photos.length ? ' · ' : ''}{o.photos.length ? photographs(o.photos.length) : ''}{stopped && answer ? <em>{text || o.photos.length ? ' · ' : ''}{stopped.message.slice((o.check?.question ?? '').length + 2)}</em> : null}</span>}
-        {(answer || o.photos.length > 0) && <CardWhereLine where={whereOf.get(o.id)} />}
+        {(answer || o.photos.length > 0) && <CardWhereLine where={whereOf.get(o.id)} saving={cardSaving} />}
       </div>
       {!wide && <span className="chev" aria-hidden="true">{isOpen ? '−' : '+'}</span>}
     </button>;
@@ -1246,7 +1324,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         actionPrompt={type.actionPrompt ?? 'What has to happen'}
         locations={placesToOffer(report.observations, observation.id, suggestions.locations)}
         companies={suggestions.companies}
-        photoWhere={(photoId) => { const w = whereOf.get(observation.id); const at = observation.photos.findIndex(p => p.id === photoId); return w && at >= 0 ? w.each[at] : undefined; }}
+        photoWhere={photoId => photoWhereOf(observation, photoId)}
         // Held open by choice once touched: the default (first one unanswered) moves on as soon as it is answered.
         // A first answer of Satisfactory or Not applicable needs nothing more, so the next check still to answer
         // opens by itself, or Check & sign once there are none; the folded row says the answer, and tapping it
@@ -1284,7 +1362,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           openIssues={projectIssues}
           locations={placesToOffer(report.observations, observation.id, suggestions.locations)}
           companies={suggestions.companies}
-          photoWhere={(photoId) => { const w = whereOf.get(observation.id); const at = observation.photos.findIndex(p => p.id === photoId); return w && at >= 0 ? w.each[at] : undefined; }}
+          photoWhere={photoId => photoWhereOf(observation, photoId)}
           // From the latest report, not this render's: a photograph read in the background must not undo a card added or changed meanwhile.
           onChange={(next) => { const current = latest.current ?? report; update({ ...current, observations: current.observations.map((o) => (o.id === next.id ? next : o)) }); }}
           onRemove={() => removeCardNow(observation.id)}
@@ -1324,7 +1402,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
   </button>);
 
   return (
-    <main className={sent ? "wrap eng-page eng-report-sent" : "wrap wrap-pad eng-report-editor"}>
+    <main className={`${sent ? "wrap eng-page eng-report-sent" : "wrap wrap-pad eng-report-editor"}${checklist ? " eng-inspection" : ""}`}>
       <PageTitle title={sent ? report.reference : type.name} />
       <Link href={safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`)} className="back">
         &larr; {backLabel(safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))}
@@ -1334,13 +1412,25 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
         <div>
           <h1>{sent ? report.reference : type.name}</h1>
           {/* The tag says draft or sent, and a correction's note says which revision, so the line under the title does not repeat them. */}
-          <p className="sub">{sent ? type.name : <span className="ref">{report.reference}</span>} · {project?.projectName}</p>
+          <p className="sub">{sent ? type.name : <span className="ref">{report.reference}</span>} · {project?.projectName}
+            {/* The day the office files it under; an earlier day's note below says it instead. */}
+            {!sent && !earlierDay && <span className="eng-visit-day" style={{ display: "block" }}>For {visitDay}</span>}</p>
         </div>
         <span className={sent ? "tag tag-sent" : "tag tag-draft"}>{sent ? "Sent" : report.corrects ? `Correction draft` : "Draft"}</span>
       </div>
 
       {type.inspects && <InspectedName report={report} type={type} editable={!sent && mine}
         onRenamed={name => setReport(current => current ? { ...current, inspected: name } : current)} />}
+
+      {earlierDay && (
+        <div className="note eng-earlier-day" role="note" style={{ marginTop: 16, borderLeftColor: "var(--brass)" }}>
+          <p style={{ margin: 0 }}><strong>This update is for {visitDay}.</strong> The office files everything in it under that day. Send it as it is; anything from today goes in today’s update.</p>
+          <div className="btn-row" style={{ marginTop: 10 }}>
+            <button type="button" className="btn-quiet" onClick={() => void openTodays()} disabled={toToday}>{toToday ? 'Opening…' : 'Go to today’s update'}</button>
+          </div>
+          {toTodayError && <p role="alert" style={{ margin: "8px 0 0" }}>{toTodayError}</p>}
+        </div>
+      )}
 
       {/* A correction draft says what it corrects and why, so the sent report is
           never mistaken for something that can be edited. */}
@@ -1364,18 +1454,18 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           )}
           {sentByItself && <p style={{ margin: "0 0 8px" }} role="status"><strong>Sent to the office by itself once it could get through ({fmtWhen(sentByItself)}).</strong></p>}
           <p style={{ margin: 0 }}>
-            It cannot be changed now; to put something right, make a correction.{" "}
-            <Link href={withViewReturn(`/reports/${report.id}/preview`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))} style={{ color: "var(--brass)", textDecoration: "underline", textUnderlineOffset: 3 }}>
-              See the full report &rarr;
-            </Link>
+            It cannot be changed now; to put something right, make a correction.
           </p>
+          <Link className="eng-full-report" href={withViewReturn(`/reports/${report.id}/preview`, safeViewReturn(returnTo, `/engineer?project=${encodeURIComponent(report.projectId)}`))}>
+            See the full report &rarr;
+          </Link>
           {/* Each step after sending, the same steps the office sees. An
               engineer sees received and seen, with the PDF and delivery folded
               away unless one went wrong; the office sees every step open. */}
           <SubmissionStages report={report} tagClass={toneClass} when={fmtWhen} fold={!principal || !canManage(principal)} />
           {mine && !correcting && !sentAway && (
             <div className="btn-row" style={{ marginTop: 12 }}>
-              <button className="btn-sm" onClick={() => setCorrecting(true)}>
+              <button className="btn-quiet eng-correct" onClick={() => setCorrecting(true)}>
                 {report.review === "returned" ? "Make the correction" : "Make a correction"}
               </button>
             </div>
@@ -1465,35 +1555,33 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
 
           {whereAll.text && <p className={`eng-where eng-where-${whereAll.where}`} aria-live="polite"><span className={WHERE_DOT[whereAll.where]} />{whereAll.text}</p>}
 
-          <div className="sec"><h2 className="lbl">{checklist ? 'In this inspection' : 'In this report'}</h2></div>
+          {(checklist || summed.length > 0) && <div className="sec"><h2 className="lbl">{checklist ? 'In this inspection' : 'In this report'}</h2></div>}
           {checklist ? <dl className="eng-sum">
             <div><dt>Satisfactory</dt><dd>{answers.ok}</dd></div>
             <div><dt>Action needed</dt><dd className={answers.action ? 'late' : ''}>{answers.action}<small>{answers.action ? (type.raisesRecords ? 'go on the snag list' : 'on the action list') : ''}</small></dd></div>
             <div><dt>Not applicable</dt><dd>{answers.na}</dd></div>
             <div><dt>To answer</dt><dd className={answers.open ? 'soon' : ''}>{answers.open}</dd></div>
-          </dl> : <dl className="eng-sum">
-            <div><dt>Progress</dt><dd>{counts.update}</dd></div>
-            <div><dt>Defects</dt><dd className={counts.defect ? 'late' : ''}>{counts.defect}<small>{counts.defect ? 'go on the issue list' : ''}</small></dd></div>
-            <div><dt>Variations</dt><dd className={counts.instruction ? 'soon' : ''}>{counts.instruction}<small>{counts.instruction ? 'for the office to price' : ''}</small></dd></div>
-            <div><dt>Access</dt><dd>{counts.access}<small>{counts.access ? 'go on the issue list' : ''}</small></dd></div>
+          </dl> : summed.length > 0 && <dl className={`eng-sum eng-sum-${summed.length}`}>
+            {/* Only the kinds in this update: three zeros were three more things to read past. */}
+            {summed.map(([kind, label, tone, said]) => <div key={kind}><dt>{label}</dt><dd className={tone}>{counts[kind]}<small>{said}</small></dd></div>)}
           </dl>}
 
           {checklist && <div className="eng-does">
             <span className="lbl">What sending does</span>
             <div className="eng-list" style={{ marginTop: 8 }}>
               {type.raisesRecords
-                ? <div className="eng-row"><div className="main"><b>{answers.action ? issuesSaid(report.observations.filter(o => o.check?.answer === 'action')) : 'No issues to raise'}</b><span>{answers.action ? `${report.observations.some(o => o.check?.answer === 'action' && o.linkedIssueId) ? 'Linked ones add a sighting to the existing issue. ' : ''}Each action goes on the snag list with where it is, and is listed at the top of the PDF.` : 'Every check is satisfactory or does not apply: the area is ready to hand over.'}</span></div></div>
+                ? <div className="eng-row"><div className="main"><b>{answers.action ? issuesSaid(report.observations.filter(o => o.check?.answer === 'action')) : 'No issues to raise'}</b><span>{answers.action ? `${report.observations.some(o => o.check?.answer === 'action' && o.linkedIssueId) ? 'Ones you linked are added to the issues already raised. ' : ''}Each action goes on the snag list with where it is, and is listed at the top of the PDF.` : 'Every check is satisfactory or does not apply: the area is ready to hand over.'}</span></div></div>
                 : <div className="eng-row"><div className="main"><b>{answers.action ? `${answers.action} action${answers.action === 1 ? '' : 's'} listed on the inspection` : 'No actions to list'}</b><span>Printed at the top of the PDF with who is to do each one, and followed on Safety actions until a later inspection finds it put right. Nothing is added to the issue register.</span></div></div>}
-              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>{project?.projectManager ?? 'The project manager'} is emailed only once RELAY’s email is switched on; until then, tell them yourself if it cannot wait.</span></div></div>
+              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>Filed under {visitDay}. RELAY does not email {project?.projectManager ?? 'the project manager'} yet. If it cannot wait, tell them yourself.</span></div></div>
             </div>
           </div>}
 
           {!checklist && report.observations.length > 0 && <div className="eng-does">
             <span className="lbl">What sending does</span>
             <div className="eng-list" style={{ marginTop: 8 }}>
-              {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{issuesSaid(report.observations.filter(o => o.type === 'defect' || o.type === 'access'))}</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Linked ones add a sighting to the existing issue. ' : ''}The office assigns them; you’ll see who and when on your home screen.</span></div></div>}
-              {counts.instruction > 0 && <div className="eng-row"><div className="main"><b>{counts.instruction} variation{counts.instruction === 1 ? '' : 's'} raised · need a quote</b><span>{report.observations.some(o => o.type === 'instruction' && o.workDone) ? 'Marked as already done: the office gets the client’s sign-off before it is invoiced. ' : ''}The office prices it and puts it to the client.</span></div></div>}
-              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>{project?.projectManager ?? 'The project manager'} is emailed only once RELAY’s email is switched on; until then, tell them yourself if it cannot wait.</span></div></div>
+              {counts.defect + counts.access > 0 && <div className="eng-row"><div className="main"><b>{issuesSaid(report.observations.filter(o => o.type === 'defect' || o.type === 'access'))}</b><span>{report.observations.filter(o => (o.type === 'defect' || o.type === 'access') && o.linkedIssueId).length ? 'Ones you linked are added to the issues already raised. ' : ''}The office says who sorts them out; you’ll see who on your home screen.</span></div></div>}
+              {counts.instruction > 0 && <div className="eng-row"><div className="main"><b>{counts.instruction} variation{counts.instruction === 1 ? '' : 's'} raised · need a quote</b><span>{report.observations.some(o => o.type === 'instruction' && o.workDone) ? 'Marked as already done: the office gets the client to agree it. ' : ''}The office prices it and puts it to the client.</span></div></div>}
+              <div className="eng-row"><div className="main"><b>The office can read it straight away</b><span>Filed under {visitDay}. RELAY does not email {project?.projectManager ?? 'the project manager'} yet. If it cannot wait, tell them yourself.</span></div></div>
             </div>
           </div>}
           </div>
@@ -1502,13 +1590,14 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           <div className="sec"><h2 className="lbl">{type.signatureRequired ? 'Sign' : 'Sign · optional'}</h2></div>
           {type.signatureRequired && <p className="hint eng-sign-hint">An inspection is signed by the person who carried it out: draw your signature, or type your name if you can’t draw.</p>}
 
-          <section className="panel">
+          {!signOpen ? <button type="button" className="btn-quiet btn-wide eng-sign-open" onClick={() => { focusSign.current = true; setSignShown(true); }}>Add your signature</button>
+          : <section className="panel" id="sign-panel" ref={signPanel} tabIndex={-1} aria-label="Your signature">
             <div className="panel-body">
               <SignaturePad
                 name={signerName}
                 initialImage={signatureImage}
                 onNameChange={(next) => updateSignature(next, signatureImage, signatureTyped)}
-                onChange={(image) => updateSignature(signerName, image)}
+                onChange={(image) => { setSignShown(true); updateSignature(signerName, image); }}
                 {...(type.signatureRequired ? {
                   typed: signatureTyped,
                   onTypedChange: (next: boolean) => updateSignature(signerName, null, next),
@@ -1516,7 +1605,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
                 } : {})}
               />
             </div>
-          </section>
+          </section>}
           </div>
         </div>}
 
@@ -1535,7 +1624,7 @@ export default function ReportPage({ params, searchParams }: { params: Promise<{
           </div>}
           {/* Why the work is not on the server, where it is seen: above the button, not below the cards. */}
           {waiting && step === 'check' && !submitError && <div className="note eng-save-problem is-waiting eng-send-waiting" role="status">
-            <b>{waiting === 'signal' ? 'Waiting for signal.' : 'Waiting for RELAY’s server.'}</b> It goes to the office by itself as soon as {waiting === 'signal' ? 'this phone has signal' : 'it answers'}, while RELAY is open. It is kept on this phone until then.
+            <b>{waiting === 'signal' ? 'Waiting for signal.' : 'Waiting for RELAY to answer.'}</b> It goes to the office by itself as soon as {waiting === 'signal' ? 'this phone has signal' : 'it answers'}, while RELAY is open. It is kept on this phone until then.
             <div><button type="button" className="btn-quiet btn-sm" onClick={() => stopWaiting(report.id)}>Don’t send yet</button></div>
           </div>}
           {(submitError || (saveProblemText && !(waiting && step === 'check'))) && <div className={`note eng-save-problem ${!submitError && (saveState === 'signedout' || saveState === 'server') ? 'is-waiting' : 'note-bad'}`} role="alert">{submitError ?? saveProblemText}</div>}
@@ -1565,12 +1654,29 @@ function onServerOf(r: Report, version = r.version): OnServer {
   return { cards: Object.fromEntries(r.observations.map(o => [o.id, savedCopy(o)])), signature: signatureCopy(r), version };
 }
 
-/** One line under a folded card: on the server, or what is still to go up. */
-function CardWhereLine({ where }: { where: ReturnType<typeof cardWhere> | undefined }) {
-  if (!where) return null;
+/**
+ * A card that is saved, or on its way, says so quietly beside its place: a dot
+ * (the word is for screen readers) or a short word. Only work that has not gone
+ * up gets a line of its own (CardWhereLine).
+ */
+function quietWhere(where: ReturnType<typeof cardWhere> | undefined, saving: boolean): Where | undefined {
+  if (!where) return undefined;
+  if (where.where === 'server' || where.where === 'uploading') return where.where;
+  return where.where === 'pending' && saving ? 'uploading' : undefined;
+}
+
+function CardWhereMark({ where, saving }: { where: ReturnType<typeof cardWhere> | undefined; saving: boolean }) {
+  const quiet = quietWhere(where, saving);
+  if (!quiet) return null;
+  const words = quiet === 'server' ? WHERE.server : where!.where === 'uploading' ? WHERE.uploading : 'Saving';
+  return <span className={`eng-where eng-where-mark eng-where-${quiet}`}><span className={quiet === 'server' ? WHERE_DOT.server : 'dot'} />{quiet === 'server' ? <span className="shot-where-said">{words}</span> : words}</span>;
+}
+
+/** A line under a folded card when its work is not yet saved: what is still to go up. */
+function CardWhereLine({ where, saving }: { where: ReturnType<typeof cardWhere> | undefined; saving: boolean }) {
+  if (!where || quietWhere(where, saving)) return null;
   const left = where.photos - where.photosOnServer;
-  const detail = where.where === 'server' || where.where === 'uploading' ? ''
-    : !where.text ? (left ? ` · changes and ${photographs(left)}` : ' · changes')
+  const detail = !where.text ? (left ? ` · changes and ${photographs(left)}` : ' · changes')
     : left ? ` · ${photographs(left)}` : '';
   return <span className={`eng-where eng-where-${where.where}`}><span className={WHERE_DOT[where.where]} />{WHERE[where.where]}{detail}</span>;
 }

@@ -10,7 +10,7 @@ import { fmtWhen } from './model';
 import { welcomeText } from '@/lib/welcomeMessage';
 import { useFeatures } from '@/components/FeaturesContext';
 import { SAFETY_RECORDS_COVERS, SAFETY_RECORDS_NAME } from '@/lib/featureSwitch';
-import { lastSentWords } from '@/lib/teamActivity';
+import { lastSentWords, thisWeekWords } from '@/lib/teamActivity';
 
 const ROLE_WORDS: Record<string, string> = { Admin: 'Everything, plus the Admin tab', Manager: 'Office, all projects', Engineer: 'Own drafts, submitted reports, issues' };
 const sees = (m: TeamMember) => ROLE_WORDS[m.assignment.split('.')[0] ?? ''] ?? 'Not known until they sign in';
@@ -21,7 +21,9 @@ const roleWords = (assignment: string) => assignment.split('.').map(w => w === '
 /**
  * "Last sent": the site and day of their latest report, so the office can see
  * a new site reporting, or who has not got going yet, without opening anyone.
- * The site links to that report.
+ * The site links to that report. Under it, the days this week they sent a
+ * report for and how many sites, so "who has sent updates this week" needs no
+ * other page.
  */
 function LastSentCell({ ctx, m }: { ctx: Ctx; m: TeamMember }) {
   const project = m.lastSent && ctx.projects.find(p => p.id === m.lastSent!.projectId);
@@ -31,6 +33,7 @@ function LastSentCell({ ctx, m }: { ctx: Ctx; m: TeamMember }) {
       : project && m.lastSent ? <a className="rowtitle" style={{ fontSize: 13 }} href={`#/projects/${project.id}/report/${m.lastSent.reportId}`} onClick={e => e.stopPropagation()}>{w.title}</a>
       : <div className="rowtitle" style={{ fontSize: 13 }}>{w.title}</div>}
     {w.sub && <div className="rowsub">{w.sub}</div>}
+    {m.lastSent && <div className="rowsub" data-week>{thisWeekWords(m.thisWeek, ctx.day)}</div>}
   </td>;
 }
 
@@ -55,7 +58,7 @@ function RosterTable({ ctx, members }: { ctx: Ctx; members: TeamMember[] | null 
 
 export function TeamView({ ctx }: { ctx: Ctx }) {
   const team = ctx.team;
-  return <div className="view">
+  return <div className="view team-view">
     <div className="pagehead"><div><h2>Team</h2><p>{team ? `${team.members.length} ${team.members.length === 1 ? 'person' : 'people'} · ${team.members.filter(m => m.session === 'active').length} signed in now` : 'Loading the team'}</p></div></div>
     {/* One list of people: the Admin's has the changes on it, everyone else's is read-only. The server refuses changes from anyone but the Admin. */}
     {ctx.me.admin ? <People ctx={ctx} /> : <RosterTable ctx={ctx} members={team?.members ?? null} />}
@@ -70,7 +73,7 @@ export function AdminView({ ctx }: { ctx: Ctx }) {
   if (!ctx.me.admin) return <div className="view"><div className="pagehead"><div><h2>Administration</h2><p>Admin role only</p></div></div><div className="empty">Administration is for the Admin role. Managers see the Team tab.</div></div>;
   const legacy = team?.legacyDrafts ?? [];
   const processing = team?.processing;
-  return <div className="view">
+  return <div className="view admin-view">
     <div className="pagehead"><div><h2>Administration</h2><p>Processing, older drafts and settings for Leodis Developments · signed in through Microsoft · people are on the Team tab</p></div>
       <div className="actions"><a className="btn btn-q" href="https://entra.microsoft.com" target="_blank" rel="noreferrer">Open Microsoft Entra ↗</a></div></div>
     <div className="filters">
@@ -127,7 +130,7 @@ function People({ ctx }: { ctx: Ctx }) {
   const members = ctx.team?.members ?? null;
   const [sel, setSel] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
-  const listed = (members ?? []).filter(m => m.onChecklist || m.session !== 'never');
+  const listed = (members ?? []).filter(m => m.onChecklist || m.session !== 'never' || !!m.lastSent);
   const selected = listed.find(m => m.email.toLowerCase() === sel);
   const unnamed = listed.filter(m => m.onChecklist && !m.name);
   const saved = () => { ctx.loadTeam(); void ctx.refresh(); };

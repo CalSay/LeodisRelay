@@ -33,6 +33,11 @@ function isOpen(issue: Issue): boolean {
   return issue.confirmation !== "withdrawn" && issue.work !== "closed";
 }
 
+/** Checked and closed. A withdrawn issue is neither open nor closed; it shows under All with its tag. */
+function isClosed(issue: Issue): boolean {
+  return issue.confirmation !== "withdrawn" && issue.work === "closed";
+}
+
 function statusLabel(issue: Issue): string {
   if (issue.confirmation === "withdrawn") return "Withdrawn";
   switch (issue.work) {
@@ -66,7 +71,7 @@ export function IssueRegister({ issues, returnTo }: { issues: Issue[] | null; re
 
   const counts = {
     open: issues?.filter(isOpen).length ?? 0,
-    closed: issues?.filter((i) => i.work === "closed").length ?? 0,
+    closed: issues?.filter(isClosed).length ?? 0,
     all: issues?.length ?? 0,
   };
 
@@ -77,11 +82,12 @@ export function IssueRegister({ issues, returnTo }: { issues: Issue[] | null; re
         ? issues
         : filter === "open"
           ? issues.filter(isOpen)
-          : issues.filter((i) => i.work === "closed");
+          : issues.filter(isClosed);
 
   // Awaiting verification is somebody's next action rather than a status, so it
   // is surfaced on the header instead of being left for the reader to count.
-  const toVerify = issues?.filter((i) => i.work === "awaiting_verification").length ?? 0;
+  // Withdrawn issues are left out, as on every other office figure (lib/officeActions.ts).
+  const toVerify = issues?.filter((i) => isOpen(i) && i.work === "awaiting_verification").length ?? 0;
 
   return (
     <>

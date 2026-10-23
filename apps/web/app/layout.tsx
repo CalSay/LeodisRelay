@@ -17,6 +17,7 @@ import { InstallRelay } from '@/components/InstallRelay';
 import { HeldWork } from '@/components/HeldWork';
 import { DefectsOnSignal } from '@/components/DefectsOnSignal';
 import { SignedOutPrompt } from '@/components/SignedOutPrompt';
+import { IconOpensBrowser } from '@/components/IconOpensBrowser';
 import { ProjectContext } from '@/components/ProjectContext';
 import { refreshProjects, reportableProject, type ConnectedProject } from '@/lib/projects';
 import { sharePointMode } from '@/lib/sharepoint/config';
@@ -53,6 +54,10 @@ export const metadata: Metadata = {
   title: { default: "RELAY", template: "%s · RELAY" },
   description: "Leodis site reporting",
   appleWebApp: { capable:true, title:'RELAY', statusBarStyle:'default' },
+  // Next.js writes appleWebApp.capable as the newer "mobile-web-app-capable"
+  // only. Older iPhones still look for Apple's own name before opening the
+  // home screen icon full screen, without Safari's address bar.
+  other: { 'apple-mobile-web-app-capable': 'yes' },
 };
 
 export const viewport: Viewport = {
@@ -115,20 +120,24 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               {principal && canManage(principal) && <Link href="/office">Office</Link>}
               {principal && isAdmin(principal) && <Link href="/admin">Admin</Link>}
               {principal && <Link href="/help">Help</Link>}
+            </nav>
+            {/* Not navigation: kept beside the brand on a phone, so the links get a row of their own. */}
+            <div className="appbar-tools">
               {principal && (
-                <form action="/api/auth/signout" method="POST" style={{ display: "inline" }}>
-                  <button type="submit" className="whoami" title="Sign out">
-                    {principal.role==='Engineer'?'Sign out':`${principal.name} · ${principal.role} · Sign out`}
+                <form action="/api/auth/signout" method="POST">
+                  <button type="submit" className="whoami" title={principal.role==='Engineer'?'Sign out':`${principal.name}, ${principal.role}. Sign out`}>
+                    Sign out
                   </button>
                 </form>
               )}
               <ThemeToggle />
-            </nav>
+            </div>
           </div>
         </header>
 
         <InstallRelay /></WorkspaceChrome>
         <SignedOutPrompt />
+        <IconOpensBrowser />
         <FeaturesContext features={{ safetyRecords: safetyRecordsOn() }}><PrincipalContext principal={principal}><HeldWork /><DefectsOnSignal /><ProjectContext projects={projects} error={projectError}>{children}</ProjectContext></PrincipalContext></FeaturesContext>
       </body>
     </html>

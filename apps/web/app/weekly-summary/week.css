@@ -42,12 +42,26 @@
 .week-work.all .week-extra{display:block;}
 .week-work button{margin-top:4px;min-height:44px;padding:0 12px;font-size:13px;}
 .week-foot{margin-top:24px;font-size:12.5px;color:var(--text-2);}
+/* On a phone the four figures stay on the first screen (one line each); the open issues are under Issues. */
+@media screen and (max-width:640px){.week-open-figure{display:none;}}
 @media (max-width:640px){
-  .week-sheet{padding:16px;}
+  .week-sheet{padding:14px;}
   .week-facts,.week-stats{grid-template-columns:repeat(2,minmax(0,1fr));}
   .week-rows > li{grid-template-columns:1fr;gap:2px;}
-  .week-step{width:100%;}.week-step button{flex:1 1 auto;}
-  .week-controls .btn-primary{width:100%;}
+  /* Three rows of controls (project; week or month and print; the steps), so the period and its figures reach the first screen. */
+  .week-controls{gap:10px;padding:12px;margin-bottom:10px;}
+  /* The project has a row of its own at every phone width, so Week or Month and print always share the second. */
+  .week-controls label{flex-basis:100%;}
+  .week-step{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;}.week-step button{padding:2px 6px;font-size:13.5px;line-height:1.2;white-space:normal;}
+  /* Reading comes first on a phone: print is a plain outlined button, not the gold one. */
+  .week-controls .week-print{flex:1 1 auto;padding:0 10px;font-size:13.5px;background:var(--panel);color:var(--brass);border:1px solid var(--brass);}
+  .week-controls .week-print:disabled{color:var(--text-3);border-color:var(--line-2);}
+  /* A mouse in a narrow window: the gold button's hover would put brass text on darker brass. */
+  @media (hover:hover){.week-controls .week-print:hover:not(:disabled){background:var(--brass-wash);border-color:var(--brass);color:var(--brass);}}
+  .week-head{padding-bottom:12px;}
+  .week-head h1{font-size:24px;}
+  .week-facts{gap:6px 10px;}
+  .week-facts dd{font-size:13px;}
 }
 @media print{
   @page{size:A4;margin:14mm 12mm;}
@@ -91,6 +105,7 @@
 .month-weeks tfoot th,.month-weeks tfoot td{font-weight:700;border-top:2px solid var(--line-2);border-bottom:0;}
 .month-place{font-size:14px;}
 .month-extra{display:none !important;}
+.month-print-only{display:none;}
 .month-more{margin-top:8px;min-height:44px;padding:0 12px;font-size:13px;}
 .week-when.late{color:var(--alert);}
 .month-companies{list-style:none;margin:6px 0 0;padding:0;}
@@ -109,16 +124,56 @@
 .month-lists details > .week-rows,.month-lists details > .week-none{padding:0 14px 6px;border-top:1px solid var(--line);}
 @media (max-width:640px){
   .month-stats{grid-template-columns:repeat(2,minmax(0,1fr));}
+  .month-sheet .week-section{margin-top:20px;}
   .month-photos{grid-template-columns:repeat(2,minmax(0,1fr));}
-  .week-period{width:100%;}.week-period button{flex:1 1 0;}
+  .week-period{flex:1 1 auto;}.week-period button{flex:1 1 0;padding:0 12px;min-height:48px;}
+}
+/* Week by week on a phone: one block a week with all six figures labelled, not seven columns behind a sideways scroll. */
+@media screen and (max-width:640px){
+  .month-weeks-wrap{overflow:visible;}
+  .month-weeks,.month-weeks tbody,.month-weeks tfoot{display:block;}
+  .month-weeks thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+  .month-weeks tr{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 10px;padding:10px 0;border-bottom:1px solid var(--line);}
+  .month-weeks th,.month-weeks td{padding:0;border:0;text-align:left;}
+  .month-weeks th[scope=row]{grid-column:1/-1;white-space:normal;}
+  .month-weeks td{display:flex;flex-direction:column;justify-content:flex-end;font-size:17px;font-weight:600;}
+  .month-weeks td::before{content:attr(data-label);content:attr(data-label) / "";font:500 9.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--text-3);margin-bottom:2px;}
+  .month-weeks tfoot tr{border-top:2px solid var(--line-2);border-bottom:0;}
+  .month-weeks tfoot th,.month-weeks tfoot td{border:0;}
 }
 @media print{
   .month-stats{grid-template-columns:repeat(3,minmax(0,1fr)) !important;}
   .month-figure{text-decoration:none;color:#111;}
   .month-extra{display:grid !important;}
+  .month-extra.month-late-extra{display:none !important;}
+  .month-print-only{display:block;}
   .month-weeks th[scope=row] a{color:#111;text-decoration:none;}
   .month-companies details > .week-rows{display:none;}
   .month-companies > li{background:#fff;break-inside:avoid;}
   .month-photos{grid-template-columns:repeat(4,minmax(0,1fr));}
   .month-sheet .week-section{break-inside:auto;}
+}
+
+/* Release 1 polish (O5). On screen each part of the summary is a card with a
+   clear edge (Cal, 21 Oct 12:59), as the project and issue sheets are (O2,
+   O3): the title and facts sit on the page ground, the figures are tiles, and
+   On site, Issues, Variations and each of the month's parts is a card. The
+   sheet itself is no longer a box, so there is no box inside a box. Paper is
+   unchanged: these rules are screen only. */
+@media screen{
+  .week-controls{border-color:var(--line-2);}
+  .week-sheet{background:none;border:0;border-radius:0;padding:0;}
+  .week-head{padding:4px 0 0;border-bottom:0;}
+  .week-head h1{text-wrap:balance;}
+  .week-stats div{background:var(--panel);border-color:var(--line-2);}
+  .week-section,.month-sheet .week-section{margin-top:16px;padding:2px 20px 18px;background:var(--panel);border:1px solid var(--line-2);border-radius:10px;}
+  .week-section h2,.month-sheet .week-section h2{margin-top:14px;border-bottom:1px solid var(--line);}
+  /* The month's figures card holds its own tiles: they take the sunken ground so they read as tiles, not as a second card. */
+  .month-sheet .month-stats div{background:var(--panel-2);border-color:var(--line);}
+  .week-foot{margin-top:18px;}
+}
+@media screen and (max-width:640px){
+  .week-head{padding-top:6px;}
+  .week-section,.month-sheet .week-section{margin-top:12px;padding:0 14px 14px;}
+  .week-section h2,.month-sheet .week-section h2{margin-top:12px;}
 }

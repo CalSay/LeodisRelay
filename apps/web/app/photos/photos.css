@@ -45,6 +45,10 @@
 
 @media (max-width:640px){
   .photos-controls{grid-template-columns:1fr;}
+  /* The heading names the project, and "Every month", "Every day" or the chosen one say what each choice is,
+     so the first screen keeps room for photographs. The two titles stay for screen readers. */
+  .photos-intro{display:none;}
+  .photos-when .photos-label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;}
   .photos-day-step{gap:6px;}
   .photos-day-step button{padding:6px 10px;font-size:13px;}
   .photos-show{flex-wrap:nowrap;overflow-x:auto;margin:0 -14px;padding:0 14px 2px;scrollbar-width:none;}
@@ -59,3 +63,9 @@
   .photos-viewer-actions{grid-template-columns:1fr 1fr;}
   .photos-viewer-actions a.btn-primary{grid-column:1/-1;grid-row:1;}
 }
+
+/* Release 1 polish E7 (2026-10-22): Back and the kind buttons are a thumb's width tall, and the
+   choices box has an edge that holds in dark mode. */
+.photos-page>.back{min-height:48px;padding-block:8px;}
+.photos-controls{border-color:var(--line-2);}
+.photos-show button{min-height:48px;}

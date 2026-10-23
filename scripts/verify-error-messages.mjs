@@ -70,7 +70,7 @@ try {
     const box=()=>card().locator('textarea').first();
     // On a phone the bottom bar steps aside while a box has the keyboard, so each edit ends by leaving the box.
     const write=async text=>{await box().fill(text);await page.evaluate(()=>document.activeElement?.blur());};
-    const saved=()=>state.filter({hasText:'Saved on server'}).waitFor({timeout:T(40000)});
+    const saved=()=>state.filter({hasText:'Saved to RELAY'}).waitFor({timeout:T(40000)});
     const draft=createReport('proj-011lme',engineer.name,engineer);
 
     await step(`${label}: open a draft`,async()=>{
@@ -108,7 +108,7 @@ try {
       await state.filter({hasText:/not answering|Not saved/i}).waitFor({timeout:T(15000)});
       await shot('server-error');
       const said=await visibleText();
-      ok(/RELAY’s server/i.test(said)&&/kept on this phone/i.test(said)&&/tries again by itself/i.test(said),`${label}: says the server is at fault, the work is kept and it tries again`);
+      ok(/RELAY is not answering/i.test(said)&&/kept on this phone/i.test(said)&&/tries again by itself/i.test(said),`${label}: says the server is at fault, the work is kept and it tries again`);
       ok(!RAW.test(said)&&!/502|Bad Gateway/.test(said),`${label}: no status code on a server error`);
       await page.unroute('**/api/reports/*');
       await saved();

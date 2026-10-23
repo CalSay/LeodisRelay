@@ -7,8 +7,7 @@ import { getVariation, variationCommand } from "@/lib/api";
 import { useProjectLookup } from '@/components/ProjectContext';
 import type { Variation } from "@/lib/types";
 import { PhotoImage } from '@/components/PhotoImage';
-import { VariationTags } from '@/components/EngineerWorkspace';
-import { fmtMoney, signedCopyLink, variationValue } from '@/lib/variations';
+import { fmtMoney, instructionParts, signedCopyLink, variationValue } from '@/lib/variations';
 import { backLabel, safeViewReturn } from '@/lib/viewNavigation';
 import { dayShort } from '@/lib/dates';
 import { variationWord } from '@/lib/cameBack';
@@ -54,13 +53,13 @@ export default function VariationPage({ params, searchParams }: { params: Promis
   const evidence = v.events.find(e => e.kind === 'raised')?.photos ?? [];
   const value = variationValue(v);
   const declinedWhy = v.instruction === 'declined' ? v.events.slice().reverse().find(e => e.kind === 'declined')?.note : undefined;
-  const headline = v.instruction === 'instructed' ? `Instructed · ${v.instructionReference}`
+  const headline = v.instruction === 'instructed' ? instructionParts('Instructed', v.instructionReference)
     : v.instruction === 'declined' ? 'Declined'
     : v.instruction === 'within_contract' ? 'Within contract'
     : v.workDone ? 'Done without a written instruction'
     : v.quotedValue !== undefined ? `Quoted ${fmtMoney(v.quotedValue)}`
     : 'With the office';
-  const detail = v.instruction === 'instructed' ? `${v.instructedBy ?? ''} · ${v.instructedOn ?? ''} · ${fmtMoney(value)}${v.signedInstruction ? ' · signed copy on file' : ''}`
+  const detail = v.instruction === 'instructed' ? instructionParts(v.instructedBy, dayShort(v.instructedOn) || v.instructedOn, fmtMoney(value), v.signedInstruction ? 'signed copy on file' : undefined)
     : v.instruction === 'declined' ? (declinedWhy ?? 'The client will not instruct it.')
     : v.instruction === 'within_contract' ? 'The office found this is within our contract, so it is not charged.'
     : v.workDone ? 'The office is getting the client’s sign-off for it as a chargeable variation before it is invoiced.'
@@ -70,15 +69,15 @@ export default function VariationPage({ params, searchParams }: { params: Promis
   const word = principal && principal.id === v.raisedById ? variationWord(v.events, principal) : undefined;
   const meta = [v.reason, v.workDone && 'already carried out when raised', v.askedBy && `asked for by ${v.askedBy}`, v.labourHours !== undefined && `about ${v.labourHours} hours`, v.partsCost !== undefined && `parts about ${fmtMoney(v.partsCost)}`].filter(Boolean).join(' · ');
 
-  return <main className="wrap eng-page">
+  return <main className="wrap eng-page eng-variation">
     <PageTitle title={`${v.reference} · Variation`} />
     <Link href={back} className="back">&larr; {backLabel(back, 'Site')}</Link>
+    {/* The office's answer is said once, in the band below, not again as a tag up here (Release 1 polish E4). */}
     <div className="pagehead">
       <div><h1 className="ref" style={{ fontSize: 22 }}>{v.reference}</h1><p className="sub">{project ? `${project.projectName} · ` : ''}{v.location || 'Location not recorded'} · raised {fmtDay(v.raisedAt)} by {v.raisedBy}</p></div>
-      <span style={{ display: 'flex', gap: 6, flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', fontSize: 12, color: 'var(--text-3)' }}><VariationTags v={v} /></span>
     </div>
 
-    <section className={`eng-band ${v.workDone && v.instruction === 'pending' ? 'alert' : ''}`} style={{ marginTop: 20 }}>
+    <section className={`eng-band ${v.workDone && v.instruction === 'pending' ? 'alert' : ''}`}>
       <span className="lbl">The office</span>
       <h2 style={{ fontSize: 20 }}>{headline}</h2>
       <p>{detail}</p>
@@ -87,7 +86,7 @@ export default function VariationPage({ params, searchParams }: { params: Promis
     {word && word.note !== declinedWhy?.trim() && <OfficeWordBox key={`${word.at}${word.note}`} word={word} />}
 
     <section className="eng-panel">
-      <div className="eng-section-title" style={{ margin: '0 0 8px' }}><h2>{v.location || 'No location'}</h2><span className="kind tone-variation">Variation</span></div>
+      <div className="eng-section-title" style={{ margin: '0 0 8px' }}><h2>{v.location || 'No location'}</h2></div>
       <p style={{ margin: 0 }}>{v.description}</p>
       {meta && <p className="eng-help">{meta}</p>}
       {evidence.length > 0 && <div className="shots">{evidence.map((p, i) => <figure key={p.id} className="shot" style={{ margin: 0 }}><PhotoImage src={p.dataUrl} alt={p.caption || `Photograph ${i + 1}`} />{p.caption && <div className="shot-body"><span className="shot-no">{p.caption}</span></div>}</figure>)}</div>}
@@ -99,11 +98,11 @@ export default function VariationPage({ params, searchParams }: { params: Promis
     </div>
 
     <div className="eng-section-title"><h2>Add a note</h2></div>
-    <section className="panel"><div className="panel-body">
+    <section className="eng-panel eng-variation-note">
       <div className="field"><label htmlFor="note">Anything the office should know</label><textarea id="note" value={note} onChange={e => setNote(e.target.value)} placeholder="The site manager confirmed it verbally on Tuesday; the panel is now fitted" /></div>
       {error && <div className="note note-bad">{error}</div>}
       <div className="btn-row"><button type="button" onClick={() => void sendNote()} disabled={busy}>{busy ? 'Sending…' : 'Send note'}</button></div>
       <p className="eng-help">Pricing and instructions are recorded by the office. Your note goes on the variation’s history for them to see.</p>
-    </div></section>
+    </section>
   </main>;
 }

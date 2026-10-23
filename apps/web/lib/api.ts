@@ -16,7 +16,7 @@ import { localSaveJournal } from './localSaveJournal';
 import { SaveConflict, saveWithJournal, type SaveRequest } from './saveRequest';
 import type { SinceLastVisit } from './sinceLastVisit';
 import type { CameBack, CameBackElsewhere } from './cameBack';
-import type { LastSent } from './teamActivity';
+import type { LastSent, SentThisWeek } from './teamActivity';
 import type { ReportTypeId } from './reportTypes';
 import type { ProjectSuggestions } from './suggestions';
 import type { SafetyActions } from './safetyActions';
@@ -250,7 +250,7 @@ export async function officeAll(): Promise<{ reports: ReportSummary[]; drafts: R
   return { reports: unique(reports), drafts: unique(drafts) };
 }
 
-/** Every issue for the office desk, each with its latest event only, and a fix to check's latest put forward (lib/officeActions.ts `deskIssue`). */
+/** Every issue for the office desk, each with its latest event only, and a fix to check's rounds of put forward, sent back and verified (lib/officeActions.ts `deskIssue`). */
 export async function allIssues(): Promise<Issue[]> {
   const data = await parse<{ issues: Issue[] }>(await request('/api/issues?view=desk', { cache: 'no-store' }));
   return data.issues;
@@ -304,6 +304,8 @@ export interface TeamMember {
   addedByRelay?: boolean;
   /** Their latest sent report (lib/teamActivity.ts). */
   lastSent?: LastSent;
+  /** The days from Monday to today they sent a report for, and the sites. */
+  thisWeek?: SentThisWeek;
 }
 export interface RelayPerson { id: string; email: string; relayName?: string; assignment?: string; removed?: boolean; addedById?: string; addedAt?: string; log: PersonLogEntry[] }
 /** One Admin change to the people checklist. Never grants access. */
@@ -389,7 +391,7 @@ export { reviewReport } from "./review";
 /** Places and responsible companies already typed on this project, newest first, for the card chips. Never a catalogue. */
 export async function projectSuggestions(projectId: string): Promise<ProjectSuggestions> {
   const data = await parse<Partial<ProjectSuggestions>>(await request(`/api/locations?projectId=${encodeURIComponent(projectId)}`, { cache: 'no-store' }));
-  return { locations: data.locations ?? [], companies: data.companies ?? [] };
+  return { locations: data.locations ?? [], companies: data.companies ?? [], byTrade: data.byTrade ?? {} };
 }
 
 /* --------------------------------------------------------------- variations */
