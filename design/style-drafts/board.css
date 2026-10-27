@@ -1,0 +1,155 @@
+/*
+ * Style draft C: "Site board".
+ *
+ * Built for a phone in sunlight and a laptop across a desk. Strong contrast,
+ * bigger type and chunkier rows. Every section opens with a solid dark bar
+ * carrying its name, like the headed boards on a site cabin wall, so you can
+ * find a section at a glance. Status is a solid block of colour with a word
+ * on it: red late, green done, amber waiting, grey nothing to do. The main
+ * action is a bright gold with dark text.
+ *
+ * A draft laid over the app at render time, not wired into the app.
+ */
+
+:root, :root .ws, :root .entry-wrap {
+  --ground: #e8e6e0 !important; --sunken: #dedbd4 !important;
+  --panel: #ffffff !important; --panel-2: #f3f2ee !important; --panel-3: #e8e6e0 !important;
+  --line: #d9d6ce !important; --line-2: #b9b5ab !important; --edge: #6e6a61 !important;
+  --text: #0f1011 !important; --text-2: #34363a !important; --text-3: #4a4d52 !important;
+  --chrome: #1d2024 !important;
+  --brass: #e3ab1f !important; --acc: #8a6410 !important; --gold: #e3ab1f !important;
+  --brass-ink: #0f1011 !important; --acc-ink: #0f1011 !important; --gold-ink: #0f1011 !important;
+  --brass-hover: #f0ba2e !important;
+  --brass-wash: rgba(227,171,31,.16) !important; --acc-wash: rgba(227,171,31,.16) !important; --gold-wash: rgba(227,171,31,.16) !important;
+  --alert: #b8321a !important; --ok: #1f6b44 !important; --caution: #9a6a00 !important;
+  --alert-wash: #fbe9e4 !important; --ok-wash: #e4f2ea !important; --caution-wash: #fdf1d3 !important;
+  --band: #1d2024 !important; --band-line: #1d2024 !important; --band-text: #ffffff !important; --band-muted: #c4c8cc !important; --band-brass: #f2c14a !important;
+  --bar: #1d2024; --bar-text: #ffffff;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]), :root:not([data-theme="light"]) .ws, :root:not([data-theme="light"]) .entry-wrap {
+    --ground: #08090a !important; --sunken: #050606 !important;
+    --panel: #15171a !important; --panel-2: #1c1f23 !important; --panel-3: #262a2f !important;
+    --line: #2b3036 !important; --line-2: #444b53 !important; --edge: #79818a !important;
+    --text: #ffffff !important; --text-2: #d3d7db !important; --text-3: #b3b9bf !important;
+    --chrome: #15171a !important;
+    --brass: #f2c14a !important; --acc: #f2c14a !important; --gold: #f2c14a !important;
+    --brass-ink: #0b0c0d !important; --acc-ink: #0b0c0d !important; --gold-ink: #0b0c0d !important;
+    --brass-wash: rgba(242,193,74,.14) !important; --acc-wash: rgba(242,193,74,.14) !important; --gold-wash: rgba(242,193,74,.14) !important;
+    --alert: #ff8a70 !important; --ok: #72d3a0 !important; --caution: #f2c14a !important;
+    --alert-wash: rgba(255,138,112,.14) !important; --ok-wash: rgba(114,211,160,.13) !important; --caution-wash: rgba(242,193,74,.13) !important;
+    --band: #23272c !important; --band-line: #23272c !important;
+    --bar: #2a2f35; --bar-text: #ffffff;
+  }
+}
+
+body { font-size: 16px !important; }
+
+/* ── Status: solid blocks with a word ─────────────────────────────────── */
+.tag, .ws .tag, .kind, .ws .kind {
+  font-family: var(--sans) !important; text-transform: none !important; letter-spacing: 0 !important;
+  font-size: 12.5px !important; font-weight: 700 !important; border: 0 !important; border-radius: 4px !important;
+  padding: 3px 9px !important; line-height: 1.35 !important; color: #fff !important;
+}
+.tag::before, .ws .tag::before { display: none !important; }
+.tag-alert, .ws .tag-alert { background: var(--alert) !important; }
+.tag-sent, .ws .tag-ok { background: var(--ok) !important; }
+.tag-draft, .ws .tag-caution, .ws .tag-acc { background: var(--caution) !important; }
+.ws .tag-quiet, .tag-quiet { background: var(--panel-3) !important; color: var(--text) !important; }
+.kind, .ws .kind { background: var(--tone, var(--text-3)) !important; }
+.kind.tone-neutral, .ws .kind.tone-neutral { background: var(--panel-3) !important; color: var(--text) !important; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) :is(.tag-alert, .tag-sent, .tag-draft, .ws .tag-ok, .ws .tag-caution, .kind:not(.tone-neutral)) { color: #0b0c0d !important; }
+}
+
+/* ── Chrome: a dark top bar ──────────────────────────────────────────── */
+.appbar, .ws .topbar { background: var(--chrome) !important; border: 0 !important; color: #fff; }
+.appbar :is(a, button), .ws .topbar :is(a, button, span) { color: #fff !important; }
+.appbar :is(button, .tbtn), .ws .topbar :is(.tbtn, .themebtn, .whoami, .bell) { background: transparent !important; border-color: #4a5058 !important; }
+.ws .topbar .search input { background: #2b2f34 !important; color: #fff !important; border-color: #4a5058 !important; }
+
+/* ── Panels: white, square, with a dark name bar ─────────────────────── */
+.eng-list, .panel, .ws .panel, .ws .pagehead, .ws .glance-group, .ws .act, .ws .today-project,
+.ws .from-site-visit, .ws .tb, .ws .sheet-links, .week-section, .week-stats > div {
+  border: 1px solid var(--line-2) !important; border-radius: 4px !important; box-shadow: none !important; background: var(--panel) !important; overflow: hidden;
+}
+.ws .colpad > .sheet { border: 0 !important; background: transparent !important; padding: 0 !important; }
+.ws .inbox-reader .sheet, .ws .panel .sheet { border: 0 !important; }
+.ws .sheet-title { border: 0 !important; background: transparent !important; padding: 4px 0 12px !important; }
+.ws .pagehead { border-left: 6px solid var(--brass) !important; padding: 16px 20px !important; }
+.ws .pagehead :is(h2,h3) { font-size: 26px !important; font-weight: 700 !important; }
+.ws .filters { border: 0 !important; background: transparent !important; padding-left: 0 !important; padding-right: 0 !important; }
+
+.ws .panel-head, .ws .grp, .ws .act-h {
+  background: var(--bar) !important; color: var(--bar-text) !important; border: 0 !important; border-left: 0 !important;
+  padding: 11px 16px !important; font-size: 15px !important; font-weight: 700 !important; margin: 0 !important;
+}
+.ws .panel-head :is(h2,h3,h4), .ws .act-h :is(h4,h5) { color: var(--bar-text) !important; font-size: 15px !important; font-weight: 700 !important; }
+.ws .act-h { align-items: center !important; }
+.ws .act-h + p, .ws .act-h ~ .rowsub { padding-top: 8px; }
+.ws .panel-head .more, .ws .grp i, .ws .act-h :is(b, strong, span, .n) { color: #f2c14a !important; font-family: var(--sans) !important; letter-spacing: 0 !important; text-transform: none !important; font-size: 14px !important; font-weight: 700 !important; }
+.ws .sec-h { border: 0 !important; background: transparent !important; padding: 0 0 10px !important; margin: 32px 0 0 !important; font-size: 20px !important; font-weight: 700 !important; color: var(--text) !important; }
+.ws .sec-h a, .ws .sec-h .r { font-family: var(--sans) !important; letter-spacing: 0 !important; text-transform: none !important; font-size: 14px !important; color: var(--acc) !important; font-weight: 600 !important; }
+.ws .glance-list { border: 0 !important; }
+.ws .glance-group + .glance-group { margin-top: 18px !important; }
+.ws .acts { gap: 18px !important; margin-top: 24px !important; }
+.ws .act-h > * + * { color: #f2c14a !important; }
+
+/* Tables: a solid head row and bigger text. */
+.ws table.reg th { background: var(--panel-3) !important; color: var(--text) !important; border-top: 0 !important; border-bottom: 2px solid var(--text) !important; font-size: 13px !important; font-weight: 700 !important; }
+.ws table.reg th .sort-head { color: var(--text) !important; font-weight: 700 !important; }
+.ws table.reg td { font-size: 14px !important; border-bottom: 1px solid var(--line) !important; }
+.ws table.reg td.due, .ws table.reg td.due b { font-family: var(--sans) !important; font-weight: 700; }
+.ws table.reg tbody tr:hover { background: var(--brass-wash) !important; }
+
+/* Numbers: big and bold; red only for late. */
+.ws .glance-cells dd { color: var(--text) !important; font-size: 26px !important; font-weight: 700 !important; }
+.ws .glance-cells dd:not(.late) small { color: var(--text-3) !important; }
+.ws .glance-name b { font-size: 17px !important; font-weight: 700 !important; }
+
+/* Buttons and filters. */
+.ws .btn, .btn-primary { border-radius: 4px !important; font-weight: 700 !important; }
+.ws .btn-q, .btn-quiet { background: var(--panel) !important; border: 1.5px solid var(--text) !important; color: var(--text) !important; border-radius: 4px !important; font-weight: 600 !important; }
+.ws .chip { border: 1.5px solid var(--line-2) !important; background: var(--panel) !important; border-radius: 4px !important; color: var(--text) !important; font-weight: 600; padding: 6px 12px !important; }
+.ws .chip.on { background: var(--text) !important; color: var(--panel) !important; border-color: var(--text) !important; }
+.ws .chip.warn:not(.on) { color: var(--alert) !important; border-color: var(--alert) !important; }
+
+/* ── Engineer phone ───────────────────────────────────────────────────── */
+.eng-section-title { margin: 28px 0 0 !important; background: var(--bar); color: var(--bar-text); padding: 12px 16px; border-radius: 4px 4px 0 0; }
+.eng-section-title h2, .eng-page .eng-section-title h2 { color: var(--bar-text) !important; font-size: 17px !important; font-weight: 700 !important; }
+.eng-section-title .r { font-family: var(--sans) !important; letter-spacing: 0 !important; text-transform: none !important; font-size: 14px !important; font-weight: 700 !important; color: #f2c14a !important; }
+.eng-section-title + .eng-list, .eng-section-title + * .eng-list:first-child { border-top: 0 !important; border-radius: 0 0 4px 4px !important; }
+.eng-list { border-radius: 4px !important; }
+.eng-row { border-left: 0 !important; padding: 16px !important; min-height: 60px !important; }
+.eng-row .main b { font-size: 16px !important; font-weight: 600 !important; }
+.eng-row .main > span, .eng-row .stat { font-size: 13.5px !important; color: var(--text-3) !important; }
+.eng-row.late { box-shadow: inset 6px 0 0 var(--alert) !important; }
+.eng-band { border-radius: 4px !important; border: 0 !important; }
+.eng-band .ref, .eng-band .lbl { color: var(--band-muted) !important; }
+.eng-tile { border-radius: 4px !important; border: 1.5px solid var(--line-2) !important; }
+.eng-tile b { font-size: 17px !important; font-weight: 700 !important; }
+.eng-tile.big { border: 0 !important; }
+.eng-tile.big b, .eng-tile.big small, .eng-tile.big .arrow { color: var(--brass-ink) !important; }
+.eng-steps { border-radius: 4px !important; border: 1.5px solid var(--text) !important; }
+.eng-steps button[aria-current] { background: var(--text) !important; color: var(--panel) !important; }
+.eng-steps button[aria-current] .n { background: var(--brass) !important; color: var(--brass-ink) !important; border-color: var(--brass) !important; }
+.eng-add-kinds { border-style: solid !important; border-radius: 4px !important; }
+.field textarea, .field input, .field select { border-radius: 4px !important; border-width: 1.5px !important; }
+.field > label { color: var(--text) !important; font-weight: 600 !important; font-size: 14px !important; }
+.eng-chip, .eng-seg button { border-radius: 4px !important; border-width: 1.5px !important; font-weight: 600 !important; }
+.nav { background: var(--chrome) !important; border-top: 0 !important; }
+.nav a { color: #c4c8cc !important; font-size: 12px !important; font-weight: 600 !important; }
+.nav a[aria-current="page"] { color: #f2c14a !important; background: rgba(255,255,255,.08) !important; }
+.issue-eng dl { background: var(--panel); border: 1px solid var(--line-2); border-radius: 4px; padding: 14px 16px; }
+.issue-eng h1 { font-weight: 700 !important; }
+.week-stats dd { font-weight: 700 !important; }
+
+/* Fixes after the first render. */
+.eng-navigation { background: var(--chrome) !important; border-top: 0 !important; }
+.eng-navigation > :is(button, a) { color: #c4c8cc !important; background: transparent !important; }
+.eng-navigation > [aria-current="page"] { color: #f2c14a !important; background: rgba(255,255,255,.08) !important; }
+.ws .topbar :is(.tbtn, .themebtn, .whoami, .bell) { border-color: transparent !important; }
+.eng-tile { justify-content: flex-start !important; gap: 4px; }
+.ws .pagehead { overflow: visible !important; flex: none !important; }
+.ws .topbar input::placeholder { color: #a9afb5 !important; }
+.ws .topbar input { background: #2b2f34 !important; color: #fff !important; }

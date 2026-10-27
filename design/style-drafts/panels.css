@@ -1,0 +1,135 @@
+/*
+ * Style draft B: "Panels".
+ *
+ * Every group of information sits on its own white panel with a soft edge,
+ * on a cool grey page, so the eye can see where one thing ends and the next
+ * begins (Cal, 21 Oct 12:59: clear visual edges). Inside a panel there is one
+ * heading in plain sentence case, then rows. Labels stop shouting: no
+ * letter-spaced mono capitals. Status is a soft filled pill, and red is kept
+ * for things that are late. Gold stays for the one main action per screen.
+ *
+ * A draft laid over the app at render time, not wired into the app.
+ */
+
+/* ── Tokens ───────────────────────────────────────────────────────────── */
+:root, :root .ws, :root .entry-wrap {
+  --ground: #eceef1 !important; --sunken: #e4e7eb !important;
+  --panel: #ffffff !important; --panel-2: #f6f7f9 !important; --panel-3: #eceef1 !important;
+  --line: #e3e6ea !important; --line-2: #d0d5db !important; --edge: #9aa1a9 !important;
+  --text: #15171a !important; --text-2: #474d55 !important; --text-3: #5b626a !important;
+  --chrome: rgba(255,255,255,.96) !important;
+  --brass: #7a5a14 !important; --acc: #7a5a14 !important; --gold: #7a5a14 !important;
+  --brass-wash: rgba(122,90,20,.08) !important; --acc-wash: rgba(122,90,20,.08) !important; --gold-wash: rgba(122,90,20,.08) !important;
+  --alert: #b3361b !important; --alert-wash: #fbece8 !important;
+  --ok: #23704a !important; --ok-wash: #e7f4ec !important;
+  --caution: #80590c !important; --caution-wash: #fbf2de !important;
+  --band: #1d2126 !important; --band-2: #171a1e !important; --band-line: #1d2126 !important; --band-text: #f3f4f5 !important; --band-muted: #b9bec4 !important; --band-brass: #e2bb5e !important;
+  --pr: 12px; --shadow: 0 1px 2px rgba(16,24,40,.05), 0 1px 3px rgba(16,24,40,.06);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]), :root:not([data-theme="light"]) .ws, :root:not([data-theme="light"]) .entry-wrap {
+    --ground: #0e1013 !important; --sunken: #0b0d0f !important;
+    --panel: #171a1e !important; --panel-2: #1d2125 !important; --panel-3: #252a2f !important;
+    --line: #272c32 !important; --line-2: #363c44 !important; --edge: #59616a !important;
+    --text: #eceef0 !important; --text-2: #b4bac1 !important; --text-3: #9aa1a9 !important;
+    --chrome: rgba(23,26,30,.96) !important;
+    --brass: #d9ae4a !important; --acc: #d9ae4a !important; --gold: #d9ae4a !important;
+    --brass-ink: #15171a !important; --acc-ink: #15171a !important; --gold-ink: #15171a !important;
+    --brass-wash: rgba(217,174,74,.10) !important; --acc-wash: rgba(217,174,74,.10) !important; --gold-wash: rgba(217,174,74,.10) !important;
+    --alert: #f08a73 !important; --alert-wash: rgba(240,138,115,.13) !important;
+    --ok: #6cc497 !important; --ok-wash: rgba(108,196,151,.12) !important;
+    --caution: #e3b45c !important; --caution-wash: rgba(227,180,92,.12) !important;
+    --band: #22272d !important; --band-line: #2d333a !important;
+    --shadow: 0 1px 0 rgba(255,255,255,.03) inset, 0 1px 3px rgba(0,0,0,.4);
+  }
+}
+
+/* ── Status: soft filled pills, no outline, sentence case ────────────── */
+.tag, .ws .tag, .kind, .ws .kind {
+  font-family: var(--sans) !important; text-transform: none !important; letter-spacing: 0 !important;
+  font-size: 12px !important; font-weight: 600 !important; border: 0 !important; border-radius: 999px !important;
+  padding: 3px 10px !important; line-height: 1.35 !important; gap: 6px !important;
+}
+.tag::before, .ws .tag::before { content: "" !important; width: 6px !important; height: 6px !important; border-radius: 50% !important; background: currentColor !important; font-size: 0 !important; }
+.ws .tag-quiet, .tag-quiet { background: var(--panel-3) !important; color: var(--text-2) !important; }
+.kind, .ws .kind { background: color-mix(in srgb, var(--tone, var(--text-3)) 12%, transparent) !important; color: var(--tone, var(--text-2)) !important; }
+.kind.tone-neutral, .ws .kind.tone-neutral { background: var(--panel-3) !important; color: var(--text-2) !important; }
+
+/* ── Panels ───────────────────────────────────────────────────────────── */
+.appbar { background: var(--chrome) !important; box-shadow: 0 1px 0 var(--line) !important; border: 0 !important; }
+.eng-list, .eng-tile:not(.big), .panel, .ws .panel, .ws .sheet, .ws .pagehead, .ws .glance-group, .ws .act, .ws .today-project,
+.ws .from-site-visit, .ws .tb, .ws .sheet-links, .eng-steps, .week-section, .week-stats > div {
+  border: 1px solid var(--line) !important; border-radius: var(--pr) !important; box-shadow: var(--shadow) !important; background: var(--panel) !important;
+}
+.eng-list, .ws .glance-group, .ws .panel { overflow: hidden !important; }
+.eng-tile.big { border-radius: var(--pr) !important; box-shadow: var(--shadow) !important; }
+.eng-band { border-radius: var(--pr) !important; border: 0 !important; }
+
+/* Panel heads: a heading in sentence case and its count, on the panel itself. */
+.ws .panel-head, .ws .grp, .ws .sec-h {
+  border: 0 !important; border-bottom: 1px solid var(--line) !important; border-left: 0 !important; background: transparent !important;
+  font-size: 15px !important; font-weight: 600 !important; color: var(--text) !important; padding: 12px 16px !important;
+}
+.ws .panel-head :is(h2,h3,h4) { font-size: 15px !important; font-weight: 600 !important; }
+.ws .panel-head .more, .ws .sec-h a, .ws .sec-h .r { font-family: var(--sans) !important; font-size: 13px !important; letter-spacing: 0 !important; color: var(--text-2) !important; text-transform: none !important; }
+.ws .grp i, .ws .sec-h .r { font-size: 13px !important; font-weight: 500 !important; color: var(--text-3) !important; }
+.ws .glance > .sec-h { border: 0 !important; padding: 0 0 8px !important; font-size: 17px !important; margin-top: 8px !important; }
+.ws .glance-list { border: 0 !important; }
+.ws .glance-group + .glance-group { margin-top: 16px !important; }
+.ws .act-h :is(h4,h5) { font-size: 15px !important; font-weight: 600 !important; color: var(--text) !important; }
+.ws .acts { gap: 16px !important; margin-top: 20px !important; }
+
+/* The office sheet is the page, not a box inside a box. */
+.ws .colpad > .sheet { border: 0 !important; box-shadow: none !important; background: transparent !important; padding: 0 !important; }
+.ws .sheet-title { border: 0 !important; background: transparent !important; padding: 4px 0 8px !important; }
+.ws .pagehead { padding: 16px 20px !important; border-left: 1px solid var(--line) !important; }
+.ws .filters { border: 0 !important; background: transparent !important; padding-left: 0 !important; padding-right: 0 !important; }
+.ws .col-head { border-bottom: 0 !important; background: transparent !important; }
+.ws .col-head :is(h2,h4) { font-size: 13px !important; font-weight: 600 !important; color: var(--text-2) !important; }
+.ws-main, .ws .cols, .ws .col, .ws .colpad { background: var(--ground) !important; }
+
+/* Tables: a quiet head row, roomy rows, one action shown. */
+.ws table.reg th { background: var(--panel-2) !important; border-top: 0 !important; border-bottom: 1px solid var(--line) !important; }
+.ws table.reg td { border-bottom: 1px solid var(--line) !important; }
+.ws table.reg td.due, .ws table.reg td.due b { font-family: var(--sans) !important; }
+.ws table.reg td.c-actions .btn-q { opacity: 0; }
+.ws table.reg tr:hover td.c-actions .btn-q, .ws table.reg tr:focus-within td.c-actions .btn-q { opacity: 1; }
+
+/* Numbers: only lateness is red. */
+.ws .glance-cells dd { color: var(--text) !important; font-size: 20px !important; }
+.ws .glance-cells dd:not(.late) small { color: var(--text-3) !important; }
+
+/* Buttons and filters: soft, one filled main action. */
+.ws .btn-q, .btn-quiet { background: var(--panel) !important; border: 1px solid var(--line-2) !important; color: var(--text) !important; border-radius: 8px !important; }
+.ws .btn, .btn-primary { border-radius: 8px !important; }
+.ws .chip { border-radius: 999px !important; border: 1px solid var(--line-2) !important; background: var(--panel) !important; padding: 5px 14px !important; }
+.ws .chip.on { background: var(--text) !important; color: var(--panel) !important; border-color: var(--text) !important; }
+.ws .chip.warn:not(.on) { color: var(--alert) !important; border-color: var(--line-2) !important; }
+.ws .filters input, .ws .filters select { border-radius: 8px !important; }
+
+/* ── Engineer phone ───────────────────────────────────────────────────── */
+.eng-section-title h2, .eng-page h2 { font-size: 18px !important; font-weight: 600 !important; letter-spacing: -.01em !important; }
+.eng-section-title { margin: 28px 0 10px !important; }
+.eng-section-title .r { font-family: var(--sans) !important; letter-spacing: 0 !important; text-transform: none !important; font-size: 13px !important; color: var(--text-3) !important; }
+.eng-row { border-left: 0 !important; padding: 14px 16px !important; }
+.eng-row.late { box-shadow: inset 3px 0 0 var(--alert) !important; }
+.eng-row .chev { color: var(--text-3) !important; }
+.eng-tile { border-radius: var(--pr) !important; }
+.eng-tile .kind { margin-bottom: 10px !important; }
+.eng-steps { overflow: hidden !important; }
+.field textarea, .field input, .field select { border-radius: 10px !important; }
+.eng-chip, .eng-seg button { border-radius: 999px !important; }
+.nav { box-shadow: 0 -1px 0 var(--line) !important; border-top: 0 !important; }
+.nav a { font-size: 11.5px !important; font-weight: 500 !important; }
+.pagehead { border-bottom: 0 !important; }
+.row { border-radius: 0 !important; }
+.issue-eng dl { background: var(--panel); border: 1px solid var(--line); border-radius: var(--pr); box-shadow: var(--shadow); padding: 14px 16px; }
+
+/* Weekly summary */
+.week-stats > div { padding: 14px 16px !important; }
+
+/* Nested panels flatten: a sheet inside a panel is the panel's content. */
+.ws .inbox-reader .sheet, .ws .panel .sheet { border: 0 !important; box-shadow: none !important; border-radius: 0 !important; }
+.eng-band .ref, .eng-band .lbl { color: var(--band-muted) !important; }
+.eng-add-kinds { border-style: solid !important; border-radius: var(--pr) !important; background: var(--panel-2) !important; }
+.eng-navigation { border-top: 0 !important; box-shadow: 0 -1px 0 var(--line), 0 -4px 12px rgba(16,24,40,.04) !important; }

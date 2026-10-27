@@ -1,0 +1,25 @@
+/*
+ * Shared by all three style drafts: what every draft agrees is noise today.
+ * Labels, column heads and section heads in plain sentence case instead of
+ * letter-spaced mono capitals; references stay in mono so codes still line
+ * up, but grey rather than gold; the prototype strip in plain words.
+ */
+/* ── Labels: plain words, not mono capitals ──────────────────────────── */
+.lbl, .field > label, .col-head, .nav a, .back,
+.ws .panel-head :is(h2,h3,h4), .ws .sec-h, .ws .grp, .ws .act-h :is(h4,h5),
+.ws table.reg th, .ws table.reg th .sort-head, .ws .tb dt, .ws .glance-cells dt, .ws .col-head :is(h2,h4),
+.ws .sheet-links-group :is(h3,h4), .ws .f label, .ws .results .k, .ws .cf-side h3, .ws .cbar-key,
+.eng-sum dt, .eng-add-kinds > :is(h2,h3), .eng-since-group, .eng-group-title, .eng-suggestions-head,
+.eng-band .row a, .week-facts dt, .week-stats dt, .month-weeks thead th, .shot-no, .stage-t,
+.tb-cell dt, .doc-tb dt, .doc-h2, .find-kind, .ws table.reg.cards td[data-label]::before {
+  font-family: var(--sans) !important; text-transform: none !important; letter-spacing: 0 !important;
+}
+.lbl, .field > label, .ws .tb dt, .ws .glance-cells dt, .eng-sum dt, .week-facts dt, .week-stats dt, .tb-cell dt, .doc-tb dt {
+  font-size: 12.5px !important; font-weight: 500 !important; color: var(--text-3) !important;
+}
+.ws table.reg th, .ws table.reg th .sort-head, .month-weeks thead th { font-size: 12.5px !important; font-weight: 600 !important; color: var(--text-2) !important; }
+.back { font-size: 14px !important; color: var(--text-2) !important; }
+.ref, .ws .ref { color: var(--text-2) !important; font-weight: 500 !important; }
+.banner { font-family: var(--sans) !important; letter-spacing: 0 !important; font-size: 12px !important; padding: 5px 16px !important; }
+
+.crumbs, .crumbs a, .trade-visit .k, .savestate, .savestate b, .ws .from-site-h .arrow { font-family: var(--sans) !important; letter-spacing: 0 !important; text-transform: none !important; }
