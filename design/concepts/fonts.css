@@ -1,0 +1,6 @@
+/* The app's own faces (packages/documents/fonts), for the concepts to share. */
+@font-face{font-family:Archivo;src:url(../../packages/documents/fonts/Archivo-Regular.ttf);font-weight:400}
+@font-face{font-family:Archivo;src:url(../../packages/documents/fonts/Archivo-Medium.ttf);font-weight:500}
+@font-face{font-family:Archivo;src:url(../../packages/documents/fonts/Archivo-SemiBold.ttf);font-weight:600 700}
+@font-face{font-family:"IBM Plex Mono";src:url(../../packages/documents/fonts/IBMPlexMono-Regular.ttf);font-weight:400}
+@font-face{font-family:"IBM Plex Mono";src:url(../../packages/documents/fonts/IBMPlexMono-Medium.ttf);font-weight:500 600}
